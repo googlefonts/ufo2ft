@@ -173,6 +173,8 @@ def _writeFeatures_kern(font, existingFeatures):
     existingFeatures = "\n".join(lines)
     if kernFeatureSearch_RE.search(existingFeatures):
         return ""
+    if not font.kerning.items():
+        return ""
     neededLeftGroups = set()
     neededRightGroups = set()
     noGroup = {}
