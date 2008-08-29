@@ -1,9 +1,8 @@
 import os
 import shutil
 import re
-from outlineOTF import makePSName, makeOutlineOTF
+from outlineOTF import makePSName, OutlineOTFCompiler, getFontBBox
 from featureTableWriter import FeatureTableWriter, winStr, macStr
-from outlineOTF import makeOutlineOTF, getFontBBox
 
 
 def makeOTFParts(font, path, glyphOrder=None):
@@ -27,7 +26,8 @@ def makeOTFParts(font, path, glyphOrder=None):
     multilineNameTableEntries = _setupFeatures(font, featuresPath)
 
     outlinePath = os.path.join(path, "font.otf")
-    makeOutlineOTF(font, outlinePath, glyphOrder)
+    c = OutlineOTFCompiler(font, outlinePath, glyphOrder)
+    c.compile()
 
     paths = dict(
         outlineSourcePath=outlinePath,
