@@ -1,6 +1,5 @@
 from __future__ import division
 import time
-from fontTools.ttLib import TTFont
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
