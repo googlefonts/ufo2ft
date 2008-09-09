@@ -308,7 +308,7 @@ def _writeFeaturesTable_OS2(font):
     writer.addLineWithKeyValue("TypoDescender", _roundInt(font.info.descender))
     # writer.addLineWithKeyValue("TypoLineGap", naked.ttinfo.os2_s_typo_line_gap)
     writer.addLineWithKeyValue("winAscent", _roundInt(yMax))
-    writer.addLineWithKeyValue("winDescent", _roundInt(yMin))
+    writer.addLineWithKeyValue("winDescent", abs(_roundInt(yMin)))
     writer.addLineWithKeyValue("XHeight", _roundInt(font.info.xHeight))
     writer.addLineWithKeyValue("CapHeight", _roundInt(font.info.capHeight))
     writer.addLineWithKeyValue("WeightClass", _roundInt(font.info.weightValue))
