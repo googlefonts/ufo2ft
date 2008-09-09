@@ -203,7 +203,7 @@ class OutlineOTFCompiler(object):
         os2.sTypoDescender = self.ufo.info.descender
         os2.sTypoLineGap = 50
         os2.usWinAscent = self.fontBoundingBox[3]
-        os2.usWinDescent = self.fontBoundingBox[1]
+        os2.usWinDescent = abs(self.fontBoundingBox[1])
         # style mapping
         os2.fsSelection = 0 # XXX this is a guess
         # characetr indexes
