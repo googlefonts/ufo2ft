@@ -412,6 +412,8 @@ class StubGlyph(object):
         return 0
 
     def _get_leftMargin(self):
+        if self.bounds is None:
+            return 0
         return self.bounds[0]
 
     leftMargin = property(_get_leftMargin)
