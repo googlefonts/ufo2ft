@@ -1,6 +1,19 @@
 import time
 from robofab import ufoLib
 
+"""
+This file provides fallback data for info attributes
+that are required for building OTFs. There are two main
+functions that are important:
+
+* :func:`~getAttrWithFallback`
+* :func:`~preflightInfo`
+
+There are a set of other functions that are used internally
+for synthesizing values for specific attributes. These can be
+used externally as well.
+"""
+
 # -----------------
 # Special Fallbacks
 # -----------------
@@ -112,9 +125,7 @@ def openTypeOS2WinAscentFallback(info):
     font = info.getParent()
     if font is None:
         return getAttrWithFallback("ascender")
-    bounds = font.bounds
-    if bounds is None:
-        return getAttrWithFallback("ascender")
+    bounds = getFontBBox(font)
     xMin, yMin, xMax, yMax = font.bounds
     return yMax
 
@@ -126,7 +137,7 @@ def openTypeOS2WinDescentFallback(info):
     font = info.getParent()
     if font is None:
         return abs(getAttrWithFallback("descender"))
-    bounds = font.bounds
+    bounds = getFontBBox(font)
     if bounds is None:
         return abs(getAttrWithFallback("descender"))
     xMin, yMin, xMax, yMax = font.bounds
@@ -386,6 +397,32 @@ def preflightInfo(info):
         if not hasattr(info, attr) or getattr(info, attr) is None:
             missingRecommended.add(attr)
     return dict(missingRequired=missingRequired, missingRecommended=missingRecommended)
+
+def getFontBBox(font):
+    """
+    Get a tuple of (xMin, yMin, xMax, yMax) for all
+    glyphs in the given *font*.
+    """
+    from fontTools.misc.arrayTools import unionRect
+    rect = None
+    if hasattr(font, "bounds"):
+        rect = font.bounds
+    else:
+        for glyph in font:
+            # robofab
+            if hasattr(glyph,"box"):
+                bounds = glyph.box
+            # others
+            else:
+                bounds = glyph.bounds
+            if rect is None:
+                rect = bounds
+                continue
+            if rect is not None and bounds is not None:
+                rect = unionRect(rect, bounds)
+    if rect is None:
+        rect = (0, 0, 0, 0)
+    return rect
 
 # ----
 # Test
