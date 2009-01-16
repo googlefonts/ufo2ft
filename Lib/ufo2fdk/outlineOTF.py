@@ -354,7 +354,7 @@ class OutlineOTFCompiler(object):
         if underlinePosition is None:
             underlinePosition = 0
         post.underlinePosition = underlinePosition
-        underlineThickness = getAttrWithFallback(font.info, "postscriptUnderlinePosition")
+        underlineThickness = getAttrWithFallback(font.info, "postscriptUnderlineThickness")
         if underlineThickness is None:
             underlineThickness = 0
         post.underlineThickness = underlineThickness
