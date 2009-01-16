@@ -3,8 +3,9 @@ import time
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
-from fontTools.ttLib.tables._h_e_a_d import parse_date
+from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from charstringPen import T2CharStringPen
+from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum
 
 
 class OutlineOTFCompiler(object):
@@ -56,7 +57,7 @@ class OutlineOTFCompiler(object):
     # -----
 
     def makeFontBoundingBox(self):
-        return getFontBBox(self.allGlyphs.values())
+        return getFontBounds(self.ufo)
 
     def makeUnicodeToGlyphNameMapping(self):
         mapping = {}
@@ -99,16 +100,18 @@ class OutlineOTFCompiler(object):
 
     def setupTable_head(self):
         self.otf["head"] = head = newTable("head")
-        head.checkSumAdjustment = 0 # XXX this is a guess
+        font = self.ufo
+        head.checkSumAdjustment = 0
         head.tableVersion = 1.0
-        head.fontRevision = 1.0
+        versionMajor = getAttrWithFallback(font.info, "versionMajor")
+        versionMinor = getAttrWithFallback(font.info, "versionMinor") * .001
+        head.fontRevision = versionMajor + versionMinor
         head.magicNumber = 0x5F0F3CF5
         # upm
-        head.unitsPerEm = int(self.ufo.info.unitsPerEm)
+        head.unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
         # times
-        rightNow = parse_date(time.asctime(time.gmtime()))
-        head.created = rightNow
-        head.modified = rightNow
+        head.created = dateStringToTimeValue(getAttrWithFallback(font.info, "openTypeHeadCreated")) - mac_epoch_diff
+        head.modified = dateStringToTimeValue(dateStringForNow()) - mac_epoch_diff
         # bounding box
         xMin, yMin, xMax, yMax = self.fontBoundingBox
         head.xMin = xMin
@@ -116,12 +119,20 @@ class OutlineOTFCompiler(object):
         head.xMax = xMax
         head.yMax = yMax
         # style mapping
-        head.macStyle = 0 # XXX this is a guess
+        styleMapStyleName = getAttrWithFallback(font.info, "styleMapStyleName")
+        macStyle = []
+        if styleMapStyleName == "bold":
+            macStyle = [0]
+        elif styleMapStyleName == "bold italic":
+            macStyle = [0, 1]
+        elif styleMapStyleName == "italic":
+            macStyle = [1]
+        head.macStyle = intListToNum(macStyle, 0, 16)
         # misc
-        head.flags = 3 # XXX this is a guess
-        head.lowestRecPPEM = 3 # XXX FontValidator describes this as "unreasonably small"
-        head.fontDirectionHint = 2 # XXX this is a guess
-        head.indexToLocFormat = 0 # XXX this is a guess
+        head.flags = intListToNum(getAttrWithFallback(font.info, "openTypeHeadFlags"), 0, 16)
+        head.lowestRecPPEM = getAttrWithFallback(font.info, "openTypeHeadLowestRecPPEM")
+        head.fontDirectionHint = 2
+        head.indexToLocFormat = 0
         head.glyphDataFormat = 0
 
     def setupTable_name(self):
@@ -152,60 +163,107 @@ class OutlineOTFCompiler(object):
 
     def setupTable_OS2(self):
         self.otf["OS/2"] = os2 = newTable("OS/2")
-        os2.version = 0x0003 # XXX has this been bumped up?
+        font = self.ufo
+        os2.version = 0x0004
         # average glyph width
         widths = [glyph.width for glyph in self.allGlyphs.values() if glyph.width > 0]
         os2.xAvgCharWidth = int(round(sum(widths) / len(widths)))
         # weight and width classes
-        os2.usWeightClass = 400
-        os2.usWidthClass = 5
+        os2.usWeightClass = getAttrWithFallback(font.info, "openTypeOS2WeightClass")
+        os2.usWidthClass = getAttrWithFallback(font.info, "openTypeOS2WidthClass")
         # embedding
-        os2.fsType = 0
-        # superscript and subscript
-        superAndSubscriptSize = int(round(self.ufo.info.ascender * 0.85)) # XXX what should the default be?
-        os2.ySubscriptXSize = superAndSubscriptSize
-        os2.ySubscriptYSize = superAndSubscriptSize
-        os2.ySubscriptXOffset = 0 # XXX what should the default be?
-        os2.ySubscriptYOffset = int(round(self.ufo.info.descender * 0.5)) # XXX what should the default be?
-        os2.ySuperscriptXSize = superAndSubscriptSize
-        os2.ySuperscriptYSize = superAndSubscriptSize
-        os2.ySuperscriptXOffset = 0 # XXX what should the default be?
-        os2.ySuperscriptYOffset = self.ufo.info.ascender - superAndSubscriptSize # XXX what should the default be?
-        os2.yStrikeoutSize = int(round(self.ufo.info.unitsPerEm * 0.05)) # XXX what should the default be?
-        os2.yStrikeoutPosition = int(round(self.ufo.info.unitsPerEm * .23)) # XXX what should the default be?
-        os2.sFamilyClass = 0
-        # Panose
+        os2.fsType = intListToNum(getAttrWithFallback(font.info, "openTypeOS2Type"), 0, 16)
+        # subscript
+        v = getAttrWithFallback(font.info, "openTypeOS2SubscriptXSize")
+        if v is None:
+            v = 0
+        os2.ySubscriptXSize = v
+        v = getAttrWithFallback(font.info, "openTypeOS2SubscriptYSize")
+        if v is None:
+            v = 0
+        os2.ySubscriptYSize = v
+        v = getAttrWithFallback(font.info, "openTypeOS2SubscriptXOffset")
+        if v is None:
+            v = 0
+        os2.ySubscriptXOffset = v
+        v = getAttrWithFallback(font.info, "openTypeOS2SubscriptYOffset")
+        if v is None:
+            v = 0
+        os2.ySubscriptYOffset = v
+        # superscript
+        v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptXSize")
+        if v is None:
+            v = 0
+        os2.ySuperscriptXSize = v
+        v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptYSize")
+        if v is None:
+            v = 0
+        os2.ySuperscriptYSize = v
+        v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptXOffset")
+        if v is None:
+            v = 0
+        os2.ySuperscriptXOffset = v
+        v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptYOffset")
+        if v is None:
+            v = 0
+        os2.ySuperscriptYOffset = v
+        # strikeout
+        v = getAttrWithFallback(font.info, "openTypeOS2StrikeoutSize")
+        if v is None:
+            v = 0
+        os2.yStrikeoutSize = v
+        v = getAttrWithFallback(font.info, "openTypeOS2StrikeoutPosition")
+        if v is None:
+            v = 0
+        os2.yStrikeoutPosition = v
+        # family class
+        os2.sFamilyClass = 0 # XXX not sure how to create the appropriate value
+        # panose
+        data = getAttrWithFallback(font.info, "openTypeOS2Panose")
         panose = Panose()
-        panose.bFamilyType = 0
-        panose.bSerifStyle = 0
-        panose.bWeight = 0
-        panose.bProportion = 0
-        panose.bContrast = 0
-        panose.bStrokeVariation = 0
-        panose.bArmStyle = 0
-        panose.bLetterForm = 0
-        panose.bMidline = 0
-        panose.bXHeight = 0
+        panose.bFamilyType = data[0]
+        panose.bSerifStyle = data[1]
+        panose.bWeight = data[2]
+        panose.bProportion = data[3]
+        panose.bContrast = data[4]
+        panose.bStrokeVariation = data[5]
+        panose.bArmStyle = data[6]
+        panose.bLetterForm = data[7]
+        panose.bMidline = data[8]
+        panose.bXHeight = data[9]
         os2.panose = panose
-        # Unicode and code page ranges
-        os2.ulUnicodeRange1 = 0
-        os2.ulUnicodeRange2 = 0
-        os2.ulUnicodeRange3 = 0
-        os2.ulUnicodeRange4 = 0
-        os2.ulCodePageRange1 = 0
-        os2.ulCodePageRange2 = 0
+        # Unicode ranges
+        uniRanges = getAttrWithFallback(font.info, "openTypeOS2UnicodeRanges")
+        os2.ulUnicodeRange1 = intListToNum(uniRanges, 0, 32)
+        os2.ulUnicodeRange2 = intListToNum(uniRanges, 32, 32)
+        os2.ulUnicodeRange3 = intListToNum(uniRanges, 64, 32)
+        os2.ulUnicodeRange4 = intListToNum(uniRanges, 96, 32)
+        # codepage ranges
+        codepageRanges = getAttrWithFallback(font.info, "openTypeOS2CodePageRanges")
+        os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
+        os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
         # vendor id
-        os2.achVendID = "None" # XXX get vendor code from font
+        os2.achVendID = getAttrWithFallback(font.info, "openTypeOS2VendorID")
         # vertical metrics
-        os2.sxHeight = int(round(self.ufo.info.ascender * 0.5))
-        os2.sCapHeight = self.ufo.info.ascender
-        os2.sTypoAscender = self.ufo.info.unitsPerEm + self.ufo.info.descender
-        os2.sTypoDescender = self.ufo.info.descender
-        os2.sTypoLineGap = 50
-        os2.usWinAscent = self.fontBoundingBox[3]
-        os2.usWinDescent = abs(self.fontBoundingBox[1])
+        os2.sxHeight = getAttrWithFallback(font.info, "xHeight")
+        os2.sCapHeight = getAttrWithFallback(font.info, "capHeight")
+        os2.sTypoAscender = getAttrWithFallback(font.info, "openTypeOS2TypoAscender")
+        os2.sTypoDescender = getAttrWithFallback(font.info, "openTypeOS2TypoDescender")
+        os2.sTypoLineGap = getAttrWithFallback(font.info, "openTypeOS2TypoLineGap")
+        os2.usWinAscent = getAttrWithFallback(font.info, "openTypeOS2WinAscent")
+        os2.usWinDescent = getAttrWithFallback(font.info, "openTypeOS2WinDescent")
         # style mapping
-        os2.fsSelection = 0 # XXX this is a guess
+        selection = list(getAttrWithFallback(font.info, "openTypeOS2Selection"))
+        styleMapStyleName = getAttrWithFallback(font.info, "styleMapStyleName")
+        if styleMapStyleName == "regular":
+            selection.append(6)
+        elif styleMapStyleName == "bold":
+            selection.append(5)
+        elif styleMapStyleName == "italic":
+            selection.append(0)
+        elif styleMapStyleName == "bold italic":
+            selection += [0, 5]
+        os2.fsSelection = intListToNum(selection, 0, 16)
         # characetr indexes
         unicodes = [i for i in self.unicodeToGlyphNameMapping.keys() if i is not None]
         minIndex = min(unicodes)
@@ -234,11 +292,12 @@ class OutlineOTFCompiler(object):
 
     def setupTable_hhea(self):
         self.otf["hhea"] = hhea = newTable("hhea")
+        font = self.ufo
         hhea.tableVersion = 1.0
         # vertical metrics
-        hhea.ascent = int(self.ufo.info.unitsPerEm + self.ufo.info.descender)
-        hhea.descent = int(self.ufo.info.descender)
-        hhea.lineGap = 50
+        hhea.ascent = getAttrWithFallback(font.info, "openTypeHheaAscender")
+        hhea.descent = getAttrWithFallback(font.info, "openTypeHheaDescender")
+        hhea.lineGap = getAttrWithFallback(font.info, "openTypeHheaLineGap")
         # horizontal metrics
         widths = []
         lefts = []
@@ -254,9 +313,14 @@ class OutlineOTFCompiler(object):
             widths.append(glyph.width)
             lefts.append(left)
             rights.append(right)
-            bounds = glyph.bounds
+            # robofab
+            if hasattr(glyph, "box"):
+                bounds = glyph.box
+            # others
+            else:
+                bounds = glyph.bounds
             if bounds is not None:
-                xMin, yMin, xMax, yMax = glyph.bounds
+                xMin, yMin, xMax, yMax = bounds
             else:
                 xMin = 0
                 xMax = 0
@@ -267,9 +331,9 @@ class OutlineOTFCompiler(object):
         hhea.minRightSideBearing = min(rights)
         hhea.xMaxExtent = max(extents)
         # misc
-        hhea.caretSlopeRise = 1
-        hhea.caretSlopeRun = 0
-        hhea.caretOffset = 0 # XXX this is a guess
+        hhea.caretSlopeRise = getAttrWithFallback(font.info, "openTypeHheaCaretSlopeRise")
+        hhea.caretSlopeRun = getAttrWithFallback(font.info, "openTypeHheaCaretSlopeRun")
+        hhea.caretOffset = getAttrWithFallback(font.info, "openTypeHheaCaretOffset")
         hhea.reserved0 = 0
         hhea.reserved1 = 0
         hhea.reserved2 = 0
@@ -280,23 +344,28 @@ class OutlineOTFCompiler(object):
 
     def setupTable_post(self):
         self.otf["post"] = post = newTable("post")
+        font = self.ufo
         post.formatType = 3.0
         # italic angle
-        italicAngle = self.ufo.info.italicAngle
-        if italicAngle is None:
-            italicAngle = 0
+        italicAngle = getAttrWithFallback(font.info, "italicAngle")
         post.italicAngle = italicAngle
         # underline
-        post.underlinePosition = int(round(self.ufo.info.descender * 0.3)) # XXX this is a guess
-        post.underlineThickness = int(round(self.ufo.info.unitsPerEm * .05)) # XXX this is a guess
+        underlinePosition = getAttrWithFallback(font.info, "postscriptUnderlinePosition")
+        if underlinePosition is None:
+            underlinePosition = 0
+        post.underlinePosition = underlinePosition
+        underlineThickness = getAttrWithFallback(font.info, "postscriptUnderlinePosition")
+        if underlineThickness is None:
+            underlineThickness = 0
+        post.underlineThickness = underlineThickness
         # determine if the font has a fixed width
         widths = set([glyph.width for glyph in self.allGlyphs.values()])
-        post.isFixedPitch = bool(len(widths) == 1)
+        post.isFixedPitch = getAttrWithFallback(font.info, "postscriptIsFixedPitch")
         # misc
-        post.minMemType42 = 0 # XXX this is a guess
-        post.maxMemType42 = 0 # XXX this is a guess
-        post.minMemType1 = 0 # XXX this is a guess
-        post.maxMemType1 = 0 # XXX this is a guess
+        post.minMemType42 = 0
+        post.maxMemType42 = 0
+        post.minMemType1 = 0
+        post.maxMemType1 = 0
 
     def setupTable_CFF(self):
         self.otf["CFF "] = cff = newTable("CFF ")
@@ -325,13 +394,28 @@ class OutlineOTFCompiler(object):
         cff.GlobalSubrs = globalSubrs
         # populate naming data
         info = self.ufo.info
-        psName = makePSName(self.ufo)
+        psName = getAttrWithFallback(info, "postscriptFontName")
         cff.fontNames.append(psName)
         topDict = cff.topDictIndex[0]
-        topDict.FullName = "%s %s" % (info.familyName, info.styleName)
-        topDict.FamilyName = info.familyName
-        topDict.Weight = info.styleName
-        topDict.FontName = psName
+        topDict.FullName = getAttrWithFallback(info, "postscriptFullName")
+        topDict.FamilyName = getAttrWithFallback(info, "openTypeNamePreferredFamilyName")
+        topDict.Weight = getAttrWithFallback(info, "postscriptWeightName")
+        topDict.FontName = getAttrWithFallback(info, "postscriptFontName")
+        # populate hint data
+        private.rawDict["BlueFuzz"] = getAttrWithFallback(info, "postscriptBlueFuzz")
+        private.rawDict["BlueShift"] = getAttrWithFallback(info, "postscriptBlueShift")
+        private.rawDict["BlueScale"] = getAttrWithFallback(info, "postscriptBlueScale")
+        private.rawDict["ForceBold"] = getAttrWithFallback(info, "postscriptForceBold")
+        private.rawDict["BlueValues"] = getAttrWithFallback(info, "postscriptBlueValues")
+        private.rawDict["OtherBlues"] = getAttrWithFallback(info, "postscriptOtherBlues")
+        private.rawDict["FamilyBlues"] = getAttrWithFallback(info, "postscriptFamilyBlues")
+        private.rawDict["FamilyOtherBlues"] = getAttrWithFallback(info, "postscriptFamilyOtherBlues")
+        private.rawDict["StemSnapH"] = getAttrWithFallback(info, "postscriptStemSnapH")
+        if private.rawDict["StemSnapH"]:
+            private.rawDict["StdHW"] = private.rawDict["StemSnapH"][0]
+        private.rawDict["StemSnapV"] = getAttrWithFallback(info, "postscriptStemSnapV")
+        if private.rawDict["StemSnapV"]:
+            private.rawDict["StdVW"] = private.rawDict["StemSnapV"][0]
         # populate glyphs
         for glyphName in self.glyphOrder:
             glyph = self.allGlyphs[glyphName]
@@ -361,26 +445,6 @@ class OutlineOTFCompiler(object):
 
     def setupOtherTables(self):
         pass
-
-
-def makePSName(font):
-    familyName = font.info.familyName
-    styleName = font.info.styleName
-    return familyName.replace(" ", "") + "-" + styleName.replace(" ", "")
-
-def getFontBBox(font):
-    from fontTools.misc.arrayTools import unionRect
-    rect = None
-    for glyph in font:
-        bounds = glyph.bounds
-        if rect is None:
-            rect = bounds
-            continue
-        if rect is not None and bounds is not None:
-            rect = unionRect(rect, bounds)
-    if rect is None:
-        rect = (0, 0, 0, 0)
-    return rect
 
 
 class StubGlyph(object):
