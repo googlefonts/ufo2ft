@@ -1,4 +1,6 @@
 import time
+from fontTools.misc.textTools import binary2num
+from fontTools.misc.arrayTools import unionRect
 from robofab import ufoLib
 
 """
@@ -30,10 +32,7 @@ def styleMapFamilyNameFallback(info):
 
 # head
 
-def openTypeHeadCreatedFallback(info):
-    """
-    Fallback to now.
-    """
+def dateStringForNow():
     year, month, day, hour, minute, second, weekDay, yearDay, isDST = time.localtime()
     year = str(year)
     month = str(month).zfill(2)
@@ -42,6 +41,12 @@ def openTypeHeadCreatedFallback(info):
     minute = str(minute).zfill(2)
     second = str(second).zfill(2)
     return "%s/%s/%s %s:%s:%s" % (year, month, day, hour, minute, second)
+
+def openTypeHeadCreatedFallback(info):
+    """
+    Fallback to now.
+    """
+    return dateStringForNow()
 
 # hhea
 
@@ -227,7 +232,7 @@ staticFallbackData = dict(
     note=None,
 
     openTypeHeadLowestRecPPEM=6,
-    openTypeHeadFlags=[],
+    openTypeHeadFlags=[0, 1],
 
     openTypeHheaLineGap=200,
     openTypeHheaCaretSlopeRise=1,
@@ -375,7 +380,7 @@ def getAttrWithFallback(info, attr):
         if attr in specialFallbacks:
             value = specialFallbacks[attr](info)
         else:
-            value = staticFallbackData.get(attr)
+            value = staticFallbackData[attr]
     return value
 
 def preflightInfo(info):
@@ -403,10 +408,11 @@ def getFontBounds(font):
     Get a tuple of (xMin, yMin, xMax, yMax) for all
     glyphs in the given *font*.
     """
-    from fontTools.misc.arrayTools import unionRect
     rect = None
+    # defcon
     if hasattr(font, "bounds"):
         rect = font.bounds
+    # others
     else:
         for glyph in font:
             # robofab
@@ -423,6 +429,37 @@ def getFontBounds(font):
     if rect is None:
         rect = (0, 0, 0, 0)
     return rect
+
+# -----------------
+# Low Level Support
+# -----------------
+
+# these should not be used outside of this package
+
+def intListToNum(intList, start, length):
+    all = []
+    bin = ""
+    for i in range(start, start+length):
+        if i in intList:
+            b = "1"
+        else:
+            b = "0"
+        bin = b + bin
+        if not (i + 1) % 8:
+            all.append(bin)
+            bin = ""
+    if bin:
+        all.append(bin)
+    all.reverse()
+    all = " ".join(all)
+    return binary2num(all)
+
+def dateStringToTimeValue(date):
+    try:
+        t = time.strptime(date, "%Y/%m/%d %H:%M:%S")
+        return long(time.mktime(t))
+    except OverflowError:
+        return 0L
 
 # ----
 # Test
