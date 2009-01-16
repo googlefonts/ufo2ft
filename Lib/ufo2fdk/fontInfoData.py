@@ -125,7 +125,7 @@ def openTypeOS2WinAscentFallback(info):
     font = info.getParent()
     if font is None:
         return getAttrWithFallback("ascender")
-    bounds = getFontBBox(font)
+    bounds = getFontBounds(font)
     xMin, yMin, xMax, yMax = font.bounds
     return yMax
 
@@ -137,7 +137,7 @@ def openTypeOS2WinDescentFallback(info):
     font = info.getParent()
     if font is None:
         return abs(getAttrWithFallback("descender"))
-    bounds = getFontBBox(font)
+    bounds = getFontBounds(font)
     if bounds is None:
         return abs(getAttrWithFallback("descender"))
     xMin, yMin, xMax, yMax = font.bounds
@@ -398,7 +398,7 @@ def preflightInfo(info):
             missingRecommended.add(attr)
     return dict(missingRequired=missingRequired, missingRecommended=missingRecommended)
 
-def getFontBBox(font):
+def getFontBounds(font):
     """
     Get a tuple of (xMin, yMin, xMax, yMax) for all
     glyphs in the given *font*.
