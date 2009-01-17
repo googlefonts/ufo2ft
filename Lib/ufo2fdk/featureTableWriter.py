@@ -19,49 +19,55 @@ class FeatureTableWriter(object):
         return self._lineSep.join(lines)
 
 
-def winStr(s):
+def winStr(text):
     """
-    Convert string to FDK encoding for windows
+    Convert string to FDK encoding for Windows.
     """
-    t = []
-    for c in s:
-        v = ord(c)
-        if v > 128:
-            h = hex(v)[2:]
-            h = "\%s" % ((4 - len(h)) * '0' + h.upper())
-            t.append(h)
-        else:
-            # escape backslash
-            if c == "\\":
-                c = "\\005C"
-            # escape double quote
-            if c == '"':
-                c = "\\0022"
-            t.append(c)
-    return "".join(t)
+    final = []
+    for line in text.splitlines():
+        newLine = []
+        for char in line:
+            value = ord(char)
+            if value > 128:
+                h = hex(value)[2:]
+                h = "\%s" % ((4 - len(h)) * '0' + h.upper())
+                newLine.append(h)
+            else:
+                # escape backslash
+                if char == "\\":
+                    char = "\\005C"
+                # escape double quote
+                elif char == '"':
+                    char = "\\0022"
+                newLine.append(char)
+        final.append("".join(newLine))
+    return "\\000D",join(final)
 
-def macStr(s):
+def macStr(text):
     """
-    Convert string to FDK encoding for mac.
+    Convert string to FDK encoding for Mac.
     """
-    t = []
-    for c in s:
-        v = ord(c.encode("macroman"))
-        if 128 < v < 256:
-            h = hex(v)[2:]
-            h = "\%s" % ((2 - len(h)) * '0' + h.upper())
-            t.append(h)
-        elif v >= 256:
-            h = hex(v)[2:]
-            h = "\%s" % ((4 - len(h)) * '0' + h.upper())
-            t.append(h)
-        else:
-            # escape backslash
-            if c == "\\":
-                c = "\\5C"
-            # escape double quote
-            if c == '"':
-                c = "\\22"
-            t.append(c)
-    return "".join(t)
+    final = []
+    for line in text.splitlines():
+        newLine = []
+        for char in line:
+            value = ord(char.encode("macroman"))
+            if 128 < value < 256:
+                h = hex(value)[2:]
+                h = "\%s" % ((2 - len(h)) * "0" + h.upper())
+                newLine.append(h)
+            elif value >= 256:
+                h = hex(value)[2:]
+                h = "\%s" % ((4 - len(h)) * "0" + h.upper())
+                newLine.append(h)
+            else:
+                # escape backslash
+                if char == "\\":
+                    char = "\\5C"
+                # escape double quote
+                elif char == '"':
+                    char = "\\22"
+                newLine.append(char)
+        final.append("".join(newLine))
+    return "\\0A".join(final)
 

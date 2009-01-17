@@ -96,9 +96,15 @@ def openTypeNamePreferredSubfamilyNameFallback(info):
 
 def openTypeNameCompatibleFullNameFallback(info):
     """
-    Fallback to *styleMapFamilyName*.
+    Fallback to *styleMapFamilyName styleMapStyleName*.
+    If *styleMapStyleName* is *regular* this will not add
+    the style name.
     """
-    return getAttrWithFallback(info, "styleMapFamilyName")
+    familyName = getAttrWithFallback(info, "styleMapFamilyName")
+    styleMapStyleName = getAttrWithFallback(info, "styleMapStyleName")
+    if styleMapStyleName != "regular":
+        familyName += " " + styleMapStyleName.title()
+    return familyName
 
 def openTypeNameWWSFamilyNameFallback(info):
     # not yet supported

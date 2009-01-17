@@ -5,7 +5,7 @@ import time
 
 def haveFDK():
     try:
-        cmds = ["makeotf"]
+        cmds = ["makeotf", "-h"]
         popen = subprocess.Popen(cmds, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         popen.wait()
         return True
@@ -46,4 +46,3 @@ def checkOutlines(fontPath):
     cmds = ["checkOutlines", "-e", fontPath]
     stderr, stdout = _execute(cmds)
     return stderr, stdout # XXX this should probably parse and raise errors
-

@@ -1,7 +1,8 @@
 import os
 import shutil
 import re
-from outlineOTF import makePSName, OutlineOTFCompiler, getFontBBox
+from fontInfoData import getAttrWithFallback, intListToNum
+from outlineOTF import OutlineOTFCompiler
 from featureTableWriter import FeatureTableWriter, winStr, macStr
 
 
@@ -23,7 +24,7 @@ def makeOTFParts(font, path, glyphOrder=None):
     _setupFontinfo(font, fontInfoPath)
 
     featuresPath = os.path.join(path, "features")
-    multilineNameTableEntries = _setupFeatures(font, featuresPath)
+    _setupFeatures(font, featuresPath)
 
     outlinePath = os.path.join(path, "font.otf")
     c = OutlineOTFCompiler(font, outlinePath, glyphOrder)
@@ -35,27 +36,25 @@ def makeOTFParts(font, path, glyphOrder=None):
         glyphOrderPath=glyphOrderPath,
         fontInfoPath=fontInfoPath,
         featuresPath=featuresPath)
-    return paths, multilineNameTableEntries
+    return paths
 
 def _setupMenuNameDB(font, path):
-    familyName = font.info.otFamilyName
-    styleName = font.info.otStyleName
-    winCompatible = font.info.menuName
-    macCompatible = winCompatible
-    if font.info.fontStyle:
-        if font.info.fontStyle & 32 and font.info.fontStyle & 1:
-            macCompatible = "%s BoldItalic" % winCompatible
-        elif font.info.fontStyle & 32:
-            macCompatible = "%s Bold" % winCompatible
-        elif font.info.fontStyle & 1:
-            macCompatible = "%s Italic" % winCompatible
+    psName = getAttrWithFallback(font.info,"postscriptFontName")
+    familyName = getAttrWithFallback(font.info,"openTypeNamePreferredFamilyName")
+    styleName = getAttrWithFallback(font.info,"openTypeNamePreferredSubfamilyName")
+    winCompatible = getAttrWithFallback(font.info,"styleMapFamilyName")
+    macCompatible = getAttrWithFallback(font.info,"openTypeNameCompatibleFullName")
     lines = [
-        "[%s]" % makePSName(font),
+        "[%s]" % psName,
         "f=%s" % familyName,
         "s=%s" % styleName,
-        "c=%s" % winCompatible, 
-        "c=1,%s" % macCompatible
     ]
+    if winCompatible != familyName:
+        l = "l=%s" % winCompatible
+        lines.append(l)
+    if macCompatible != winCompatible:
+        l = "m=1,%s" % macCompatible
+        lines.append(l)
     text = "\n".join(lines) + "\n"
     f = open(path, "wb")
     f.write(text)
@@ -79,40 +78,39 @@ def _setupGlyphOrderAndAliasDB(font, path, glyphOrder):
     f.close()
 
 def _setupFontinfo(font, path):
-    fontStyle = font.info.fontStyle
-    if fontStyle is None:
-        return
-    # 64 : regular
-    # 32 : italic
-    # 1 : bold
-    # 33 : bold italic
     lines = []
-    if font.info.fontStyle & 1:
+    # style mapping
+    styleMapStyleName = getAttrWithFallback(font.info,"styleMapStyleName")
+    if styleMapStyleName in ("italic", "bold italic"):
         lines.append("IsItalicStyle true")
     else:
         lines.append("IsItalicStyle false")
-    if font.info.fontStyle & 32:
+    if styleMapStyleName in ("bold", "bold italic"):
         lines.append("IsBoldStyle true")
     else:
         lines.append("IsBoldStyle false")
-    lines.append("PreferOS/2TypoMetricsPreferOS/2TypoMetrics true")
-    lines.append("IsOS/2WidthWeigthSlopeOnlyIsOS/2WidthWeigthSlopeOnly true")
-    lines.append("IsOS/2OBLIQUEIsOS/2OBLIQUE false")
+    # fsSelection bits
+    selection = getAttrWithFallback(font.info,"openTypeOS2Selection")
+    if 7 in selection:
+        lines.append("PreferOS/2TypoMetrics true")
+    else:
+        lines.append("PreferOS/2TypoMetrics false")
+    if 8 in selection:
+        lines.append("IsOS/2WidthWeigthSlopeOnly true")
+    else:
+        lines.append("IsOS/2WidthWeigthSlopeOnly false")
+    if 9 in selection:
+        lines.append("IsOS/2OBLIQUE true")
+    else:
+        lines.append("IsOS/2OBLIQUE false")
+    # write the file
     if lines:
         f = open(path, "wb")
         f.write("\n".join(lines))
         f.close()
 
 def _setupFeatures(font, path):
-    # XXX where should the features be drawn from?
-    featuresPath = os.path.join(font.path, "features.fea")
-    if os.path.exists(featuresPath):
-        f = open(featuresPath, "rb")
-        features = f.read()
-        f.close()
-    else:
-        features = ""
-    features = _forceAbsoluteIncludesInFeatures(features, os.path.dirname(path))
+    features = _forceAbsoluteIncludesInFeatures(font.features.text, os.path.dirname(path))
     tables = [
         features,
         "",
@@ -123,16 +121,14 @@ def _setupFeatures(font, path):
         _writeFeaturesTable_hhea(font),
         "",
         _writeFeaturesTable_OS2(font),
-        ""
+        "",
+        _writeFeaturesTable_name(font)
     ]
-    nameTable, multilineNameTableEntries = _writeFeaturesTable_name(font)
-    tables.append(nameTable)
     tables = "\n".join(tables)
     features = "\n".join([tables])
     f = open(path, "wb")
     f.write(features)
     f.close()
-    return multilineNameTableEntries
 
 def _forceAbsoluteIncludesInFeatures(text, directory):
     includeRE = re.compile(
@@ -226,97 +222,115 @@ def _writeFeatures_kern(font, existingFeatures):
     return "\n".join(lines)
 
 def _writeFeaturesTable_head(font):
-    versionMajor = font.info.versionMajor
-    versionMinor = font.info.versionMinor
-    if versionMajor is None:
-        versionMajor = 0
-    if versionMinor is None:
-        versionMinor = 0
+    versionMajor = getattr(font.info, "versionMajor")
+    versionMinor = getattr(font.info, "versionMinor")
     value = "%d.%s" % (versionMajor, str(versionMinor).zfill(3))
     writer = FeatureTableWriter("head")
     writer.addLineWithKeyValue("FontRevision", value)
     return writer.write()
 
 def _writeFeaturesTable_hhea(font):
-    # XXX is the caret necessary?
-    ascender = font.info.unitsPerEm - abs(font.info.descender)
-    descender = font.info.descender
-    # XXX lineGap = naked.ttinfo.hhea_line_gap
+    ascender = getAttrWithFallback(font.info, "openTypeHheaAscender")
+    descender = getAttrWithFallback(font.info, "openTypeHheaDescender")
+    lineGap = getAttrWithFallback(font.info, "openTypeHheaLineGap")
+    caret = getAttrWithFallback(font.info, "openTypeHheaCaretOffset")
     writer = FeatureTableWriter("hhea")
     writer.addLineWithKeyValue("Ascender", _roundInt(ascender))
     writer.addLineWithKeyValue("Descender", _roundInt(descender))
-    #writer.addLineWithKeyValue("LineGap", lineGap)
+    writer.addLineWithKeyValue("LineGap", _roundInt(lineGap))
+    writer.addLineWithKeyValue("CaretOffset", _roundInt(caret))
     return writer.write()
 
 def _writeFeaturesTable_name(font):
     idToAttr = [
         (0  , "copyright"),
         (7  , "trademark"),
-        (8  , "createdBy"),
-        (9  , "designer"),
-        (10 , "notice"), # description
-        (11 , "vendorURL"),
-        (12 , "designerURL"),
-        (13 , "license"),
-        (14 , "licenseURL"),
-        #(19 , "sampleText")
+        (8  , "openTypeNameManufacturer"),
+        (9  , "openTypeNameDesigner"),
+        (10 , "openTypeNameDescription"),
+        (11 , "openTypeNameManufacturerURL"),
+        (12 , "openTypeNameDesignerURL"),
+        (13 , "openTypeNameLicense"),
+        (14 , "openTypeNameLicenseURL"),
+        (19 , "openTypeNameSampleText")
     ]
     multilineNameTableEntries = {}
     lines = []
     for id, attr in idToAttr:
-        value = getattr(font.info, attr)
+        value = getAttrWithFallback(font.info, attr)
         if value is None:
-            continue
-        if len(value.splitlines()) > 1:
-            multilineNameTableEntries[id] = value
             continue
         s = 'nameid %d "%s";' % (id, winStr(value))
         lines.append(s)
         s = 'nameid %d 1 "%s";' % (id, macStr(value))
         lines.append(s)
     if not lines:
-        return "", {}
+        return ""
     writer = FeatureTableWriter("name")
     for line in lines:
         writer.addLine(line)
-    return writer.write(), multilineNameTableEntries
+    return writer.write()
+
+codePageBitTranslation = {
+    0  : "1252",
+    1  : "1250",
+    2  : "1251",
+    3  : "1253",
+    4  : "1254",
+    5  : "1255",
+    6  : "1256",
+    7  : "1257",
+    8  : "1258",
+    16 : "874",
+    17 : "932",
+    18 : "936",
+    19 : "949",
+    20 : "950",
+    21 : "1361",
+    48 : "869",
+    49 : "866",
+    50 : "865",
+    51 : "864",
+    52 : "863",
+    53 : "862",
+    54 : "861",
+    55 : "860",
+    56 : "857",
+    57 : "855",
+    58 : "852",
+    59 : "775",
+    60 : "737",
+    61 : "708",
+    62 : "850",
+    63 : "437"
+}
 
 def _writeFeaturesTable_OS2(font):
-    widthNames = [
-        "Ultra-condensed",
-        "Extra-condensed",
-        "Condensed",
-        "Semi-condensed",
-        "Medium (normal)",
-        "Semi-expanded",
-        "Expanded",
-        "Extra-expanded",
-        "Ultra-expanded"
-    ]
     writer = FeatureTableWriter("OS/2")
-    xMin, yMin, xMax, yMax = getFontBBox(font)
-    #writer.addLineWithKeyValue("FSType", font.info.fsType)
-    #panose = [str(i) for i in naked.panose]
-    #writer.addLineWithKeyValue("Panose", " ".join(panose))
-    #unicodeRange = [str(i) for i in font.info.unicodeRange]
-    #if unicodeRange:
-    #    writer.addLineWithKeyValue("UnicodeRange", " ".join(unicodeRange))
-    #codePageRange = [str(i) for i in font.info.codePageRange]
-    #if codePageRange:
-    #    writer.addLineWithKeyValue("CodePageRange", " ".join(codePageRange))
-    writer.addLineWithKeyValue("TypoAscender", _roundInt(font.info.unitsPerEm - abs(font.info.descender)))
-    writer.addLineWithKeyValue("TypoDescender", _roundInt(font.info.descender))
-    # writer.addLineWithKeyValue("TypoLineGap", naked.ttinfo.os2_s_typo_line_gap)
-    writer.addLineWithKeyValue("winAscent", _roundInt(yMax))
-    writer.addLineWithKeyValue("winDescent", abs(_roundInt(yMin)))
-    writer.addLineWithKeyValue("XHeight", _roundInt(font.info.xHeight))
-    writer.addLineWithKeyValue("CapHeight", _roundInt(font.info.capHeight))
-    writer.addLineWithKeyValue("WeightClass", _roundInt(font.info.weightValue))
-    widthName = font.info.widthName
-    if widthName in widthNames:
-        value = widthNames.index(widthName) + 1
-        writer.addLineWithKeyValue("WidthClass", _roundInt(value))
-    writer.addLineWithKeyValue("Vendor", '"%s"' % font.info.ttVendor)
+    # type
+    writer.addLineWithKeyValue("FSType", intListToNum(getAttrWithFallback(font.info, "openTypeOS2Type"), 0, 16))
+    # panose
+    panose = [str(i) for i in getAttrWithFallback(font.info, "openTypeOS2Panose")]
+    writer.addLineWithKeyValue("Panose", " ".join(panose))
+    # unicode ranges
+    unicodeRange = [str(i) for i in getAttrWithFallback(font.info, "openTypeOS2UnicodeRanges")]
+    if unicodeRange:
+        writer.addLineWithKeyValue("UnicodeRange", " ".join(unicodeRange))
+    # code page ranges
+    codePageRange = [codePageBitTranslation[i] for i in getAttrWithFallback(font.info, "openTypeOS2CodePageRanges") if i in codePageBitTranslation]
+    if codePageRange:
+        writer.addLineWithKeyValue("CodePageRange", " ".join(codePageRange))
+    # vertical metrics
+    writer.addLineWithKeyValue("TypoAscender", _roundInt(getAttrWithFallback(font.info, "openTypeOS2TypoAscender")))
+    writer.addLineWithKeyValue("TypoDescender", _roundInt(getAttrWithFallback(font.info, "openTypeOS2TypoDescender")))
+    writer.addLineWithKeyValue("TypoLineGap", _roundInt(getAttrWithFallback(font.info, "openTypeOS2TypoLineGap")))
+    writer.addLineWithKeyValue("winAscent", _roundInt(getAttrWithFallback(font.info, "openTypeOS2WinAscent")))
+    writer.addLineWithKeyValue("winDescent", _roundInt(getAttrWithFallback(font.info, "openTypeOS2WinDescent")))
+    writer.addLineWithKeyValue("XHeight", _roundInt(getAttrWithFallback(font.info, "xHeight")))
+    writer.addLineWithKeyValue("CapHeight", _roundInt(getAttrWithFallback(font.info, "capHeight")))
+    writer.addLineWithKeyValue("WeightClass", getAttrWithFallback(font.info, "openTypeOS2WeightClass"))
+    writer.addLineWithKeyValue("WidthClass", getAttrWithFallback(font.info, "openTypeOS2WidthClass"))
+    writer.addLineWithKeyValue("Vendor", '"%s"' % getAttrWithFallback(font.info, "openTypeOS2VendorID"))
     return writer.write()
 
 def _roundInt(value):
