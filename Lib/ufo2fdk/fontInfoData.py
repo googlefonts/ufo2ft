@@ -163,9 +163,9 @@ def postscriptFontNameFallback(info):
     """
     Fallback to a string containing only valid characters
     as defined in the specification. This will draw from
-    *openTypeNamePreferredFamilyName* and *openTypeNamePreferredSubamilyName*.
+    *openTypeNamePreferredFamilyName* and *openTypeNamePreferredSubfamilyName*.
     """
-    name = u"%s-%s" % (getAttrWithFallback(info, "openTypeNamePreferredFamilyName"), getAttrWithFallback(info, "openTypeNamePreferredSubamilyName"))
+    name = u"%s-%s" % (getAttrWithFallback(info, "openTypeNamePreferredFamilyName"), getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"))
     normalized = []
     for c in name:
         if c in _postscriptFontNameExceptions:
