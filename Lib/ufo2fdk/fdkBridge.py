@@ -1,16 +1,32 @@
+import sys
 import os
 import subprocess
 import time
 
+if sys.platform == "darwin":
+    fdkToolDirectory = os.path.join(os.environ["HOME"], "bin/FDK/Tools/osx")
+else:
+    fdkToolDirectory = None
+
+def _makeEnviron():
+    env = dict(os.environ)
+    if fdkToolDirectory not in env["PATH"].split(":"):
+        env["PATH"] += (":%s" % fdkToolDirectory)
+    return env
 
 def haveFDK():
-    try:
-        cmds = ["makeotf", "-h"]
-        popen = subprocess.Popen(cmds, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        popen.wait()
-        return True
-    except OSError:
+    if fdkToolDirectory is None:
         return False
+    env = _makeEnviron()
+    for tool in ["makeotf", "outlinecheck", "autohint"]:
+        cmds = "which %s" % tool
+        popen = subprocess.Popen(cmds, stderr=subprocess.PIPE, stdout=subprocess.PIPE, env=env, shell=True)
+        popen.wait()
+        text = popen.stderr.read()
+        text += popen.stdout.read()
+        if not text:
+            return False
+    return True
 
 def _execute(cmds):
     popen = subprocess.Popen(cmds, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
