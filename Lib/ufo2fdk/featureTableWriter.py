@@ -41,7 +41,7 @@ def winStr(text):
                     char = "\\0022"
                 newLine.append(char)
         final.append("".join(newLine))
-    return "\\000D",join(final)
+    return "\\000D".join(final)
 
 def macStr(text):
     """
