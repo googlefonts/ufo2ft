@@ -8,10 +8,16 @@ def generateFont(font, path, fdkPartsPath=None, autohint=False, releaseMode=Fals
         fdkPartsPath = os.path.splitext(path)[0] + ".fdk"
     paths = makeOTFParts(font, fdkPartsPath)
 
+    text = []
+
     if checkOutlines:
-        fdkBridge.checkOutlines(paths["outlineSourcePath"])
+        stderr, stdout = fdkBridge.checkOutlines(paths["outlineSourcePath"])
+        text.append(stderr)
+        text.append(stdout)
     if autohint:
-        fdkBridge.autohint(paths["outlineSourcePath"])
+        stderr, stdout = fdkBridge.autohint(paths["outlineSourcePath"])
+        text.append(stderr)
+        text.append(stdout)
 
     stderr, stdout = fdkBridge.makeotf(
         outputPath=path,
@@ -21,9 +27,10 @@ def generateFont(font, path, fdkPartsPath=None, autohint=False, releaseMode=Fals
         menuNamePath=paths["menuNamePath"],
         releaseMode=releaseMode
         )
+    text.append(stderr)
+    text.append(stdout)
 
-    print stderr
-    print stdout
+    return "\n".join(text)
 
 
 def preflightFont(font):
