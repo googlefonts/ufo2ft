@@ -1,24 +1,17 @@
 import sys
 import os
 import subprocess
-import time
+import tempfile
 
-if sys.platform == "darwin":
-    fdkToolDirectory = os.path.join(os.environ["HOME"], "bin/FDK/Tools/osx")
-else:
-    fdkToolDirectory = None
-
-def _makeEnviron():
-    env = dict(os.environ)
-    if fdkToolDirectory not in env["PATH"].split(":"):
-        env["PATH"] += (":%s" % fdkToolDirectory)
-    return env
+# ----------------
+# Public Functions
+# ----------------
 
 def haveFDK():
-    if fdkToolDirectory is None:
+    if _fdkToolDirectory is None:
         return False
     env = _makeEnviron()
-    for tool in ["makeotf", "outlinecheck", "autohint"]:
+    for tool in ["makeotf", "checkoutlines", "autohint"]:
         cmds = "which %s" % tool
         popen = subprocess.Popen(cmds, stderr=subprocess.PIPE, stdout=subprocess.PIPE, env=env, shell=True)
         popen.wait()
@@ -27,13 +20,6 @@ def haveFDK():
         if not text:
             return False
     return True
-
-def _execute(cmds):
-    popen = subprocess.Popen(cmds, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    popen.wait()
-    stderr = popen.stderr.read()
-    stdout = popen.stdout.read()
-    return stderr, stdout
 
 def makeotf(outputPath, outlineSourcePath=None, featuresPath=None, glyphOrderPath=None, menuNamePath=None, releaseMode=False):
     cmds = ["makeotf", "-o", outputPath]
@@ -48,17 +34,70 @@ def makeotf(outputPath, outlineSourcePath=None, featuresPath=None, glyphOrderPat
     if releaseMode:
         cmds.append("-r")
     stderr, stdout = _execute(cmds)
-    return stderr, stdout # XXX this should probably parse and raise errors
+    return stderr, stdout
 
-def autohint(fontPath, ignoreExistingHints=True):
-    cmds = ["autohint", "-nb"]
-    if ignoreExistingHints:
-        cmds.extend(["-a", "-r"])
+def autohint(fontPath):
+    cmds = ["autohint", "-nb", "-a", "-r", "-q", fontPath]
+    stderr, stdout = _execute(cmds)
+    return stderr, stdout
+
+def checkOutlines(fontPath, removeOverlap=True, correctContourDirection=True):
+    cmds = ["checkoutlines", "-e"]
+    if not removeOverlap:
+        cmds.append("-V")
+    if not correctContourDirection:
+        cmds.append("-O")
     cmds.append(fontPath)
     stderr, stdout = _execute(cmds)
-    return stderr, stdout # XXX this should probably parse and raise errors
+    return stderr, stdout
 
-def checkOutlines(fontPath):
-    cmds = ["checkOutlines", "-e", fontPath]
-    stderr, stdout = _execute(cmds)
-    return stderr, stdout # XXX this should probably parse and raise errors
+# --------------
+# Internal Tools
+# --------------
+
+if sys.platform == "darwin":
+    _fdkToolDirectory = os.path.join(os.environ["HOME"], "bin/FDK/Tools/osx")
+else:
+    _fdkToolDirectory = None
+
+def _makeEnviron():
+    env = dict(os.environ)
+    if _fdkToolDirectory not in env["PATH"].split(":"):
+        env["PATH"] += (":%s" % _fdkToolDirectory)
+    kill = ["ARGVZERO", "EXECUTABLEPATH", "PYTHONHOME", "PYTHONPATH", "RESOURCEPATH"]
+    for key in kill:
+        if key in env:
+            del env[key]
+    return env
+
+def _execute(cmds):
+    # for some reason, autohint and/or checkoutlines
+    # locks up when subprocess.PIPE is given. subprocess
+    # requires a real file so StringIO is not acceptable
+    # here. thus, make a temporary file.
+    stderrPath = tempfile.mkstemp()[1]
+    stdoutPath = tempfile.mkstemp()[1]
+    stderrFile = open(stderrPath, "w")
+    stdoutFile = open(stdoutPath, "w")
+    # get the os.environ
+    env = _makeEnviron()
+    # make a string of escaped commands
+    cmds = subprocess.list2cmdline(cmds)
+    # go
+    popen = subprocess.Popen(cmds, stderr=stderrFile, stdout=stdoutFile, env=env, shell=True)
+    popen.wait()
+    # get the output
+    stderrFile.close()
+    stdoutFile.close()
+    stderrFile = open(stderrPath, "r")
+    stdoutFile = open(stdoutPath, "r")
+    stderr = stderrFile.read()
+    stdout = stdoutFile.read()
+    stderrFile.close()
+    stdoutFile.close()
+    # trash the temp files
+    os.remove(stderrPath)
+    os.remove(stdoutPath)
+    # done
+    return stderr, stdout
+
