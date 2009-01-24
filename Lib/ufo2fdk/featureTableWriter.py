@@ -1,5 +1,9 @@
 class FeatureTableWriter(object):
 
+    """
+    A very simple feature file syntax table writer.
+    """
+
     def __init__(self, name, indentation="    "):
         self._name = name
         self._lineSep = "\n"
@@ -7,14 +11,25 @@ class FeatureTableWriter(object):
         self._lines = ["table %s {" % name]
 
     def addLineWithKeyValue(self, key, value):
+        """
+        Adds a line with form::
+
+            key value;
+        """
         line = "%s %s;" % (key, str(value))
         self.addLine(line)
 
     def addLine(self, line):
+        """
+        Adds a raw line.
+        """
         line = self._indentation + line
         self._lines.append(line)
 
     def write(self):
+        """
+        Returns the text of the table.
+        """
         lines = self._lines + ["} %s;" % self._name]
         return self._lineSep.join(lines)
 

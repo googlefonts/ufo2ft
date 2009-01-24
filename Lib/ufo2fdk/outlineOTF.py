@@ -10,6 +10,18 @@ from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeVal
 
 class OutlineOTFCompiler(object):
 
+    """
+    This object will create a bare-bones OTF-CFF containing
+    outline data and not much else. The only external
+    method is :meth:`ufo2fdk.tools.outlineOTF.compile`.
+
+    When creating this object, you must provide a *font*
+    object and a *path* indicating where the OTF should
+    be saved. Optionally, you can provide a *glyphOrder*
+    list of glyph names indicating the order of the glyphs
+    in the font.
+    """
+
     def __init__(self, font, path, glyphOrder=None):
         self.ufo = font
         self.path = path
@@ -34,6 +46,9 @@ class OutlineOTFCompiler(object):
     # -----------
 
     def compile(self):
+        """
+        Compile the OTF.
+        """
         self.otf = TTFont(sfntVersion="OTTO")
         # populate basic tables
         self.setupTable_head()
@@ -57,9 +72,23 @@ class OutlineOTFCompiler(object):
     # -----
 
     def makeFontBoundingBox(self):
+        """
+        Make a bounding box for the font.
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the bounds creation
+        in a different way if desired.
+        """
         return getFontBounds(self.ufo)
 
     def makeUnicodeToGlyphNameMapping(self):
+        """
+        Make a ``unicode : glyph name`` mapping for the font.
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the mapping creation
+        in a different way if desired.
+        """
         mapping = {}
         for glyphName, glyph in self.allGlyphs.items():
             unicodes = glyph.unicodes
@@ -68,6 +97,13 @@ class OutlineOTFCompiler(object):
         return mapping
 
     def makeMissingRequiredGlyphs(self):
+        """
+        Add space and .notdef to the font if they are not present.
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the glyph creation
+        in a different way if desired.
+        """
         glyphs = {}
         defaultWidth = int(round(self.ufo.info.unitsPerEm * 0.5))
         if ".notdef" not in self.ufo:
@@ -77,6 +113,13 @@ class OutlineOTFCompiler(object):
         return glyphs
 
     def makeOfficialGlyphOrder(self, glyphOrder):
+        """
+        Make a the final glyph order.
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the order creation
+        in a different way if desired.
+        """
         allGlyphs = self.allGlyphs
         orderedGlyphs = [".notdef", "space"]
         for glyphName in glyphOrder:
@@ -89,6 +132,13 @@ class OutlineOTFCompiler(object):
         return orderedGlyphs
 
     def getCharStringForGlyph(self, glyph, private, globalSubrs):
+        """
+        Get a Type2CharString for the *glyph*
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the charstring creation
+        in a different way if desired.
+        """
         pen = T2CharStringPen(glyph.width, self.allGlyphs)
         glyph.draw(pen)
         charString = pen.getCharString(private, globalSubrs)
@@ -99,6 +149,13 @@ class OutlineOTFCompiler(object):
     # --------------
 
     def setupTable_head(self):
+        """
+        Make the head table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
         self.otf["head"] = head = newTable("head")
         font = self.ufo
         head.checkSumAdjustment = 0
@@ -136,13 +193,34 @@ class OutlineOTFCompiler(object):
         head.glyphDataFormat = 0
 
     def setupTable_name(self):
+        """
+        Make the name table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
         self.otf["name"] = newTable("name")
 
     def setupTable_maxp(self):
+        """
+        Make the maxp table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
         self.otf["maxp"] = maxp = newTable("maxp")
         maxp.tableVersion = 0x00005000
 
     def setupTable_cmap(self):
+        """
+        Make the cmap table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
         from fontTools.ttLib.tables._c_m_a_p import cmap_format_4
         # mac
         cmap4_0_3 = cmap_format_4(4)
@@ -162,6 +240,13 @@ class OutlineOTFCompiler(object):
         cmap.tables = [cmap4_0_3, cmap4_3_1]
 
     def setupTable_OS2(self):
+        """
+        Make the OS/2 table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
         self.otf["OS/2"] = os2 = newTable("OS/2")
         font = self.ufo
         os2.version = 0x0004
@@ -281,6 +366,13 @@ class OutlineOTFCompiler(object):
         os2.usMaxContex = 0
 
     def setupTable_hmtx(self):
+        """
+        Make the hmtx table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
         self.otf["hmtx"] = hmtx = newTable("hmtx")
         hmtx.metrics = {}
         for glyphName, glyph in self.allGlyphs.items():
@@ -291,6 +383,13 @@ class OutlineOTFCompiler(object):
             hmtx[glyphName] = (width, left)
 
     def setupTable_hhea(self):
+        """
+        Make the hhea table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
         self.otf["hhea"] = hhea = newTable("hhea")
         font = self.ufo
         hhea.tableVersion = 1.0
@@ -343,6 +442,13 @@ class OutlineOTFCompiler(object):
         hhea.numberOfHMetrics = len(self.allGlyphs)
 
     def setupTable_post(self):
+        """
+        Make the post table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
         self.otf["post"] = post = newTable("post")
         font = self.ufo
         post.formatType = 3.0
@@ -368,6 +474,13 @@ class OutlineOTFCompiler(object):
         post.maxMemType1 = 0
 
     def setupTable_CFF(self):
+        """
+        Make the CFF table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
         self.otf["CFF "] = cff = newTable("CFF ")
         cff = cff.cff
         # set up the basics
@@ -456,6 +569,13 @@ class OutlineOTFCompiler(object):
         self.otf.setGlyphOrder(self.glyphOrder)
 
     def setupOtherTables(self):
+        """
+        Make the other tables. The default implementation does nothing.
+
+        **This should not be called externally.** Subclasses
+        may override this method to add other tables to the
+        font if desired.
+        """
         pass
 
 

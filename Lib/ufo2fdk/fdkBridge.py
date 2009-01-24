@@ -8,6 +8,14 @@ import tempfile
 # ----------------
 
 def haveFDK():
+    """
+    THis will return a bool indicating if the FDK
+    can be found. It searches for the FDK by using
+    *which* to find the commandline *makeotf*,
+    *checkoutlines* and *autohint* programs. If one
+    of those cannot be found, this FDK is considered
+    to be unavailable.
+    """
     if _fdkToolDirectory is None:
         return False
     env = _makeEnviron()
@@ -22,6 +30,20 @@ def haveFDK():
     return True
 
 def makeotf(outputPath, outlineSourcePath=None, featuresPath=None, glyphOrderPath=None, menuNamePath=None, releaseMode=False):
+    """
+    Run makeotf.
+    The arguments will be converted into arguments
+    for makeotf as follows:
+
+    =================  ===
+    outputPath         -o
+    outlineSourcePath  -f
+    featuresPath       -ff
+    glyphOrderPath     -gf
+    menuNamePath       -mf
+    releaseMode        -r
+    =================  ===
+    """
     cmds = ["makeotf", "-o", outputPath]
     if outlineSourcePath:
         cmds.extend(["-f", outlineSourcePath])
@@ -37,11 +59,39 @@ def makeotf(outputPath, outlineSourcePath=None, featuresPath=None, glyphOrderPat
     return stderr, stdout
 
 def autohint(fontPath):
+    """
+    Run autohint.
+    The following arguments will be passed to autohint.
+
+    ===
+    -nb
+    -a
+    -r
+    -q
+    ===
+    """
     cmds = ["autohint", "-nb", "-a", "-r", "-q", fontPath]
     stderr, stdout = _execute(cmds)
     return stderr, stdout
 
 def checkOutlines(fontPath, removeOverlap=True, correctContourDirection=True):
+    """
+    Run checkOutlines.
+    The arguments will be converted into arguments
+    for makeotf as follows:
+
+    The following arguments will be passed to autohint.
+
+    =============================  ===
+    removeOverlap=False            -V
+    correctContourDirection=False  -O
+    =============================  ===
+
+    Additionally, the following arguments will be passed to checkOutlines.
+    ===
+    -e
+    ===
+    """
     cmds = ["checkoutlines", "-e"]
     if not removeOverlap:
         cmds.append("-V")

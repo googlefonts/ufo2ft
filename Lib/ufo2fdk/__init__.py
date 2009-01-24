@@ -1,36 +1,16 @@
 import os
 import shutil
+import tempfile
 import fdkBridge
-from makeotfParts import makeOTFParts
+from fdkBridge import haveFDK
+from makeotfParts import MakeOTFPartsCompiler
+from outlineOTF import OutlineOTFCompiler
 
-def generateFont(font, path, fdkPartsPath=None, autohint=False, releaseMode=False, checkOutlines=False):
-    if fdkPartsPath is None:
-        fdkPartsPath = os.path.splitext(path)[0] + ".fdk"
-    paths = makeOTFParts(font, fdkPartsPath)
 
-    text = []
-
-    if checkOutlines:
-        stderr, stdout = fdkBridge.checkOutlines(paths["outlineSourcePath"])
-        text.append(stderr)
-        text.append(stdout)
-    if autohint:
-        stderr, stdout = fdkBridge.autohint(paths["outlineSourcePath"])
-        text.append(stderr)
-        text.append(stdout)
-
-    stderr, stdout = fdkBridge.makeotf(
-        outputPath=path,
-        outlineSourcePath=paths["outlineSourcePath"],
-        featuresPath=paths["featuresPath"],
-        glyphOrderPath=paths["glyphOrderPath"],
-        menuNamePath=paths["menuNamePath"],
-        releaseMode=releaseMode
-        )
-    text.append(stderr)
-    text.append(stdout)
-
-    return "\n".join(text)
+__all__ = [
+    "haveFDK",
+    "OTFCompiler"
+]
 
 
 def preflightFont(font):
@@ -41,3 +21,81 @@ def preflightFont(font):
         missingGlyphs.append("space")
     missingInfo, suggestedInfo = preflightInfo(font.info)
     # if maxIndex >= 0xFFFF: from outlineOTF
+
+
+class OTFCompiler(object):
+
+    """
+    This object will create an OTF from a UFO. When creating this object,
+    there are three optional arguments. *savePartsNextToUFO* will
+    cause the compilation of parts for the FDK to occur at *yourUFOName.fdk*.
+    Use this with caution, as an existing file at that location will
+    be overwritten. *partsCompilerClass* will override the default
+    parts compiler, :class:`ufo2fdk.tools.makeotfParts.MakeOTFPartsCompiler`.
+    *outlineCompilerClass* will override the default parts compiler,
+    :class:`ufo2fdk.tools.outlineOTF.OutlineOTFCompiler`.
+    """
+
+    def __init__(self, savePartsNextToUFO=False, partsCompilerClass=MakeOTFPartsCompiler, outlineCompilerClass=OutlineOTFCompiler):
+        self.savePartsNextToUFO = savePartsNextToUFO
+        self.partsCompilerClass = partsCompilerClass
+        self.outlineCompilerClass = outlineCompilerClass
+
+    def compileFont(self, font, path, checkOutlines=False, autohint=False, releaseMode=False, glyphOrder=None, progressBar=None):
+        """
+        This method will write *font* into an OTF-CFF at *path*.
+        If *checkOutlines* is True, the checkOutlines program
+        will be run on the font. If *autohint* is True, the
+        autohint program will be run on the font. If *releaseMode*
+        is True, makeotf will be told to compile the font in
+        release mode. An optional list of glyph names in *glyphOrder*
+        will specifiy the order of glyphs inthe font. If provided,
+        *progressBar* should be an object that has a *tick* method.
+
+        When this method is finished, it will return a dictionary
+        containing reports from the run programs. The keys
+        are as follows:
+
+        =============
+        makeotf
+        checkOutlines
+        autohint
+        =============
+        """
+        # get the path for the parts
+        if self.savePartsNextToUFO:
+            partsPath = os.path.splitext(font.path)[0] + ".fdk"
+        else:
+            partsPath = mkdtemp.mkdtemp()
+        # make report storage
+        report = dict(makeotf=None, checkOutlines=None, autohint=None)
+        # do the compile
+        try:
+            # make the parts
+            partsCompiler = self.partsCompilerClass(font, partsPath, glyphOrder=glyphOrder, outlineCompilerClass=self.outlineCompilerClass)
+            partsCompiler.compile()
+            # checkOutlines
+            if checkOutlines:
+                stderr, stdout = fdkBridge.checkOutlines(partsCompiler.paths["outlineSource"])
+                report["checkOutlines"] = "\n".join((stdout, stderr))
+            # autohint
+            if autohint:
+                stderr, stdout = fdkBridge.autohint(partsCompiler.paths["outlineSource"])
+                report["autohint"] = "\n".join((stdout, stderr))
+            # makeotf
+            stderr, stdout = fdkBridge.makeotf(
+                outputPath=path,
+                outlineSourcePath=partsCompiler.paths["outlineSource"],
+                featuresPath=partsCompiler.paths["features"],
+                glyphOrderPath=partsCompiler.paths["glyphOrder"],
+                menuNamePath=partsCompiler.paths["menuName"],
+                releaseMode=releaseMode
+                )
+            report["makeotf"] = "\n".join((stdout, stderr))
+        # destroy the temp directory
+        finally:
+            if not self.savePartsNextToUFO and os.path.exists(partsPath):
+                shutil.rmtree(partsPath)
+        # return the report
+        return report
+
