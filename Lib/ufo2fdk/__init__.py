@@ -41,7 +41,7 @@ class OTFCompiler(object):
         self.partsCompilerClass = partsCompilerClass
         self.outlineCompilerClass = outlineCompilerClass
 
-    def compileFont(self, font, path, checkOutlines=False, autohint=False, releaseMode=False, glyphOrder=None, progressBar=None):
+    def compile(self, font, path, checkOutlines=False, autohint=False, releaseMode=False, glyphOrder=None, progressBar=None):
         """
         This method will write *font* into an OTF-CFF at *path*.
         If *checkOutlines* is True, the checkOutlines program
@@ -50,7 +50,7 @@ class OTFCompiler(object):
         is True, makeotf will be told to compile the font in
         release mode. An optional list of glyph names in *glyphOrder*
         will specifiy the order of glyphs inthe font. If provided,
-        *progressBar* should be an object that has a *tick* method.
+        *progressBar* should be an object that has an *update* method.
 
         When this method is finished, it will return a dictionary
         containing reports from the run programs. The keys
@@ -72,17 +72,25 @@ class OTFCompiler(object):
         # do the compile
         try:
             # make the parts
+            if progressBar is not None:
+                progressBar.update("Preparing...")
             partsCompiler = self.partsCompilerClass(font, partsPath, glyphOrder=glyphOrder, outlineCompilerClass=self.outlineCompilerClass)
             partsCompiler.compile()
             # checkOutlines
             if checkOutlines:
+                if progressBar is not None:
+                    progressBar.update("Removing overlap...")
                 stderr, stdout = fdkBridge.checkOutlines(partsCompiler.paths["outlineSource"])
                 report["checkOutlines"] = "\n".join((stdout, stderr))
             # autohint
             if autohint:
+                if progressBar is not None:
+                    progressBar.update("Autohinting...")
                 stderr, stdout = fdkBridge.autohint(partsCompiler.paths["outlineSource"])
                 report["autohint"] = "\n".join((stdout, stderr))
             # makeotf
+            if progressBar is not None:
+                progressBar.update("Compiling...")
             stderr, stdout = fdkBridge.makeotf(
                 outputPath=path,
                 outlineSourcePath=partsCompiler.paths["outlineSource"],
@@ -92,6 +100,8 @@ class OTFCompiler(object):
                 releaseMode=releaseMode
                 )
             report["makeotf"] = "\n".join((stdout, stderr))
+            if progressBar is not None:
+                progressBar.update("Finishing...")
         # destroy the temp directory
         finally:
             if not self.savePartsNextToUFO and os.path.exists(partsPath):
