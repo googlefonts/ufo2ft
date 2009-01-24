@@ -402,20 +402,32 @@ class OutlineOTFCompiler(object):
         topDict.Weight = getAttrWithFallback(info, "postscriptWeightName")
         topDict.FontName = getAttrWithFallback(info, "postscriptFontName")
         # populate hint data
-        private.rawDict["BlueFuzz"] = getAttrWithFallback(info, "postscriptBlueFuzz")
-        private.rawDict["BlueShift"] = getAttrWithFallback(info, "postscriptBlueShift")
-        private.rawDict["BlueScale"] = getAttrWithFallback(info, "postscriptBlueScale")
-        private.rawDict["ForceBold"] = getAttrWithFallback(info, "postscriptForceBold")
-        private.rawDict["BlueValues"] = getAttrWithFallback(info, "postscriptBlueValues")
-        private.rawDict["OtherBlues"] = getAttrWithFallback(info, "postscriptOtherBlues")
-        private.rawDict["FamilyBlues"] = getAttrWithFallback(info, "postscriptFamilyBlues")
-        private.rawDict["FamilyOtherBlues"] = getAttrWithFallback(info, "postscriptFamilyOtherBlues")
-        private.rawDict["StemSnapH"] = getAttrWithFallback(info, "postscriptStemSnapH")
-        if private.rawDict["StemSnapH"]:
-            private.rawDict["StdHW"] = private.rawDict["StemSnapH"][0]
-        private.rawDict["StemSnapV"] = getAttrWithFallback(info, "postscriptStemSnapV")
-        if private.rawDict["StemSnapV"]:
-            private.rawDict["StdVW"] = private.rawDict["StemSnapV"][0]
+        blueFuzz = getAttrWithFallback(info, "postscriptBlueFuzz")
+        blueShift = getAttrWithFallback(info, "postscriptBlueShift")
+        blueScale = getAttrWithFallback(info, "postscriptBlueScale")
+        forceBold = getAttrWithFallback(info, "postscriptForceBold")
+        blueValues = getAttrWithFallback(info, "postscriptBlueValues")
+        otherBlues = getAttrWithFallback(info, "postscriptOtherBlues")
+        familyBlues = getAttrWithFallback(info, "postscriptFamilyBlues")
+        familyOtherBlues = getAttrWithFallback(info, "postscriptFamilyOtherBlues")
+        stemSnapH = getAttrWithFallback(info, "postscriptStemSnapH")
+        stemSnapV = getAttrWithFallback(info, "postscriptStemSnapV")
+        # only write the blues data if some blues are defined.
+        if (blueValues or otherBlues):
+            private.rawDict["BlueFuzz"] = blueFuzz
+            private.rawDict["BlueShift"] = blueShift
+            private.rawDict["BlueScale"] = blueScale
+            private.rawDict["ForceBold"] = forceBold
+            private.rawDict["BlueValues"] = blueValues
+            private.rawDict["OtherBlues"] = otherBlues
+            private.rawDict["FamilyBlues"] = familyBlues
+            private.rawDict["FamilyOtherBlues"] = familyOtherBlues
+        # only write the stems if both are defined.
+        if (stemSnapH and stemSnapV):
+            private.rawDict["StemSnapH"] = stemSnapH
+            private.rawDict["StdHW"] = stemSnapH[0]
+            private.rawDict["StemSnapV"] = stemSnapV
+            private.rawDict["StdVW"] = stemSnapV[0]
         # populate glyphs
         for glyphName in self.glyphOrder:
             glyph = self.allGlyphs[glyphName]
