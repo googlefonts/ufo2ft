@@ -619,6 +619,9 @@ def breakFeaturesAndTables(text):
         start, end = startMatch.span()
         precedingText = text[:start].strip()
         text = text[start:]
+    else:
+        precedingText = text
+        text = ""
     # break the features
     broken = _textBreakRecurse(text)
     # organize into tables and features
