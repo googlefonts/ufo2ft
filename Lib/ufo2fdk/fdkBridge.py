@@ -1,3 +1,10 @@
+"""
+This module is the bridge between Python and the FDK.
+It uses subprocess.Popen to create a process that
+executes an FDK program.
+"""
+
+
 import sys
 import os
 import subprocess
@@ -9,7 +16,7 @@ import tempfile
 
 def haveFDK():
     """
-    THis will return a bool indicating if the FDK
+    This will return a bool indicating if the FDK
     can be found. It searches for the FDK by using
     *which* to find the commandline *makeotf*,
     *checkoutlines* and *autohint* programs. If one
@@ -63,12 +70,10 @@ def autohint(fontPath):
     Run autohint.
     The following arguments will be passed to autohint.
 
-    ===
-    -nb
-    -a
-    -r
-    -q
-    ===
+    * -nb
+    * -a
+    * -r
+    * -q
     """
     cmds = ["autohint", "-nb", "-a", "-r", "-q", fontPath]
     stderr, stdout = _execute(cmds)
@@ -88,9 +93,8 @@ def checkOutlines(fontPath, removeOverlap=True, correctContourDirection=True):
     =============================  ===
 
     Additionally, the following arguments will be passed to checkOutlines.
-    ===
-    -e
-    ===
+
+    * -e
     """
     cmds = ["checkoutlines", "-e"]
     if not removeOverlap:

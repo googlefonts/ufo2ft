@@ -1,8 +1,3 @@
-import time
-from fontTools.misc.textTools import binary2num
-from fontTools.misc.arrayTools import unionRect
-from robofab import ufoLib
-
 """
 This file provides fallback data for info attributes
 that are required for building OTFs. There are two main
@@ -15,6 +10,11 @@ There are a set of other functions that are used internally
 for synthesizing values for specific attributes. These can be
 used externally as well.
 """
+
+import time
+from fontTools.misc.textTools import binary2num
+from fontTools.misc.arrayTools import unionRect
+from robofab import ufoLib
 
 # -----------------
 # Special Fallbacks
@@ -176,6 +176,9 @@ def postscriptFontNameFallback(info):
     return "".join(normalized)
 
 def postscriptFullNameFallback(info):
+    """
+    Fallback to *openTypeNamePreferredFamilyName openTypeNamePreferredSubfamilyName*.
+    """
     return u"%s %s" % (getAttrWithFallback(info, "openTypeNamePreferredFamilyName"), getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"))
 
 def postscriptSlantAngleFallback(info):

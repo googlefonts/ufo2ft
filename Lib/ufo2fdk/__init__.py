@@ -27,13 +27,20 @@ class OTFCompiler(object):
 
     """
     This object will create an OTF from a UFO. When creating this object,
-    there are three optional arguments. *savePartsNextToUFO* will
-    cause the compilation of parts for the FDK to occur at *yourUFOName.fdk*.
-    Use this with caution, as an existing file at that location will
-    be overwritten. *partsCompilerClass* will override the default
-    parts compiler, :class:`ufo2fdk.tools.makeotfParts.MakeOTFPartsCompiler`.
-    *outlineCompilerClass* will override the default parts compiler,
-    :class:`ufo2fdk.tools.outlineOTF.OutlineOTFCompiler`.
+    there are three optional arguments:
+
+    +------------------------+------------------------------------------------------------+
+    | *savePartsNextToUFO*   | This will cause the compilation of parts for the           |
+    |                        | FDK to occur at *yourUFOName.fdk*. Use this with           |
+    |                        | caution, as an existing file at that location will         |
+    |                        | be overwritten.                                            |
+    +------------------------+------------------------------------------------------------+
+    | *partsCompilerClass*   | This will override the default parts compiler,             |
+    |                        | :class:`ufo2fdk.tools.makeotfParts.MakeOTFPartsCompiler`.  |
+    +------------------------+------------------------------------------------------------+
+    | *outlineCompilerClass* | This will override the default parts compiler,             |
+    |                        | :class:`ufo2fdk.tools.outlineOTF.OutlineOTFCompiler`.      |
+    +------------------------+------------------------------------------------------------+
     """
 
     def __init__(self, savePartsNextToUFO=False, partsCompilerClass=MakeOTFPartsCompiler, outlineCompilerClass=OutlineOTFCompiler):
@@ -56,11 +63,9 @@ class OTFCompiler(object):
         containing reports from the run programs. The keys
         are as follows:
 
-        =============
-        makeotf
-        checkOutlines
-        autohint
-        =============
+        * makeotf
+        * checkOutlines
+        * autohint
         """
         # get the path for the parts
         if self.savePartsNextToUFO:
