@@ -71,7 +71,16 @@ class MakeOTFPartsCompiler(object):
 
     def setupFile_menuName(self, path):
         """
-        Make the menu name source file.
+        Make the menu name source file. This gets the values for
+        the file using the fallback system as described below:
+
+        ====  ===
+        [PS]  postscriptFontName
+        f=    openTypeNamePreferredFamilyName
+        s=    openTypeNamePreferredSubfamilyName
+        l=    styleMapFamilyName
+        m=1,  openTypeNameCompatibleFullName
+        ====  ===
 
         **This should not be called externally.** Subclasses
         may override this method to handle the file creation
@@ -123,6 +132,22 @@ class MakeOTFPartsCompiler(object):
         f.close()
 
     def setupFile_fontInfo(self, path):
+        """
+        Make the font info source file. This gets the values for
+        the file using the fallback system as described below:
+
+        ==========================  ===
+        IsItalicStyle               styleMapStyleName
+        IsBoldStyle                 styleMapStyleName
+        PreferOS/2TypoMetrics       openTypeOS2Selection
+        IsOS/2WidthWeigthSlopeOnly  openTypeOS2Selection
+        IsOS/2OBLIQUE               openTypeOS2Selection
+        ==========================  ===
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the file creation
+        in a different way if desired.
+        """
         lines = []
         # style mapping
         styleMapStyleName = getAttrWithFallback(self.font.info,"styleMapStyleName")
@@ -300,6 +325,13 @@ class MakeOTFPartsCompiler(object):
         Write the head to a string and return it.
         *existing* will be the existing head table in the font.
 
+        This gets the values for the file using the fallback
+        system as described below:
+
+        =====  ===
+        X.XXX  versionMajor.versionMinor
+        =====  ===
+
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
         in a different way if desired.
@@ -317,6 +349,16 @@ class MakeOTFPartsCompiler(object):
         """
         Write the hhea to a string and return it.
         *existing* will be the existing hhea table in the font.
+
+        This gets the values for the file using the fallback
+        system as described below:
+
+        ===========  ===
+        Ascender     openTypeHheaAscender
+        Descender    openTypeHheaDescender
+        LineGap      openTypeHheaLineGap
+        CaretOffset  openTypeHheaCaretOffset
+        ===========  ===
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
@@ -339,6 +381,22 @@ class MakeOTFPartsCompiler(object):
         """
         Write the name to a string and return it.
         *existing* will be the existing name table in the font.
+
+        This gets the values for the file using the fallback
+        system as described below:
+
+        =========  ===
+        nameid 0   copyright
+        nameid 7   trademark
+        nameid 8   openTypeNameManufacturer
+        nameid 9   openTypeNameDesigner
+        nameid 10  openTypeNameDescription
+        nameid 11  openTypeNameManufacturerURL
+        nameid 12  openTypeNameDesignerURL
+        nameid 13  openTypeNameLicense
+        nameid 14  openTypeNameLicenseURL
+        nameid 19  openTypeNameSampleText
+        =========  ===
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
@@ -379,6 +437,26 @@ class MakeOTFPartsCompiler(object):
         """
         Write the OS/2 to a string and return it.
         *existing* will be the existing OS/2 table in the font.
+
+        This gets the values for the file using the fallback
+        system as described below:
+
+        =============  ===
+        FSType         openTypeOS2Type
+        Panose         openTypeOS2Panose
+        UnicodeRange   openTypeOS2UnicodeRanges
+        CodePageRange  openTypeOS2CodePageRanges
+        TypoAscender   openTypeOS2TypoAscender
+        TypoDescender  openTypeOS2TypoDescender
+        TypoLineGap    openTypeOS2TypoLineGap
+        winAscent      openTypeOS2WinAscent
+        winDescent     openTypeOS2WinDescent
+        XHeight        xHeight
+        CapHeight      capHeight
+        WeightClass    openTypeOS2WeightClass
+        WidthClass     openTypeOS2WidthClass
+        Vendor         openTypeOS2VendorID
+        =============  ===
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
