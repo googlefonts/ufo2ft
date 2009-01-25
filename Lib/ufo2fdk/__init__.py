@@ -71,7 +71,7 @@ class OTFCompiler(object):
         if self.savePartsNextToUFO:
             partsPath = os.path.splitext(font.path)[0] + ".fdk"
         else:
-            partsPath = mkdtemp.mkdtemp()
+            partsPath = tempfile.mkdtemp()
         # make report storage
         report = dict(makeotf=None, checkOutlines=None, autohint=None)
         # do the compile
@@ -96,14 +96,22 @@ class OTFCompiler(object):
             # makeotf
             if progressBar is not None:
                 progressBar.update("Compiling...")
+            ## make a temp location for makeotf to compile to.
+            ## it gets confused by the various directories,
+            ## so compile into the parts directory. it will
+            ## be moved later.
+            tempFontPath = os.path.join(partsPath, "compile.otf")
             stderr, stdout = fdkBridge.makeotf(
-                outputPath=path,
+                outputPath=tempFontPath,
                 outlineSourcePath=partsCompiler.paths["outlineSource"],
                 featuresPath=partsCompiler.paths["features"],
                 glyphOrderPath=partsCompiler.paths["glyphOrder"],
                 menuNamePath=partsCompiler.paths["menuName"],
                 releaseMode=releaseMode
                 )
+            ## copy the result from the temp location
+            if os.path.exists(tempFontPath):
+                shutil.copy(tempFontPath, path)
             report["makeotf"] = "\n".join((stdout, stderr))
             if progressBar is not None:
                 progressBar.update("Finishing...")
