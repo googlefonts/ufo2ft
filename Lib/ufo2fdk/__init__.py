@@ -86,12 +86,24 @@ class OTFCompiler(object):
                 if progressBar is not None:
                     progressBar.update("Removing overlap...")
                 stderr, stdout = fdkBridge.checkOutlines(partsCompiler.paths["outlineSource"])
+                ## replace the temp names in the report.
+                if not self.savePartsNextToUFO:
+                    stderr = stderr.replace(partsPath, "")
+                    stderr = stderr.replace(partsPath + "/", "")
+                    stdout = stdout.replace(partsPath, "")
+                    stdout = stdout.replace(partsPath + "/", "")
                 report["checkOutlines"] = "\n".join((stdout, stderr))
             # autohint
             if autohint:
                 if progressBar is not None:
                     progressBar.update("Autohinting...")
                 stderr, stdout = fdkBridge.autohint(partsCompiler.paths["outlineSource"])
+                ## replace the temp names in the report.
+                if not self.savePartsNextToUFO:
+                    stderr = stderr.replace(partsPath, "")
+                    stderr = stderr.replace(partsPath + "/", "")
+                    stdout = stdout.replace(partsPath, "")
+                    stdout = stdout.replace(partsPath + "/", "")
                 report["autohint"] = "\n".join((stdout, stderr))
             # makeotf
             if progressBar is not None:
@@ -109,6 +121,16 @@ class OTFCompiler(object):
                 menuNamePath=partsCompiler.paths["menuName"],
                 releaseMode=releaseMode
                 )
+            ## replace the temp names in the report.
+            stderr = stderr.replace("compile.otf", os.path.basename(path))
+            stdout = stdout.replace("compile.otf", os.path.basename(path))
+            stderr = stderr.replace(tempFontPath, path)
+            stdout = stdout.replace(tempFontPath, path)
+            if not self.savePartsNextToUFO:
+                stderr = stderr.replace(partsPath, "")
+                stderr = stderr.replace(partsPath + "/", "")
+                stdout = stdout.replace(partsPath, "")
+                stdout = stdout.replace(partsPath + "/", "")
             ## copy the result from the temp location
             if os.path.exists(tempFontPath):
                 shutil.copy(tempFontPath, path)
