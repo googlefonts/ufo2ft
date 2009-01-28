@@ -7,12 +7,28 @@ executes an FDK program.
 
 import sys
 import os
+import re
 import subprocess
 import tempfile
 
 # ----------------
 # Public Functions
 # ----------------
+
+
+minMakeOTFVersion = (2, 0, 39)
+minMakeOTFVersionRE = re.compile(
+    "\s*"
+    "makeotf"
+    "\s+"
+    "v"
+    "(\d+)"
+    "."
+    "(\d+)"
+    "."
+    "(\d+)"
+)
+
 
 def haveFDK():
     """
@@ -34,6 +50,16 @@ def haveFDK():
         text += popen.stdout.read()
         if not text:
             return False
+    # now test to make sure that makeotf is new enough
+    help = _execute(["makeotf", "-h"])[1]
+    m = minMakeOTFVersionRE.match(help)
+    if m is None:
+        return False
+    v1 = int(m.group(1))
+    v2 = int(m.group(2))
+    v3 = int(m.group(3))
+    if (v1, v2, v3) < minMakeOTFVersion:
+        return False
     return True
 
 def makeotf(outputPath, outlineSourcePath=None, featuresPath=None, glyphOrderPath=None, menuNamePath=None, releaseMode=False):
