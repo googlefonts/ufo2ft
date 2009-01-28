@@ -12,6 +12,7 @@ used externally as well.
 """
 
 import time
+import unicodedata
 from fontTools.misc.textTools import binary2num
 from fontTools.misc.arrayTools import unionRect
 from robofab import ufoLib
@@ -159,13 +160,7 @@ def openTypeOS2WinDescentFallback(info):
 _postscriptFontNameExceptions = set(" [](){}<>/%")
 _postscriptFontNameAllowed = set([unichr(i) for i in xrange(33, 137)])
 
-def postscriptFontNameFallback(info):
-    """
-    Fallback to a string containing only valid characters
-    as defined in the specification. This will draw from
-    *openTypeNamePreferredFamilyName* and *openTypeNamePreferredSubfamilyName*.
-    """
-    name = u"%s-%s" % (getAttrWithFallback(info, "openTypeNamePreferredFamilyName"), getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"))
+def normalizeNameForPostscript(name):
     normalized = []
     for c in name:
         if c in _postscriptFontNameExceptions:
@@ -174,6 +169,15 @@ def postscriptFontNameFallback(info):
             c = unicodedata.normalize("NFKD", c).encode("ascii", "ignore")
         normalized.append(c)
     return "".join(normalized)
+
+def postscriptFontNameFallback(info):
+    """
+    Fallback to a string containing only valid characters
+    as defined in the specification. This will draw from
+    *openTypeNamePreferredFamilyName* and *openTypeNamePreferredSubfamilyName*.
+    """
+    name = u"%s-%s" % (getAttrWithFallback(info, "openTypeNamePreferredFamilyName"), getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"))
+    return normalizeNameForPostscript(name)
 
 def postscriptFullNameFallback(info):
     """

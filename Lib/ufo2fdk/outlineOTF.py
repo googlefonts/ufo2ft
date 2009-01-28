@@ -5,7 +5,7 @@ from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, Glo
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from charstringPen import T2CharStringPen
-from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum
+from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeNameForPostscript
 
 
 class OutlineOTFCompiler(object):
@@ -511,7 +511,7 @@ class OutlineOTFCompiler(object):
         cff.fontNames.append(psName)
         topDict = cff.topDictIndex[0]
         topDict.FullName = getAttrWithFallback(info, "postscriptFullName")
-        topDict.FamilyName = getAttrWithFallback(info, "openTypeNamePreferredFamilyName")
+        topDict.FamilyName = normalizeNameForPostscript(getAttrWithFallback(info, "openTypeNamePreferredFamilyName"))
         topDict.Weight = getAttrWithFallback(info, "postscriptWeightName")
         topDict.FontName = getAttrWithFallback(info, "postscriptFontName")
         # populate hint data

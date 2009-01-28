@@ -87,18 +87,28 @@ class MakeOTFPartsCompiler(object):
         in a different way if desired.
         """
         psName = getAttrWithFallback(self.font.info,"postscriptFontName")
-        familyName = getAttrWithFallback(self.font.info,"openTypeNamePreferredFamilyName")
-        styleName = getAttrWithFallback(self.font.info,"openTypeNamePreferredSubfamilyName")
-        winCompatible = getAttrWithFallback(self.font.info,"styleMapFamilyName")
-        macCompatible = getAttrWithFallback(self.font.info,"openTypeNameCompatibleFullName")
         lines = [
-            "[%s]" % psName,
-            "f=%s" % familyName,
-            "s=%s" % styleName,
+            "[%s]" % psName
         ]
+        # family name
+        familyName = getAttrWithFallback(self.font.info,"openTypeNamePreferredFamilyName")
+        encodedFamilyName = winStr(familyName)
+        lines.append("f=%s" % encodedFamilyName)
+        if encodedFamilyName != familyName:
+            lines.append("f=1,%s" % macStr(familyName))
+        # style name
+        styleName = getAttrWithFallback(self.font.info,"openTypeNamePreferredSubfamilyName")
+        encodedStyleName = winStr(styleName)
+        lines.append("s=%s" % encodedStyleName)
+        if encodedStyleName != styleName:
+            lines.append("s=1,%s" % macStr(styleName))
+        # window compatible
+        winCompatible = getAttrWithFallback(self.font.info,"styleMapFamilyName")
         if winCompatible != familyName:
             l = "l=%s" % winCompatible
             lines.append(l)
+        # mac compatible
+        macCompatible = getAttrWithFallback(self.font.info,"openTypeNameCompatibleFullName")
         if macCompatible != winCompatible:
             l = "m=1,%s" % macCompatible
             lines.append(l)
