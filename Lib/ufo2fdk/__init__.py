@@ -126,6 +126,8 @@ class OTFCompiler(object):
             stdout = stdout.replace("compile.otf", os.path.basename(path))
             stderr = stderr.replace(tempFontPath, path)
             stdout = stdout.replace(tempFontPath, path)
+            stderr = stderr.replace(os.path.basename(tempFontPath), os.path.basename(path))
+            stdout = stdout.replace(os.path.basename(tempFontPath), os.path.basename(path))
             if not self.savePartsNextToUFO:
                 stderr = stderr.replace(partsPath, "")
                 stderr = stderr.replace(partsPath + "/", "")
