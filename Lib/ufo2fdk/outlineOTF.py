@@ -546,7 +546,10 @@ class OutlineOTFCompiler(object):
             glyph = self.allGlyphs[glyphName]
             glyphWidth = glyph.width
             unicodes = glyph.unicodes
-            bounds = glyph.bounds
+            if hasattr(glyph, "box"):
+                bounds = glyph.box
+            else:
+                bounds = glyph.bounds
             if bounds is not None:
                 xMin, yMin, xMax, yMax = bounds
             else:
