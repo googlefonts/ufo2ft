@@ -55,6 +55,7 @@ If you want to know how the bridging works, what information is needed in the so
    autodoc/fdkBridge
    autodoc/makeotfParts
    autodoc/outlineOTF
+   autodoc/kernFeatureWriter
    autodoc/fontInfoData
 
 Indices and tables

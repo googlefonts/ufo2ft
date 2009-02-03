@@ -2,6 +2,12 @@ inlineGroupInstance = (list, tuple, set)
 
 class KernFeatureWriter(object):
 
+    """
+    This object will create a kerning feature in FDK
+    syntax using the kerning in the given font. The
+    only external method is :meth:`ufo2fdk.tools.kernFeatureWriter.write`.
+    """
+
     def __init__(self, font):
         self.font = font
         self.leftGroups, self.rightGroups = self.getReferencedGroups()
