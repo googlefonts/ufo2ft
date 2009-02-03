@@ -4,6 +4,7 @@ import re
 from fontInfoData import getAttrWithFallback, intListToNum
 from outlineOTF import OutlineOTFCompiler
 from featureTableWriter import FeatureTableWriter, winStr, macStr
+from kernFeatureWriter import KernFeatureWriter
 
 
 class MakeOTFPartsCompiler(object):
@@ -191,149 +192,59 @@ class MakeOTFPartsCompiler(object):
 
     def setupFile_features(self, path):
         """
-        Make the features source file.
+        Make the features source file. If any tables
+        or the kern feature are defined in the font's
+        features, they will not be overwritten.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the file creation
         in a different way if desired.
         """
         # force absolute includes into the features
+        existingFeaturePath = os.path.join(self.font.path, "features.fea")
         existing = forceAbsoluteIncludesInFeatures(self.font.features.text, self.font.path)
         # break the features into parts
-        initialText, features, tables = breakFeaturesAndTables(existing)
-        # extract the relevant parts from the features and tables
-        gsubGpos = [initialText]
-        kernFeature = None
-        for name, text in features:
-            if name == "kern":
-                kernFeature = text
-            else:
-                gsubGpos.append(text)
-        gsubGpos = "\n".join(gsubGpos).strip()
-        if not gsubGpos:
-            gsubGpos = None
-        unknownTables = []
-        headTable = None
-        hheaTable = None
-        os2Table = None
-        nameTable = None
-        for name, text in tables:
-            if name == "head":
-                headTable = text
-            elif name == "hhea":
-                hheaTable = text
-            elif name == "OS/2":
-                os2Table = text
-            elif name == "name":
-                nameTable = text
-            else:
-                unknownTables.append(text)
-        unknownTables = "\n".join(unknownTables)
-        # compile the new features
-        features = [
-            self.writeFeatures_basic(gsubGpos),
-            "",
-            self.writeFeatures_kern(kernFeature),
-            "",
-            self.writeFeatures_head(headTable),
-            "",
-            self.writeFeatures_hhea(hheaTable),
-            "",
-            self.writeFeatures_OS2(os2Table),
-            "",
-            self.writeFeatures_name(nameTable),
-            "",
-            unknownTables
-        ]
-        features = "\n".join(features)
+        features, tables = extractFeaturesAndTables(existing, scannedFiles=[existingFeaturePath])
+        # build tables that are not in the existing features
+        autoTables = {}
+        if "head" not in tables:
+            autoTables["head"] = self.writeFeatures_head()
+        if "hhea" not in tables:
+            autoTables["hhea"] = self.writeFeatures_hhea()
+        if "OS/2" not in tables:
+            autoTables["OS/2"] = self.writeFeatures_OS2()
+        if "name" not in tables:
+            autoTables["name"] = self.writeFeatures_name()
+        # build the kern feature if necessary
+        autoFeatures = {}
+        if "kern" not in features and len(self.font.kerning):
+            autoFeatures["kern"] = self.writeFeatures_kern()
+        # write the features
+        features = [existing]
+        for name, text in sorted(autoFeatures.items()):
+            features.append(text)
+        for name, text in sorted(autoTables.items()):
+            features.append(text)
+        features = "\n\n".join(features)
         # write the result
         f = open(path, "wb")
         f.write(features)
         f.close()
 
-    def writeFeatures_basic(self, existing):
-        """
-        Write the GSUB and GPOS features, excluding kern,
-        to a string and return it. *existing* will be
-        the existing GSUB and GPOS features in the font
-        excluding kern.
-
-        **This should not be called externally.** Subclasses
-        may override this method to handle the string creation
-        in a different way if desired.
-        """
-        if existing is None:
-            return ""
-        return existing
-
-    def writeFeatures_kern(self, existing):
+    def writeFeatures_kern(self):
         """
         Write the kern feature to a string and return it.
-        *existing* will be the existing kern feature in the font.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
         in a different way if desired.
         """
-        if existing is not None:
-            return existing
-        font = self.font
-        if not font.kerning.items():
-            return ""
-        neededLeftGroups = set()
-        neededRightGroups = set()
-        noGroup = {}
-        leftGroup = {}
-        rightGroup = {}
-        bothGroup = {}
-        for (left, right), value in font.kerning.items():
-            if left.startswith("@") and right.startswith("@"):
-                bothGroup[left, right] = _roundInt(value)
-                neededLeftGroups.add(left)
-                neededRightGroups.add(right)
-            elif left.startswith("@"):
-                leftGroup[left, right] = _roundInt(value)
-                neededLeftGroups.add(left)
-            elif right.startswith("@"):
-                rightGroup[left, right] = _roundInt(value)
-                neededRightGroups.add(right)
-            else:
-                noGroup[left, right] = _roundInt(value)
-        lines = ["feature kern {"]
-        emptyGroups = set()
-        for groupName in sorted(neededLeftGroups):
-            contents = font.groups.get(groupName, [])
-            if not contents:
-                emptyGroups.add(groupName)
-                continue
-            lines.append("    %s = [%s];" % (groupName, " ".join(contents)))
-        for groupName in sorted(neededRightGroups):
-            contents = font.groups.get(groupName, [])
-            if not contents:
-                emptyGroups.add(groupName)
-                continue
-            lines.append("    %s = [%s];" % (groupName, " ".join(contents)))
-        for (left, right), value in sorted(noGroup.items()):
-            lines.append("    pos %s %s %d;" % (left, right, value))
-        for (left, right), value in sorted(leftGroup.items()):
-            if left in emptyGroups:
-                continue
-            lines.append("    pos %s %s %d;" % (left, right, value))
-        for (left, right), value in sorted(rightGroup.items()):
-            if right in emptyGroups:
-                continue
-            lines.append("    pos %s %s %d;" % (left, right, value))
-        for (left, right), value in sorted(bothGroup.items()):
-            if left in emptyGroups or right in emptyGroups:
-                continue
-            lines.append("    pos %s %s %d;" % (left, right, value))
-        lines.append("} kern;")
-        return "\n".join(lines)
+        writer = KernFeatureWriter(self.font)
+        return writer.write()
 
-    def writeFeatures_head(self, existing):
+    def writeFeatures_head(self):
         """
         Write the head to a string and return it.
-        *existing* will be the existing head table in the font.
 
         This gets the values for the file using the fallback
         system as described below:
@@ -346,8 +257,6 @@ class MakeOTFPartsCompiler(object):
         may override this method to handle the string creation
         in a different way if desired.
         """
-        if existing is not None:
-            return existing
         versionMajor = getattr(self.font.info, "versionMajor")
         versionMinor = getattr(self.font.info, "versionMinor")
         value = "%d.%s" % (versionMajor, str(versionMinor).zfill(3))
@@ -355,10 +264,9 @@ class MakeOTFPartsCompiler(object):
         writer.addLineWithKeyValue("FontRevision", value)
         return writer.write()
 
-    def writeFeatures_hhea(self, existing):
+    def writeFeatures_hhea(self):
         """
         Write the hhea to a string and return it.
-        *existing* will be the existing hhea table in the font.
 
         This gets the values for the file using the fallback
         system as described below:
@@ -374,8 +282,6 @@ class MakeOTFPartsCompiler(object):
         may override this method to handle the string creation
         in a different way if desired.
         """
-        if existing is not None:
-            return existing
         ascender = getAttrWithFallback(self.font.info, "openTypeHheaAscender")
         descender = getAttrWithFallback(self.font.info, "openTypeHheaDescender")
         lineGap = getAttrWithFallback(self.font.info, "openTypeHheaLineGap")
@@ -387,10 +293,9 @@ class MakeOTFPartsCompiler(object):
         writer.addLineWithKeyValue("CaretOffset", _roundInt(caret))
         return writer.write()
 
-    def writeFeatures_name(self, existing):
+    def writeFeatures_name(self):
         """
         Write the name to a string and return it.
-        *existing* will be the existing name table in the font.
 
         This gets the values for the file using the fallback
         system as described below:
@@ -412,8 +317,6 @@ class MakeOTFPartsCompiler(object):
         may override this method to handle the string creation
         in a different way if desired.
         """
-        if existing is not None:
-            return existing
         idToAttr = [
             (0  , "copyright"),
             (7  , "trademark"),
@@ -443,10 +346,9 @@ class MakeOTFPartsCompiler(object):
             writer.addLine(line)
         return writer.write()
 
-    def writeFeatures_OS2(self, existing):
+    def writeFeatures_OS2(self):
         """
         Write the OS/2 to a string and return it.
-        *existing* will be the existing OS/2 table in the font.
 
         This gets the values for the file using the fallback
         system as described below:
@@ -472,8 +374,6 @@ class MakeOTFPartsCompiler(object):
         may override this method to handle the string creation
         in a different way if desired.
         """
-        if existing is not None:
-            return existing
         codePageBitTranslation = {
             0  : "1252",
             1  : "1250",
@@ -536,17 +436,18 @@ class MakeOTFPartsCompiler(object):
         return writer.write()
 
 
+includeRE = re.compile(
+    "include"
+    "\("
+    "([^\)]+)"
+    "\)"
+    )
+
 def forceAbsoluteIncludesInFeatures(text, directory):
     """
     Convert relative includes in the *text*
     to absolute includes.
     """
-    includeRE = re.compile(
-        "include"
-        "\("
-        "([^\)]+)"
-        "\)"
-        )
     for includePath in includeRE.findall(text):
         currentDirectory = directory
         parts = includePath.split("/")
@@ -604,7 +505,7 @@ tableNameRE = re.compile(
     "\{"
 )
 
-def breakFeaturesAndTables(text):
+def extractFeaturesAndTables(text, scannedFiles=[]):
     # strip all comments
     decommentedLines = [line.split("#")[0] for line in text.splitlines()]
     text = "\n".join(decommentedLines)
@@ -621,6 +522,8 @@ def breakFeaturesAndTables(text):
             line = line.replace("__ufo2fdk_temp_escaped_quote__", "\\\"")
         destringedLines.append(line)
     text = "\n".join(destringedLines)
+    # extract all includes
+    includes = includeRE.findall(text)
     # slice off the text that comes before
     # the first feature/table definition
     precedingText = ""
@@ -635,8 +538,8 @@ def breakFeaturesAndTables(text):
     # break the features
     broken = _textBreakRecurse(text)
     # organize into tables and features
-    features = []
-    tables = []
+    features = {}
+    tables = {}
     for text in broken:
         text = text.strip()
         if not text:
@@ -651,11 +554,23 @@ def breakFeaturesAndTables(text):
         # grab feature or table names and store
         featureMatch = featureNameRE.search(text)
         if featureMatch is not None:
-            features.append((featureMatch.group(1), finalText))
+            features[featureMatch.group(1)] = finalText
         else:
             tableMatch = tableNameRE.search(text)
-            tables.append((tableMatch.group(1), finalText))
-    return precedingText, features, tables
+            tables[tableMatch.group(1)] = finalText
+    # scan all includes
+    for path in includes:
+        if path in scannedFiles:
+            continue
+        scannedFiles.append(path)
+        if os.path.exists(path):
+            f = open(path, "r")
+            text = f.read()
+            f.close()
+            f, t = extractFeaturesAndTables(text, scannedFiles)
+            features.update(f)
+            tables.update(t)
+    return features, tables
 
 def _textBreakRecurse(text):
     matched = []
@@ -689,7 +604,7 @@ def _textBreakRecurse(text):
     return matched
 
 
-breakFeaturesAndTablesTestText = """
+extractFeaturesAndTablesTestText = """
 @foo = [bar];
 
 # test commented item
@@ -706,16 +621,26 @@ table tts1 {
 } tts1;feature fts3 { sub a by b;} fts3;
 """
 
-breakFeaturesAndTablesTestResult = ('@foo = [bar];',
- [('fts2', 'feature fts2 {\n    sub foo by bar;\n} fts2;'),
-  ('fts3', 'feature fts3 { sub a by b;} fts3;')],
- [('tts1',
-   'table tts1 {\n    nameid 1 "feature this { is not really a \\"feature that { other thing is";\n} tts1;')])
+#extractFeaturesAndTablesTestResult = ('@foo = [bar];',
+# [('fts2', 'feature fts2 {\n    sub foo by bar;\n} fts2;'),
+#  ('fts3', 'feature fts3 { sub a by b;} fts3;')],
+# [('tts1',
+#   'table tts1 {\n    nameid 1 "feature this { is not really a \\"feature that { other thing is";\n} tts1;')])
+
+extractFeaturesAndTablesTestResult = (
+    {
+        'fts2': 'feature fts2 {\n    sub foo by bar;\n} fts2;',
+        'fts3': 'feature fts3 { sub a by b;} fts3;'
+    },
+    {
+        'tts1': 'table tts1 {\n    nameid 1 "feature this { is not really a \\"feature that { other thing is";\n} tts1;'
+    }
+)
 
 def testBreakFeaturesAndTables():
     """
-    >>> r = breakFeaturesAndTables(breakFeaturesAndTablesTestText)
-    >>> r == breakFeaturesAndTablesTestResult
+    >>> r = extractFeaturesAndTables(extractFeaturesAndTablesTestText)
+    >>> r == extractFeaturesAndTablesTestResult
     True
     """
 
