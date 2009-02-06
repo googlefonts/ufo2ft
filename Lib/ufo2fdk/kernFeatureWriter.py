@@ -11,9 +11,9 @@ class KernFeatureWriter(object):
     def __init__(self, font):
         self.font = font
         self.leftGroups, self.rightGroups = self.getReferencedGroups()
-        self.unreferencedGroups = self.getUnreferencedGroups()
+        self.leftUnreferencedGroups, self.rightUnreferencedGroups = self.getUnreferencedGroups()
         self.pairs = self.getPairs()
-        self.flatLeftGroups, self.flatRightGroups, self.flatUnreferencedGroups = self.getFlatGroups()
+        self.flatLeftGroups, self.flatRightGroups, self.flatLeftUnreferencedGroups, self.flatRightUnreferencedGroups = self.getFlatGroups()
 
     def write(self, headerText=None):
         """
@@ -100,16 +100,33 @@ class KernFeatureWriter(object):
         that are not referenced in any kerning pairs.
         You should not call this method directly.
         """
-        unreferencedGroups = {}
-        for groupName, glyphList in self.font.groups.items():
+        # gather all glyphs that are already referenced
+        leftReferencedGlyphs = []
+        for glyphList in self.leftGroups.values():
+            leftReferencedGlyphs += glyphList
+        leftReferencedGlyphs = set(leftReferencedGlyphs)
+        rightReferencedGlyphs = []
+        for glyphList in self.rightGroups.values():
+            rightReferencedGlyphs += glyphList
+        rightReferencedGlyphs = set(rightReferencedGlyphs)
+        # find unreferenced groups
+        unreferencedLeftGroups = {}
+        unreferencedRightGroups = {}
+        for groupName, glyphList in sorted(self.font.groups.items()):
             if not groupName.startswith("@"):
                 continue
             if groupName in self.leftGroups:
                 continue
             if groupName in self.rightGroups:
                 continue
-            unreferencedGroups[groupName] = set(glyphList)
-        return unreferencedGroups
+            glyphList = set(glyphList)
+            if not leftReferencedGlyphs & glyphList:
+                unreferencedLeftGroups[groupName] = glyphList
+                leftReferencedGlyphs = leftReferencedGlyphs | glyphList
+            if not rightReferencedGlyphs & glyphList:
+                unreferencedRightGroups[groupName] = glyphList
+                rightReferencedGlyphs = rightReferencedGlyphs | glyphList
+        return unreferencedLeftGroups, unreferencedRightGroups
 
     def getPairs(self):
         """
@@ -163,11 +180,15 @@ class KernFeatureWriter(object):
                 if glyphName in flatRightGroups:
                     continue
                 flatRightGroups[glyphName] = groupName
-        flatUnreferencedGroups = {}
-        for groupName, glyphList in self.unreferencedGroups.items():
+        flatLeftUnreferencedGroups = {}
+        for groupName, glyphList in self.leftUnreferencedGroups.items():
             for glyphName in glyphList:
-                flatUnreferencedGroups[glyphName] = groupName
-        return flatLeftGroups, flatRightGroups, flatUnreferencedGroups
+                flatLeftUnreferencedGroups[glyphName] = groupName
+        flatRightUnreferencedGroups = {}
+        for groupName, glyphList in self.rightUnreferencedGroups.items():
+            for glyphName in glyphList:
+                flatRightUnreferencedGroups[glyphName] = groupName
+        return flatLeftGroups, flatRightGroups, flatLeftUnreferencedGroups, flatRightUnreferencedGroups
 
     # ------------
     # Pair Support
@@ -189,7 +210,7 @@ class KernFeatureWriter(object):
         else:
             leftGroup = self.flatLeftGroups.get(left)
             leftGlyph = left
-            if leftGroup is None and left in self.flatUnreferencedGroups:
+            if leftGroup is None and left in self.flatLeftUnreferencedGroups:
                 leftInUnreferenced= True
         if right.startswith("@"):
             rightGroup = right
@@ -197,7 +218,7 @@ class KernFeatureWriter(object):
         else:
             rightGroup = self.flatRightGroups.get(right)
             rightGlyph = right
-            if rightGroup is None and right in self.flatUnreferencedGroups:
+            if rightGroup is None and right in self.flatRightUnreferencedGroups:
                 rightInUnreferenced = True
 
         havePotentialHigherLevelPair = False
