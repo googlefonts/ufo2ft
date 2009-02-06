@@ -621,12 +621,6 @@ table tts1 {
 } tts1;feature fts3 { sub a by b;} fts3;
 """
 
-#extractFeaturesAndTablesTestResult = ('@foo = [bar];',
-# [('fts2', 'feature fts2 {\n    sub foo by bar;\n} fts2;'),
-#  ('fts3', 'feature fts3 { sub a by b;} fts3;')],
-# [('tts1',
-#   'table tts1 {\n    nameid 1 "feature this { is not really a \\"feature that { other thing is";\n} tts1;')])
-
 extractFeaturesAndTablesTestResult = (
     {
         'fts2': 'feature fts2 {\n    sub foo by bar;\n} fts2;',
