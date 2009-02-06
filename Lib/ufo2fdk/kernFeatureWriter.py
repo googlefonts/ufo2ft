@@ -53,11 +53,12 @@ class KernFeatureWriter(object):
                 line = "    " + line
                 feature.append(line)
         for line in classes + rules:
-            line = "    " + line
+            if line:
+                line = "    " + line
             feature.append(line)
         feature.append("} kern;")
         # done
-        return "\n".join(feature)
+        return u"\n".join(feature)
 
     # -------------
     # Initial Setup
