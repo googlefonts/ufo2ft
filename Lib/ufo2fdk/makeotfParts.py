@@ -257,8 +257,8 @@ class MakeOTFPartsCompiler(object):
         may override this method to handle the string creation
         in a different way if desired.
         """
-        versionMajor = getattr(self.font.info, "versionMajor")
-        versionMinor = getattr(self.font.info, "versionMinor")
+        versionMajor = getAttrWithFallback(self.font.info, "versionMajor")
+        versionMinor = getAttrWithFallback(self.font.info, "versionMinor")
         value = "%d.%s" % (versionMajor, str(versionMinor).zfill(3))
         writer = FeatureTableWriter("head")
         writer.addLineWithKeyValue("FontRevision", value)
