@@ -434,7 +434,7 @@ class MakeOTFPartsCompiler(object):
         writer.addLineWithKeyValue("TypoDescender", _roundInt(getAttrWithFallback(self.font.info, "openTypeOS2TypoDescender")))
         writer.addLineWithKeyValue("TypoLineGap", _roundInt(getAttrWithFallback(self.font.info, "openTypeOS2TypoLineGap")))
         writer.addLineWithKeyValue("winAscent", _roundInt(getAttrWithFallback(self.font.info, "openTypeOS2WinAscent")))
-        writer.addLineWithKeyValue("winDescent", _roundInt(getAttrWithFallback(self.font.info, "openTypeOS2WinDescent")))
+        writer.addLineWithKeyValue("winDescent", abs(_roundInt(getAttrWithFallback(self.font.info, "openTypeOS2WinDescent"))))
         writer.addLineWithKeyValue("XHeight", _roundInt(getAttrWithFallback(self.font.info, "xHeight")))
         writer.addLineWithKeyValue("CapHeight", _roundInt(getAttrWithFallback(self.font.info, "capHeight")))
         writer.addLineWithKeyValue("WeightClass", getAttrWithFallback(self.font.info, "openTypeOS2WeightClass"))
