@@ -110,14 +110,14 @@ class MakeOTFPartsCompiler(object):
         lines.append("s=%s" % encodedStyleName)
         if encodedStyleName != styleName:
             lines.append("s=1,%s" % macStr(styleName))
-        # window compatible
+        # compatible name
         winCompatible = getAttrWithFallback(self.font.info,"styleMapFamilyName")
         if winCompatible != familyName:
+            # windows
             l = "l=%s" % winCompatible
             lines.append(l)
-        # mac compatible
-        macCompatible = getAttrWithFallback(self.font.info,"openTypeNameCompatibleFullName")
-        if macCompatible != winCompatible:
+            # mac
+            macCompatible = getAttrWithFallback(self.font.info,"openTypeNameCompatibleFullName")
             l = "m=1,%s" % macCompatible
             lines.append(l)
         text = "\n".join(lines) + "\n"
