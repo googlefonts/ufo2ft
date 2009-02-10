@@ -1,3 +1,16 @@
+try:
+    set
+except NameError:
+    from sets import Set as set
+
+try:
+    sorted
+except NameError:
+    def sorted(l):
+        l = list(l)
+        l.sort()
+        return l
+
 inlineGroupInstance = (list, tuple, set)
 
 class KernFeatureWriter(object):

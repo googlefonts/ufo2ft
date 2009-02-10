@@ -5,6 +5,13 @@ from fontInfoData import getAttrWithFallback, intListToNum
 from outlineOTF import OutlineOTFCompiler
 from featureTableWriter import FeatureTableWriter, winStr, macStr
 from kernFeatureWriter import KernFeatureWriter
+try:
+    sorted
+except NameError:
+    def sorted(l):
+        l = list(l)
+        l.sort()
+        return l
 
 
 class MakeOTFPartsCompiler(object):

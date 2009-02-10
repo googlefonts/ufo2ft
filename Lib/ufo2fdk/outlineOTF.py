@@ -6,6 +6,17 @@ from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from charstringPen import T2CharStringPen
 from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeNameForPostscript
+try:
+    set
+except NameError:
+    from sets import Set as set
+try:
+    sorted
+except NameError:
+    def sorted(l):
+        l = list(l)
+        l.sort()
+        return l
 
 
 class OutlineOTFCompiler(object):

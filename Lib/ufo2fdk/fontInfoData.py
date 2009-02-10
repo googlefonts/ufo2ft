@@ -16,6 +16,10 @@ import unicodedata
 from fontTools.misc.textTools import binary2num
 from fontTools.misc.arrayTools import unionRect
 from robofab import ufoLib
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 # -----------------
 # Special Fallbacks

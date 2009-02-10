@@ -119,6 +119,7 @@ class OTFCompiler(object):
                 featuresPath=partsCompiler.paths["features"],
                 glyphOrderPath=partsCompiler.paths["glyphOrder"],
                 menuNamePath=partsCompiler.paths["menuName"],
+                fontInfoPath=partsCompiler.paths["fontInfo"],
                 releaseMode=releaseMode
                 )
             ## replace the temp names in the report.

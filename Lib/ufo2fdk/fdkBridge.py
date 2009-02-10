@@ -8,7 +8,6 @@ executes an FDK program.
 import sys
 import os
 import re
-import subprocess
 import tempfile
 
 # ----------------
@@ -39,6 +38,7 @@ def haveFDK():
     of those cannot be found, this FDK is considered
     to be unavailable.
     """
+    import subprocess
     if _fdkToolDirectory is None:
         return False
     env = _makeEnviron()
@@ -62,7 +62,7 @@ def haveFDK():
         return False
     return True
 
-def makeotf(outputPath, outlineSourcePath=None, featuresPath=None, glyphOrderPath=None, menuNamePath=None, releaseMode=False):
+def makeotf(outputPath, outlineSourcePath=None, featuresPath=None, glyphOrderPath=None, menuNamePath=None, fontInfoPath=None, releaseMode=False):
     """
     Run makeotf.
     The arguments will be converted into arguments
@@ -74,6 +74,7 @@ def makeotf(outputPath, outlineSourcePath=None, featuresPath=None, glyphOrderPat
     featuresPath       -ff
     glyphOrderPath     -gf
     menuNamePath       -mf
+    fontInfoPath       -fi
     releaseMode        -r
     =================  ===
     """
@@ -86,6 +87,8 @@ def makeotf(outputPath, outlineSourcePath=None, featuresPath=None, glyphOrderPat
         cmds.extend(["-gf", glyphOrderPath])
     if menuNamePath:
         cmds.extend(["-mf", menuNamePath])
+    if fontInfoPath:
+        cmds.extend(["-fi", fontInfoPath])
     if releaseMode:
         cmds.append("-r")
     stderr, stdout = _execute(cmds)
@@ -151,6 +154,7 @@ def _makeEnviron():
     return env
 
 def _execute(cmds):
+    import subprocess
     # for some reason, autohint and/or checkoutlines
     # locks up when subprocess.PIPE is given. subprocess
     # requires a real file so StringIO is not acceptable
