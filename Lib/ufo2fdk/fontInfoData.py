@@ -33,7 +33,9 @@ def styleMapFamilyNameFallback(info):
     """
     familyName = getAttrWithFallback(info, "openTypeNamePreferredFamilyName")
     styleName = getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName")
-    return familyName + u" " + styleName
+    if styleName is None:
+        styleName = u""
+    return (familyName + u" " + styleName).strip()
 
 # head
 
