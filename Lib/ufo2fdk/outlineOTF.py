@@ -391,6 +391,8 @@ class OutlineOTFCompiler(object):
             left = 0
             if len(glyph) or len(glyph.components):
                 left = glyph.leftMargin
+            if left is None:
+                left = 0
             hmtx[glyphName] = (width, left)
 
     def setupTable_hhea(self):
