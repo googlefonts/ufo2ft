@@ -13,12 +13,26 @@ except NameError:
 
 inlineGroupInstance = (list, tuple, set)
 
+
 class KernFeatureWriter(object):
 
     """
     This object will create a kerning feature in FDK
     syntax using the kerning in the given font. The
     only external method is :meth:`ufo2fdk.tools.kernFeatureWriter.write`.
+
+    This object does what it can to create the best possible
+    kerning feature, but because it doesn't know anything
+    about how the raw kerning data was created, it has
+    to make some educated guesses about a few things. This
+    happens with regards to finding kerning groups that
+    are not referenced by any kerning pairs. This is only an
+    issue when attempting to decompose certain types of
+    exception pairs. The default implementation of this object
+    finds unreferenced groups in the ``getUnreferencedGroups``.
+    These groups will be studied when attempting to decompose
+    these special exceptions. This is as accurate as it can be,
+    but it is not foolproof.
     """
 
     def __init__(self, font):
