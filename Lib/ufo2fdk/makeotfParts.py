@@ -445,6 +445,7 @@ class MakeOTFPartsCompiler(object):
 
 includeRE = re.compile(
     "include"
+    "\s*"
     "\("
     "([^\)]+)"
     "\)"
