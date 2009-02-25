@@ -209,7 +209,7 @@ class MakeOTFPartsCompiler(object):
         """
         # force absolute includes into the features
         existingFeaturePath = os.path.join(self.font.path, "features.fea")
-        existing = forceAbsoluteIncludesInFeatures(self.font.features.text, self.font.path)
+        existing = forceAbsoluteIncludesInFeatures(self.font.features.text, os.path.dirname(self.font.path))
         # break the features into parts
         features, tables = extractFeaturesAndTables(existing, scannedFiles=[existingFeaturePath])
         # build tables that are not in the existing features
@@ -463,7 +463,7 @@ def forceAbsoluteIncludesInFeatures(text, directory):
             part = part.strip()
             if not part:
                 continue
-            if part == "..":
+            if part in ("..", "."):
                 currentDirectory = os.path.dirname(currentDirectory)
             else:
                 break
