@@ -463,8 +463,10 @@ def forceAbsoluteIncludesInFeatures(text, directory):
             part = part.strip()
             if not part:
                 continue
-            if part in ("..", "."):
+            if part == "..":
                 currentDirectory = os.path.dirname(currentDirectory)
+            elif part == ".":
+                continue
             else:
                 break
         subPath = "/".join(parts[index:])
