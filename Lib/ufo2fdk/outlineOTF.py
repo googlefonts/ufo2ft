@@ -540,22 +540,22 @@ class OutlineOTFCompiler(object):
         forceBold = getAttrWithFallback(info, "postscriptForceBold")
         blueValues = getAttrWithFallback(info, "postscriptBlueValues")
         if isinstance(blueValues, list):
-            blueValues = [_roundInt(i) for in blueValues]
+            blueValues = [_roundInt(i) for i in blueValues]
         otherBlues = getAttrWithFallback(info, "postscriptOtherBlues")
         if isinstance(otherBlues, list):
-            otherBlues = [_roundInt(i) for in otherBlues]
+            otherBlues = [_roundInt(i) for i in otherBlues]
         familyBlues = getAttrWithFallback(info, "postscriptFamilyBlues")
         if isinstance(familyBlues, list):
-            familyBlues = [_roundInt(i) for in familyBlues]
+            familyBlues = [_roundInt(i) for i in familyBlues]
         familyOtherBlues = getAttrWithFallback(info, "postscriptFamilyOtherBlues")
         if isinstance(familyOtherBlues, list):
-            familyOtherBlues = [_roundInt(i) for in familyOtherBlues]
+            familyOtherBlues = [_roundInt(i) for i in familyOtherBlues]
         stemSnapH = getAttrWithFallback(info, "postscriptStemSnapH")
         if isinstance(stemSnapH, list):
-            stemSnapH = [_roundInt(i) for in stemSnapH]
+            stemSnapH = [_roundInt(i) for i in stemSnapH]
         stemSnapV = getAttrWithFallback(info, "postscriptStemSnapV")
         if isinstance(stemSnapV, list):
-            stemSnapV = [_roundInt(i) for in stemSnapV]
+            stemSnapV = [_roundInt(i) for i in stemSnapV]
         # only write the blues data if some blues are defined.
         if (blueValues or otherBlues):
             private.rawDict["BlueFuzz"] = blueFuzz
