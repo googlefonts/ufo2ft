@@ -119,10 +119,11 @@ class OutlineOTFCompiler(object):
         in a different way if desired.
         """
         glyphs = {}
-        defaultWidth = _roundInt(self.ufo.info.unitsPerEm * 0.5)
+        font = self.ufo
         unitsPerEm = _roundInt(getAttrWithFallback(font.info, "unitsPerEm"))
         ascender = _roundInt(getAttrWithFallback(font.info, "ascender"))
         descender = _roundInt(getAttrWithFallback(font.info, "descender"))
+        defaultWidth = _roundInt(unitsPerEm * 0.5)
         if ".notdef" not in self.ufo:
             glyphs[".notdef"] = StubGlyph(name=".notdef", width=defaultWidth, unitsPerEm=unitsPerEm, ascender=ascender, descender=descender)
         if "space" not in self.ufo:
