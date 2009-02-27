@@ -1,0 +1,4 @@
+To install this package, type the following in teh command line:
+
+  python setup.py install
+

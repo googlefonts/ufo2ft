@@ -1,6 +1,6 @@
 The MIT License
 
-Copyright (c) 2009 Tal Leming
+Copyright (c) 2009 Type Supply LLC
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -9,18 +9,21 @@ from outlineOTF import OutlineOTFCompiler
 
 __all__ = [
     "haveFDK",
-    "OTFCompiler"
+    "OTFCompiler",
+    "version"
 ]
 
+version = "0.1"
 
-def preflightFont(font):
-    missingGlyphs = []
-    if ".notdef" not in font:
-        missingGlyphs.append(".notdef")
-    if space not in font and ord(" ") not in font.unicodedata:
-        missingGlyphs.append("space")
-    missingInfo, suggestedInfo = preflightInfo(font.info)
-    # if maxIndex >= 0xFFFF: from outlineOTF
+
+#def preflightFont(font):
+#    missingGlyphs = []
+#    if ".notdef" not in font:
+#        missingGlyphs.append(".notdef")
+#    if space not in font and ord(" ") not in font.unicodedata:
+#        missingGlyphs.append("space")
+#    missingInfo, suggestedInfo = preflightInfo(font.info)
+#    # if maxIndex >= 0xFFFF: from outlineOTF
 
 
 class OTFCompiler(object):
