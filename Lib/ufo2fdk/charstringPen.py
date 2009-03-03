@@ -1,6 +1,11 @@
 from fontTools.pens.basePen import BasePen
 from fontTools.misc.psCharStrings import T2CharString
 
+def _roundInt(v):
+    return int(round(v))
+
+def _roundIntPoint((x, y)):
+    return _roundInt(x), _roundInt(y)
 
 class RelativeCoordinatePen(BasePen):
 
@@ -28,6 +33,7 @@ class RelativeCoordinatePen(BasePen):
         return relX, relY
 
     def _moveTo(self, pt):
+        pt = _roundIntPoint(pt)
         pt = self._makePointRelative(pt)
         self._relativeMoveTo(pt)
 
@@ -35,6 +41,7 @@ class RelativeCoordinatePen(BasePen):
         raise NotImplementedError
 
     def _lineTo(self, pt):
+        pt = _roundIntPoint(pt)
         pt = self._makePointRelative(pt)
         self._relativeLineTo(pt)
 
@@ -42,8 +49,11 @@ class RelativeCoordinatePen(BasePen):
         raise NotImplementedError
 
     def _curveToOne(self, pt1, pt2, pt3):
+        pt1 = _roundIntPoint(pt1)
         pt1 = self._makePointRelative(pt1)
+        pt2 = _roundIntPoint(pt2)
         pt2 = self._makePointRelative(pt2)
+        pt3 = _roundIntPoint(pt3)
         pt3 = self._makePointRelative(pt3)
         self._relativeCurveToOne(pt1, pt2, pt3)
 
@@ -55,17 +65,22 @@ class T2CharStringPen(RelativeCoordinatePen):
 
     def __init__(self, width, glyphSet):
         RelativeCoordinatePen.__init__(self, glyphSet)
-        self._program = [width]
+        self._program = [_roundInt(width)]
 
     def _relativeMoveTo(self, pt):
+        pt = _roundIntPoint(pt)
         x, y = pt
         self._program.extend([x, y, "rmoveto"])
 
     def _relativeLineTo(self, pt):
+        pt = _roundIntPoint(pt)
         x, y = pt
         self._program.extend([x, y, "rlineto"])
 
     def _relativeCurveToOne(self, pt1, pt2, pt3):
+        pt1 = _roundIntPoint(pt1)
+        pt2 = _roundIntPoint(pt2)
+        pt3 = _roundIntPoint(pt3)
         x1, y1 = pt1
         x2, y2 = pt2
         x3, y3 = pt3

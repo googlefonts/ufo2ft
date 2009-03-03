@@ -157,7 +157,7 @@ class OutlineOTFCompiler(object):
         may override this method to handle the charstring creation
         in a different way if desired.
         """
-        pen = T2CharStringPen(glyph.width, self.allGlyphs)
+        pen = T2CharStringPen(_roundInt(glyph.width), self.allGlyphs)
         glyph.draw(pen)
         charString = pen.getCharString(private, globalSubrs)
         return charString
@@ -576,7 +576,6 @@ class OutlineOTFCompiler(object):
         # populate glyphs
         for glyphName in self.glyphOrder:
             glyph = self.allGlyphs[glyphName]
-            glyphWidth = glyph.width
             unicodes = glyph.unicodes
             charString = self.getCharStringForGlyph(glyph, private, globalSubrs)
             # add to the font
