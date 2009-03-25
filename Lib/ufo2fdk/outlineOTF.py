@@ -534,6 +534,9 @@ class OutlineOTFCompiler(object):
         topDict.FamilyName = normalizeNameForPostscript(getAttrWithFallback(info, "openTypeNamePreferredFamilyName"))
         topDict.Weight = getAttrWithFallback(info, "postscriptWeightName")
         topDict.FontName = getAttrWithFallback(info, "postscriptFontName")
+        # populate font matrix
+        unitsPerEm = _roundInt(getAttrWithFallback(info, "unitsPerEm"))
+        topDict.FontMatrix = [1.0 / unitsPerEm, 0, 0, 1.0 / unitsPerEm, 0, 0]
         # populate hint data
         blueFuzz = _roundInt(getAttrWithFallback(info, "postscriptBlueFuzz"))
         blueShift = _roundInt(getAttrWithFallback(info, "postscriptBlueShift"))
