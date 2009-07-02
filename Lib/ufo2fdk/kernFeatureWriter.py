@@ -32,11 +32,15 @@ class KernFeatureWriter(object):
     finds unreferenced groups in the ``getUnreferencedGroups``.
     These groups will be studied when attempting to decompose
     these special exceptions. This is as accurate as it can be,
-    but it is not foolproof.
+    but it is not foolproof. Passing a groupNamePrefix that
+    defines a prefix that all referenced kerning groups will
+    start with. If this is known, it will help remove the
+    ambiguities described above.
     """
 
-    def __init__(self, font):
+    def __init__(self, font, groupNamePrefix=""):
         self.font = font
+        self.groupNamePrefix = groupNamePrefix
         self.leftGroups, self.rightGroups = self.getReferencedGroups()
         self.leftUnreferencedGroups, self.rightUnreferencedGroups = self.getUnreferencedGroups()
         self.pairs = self.getPairs()
@@ -101,9 +105,9 @@ class KernFeatureWriter(object):
         rightReferencedGroups = set()
         groups = self.font.groups
         for left, right in self.font.kerning.keys():
-            if left in groups:
+            if left.startswith(self.groupNamePrefix) and left in groups:
                 leftReferencedGroups.add(left)
-            if right in groups:
+            if right.startswith(self.groupNamePrefix) and right in groups:
                 rightReferencedGroups.add(right)
         leftGroups = {}
         for groupName in leftReferencedGroups:
@@ -140,7 +144,7 @@ class KernFeatureWriter(object):
         unreferencedLeftGroups = {}
         unreferencedRightGroups = {}
         for groupName, glyphList in sorted(self.font.groups.items()):
-            if not groupName.startswith("@"):
+            if not groupName.startswith("@") or not groupName.startswith(self.groupNamePrefix):
                 continue
             if groupName in self.leftGroups:
                 continue
@@ -170,15 +174,15 @@ class KernFeatureWriter(object):
             if right not in self.font.groups and right not in self.font:
                 continue
             # skip empty groups
-            if left in self.font.groups and not self.font.groups[left]:
+            if left.startswith(self.groupNamePrefix) and left in self.font.groups and not self.font.groups[left]:
                 continue
-            if right in self.font.groups and not self.font.groups[right]:
+            if right.startswith(self.groupNamePrefix) and right in self.font.groups and not self.font.groups[right]:
                 continue
             # store pair
-            if left in self.font.groups:
+            if left.startswith(self.groupNamePrefix) and left in self.font.groups:
                 if not left.startswith("@"):
                     left = "@" + left
-            if right in self.font.groups:
+            if right.startswith(self.groupNamePrefix) and right in self.font.groups:
                 if not right.startswith("@"):
                     right = "@" + right
             pairs[left, right] = value
