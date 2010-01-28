@@ -134,6 +134,54 @@ def checkOutlines(fontPath, removeOverlap=True, correctContourDirection=True):
     stderr, stdout = _execute(cmds)
     return stderr, stdout
 
+def removeOverlap(contours):
+    """
+    Run outlineCheck on more than one contour.
+    This will remove the original contours from
+    the parent glyph, if a change was made.
+    """
+    from ufo2fdk.pens.bezPen import BezPen, drawBez
+    assert len(contours) > 1, "More than one contour is required."
+    glyphs = set()
+    for contour in contours:
+        glyph = contour.getParent()
+        glyphs.add(glyph)
+    assert len(glyphs) == 1, "The contours must belong to only one glyph."
+    assert glyph is not None, "A parent glyph must be present for the contours."
+    # write the bez
+    pen = BezPen(glyphSet=None)
+    for contour in contours:
+        contour.draw(pen)
+    inBez = pen.getBez()
+    # write the bez to a temp file
+    bezPathIn = tempfile.mkstemp()[1]
+    f = open(bezPathIn, "w")
+    f.write(inBez)
+    f.close()
+    # call the outlinecheck tool
+    cmds = ["outlinecheck", "-n", "-O", "-k"]
+    cmds.append(bezPathIn)
+    _execute(cmds)
+    # load the new bez
+    bezPathOut = bezPathIn + ".new"
+    if os.path.exists(bezPathOut):
+        f = open(bezPathOut, "r")
+        outBez = f.read()
+        f.close()
+        # apply only if the new bez is different than the old bez
+        if inBez != outBez:
+            # remove the old contours
+            for contour in contours:
+                glyph.removeContour(contour)
+            # write the bez back into the glyph
+            pen = glyph.getPen()
+            drawBez(outBez, pen)
+    # remove files
+    for path in [bezPathIn, bezPathOut]:
+        if os.path.exists(path):
+            os.remove(path)
+
+
 # --------------
 # Internal Tools
 # --------------
