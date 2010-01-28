@@ -136,12 +136,11 @@ def checkOutlines(fontPath, removeOverlap=True, correctContourDirection=True):
 
 def removeOverlap(contours):
     """
-    Run outlineCheck on more than one contour.
+    Run outlineCheck on one or more contours.
     This will remove the original contours from
     the parent glyph, if a change was made.
     """
     from ufo2fdk.pens.bezPen import BezPen, drawBez
-    assert len(contours) > 1, "More than one contour is required."
     glyphs = set()
     for contour in contours:
         glyph = contour.getParent()
