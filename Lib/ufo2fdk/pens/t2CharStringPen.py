@@ -1,7 +1,8 @@
+from fontTools.misc.psCharStrings import T2CharString
 from ufo2fdk.pens import RelativeCoordinatePen, roundInt, roundIntPoint
 
 
-class T2CharstringPen(RelativeCoordinatePen):
+class T2CharStringPen(RelativeCoordinatePen):
 
     def __init__(self, width, glyphSet):
         RelativeCoordinatePen.__init__(self, glyphSet)
