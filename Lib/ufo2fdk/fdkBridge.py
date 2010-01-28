@@ -134,19 +134,16 @@ def checkOutlines(fontPath, removeOverlap=True, correctContourDirection=True):
     stderr, stdout = _execute(cmds)
     return stderr, stdout
 
-def removeOverlap(contours):
+def removeOverlap(glyph, contours):
     """
     Run outlineCheck on one or more contours.
     This will remove the original contours from
-    the parent glyph, if a change was made.
+    the given glyph, if a change was made.
+
+    This returns a boolean indicating if a change
+    was made or not.
     """
     from ufo2fdk.pens.bezPen import BezPen, drawBez
-    glyphs = set()
-    for contour in contours:
-        glyph = contour.getParent()
-        glyphs.add(glyph)
-    assert len(glyphs) == 1, "The contours must belong to only one glyph."
-    assert glyph is not None, "A parent glyph must be present for the contours."
     # write the bez
     pen = BezPen(glyphSet=None)
     for contour in contours:
@@ -163,6 +160,7 @@ def removeOverlap(contours):
     _execute(cmds)
     # load the new bez
     bezPathOut = bezPathIn + ".new"
+    madeChange = False
     if os.path.exists(bezPathOut):
         f = open(bezPathOut, "r")
         outBez = f.read()
@@ -175,10 +173,13 @@ def removeOverlap(contours):
             # write the bez back into the glyph
             pen = glyph.getPen()
             drawBez(outBez, pen)
+            madeChange = True
     # remove files
     for path in [bezPathIn, bezPathOut]:
         if os.path.exists(path):
             os.remove(path)
+    # return the change status
+    return madeChange
 
 
 # --------------
