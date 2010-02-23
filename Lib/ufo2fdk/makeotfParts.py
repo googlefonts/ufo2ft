@@ -74,7 +74,7 @@ class MakeOTFPartsCompiler(object):
         may override this method to handle the file creation
         in a different way if desired.
         """
-        c = OutlineOTFCompiler(self.font, path, self.glyphOrder)
+        c = self.outlineCompilerClass(self.font, path, self.glyphOrder)
         c.compile()
 
     def setupFile_menuName(self, path):
