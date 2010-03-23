@@ -51,6 +51,8 @@ class KernFeatureWriter(object):
         Write the feature text. If *headerText* is provided
         it will inserted after the ``feature kern {`` line.
         """
+        if not self.pairs:
+            return ""
         glyphGlyph, glyphGroupDecomposed, groupGlyphDecomposed, glyphGroup, groupGlyph, groupGroup = self.getSeparatedPairs(self.pairs)
         # write the classes
         groups = dict(self.leftGroups)
