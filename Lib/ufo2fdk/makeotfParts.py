@@ -208,8 +208,12 @@ class MakeOTFPartsCompiler(object):
         in a different way if desired.
         """
         # force absolute includes into the features
-        existingFeaturePath = os.path.join(self.font.path, "features.fea")
-        existing = forceAbsoluteIncludesInFeatures(self.font.features.text, os.path.dirname(self.font.path))
+        if self.font.path is None:
+            existingFeaturePath = None
+            existing = self.font.features.text
+        else:
+            existingFeaturePath = os.path.join(self.font.path, "features.fea")
+            existing = forceAbsoluteIncludesInFeatures(self.font.features.text, os.path.dirname(self.font.path))
         # break the features into parts
         features, tables = extractFeaturesAndTables(existing, scannedFiles=[existingFeaturePath])
         # build tables that are not in the existing features
