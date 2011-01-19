@@ -112,7 +112,13 @@ class MakeOTFPartsCompiler(object):
             lines.append("s=1,%s" % macStr(styleName))
         # compatible name
         winCompatible = getAttrWithFallback(self.font.info,"styleMapFamilyName")
-        if winCompatible != familyName:
+        ## the second qualification here is in place for Mac Office <= 2004.
+        ## in that app the menu name is pulled from name ID 18. the font
+        ## may have standard naming data that combines to a length longer
+        ## than the app can handle (see Adobe Tech Note #5088). the designer
+        ## may have created a specific openTypeNameCompatibleFullName to
+        ## get around this problem. sigh, old app bugs live long lives.
+        if winCompatible != familyName or self.font.info.openTypeNameCompatibleFullName is not None:
             # windows
             l = "l=%s" % winCompatible
             lines.append(l)
