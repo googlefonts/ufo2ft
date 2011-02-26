@@ -217,6 +217,8 @@ class MakeOTFPartsCompiler(object):
         if self.font.path is None:
             existingFeaturePath = None
             existing = self.font.features.text
+            if existing is None:
+                existing = ""
         else:
             existingFeaturePath = os.path.join(self.font.path, "features.fea")
             existing = forceAbsoluteIncludesInFeatures(self.font.features.text, os.path.dirname(self.font.path))
