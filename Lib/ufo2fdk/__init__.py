@@ -71,7 +71,7 @@ class OTFCompiler(object):
         * autohint
         """
         # get the path for the parts
-        if self.savePartsNextToUFO and font.path is not None:
+        if self.savePartsNextToUFO:
             partsPath = os.path.splitext(font.path)[0] + ".fdk"
         else:
             partsPath = tempfile.mkdtemp()
