@@ -157,7 +157,17 @@ class OutlineOTFCompiler(object):
         may override this method to handle the charstring creation
         in a different way if desired.
         """
-        pen = T2CharStringPen(_roundInt(glyph.width), self.allGlyphs)
+        width = glyph.width
+        # don't store the width if it is the default width
+        if self.font.postscriptDefaultWidthX == width:
+            width = None
+        else:
+            # store the width as the difference from the nominal width
+            if self.font.postscriptNominalWidthX:
+                width = self.font.postscriptNominalWidthX - width
+            # round
+            width = _roundInt(width)
+        pen = T2CharStringPen(width, self.allGlyphs)
         glyph.draw(pen)
         charString = pen.getCharString(private, globalSubrs)
         return charString
