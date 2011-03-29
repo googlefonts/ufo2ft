@@ -379,8 +379,15 @@ class OutlineOTFCompiler(object):
         os2.fsSelection = intListToNum(selection, 0, 16)
         # characetr indexes
         unicodes = [i for i in self.unicodeToGlyphNameMapping.keys() if i is not None]
-        minIndex = min(unicodes)
-        maxIndex = max(unicodes)
+        if unicodes:
+            minIndex = min(unicodes)
+            maxIndex = max(unicodes)
+        else:
+            # the font may have *no* unicode values
+            # (it really happens!) so there needs
+            # to be a fallback. use space for this.
+            minIndex = 0x0020
+            maxIndex = 0x0020
         if maxIndex >= 0xFFFF:
             # see OS/2 docs
             # need to find a value lower than 0xFFFF.
