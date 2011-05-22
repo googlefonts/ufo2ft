@@ -314,7 +314,7 @@ staticFallbackData = dict(
     postscriptBlueScale=.039625,
     postscriptForceBold=False,
     postscriptDefaultWidthX=200,
-    postscriptNominalWidthX=None,
+    postscriptNominalWidthX=0,
 
     # not used in OTF
     postscriptDefaultCharacter=None,

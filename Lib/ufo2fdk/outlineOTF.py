@@ -159,12 +159,13 @@ class OutlineOTFCompiler(object):
         """
         width = glyph.width
         # don't store the width if it is the default width
-        if self.ufo.info.postscriptDefaultWidthX == width:
+        if getAttrWithFallback(self.ufo.info, "postscriptDefaultWidthX") == width:
             width = None
         else:
             # store the width as the difference from the nominal width
-            if self.ufo.info.postscriptNominalWidthX:
-                width = self.ufo.info.postscriptNominalWidthX - width
+            postscriptNominalWidthX = getAttrWithFallback(self.ufo.info, "postscriptNominalWidthX")
+            if postscriptNominalWidthX:
+                width = width - self.ufo.info.postscriptNominalWidthX
             # round
             width = _roundInt(width)
         pen = T2CharStringPen(width, self.allGlyphs)
@@ -554,6 +555,9 @@ class OutlineOTFCompiler(object):
         # populate font matrix
         unitsPerEm = _roundInt(getAttrWithFallback(info, "unitsPerEm"))
         topDict.FontMatrix = [1.0 / unitsPerEm, 0, 0, 1.0 / unitsPerEm, 0, 0]
+        # populate the width values
+        topDict.defaultWidthX = _roundInt(getAttrWithFallback(info, "postscriptDefaultWidthX"))
+        topDict.nominalWidthX = _roundInt(getAttrWithFallback(info, "postscriptNominalWidthX"))
         # populate hint data
         blueFuzz = _roundInt(getAttrWithFallback(info, "postscriptBlueFuzz"))
         blueShift = _roundInt(getAttrWithFallback(info, "postscriptBlueShift"))
