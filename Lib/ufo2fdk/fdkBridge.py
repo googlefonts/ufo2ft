@@ -112,7 +112,7 @@ def checkOutlines(fontPath, removeOverlap=True, correctContourDirection=True):
     """
     Run checkOutlines.
     The arguments will be converted into arguments
-    for makeotf as follows:
+    for checkOutlines as follows:
 
     The following arguments will be passed to autohint.
 
@@ -124,24 +124,54 @@ def checkOutlines(fontPath, removeOverlap=True, correctContourDirection=True):
     Additionally, the following arguments will be passed to checkOutlines.
 
     * -e
+    * -k
     """
-    cmds = ["checkoutlines", "-e"]
-    if not removeOverlap:
-        cmds.append("-V")
-    if not correctContourDirection:
-        cmds.append("-O")
-    cmds.append(fontPath)
-    stderr, stdout = _execute(cmds)
-    return stderr, stdout
+    cmds = ["checkoutlines", "-e", "-k"]
+    # checkoutlines seems to apply the contour direction correction
+    # before the overlap removal. that may alter the design of the
+    # glyph when self-intersecting contours are present. to get
+    # around this, do these separately. this is inefficient, but...
+    allStderr = []
+    allStdout = []
+    if removeOverlap:
+        c = cmds + ["-O", fontPath]
+        stderr, stdout = _execute(c)
+        allStderr.append(stderr)
+        allStdout.append(stdout)
+    if correctContourDirection:
+        c = cmds + ["-V", fontPath]
+        stderr, stdout = _execute(c)
+        allStderr.append(stderr)
+        allStdout.append(stdout)
+    return "\n".join(allStderr), "\n".join(allStdout)
 
-def removeOverlap(glyph, contours):
+outlineCheckFirstLineRE = re.compile(
+    "Wrote fixed file"
+    ".+"
+)
+
+def checkOutlinesGlyph(glyph, contours, removeOverlap=True, correctContourDirection=True):
     """
     Run outlineCheck on one or more contours.
     This will remove the original contours from
-    the given glyph, if a change was made.
-
-    This returns a boolean indicating if a change
+    the given glyph, if a change was made. This
+    returns a boolean indicating if a change
     was made or not.
+
+    The arguments will be converted into arguments
+    for outlineCheck as follows:
+
+    The following arguments will be passed to autohint.
+
+    =============================  ===
+    removeOverlap=False            -V
+    correctContourDirection=False  -O
+    =============================  ===
+
+    Additionally, the following arguments will be passed to outlineCheck.
+
+    * -e
+    * -k
     """
     from ufo2fdk.pens.bezPen import BezPen, drawBez
     # write the bez
@@ -155,7 +185,11 @@ def removeOverlap(glyph, contours):
     f.write(inBez)
     f.close()
     # call the outlinecheck tool
-    cmds = ["outlinecheck", "-n", "-O", "-k"]
+    cmds = ["outlinecheck", "-n", "-k"]
+    if not removeOverlap:
+        cmds.append("-V")
+    if not correctContourDirection:
+        cmds.append("-O")
     cmds.append(bezPathIn)
     _execute(cmds)
     # load the new bez
@@ -165,6 +199,11 @@ def removeOverlap(glyph, contours):
         f = open(bezPathOut, "r")
         outBez = f.read()
         f.close()
+        # remove irrelevant log at the top of the file
+        outBez = outBez.splitlines()
+        if outlineCheckFirstLineRE.match(outBez[0]):
+            outBez = outBez[1:]
+        outBez = "\n".join(outBez)
         # apply only if the new bez is different than the old bez
         if inBez != outBez:
             # remove the old contours
@@ -180,6 +219,11 @@ def removeOverlap(glyph, contours):
             os.remove(path)
     # return the change status
     return madeChange
+
+def removeOverlap(glyph, contours):
+    from warnings import warn
+    warn(DeprecationWarning("Use checkOutlinesGlyph!"))
+    return checkOutlinesGlyph(glyph, contours, removeOverlap=True, correctContourDirection=False)
 
 
 # --------------
