@@ -158,16 +158,12 @@ class OutlineOTFCompiler(object):
         in a different way if desired.
         """
         width = glyph.width
-        # don't store the width if it is the default width
-        if getAttrWithFallback(self.ufo.info, "postscriptDefaultWidthX") == width:
-            width = None
-        else:
-            # store the width as the difference from the nominal width
-            postscriptNominalWidthX = getAttrWithFallback(self.ufo.info, "postscriptNominalWidthX")
-            if postscriptNominalWidthX:
-                width = width - self.ufo.info.postscriptNominalWidthX
-            # round
-            width = _roundInt(width)
+        # subtract the nominal width
+        postscriptNominalWidthX = getAttrWithFallback(self.ufo.info, "postscriptNominalWidthX")
+        if postscriptNominalWidthX:
+            width = width - postscriptNominalWidthX
+        # round
+        width = _roundInt(width)
         pen = T2CharStringPen(width, self.allGlyphs)
         glyph.draw(pen)
         charString = pen.getCharString(private, globalSubrs)
