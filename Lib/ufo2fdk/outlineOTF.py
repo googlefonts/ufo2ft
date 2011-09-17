@@ -385,11 +385,10 @@ class OutlineOTFCompiler(object):
             # to be a fallback. use space for this.
             minIndex = 0x0020
             maxIndex = 0x0020
-        if maxIndex >= 0xFFFF:
-            # see OS/2 docs
-            # need to find a value lower than 0xFFFF.
-            # shouldn't get to this point though.
-            raise NotImplementedError
+        if maxIndex > 0xFFFF:
+            # the spec says that 0xFFFF should be used
+            # as the max if the max exceeds 0xFFFF
+            maxIndex = 0xFFFF
         os2.fsFirstCharIndex = minIndex
         os2.fsLastCharIndex = maxIndex
         os2.usBreakChar = 32
