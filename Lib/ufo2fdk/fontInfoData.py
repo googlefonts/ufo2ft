@@ -142,7 +142,7 @@ def openTypeOS2WinAscentFallback(info):
     """
     font = info.getParent()
     if font is None:
-        return getAttrWithFallback("ascender")
+        return getAttrWithFallback(info, "ascender")
     bounds = getFontBounds(font)
     xMin, yMin, xMax, yMax = bounds
     return yMax
@@ -154,10 +154,10 @@ def openTypeOS2WinDescentFallback(info):
     """
     font = info.getParent()
     if font is None:
-        return abs(getAttrWithFallback("descender"))
+        return abs(getAttrWithFallback(info, "descender"))
     bounds = getFontBounds(font)
     if bounds is None:
-        return abs(getAttrWithFallback("descender"))
+        return abs(getAttrWithFallback(info, "descender"))
     xMin, yMin, xMax, yMax = bounds
     return abs(yMin)
 
