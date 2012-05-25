@@ -562,8 +562,12 @@ class OutlineOTFCompiler(object):
         unitsPerEm = _roundInt(getAttrWithFallback(info, "unitsPerEm"))
         topDict.FontMatrix = [1.0 / unitsPerEm, 0, 0, 1.0 / unitsPerEm, 0, 0]
         # populate the width values
-        topDict.defaultWidthX = _roundInt(getAttrWithFallback(info, "postscriptDefaultWidthX"))
-        topDict.nominalWidthX = _roundInt(getAttrWithFallback(info, "postscriptNominalWidthX"))
+        defaultWidthX = _roundInt(getAttrWithFallback(info, "postscriptDefaultWidthX"))
+        if defaultWidthX:
+            private.rawDict["defaultWidthX"] = defaultWidthX
+        nominalWidthX = _roundInt(getAttrWithFallback(info, "postscriptNominalWidthX"))
+        if nominalWidthX:
+            private.rawDict["nominalWidthX"] = nominalWidthX
         # populate hint data
         blueFuzz = _roundInt(getAttrWithFallback(info, "postscriptBlueFuzz"))
         blueShift = _roundInt(getAttrWithFallback(info, "postscriptBlueShift"))
