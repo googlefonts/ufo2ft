@@ -456,34 +456,79 @@ class MakeOTFPartsCompiler(object):
 
 
 includeRE = re.compile(
-    "include"
-    "\s*"
-    "\("
+    "(include\s*\(\s*)"
     "([^\)]+)"
-    "\)"
+    "(\s*\))" # this won't actually capture a trailing space.
     )
+
+forceAbsoluteIncludesInFeaturesTestText = """
+# absolute path
+include(/Users/bob/foo1/bar1/default.fea);
+
+# relative path
+include(foo2/bar2/default.fea);
+
+# . syntax
+include(./foo3/bar3/default.fea);
+
+# .. syntax
+include(../foo4/bar4/default.fea);
+
+# spaces around path
+include( foo5/bar5/default.fea );
+"""
+
+forceAbsoluteIncludesInFeaturesTestResult = """
+# absolute path
+include(/Users/bob/foo1/bar1/default.fea);
+
+# relative path
+include(/test1/test2/foo2/bar2/default.fea);
+
+# . syntax
+include(/test1/test2/foo3/bar3/default.fea);
+
+# .. syntax
+include(/test1/foo4/bar4/default.fea);
+
+# spaces around path
+include( /test1/test2/foo5/bar5/default.fea );
+"""
+
 
 def forceAbsoluteIncludesInFeatures(text, directory):
     """
     Convert relative includes in the *text*
     to absolute includes.
+
+    >>> result = forceAbsoluteIncludesInFeatures(forceAbsoluteIncludesInFeaturesTestText, "/test1/test2")
+    >>> result == forceAbsoluteIncludesInFeaturesTestResult
+    True
     """
-    for includePath in includeRE.findall(text):
+    for match in reversed(list(includeRE.finditer(text))):
+        start, includePath, close = match.groups()
+        # absolute path
+        if os.path.isabs(includePath):
+            continue
+        # relative path
         currentDirectory = directory
-        parts = includePath.split("/")
+        parts = includePath.split(os.sep)
         for index, part in enumerate(parts):
             part = part.strip()
             if not part:
                 continue
+            # .. = up one level
             if part == "..":
                 currentDirectory = os.path.dirname(currentDirectory)
+            # . = current level
             elif part == ".":
                 continue
             else:
                 break
-        subPath = "/".join(parts[index:])
+        subPath = os.sep.join(parts[index:])
         srcPath = os.path.join(currentDirectory, subPath)
-        text = text.replace(includePath, srcPath)
+        includeText = start + srcPath + close
+        text = text[:match.start()] + includeText + text[match.end():]
     return text
 
 def _roundInt(value):
