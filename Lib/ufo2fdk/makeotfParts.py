@@ -590,7 +590,10 @@ def extractFeaturesAndTables(text, scannedFiles=[]):
         destringedLines.append(line)
     text = "\n".join(destringedLines)
     # extract all includes
-    includes = includeRE.findall(text)
+    includes = []
+    for match in includeRE.finditer(text):
+       start, includePath, close = match.groups()
+       includes.append(includePath)
     # slice off the text that comes before
     # the first feature/table definition
     precedingText = ""
