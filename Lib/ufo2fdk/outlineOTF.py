@@ -5,7 +5,7 @@ from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, Glo
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from pens.t2CharStringPen import T2CharStringPen
-from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeNameForPostscript
+from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum
 try:
     set
 except NameError:
@@ -543,8 +543,17 @@ class OutlineOTFCompiler(object):
         psName = getAttrWithFallback(info, "postscriptFontName")
         cff.fontNames.append(psName)
         topDict = cff.topDictIndex[0]
+        topDict.version = "%d.%d" % (getAttrWithFallback(info, "versionMajor"), getAttrWithFallback(info, "versionMinor"))
+        trademark = getAttrWithFallback(info, trademark)
+        if trademark is None:
+            trademark = ""
+        topDict.Notice = trademark
+        copyright = getAttrWithFallback(info, copyright)
+        if copyright is None:
+            copyright = ""
+        topDict.Copyright = copyright
         topDict.FullName = getAttrWithFallback(info, "postscriptFullName")
-        topDict.FamilyName = normalizeNameForPostscript(getAttrWithFallback(info, "openTypeNamePreferredFamilyName"))
+        topDict.FamilyName = getAttrWithFallback(info, "openTypeNamePreferredFamilyName")
         topDict.Weight = getAttrWithFallback(info, "postscriptWeightName")
         topDict.FontName = getAttrWithFallback(info, "postscriptFontName")
         # populate various numbers
