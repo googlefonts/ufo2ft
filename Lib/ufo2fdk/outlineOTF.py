@@ -544,11 +544,11 @@ class OutlineOTFCompiler(object):
         cff.fontNames.append(psName)
         topDict = cff.topDictIndex[0]
         topDict.version = "%d.%d" % (getAttrWithFallback(info, "versionMajor"), getAttrWithFallback(info, "versionMinor"))
-        trademark = getAttrWithFallback(info, trademark)
+        trademark = getAttrWithFallback(info, "trademark")
         if trademark is None:
             trademark = ""
         topDict.Notice = trademark
-        copyright = getAttrWithFallback(info, copyright)
+        copyright = getAttrWithFallback(info, "copyright")
         if copyright is None:
             copyright = ""
         topDict.Copyright = copyright
