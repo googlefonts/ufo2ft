@@ -1,11 +1,12 @@
 from __future__ import division
 import time
+from warnings import warn
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from pens.t2CharStringPen import T2CharStringPen
-from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum
+from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
 try:
     set
 except NameError:
@@ -545,10 +546,16 @@ class OutlineOTFCompiler(object):
         topDict = cff.topDictIndex[0]
         topDict.version = "%d.%d" % (getAttrWithFallback(info, "versionMajor"), getAttrWithFallback(info, "versionMinor"))
         trademark = getAttrWithFallback(info, "trademark")
+        trademark = normalizeStringForPostscript(trademark.replace(u"\u00A9", "Copyright"))
+        if trademark != font.info.trademark:
+        	warn("The trademark was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % trademark)
         if trademark is None:
             trademark = ""
         topDict.Notice = trademark
         copyright = getAttrWithFallback(info, "copyright")
+        copyright = normalizeStringForPostscript(copyright.replace(u"\u00A9", "Copyright"))
+        if copyright != font.info.copyright:
+        	warn("The copyright was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % copyright)
         if copyright is None:
             copyright = ""
         topDict.Copyright = copyright
