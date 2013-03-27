@@ -547,14 +547,14 @@ class OutlineOTFCompiler(object):
         topDict.version = "%d.%d" % (getAttrWithFallback(info, "versionMajor"), getAttrWithFallback(info, "versionMinor"))
         trademark = getAttrWithFallback(info, "trademark")
         trademark = normalizeStringForPostscript(trademark.replace(u"\u00A9", "Copyright"))
-        if trademark != font.info.trademark:
+        if trademark != self.ufo.info.trademark:
         	warn("The trademark was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % trademark)
         if trademark is None:
             trademark = ""
         topDict.Notice = trademark
         copyright = getAttrWithFallback(info, "copyright")
         copyright = normalizeStringForPostscript(copyright.replace(u"\u00A9", "Copyright"))
-        if copyright != font.info.copyright:
+        if copyright != self.ufo.info.copyright:
         	warn("The copyright was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % copyright)
         if copyright is None:
             copyright = ""
