@@ -167,6 +167,7 @@ _postscriptFontNameExceptions = set("[](){}<>/%")
 _postscriptFontNameAllowed = set([unichr(i) for i in xrange(33, 137)])
 
 def normalizeStringForPostscript(s, allowSpaces=True):
+    s = unicode(s)
     normalized = []
     for c in s:
         if c == " " and not allowSpaces:
