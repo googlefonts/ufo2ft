@@ -76,7 +76,7 @@ class OTFCompiler(object):
         else:
             partsPath = tempfile.mkdtemp()
         # make report storage
-        report = dict(makeotf=None, checkOutlines=None, autohint=None)
+        report = dict(parts=None, makeotf=None, checkOutlines=None, autohint=None)
         # do the compile
         try:
             # make the parts
@@ -84,6 +84,7 @@ class OTFCompiler(object):
                 progressBar.update("Preparing...")
             partsCompiler = self.partsCompilerClass(font, partsPath, glyphOrder=glyphOrder, outlineCompilerClass=self.outlineCompilerClass)
             partsCompiler.compile()
+            report["parts"] = "\n".join(partsCompiler.log)
             # checkOutlines
             if checkOutlines:
                 if progressBar is not None:

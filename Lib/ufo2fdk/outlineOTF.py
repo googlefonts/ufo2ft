@@ -1,6 +1,5 @@
 from __future__ import division
 import time
-from warnings import warn
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
@@ -40,6 +39,7 @@ class OutlineOTFCompiler(object):
     def __init__(self, font, path, glyphOrder=None):
         self.ufo = font
         self.path = path
+        self.log = []
         # make any missing glyphs and store them locally
         missingRequiredGlyphs = self.makeMissingRequiredGlyphs()
         # make a dict of all glyphs
@@ -548,14 +548,14 @@ class OutlineOTFCompiler(object):
         trademark = getAttrWithFallback(info, "trademark")
         trademark = normalizeStringForPostscript(trademark.replace(u"\u00A9", "Copyright"))
         if trademark != self.ufo.info.trademark:
-        	warn("The trademark was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % trademark)
+        	self.log.append("[Warning] The trademark was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % trademark)
         if trademark is None:
             trademark = ""
         topDict.Notice = trademark
         copyright = getAttrWithFallback(info, "copyright")
         copyright = normalizeStringForPostscript(copyright.replace(u"\u00A9", "Copyright"))
         if copyright != self.ufo.info.copyright:
-        	warn("The copyright was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % copyright)
+        	self.log.append("[Warning] The copyright was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % copyright)
         if copyright is None:
             copyright = ""
         topDict.Copyright = copyright
