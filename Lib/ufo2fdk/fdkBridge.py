@@ -143,6 +143,11 @@ def checkOutlines(fontPath, removeOverlap=True, correctContourDirection=True):
         stderr, stdout = _execute(c)
         allStderr.append(stderr)
         allStdout.append(stdout)
+    if not removeOverlap and not correctContourDirection:
+        c = cmds + ["-O", fontPath]
+        stderr, stdout = _execute(c)
+        allStderr.append(stderr)
+        allStdout.append(stdout)
     return "\n".join(allStderr), "\n".join(allStdout)
 
 outlineCheckFirstLineRE = re.compile(
