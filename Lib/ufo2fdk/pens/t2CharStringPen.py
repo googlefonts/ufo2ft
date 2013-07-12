@@ -17,7 +17,7 @@ class T2CharStringPen(RelativeCoordinatePen):
         self._heldMove = [x, y, "rmoveto"]
 
     def _storeHeldMove(self):
-        if self._heldMove is None:
+        if self._heldMove is not None:
             self._program.extend(self._heldMove)
             self._heldMove = None
 
