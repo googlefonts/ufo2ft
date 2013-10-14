@@ -39,6 +39,6 @@ setup(name="ufo2fdk",
     author_email="tal@typesupply.com",
     url="http://code.typesupply.com",
     license="MIT",
-    packages=["ufo2fdk"],
+    packages=["ufo2fdk", "ufo2fdk.pens"],
     package_dir={"":"Lib"}
 )
