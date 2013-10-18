@@ -13,7 +13,7 @@ class RelativeCoordinatePen(BasePen):
         BasePen.__init__(self, glyphSet)
         self._lastX = None
         self._lastY = None
-        self._heldMove = None
+        self._heldAbsoluteMove = None
 
     def _makePointRelative(self, pt):
         absX, absY = pt
@@ -34,13 +34,13 @@ class RelativeCoordinatePen(BasePen):
         return relX, relY
 
     def _moveTo(self, pt):
-        pt = self._makePointRelative(pt)
-        self._heldMove = pt
+        self._heldAbsoluteMove = pt
     
     def _releaseHeldMove(self):
-        if self._heldMove:
-            self._relativeMoveTo(self._heldMove)
-            self._heldMove = None
+        if self._heldAbsoluteMove is not None:
+            pt = self._makePointRelative(self._heldAbsoluteMove)
+            self._relativeMoveTo(pt)
+            self._heldAbsoluteMove = None
     
     def _relativeMoveTo(self, pt):
         raise NotImplementedError
