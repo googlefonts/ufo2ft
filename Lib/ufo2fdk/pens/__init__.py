@@ -13,6 +13,7 @@ class RelativeCoordinatePen(BasePen):
         BasePen.__init__(self, glyphSet)
         self._lastX = None
         self._lastY = None
+        self._heldMove = None
 
     def _makePointRelative(self, pt):
         absX, absY = pt
@@ -34,12 +35,18 @@ class RelativeCoordinatePen(BasePen):
 
     def _moveTo(self, pt):
         pt = self._makePointRelative(pt)
-        self._relativeMoveTo(pt)
-
+        self._heldMove = pt
+    
+    def _releaseHeldMove(self):
+        if self._heldMove:
+            self._relativeMoveTo(self._heldMove)
+            self._heldMove = None
+    
     def _relativeMoveTo(self, pt):
         raise NotImplementedError
 
     def _lineTo(self, pt):
+        self._releaseHeldMove()
         pt = self._makePointRelative(pt)
         self._relativeLineTo(pt)
 
@@ -47,6 +54,7 @@ class RelativeCoordinatePen(BasePen):
         raise NotImplementedError
 
     def _curveToOne(self, pt1, pt2, pt3):
+        self._releaseHeldMove()
         pt1 = self._makePointRelative(pt1)
         pt2 = self._makePointRelative(pt2)
         pt3 = self._makePointRelative(pt3)
