@@ -146,11 +146,11 @@ class MakeOTFPartsCompiler(object):
             if glyphName in self.font and self.font[glyphName].unicode is not None:
                 code = self.font[glyphName].unicode
                 code = "%04X" % code
-                if len(code) < 4:
+                if len(code) <= 4:
                     code = "uni%s" % code
                 else:
                     code = "u%s" % code
-                line = "%s %s uni%s" % (glyphName, glyphName, code)
+                line = "%s %s %s" % (glyphName, glyphName, code)
             else:
                 line = "%s %s" % (glyphName, glyphName)
             lines.append(line)
