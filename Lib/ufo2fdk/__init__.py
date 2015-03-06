@@ -51,16 +51,18 @@ class OTFCompiler(object):
         self.partsCompilerClass = partsCompilerClass
         self.outlineCompilerClass = outlineCompilerClass
 
-    def compile(self, font, path, checkOutlines=False, autohint=False, releaseMode=False, glyphOrder=None, progressBar=None):
+    def compile(self, font, path, checkOutlines=False, autohint=False, releaseMode=False, features=None, glyphOrder=None, progressBar=None):
         """
         This method will write *font* into an OTF-CFF at *path*.
         If *checkOutlines* is True, the checkOutlines program
         will be run on the font. If *autohint* is True, the
         autohint program will be run on the font. If *releaseMode*
         is True, makeotf will be told to compile the font in
-        release mode. An optional list of glyph names in *glyphOrder*
-        will specifiy the order of glyphs inthe font. If provided,
-        *progressBar* should be an object that has an *update* method.
+        release mode. A custom feature file may be used instead of
+        that of the UFO in *features*. An optional list of glyph names
+        in *glyphOrder* will specifiy the order of glyphs in the font.
+        If provided, *progressBar* should be an object that has an
+        *update* method.
 
         When this method is finished, it will return a dictionary
         containing reports from the run programs. The keys
@@ -82,7 +84,7 @@ class OTFCompiler(object):
             # make the parts
             if progressBar is not None:
                 progressBar.update("Preparing...")
-            partsCompiler = self.partsCompilerClass(font, partsPath, glyphOrder=glyphOrder, outlineCompilerClass=self.outlineCompilerClass)
+            partsCompiler = self.partsCompilerClass(font, partsPath, features=features, glyphOrder=glyphOrder, outlineCompilerClass=self.outlineCompilerClass)
             partsCompiler.compile()
             report["parts"] = "\n".join(partsCompiler.log)
             # checkOutlines
@@ -150,4 +152,3 @@ class OTFCompiler(object):
                 shutil.rmtree(partsPath)
         # return the report
         return report
-
