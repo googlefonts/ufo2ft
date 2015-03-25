@@ -11,6 +11,9 @@ class T2CharStringPen(RelativeCoordinatePen):
         if width is not None:
             self._program.append(roundInt(width))
 
+    def _moveTo(self, pt):
+        RelativeCoordinatePen._moveTo(self, roundIntPoint(pt))
+
     def _relativeMoveTo(self, pt):
         pt = roundIntPoint(pt)
         x, y = pt
@@ -20,12 +23,18 @@ class T2CharStringPen(RelativeCoordinatePen):
         if self._heldMove is not None:
             self._program.extend(self._heldMove)
             self._heldMove = None
+    
+    def _lineTo(self, pt):
+        RelativeCoordinatePen._lineTo(self, roundIntPoint(pt))
 
     def _relativeLineTo(self, pt):
         self._storeHeldMove()
         pt = roundIntPoint(pt)
         x, y = pt
         self._program.extend([x, y, "rlineto"])
+
+    def _curveToOne(self, pt1, pt2, pt3):
+        RelativeCoordinatePen._curveToOne(self, roundIntPoint(pt1), roundIntPoint(pt2), roundIntPoint(pt3))
 
     def _relativeCurveToOne(self, pt1, pt2, pt3):
         self._storeHeldMove()
