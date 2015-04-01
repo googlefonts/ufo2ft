@@ -378,7 +378,7 @@ class OutlineOTFCompiler(object):
         os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
         os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
         # vendor id
-        os2.achVendID = getAttrWithFallback(font.info, "openTypeOS2VendorID")
+        os2.achVendID = str(getAttrWithFallback(font.info, "openTypeOS2VendorID").decode("ascii", "ignore"))
         # vertical metrics
         os2.sxHeight = _roundInt(getAttrWithFallback(font.info, "xHeight"))
         os2.sCapHeight = _roundInt(getAttrWithFallback(font.info, "capHeight"))
