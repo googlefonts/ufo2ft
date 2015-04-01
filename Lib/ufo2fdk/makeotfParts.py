@@ -33,11 +33,13 @@ class MakeOTFPartsCompiler(object):
     :class:`ufo2fdk.tools.outlineOTF.OutlineOTFCompiler`.
     """
 
-    def __init__(self, font, path, glyphOrder=None, outlineCompilerClass=OutlineOTFCompiler):
+    def __init__(self, font, path, features=None, glyphOrder=None, outlineCompilerClass=OutlineOTFCompiler):
         self.font = font
         self.path = path
         self.log = []
         self.outlineCompilerClass = outlineCompilerClass
+        # store the path to an eventual custom feature file
+        self.features = features
         # store the glyph order
         if glyphOrder is None:
             glyphOrder = sorted(font.keys())
@@ -223,6 +225,11 @@ class MakeOTFPartsCompiler(object):
             existing = self.font.features.text
             if existing is None:
                 existing = ""
+        elif self.features is not None:
+            existingFeaturePath = os.path.normpath(os.path.join(self.font.path, self.features))
+            with open(existingFeaturePath, "r") as fea:
+                text = fea.read()
+            existing = forceAbsoluteIncludesInFeatures(text, os.path.dirname(existingFeaturePath))
         else:
             existingFeaturePath = os.path.join(self.font.path, "features.fea")
             existing = forceAbsoluteIncludesInFeatures(self.font.features.text, os.path.dirname(self.font.path))
