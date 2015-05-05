@@ -274,20 +274,21 @@ class OutlineOTFCompiler(object):
         # subtable that can hold longer codepoints for them.
         if nonBMP:
             from fontTools.ttLib.tables._c_m_a_p import cmap_format_12
+            nonBMP.update(mapping)
             # mac
-            cmap12_0_3 = cmap_format_12(12)
-            cmap12_0_3.platformID = 0
-            cmap12_0_3.platEncID = 3
-            cmap12_0_3.language = 0
-            cmap12_0_3.cmap = nonBMP
+            cmap12_0_4 = cmap_format_12(12)
+            cmap12_0_4.platformID = 0
+            cmap12_0_4.platEncID = 4
+            cmap12_0_4.language = 0
+            cmap12_0_4.cmap = nonBMP
             # windows
-            cmap12_3_1 = cmap_format_12(12)
-            cmap12_3_1.platformID = 3
-            cmap12_3_1.platEncID = 1
-            cmap12_3_1.language = 0
-            cmap12_3_1.cmap = nonBMP
+            cmap12_3_10 = cmap_format_12(12)
+            cmap12_3_10.platformID = 3
+            cmap12_3_10.platEncID = 10
+            cmap12_3_10.language = 0
+            cmap12_3_10.cmap = nonBMP
             # update tables registry
-            cmap.tables = [cmap4_0_3, cmap4_3_1, cmap12_0_3, cmap12_3_1]
+            cmap.tables = [cmap4_0_3, cmap4_3_1, cmap12_0_4, cmap12_3_10]
 
     def setupTable_OS2(self):
         """
