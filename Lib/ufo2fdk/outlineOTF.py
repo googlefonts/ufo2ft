@@ -187,8 +187,8 @@ class OutlineOTFCompiler(object):
         head.checkSumAdjustment = 0
         head.tableVersion = 1.0
         versionMajor = getAttrWithFallback(font.info, "versionMajor")
-        versionMinor = getAttrWithFallback(font.info, "versionMinor") * .001
-        head.fontRevision = versionMajor + versionMinor
+        versionMinor = getAttrWithFallback(font.info, "versionMinor")
+        head.fontRevision = float("%d.%d" % (versionMajor, versionMinor))
         head.magicNumber = 0x5F0F3CF5
         # upm
         head.unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
