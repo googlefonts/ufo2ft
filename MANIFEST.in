@@ -1,3 +1,0 @@
-include License.txt
-include Install.txt
-recursive-include documentation *
