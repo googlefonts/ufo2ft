@@ -2,8 +2,10 @@ from __future__ import division
 import time
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
+from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
+from fontTools.ttLib.tables._n_a_m_e import NameRecord
 from pens.t2CharStringPen import T2CharStringPen
 from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
 try:
@@ -22,19 +24,8 @@ def _roundInt(v):
     return int(round(v))
 
 
-class OutlineOTFCompiler(object):
-
-    """
-    This object will create a bare-bones OTF-CFF containing
-    outline data and not much else. The only external
-    method is :meth:`ufo2fdk.tools.outlineOTF.compile`.
-
-    When creating this object, you must provide a *font*
-    object and a *path* indicating where the OTF should
-    be saved. Optionally, you can provide a *glyphOrder*
-    list of glyph names indicating the order of the glyphs
-    in the font.
-    """
+class OutlineCompiler:
+    """Create a feature-less outline binary."""
 
     def __init__(self, font, path, glyphOrder=None):
         self.ufo = font
@@ -62,9 +53,14 @@ class OutlineOTFCompiler(object):
 
     def compile(self):
         """
-        Compile the OTF.
+        Compile the OpenType binary.
         """
-        self.otf = TTFont(sfntVersion="OTTO")
+        self.precompile()
+        if self.sfnt_version:
+            self.otf = TTFont(sfntVersion=self.sfnt_version)
+        else:
+            self.otf = TTFont()
+
         # populate basic tables
         self.setupTable_head()
         self.setupTable_hhea()
@@ -74,10 +70,11 @@ class OutlineOTFCompiler(object):
         self.setupTable_cmap()
         self.setupTable_OS2()
         self.setupTable_post()
-        self.setupTable_CFF()
         self.setupOtherTables()
+
         # write the file
         self.otf.save(self.path)
+
         # discard the object
         self.otf.close()
         del self.otf
@@ -85,6 +82,14 @@ class OutlineOTFCompiler(object):
     # -----
     # Tools
     # -----
+
+    def precompile(self):
+        """Set any attributes needed before compilation.
+
+        **This should not be called externally.** Subclasses
+        may override this method if desired.
+        """
+        pass
 
     def makeFontBoundingBox(self):
         """
@@ -226,18 +231,49 @@ class OutlineOTFCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
-        self.otf["name"] = newTable("name")
+
+        font = self.ufo
+        nameVals = {
+            "0": font.info.copyright,
+            "1": font.info.styleMapFamilyName,
+            "2": font.info.styleMapStyleName.title(),
+            "3": font.info.openTypeNameUniqueID,
+            "4": "%s %s" % (font.info.familyName, font.info.styleName),
+            "5": font.info.openTypeNameVersion,
+            "6": font.info.postscriptFontName,
+            "7": font.info.trademark,
+            "9": font.info.openTypeNameDesigner,
+            "11": font.info.openTypeNameManufacturerURL,
+            "12": font.info.openTypeNameDesignerURL,
+            "13": font.info.openTypeNameLicense,
+            "14": font.info.openTypeNameLicenseURL,
+            "16": font.info.openTypeNamePreferredFamilyName,
+            "17": font.info.openTypeNamePreferredSubfamilyName}
+        nameIds = nameVals.keys()
+        nameIds.sort()
+
+        self.otf["name"] = name = newTable("name")
+        name.names = []
+        for ids in [(1, 0, 0x0), (3, 1, 0x409)]:
+            for nameId in nameIds:
+                if not nameVals[nameId]:
+                    continue
+                rec = NameRecord()
+                rec.platformID, rec.platEncID, rec.langID = ids
+                rec.nameID = int(nameId)
+                rec.string = nameVals[nameId].encode(
+                    rec.getEncoding(), "strict")
+                name.names.append(rec)
 
     def setupTable_maxp(self):
         """
         Make the maxp table.
 
         **This should not be called externally.** Subclasses
-        may override or supplement this method to handle the
-        table creation in a different way if desired.
+        must override or supplement this method to handle the
+        table creation for either CFF or TT data.
         """
-        self.otf["maxp"] = maxp = newTable("maxp")
-        maxp.tableVersion = 0x00005000
+        raise NotImplementedError
 
     def setupTable_cmap(self):
         """
@@ -532,14 +568,35 @@ class OutlineOTFCompiler(object):
         post.minMemType1 = 0
         post.maxMemType1 = 0
 
-    def setupTable_CFF(self):
+    def setupOtherTables(self):
         """
-        Make the CFF table.
+        Make the other tables. The default implementation does nothing.
 
         **This should not be called externally.** Subclasses
-        may override or supplement this method to handle the
-        table creation in a different way if desired.
+        may override this method to add other tables to the
+        font if desired.
         """
+        pass
+
+
+class OutlineOTFCompiler(OutlineCompiler):
+    """Compile a .otf font with CFF outlines."""
+
+    def precompile(self):
+        self.sfnt_version = "OTTO"
+
+    def setupTable_maxp(self):
+        """Make the maxp table."""
+
+        self.otf["maxp"] = maxp = newTable("maxp")
+        maxp.tableVersion = 0x00005000
+
+    def setupOtherTables(self):
+        self.setupTable_CFF()
+
+    def setupTable_CFF(self):
+        """Make the CFF table."""
+
         self.otf["CFF "] = cff = newTable("CFF ")
         cff = cff.cff
         # set up the basics
@@ -670,15 +727,48 @@ class OutlineOTFCompiler(object):
         # write the glyph order
         self.otf.setGlyphOrder(self.glyphOrder)
 
-    def setupOtherTables(self):
-        """
-        Make the other tables. The default implementation does nothing.
 
-        **This should not be called externally.** Subclasses
-        may override this method to add other tables to the
-        font if desired.
-        """
-        pass
+class OutlineTTFCompiler(OutlineCompiler):
+    """Compile a .ttf font with TrueType outlines."""
+
+    def setupTable_maxp(self):
+        """Make the maxp table."""
+
+        self.otf["maxp"] = maxp = newTable("maxp")
+        maxp.tableVersion = 0b10000
+        maxp.maxZones = 1
+        maxp.maxTwilightPoints = 0
+        maxp.maxStorage = 0
+        maxp.maxFunctionDefs = 0
+        maxp.maxInstructionDefs = 0
+        maxp.maxStackElements = 0
+        maxp.maxSizeOfInstructions = 0
+        maxp.maxComponentElements = max(len(g.components) for g in self.ufo)
+
+    def setupTable_post(self):
+        """Make a format 2 post table with the compiler's glyph order."""
+
+        super(TTFCompiler, self).setupTable_post()
+        post = self.otf["post"]
+        post.formatType = 2.0
+        post.extraNames = []
+        post.mapping = {}
+        post.glyphOrder = self.glyphOrder
+
+    def setupOtherTables(self):
+        self.setupTable_glyf()
+
+    def setupTable_glyf(self):
+        """Make the glyf table."""
+
+        self.otf["loca"] = newTable("loca")
+        self.otf["glyf"] = glyf = newTable("glyf")
+        glyf.glyphs = {}
+        glyf.glyphOrder = self.glyphOrder
+        for glyph in self.ufo:
+            pen = TTGlyphPen()
+            glyph.draw(pen)
+            glyf[glyph.name] = pen.glyph()
 
 
 class StubGlyph(object):
