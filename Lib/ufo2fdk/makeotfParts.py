@@ -12,6 +12,7 @@ class MakeOTFPartsCompiler:
         self.path = path
         self.log = []
         self.outlineCompilerClass = outlineCompilerClass
+        self.setupAnchorPairs()
 
     def compile(self):
         """Compile the outline and features."""
@@ -43,7 +44,7 @@ class MakeOTFPartsCompiler:
         in a different way if desired.
         """
 
-        existing = font.features.text
+        existing = self.font.features.text
 
         # build the GPOS features as necessary
         autoFeatures = {}
@@ -59,7 +60,7 @@ class MakeOTFPartsCompiler:
         for name, text in sorted(autoTables.items()):
             features.append(text)
         features = "\n\n".join(features)
-        font.features.text = features
+        self.font.features.text = features
 
     def writeFeatures_kern(self):
         """
@@ -80,7 +81,7 @@ class MakeOTFPartsCompiler:
         may override this method to handle the string creation
         in a different way if desired.
         """
-        writer = MarkFeatureWriter(self.font)
+        writer = MarkFeatureWriter(self.font, self.anchorPairs)
         return writer.write()
 
     def writeFeatures_mkmk(self):
@@ -91,5 +92,25 @@ class MakeOTFPartsCompiler:
         may override this method to handle the string creation
         in a different way if desired.
         """
-        writer = MarkFeatureWriter(self.font, mkmk=True)
+        writer = MarkFeatureWriter(self.font, self.anchorPairs, mkmk=True)
         return writer.write()
+
+    def setupAnchorPairs(self):
+        """
+        Try to determine the base-accent anchor pairs to use in building the
+        mark and mkmk features.
+
+        **This should not be called externally.** Subclasses
+        may override this method to set up the anchor pairs
+        in a different way if desired.
+        """
+
+        self.anchorPairs = []
+        anchorNames = set()
+        for glyph in self.font:
+            for accent in glyph.accents:
+                anchorNames.add(anchor.name)
+        for baseName in sorted(anchorNames):
+            accentName = "_" + baseName
+            if accentName in anchorNames:
+                self.anchorPairs.append((baseName, accentName))
