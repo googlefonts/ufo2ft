@@ -24,12 +24,11 @@ def _roundInt(v):
     return int(round(v))
 
 
-class OutlineCompiler:
+class OutlineCompiler(object):
     """Create a feature-less outline binary."""
 
-    def __init__(self, font, path, glyphOrder=None):
+    def __init__(self, font, glyphOrder=None):
         self.ufo = font
-        self.path = path
         self.log = []
         # make any missing glyphs and store them locally
         missingRequiredGlyphs = self.makeMissingRequiredGlyphs()
@@ -46,10 +45,6 @@ class OutlineCompiler:
         self.fontBoundingBox = tuple([_roundInt(i) for i in self.makeFontBoundingBox()])
         # make a reusable character mapping
         self.unicodeToGlyphNameMapping = self.makeUnicodeToGlyphNameMapping()
-
-    # -----------
-    # Main Method
-    # -----------
 
     def compile(self):
         """
@@ -72,16 +67,7 @@ class OutlineCompiler:
         self.setupTable_post()
         self.setupOtherTables()
 
-        # write the file
-        self.otf.save(self.path)
-
-        # discard the object
-        self.otf.close()
-        del self.otf
-
-    # -----
-    # Tools
-    # -----
+        return self.otf
 
     def precompile(self):
         """Set any attributes needed before compilation.
@@ -89,7 +75,8 @@ class OutlineCompiler:
         **This should not be called externally.** Subclasses
         may override this method if desired.
         """
-        pass
+
+        self.sfnt_version = None
 
     def makeFontBoundingBox(self):
         """
@@ -748,7 +735,7 @@ class OutlineTTFCompiler(OutlineCompiler):
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
 
-        super(TTFCompiler, self).setupTable_post()
+        super(OutlineTTFCompiler, self).setupTable_post()
         post = self.otf["post"]
         post.formatType = 2.0
         post.extraNames = []

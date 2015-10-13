@@ -4,36 +4,22 @@ from kernFeatureWriter import KernFeatureWriter
 from markFeatureWriter import MarkFeatureWriter
 
 
-class MakeOTFPartsCompiler:
-    """Creates an outline binary, and generates missing feature definitions."""
+class FeatureOTFCompiler:
+    """Generates OpenType feature tables for a UFO."""
 
-    def __init__(self, font, path, outlineCompilerClass):
+    def __init__(self, font, outline):
         self.font = font
-        self.path = path
-        self.log = []
-        self.outlineCompilerClass = outlineCompilerClass
+        self.outline = outline
         self.setupAnchorPairs()
 
     def compile(self):
-        """Compile the outline and features."""
+        """Compile the features."""
 
-        self.setupFile_outlineSource(self.path)
         self.setupFile_features()
+        self.setupFile_featureTables()
+        return self.feasrc
 
-    def setupFile_outlineSource(self, path):
-        """
-        Make the outline source file.
-
-        **This should not be called externally.** Subclasses
-        may override this method to handle the file creation
-        in a different way if desired.
-        """
-
-        c = self.outlineCompilerClass(self.font, path)
-        c.compile()
-        self.log += c.log
-
-    def setupFile_features(self, path):
+    def setupFile_features(self):
         """
         Make the features source file. If any tables
         or the kern feature are defined in the font's
@@ -59,8 +45,7 @@ class MakeOTFPartsCompiler:
         features = [existing]
         for name, text in sorted(autoFeatures.items()):
             features.append(text)
-        features = "\n\n".join(features)
-        self.font.features.text = features
+        self.features = "\n\n".join(features)
 
     def writeFeatures_kern(self):
         """
@@ -114,3 +99,34 @@ class MakeOTFPartsCompiler:
             accentName = "_" + baseName
             if accentName in anchorNames:
                 self.anchorPairs.append((baseName, accentName))
+
+    def setupFile_featureTables(self):
+        """
+        Compile and return OpenType feature tables from the source.
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the table compilation
+        in a different way if desired.
+        """
+
+        import os
+        import subprocess
+        from fontTools.ttLib import TTFont
+
+        fea_path = "tmp.fea"
+        outline_path = "tmp1." + ("otf" if "CFF " in self.outline else "ttf")
+        feasrc_path = outline_path.replace("1", "2")
+
+        with open(fea_path, "w") as feafile:
+            feafile.write(self.features)
+        self.outline.save(outline_path)
+
+        subprocess.call([
+            "makeotf", "-o", feasrc_path, "-f", outline_path, "-ff", fea_path])
+        os.remove(fea_path)
+        os.remove(outline_path)
+
+        feasrc = TTFont(feasrc_path)
+        self.feasrc = {table: feasrc[table] for table in ["GPOS", "GSUB"]}
+        feasrc.close()
+        os.remove(feasrc_path)

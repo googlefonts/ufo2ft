@@ -1,27 +1,30 @@
-from makeotfParts import MakeOTFPartsCompiler
+from makeotfParts import FeatureOTFCompiler
 from outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
 
 
-class UFOCompiler:
-    """Creates an OpenType font from a UFO."""
+def compile(font, outlineCompilerClass, featureCompilerClass):
+    """Create FontTools TTFonts from a UFO."""
 
-    def compile(self, font, path):
-        """Writes font into an OTF-CFF/TTF at path."""
+    outlineCompiler = outlineCompilerClass(font)
+    outline = outlineCompiler.compile()
 
-        partsCompiler = self.partsCompilerClass(
-            font, path, self.outlineCompilerClass)
-        partsCompiler.compile()
+    featureCompiler = FeatureOTFCompiler(font, outline)
+    feasrc = featureCompiler.compile()
+    for table in ['GPOS', 'GSUB']:
+        outline[table] = feasrc[table]
 
-
-class OTFCompiler(UFOCompiler):
-    def __init__(self, partsCompilerClass=MakeOTFPartsCompiler,
-                 outlineCompilerClass=OutlineOTFCompiler):
-        self.partsCompilerClass = partsCompilerClass
-        self.outlineCompilerClass = outlineCompilerClass
+    return outline
 
 
-class TTFCompiler(UFOCompiler):
-    def __init__(self, partsCompilerClass=MakeOTFPartsCompiler,
-                 outlineCompilerClass=OutlineTTFCompiler):
-        self.partsCompilerClass = partsCompilerClass
-        self.outlineCompilerClass = outlineCompilerClass
+def compileOTF(font, outlineCompilerClass=OutlineOTFCompiler,
+               featureCompilerClass=FeatureOTFCompiler):
+    """Create FontTools CFF font from a UFO."""
+
+    return compile(font, outlineCompilerClass, featureCompilerClass)
+
+
+def compileTTF(font, outlineCompilerClass=OutlineTTFCompiler,
+               featureCompilerClass=FeatureOTFCompiler):
+    """Create FontTools TrueType font from a UFO."""
+
+    return compile(font, outlineCompilerClass, featureCompilerClass)
