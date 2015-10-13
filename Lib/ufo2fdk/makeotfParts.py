@@ -57,7 +57,7 @@ class MakeOTFPartsCompiler:
 
         # write the features
         features = [existing]
-        for name, text in sorted(autoTables.items()):
+        for name, text in sorted(autoFeatures.items()):
             features.append(text)
         features = "\n\n".join(features)
         self.font.features.text = features
@@ -108,7 +108,7 @@ class MakeOTFPartsCompiler:
         self.anchorPairs = []
         anchorNames = set()
         for glyph in self.font:
-            for accent in glyph.accents:
+            for anchor in glyph.anchors:
                 anchorNames.add(anchor.name)
         for baseName in sorted(anchorNames):
             accentName = "_" + baseName
