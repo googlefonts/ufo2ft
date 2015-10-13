@@ -36,13 +36,32 @@ class KernFeatureWriter(AbstractFeatureWriter):
         for key, members in self.groups.iteritems():
             lines.append("%s = [%s];" % (key, " ".join(members)))
 
-    def _addKerning(self, lines, kerning, enum=False):
+    def _addKerning(self, lines, kerning=None, enum=False):
         """Add kerning rules for a mapping of pairs to values."""
+
+        usingFontKerning = False
+        if kerning is None:
+            usingFontKerning = True
+            kerning = self.kerning
 
         enum = "enum " if enum else ""
         pairs = kerning.items()
         pairs.sort()
+
         for (left, right), val in pairs:
+            if usingFontKerning:
+                leftIsClass = left.startswith("@")
+                rightIsClass = right.startswith("@")
+                if leftIsClass:
+                    if rightIsClass:
+                        self.classPairKerning[left, right] = val
+                    else:
+                        self.leftClassKerning[left, right] = val
+                    continue
+                elif rightIsClass:
+                    self.rightClassKerning[left, right] = val
+                    continue
+
             if enum:
                 rulesAdded = (self.classSizes.get(left, 1) *
                               self.classSizes.get(right, 1))
@@ -52,13 +71,16 @@ class KernFeatureWriter(AbstractFeatureWriter):
             if self.ruleCount > 1024:
                 lines.append("    subtable;")
                 self.ruleCount = rulesAdded
+
             lines.append("    %spos %s %s %d;" % (enum, left, right, val))
 
-    def write(self, linesep="\n"):
-        """Write kern feature."""
+    def _collectClassKerning(self):
+        """Set up collections of different rule types."""
 
-        # maintain collections of different rule types
-        leftClassKerning, rightClassKerning, classPairKerning = {}, {}, {}
+        self.leftClassKerning = {}
+        self.rightClassKerning = {}
+        self.classPairKerning = {}
+
         for leftName, leftContents in self.leftClasses:
             leftKey = leftContents[0]
 
@@ -74,15 +96,20 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
             # collect rules with left class and right glyph
             for pair, kerningVal in self.kerning.getLeft(leftKey):
-                leftClassKerning[leftName, pair[1]] = kerningVal
+                self.leftClassKerning[leftName, pair[1]] = kerningVal
                 self.kerning.remove(pair)
 
         # collect rules with left glyph and right class
         for rightName, rightContents in self.rightClasses:
             rightKey = rightContents[0]
             for pair, kerningVal in self.kerning.getRight(rightKey):
-                rightClassKerning[pair[0], rightName] = kerningVal
+                self.rightClassKerning[pair[0], rightName] = kerningVal
                 self.kerning.remove(pair)
+
+    def write(self, linesep="\n"):
+        """Write kern feature."""
+
+        self._collectClassKerning()
 
         # write the glyph classes
         lines = []
@@ -92,9 +119,9 @@ class KernFeatureWriter(AbstractFeatureWriter):
         # write the feature
         self.ruleCount = 0
         lines.append("feature kern {")
-        self._addKerning(lines, self.kerning)
-        self._addKerning(lines, leftClassKerning, enum=True)
-        self._addKerning(lines, rightClassKerning, enum=True)
-        self._addKerning(lines, classPairKerning)
+        self._addKerning(lines)
+        self._addKerning(lines, self.leftClassKerning, enum=True)
+        self._addKerning(lines, self.rightClassKerning, enum=True)
+        self._addKerning(lines, self.classPairKerning)
         lines.append("} kern;")
         return linesep.join(lines)
