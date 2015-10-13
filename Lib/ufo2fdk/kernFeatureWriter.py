@@ -12,6 +12,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
     def __init__(self, font):
         self.kerning = font.kerning
+        self.groups = font.groups
         self.leftClasses = []
         self.rightClasses = []
         self.classSizes = {}
@@ -28,6 +29,12 @@ class KernFeatureWriter(AbstractFeatureWriter):
         elif name.endswith("_R"):
             self.rightClasses.append(info)
         self.classSizes[name] = len(contents)
+
+    def _addGlyphClasses(self, lines):
+        """Add glyph classes for the input font's groups."""
+
+        for key, members in self.groups.iteritems():
+            lines.append("%s = [%s];" % (key, " ".join(members)))
 
     def _addKerning(self, lines, kerning, enum=False):
         """Add kerning rules for a mapping of pairs to values."""
@@ -77,9 +84,14 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 rightClassKerning[pair[0], rightName] = kerningVal
                 self.kerning.remove(pair)
 
+        # write the glyph classes
+        lines = []
+        self._addGlyphClasses(lines)
+        lines.append("")
+
         # write the feature
         self.ruleCount = 0
-        lines = ["feature kern {"]
+        lines.append("feature kern {")
         self._addKerning(lines, self.kerning)
         self._addKerning(lines, leftClassKerning, enum=True)
         self._addKerning(lines, rightClassKerning, enum=True)
