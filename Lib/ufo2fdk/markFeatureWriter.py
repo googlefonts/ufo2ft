@@ -62,7 +62,7 @@ class MarkFeatureWriter:
 
         lines.append("  lookup %s {" % lookupName)
 
-        className = "@MC_" + anchorName
+        className = "@MC_%s_%s" % ("mkmk" if self.mkmk else "mark", anchorName)
         ruleType = "mark" if self.mkmk else "base"
         accentGlyphs = self._createAccentGlyphList(
             accentAnchorName, combAccentOnly)
