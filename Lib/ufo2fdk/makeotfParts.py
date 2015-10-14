@@ -103,6 +103,7 @@ class FeatureOTFCompiler:
     def setupFile_featureTables(self):
         """
         Compile and return OpenType feature tables from the source.
+        Raises a ValueError if the feature compilation was unsuccessful.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the table compilation
@@ -121,10 +122,14 @@ class FeatureOTFCompiler:
             feafile.write(self.features)
         self.outline.save(outline_path)
 
-        subprocess.call([
+        report = subprocess.check_output([
             "makeotf", "-o", feasrc_path, "-f", outline_path, "-ff", fea_path])
         os.remove(fea_path)
         os.remove(outline_path)
+
+        print report
+        if 'Done.' not in report:
+            raise ValueError("Feature syntax compilation failed.")
 
         feasrc = TTFont(feasrc_path)
         self.feasrc = {table: feasrc[table] for table in ["GPOS", "GSUB"]}
