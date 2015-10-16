@@ -1,5 +1,5 @@
 from fontTools.misc.psCharStrings import T2CharString
-from ufo2fdk.pens import RelativeCoordinatePen, roundInt, roundIntPoint
+from ufo2ft.pens import RelativeCoordinatePen, roundInt, roundIntPoint
 
 
 class T2CharStringPen(RelativeCoordinatePen):

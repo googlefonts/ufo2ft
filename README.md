@@ -4,15 +4,15 @@ ufo2ft ("UFO to FontTools") is a fork of
 [ufo2fdk](https://github.com/typesupply/ufo2fdk) whose goal is to generate
 OpenType font binaries from UFOs without the FDK dependency.
 
-The library provides two classes, `OTFCompiler` and `TTFCompiler`, which work
+The library provides two functions, `compileOTF` and `compileTTF`, which work
 exactly the same way:
 
 ```python
-from ufo2fdk import OTFCompiler
+from ufo2ft import OTFCompiler
 from robofab.world import OpenFont
 ufo = OpenFont('MyFont-Regular.ufo')
-compiler = OTFCompiler()
-compiler.compile(ufo, 'MyFont-Regular.otf')
+otf = compileOTF(ufo)
+otf.save('MyFont-Regular.otf')
 ```
 
 In most cases, the behavior of ufo2ft should match that of ufo2fdk, whose
