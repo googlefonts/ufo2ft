@@ -6,13 +6,13 @@ from distutils.core import setup
 try:
     import fontTools
 except:
-    print "*** Warning: ufo2fdk requires FontTools, see:"
+    print "*** Warning: ufo2ft requires FontTools, see:"
     print "    fonttools.sf.net"
 
 try:
     import robofab
 except:
-    print "*** Warning: ufo2fdk requires RoboFab, see:"
+    print "*** Warning: ufo2ft requires RoboFab, see:"
     print "    robofab.com"
 
 if "sdist" in sys.argv:
@@ -32,13 +32,13 @@ if "sdist" in sys.argv:
 
 
 
-setup(name="ufo2fdk",
+setup(name="ufo2ft",
     version="0.1",
-    description="A bridge between UFOs and the AFKDO",
+    description="A bridge between UFOs and FontTools.",
     author="Tal Leming",
     author_email="tal@typesupply.com",
     url="http://code.typesupply.com",
     license="MIT",
-    packages=["ufo2fdk", "ufo2fdk.pens"],
+    packages=["ufo2ft", "ufo2ft.pens"],
     package_dir={"":"Lib"}
 )
