@@ -2,7 +2,7 @@ class MarkFeatureWriter:
     """Generates a mark or mkmk feature based on glyph anchors.
 
     Takes in a list of <anchorName, accentAnchorName> tuples, which may
-    additionally include boolean parameters dictating whether to only include
+    additionally include boolean parameters indicating whether to only include
     combining accents and whether to expand the rule to aliased glyphs.
 
     Takes in a list of aliases as tuples, each typically a base glyph and a
@@ -18,7 +18,7 @@ class MarkFeatureWriter:
     def _getAlias(self, name):
         """Return an alias for a given glyph, if it exists."""
 
-        for alias, base in self.aliases:
+        for base, alias in self.aliases:
             if name == base:
                 return alias
         return None

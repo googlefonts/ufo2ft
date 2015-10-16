@@ -8,7 +8,7 @@ def compile(font, outlineCompilerClass, featureCompilerClass):
     outlineCompiler = outlineCompilerClass(font)
     outline = outlineCompiler.compile()
 
-    featureCompiler = FeatureOTFCompiler(font, outline)
+    featureCompiler = featureCompilerClass(font, outline)
     feasrc = featureCompiler.compile()
     for table in ['GPOS', 'GSUB']:
         outline[table] = feasrc[table]

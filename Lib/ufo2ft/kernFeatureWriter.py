@@ -91,7 +91,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 kerningVal = self.kerning[pair]
                 if kerningVal is None:
                     continue
-                classPairKerning[leftName, rightName] = kerningVal
+                self.classPairKerning[leftName, rightName] = kerningVal
                 self.kerning.remove(pair)
 
             # collect rules with left class and right glyph
