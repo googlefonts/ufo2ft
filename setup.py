@@ -39,6 +39,6 @@ setup(name="ufo2ft",
     author_email="tal@typesupply.com",
     url="http://code.typesupply.com",
     license="MIT",
-    packages=["ufo2ft", "ufo2ft.pens"],
+    packages=["ufo2ft"],
     package_dir={"":"Lib"}
 )
