@@ -10,17 +10,7 @@ from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._n_a_m_e import NameRecord
 
 from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
-try:
-    set
-except NameError:
-    from sets import Set as set
-try:
-    sorted
-except NameError:
-    def sorted(l):
-        l = list(l)
-        l.sort()
-        return l
+
 
 def _roundInt(v):
     return int(round(v))
