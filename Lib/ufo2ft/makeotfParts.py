@@ -1,15 +1,14 @@
 import re
 
-from kernFeatureWriter import KernFeatureWriter
-from markFeatureWriter import MarkFeatureWriter
-
 
 class FeatureOTFCompiler(object):
     """Generates OpenType feature tables for a UFO."""
 
-    def __init__(self, font, outline):
+    def __init__(self, font, outline, kernWriter, markWriter):
         self.font = font
         self.outline = outline
+        self.kernWriter = kernWriter
+        self.markWriter = markWriter
         self.setupAnchorPairs()
         self.setupAliases()
 
@@ -79,7 +78,7 @@ class FeatureOTFCompiler(object):
         may override this method to handle the string creation
         in a different way if desired.
         """
-        writer = KernFeatureWriter(self.font)
+        writer = self.kernWriter(self.font)
         return writer.write()
 
     def writeFeatures_mark(self):
@@ -90,8 +89,8 @@ class FeatureOTFCompiler(object):
         may override this method to handle the string creation
         in a different way if desired.
         """
-        writer = MarkFeatureWriter(self.font, self.anchorPairs,
-                                   aliases=self.aliases)
+        writer = self.markWriter(self.font, self.anchorPairs,
+                                 aliases=self.aliases)
         return writer.write()
 
     def writeFeatures_mkmk(self):

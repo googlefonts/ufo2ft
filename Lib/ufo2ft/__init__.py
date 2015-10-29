@@ -1,14 +1,18 @@
+from kernFeatureWriter import KernFeatureWriter
 from makeotfParts import FeatureOTFCompiler
+from markFeatureWriter import MarkFeatureWriter
 from outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
 
 
-def compile(font, outlineCompilerClass, featureCompilerClass):
+def compile(font, outlineCompilerClass, featureCompilerClass,
+            kernWriter, markWriter):
     """Create FontTools TTFonts from a UFO."""
 
     outlineCompiler = outlineCompilerClass(font)
     outline = outlineCompiler.compile()
 
-    featureCompiler = featureCompilerClass(font, outline)
+    featureCompiler = featureCompilerClass(
+        font, outline, kernWriter=kernWriter, markWriter=markWriter)
     feasrc = featureCompiler.compile()
     for table in ['GPOS', 'GSUB']:
         outline[table] = feasrc[table]
@@ -17,14 +21,18 @@ def compile(font, outlineCompilerClass, featureCompilerClass):
 
 
 def compileOTF(font, outlineCompilerClass=OutlineOTFCompiler,
-               featureCompilerClass=FeatureOTFCompiler):
+               featureCompilerClass=FeatureOTFCompiler,
+               kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter):
     """Create FontTools CFF font from a UFO."""
 
-    return compile(font, outlineCompilerClass, featureCompilerClass)
+    return compile(font, outlineCompilerClass, featureCompilerClass,
+                   kernWriter, markWriter)
 
 
 def compileTTF(font, outlineCompilerClass=OutlineTTFCompiler,
-               featureCompilerClass=FeatureOTFCompiler):
+               featureCompilerClass=FeatureOTFCompiler,
+               kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter):
     """Create FontTools TrueType font from a UFO."""
 
-    return compile(font, outlineCompilerClass, featureCompilerClass)
+    return compile(font, outlineCompilerClass, featureCompilerClass,
+                   kernWriter, markWriter)
