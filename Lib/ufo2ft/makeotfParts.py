@@ -101,8 +101,8 @@ class FeatureOTFCompiler(object):
         may override this method to handle the string creation
         in a different way if desired.
         """
-        writer = MarkFeatureWriter(self.font, self.mkmkAnchorPairs,
-                                   aliases=self.aliases, mkmk=True)
+        writer = self.markWriter(self.font, self.mkmkAnchorPairs,
+                                 aliases=self.aliases, mkmk=True)
         return writer.write()
 
     def setupAnchorPairs(self):
