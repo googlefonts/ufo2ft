@@ -124,4 +124,6 @@ class KernFeatureWriter(AbstractFeatureWriter):
         self._addKerning(lines, self.rightClassKerning, enum=True)
         self._addKerning(lines, self.classPairKerning)
         lines.append("} kern;")
-        return linesep.join(lines)
+
+        # return the feature, unless it's empty
+        return "" if len(filter(None, lines)) == 2 else linesep.join(lines)

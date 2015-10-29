@@ -98,4 +98,4 @@ class MarkFeatureWriter:
             self._addMarkLookup(lines, lookupName, *anchorPair)
 
         lines.append("} %s;" % featureName)
-        return "\n".join(lines)
+        return "" if len(filter(None, lines)) == 2 else "\n".join(lines)
