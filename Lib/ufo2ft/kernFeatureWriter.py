@@ -62,16 +62,6 @@ class KernFeatureWriter(AbstractFeatureWriter):
                     self.rightClassKerning[left, right] = val
                     continue
 
-            if enum:
-                rulesAdded = (self.classSizes.get(left, 1) *
-                              self.classSizes.get(right, 1))
-            else:
-                rulesAdded = 1
-            self.ruleCount += rulesAdded
-            if self.ruleCount > 1024:
-                lines.append("    subtable;")
-                self.ruleCount = rulesAdded
-
             lines.append("    %spos %s %s %d;" % (enum, left, right, val))
 
     def _collectClassKerning(self):
@@ -117,13 +107,15 @@ class KernFeatureWriter(AbstractFeatureWriter):
         lines.append("")
 
         # write the feature
-        self.ruleCount = 0
         lines.append("feature kern {")
         self._addKerning(lines)
+        lines.append("    subtable;")
         self._addKerning(lines, self.leftClassKerning, enum=True)
+        lines.append("    subtable;")
         self._addKerning(lines, self.rightClassKerning, enum=True)
+        lines.append("    subtable;")
         self._addKerning(lines, self.classPairKerning)
         lines.append("} kern;")
 
         # return the feature, unless it's empty
-        return "" if len(filter(None, lines)) == 2 else linesep.join(lines)
+        return "" if len(filter(None, lines)) == 5 else linesep.join(lines)
