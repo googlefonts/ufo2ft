@@ -744,8 +744,9 @@ class OutlineTTFCompiler(OutlineCompiler):
         self.otf["glyf"] = glyf = newTable("glyf")
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
+
         for glyph in self.ufo:
-            pen = TTGlyphPen()
+            pen = TTGlyphPen(self.ufo)
             glyph.draw(pen)
             glyf[glyph.name] = pen.glyph()
 
