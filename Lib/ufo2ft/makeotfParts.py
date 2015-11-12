@@ -153,24 +153,33 @@ class FeatureOTFCompiler(object):
         import subprocess
         from fontTools.ttLib import TTFont
 
-        fea_path = "tmp.fea"
         outline_path = "tmp1." + ("otf" if "CFF " in self.outline else "ttf")
-        feasrc_path = outline_path.replace("1", "2")
-
-        with open(fea_path, "w") as feafile:
-            feafile.write(self.features)
         self.outline.save(outline_path)
 
-        report = subprocess.check_output([
-            "makeotf", "-o", feasrc_path, "-f", outline_path, "-ff", fea_path])
-        os.remove(fea_path)
+        feasrc_path = outline_path.replace("1", "2")
+        makeotf_args = ["makeotf", "-o", feasrc_path, "-f", outline_path]
+
+        fea_path = None
+        if self.features.strip():
+            fea_path = "tmp.fea"
+            with open(fea_path, "w") as feafile:
+                feafile.write(self.features)
+            makeotf_args.extend(["-ff", fea_path])
+
+        report = subprocess.check_output(makeotf_args)
         os.remove(outline_path)
+        if fea_path is not None:
+            os.remove(fea_path)
 
         print report
         if 'Done.' not in report:
             raise ValueError("Feature syntax compilation failed.")
 
         feasrc = TTFont(feasrc_path)
-        self.feasrc = {table: feasrc[table] for table in ["GPOS", "GSUB"]}
+        self.feasrc = {
+            table: feasrc[table]
+            for table in ["GPOS", "GSUB"]
+            if table in feasrc}
+
         feasrc.close()
         os.remove(feasrc_path)
