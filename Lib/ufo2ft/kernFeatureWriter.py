@@ -1,3 +1,4 @@
+from __future__ import print_function, division, absolute_import, unicode_literals
 from feaTools import parser
 from feaTools.writers.baseWriter import AbstractFeatureWriter
 
@@ -33,7 +34,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
     def _addGlyphClasses(self, lines):
         """Add glyph classes for the input font's groups."""
 
-        for key, members in self.groups.iteritems():
+        for key, members in self.groups.items():
             lines.append("%s = [%s];" % (key, " ".join(members)))
 
     def _addKerning(self, lines, kerning=None, enum=False):
@@ -45,10 +46,8 @@ class KernFeatureWriter(AbstractFeatureWriter):
             kerning = self.kerning
 
         enum = "enum " if enum else ""
-        pairs = kerning.items()
-        pairs.sort()
 
-        for (left, right), val in pairs:
+        for (left, right), val in sorted(kerning.items()):
             if usingFontKerning:
                 leftIsClass = left.startswith("@")
                 rightIsClass = right.startswith("@")
@@ -118,4 +117,4 @@ class KernFeatureWriter(AbstractFeatureWriter):
         lines.append("} kern;")
 
         # return the feature, unless it's empty
-        return "" if len(filter(None, lines)) == 5 else linesep.join(lines)
+        return "" if len([ln for ln in lines if ln]) == 5 else linesep.join(lines)
