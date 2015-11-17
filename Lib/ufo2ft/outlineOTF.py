@@ -1,4 +1,5 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
+from fontTools.misc.py23 import tounicode
 import time
 
 from fontTools.ttLib import TTFont, newTable
@@ -392,7 +393,9 @@ class OutlineCompiler(object):
         os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
         os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
         # vendor id
-        os2.achVendID = str(getAttrWithFallback(font.info, "openTypeOS2VendorID").decode("ascii", "ignore"))
+        os2.achVendID = tounicode(
+            getAttrWithFallback(font.info, "openTypeOS2VendorID"),
+            encoding="ascii", errors="ignore")
         # vertical metrics
         os2.sxHeight = _roundInt(getAttrWithFallback(font.info, "xHeight"))
         os2.sCapHeight = _roundInt(getAttrWithFallback(font.info, "capHeight"))
