@@ -12,7 +12,7 @@ used externally as well.
 """
 
 from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import tounicode
+from fontTools.misc.py23 import tounicode, unichr
 import time
 import unicodedata
 from fontTools.misc.textTools import binary2num
@@ -520,8 +520,8 @@ def _test():
     >>> getAttrWithFallback(info, "styleName")
     'Style Name'
 
-    >>> getAttrWithFallback(info, "styleMapFamilyName")
-    u'Family Name Style Name'
+    >>> getAttrWithFallback(info, "styleMapFamilyName") == u'Family Name Style Name'
+    True
     >>> info.styleMapFamilyName = "Style Map Family Name"
     >>> getAttrWithFallback(info, "styleMapFamilyName")
     'Style Map Family Name'
@@ -545,8 +545,8 @@ def _test():
     >>> getAttrWithFallback(info, "openTypeNameVersion")
     '1.001'
 
-    >>> getAttrWithFallback(info, "openTypeNameUniqueID")
-    u'1.001;NONE;Style Map Family Name Regular'
+    >>> getAttrWithFallback(info, "openTypeNameUniqueID") == u'1.001;NONE;Style Map Family Name Regular'
+    True
 
     >>> getAttrWithFallback(info, "openTypeOS2TypoAscender")
     750
