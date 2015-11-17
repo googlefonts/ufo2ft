@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import print_function, division, absolute_import, unicode_literals
 import time
 
 from fontTools.ttLib import TTFont, newTable
@@ -9,7 +9,7 @@ from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._n_a_m_e import NameRecord
 
-from fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
+from .fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
 
 
 def _roundInt(v):
@@ -228,13 +228,11 @@ class OutlineCompiler(object):
             "14": font.info.openTypeNameLicenseURL,
             "16": font.info.openTypeNamePreferredFamilyName,
             "17": font.info.openTypeNamePreferredSubfamilyName}
-        nameIds = nameVals.keys()
-        nameIds.sort()
 
         self.otf["name"] = name = newTable("name")
         name.names = []
         for ids in [(1, 0, 0x0), (3, 1, 0x409)]:
-            for nameId in nameIds:
+            for nameId in sorted(nameVals.keys()):
                 if not nameVals[nameId]:
                     continue
                 rec = NameRecord()
@@ -608,7 +606,7 @@ class OutlineOTFCompiler(OutlineCompiler):
         topDict.version = "%d.%d" % (getAttrWithFallback(info, "versionMajor"), getAttrWithFallback(info, "versionMinor"))
         trademark = getAttrWithFallback(info, "trademark")
         if trademark:
-            trademark = normalizeStringForPostscript(trademark.replace(u"\u00A9", "Copyright"))
+            trademark = normalizeStringForPostscript(trademark.replace("\u00A9", "Copyright"))
         if trademark != self.ufo.info.trademark:
             self.log.append("[Warning] The trademark was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % trademark)
         if trademark is None:
@@ -616,7 +614,7 @@ class OutlineOTFCompiler(OutlineCompiler):
         topDict.Notice = trademark
         copyright = getAttrWithFallback(info, "copyright")
         if copyright:
-            copyright = normalizeStringForPostscript(copyright.replace(u"\u00A9", "Copyright"))
+            copyright = normalizeStringForPostscript(copyright.replace("\u00A9", "Copyright"))
         if copyright != self.ufo.info.copyright:
             self.log.append("[Warning] The copyright was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % copyright)
         if copyright is None:
@@ -692,8 +690,7 @@ class OutlineOTFCompiler(OutlineCompiler):
             unicodes = glyph.unicodes
             charString = self.getCharStringForGlyph(glyph, private, globalSubrs)
             # add to the font
-            exists = charStrings.has_key(glyphName)
-            if exists:
+            if glyphName in charStrings:
                 # XXX a glyph already has this name. should we choke?
                 glyphID = charStrings.charStrings[glyphName]
                 charStringsIndex.items[glyphID] = charString
