@@ -6,14 +6,14 @@ from distutils.core import setup
 try:
     import fontTools
 except:
-    print "*** Warning: ufo2ft requires FontTools, see:"
-    print "    fonttools.sf.net"
+    print("*** Warning: ufo2ft requires FontTools, see:")
+    print("    fonttools.sf.net")
 
 try:
     import robofab
 except:
-    print "*** Warning: ufo2ft requires RoboFab, see:"
-    print "    robofab.com"
+    print("*** Warning: ufo2ft requires RoboFab, see:")
+    print("    robofab.com")
 
 if "sdist" in sys.argv:
     import os
