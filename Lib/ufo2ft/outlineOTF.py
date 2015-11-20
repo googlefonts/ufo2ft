@@ -367,7 +367,9 @@ class OutlineCompiler(object):
             v = 0
         os2.yStrikeoutPosition = _roundInt(v)
         # family class
-        os2.sFamilyClass = 0 # XXX not sure how to create the appropriate value
+        ibmFontClass, ibmFontSubclass = getAttrWithFallback(
+            font.info, "openTypeOS2FamilyClass")
+        os2.sFamilyClass = (ibmFontClass << 8) + ibmFontSubclass
         # panose
         data = getAttrWithFallback(font.info, "openTypeOS2Panose")
         panose = Panose()
