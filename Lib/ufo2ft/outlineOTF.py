@@ -213,22 +213,35 @@ class OutlineCompiler(object):
         """
 
         font = self.ufo
+
+        subfamilyName = font.info.styleMapStyleName.title()
+
+        # If name ID 2 is "Regular", it can be omitted from name ID 4
+        fullName = font.info.styleMapFamilyName
+        if subfamilyName != "Regular":
+            fullName += " %s" % subfamilyName
+
         nameVals = {
             "0": font.info.copyright,
             "1": font.info.styleMapFamilyName,
-            "2": font.info.styleMapStyleName.title(),
+            "2": subfamilyName,
             "3": font.info.openTypeNameUniqueID,
-            "4": "%s %s" % (font.info.familyName, font.info.styleName),
+            "4": fullName,
             "5": font.info.openTypeNameVersion,
             "6": font.info.postscriptFontName,
             "7": font.info.trademark,
+            "8": font.info.openTypeNameManufacturer,
             "9": font.info.openTypeNameDesigner,
             "11": font.info.openTypeNameManufacturerURL,
             "12": font.info.openTypeNameDesignerURL,
             "13": font.info.openTypeNameLicense,
-            "14": font.info.openTypeNameLicenseURL,
-            "16": font.info.openTypeNamePreferredFamilyName,
-            "17": font.info.openTypeNamePreferredSubfamilyName}
+            "14": font.info.openTypeNameLicenseURL}
+
+        # don't add typographic names if they are the same as the legacy ones
+        if nameVals["1"] != font.info.openTypeNamePreferredFamilyName:
+            nameVals["16"] = font.info.openTypeNamePreferredFamilyName
+        if nameVals["2"] != font.info.openTypeNamePreferredSubfamilyName:
+            nameVals["17"] = font.info.openTypeNamePreferredSubfamilyName
 
         self.otf["name"] = name = newTable("name")
         name.names = []
