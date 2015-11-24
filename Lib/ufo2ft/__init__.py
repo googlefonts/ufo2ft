@@ -1,8 +1,9 @@
 from __future__ import print_function, division, absolute_import
-from .kernFeatureWriter import KernFeatureWriter
-from .makeotfParts import FeatureOTFCompiler
-from .markFeatureWriter import MarkFeatureWriter
-from .outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
+
+from ufo2ft.kernFeatureWriter import KernFeatureWriter
+from ufo2ft.makeotfParts import FeatureOTFCompiler
+from ufo2ft.markFeatureWriter import MarkFeatureWriter
+from ufo2ft.outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
 
 
 def compile(font, outlineCompilerClass, featureCompilerClass,
