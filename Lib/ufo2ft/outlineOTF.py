@@ -167,10 +167,13 @@ class OutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+
         self.otf["head"] = head = newTable("head")
         font = self.ufo
         head.checkSumAdjustment = 0
         head.tableVersion = 1.0
+        head.magicNumber = 0x5F0F3CF5
+
         # version numbers
         # limit minor version to 3 digits as recommended in OpenType spec:
         # https://www.microsoft.com/typography/otspec/recom.htm
@@ -182,18 +185,21 @@ class OutlineCompiler(object):
             print("Minor version in %s has too many digits and won't fit into "
                 "the head table's fontRevision field; rounded to %s." %
                 (fullFontRevision, head.fontRevision))
-        head.magicNumber = 0x5F0F3CF5
+
         # upm
         head.unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
+
         # times
         head.created = dateStringToTimeValue(getAttrWithFallback(font.info, "openTypeHeadCreated")) - mac_epoch_diff
         head.modified = dateStringToTimeValue(dateStringForNow()) - mac_epoch_diff
+
         # bounding box
         xMin, yMin, xMax, yMax = self.fontBoundingBox
         head.xMin = xMin
         head.yMin = yMin
         head.xMax = xMax
         head.yMax = yMax
+
         # style mapping
         styleMapStyleName = getAttrWithFallback(font.info, "styleMapStyleName")
         macStyle = []
@@ -204,6 +210,7 @@ class OutlineCompiler(object):
         elif styleMapStyleName == "italic":
             macStyle = [1]
         head.macStyle = intListToNum(macStyle, 0, 16)
+
         # misc
         head.flags = intListToNum(getAttrWithFallback(font.info, "openTypeHeadFlags"), 0, 16)
         head.lowestRecPPEM = _roundInt(getAttrWithFallback(font.info, "openTypeHeadLowestRecPPEM"))
