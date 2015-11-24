@@ -1,4 +1,7 @@
-class MarkFeatureWriter:
+from __future__ import print_function, division, absolute_import, unicode_literals
+
+
+class MarkFeatureWriter(object):
     """Generates a mark or mkmk feature based on glyph anchors.
 
     Takes in a list of <anchorName, accentAnchorName> tuples, which may
@@ -98,4 +101,4 @@ class MarkFeatureWriter:
             self._addMarkLookup(lines, lookupName, *anchorPair)
 
         lines.append("} %s;" % featureName)
-        return "" if len(filter(None, lines)) == 2 else "\n".join(lines)
+        return "" if len([ln for ln in lines if ln]) == 2 else "\n".join(lines)

@@ -1,3 +1,4 @@
+from __future__ import print_function, division, absolute_import, unicode_literals
 import re
 
 
@@ -171,7 +172,7 @@ class FeatureOTFCompiler(object):
         if fea_path is not None:
             os.remove(fea_path)
 
-        print report
+        print(report)
         if 'Done.' not in report:
             raise ValueError("Feature syntax compilation failed.")
 
