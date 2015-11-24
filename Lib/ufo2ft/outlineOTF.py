@@ -171,9 +171,17 @@ class OutlineCompiler(object):
         font = self.ufo
         head.checkSumAdjustment = 0
         head.tableVersion = 1.0
+        # version numbers
+        # limit minor version to 3 digits as recommended in OpenType spec:
+        # https://www.microsoft.com/typography/otspec/recom.htm
         versionMajor = getAttrWithFallback(font.info, "versionMajor")
         versionMinor = getAttrWithFallback(font.info, "versionMinor")
-        head.fontRevision = float("%d.%d" % (versionMajor, versionMinor))
+        fullFontRevision = float("%d.%03d" % (versionMajor, versionMinor))
+        head.fontRevision = round(fullFontRevision, 3)
+        if head.fontRevision != fullFontRevision:
+            print("Minor version in %s has too many digits and won't fit into "
+                "the head table's fontRevision field; rounded to %s." %
+                (fullFontRevision, head.fontRevision))
         head.magicNumber = 0x5F0F3CF5
         # upm
         head.unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
