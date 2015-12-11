@@ -29,7 +29,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
         self.rightClasses = []
         parser.parseFeatures(self, font.features.text)
 
-    def _isGlyphClass(self, name, nameRe):
+    def _isGlyphClass(self, nameRe, name):
         return re.match(nameRe, name) is not None
 
     def classDefinition(self, name, contents):
