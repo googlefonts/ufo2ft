@@ -19,8 +19,8 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
     leftUfoGroupRe = r"^public\.kern1\.(.+)"
     rightUfoGroupRe = r"^public\.kern2\.(.+)"
-    leftFeaClassRe = r"@_(.+)_L"
-    rightFeaClassRe = r"@_(.+)_R"
+    leftFeaClassRe = r"@MMK_L_(.+)"
+    rightFeaClassRe = r"@MMK_R_(.+)"
 
     def __init__(self, font):
         self.kerning = font.kerning
