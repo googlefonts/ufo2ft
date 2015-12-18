@@ -1,4 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
+
+import re
+
 from feaTools import parser
 from feaTools.writers.baseWriter import AbstractFeatureWriter
 
@@ -9,27 +12,34 @@ class KernFeatureWriter(AbstractFeatureWriter):
     Uses the kerning rules contained in an RFont's kerning attribute, as well as
     glyph classes from parsed OTF text. Class-based rules are set based on the
     existing rules for their key glyphs.
+
+    Uses class attributes to match UFO glyph group names and feature syntax
+    glyph class names as kerning classes, which can be overridden.
     """
+
+    leftUfoGroupRe = r"^public\.kern1\.(.+)"
+    rightUfoGroupRe = r"^public\.kern2\.(.+)"
+    leftFeaClassRe = r"@MMK_L_(.+)"
+    rightFeaClassRe = r"@MMK_R_(.+)"
 
     def __init__(self, font):
         self.kerning = font.kerning
         self.groups = font.groups
         self.leftClasses = []
         self.rightClasses = []
-        self.classSizes = {}
         parser.parseFeatures(self, font.features.text)
+
+    def _isGlyphClass(self, nameRe, name):
+        return re.match(nameRe, name) is not None
 
     def classDefinition(self, name, contents):
         """Store a class definition as either a left- or right-hand class."""
 
-        if not name.startswith("@_"):
-            return
         info = (name, contents)
-        if name.endswith("_L"):
+        if self._isGlyphClass(self.leftFeaClassRe, name):
             self.leftClasses.append(info)
-        elif name.endswith("_R"):
+        elif self._isGlyphClass(self.rightFeaClassRe, name):
             self.rightClasses.append(info)
-        self.classSizes[name] = len(contents)
 
     def _addGlyphClasses(self, lines):
         """Add glyph classes for the input font's groups."""
@@ -49,8 +59,8 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
         for (left, right), val in sorted(kerning.items()):
             if usingFontKerning:
-                leftIsClass = left.startswith("@")
-                rightIsClass = right.startswith("@")
+                leftIsClass = self._isGlyphClass(self.leftUfoGroupRe, left)
+                rightIsClass = self._isGlyphClass(self.rightUfoGroupRe, right)
                 if leftIsClass:
                     if rightIsClass:
                         self.classPairKerning[left, right] = val
