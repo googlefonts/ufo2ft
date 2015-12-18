@@ -229,34 +229,39 @@ class OutlineCompiler(object):
 
         font = self.ufo
 
-        subfamilyName = font.info.styleMapStyleName.title()
+        familyName = getAttrWithFallback(font.info, "styleMapFamilyName")
+        styleName = getAttrWithFallback(font.info, "styleMapStyleName").title()
 
         # If name ID 2 is "Regular", it can be omitted from name ID 4
-        fullName = font.info.styleMapFamilyName
-        if subfamilyName != "Regular":
-            fullName += " %s" % subfamilyName
+        fullName = familyName
+        if styleName != "Regular":
+            fullName += " %s" % styleName
 
         nameVals = {
-            "0": font.info.copyright,
-            "1": font.info.styleMapFamilyName,
-            "2": subfamilyName,
-            "3": font.info.openTypeNameUniqueID,
+            "0": getAttrWithFallback(font.info, "copyright"),
+            "1": familyName,
+            "2": styleName,
+            "3": getAttrWithFallback(font.info, "openTypeNameUniqueID"),
             "4": fullName,
-            "5": font.info.openTypeNameVersion,
-            "6": font.info.postscriptFontName,
-            "7": font.info.trademark,
-            "8": font.info.openTypeNameManufacturer,
-            "9": font.info.openTypeNameDesigner,
-            "11": font.info.openTypeNameManufacturerURL,
-            "12": font.info.openTypeNameDesignerURL,
-            "13": font.info.openTypeNameLicense,
-            "14": font.info.openTypeNameLicenseURL}
+            "5": getAttrWithFallback(font.info, "openTypeNameVersion"),
+            "6": getAttrWithFallback(font.info, "postscriptFontName"),
+            "7": getAttrWithFallback(font.info, "trademark"),
+            "8": getAttrWithFallback(font.info, "openTypeNameManufacturer"),
+            "9": getAttrWithFallback(font.info, "openTypeNameDesigner"),
+            "11": getAttrWithFallback(font.info, "openTypeNameManufacturerURL"),
+            "12": getAttrWithFallback(font.info, "openTypeNameDesignerURL"),
+            "13": getAttrWithFallback(font.info, "openTypeNameLicense"),
+            "14": getAttrWithFallback(font.info, "openTypeNameLicenseURL")}
 
         # don't add typographic names if they are the same as the legacy ones
-        if nameVals["1"] != font.info.openTypeNamePreferredFamilyName:
-            nameVals["16"] = font.info.openTypeNamePreferredFamilyName
-        if nameVals["2"] != font.info.openTypeNamePreferredSubfamilyName:
-            nameVals["17"] = font.info.openTypeNamePreferredSubfamilyName
+        typographicFamilyName = getAttrWithFallback(font.info,
+            "openTypeNamePreferredFamilyName")
+        typographicSubfamilyName = getAttrWithFallback(font.info,
+            "openTypeNamePreferredSubfamilyName")
+        if nameVals["1"] != typographicFamilyName:
+            nameVals["16"] = typographicFamilyName
+        if nameVals["2"] != typographicSubfamilyName:
+            nameVals["17"] = typographicSubfamilyName
 
         self.otf["name"] = name = newTable("name")
         name.names = []
