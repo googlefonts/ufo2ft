@@ -1,6 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import tostr
 import re
+import sys
 
 
 class FeatureOTFCompiler(object):
@@ -168,8 +169,10 @@ class FeatureOTFCompiler(object):
                 feafile.write(self.features)
             makeotf_args.extend(["-ff", fea_path])
 
+        # On Windows, subprocess doesn't look in PATH unless given shell
+        needsShell = sys.platform == "win32"
         report = tostr(
-            subprocess.check_output(makeotf_args))
+            subprocess.check_output(makeotf_args, shell=needsShell))
         os.remove(outline_path)
         if fea_path is not None:
             os.remove(fea_path)
