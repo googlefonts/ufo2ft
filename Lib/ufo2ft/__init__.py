@@ -6,11 +6,11 @@ from ufo2ft.markFeatureWriter import MarkFeatureWriter
 from ufo2ft.outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
 
 
-def _compile(font, outlineCompilerClass, featureCompilerClass,
+def _compile(font, glyphOrder, outlineCompilerClass, featureCompilerClass,
              kernWriter, markWriter):
     """Create FontTools TTFonts from a UFO."""
 
-    outlineCompiler = outlineCompilerClass(font)
+    outlineCompiler = outlineCompilerClass(font, glyphOrder=glyphOrder)
     outline = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
@@ -23,19 +23,19 @@ def _compile(font, outlineCompilerClass, featureCompilerClass,
     return outline
 
 
-def compileOTF(font, outlineCompilerClass=OutlineOTFCompiler,
+def compileOTF(font, glyphOrder=None, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureOTFCompiler,
                kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter):
     """Create FontTools CFF font from a UFO."""
 
-    return _compile(font, outlineCompilerClass, featureCompilerClass,
-                    kernWriter, markWriter)
+    return _compile(font, glyphOrder, outlineCompilerClass,
+                    featureCompilerClass, kernWriter, markWriter)
 
 
-def compileTTF(font, outlineCompilerClass=OutlineTTFCompiler,
+def compileTTF(font, glyphOrder=None, outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureOTFCompiler,
                kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter):
     """Create FontTools TrueType font from a UFO."""
 
-    return _compile(font, outlineCompilerClass, featureCompilerClass,
-                    kernWriter, markWriter)
+    return _compile(font, glyphOrder, outlineCompilerClass,
+                    featureCompilerClass, kernWriter, markWriter)
