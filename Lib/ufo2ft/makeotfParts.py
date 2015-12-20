@@ -1,4 +1,5 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
+from fontTools.misc.py23 import tostr
 import re
 
 
@@ -167,7 +168,8 @@ class FeatureOTFCompiler(object):
                 feafile.write(self.features)
             makeotf_args.extend(["-ff", fea_path])
 
-        report = subprocess.check_output(makeotf_args)
+        report = tostr(
+            subprocess.check_output(makeotf_args))
         os.remove(outline_path)
         if fea_path is not None:
             os.remove(fea_path)
