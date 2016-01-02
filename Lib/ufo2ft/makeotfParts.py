@@ -121,6 +121,9 @@ class FeatureOTFCompiler(object):
         anchorNames = set()
         for glyph in self.font:
             for anchor in glyph.anchors:
+                if anchor.name is None:
+                    print("warning: unnamed anchor discarded in", glyph.name)
+                    continue
                 anchorNames.add(anchor.name)
         for baseName in sorted(anchorNames):
             accentName = "_" + baseName
