@@ -1,5 +1,5 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import tostr
+import os
 import re
 import sys
 
@@ -26,7 +26,6 @@ class FeatureOTFCompiler(object):
         self.precompile()
         self.setupFile_features()
         self.setupFile_featureTables()
-        return self.feasrc
 
     def precompile(self):
         """Set any attributes needed before compilation.
@@ -145,47 +144,21 @@ class FeatureOTFCompiler(object):
     def setupFile_featureTables(self):
         """
         Compile and return OpenType feature tables from the source.
-        Raises a ValueError if the feature compilation was unsuccessful.
+        Raises a FeaLibError if the feature compilation was unsuccessful.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the table compilation
         in a different way if desired.
         """
 
-        import os
-        import subprocess
+        import tempfile
+        from fontTools.feaLib.builder import addOpenTypeFeatures
         from fontTools.ttLib import TTFont
 
-        outline_path = "tmp1." + ("otf" if "CFF " in self.outline else "ttf")
-        self.outline.save(outline_path)
-
-        feasrc_path = outline_path.replace("1", "2")
-        makeotf_args = ["makeotf", "-o", feasrc_path, "-f", outline_path]
-
-        fea_path = None
         if self.features.strip():
-            fea_path = "tmp.fea"
+            fd, fea_path = tempfile.mkstemp()
             with open(fea_path, "w") as feafile:
                 feafile.write(self.features)
-            makeotf_args.extend(["-ff", fea_path])
-
-        # On Windows, subprocess doesn't look in PATH unless given shell
-        needsShell = sys.platform == "win32"
-        report = tostr(
-            subprocess.check_output(makeotf_args, shell=needsShell))
-        os.remove(outline_path)
-        if fea_path is not None:
+            addOpenTypeFeatures(fea_path, self.outline)
+            os.close(fd)
             os.remove(fea_path)
-
-        print(report)
-        if 'Done.' not in report:
-            raise ValueError("Feature syntax compilation failed.")
-
-        feasrc = TTFont(feasrc_path)
-        self.feasrc = {
-            table: feasrc[table]
-            for table in ["GPOS", "GSUB"]
-            if table in feasrc}
-
-        feasrc.close()
-        os.remove(feasrc_path)

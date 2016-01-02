@@ -15,10 +15,7 @@ def _compile(font, glyphOrder, outlineCompilerClass, featureCompilerClass,
 
     featureCompiler = featureCompilerClass(
         font, outline, kernWriter=kernWriter, markWriter=markWriter)
-    feasrc = featureCompiler.compile()
-    for table in ['GPOS', 'GSUB']:
-        if table in feasrc:
-            outline[table] = feasrc[table]
+    featureCompiler.compile()
 
     return outline
 
