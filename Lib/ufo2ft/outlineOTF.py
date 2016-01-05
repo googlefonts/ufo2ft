@@ -13,6 +13,13 @@ from fontTools.ttLib.tables._n_a_m_e import NameRecord
 from ufo2ft.fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
 
 
+def _isNonBMP(s):
+    for c in s:
+        if ord(c) > 65535:
+            return True
+    return False
+
+
 def _roundInt(v):
     return int(round(v))
 
@@ -265,16 +272,21 @@ class OutlineCompiler(object):
 
         self.otf["name"] = name = newTable("name")
         name.names = []
-        for ids in [(1, 0, 0x0), (3, 1, 0x409)]:
-            for nameId in sorted(nameVals.keys()):
-                if not nameVals[nameId]:
-                    continue
-                rec = NameRecord()
-                rec.platformID, rec.platEncID, rec.langID = ids
-                rec.nameID = int(nameId)
-                rec.string = nameVals[nameId].encode(
-                    rec.getEncoding(), "strict")
-                name.names.append(rec)
+        for nameId in sorted(nameVals.keys()):
+            nameVal = nameVals[nameId]
+            if not nameVal:
+                continue
+            nameIdVal = int(nameId)
+            if nameIdVal == 6:
+                # postscript font name
+                nameVal = normalizeStringForPostscript(nameVal)
+            rec = NameRecord()
+            rec.platformID = 3
+            rec.platEncID = 10 if _isNonBMP(nameVal) else 1
+            rec.langID = 0x409
+            rec.nameID = nameIdVal
+            rec.string = nameVal.encode(rec.getEncoding())
+            name.names.append(rec)
 
     def setupTable_maxp(self):
         """
