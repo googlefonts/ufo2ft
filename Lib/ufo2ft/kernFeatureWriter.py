@@ -26,8 +26,8 @@ class KernFeatureWriter(AbstractFeatureWriter):
         self.kerning = font.kerning
         self.groups = font.groups
 
-        self.leftClasses = []
-        self.rightClasses = []
+        self.leftClasses = {}
+        self.rightClasses = {}
 
         self.glyphPairKerning = {}
         self.leftClassKerning = {}
@@ -42,11 +42,10 @@ class KernFeatureWriter(AbstractFeatureWriter):
     def classDefinition(self, name, contents):
         """Store a class definition as either a left- or right-hand class."""
 
-        info = (name, contents)
         if self._isGlyphClass(self.leftFeaClassRe, name):
-            self.leftClasses.append(info)
+            self.leftClasses[name] = contents
         elif self._isGlyphClass(self.rightFeaClassRe, name):
-            self.rightClasses.append(info)
+            self.rightClasses[name] = contents
 
     def _addGlyphClasses(self, lines):
         """Add glyph classes for the input font's groups."""
@@ -68,11 +67,11 @@ class KernFeatureWriter(AbstractFeatureWriter):
         the kerning values associated with that class.
         """
 
-        for leftName, leftContents in self.leftClasses:
+        for leftName, leftContents in self.leftClasses.items():
             leftKey = leftContents[0]
 
             # collect rules with two classes
-            for rightName, rightContents in self.rightClasses:
+            for rightName, rightContents in self.rightClasses.items():
                 rightKey = rightContents[0]
                 pair = leftKey, rightKey
                 kerningVal = self.kerning[pair]
@@ -87,7 +86,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 self.kerning.remove(pair)
 
         # collect rules with left glyph and right class
-        for rightName, rightContents in self.rightClasses:
+        for rightName, rightContents in self.rightClasses.items():
             rightKey = rightContents[0]
             for pair, kerningVal in self.kerning.getRight(rightKey):
                 self.rightClassKerning[pair[0], rightName] = kerningVal
