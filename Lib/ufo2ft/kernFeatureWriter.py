@@ -109,11 +109,85 @@ class KernFeatureWriter(AbstractFeatureWriter):
             else:
                 self.glyphPairKerning[glyphPair] = val
 
+    def _collectUfoGroups(self):
+        """Sort UFO groups into left or right glyph classes."""
+
+        for name, contents in self.groups.items():
+            if self._isGlyphClass(self.leftUfoGroupRe, name):
+                self.leftClasses[name] = contents
+            if self._isGlyphClass(self.rightUfoGroupRe, name):
+                self.rightClasses[name] = contents
+
+    def _removeConflictingKerningRules(self):
+        """Remove any conflicting pair and class rules.
+
+        If conflicts are detected in a class rule, the offending class members
+        are removed from the rule and the class name is replaced with a list of
+        glyphs (the class members minus the offending members).
+        """
+
+        # maintain list of glyph pair rules seen
+        seen = dict(self.glyphPairKerning)
+
+        # remove conflicts in left class / right glyph rules
+        for (lClass, rGlyph), val in self.leftClassKerning.items():
+            lGlyphs = self.leftClasses[lClass]
+            nlGlyphs = []
+            for lGlyph in lGlyphs:
+                pair = lGlyph, rGlyph
+                if pair not in seen or seen[pair] == val:
+                    nlGlyphs.append(lGlyph)
+                    seen[pair] = val
+            if nlGlyphs != lGlyphs:
+                self.leftClassKerning[self._liststr(nlGlyphs), rGlyph] = val
+                del self.leftClassKerning[lClass, rGlyph]
+
+        # remove conflicts in left glyph / right class rules
+        for (lGlyph, rClass), val in self.rightClassKerning.items():
+            rGlyphs = self.rightClasses[rClass]
+            nrGlyphs = []
+            for rGlyph in rGlyphs:
+                pair = lGlyph, rGlyph
+                if pair not in seen or seen[pair] == val:
+                    nrGlyphs.append(rGlyph)
+                    seen[pair] = val
+            if nrGlyphs != rGlyphs:
+                self.rightClassKerning[lGlyph, self._liststr(nrGlyphs)] = val
+                del self.rightClassKerning[lGlyph, rClass]
+
+        # remove conflicts in class / class rules
+        for (lClass, rClass), val in self.classPairKerning.items():
+            lGlyphs = self.leftClasses[lClass]
+            rGlyphs = self.rightClasses[rClass]
+            nlGlyphs, nrGlyphs = set(), set()
+            for lGlyph in lGlyphs:
+                for rGlyph in rGlyphs:
+                    pair = lGlyph, rGlyph
+                    if pair not in seen or seen[pair] == val:
+                        nlGlyphs.add(lGlyph)
+                        nrGlyphs.add(rGlyph)
+                        seen[pair] = val
+            nlClass, nrClass = lClass, rClass
+            if nlGlyphs != set(lGlyphs):
+                nlClass = self._liststr(sorted(nlGlyphs))
+            if nrGlyphs != set(rGlyphs):
+                nrClass = self._liststr(sorted(nrGlyphs))
+            if nlClass != lClass or nrClass != rClass:
+                self.classPairKerning[nlClass, nrClass] = val
+                del self.classPairKerning[lClass, rClass]
+
+    def _liststr(self, glyphs):
+        """Return string representation of a list of glyph names."""
+
+        return "[%s]" % " ".join(glyphs)
+
     def write(self, linesep="\n"):
         """Write kern feature."""
 
         self._collectFeaClassKerning()
         self._collectUfoKerning()
+        self._collectUfoGroups()
+        self._removeConflictingKerningRules()
 
         # write the glyph classes
         lines = []
