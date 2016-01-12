@@ -1,4 +1,5 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
+import os
 import re
 
 
@@ -24,7 +25,6 @@ class FeatureOTFCompiler(object):
         self.precompile()
         self.setupFile_features()
         self.setupFile_featureTables()
-        return self.feasrc
 
     def precompile(self):
         """Set any attributes needed before compilation.
@@ -120,6 +120,9 @@ class FeatureOTFCompiler(object):
         anchorNames = set()
         for glyph in self.font:
             for anchor in glyph.anchors:
+                if anchor.name is None:
+                    print("warning: unnamed anchor discarded in", glyph.name)
+                    continue
                 anchorNames.add(anchor.name)
         for baseName in sorted(anchorNames):
             accentName = "_" + baseName
@@ -143,44 +146,42 @@ class FeatureOTFCompiler(object):
     def setupFile_featureTables(self):
         """
         Compile and return OpenType feature tables from the source.
-        Raises a ValueError if the feature compilation was unsuccessful.
+        Raises a FeaLibError if the feature compilation was unsuccessful.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the table compilation
         in a different way if desired.
         """
 
-        import os
-        import subprocess
+        import tempfile
+        from fontTools.feaLib.builder import addOpenTypeFeatures
         from fontTools.ttLib import TTFont
 
-        outline_path = "tmp1." + ("otf" if "CFF " in self.outline else "ttf")
-        self.outline.save(outline_path)
-
-        feasrc_path = outline_path.replace("1", "2")
-        makeotf_args = ["makeotf", "-o", feasrc_path, "-f", outline_path]
-
-        fea_path = None
         if self.features.strip():
-            fea_path = "tmp.fea"
+            if self.font.path is not None:
+                self.features = forceAbsoluteIncludesInFeatures(self.features, self.font.path)
+            fd, fea_path = tempfile.mkstemp()
             with open(fea_path, "w") as feafile:
                 feafile.write(self.features)
-            makeotf_args.extend(["-ff", fea_path])
-
-        report = subprocess.check_output(makeotf_args)
-        os.remove(outline_path)
-        if fea_path is not None:
+            addOpenTypeFeatures(fea_path, self.outline)
+            os.close(fd)
             os.remove(fea_path)
 
-        print(report)
-        if 'Done.' not in report:
-            raise ValueError("Feature syntax compilation failed.")
+includeRE = re.compile(
+    "(include\s*\(\s*)"
+    "([^\)]+)"
+    "(\s*\))" # this won't actually capture a trailing space.
+    )
 
-        feasrc = TTFont(feasrc_path)
-        self.feasrc = {
-            table: feasrc[table]
-            for table in ["GPOS", "GSUB"]
-            if table in feasrc}
 
-        feasrc.close()
-        os.remove(feasrc_path)
+def forceAbsoluteIncludesInFeatures(text, directory):
+    for match in reversed(list(includeRE.finditer(text))):
+       start, includePath, close = match.groups()
+       # absolute path
+       if os.path.isabs(includePath):
+           continue
+       # relative path
+       srcPath = os.path.normpath(os.path.join(directory, includePath.strip()))
+       includeText = start + srcPath + close
+       text = text[:match.start()] + includeText + text[match.end():]
+    return text

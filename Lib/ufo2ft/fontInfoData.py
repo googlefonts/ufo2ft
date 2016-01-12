@@ -12,7 +12,7 @@ used externally as well.
 """
 
 from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import tounicode, unichr
+from fontTools.misc.py23 import tostr, tounicode, unichr
 import time
 import unicodedata
 from fontTools.misc.textTools import binary2num
@@ -180,8 +180,8 @@ def normalizeStringForPostscript(s, allowSpaces=True):
         if c in _postscriptFontNameExceptions:
             continue
         if c not in _postscriptFontNameAllowed:
-            c = unicodedata.normalize("NFKD", c).encode("ascii", "ignore")
-        normalized.append(c)
+            c = unicodedata.normalize("NFKD", c)
+        normalized.append(tostr(c))
     return "".join(normalized)
 
 def normalizeNameForPostscript(name):
