@@ -1,5 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import tounicode
+
+import math
 import time
 
 from fontTools.ttLib import TTFont, newTable
@@ -9,6 +11,7 @@ from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._n_a_m_e import NameRecord
+from robofab.pens.boundsPen import ControlBoundsPen
 
 from ufo2ft.fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
 
@@ -493,16 +496,22 @@ class OutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+
         self.otf["hmtx"] = hmtx = newTable("hmtx")
         hmtx.metrics = {}
         for glyphName, glyph in self.allGlyphs.items():
             width = glyph.width
             left = 0
             if len(glyph) or len(glyph.components):
-                left = glyph.leftMargin
+                # lsb should be consistent with glyf xMin, which is just
+                # minimum x for coordinate data
+                pen = ControlBoundsPen(self.ufo)
+                glyph.draw(pen)
+                left, _, _, _ = pen.bounds
             if left is None:
                 left = 0
-            hmtx[glyphName] = (_roundInt(width), _roundInt(left))
+            # take floor of lsb/xMin, as fontTools does with min bounds
+            hmtx[glyphName] = (_roundInt(width), int(math.floor(left)))
 
     def setupTable_hhea(self):
         """
