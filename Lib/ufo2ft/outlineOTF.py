@@ -6,12 +6,12 @@ import time
 
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
+from fontTools.pens.boundsPen import BoundsPen, ControlBoundsPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._n_a_m_e import NameRecord
-from robofab.pens.boundsPen import ControlBoundsPen
 
 from ufo2ft.fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
 
@@ -505,7 +505,7 @@ class OutlineCompiler(object):
             if len(glyph) or len(glyph.components):
                 # lsb should be consistent with glyf xMin, which is just
                 # minimum x for coordinate data
-                pen = ControlBoundsPen(self.ufo)
+                pen = ControlBoundsPen(self.ufo, ignoreSinglePoints=True)
                 glyph.draw(pen)
                 left, _, _, _ = pen.bounds
             if left is None:
@@ -881,7 +881,6 @@ class StubGlyph(object):
         pen.closePath()
 
     def _get_bounds(self):
-        from fontTools.pens.boundsPen import BoundsPen
         pen = BoundsPen(None)
         self.draw(pen)
         return pen.bounds
