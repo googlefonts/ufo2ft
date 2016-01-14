@@ -26,14 +26,19 @@ class KernFeatureWriter(AbstractFeatureWriter):
         self.kerning = font.kerning
         self.groups = font.groups
 
-        self.leftClasses = {}
-        self.rightClasses = {}
+        # kerning classes found in existing OTF syntax and UFO groups
+        self.leftFeaClasses = {}
+        self.rightFeaClasses = {}
+        self.leftUfoClasses = {}
+        self.rightUfoClasses = {}
 
+        # kerning rule collections, mapping pairs to values
         self.glyphPairKerning = {}
         self.leftClassKerning = {}
         self.rightClassKerning = {}
         self.classPairKerning = {}
 
+        # parse feature definitions into left/rightFeaClasses
         parser.parseFeatures(self, font.features.text)
 
     def _isGlyphClass(self, nameRe, name):
@@ -43,14 +48,15 @@ class KernFeatureWriter(AbstractFeatureWriter):
         """Store a class definition as either a left- or right-hand class."""
 
         if self._isGlyphClass(self.leftFeaClassRe, name):
-            self.leftClasses[name] = contents
+            self.leftFeaClasses[name] = contents
         elif self._isGlyphClass(self.rightFeaClassRe, name):
-            self.rightClasses[name] = contents
+            self.rightFeaClasses[name] = contents
 
     def _addGlyphClasses(self, lines):
         """Add glyph classes for the input font's groups."""
 
-        for key, members in self.groups.items():
+        for key, members in sorted(self.leftUfoClasses.items() +
+                                   self.rightUfoClasses.items()):
             lines.append("%s = [%s];" % (key, " ".join(members)))
 
     def _addKerning(self, lines, kerning, enum=False):
@@ -67,11 +73,11 @@ class KernFeatureWriter(AbstractFeatureWriter):
         the kerning values associated with that class.
         """
 
-        for leftName, leftContents in self.leftClasses.items():
+        for leftName, leftContents in self.leftFeaClasses.items():
             leftKey = leftContents[0]
 
             # collect rules with two classes
-            for rightName, rightContents in self.rightClasses.items():
+            for rightName, rightContents in self.rightFeaClasses.items():
                 rightKey = rightContents[0]
                 pair = leftKey, rightKey
                 kerningVal = self.kerning[pair]
@@ -86,7 +92,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 self.kerning.remove(pair)
 
         # collect rules with left glyph and right class
-        for rightName, rightContents in self.rightClasses.items():
+        for rightName, rightContents in self.rightFeaClasses.items():
             rightKey = rightContents[0]
             for pair, kerningVal in self.kerning.getRight(rightKey):
                 self.rightClassKerning[pair[0], rightName] = kerningVal
@@ -114,9 +120,9 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
         for name, contents in self.groups.items():
             if self._isGlyphClass(self.leftUfoGroupRe, name):
-                self.leftClasses[name] = contents
+                self.leftUfoClasses[name] = contents
             if self._isGlyphClass(self.rightUfoGroupRe, name):
-                self.rightClasses[name] = contents
+                self.rightUfoClasses[name] = contents
 
     def _removeConflictingKerningRules(self):
         """Remove any conflicting pair and class rules.
@@ -126,12 +132,17 @@ class KernFeatureWriter(AbstractFeatureWriter):
         glyphs (the class members minus the offending members).
         """
 
+        leftClasses = dict(
+            self.leftFeaClasses.items() + self.leftUfoClasses.items())
+        rightClasses = dict(
+            self.rightFeaClasses.items() + self.rightUfoClasses.items())
+
         # maintain list of glyph pair rules seen
         seen = dict(self.glyphPairKerning)
 
         # remove conflicts in left class / right glyph rules
         for (lClass, rGlyph), val in self.leftClassKerning.items():
-            lGlyphs = self.leftClasses[lClass]
+            lGlyphs = leftClasses[lClass]
             nlGlyphs = []
             for lGlyph in lGlyphs:
                 pair = lGlyph, rGlyph
@@ -144,7 +155,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
         # remove conflicts in left glyph / right class rules
         for (lGlyph, rClass), val in self.rightClassKerning.items():
-            rGlyphs = self.rightClasses[rClass]
+            rGlyphs = rightClasses[rClass]
             nrGlyphs = []
             for rGlyph in rGlyphs:
                 pair = lGlyph, rGlyph
@@ -157,8 +168,8 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
         # remove conflicts in class / class rules
         for (lClass, rClass), val in self.classPairKerning.items():
-            lGlyphs = self.leftClasses[lClass]
-            rGlyphs = self.rightClasses[rClass]
+            lGlyphs = leftClasses[lClass]
+            rGlyphs = rightClasses[rClass]
             nlGlyphs, nrGlyphs = set(), set()
             for lGlyph in lGlyphs:
                 for rGlyph in rGlyphs:
@@ -190,8 +201,8 @@ class KernFeatureWriter(AbstractFeatureWriter):
             return ""
 
         self._collectFeaClassKerning()
-        self._collectUfoKerning()
         self._collectUfoGroups()
+        self._collectUfoKerning()
         self._removeConflictingKerningRules()
 
         # write the glyph classes
