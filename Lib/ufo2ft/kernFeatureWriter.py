@@ -184,6 +184,11 @@ class KernFeatureWriter(AbstractFeatureWriter):
     def write(self, linesep="\n"):
         """Write kern feature."""
 
+        if not any([self.glyphPairKerning, self.leftClassKerning,
+                    self.rightClassKerning, self.classPairKerning]):
+            # no kerning pairs, don't write empty feature
+            return ""
+
         self._collectFeaClassKerning()
         self._collectUfoKerning()
         self._collectUfoGroups()
@@ -197,13 +202,15 @@ class KernFeatureWriter(AbstractFeatureWriter):
         # write the feature
         lines.append("feature kern {")
         self._addKerning(lines, self.glyphPairKerning)
-        lines.append("    subtable;")
-        self._addKerning(lines, self.leftClassKerning, enum=True)
-        lines.append("    subtable;")
-        self._addKerning(lines, self.rightClassKerning, enum=True)
-        lines.append("    subtable;")
-        self._addKerning(lines, self.classPairKerning)
+        if self.leftClassKerning:
+            lines.append("    subtable;")
+            self._addKerning(lines, self.leftClassKerning, enum=True)
+        if self.leftClassKerning:
+            lines.append("    subtable;")
+            self._addKerning(lines, self.rightClassKerning, enum=True)
+        if self.leftClassKerning:
+            lines.append("    subtable;")
+            self._addKerning(lines, self.classPairKerning)
         lines.append("} kern;")
 
-        # return the feature, unless it's empty
-        return "" if len([ln for ln in lines if ln]) == 5 else linesep.join(lines)
+        return linesep.join(lines)
