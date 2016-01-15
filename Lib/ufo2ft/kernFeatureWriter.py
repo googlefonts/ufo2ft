@@ -166,7 +166,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
             nlGlyphs = []
             for lGlyph in lGlyphs:
                 pair = lGlyph, rGlyph
-                if pair not in seen or seen[pair] == val:
+                if pair not in seen:
                     nlGlyphs.append(lGlyph)
                     seen[pair] = val
             if nlGlyphs != lGlyphs:
@@ -179,7 +179,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
             nrGlyphs = []
             for rGlyph in rGlyphs:
                 pair = lGlyph, rGlyph
-                if pair not in seen or seen[pair] == val:
+                if pair not in seen:
                     nrGlyphs.append(rGlyph)
                     seen[pair] = val
             if nrGlyphs != rGlyphs:
@@ -194,7 +194,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
             for lGlyph in lGlyphs:
                 for rGlyph in rGlyphs:
                     pair = lGlyph, rGlyph
-                    if pair not in seen or seen[pair] == val:
+                    if pair not in seen:
                         nlGlyphs.add(lGlyph)
                         nrGlyphs.add(rGlyph)
                         seen[pair] = val
