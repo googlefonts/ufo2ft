@@ -120,9 +120,9 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
         for name, contents in self.groups.items():
             if self._isGlyphClass(self.leftUfoGroupRe, name):
-                self.leftUfoClasses[name] = contents
+                self.leftUfoClasses[self._makeFeaClassName(name)] = contents
             if self._isGlyphClass(self.rightUfoGroupRe, name):
-                self.rightUfoClasses[name] = contents
+                self.rightUfoClasses[self._makeFeaClassName(name)] = contents
 
     def _removeConflictingKerningRules(self):
         """Remove any conflicting pair and class rules.
@@ -225,3 +225,21 @@ class KernFeatureWriter(AbstractFeatureWriter):
         lines.append("} kern;")
 
         return linesep.join(lines)
+
+    def _makeFeaClassName(self, name):
+        """Make a glyph class name which is legal to use in OTF syntax.
+
+        Ensures the name starts with "@" and only includes characters in
+        "A-Za-z0-9._", and isn't already defined.
+        """
+
+        if not name.startswith("@"):
+            name = "@" + name
+        name = re.sub(r"[^A-Za-z0-9._]", r"", name)
+        existingClassNames = (
+            self.leftFeaClasses.keys() + self.rightFeaClasses.keys() +
+            self.leftUfoClasses.keys() + self.rightUfoClasses.keys())
+        if name in existingClassNames:
+            raise ValueError('New glyph class name "%s" (from UFO groups) '
+                             'is the name of an existing class.')
+        return name
