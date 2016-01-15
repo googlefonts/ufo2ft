@@ -38,33 +38,53 @@ class KernFeatureWriter(AbstractFeatureWriter):
         self.rightClassKerning = {}
         self.classPairKerning = {}
 
-        # parse feature definitions into left/rightFeaClasses
-        parser.parseFeatures(self, font.features.text)
-
-    def _isGlyphClass(self, nameRe, name):
-        return re.match(nameRe, name) is not None
-
     def classDefinition(self, name, contents):
         """Store a class definition as either a left- or right-hand class."""
 
-        if self._isGlyphClass(self.leftFeaClassRe, name):
+        if self._isClassName(self.leftFeaClassRe, name):
             self.leftFeaClasses[name] = contents
-        elif self._isGlyphClass(self.rightFeaClassRe, name):
+        elif self._isClassName(self.rightFeaClassRe, name):
             self.rightFeaClasses[name] = contents
 
-    def _addGlyphClasses(self, lines):
-        """Add glyph classes for the input font's groups."""
+    def write(self, linesep="\n"):
+        """Write kern feature."""
 
-        for key, members in sorted(self.leftUfoClasses.items() +
-                                   self.rightUfoClasses.items()):
-            lines.append("%s = [%s];" % (key, " ".join(members)))
+        if not any([self.glyphPairKerning, self.leftClassKerning,
+                    self.rightClassKerning, self.classPairKerning]):
+            # no kerning pairs, don't write empty feature
+            return ""
 
-    def _addKerning(self, lines, kerning, enum=False):
-        """Add kerning rules for a mapping of pairs to values."""
+        self._collectFeaClasses()
+        self._collectFeaClassKerning()
+        self._collectUfoClasses()
+        self._collectUfoKerning()
+        self._removeConflictingKerningRules()
 
-        enum = "enum " if enum else ""
-        for (left, right), val in sorted(kerning.items()):
-            lines.append("    %spos %s %s %d;" % (enum, left, right, val))
+        # write the glyph classes
+        lines = []
+        self._addGlyphClasses(lines)
+        lines.append("")
+
+        # write the feature
+        lines.append("feature kern {")
+        self._addKerning(lines, self.glyphPairKerning)
+        if self.leftClassKerning:
+            lines.append("    subtable;")
+            self._addKerning(lines, self.leftClassKerning, enum=True)
+        if self.leftClassKerning:
+            lines.append("    subtable;")
+            self._addKerning(lines, self.rightClassKerning, enum=True)
+        if self.leftClassKerning:
+            lines.append("    subtable;")
+            self._addKerning(lines, self.classPairKerning)
+        lines.append("} kern;")
+
+        return linesep.join(lines)
+
+    def _collectFeaClasses(self):
+        """Parse glyph classes from existing OTF syntax."""
+
+        parser.parseFeatures(self, font.features.text)
 
     def _collectFeaClassKerning(self):
         """Set up class kerning rules from OTF glyph class definitions.
@@ -98,13 +118,22 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 self.rightClassKerning[pair[0], rightName] = kerningVal
                 self.kerning.remove(pair)
 
+    def _collectUfoClasses(self):
+        """Sort UFO groups into left or right glyph classes."""
+
+        for name, contents in self.groups.items():
+            if self._isClassName(self.leftUfoGroupRe, name):
+                self.leftUfoClasses[self._makeFeaClassName(name)] = contents
+            if self._isClassName(self.rightUfoGroupRe, name):
+                self.rightUfoClasses[self._makeFeaClassName(name)] = contents
+
     def _collectUfoKerning(self):
         """Sort UFO kerning rules into glyph pair or class rules."""
 
         for glyphPair, val in sorted(self.kerning.items()):
             left, right = glyphPair
-            leftIsClass = self._isGlyphClass(self.leftUfoGroupRe, left)
-            rightIsClass = self._isGlyphClass(self.rightUfoGroupRe, right)
+            leftIsClass = self._isClassName(self.leftUfoGroupRe, left)
+            rightIsClass = self._isClassName(self.rightUfoGroupRe, right)
             if leftIsClass:
                 if rightIsClass:
                     self.classPairKerning[glyphPair] = val
@@ -114,15 +143,6 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 self.rightClassKerning[glyphPair] = val
             else:
                 self.glyphPairKerning[glyphPair] = val
-
-    def _collectUfoGroups(self):
-        """Sort UFO groups into left or right glyph classes."""
-
-        for name, contents in self.groups.items():
-            if self._isGlyphClass(self.leftUfoGroupRe, name):
-                self.leftUfoClasses[self._makeFeaClassName(name)] = contents
-            if self._isGlyphClass(self.rightUfoGroupRe, name):
-                self.rightUfoClasses[self._makeFeaClassName(name)] = contents
 
     def _removeConflictingKerningRules(self):
         """Remove any conflicting pair and class rules.
@@ -187,44 +207,29 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 self.classPairKerning[nlClass, nrClass] = val
                 del self.classPairKerning[lClass, rClass]
 
+    def _addGlyphClasses(self, lines):
+        """Add glyph classes for the input font's groups."""
+
+        for key, members in sorted(self.leftUfoClasses.items() +
+                                   self.rightUfoClasses.items()):
+            lines.append("%s = [%s];" % (key, " ".join(members)))
+
+    def _addKerning(self, lines, kerning, enum=False):
+        """Add kerning rules for a mapping of pairs to values."""
+
+        enum = "enum " if enum else ""
+        for (left, right), val in sorted(kerning.items()):
+            lines.append("    %spos %s %s %d;" % (enum, left, right, val))
+
     def _liststr(self, glyphs):
         """Return string representation of a list of glyph names."""
 
         return "[%s]" % " ".join(glyphs)
 
-    def write(self, linesep="\n"):
-        """Write kern feature."""
+    def _isClassName(self, nameRe, name):
+        """Return whether a given name matches a given class name regex."""
 
-        if not any([self.glyphPairKerning, self.leftClassKerning,
-                    self.rightClassKerning, self.classPairKerning]):
-            # no kerning pairs, don't write empty feature
-            return ""
-
-        self._collectFeaClassKerning()
-        self._collectUfoGroups()
-        self._collectUfoKerning()
-        self._removeConflictingKerningRules()
-
-        # write the glyph classes
-        lines = []
-        self._addGlyphClasses(lines)
-        lines.append("")
-
-        # write the feature
-        lines.append("feature kern {")
-        self._addKerning(lines, self.glyphPairKerning)
-        if self.leftClassKerning:
-            lines.append("    subtable;")
-            self._addKerning(lines, self.leftClassKerning, enum=True)
-        if self.leftClassKerning:
-            lines.append("    subtable;")
-            self._addKerning(lines, self.rightClassKerning, enum=True)
-        if self.leftClassKerning:
-            lines.append("    subtable;")
-            self._addKerning(lines, self.classPairKerning)
-        lines.append("} kern;")
-
-        return linesep.join(lines)
+        return re.match(nameRe, name) is not None
 
     def _makeFeaClassName(self, name):
         """Make a glyph class name which is legal to use in OTF syntax.
