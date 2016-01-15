@@ -25,6 +25,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
     def __init__(self, font):
         self.kerning = font.kerning
         self.groups = font.groups
+        self.featxt = font.features.text
 
         # kerning classes found in existing OTF syntax and UFO groups
         self.leftFeaClasses = {}
@@ -49,16 +50,16 @@ class KernFeatureWriter(AbstractFeatureWriter):
     def write(self, linesep="\n"):
         """Write kern feature."""
 
-        if not any([self.glyphPairKerning, self.leftClassKerning,
-                    self.rightClassKerning, self.classPairKerning]):
-            # no kerning pairs, don't write empty feature
-            return ""
-
         self._collectFeaClasses()
         self._collectFeaClassKerning()
         self._collectUfoClasses()
         self._collectUfoKerning()
         self._removeConflictingKerningRules()
+
+        if not any([self.glyphPairKerning, self.leftClassKerning,
+                    self.rightClassKerning, self.classPairKerning]):
+            # no kerning pairs, don't write empty feature
+            return ""
 
         # write the glyph classes
         lines = []
@@ -71,10 +72,10 @@ class KernFeatureWriter(AbstractFeatureWriter):
         if self.leftClassKerning:
             lines.append("    subtable;")
             self._addKerning(lines, self.leftClassKerning, enum=True)
-        if self.leftClassKerning:
+        if self.rightClassKerning:
             lines.append("    subtable;")
             self._addKerning(lines, self.rightClassKerning, enum=True)
-        if self.leftClassKerning:
+        if self.classPairKerning:
             lines.append("    subtable;")
             self._addKerning(lines, self.classPairKerning)
         lines.append("} kern;")
@@ -84,7 +85,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
     def _collectFeaClasses(self):
         """Parse glyph classes from existing OTF syntax."""
 
-        parser.parseFeatures(self, font.features.text)
+        parser.parseFeatures(self, self.featxt)
 
     def _collectFeaClassKerning(self):
         """Set up class kerning rules from OTF glyph class definitions.
