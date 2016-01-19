@@ -239,13 +239,13 @@ class KernFeatureWriter(AbstractFeatureWriter):
         "A-Za-z0-9._", and isn't already defined.
         """
 
-        if not name.startswith("@"):
-            name = "@" + name
-        name = re.sub(r"[^A-Za-z0-9._]", r"", name)
+        name = "@%s" % re.sub(r"[^A-Za-z0-9._]", r"", name)
         existingClassNames = (
             self.leftFeaClasses.keys() + self.rightFeaClasses.keys() +
             self.leftUfoClasses.keys() + self.rightUfoClasses.keys())
-        if name in existingClassNames:
-            raise ValueError('New glyph class name "%s" (from UFO groups) '
-                             'is the name of an existing class.')
+        i = 1
+        origName = name
+        while name in existingClassNames:
+            name = "%s_%d" % (origName, i)
+            i += 1
         return name
