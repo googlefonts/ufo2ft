@@ -507,9 +507,7 @@ class OutlineCompiler(object):
                 # minimum x for coordinate data
                 pen = ControlBoundsPen(self.ufo, ignoreSinglePoints=True)
                 glyph.draw(pen)
-                left, _, _, _ = pen.bounds
-            if left is None:
-                left = 0
+                left = 0 if pen.bounds is None else pen.bounds[0]
             # take floor of lsb/xMin, as fontTools does with min bounds
             hmtx[glyphName] = (_roundInt(width), int(math.floor(left)))
 
