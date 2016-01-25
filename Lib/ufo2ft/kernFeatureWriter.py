@@ -52,7 +52,10 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
         self._collectFeaClasses()
         self._collectFeaClassKerning()
+
         self._collectUfoClasses()
+        self._correctUfoClassNames()
+
         self._collectUfoKerning()
         self._removeConflictingKerningRules()
 
@@ -124,17 +127,45 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
         for name, contents in self.groups.items():
             if self._isClassName(self.leftUfoGroupRe, name):
-                self.leftUfoClasses[self._makeFeaClassName(name)] = contents
+                self.leftUfoClasses[name] = contents
             if self._isClassName(self.rightUfoGroupRe, name):
-                self.rightUfoClasses[self._makeFeaClassName(name)] = contents
+                self.rightUfoClasses[name] = contents
+
+    def _correctUfoClassNames(self):
+        """Detect and replace OTF-illegal class names found in UFO kerning."""
+
+        for name, members in self.leftUfoClasses.items():
+            newName = self._makeFeaClassName(name)
+            if name == newName:
+                continue
+            self.leftUfoClasses[newName] = members
+            del self.leftUfoClasses[name]
+            for pair, kerningVal in self.kerning.getLeft(name):
+                self.kerning[newName, pair[1]] = kerningVal
+                self.kerning.remove(pair)
+
+        for name, members in self.rightUfoClasses.items():
+            newName = self._makeFeaClassName(name)
+            if name == newName:
+                continue
+            self.rightUfoClasses[newName] = members
+            del self.rightUfoClasses[name]
+            for pair, kerningVal in self.kerning.getRight(name):
+                self.kerning[pair[0], newName] = kerningVal
+                self.kerning.remove(pair)
 
     def _collectUfoKerning(self):
-        """Sort UFO kerning rules into glyph pair or class rules."""
+        """Sort UFO kerning rules into glyph pair or class rules.
+
+        Assumes classes are present in the UFO's groups, though this is not
+        required by the UFO spec. Kerning rules using non-existent classes
+        should break the OTF compiler, so this *should* be a safe assumption.
+        """
 
         for glyphPair, val in sorted(self.kerning.items()):
             left, right = glyphPair
-            leftIsClass = self._isClassName(self.leftUfoGroupRe, left)
-            rightIsClass = self._isClassName(self.rightUfoGroupRe, right)
+            leftIsClass = left in self.leftUfoClasses
+            rightIsClass = right in self.rightUfoClasses
             if leftIsClass:
                 if rightIsClass:
                     self.classPairKerning[glyphPair] = val
