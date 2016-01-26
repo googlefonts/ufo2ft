@@ -33,7 +33,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
     def __init__(self, font):
         self.kerning = font.kerning
         self.groups = font.groups
-        self.featxt = font.features.text
+        self.featxt = font.features.text or ""
 
         # kerning classes found in existing OTF syntax and UFO groups
         self.leftFeaClasses = {}

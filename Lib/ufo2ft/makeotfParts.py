@@ -51,7 +51,7 @@ class FeatureOTFCompiler(object):
         mkmkRE = re.compile(kernRE.replace("kern", "mkmk"), re.DOTALL)
         kernRE = re.compile(kernRE, re.DOTALL)
 
-        existing = self.font.features.text
+        existing = self.font.features.text or ""
 
         # build the GPOS features as necessary
         autoFeatures = {}
