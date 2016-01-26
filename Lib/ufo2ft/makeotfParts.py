@@ -1,16 +1,27 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
+
 import os
 import re
+import tempfile
+
+from fontTools.feaLib.builder import addOpenTypeFeatures
+from fontTools import mtiLib
 
 
 class FeatureOTFCompiler(object):
-    """Generates OpenType feature tables for a UFO."""
+    """Generates OpenType feature tables for a UFO.
 
-    def __init__(self, font, outline, kernWriter, markWriter):
+    If mtiFeaFiles is passed to the constructor, it should be a dictionary
+    mapping feature table tags to source files which should be compiled by
+    mtiLib into that respective table.
+    """
+
+    def __init__(self, font, outline, kernWriter, markWriter, mtiFeaFiles=None):
         self.font = font
         self.outline = outline
         self.kernWriter = kernWriter
         self.markWriter = markWriter
+        self.mtiFeaFiles = mtiFeaFiles
         self.setupAnchorPairs()
         self.setupAliases()
 
@@ -45,6 +56,9 @@ class FeatureOTFCompiler(object):
         may override this method to handle the file creation
         in a different way if desired.
         """
+
+        if self.mtiFeaFiles is not None:
+            return
 
         kernRE = r"feature\s+kern\s+{.*?}\s+kern\s*;"
         markRE = re.compile(kernRE.replace("kern", "mark"), re.DOTALL)
@@ -153,11 +167,12 @@ class FeatureOTFCompiler(object):
         in a different way if desired.
         """
 
-        import tempfile
-        from fontTools.feaLib.builder import addOpenTypeFeatures
-        from fontTools.ttLib import TTFont
+        if self.mtiFeaFiles is not None:
+            for tag, feapath in self.mtiFeaFiles.iteritems():
+                with open(feapath) as feafile:
+                    self.outline[tag] = mtiLib.build(feafile, self.outline)
 
-        if self.features.strip():
+        elif self.features.strip():
             if self.font.path is not None:
                 self.features = forceAbsoluteIncludesInFeatures(self.features, self.font.path)
             fd, fea_path = tempfile.mkstemp()
