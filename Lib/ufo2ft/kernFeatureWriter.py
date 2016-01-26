@@ -6,6 +6,14 @@ from feaTools import parser
 from feaTools.writers.baseWriter import AbstractFeatureWriter
 
 
+def _getGlyphKern(kerning, glyphName, index):
+    hits = []
+    for k, v in kerning.items():
+        if k[index] == glyphName:
+            hits.append((k, v))
+    return hits
+
+
 class KernFeatureWriter(AbstractFeatureWriter):
     """Generates a kerning feature based on glyph class definitions.
 
@@ -111,14 +119,14 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 self.kerning.remove(pair)
 
             # collect rules with left class and right glyph
-            for pair, kerningVal in self.kerning.getLeft(leftKey):
+            for pair, kerningVal in _getGlyphKern(self.kerning, leftKey, 0):
                 self.leftClassKerning[leftName, pair[1]] = kerningVal
                 self.kerning.remove(pair)
 
         # collect rules with left glyph and right class
         for rightName, rightContents in self.rightFeaClasses.items():
             rightKey = rightContents[0]
-            for pair, kerningVal in self.kerning.getRight(rightKey):
+            for pair, kerningVal in _getGlyphKern(self.kerning, rightKey, 1):
                 self.rightClassKerning[pair[0], rightName] = kerningVal
                 self.kerning.remove(pair)
 
@@ -140,9 +148,9 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 continue
             self.leftUfoClasses[newName] = members
             del self.leftUfoClasses[name]
-            for pair, kerningVal in self.kerning.getLeft(name):
+            for pair, kerningVal in _getGlyphKern(self.kerning, name, 0):
                 self.kerning[newName, pair[1]] = kerningVal
-                self.kerning.remove(pair)
+                del self.kerning[pair]
 
         for name, members in self.rightUfoClasses.items():
             newName = self._makeFeaClassName(name)
@@ -150,9 +158,9 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 continue
             self.rightUfoClasses[newName] = members
             del self.rightUfoClasses[name]
-            for pair, kerningVal in self.kerning.getRight(name):
+            for pair, kerningVal in _getGlyphKern(self.kerning, name, 1):
                 self.kerning[pair[0], newName] = kerningVal
-                self.kerning.remove(pair)
+                del self.kerning[pair]
 
     def _collectUfoKerning(self):
         """Sort UFO kerning rules into glyph pair or class rules.
@@ -184,16 +192,16 @@ class KernFeatureWriter(AbstractFeatureWriter):
         glyphs (the class members minus the offending members).
         """
 
-        leftClasses = dict(
-            self.leftFeaClasses.items() + self.leftUfoClasses.items())
-        rightClasses = dict(
-            self.rightFeaClasses.items() + self.rightUfoClasses.items())
+        leftClasses = self.leftFeaClasses.copy()
+        leftClasses.update(self.leftUfoClasses)
+        rightClasses = self.rightFeaClasses.copy()
+        rightClasses.update(self.rightUfoClasses)
 
         # maintain list of glyph pair rules seen
         seen = dict(self.glyphPairKerning)
 
         # remove conflicts in left class / right glyph rules
-        for (lClass, rGlyph), val in self.leftClassKerning.items():
+        for (lClass, rGlyph), val in list(self.leftClassKerning.items()):
             lGlyphs = leftClasses[lClass]
             nlGlyphs = []
             for lGlyph in lGlyphs:
@@ -206,7 +214,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 del self.leftClassKerning[lClass, rGlyph]
 
         # remove conflicts in left glyph / right class rules
-        for (lGlyph, rClass), val in self.rightClassKerning.items():
+        for (lGlyph, rClass), val in list(self.rightClassKerning.items()):
             rGlyphs = rightClasses[rClass]
             nrGlyphs = []
             for rGlyph in rGlyphs:
@@ -219,7 +227,7 @@ class KernFeatureWriter(AbstractFeatureWriter):
                 del self.rightClassKerning[lGlyph, rClass]
 
         # remove conflicts in class / class rules
-        for (lClass, rClass), val in self.classPairKerning.items():
+        for (lClass, rClass), val in list(self.classPairKerning.items()):
             lGlyphs = leftClasses[lClass]
             rGlyphs = rightClasses[rClass]
             nlGlyphs, nrGlyphs = set(), set()
@@ -242,8 +250,9 @@ class KernFeatureWriter(AbstractFeatureWriter):
     def _addGlyphClasses(self, lines):
         """Add glyph classes for the input font's groups."""
 
-        for key, members in sorted(self.leftUfoClasses.items() +
-                                   self.rightUfoClasses.items()):
+        ufoClasses = self.leftUfoClasses.copy()
+        ufoClasses.update(self.rightUfoClasses)
+        for key, members in sorted(ufoClasses.items()):
             lines.append("%s = [%s];" % (key, " ".join(members)))
 
     def _addKerning(self, lines, kerning, enum=False):
@@ -272,8 +281,8 @@ class KernFeatureWriter(AbstractFeatureWriter):
 
         name = "@%s" % re.sub(r"[^A-Za-z0-9._]", r"", name)
         existingClassNames = (
-            self.leftFeaClasses.keys() + self.rightFeaClasses.keys() +
-            self.leftUfoClasses.keys() + self.rightUfoClasses.keys())
+            list(self.leftFeaClasses.keys()) + list(self.rightFeaClasses.keys()) +
+            list(self.leftUfoClasses.keys()) + list(self.rightUfoClasses.keys()))
         i = 1
         origName = name
         while name in existingClassNames:
