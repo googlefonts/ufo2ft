@@ -150,7 +150,10 @@ class KernFeatureWriter(AbstractFeatureWriter):
             del self.leftUfoClasses[name]
             for pair, kerningVal in _getGlyphKern(self.kerning, name, 0):
                 self.kerning[newName, pair[1]] = kerningVal
-                del self.kerning[pair]
+                try:
+                    self.kerning.remove(pair)
+                except AttributeError:
+                    del self.kerning[pair]
 
         for name, members in self.rightUfoClasses.items():
             newName = self._makeFeaClassName(name)
@@ -160,7 +163,10 @@ class KernFeatureWriter(AbstractFeatureWriter):
             del self.rightUfoClasses[name]
             for pair, kerningVal in _getGlyphKern(self.kerning, name, 1):
                 self.kerning[pair[0], newName] = kerningVal
-                del self.kerning[pair]
+                try:
+                    self.kerning.remove(pair)
+                except AttributeError:
+                    del self.kerning[pair]
 
     def _collectUfoKerning(self):
         """Sort UFO kerning rules into glyph pair or class rules.
