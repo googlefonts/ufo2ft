@@ -37,6 +37,9 @@ class FeatureOTFCompiler(object):
         self.setupFile_features()
         self.setupFile_featureTables()
 
+        # only after compiling features can usMaxContext be calculated
+        self.font['OS/2'].usMaxContext = maxCtxFont(self.font)
+
     def precompile(self):
         """Set any attributes needed before compilation.
 
@@ -202,3 +205,116 @@ def forceAbsoluteIncludesInFeatures(text, directory):
        includeText = start + srcPath + close
        text = text[:match.start()] + includeText + text[match.end():]
     return text
+
+
+def maxCtxFont(font):
+    """Calculate the usMaxContext value for an entire font."""
+
+    maxCtx = 0
+    for tag in ('GSUB', 'GPOS'):
+        if tag not in font:
+            continue
+        table = font[tag].table
+        if table.LookupList is None:
+            continue
+        for lookup in table.LookupList.Lookup:
+            for st in lookup.SubTable:
+                maxCtx = maxCtxSubtable(maxCtx, tag, lookup.LookupType, st)
+    return maxCtx
+
+
+def maxCtxSubtable(maxCtx, tag, lookupType, st):
+    """Calculate usMaxContext based on a single lookup table (and an existing
+    max value).
+    """
+
+    #TODO don't consider backtrack context? back-chaining?
+
+    # pair positioning
+    if tag == 'GPOS' and lookupType == 2:
+        ruleCount = 0
+        if st.Format == 1:
+            ruleCount = st.PairSetCount
+        elif st.Format == 2:
+            ruleCount = st.Class1Count * st.Class2Count
+        if ruleCount > 0:
+            maxCtx = max(maxCtx, 2)
+
+    #TODO mark positioning
+    elif tag == 'GPOS' and lookupType == 4:
+        pass
+    elif tag == 'GPOS' and lookupType == 5:
+        for ligature in st.LigatureArray.LigatureAttach:
+            maxCtx = max(maxCtx, 1 + ligature.ComponentCount)
+    elif tag == 'GPOS' and lookupType == 6:
+        pass
+
+    # ligatures
+    elif tag == 'GSUB' and lookupType == 4:
+        for ligatures in st.ligatures.values():
+            for ligature in ligatures:
+                maxCtx = max(maxCtx, ligature.CompCount)
+
+    # context
+    elif (tag == 'GPOS' and lookupType == 7 or
+          tag == 'GSUB' and lookupType == 5):
+        maxCtx = maxCtxContextualSubtable(
+            maxCtx, st, 'Pos' if tag == 'GPOS' else 'Sub')
+
+    # chained context
+    elif (tag == 'GPOS' and lookupType == 8 or
+          tag == 'GSUB' and lookupType == 6):
+        maxCtx = maxCtxContextualSubtable(
+            maxCtx, st, 'Pos' if tag == 'GPOS' else 'Sub', 'Chain')
+
+    # extensions
+    elif (tag == 'GPOS' and lookupType == 9) or (
+          tag == 'GSUB' and lookupType == 7):
+        maxCtx = maxCtxSubtable(
+            maxCtx, tag, st.ExtensionLookupType, st.ExtSubTable)
+
+    # reverse-chained context
+    elif tag == 'GSUB' and lookupType == 8:
+        maxCtx = maxCtxContextualRule(maxCtx, st, True)
+
+    return maxCtx
+
+
+def maxCtxContextualSubtable(maxCtx, st, ruleType, chain=''):
+    """Calculate usMaxContext based on a contextual feature subtable."""
+
+    if st.Format == 1:
+        for ruleset in getattr(st, '%s%sRuleSet' % (chain, ruleType)):
+            if ruleset is None:
+                continue
+            for rule in getattr(ruleset, '%s%sRule' % (chain, ruleType)):
+                if rule is None:
+                    continue
+                maxCtx = maxCtxContextualRule(maxCtx, rule, chain)
+
+    elif st.Format == 2:
+        for ruleset in getattr(st, '%s%sClassSet' % (chain, ruleType)):
+            if ruleset is None:
+                continue
+            for rule in getattr(ruleset, '%s%sClassRule' % (chain, ruleType)):
+                if rule is None:
+                    continue
+                maxCtx = maxCtxContextualRule(maxCtx, rule, chain)
+
+    elif st.Format == 3:
+        maxCtx = maxCtxContextualRule(maxCtx, st, chain)
+
+    return maxCtx
+
+
+def maxCtxContextualRule(maxCtx, st, chain):
+    """Calculate usMaxContext based on a contextual feature rule."""
+
+    if not chain:
+        return max(maxCtx, st.GlyphCount)
+
+    inputCount = 1
+    if hasattr(st, 'InputGlyphCount'):
+        inputCount = st.InputGlyphCount
+    return max(maxCtx, inputCount + st.LookAheadGlyphCount,
+               inputCount + st.BacktrackGlyphCount)
