@@ -8,7 +8,7 @@ The library provides two functions, `compileOTF` and `compileTTF`, which work
 exactly the same way:
 
 ```python
-from ufo2ft import OTFCompiler
+from ufo2ft import compileOTF
 from robofab.world import OpenFont
 ufo = OpenFont('MyFont-Regular.ufo')
 otf = compileOTF(ufo)
