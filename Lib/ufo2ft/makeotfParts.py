@@ -38,7 +38,7 @@ class FeatureOTFCompiler(object):
         self.setupFile_featureTables()
 
         # only after compiling features can usMaxContext be calculated
-        self.font['OS/2'].usMaxContext = maxCtxFont(self.font)
+        self.outline['OS/2'].usMaxContext = maxCtxFont(self.outline)
 
     def precompile(self):
         """Set any attributes needed before compilation.
