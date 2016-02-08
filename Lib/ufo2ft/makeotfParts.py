@@ -170,7 +170,9 @@ class FeatureOTFCompiler(object):
         if self.mtiFeaFiles is not None:
             for tag, feapath in self.mtiFeaFiles.items():
                 with open(feapath) as feafile:
-                    self.outline[tag] = mtiLib.build(feafile, self.outline)
+                    table = mtiLib.build(feafile, self.outline)
+                    assert table.tableTag == tag
+                    self.outline[tag] = table
 
         elif self.features.strip():
             if self.font.path is not None:
