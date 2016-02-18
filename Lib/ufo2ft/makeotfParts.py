@@ -228,26 +228,14 @@ def maxCtxSubtable(maxCtx, tag, lookupType, st):
     max value).
     """
 
-    #TODO don't consider backtrack context? back-chaining?
+    # single positioning, single / multiple substitution
+    if (tag == 'GPOS' and lookupType == 2 or
+        tag == 'GSUB' and lookupType in (1, 2, 3)):
+        maxCtx = max(maxCtx, 1)
 
     # pair positioning
     if tag == 'GPOS' and lookupType == 2:
-        ruleCount = 0
-        if st.Format == 1:
-            ruleCount = st.PairSetCount
-        elif st.Format == 2:
-            ruleCount = st.Class1Count * st.Class2Count
-        if ruleCount > 0:
-            maxCtx = max(maxCtx, 2)
-
-    #TODO mark positioning
-    elif tag == 'GPOS' and lookupType == 4:
-        pass
-    elif tag == 'GPOS' and lookupType == 5:
-        for ligature in st.LigatureArray.LigatureAttach:
-            maxCtx = max(maxCtx, 1 + ligature.ComponentCount)
-    elif tag == 'GPOS' and lookupType == 6:
-        pass
+        maxCtx = max(maxCtx, 2)
 
     # ligatures
     elif tag == 'GSUB' and lookupType == 4:
@@ -312,9 +300,4 @@ def maxCtxContextualRule(maxCtx, st, chain):
 
     if not chain:
         return max(maxCtx, st.GlyphCount)
-
-    inputCount = 1
-    if hasattr(st, 'InputGlyphCount'):
-        inputCount = st.InputGlyphCount
-    return max(maxCtx, inputCount + st.LookAheadGlyphCount,
-               inputCount + st.BacktrackGlyphCount)
+    return max(maxCtx, st.InputGlyphCount + st.LookAheadGlyphCount)
