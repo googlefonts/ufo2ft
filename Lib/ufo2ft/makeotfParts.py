@@ -229,7 +229,7 @@ def maxCtxSubtable(maxCtx, tag, lookupType, st):
     """
 
     # single positioning, single / multiple substitution
-    if (tag == 'GPOS' and lookupType == 2 or
+    if (tag == 'GPOS' and lookupType == 1 or
         tag == 'GSUB' and lookupType in (1, 2, 3)):
         maxCtx = max(maxCtx, 1)
 
