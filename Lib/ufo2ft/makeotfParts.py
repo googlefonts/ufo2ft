@@ -229,7 +229,7 @@ def maxCtxSubtable(maxCtx, tag, lookupType, st):
     """
 
     # single positioning, single / multiple substitution
-    if (tag == 'GPOS' and lookupType == 1 or
+    if (tag == 'GPOS' and lookupType == 1) or (
         tag == 'GSUB' and lookupType in (1, 2, 3)):
         maxCtx = max(maxCtx, 1)
 
@@ -244,13 +244,13 @@ def maxCtxSubtable(maxCtx, tag, lookupType, st):
                 maxCtx = max(maxCtx, ligature.CompCount)
 
     # context
-    elif (tag == 'GPOS' and lookupType == 7 or
+    elif (tag == 'GPOS' and lookupType == 7) or (
           tag == 'GSUB' and lookupType == 5):
         maxCtx = maxCtxContextualSubtable(
             maxCtx, st, 'Pos' if tag == 'GPOS' else 'Sub')
 
     # chained context
-    elif (tag == 'GPOS' and lookupType == 8 or
+    elif (tag == 'GPOS' and lookupType == 8) or (
           tag == 'GSUB' and lookupType == 6):
         maxCtx = maxCtxContextualSubtable(
             maxCtx, st, 'Pos' if tag == 'GPOS' else 'Sub', 'Chain')
