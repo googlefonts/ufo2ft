@@ -234,7 +234,7 @@ def maxCtxSubtable(maxCtx, tag, lookupType, st):
         maxCtx = max(maxCtx, 1)
 
     # pair positioning
-    if tag == 'GPOS' and lookupType == 2:
+    elif tag == 'GPOS' and lookupType == 2:
         maxCtx = max(maxCtx, 2)
 
     # ligatures
