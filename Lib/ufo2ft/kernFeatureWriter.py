@@ -81,13 +81,10 @@ class KernFeatureWriter(AbstractFeatureWriter):
         lines.append("feature kern {")
         self._addKerning(lines, self.glyphPairKerning)
         if self.leftClassKerning:
-            lines.append("    subtable;")
             self._addKerning(lines, self.leftClassKerning, enum=True)
         if self.rightClassKerning:
-            lines.append("    subtable;")
             self._addKerning(lines, self.rightClassKerning, enum=True)
         if self.classPairKerning:
-            lines.append("    subtable;")
             self._addKerning(lines, self.classPairKerning)
         lines.append("} kern;")
 
@@ -231,27 +228,6 @@ class KernFeatureWriter(AbstractFeatureWriter):
             if nrGlyphs != rGlyphs:
                 self.rightClassKerning[lGlyph, self._liststr(nrGlyphs)] = val
                 del self.rightClassKerning[lGlyph, rClass]
-
-        # remove conflicts in class / class rules
-        for (lClass, rClass), val in list(self.classPairKerning.items()):
-            lGlyphs = leftClasses[lClass]
-            rGlyphs = rightClasses[rClass]
-            nlGlyphs, nrGlyphs = set(), set()
-            for lGlyph in lGlyphs:
-                for rGlyph in rGlyphs:
-                    pair = lGlyph, rGlyph
-                    if pair not in seen:
-                        nlGlyphs.add(lGlyph)
-                        nrGlyphs.add(rGlyph)
-                        seen[pair] = val
-            nlClass, nrClass = lClass, rClass
-            if nlGlyphs != set(lGlyphs):
-                nlClass = self._liststr(sorted(nlGlyphs))
-            if nrGlyphs != set(rGlyphs):
-                nrClass = self._liststr(sorted(nrGlyphs))
-            if nlClass != lClass or nrClass != rClass:
-                self.classPairKerning[nlClass, nrClass] = val
-                del self.classPairKerning[lClass, rClass]
 
     def _addGlyphClasses(self, lines):
         """Add glyph classes for the input font's groups."""
