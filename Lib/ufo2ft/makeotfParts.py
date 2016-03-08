@@ -7,6 +7,8 @@ import tempfile
 from fontTools.feaLib.builder import addOpenTypeFeatures
 from fontTools import mtiLib
 
+from ufo2ft.maxContextCalc import maxCtxFont
+
 
 class FeatureOTFCompiler(object):
     """Generates OpenType feature tables for a UFO.
@@ -36,6 +38,9 @@ class FeatureOTFCompiler(object):
         self.precompile()
         self.setupFile_features()
         self.setupFile_featureTables()
+
+        # only after compiling features can usMaxContext be calculated
+        self.outline['OS/2'].usMaxContext = maxCtxFont(self.outline)
 
     def precompile(self):
         """Set any attributes needed before compilation.
