@@ -2,11 +2,8 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import re
 
-from feaTools import parser
-from feaTools.writers.baseWriter import AbstractFeatureWriter
 
-
-class KernFeatureWriter(AbstractFeatureWriter):
+class KernFeatureWriter(object):
     """Generates a kerning feature based on glyph class definitions.
 
     Uses the kerning rules contained in an RFont's kerning attribute, as well as
@@ -36,14 +33,6 @@ class KernFeatureWriter(AbstractFeatureWriter):
         self.leftClassKerning = {}
         self.rightClassKerning = {}
         self.classPairKerning = {}
-
-    def classDefinition(self, name, contents):
-        """Store a class definition as either a left- or right-hand class."""
-
-        if self._isClassName(self.leftFeaClassRe, name):
-            self.leftFeaClasses[name] = contents
-        elif self._isClassName(self.rightFeaClassRe, name):
-            self.rightFeaClasses[name] = contents
 
     def write(self, linesep="\n"):
         """Write kern feature."""
@@ -82,7 +71,12 @@ class KernFeatureWriter(AbstractFeatureWriter):
     def _collectFeaClasses(self):
         """Parse glyph classes from existing OTF syntax."""
 
-        parser.parseFeatures(self, self.featxt)
+        for name, contents in re.findall(
+                r'(@[\w.]+)\s*=\s*\[([\s\w.@-]*)\]\s*;', self.featxt, re.M):
+            if re.match(self.leftFeaClassRe, name):
+                self.leftFeaClasses[name] = contents.split()
+            elif re.match(self.rightFeaClassRe, name):
+                self.rightFeaClasses[name] = contents.split()
 
     def _collectFeaClassKerning(self):
         """Set up class kerning rules from OTF glyph class definitions.
@@ -214,11 +208,6 @@ class KernFeatureWriter(AbstractFeatureWriter):
         """Return string representation of a list of glyph names."""
 
         return "[%s]" % " ".join(glyphs)
-
-    def _isClassName(self, nameRe, name):
-        """Return whether a given name matches a given class name regex."""
-
-        return re.match(nameRe, name) is not None
 
     def _makeFeaClassName(self, name):
         """Make a glyph class name which is legal to use in OTF syntax.
