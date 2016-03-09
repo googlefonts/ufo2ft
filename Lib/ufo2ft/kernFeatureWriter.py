@@ -92,23 +92,23 @@ class KernFeatureWriter(object):
             for rightName, rightContents in self.rightFeaClasses.items():
                 rightKey = rightContents[0]
                 pair = leftKey, rightKey
-                kerningVal = self.kerning[pair]
+                kerningVal = self.kerning.get(pair)
                 if kerningVal is None:
                     continue
                 self.classPairKerning[leftName, rightName] = kerningVal
-                self.kerning.remove(pair)
+                del self.kerning[pair]
 
             # collect rules with left class and right glyph
             for pair, kerningVal in self._getGlyphKerning(leftKey, 0):
                 self.leftClassKerning[leftName, pair[1]] = kerningVal
-                self.kerning.remove(pair)
+                del self.kerning[pair]
 
         # collect rules with left glyph and right class
         for rightName, rightContents in self.rightFeaClasses.items():
             rightKey = rightContents[0]
             for pair, kerningVal in self._getGlyphKerning(rightKey, 1):
                 self.rightClassKerning[pair[0], rightName] = kerningVal
-                self.kerning.remove(pair)
+                del self.kerning[pair]
 
     def _correctUfoClassNames(self):
         """Detect and replace OTF-illegal class names found in UFO kerning."""
