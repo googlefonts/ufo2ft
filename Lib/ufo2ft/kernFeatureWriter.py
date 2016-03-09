@@ -126,12 +126,7 @@ class KernFeatureWriter(object):
                 del self.kerning[oldPair]
 
     def _collectUfoKerning(self):
-        """Sort UFO kerning rules into glyph pair or class rules.
-
-        Assumes classes are present in the UFO's groups, though this is not
-        required by the UFO spec. Kerning rules using non-existent classes
-        should break the OTF compiler, so this *should* be a safe assumption.
-        """
+        """Sort UFO kerning rules into glyph pair or class rules."""
 
         for glyphPair, val in sorted(self.kerning.items()):
             left, right = glyphPair
