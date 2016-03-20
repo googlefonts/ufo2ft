@@ -180,30 +180,5 @@ class FeatureOTFCompiler(object):
                     self.outline[tag] = table
 
         elif self.features.strip():
-            if self.font.path is not None:
-                self.features = forceAbsoluteIncludesInFeatures(self.features, self.font.path)
-            fd, fea_path = tempfile.mkstemp()
-            with open(fea_path, "w") as feafile:
-                feafile.write(self.features)
-            addOpenTypeFeatures(fea_path, self.outline)
-            os.close(fd)
-            os.remove(fea_path)
-
-includeRE = re.compile(
-    "(include\s*\(\s*)"
-    "([^\)]+)"
-    "(\s*\))" # this won't actually capture a trailing space.
-    )
-
-
-def forceAbsoluteIncludesInFeatures(text, directory):
-    for match in reversed(list(includeRE.finditer(text))):
-       start, includePath, close = match.groups()
-       # absolute path
-       if os.path.isabs(includePath):
-           continue
-       # relative path
-       srcPath = os.path.normpath(os.path.join(directory, includePath.strip()))
-       includeText = start + srcPath + close
-       text = text[:match.start()] + includeText + text[match.end():]
-    return text
+            feapath = os.path.join(self.font.path, "features.fea")
+            addOpenTypeFeatures(self.outline, feapath, self.features)
