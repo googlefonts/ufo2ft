@@ -4,7 +4,7 @@ import os
 import re
 import tempfile
 
-from fontTools.feaLib.builder import addOpenTypeFeatures
+from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
 
 from ufo2ft.maxContextCalc import maxCtxFont
@@ -181,4 +181,5 @@ class FeatureOTFCompiler(object):
 
         elif self.features.strip():
             feapath = os.path.join(self.font.path, "features.fea")
-            addOpenTypeFeatures(self.outline, feapath, self.features)
+            addOpenTypeFeaturesFromString(self.outline, self.features,
+                                          filename=feapath)
