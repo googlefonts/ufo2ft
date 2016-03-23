@@ -6,12 +6,12 @@ import re
 class KernFeatureWriter(object):
     """Generates a kerning feature based on glyph class definitions.
 
-    Uses the kerning rules contained in an RFont's kerning attribute, as well as
-    glyph classes from parsed OTF text. Class-based rules are set based on the
+    Uses the kerning rules contained in an UFO's kerning data, as well as glyph
+    classes from parsed feature text. Class-based rules are set based on the
     existing rules for their key glyphs.
 
-    Uses class attributes to match UFO glyph group names and feature syntax
-    glyph class names as kerning classes, which can be overridden.
+    Uses class attributes to match glyph class names in feature text as kerning
+    classes, which can be overridden.
     """
 
     leftFeaClassRe = r"@MMK_L_(.+)"
@@ -22,7 +22,7 @@ class KernFeatureWriter(object):
         self.groups = dict(font.groups)
         self.featxt = font.features.text or ""
 
-        # kerning classes found in existing OTF syntax and UFO groups
+        # kerning classes found in existing feature text and UFO groups
         self.leftFeaClasses = {}
         self.rightFeaClasses = {}
         self.leftUfoClasses = {}
@@ -69,7 +69,7 @@ class KernFeatureWriter(object):
         return linesep.join(lines)
 
     def _collectFeaClasses(self):
-        """Parse glyph classes from existing OTF syntax."""
+        """Parse glyph classes from existing feature text."""
 
         for name, contents in re.findall(
                 r'(@[\w.]+)\s*=\s*\[([\s\w.@-]*)\]\s*;', self.featxt, re.M):
@@ -79,7 +79,7 @@ class KernFeatureWriter(object):
                 self.rightFeaClasses[name] = contents.split()
 
     def _collectFeaClassKerning(self):
-        """Set up class kerning rules from OTF glyph class definitions.
+        """Set up class kerning rules from class definitions in feature text.
 
         The first glyph from each class (called it's "key") is used to determine
         the kerning values associated with that class.
@@ -111,7 +111,7 @@ class KernFeatureWriter(object):
                 del self.kerning[pair]
 
     def _correctUfoClassNames(self):
-        """Detect and replace OTF-illegal class names found in UFO kerning."""
+        """Detect and replace illegal class names found in UFO kerning."""
 
         for oldName, members in self.groups.items():
             newName = self._makeFeaClassName(oldName)
@@ -205,7 +205,7 @@ class KernFeatureWriter(object):
         return "[%s]" % " ".join(glyphs)
 
     def _makeFeaClassName(self, name):
-        """Make a glyph class name which is legal to use in OTF syntax.
+        """Make a glyph class name which is legal to use in feature text.
 
         Ensures the name starts with "@" and only includes characters in
         "A-Za-z0-9._", and isn't already defined.
