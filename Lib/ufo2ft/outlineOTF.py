@@ -134,10 +134,10 @@ class OutlineCompiler(object):
         may override this method to handle the order creation
         in a different way if desired.
         """
-        allGlyphs = self.allGlyphs
-        orderedGlyphs = [".notdef", "space"]
+
+        orderedGlyphs = [".notdef"]
         for glyphName in glyphOrder:
-            if glyphName in [".notdef", "space"]:
+            if glyphName == ".notdef":
                 continue
             orderedGlyphs.append(glyphName)
         for glyphName in sorted(self.allGlyphs.keys()):
