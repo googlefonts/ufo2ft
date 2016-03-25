@@ -17,14 +17,7 @@ import time
 import unicodedata
 from fontTools.misc.textTools import binary2num
 from fontTools.misc.arrayTools import unionRect
-try:
-    import ufoLib
-except ImportError:
-    from robofab import ufoLib
-try:
-    set
-except NameError:
-    from sets import Set as set
+import ufoLib
 
 # -----------------
 # Special Fallbacks
