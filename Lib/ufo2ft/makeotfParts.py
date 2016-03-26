@@ -180,6 +180,6 @@ class FeatureOTFCompiler(object):
                     self.outline[tag] = table
 
         elif self.features.strip():
-            feapath = os.path.join(self.font.path, "features.fea")
+            feapath = os.path.join(self.font.path if self.font.path is not None else '', "features.fea")
             addOpenTypeFeaturesFromString(self.outline, self.features,
                                           filename=feapath)
