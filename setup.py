@@ -10,10 +10,10 @@ except:
     print("    fonttools.sf.net")
 
 try:
-    import robofab
+    import ufoLib
 except:
-    print("*** Warning: ufo2ft requires RoboFab, see:")
-    print("    robofab.com")
+    print("*** Warning: ufo2ft requires ufoLib, see:")
+    print("    https://github.com/unified-font-object/ufoLib")
 
 
 setup(name="ufo2ft",
