@@ -42,7 +42,10 @@ class OutlineCompiler(object):
         self.allGlyphs.update(missingRequiredGlyphs)
         # store the glyph order
         if glyphOrder is None:
-            glyphOrder = sorted(self.allGlyphs.keys())
+            if hasattr(font, 'glyphOrder'):
+                glyphOrder = font.glyphOrder
+            else:
+                glyphOrder = sorted(self.allGlyphs.keys())
         self.glyphOrder = self.makeOfficialGlyphOrder(glyphOrder)
         # make a reusable bounding box
         self.fontBoundingBox = tuple([_roundInt(i) for i in self.makeFontBoundingBox()])
