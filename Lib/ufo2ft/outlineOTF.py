@@ -261,6 +261,7 @@ class OutlineCompiler(object):
             "7": getAttrWithFallback(font.info, "trademark"),
             "8": getAttrWithFallback(font.info, "openTypeNameManufacturer"),
             "9": getAttrWithFallback(font.info, "openTypeNameDesigner"),
+            "10": getAttrWithFallback(font.info, "openTypeNameDescription"),
             "11": getAttrWithFallback(font.info, "openTypeNameManufacturerURL"),
             "12": getAttrWithFallback(font.info, "openTypeNameDesignerURL"),
             "13": getAttrWithFallback(font.info, "openTypeNameLicense"),

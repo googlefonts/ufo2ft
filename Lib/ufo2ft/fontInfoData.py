@@ -75,7 +75,7 @@ def openTypeNameVersionFallback(info):
     """
     versionMajor = getAttrWithFallback(info, "versionMajor")
     versionMinor = getAttrWithFallback(info, "versionMinor")
-    return "%d.%s" % (versionMajor, str(versionMinor).zfill(3))
+    return "Version %d.%s" % (versionMajor, str(versionMinor).zfill(3))
 
 def openTypeNameUniqueIDFallback(info):
     """
