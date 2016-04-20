@@ -130,6 +130,12 @@ class FeatureOTFCompiler(object):
         Try to determine the base-accent anchor pairs to use in building the
         mark and mkmk features.
 
+        The default behavior is to match anchors using a scheme used by Glyphs.
+        "top" and "top_1" would both match with attaching anchor "_top", but not
+        "top_2". While "top_2" might be used to attach components, its presence
+        implies that "top_1" is also present and it seems this _1 anchor is
+        used for actual GPOS positioning.
+
         **This should not be called externally.** Subclasses
         may override this method to set up the anchor pairs
         in a different way if desired.
@@ -144,9 +150,10 @@ class FeatureOTFCompiler(object):
                     continue
                 anchorNames.add(anchor.name)
         for baseName in sorted(anchorNames):
-            accentName = "_" + baseName
-            if accentName in anchorNames:
-                self.anchorPairs.append((baseName, accentName))
+            accentName = "_" + re.sub(r'_1$', '', baseName)
+            anchorPair = baseName, accentName
+            if accentName in anchorNames and anchorPair not in self.anchorPairs:
+                self.anchorPairs.append(anchorPair)
 
         self.mkmkAnchorPairs = []
 
