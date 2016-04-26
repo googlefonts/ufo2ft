@@ -98,7 +98,12 @@ class MarkFeatureWriter(object):
             anchorList.extend(self.ligaAnchorList)
         if doMkmk:
             anchorList.extend(self.mkmkAnchorList)
-        for anchorPair in sorted(set(anchorList)):
+
+        added = set()
+        for anchorPair in sorted(anchorList):
+            if anchorPair[1] in added:
+                continue
+            added.add(anchorPair[1])
             self._addClass(lines, *anchorPair[1:])
 
     def _addClass(self, lines, accentAnchorName, combAccentOnly=False,
