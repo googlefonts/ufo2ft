@@ -36,35 +36,6 @@ class MarkFeatureWriter(object):
                 return alias
         return None
 
-    def _addClasses(self, lines, doMark, doMkmk):
-        """Write class definitions for anchors used in mark and/or mkmk."""
-
-        anchorList = []
-        if doMark:
-            anchorList.extend(self.anchorList)
-            anchorList.extend(self.ligaAnchorList)
-        if doMkmk:
-            anchorList.extend(self.mkmkAnchorList)
-        for anchorPair in sorted(set(anchorList)):
-            self._addClass(lines, *anchorPair[1:])
-
-    def _addClass(self, lines, accentAnchorName, combAccentOnly=False,
-                  checkAliases=False):
-        """Write class definition statements for one accent anchor. Remembers
-        the accent glyph names, for use when generating base glyph lists.
-        """
-
-        accentGlyphs = self._createAccentGlyphList(
-            accentAnchorName, combAccentOnly)
-        className = self._generateClassName(accentAnchorName)
-
-        for accentName, x, y in accentGlyphs:
-            self.accentGlyphNames.add(accentName)
-            lines.append(
-                "markClass %s <anchor %d %d> %s;" %
-                (accentName, x, y, className))
-        lines.append("")
-
     def _createAccentGlyphList(self, accentAnchorName, combAccentOnly):
         """Return a list of <name, x, y> tuples for glyphs containing an anchor
         with the given accent anchor name. If combAccentOnly is True, only
@@ -97,6 +68,56 @@ class MarkFeatureWriter(object):
                     break
         return glyphList
 
+    def _createLigaGlyphList(self, anchorNames):
+        """Return a list of (name, ((x, y), (x, y), ...)) tuples for glyphs
+        containing anchors with given anchor names.
+        """
+
+        glyphList = []
+        for glyph in self.font:
+            points = []
+            for anchorName in anchorNames:
+                found = False
+                for anchor in glyph.anchors:
+                    if anchorName == anchor.name:
+                        points.append((anchor.x, anchor.y))
+                        found = True
+                        break
+                if not found:
+                    break
+            if points:
+                glyphList.append((glyph.name, tuple(points)))
+        return glyphList
+
+    def _addClasses(self, lines, doMark, doMkmk):
+        """Write class definitions for anchors used in mark and/or mkmk."""
+
+        anchorList = []
+        if doMark:
+            anchorList.extend(self.anchorList)
+            anchorList.extend(self.ligaAnchorList)
+        if doMkmk:
+            anchorList.extend(self.mkmkAnchorList)
+        for anchorPair in sorted(set(anchorList)):
+            self._addClass(lines, *anchorPair[1:])
+
+    def _addClass(self, lines, accentAnchorName, combAccentOnly=False,
+                  checkAliases=False):
+        """Write class definition statements for one accent anchor. Remembers
+        the accent glyph names, for use when generating base glyph lists.
+        """
+
+        accentGlyphs = self._createAccentGlyphList(
+            accentAnchorName, combAccentOnly)
+        className = self._generateClassName(accentAnchorName)
+
+        for accentName, x, y in accentGlyphs:
+            self.accentGlyphNames.add(accentName)
+            lines.append(
+                "markClass %s <anchor %d %d> %s;" %
+                (accentName, x, y, className))
+        lines.append("")
+
     def _addMarkLookup(self, lines, lookupName, isMkmk, anchorName, accentAnchorName,
                        combAccentOnly=False, checkAliases=False):
         """Add a mark lookup for one tuple in the writer's anchor list."""
@@ -122,27 +143,6 @@ class MarkFeatureWriter(object):
                         (ruleType, alias, x, y, className))
 
         lines.append("  } %s;" % lookupName)
-
-    def _createLigaGlyphList(self, anchorNames):
-        """Return a list of (name, ((x, y), (x, y), ...)) tuples for glyphs
-        containing anchors with given anchor names.
-        """
-
-        glyphList = []
-        for glyph in self.font:
-            points = []
-            for anchorName in anchorNames:
-                found = False
-                for anchor in glyph.anchors:
-                    if anchorName == anchor.name:
-                        points.append((anchor.x, anchor.y))
-                        found = True
-                        break
-                if not found:
-                    break
-            if points:
-                glyphList.append((glyph.name, tuple(points)))
-        return glyphList
 
     def _addMarkToLigaLookup(self, lines, lookupName, anchorNames,
                              accentAnchorName):
