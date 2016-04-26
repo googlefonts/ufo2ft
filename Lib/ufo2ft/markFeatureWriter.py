@@ -76,13 +76,13 @@ class MarkFeatureWriter(object):
                 "    markClass %s <anchor %d %d> %s;" %
                 (accentName, x, y, className))
 
-        for accentName, x, y in baseGlyphs:
+        for baseName, x, y in baseGlyphs:
             lines.append(
                 "    pos %s %s <anchor %d %d> mark %s;" %
-                (ruleType, accentName, x, y, className))
+                (ruleType, baseName, x, y, className))
 
             if checkAliases:
-                alias = self._getAlias(accentName)
+                alias = self._getAlias(baseName)
                 if alias:
                     lines.append(
                         "    pos %s %s <anchor %d %d> mark %s;" %
