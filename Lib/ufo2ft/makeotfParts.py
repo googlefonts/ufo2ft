@@ -76,10 +76,11 @@ class FeatureOTFCompiler(object):
         autoFeatures = {}
         if self.overwriteFeatures or not kernRE.search(existing):
             autoFeatures["kern"] = self.writeFeatures_kern()
-        if self.overwriteFeatures or not markRE.search(existing):
-            autoFeatures["mark"] = self.writeFeatures_mark()
-        if self.overwriteFeatures or not mkmkRE.search(existing):
-            autoFeatures["mkmk"] = self.writeFeatures_mkmk()
+        writeMark = self.overwriteFeatures or not markRE.search(existing)
+        writeMkmk = self.overwriteFeatures or not mkmkRE.search(existing)
+        if writeMark or writeMkmk:
+            autoFeatures["mark"] = self.writeFeatures_mark(
+                doMark=writeMark, doMkmk=writeMkmk)
 
         if self.overwriteFeatures:
             existing = kernRE.sub("", markRE.sub("", mkmkRE.sub("", existing)))
@@ -101,29 +102,19 @@ class FeatureOTFCompiler(object):
         writer = self.kernWriter(self.font)
         return writer.write()
 
-    def writeFeatures_mark(self):
+    def writeFeatures_mark(self, doMark=True, doMkmk=True):
         """
-        Write the mark feature to a string and return it.
+        Write the mark and mkmk features to a string and return it.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
         in a different way if desired.
         """
-        writer = self.markWriter(self.font, self.anchorPairs,
-                                 aliases=self.aliases)
-        return writer.write()
 
-    def writeFeatures_mkmk(self):
-        """
-        Write the mkmk feature to a string and return it.
-
-        **This should not be called externally.** Subclasses
-        may override this method to handle the string creation
-        in a different way if desired.
-        """
-        writer = self.markWriter(self.font, self.mkmkAnchorPairs,
-                                 aliases=self.aliases, mkmk=True)
-        return writer.write()
+        writer = self.markWriter(
+            self.font, self.anchorPairs, self.mkmkAnchorPairs,
+            self.ligaAnchorPairs, self.aliases)
+        return writer.write(doMark, doMkmk)
 
     def setupAnchorPairs(self):
         """
@@ -136,6 +127,8 @@ class FeatureOTFCompiler(object):
         """
 
         self.anchorPairs = []
+        self.ligaAnchorPairs = []
+
         anchorNames = set()
         for glyph in self.font:
             for anchor in glyph.anchors:
@@ -143,12 +136,24 @@ class FeatureOTFCompiler(object):
                     print("warning: unnamed anchor discarded in", glyph.name)
                     continue
                 anchorNames.add(anchor.name)
+
         for baseName in sorted(anchorNames):
             accentName = "_" + baseName
             if accentName in anchorNames:
                 self.anchorPairs.append((baseName, accentName))
 
-        self.mkmkAnchorPairs = []
+                ligaNames = []
+                i = 1
+                while True:
+                    ligaName = "%s_%d" % (baseName, i)
+                    if ligaName not in anchorNames:
+                        break
+                    ligaNames.append(ligaName)
+                    i += 1
+                if ligaNames:
+                    self.ligaAnchorPairs.append((tuple(ligaNames), accentName))
+
+        self.mkmkAnchorPairs = self.anchorPairs
 
     def setupAliases(self):
         """
