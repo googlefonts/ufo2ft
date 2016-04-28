@@ -3,12 +3,14 @@ from __future__ import print_function, division, absolute_import
 from ufo2ft.kernFeatureWriter import KernFeatureWriter
 from ufo2ft.makeotfParts import FeatureOTFCompiler
 from ufo2ft.markFeatureWriter import MarkFeatureWriter
+from ufo2ft.otfPostProcessor import OTFPostProcessor
 from ufo2ft.outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
 
 
-def compileOTF(ufo, glyphOrder=None, outlineCompilerClass=OutlineOTFCompiler,
+def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureOTFCompiler, mtiFeaFiles=None,
-               kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter):
+               kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter,
+               glyphOrder=None, useProductionNames=True):
     """Create FontTools CFF font from a UFO."""
 
     outlineCompiler = outlineCompilerClass(ufo, glyphOrder=glyphOrder)
@@ -17,6 +19,9 @@ def compileOTF(ufo, glyphOrder=None, outlineCompilerClass=OutlineOTFCompiler,
     featureCompiler = featureCompilerClass(
         ufo, otf, kernWriter, markWriter, mtiFeaFiles=mtiFeaFiles)
     featureCompiler.compile()
+
+    postProcessor = OTFPostProcessor(otf, ufo)
+    otf = postProcessor.process(useProductionNames)
 
     return otf
 
