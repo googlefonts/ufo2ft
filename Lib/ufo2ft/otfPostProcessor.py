@@ -67,9 +67,11 @@ class OTFPostProcessor(object):
             liga_parts = ['%s.%s' % (n, parts[1]) for n in parts[0].split('_')]
         else:
             liga_parts = glyph.name.split('_')
-        if all(n in self.ufo for n in liga_parts):
+        if len(liga_parts) > 1 and all(n in self.ufo for n in liga_parts):
             unicode_vals = [self.ufo[n].unicode for n in liga_parts]
-            if all(unicode_vals):
+            if all(v and v <= 0xffff for v in unicode_vals):
                 return 'uni' + ''.join('%04X' % v for v in unicode_vals)
+            return '_'.join(
+                self._build_production_name(self.ufo[n]) for n in liga_parts)
 
         return glyph.name
