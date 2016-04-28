@@ -2,6 +2,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import tempfile
 
+from compreffor import Compreffor
 from fontTools.ttLib import TTFont
 
 
@@ -17,9 +18,12 @@ class OTFPostProcessor(object):
         otf.save(tmp_path)
         self.otf = TTFont(tmp_path)
 
-    def process(self, useProductionNames=True):
+    def process(self, useProductionNames=True, optimizeCff=True):
         if useProductionNames:
             self._rename_glyphs_from_ufo()
+        if optimizeCff and 'CFF ' in self.otf:
+            comp = Compreffor(self.otf)
+            comp.compress()
         return self.otf
 
     def _rename_glyphs_from_ufo(self):

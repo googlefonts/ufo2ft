@@ -10,7 +10,7 @@ from ufo2ft.outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureOTFCompiler, mtiFeaFiles=None,
                kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter,
-               glyphOrder=None, useProductionNames=True):
+               glyphOrder=None, useProductionNames=True, optimizeCff=True):
     """Create FontTools CFF font from a UFO."""
 
     outlineCompiler = outlineCompilerClass(ufo, glyphOrder=glyphOrder)
@@ -21,7 +21,7 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
     featureCompiler.compile()
 
     postProcessor = OTFPostProcessor(otf, ufo)
-    otf = postProcessor.process(useProductionNames)
+    otf = postProcessor.process(useProductionNames, optimizeCff)
 
     return otf
 
