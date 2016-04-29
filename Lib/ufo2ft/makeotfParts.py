@@ -2,7 +2,6 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import os
 import re
-import tempfile
 
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
