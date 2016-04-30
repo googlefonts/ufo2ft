@@ -1,6 +1,5 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-from compreffor import Compreffor
 from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
 
@@ -21,6 +20,7 @@ class OTFPostProcessor(object):
         if useProductionNames:
             self._rename_glyphs_from_ufo()
         if optimizeCff and 'CFF ' in self.otf:
+            from compreffor import Compreffor
             comp = Compreffor(self.otf)
             comp.compress()
         return self.otf
