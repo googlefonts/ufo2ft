@@ -31,6 +31,8 @@ class OTFPostProcessor(object):
 
         rename_map = {
             g.name: self._build_production_name(g) for g in self.ufo}
+        # .notdef may not be present in the original font
+        rename_map[".notdef"] = ".notdef"
         rename = lambda names: [rename_map[n] for n in names]
 
         self.otf.setGlyphOrder(rename(self.otf.getGlyphOrder()))
