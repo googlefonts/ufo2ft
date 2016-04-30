@@ -1,8 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-import tempfile
-
 from compreffor import Compreffor
+from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
 
 
@@ -13,10 +12,10 @@ class OTFPostProcessor(object):
 
     def __init__(self, otf, ufo):
         self.ufo = ufo
-        tmp_file = tempfile.NamedTemporaryFile()
-        tmp_path = tmp_file.name
-        otf.save(tmp_path)
-        self.otf = TTFont(tmp_path)
+        stream = BytesIO()
+        otf.save(stream)
+        stream.seek(0)
+        self.otf = TTFont(stream)
 
     def process(self, useProductionNames=True, optimizeCff=True):
         if useProductionNames:
