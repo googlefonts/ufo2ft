@@ -1,8 +1,6 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
-import tempfile
-
-from compreffor import Compreffor
+from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
 
 
@@ -13,15 +11,16 @@ class OTFPostProcessor(object):
 
     def __init__(self, otf, ufo):
         self.ufo = ufo
-        tmp_file = tempfile.NamedTemporaryFile()
-        tmp_path = tmp_file.name
-        otf.save(tmp_path)
-        self.otf = TTFont(tmp_path)
+        stream = BytesIO()
+        otf.save(stream)
+        stream.seek(0)
+        self.otf = TTFont(stream)
 
     def process(self, useProductionNames=True, optimizeCff=True):
         if useProductionNames:
             self._rename_glyphs_from_ufo()
         if optimizeCff and 'CFF ' in self.otf:
+            from compreffor import Compreffor
             comp = Compreffor(self.otf)
             comp.compress()
         return self.otf
@@ -31,6 +30,8 @@ class OTFPostProcessor(object):
 
         rename_map = {
             g.name: self._build_production_name(g) for g in self.ufo}
+        # .notdef may not be present in the original font
+        rename_map[".notdef"] = ".notdef"
         rename = lambda names: [rename_map[n] for n in names]
 
         self.otf.setGlyphOrder(rename(self.otf.getGlyphOrder()))

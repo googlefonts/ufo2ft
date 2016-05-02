@@ -142,6 +142,8 @@ class OutlineCompiler(object):
         for glyphName in glyphOrder:
             if glyphName == ".notdef":
                 continue
+            if glyphName not in self.ufo:
+                continue
             orderedGlyphs.append(glyphName)
         for glyphName in sorted(self.allGlyphs.keys()):
             if glyphName not in orderedGlyphs:
