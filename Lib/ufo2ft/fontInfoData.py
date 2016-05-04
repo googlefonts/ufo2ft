@@ -208,6 +208,18 @@ def postscriptSlantAngleFallback(info):
     """
     return getAttrWithFallback(info, "italicAngle")
 
+def postscriptUnderlineThicknessFallback(info):
+    """Return UPM * 0.05 (50 for 1000 UPM) and warn."""
+    print('WARNING: underline thickness not set in UFO, defaulting to UPM * '
+          '0.05')
+    return info.unitsPerEm * 0.05
+
+def postscriptUnderlinePositionFallback(info):
+    """Return UPM * -0.075 (-75 for 1000 UPM) and warn."""
+    print('WARNING: underline position not set in UFO, defaulting to UPM * '
+          '-0.075')
+    return info.unitsPerEm * -0.075
+
 _postscriptWeightNameOptions = {
     100 : "Thin",
     200 : "Extra-light",
@@ -288,7 +300,7 @@ staticFallbackData = dict(
     openTypeOS2CodePageRanges=[],
     openTypeOS2TypoLineGap=200,
     openTypeOS2Type=[2],
-    # let the FDK fallback on these
+
     openTypeOS2SubscriptXSize=None,
     openTypeOS2SubscriptYSize=None,
     openTypeOS2SubscriptXOffset=None,
@@ -311,8 +323,6 @@ staticFallbackData = dict(
     openTypeVheaCaretOffset=None,
 
     postscriptUniqueID=None,
-    postscriptUnderlineThickness=None,
-    postscriptUnderlinePosition=None,
     postscriptIsFixedPitch=False,
     postscriptBlueValues=[],
     postscriptOtherBlues=[],
@@ -355,6 +365,8 @@ specialFallbacks = dict(
     postscriptFontName=postscriptFontNameFallback,
     postscriptFullName=postscriptFullNameFallback,
     postscriptSlantAngle=postscriptSlantAngleFallback,
+    postscriptUnderlineThickness=postscriptUnderlineThicknessFallback,
+    postscriptUnderlinePosition=postscriptUnderlinePositionFallback,
     postscriptWeightName=postscriptWeightNameFallback
 )
 
