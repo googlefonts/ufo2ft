@@ -288,7 +288,7 @@ staticFallbackData = dict(
     openTypeOS2CodePageRanges=[],
     openTypeOS2TypoLineGap=200,
     openTypeOS2Type=[2],
-    # let the FDK fallback on these
+
     openTypeOS2SubscriptXSize=None,
     openTypeOS2SubscriptYSize=None,
     openTypeOS2SubscriptXOffset=None,
@@ -311,8 +311,8 @@ staticFallbackData = dict(
     openTypeVheaCaretOffset=None,
 
     postscriptUniqueID=None,
-    postscriptUnderlineThickness=None,
-    postscriptUnderlinePosition=None,
+    postscriptUnderlineThickness=50,
+    postscriptUnderlinePosition=-75,
     postscriptIsFixedPitch=False,
     postscriptBlueValues=[],
     postscriptOtherBlues=[],

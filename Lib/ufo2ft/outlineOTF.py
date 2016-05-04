@@ -375,49 +375,59 @@ class OutlineCompiler(object):
         os2.usWidthClass = getAttrWithFallback(font.info, "openTypeOS2WidthClass")
         # embedding
         os2.fsType = intListToNum(getAttrWithFallback(font.info, "openTypeOS2Type"), 0, 16)
-        # subscript
+
+        # subscript, superscript, strikeout values, taken from AFDKO:
+        # FDK/Tools/Programs/makeotf/makeotf_lib/source/hotconv/hot.c
+        unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
+        italicAngle = getAttrWithFallback(font.info, "italicAngle")
+        xHeight = getAttrWithFallback(font.info, "xHeight")
+        def adjustOffset(offset, angle):
+            """Adjust Y offset based on italic angle, to get X offset."""
+            return offset * math.tan(math.radians(-angle)) if angle else 0
+
         v = getAttrWithFallback(font.info, "openTypeOS2SubscriptXSize")
         if v is None:
-            v = 0
+            v = unitsPerEm * 0.65
         os2.ySubscriptXSize = _roundInt(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SubscriptYSize")
         if v is None:
-            v = 0
+            v = unitsPerEm * 0.6
         os2.ySubscriptYSize = _roundInt(v)
-        v = getAttrWithFallback(font.info, "openTypeOS2SubscriptXOffset")
-        if v is None:
-            v = 0
-        os2.ySubscriptXOffset = _roundInt(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SubscriptYOffset")
         if v is None:
-            v = 0
+            v = unitsPerEm * 0.075
         os2.ySubscriptYOffset = _roundInt(v)
-        # superscript
+        v = getAttrWithFallback(font.info, "openTypeOS2SubscriptXOffset")
+        if v is None:
+            v = adjustOffset(-os2.ySubscriptYOffset, italicAngle)
+        os2.ySubscriptXOffset = _roundInt(v)
+
         v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptXSize")
         if v is None:
-            v = 0
+            v = os2.ySubscriptXSize
         os2.ySuperscriptXSize = _roundInt(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptYSize")
         if v is None:
-            v = 0
+            v = os2.ySubscriptYSize
         os2.ySuperscriptYSize = _roundInt(v)
-        v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptXOffset")
-        if v is None:
-            v = 0
-        os2.ySuperscriptXOffset = _roundInt(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptYOffset")
         if v is None:
-            v = 0
+            v = unitsPerEm * 0.35
         os2.ySuperscriptYOffset = _roundInt(v)
-        # strikeout
+        v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptXOffset")
+        if v is None:
+            v = adjustOffset(os2.ySuperscriptYOffset, italicAngle)
+        os2.ySuperscriptXOffset = _roundInt(v)
+
         v = getAttrWithFallback(font.info, "openTypeOS2StrikeoutSize")
         if v is None:
-            v = 0
+            v = getAttrWithFallback(font.info, "postscriptUnderlineThickness")
         os2.yStrikeoutSize = _roundInt(v)
         v = getAttrWithFallback(font.info, "openTypeOS2StrikeoutPosition")
         if v is None:
-            v = 0
+            v = xHeight * 0.6 if xHeight else unitsPerEm * 0.22
         os2.yStrikeoutPosition = _roundInt(v)
+
         # family class
         ibmFontClass, ibmFontSubclass = getAttrWithFallback(
             font.info, "openTypeOS2FamilyClass")
@@ -590,12 +600,8 @@ class OutlineCompiler(object):
         post.italicAngle = italicAngle
         # underline
         underlinePosition = getAttrWithFallback(font.info, "postscriptUnderlinePosition")
-        if underlinePosition is None:
-            underlinePosition = 0
         post.underlinePosition = _roundInt(underlinePosition)
         underlineThickness = getAttrWithFallback(font.info, "postscriptUnderlineThickness")
-        if underlineThickness is None:
-            underlineThickness = 0
         post.underlineThickness = _roundInt(underlineThickness)
         # determine if the font has a fixed width
         widths = set([glyph.width for glyph in self.allGlyphs.values()])
