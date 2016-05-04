@@ -695,12 +695,8 @@ class OutlineOTFCompiler(OutlineCompiler):
         topDict.isFixedPitch = getAttrWithFallback(info, "postscriptIsFixedPitch")
         topDict.ItalicAngle = getAttrWithFallback(info, "italicAngle")
         underlinePosition = getAttrWithFallback(info, "postscriptUnderlinePosition")
-        if underlinePosition is None:
-            underlinePosition = 0
         topDict.UnderlinePosition = _roundInt(underlinePosition)
         underlineThickness = getAttrWithFallback(info, "postscriptUnderlineThickness")
-        if underlineThickness is None:
-            underlineThickness = 0
         topDict.UnderlineThickness = _roundInt(underlineThickness)
         # populate font matrix
         unitsPerEm = _roundInt(getAttrWithFallback(info, "unitsPerEm"))
