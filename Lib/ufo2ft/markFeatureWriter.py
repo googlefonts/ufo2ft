@@ -4,21 +4,16 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 class MarkFeatureWriter(object):
     """Generates a mark or mkmk feature based on glyph anchors.
 
-    Takes in a list of <anchorName, accentAnchorName> tuples, which may
-    additionally include boolean parameters indicating whether to only include
-    combining accents and whether to expand the rule to aliased glyphs.
-
-    Takes in a list of aliases as tuples, each typically a base glyph and a
-    composite including the base glyph.
+    Takes in lists of (anchorName, accentAnchorName) tuples for mark and mkmk
+    features, and optionally a list of ((anchorName, ...), accentAnchorName)
+    tuples for a liga2mark feature.
     """
 
-    def __init__(self, font, anchorList, mkmkAnchorList=(), ligaAnchorList=(),
-                 aliases=()):
+    def __init__(self, font, anchorList, mkmkAnchorList=(), ligaAnchorList=()):
         self.font = font
         self.anchorList = anchorList
         self.mkmkAnchorList = mkmkAnchorList
         self.ligaAnchorList = ligaAnchorList
-        self.aliases = aliases
         self.accentGlyphNames = set()
 
     def _generateClassName(self, accentAnchorName):
@@ -28,24 +23,13 @@ class MarkFeatureWriter(object):
 
         return "@MC%s" % accentAnchorName
 
-    def _getAlias(self, name):
-        """Return an alias for a given glyph, if it exists."""
-
-        for base, alias in self.aliases:
-            if name == base:
-                return alias
-        return None
-
-    def _createAccentGlyphList(self, accentAnchorName, combAccentOnly):
+    def _createAccentGlyphList(self, accentAnchorName):
         """Return a list of <name, x, y> tuples for glyphs containing an anchor
-        with the given accent anchor name. If combAccentOnly is True, only
-        combining glyphs are returned.
+        with the given accent anchor name.
         """
 
         glyphList = []
         for glyph in self.font:
-            if combAccentOnly and glyph.width != 0:
-                continue
             for anchor in glyph.anchors:
                 if accentAnchorName == anchor.name:
                     glyphList.append((glyph.name, anchor.x, anchor.y))
@@ -100,20 +84,18 @@ class MarkFeatureWriter(object):
             anchorList.extend(self.mkmkAnchorList)
 
         added = set()
-        for anchorPair in sorted(anchorList):
-            if anchorPair[1] in added:
+        for _, accentAnchorName in sorted(anchorList):
+            if accentAnchorName in added:
                 continue
-            added.add(anchorPair[1])
-            self._addClass(lines, *anchorPair[1:])
+            added.add(accentAnchorName)
+            self._addClass(lines, accentAnchorName)
 
-    def _addClass(self, lines, accentAnchorName, combAccentOnly=False,
-                  checkAliases=False):
+    def _addClass(self, lines, accentAnchorName):
         """Write class definition statements for one accent anchor. Remembers
         the accent glyph names, for use when generating base glyph lists.
         """
 
-        accentGlyphs = self._createAccentGlyphList(
-            accentAnchorName, combAccentOnly)
+        accentGlyphs = self._createAccentGlyphList(accentAnchorName)
         className = self._generateClassName(accentAnchorName)
 
         for accentName, x, y in accentGlyphs:
@@ -123,10 +105,10 @@ class MarkFeatureWriter(object):
                 (accentName, x, y, className))
         lines.append("")
 
-    def _addMarkLookup(self, lines, lookupName, isMkmk, anchorName, accentAnchorName,
-                       combAccentOnly=False, checkAliases=False):
+    def _addMarkLookup(self, lines, lookupName, isMkmk, anchorPair):
         """Add a mark lookup for one tuple in the writer's anchor list."""
 
+        anchorName, accentAnchorName = anchorPair
         baseGlyphs = self._createBaseGlyphList(anchorName, isMkmk)
         if not baseGlyphs:
             return
@@ -140,19 +122,12 @@ class MarkFeatureWriter(object):
                 "    pos %s %s <anchor %d %d> mark %s;" %
                 (ruleType, baseName, x, y, className))
 
-            if checkAliases:
-                alias = self._getAlias(baseName)
-                if alias:
-                    lines.append(
-                        "    pos %s %s <anchor %d %d> mark %s;" %
-                        (ruleType, alias, x, y, className))
-
         lines.append("  } %s;" % lookupName)
 
-    def _addMarkToLigaLookup(self, lines, lookupName, anchorNames,
-                             accentAnchorName):
+    def _addMarkToLigaLookup(self, lines, lookupName, anchorPairs):
         """Add a mark lookup containing mark-to-ligature position rules."""
 
+        anchorNames, accentAnchorName = anchorPairs
         baseGlyphs = self._createLigaGlyphList(anchorNames)
         if not baseGlyphs:
             return
@@ -184,12 +159,12 @@ class MarkFeatureWriter(object):
 
         for i, anchorPair in enumerate(anchorList):
             lookupName = "%s%d" % (featureName, i + 1)
-            self._addMarkLookup(lines, lookupName, isMkmk, *anchorPair)
+            self._addMarkLookup(lines, lookupName, isMkmk, anchorPair)
 
         if not isMkmk:
             for i, anchorPairs in enumerate(self.ligaAnchorList):
                 lookupName = "mark2liga%d" % (i + 1)
-                self._addMarkToLigaLookup(lines, lookupName, *anchorPairs)
+                self._addMarkToLigaLookup(lines, lookupName, anchorPairs)
 
         lines.append("} %s;\n" % featureName)
 

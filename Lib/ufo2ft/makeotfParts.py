@@ -24,7 +24,6 @@ class FeatureOTFCompiler(object):
         self.markWriter = markWriter
         self.mtiFeaFiles = mtiFeaFiles
         self.setupAnchorPairs()
-        self.setupAliases()
 
     def compile(self):
         """Compile the features.
@@ -112,7 +111,7 @@ class FeatureOTFCompiler(object):
 
         writer = self.markWriter(
             self.font, self.anchorPairs, self.mkmkAnchorPairs,
-            self.ligaAnchorPairs, self.aliases)
+            self.ligaAnchorPairs)
         return writer.write(doMark, doMkmk)
 
     def setupAnchorPairs(self):
@@ -153,18 +152,6 @@ class FeatureOTFCompiler(object):
                     self.ligaAnchorPairs.append((tuple(ligaNames), accentName))
 
         self.mkmkAnchorPairs = self.anchorPairs
-
-    def setupAliases(self):
-        """
-        Initialize an empty list of glyph aliases, which would be used in
-        building the mark and mkmk features.
-
-        **This should not be called externally.** Subclasses
-        may override this method to set up the glyph aliases
-        in a different way if desired.
-        """
-
-        self.aliases = ()
 
     def setupFile_featureTables(self):
         """
