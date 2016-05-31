@@ -175,7 +175,7 @@ class MarkFeatureWriter(object):
             return ""
 
         lines = []
-        accentGlyphs = self._addClasses(lines, doMark, doMkmk)
+        self._addClasses(lines, doMark, doMkmk)
         if doMark:
             self._addFeature(lines, isMkmk=False)
         if doMkmk:
