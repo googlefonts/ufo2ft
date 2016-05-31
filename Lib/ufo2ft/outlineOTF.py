@@ -784,7 +784,8 @@ class OutlineTTFCompiler(OutlineCompiler):
         maxp.maxInstructionDefs = 0
         maxp.maxStackElements = 0
         maxp.maxSizeOfInstructions = 0
-        maxp.maxComponentElements = max(len(g.components) for g in self.ufo)
+        maxp.maxComponentElements = max(len(g.components)
+                                        for g in self.allGlyphs.values())
 
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
@@ -807,10 +808,10 @@ class OutlineTTFCompiler(OutlineCompiler):
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
-        for glyph in self.ufo:
-            pen = TTGlyphPen(self.ufo)
-            glyph.draw(pen)
-            glyf[glyph.name] = pen.glyph()
+        for name in self.glyphOrder:
+            pen = TTGlyphPen(self.allGlyphs)
+            self.allGlyphs[name].draw(pen)
+            glyf[name] = pen.glyph()
 
 
 class StubGlyph(object):
