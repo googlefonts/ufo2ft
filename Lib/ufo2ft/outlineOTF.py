@@ -111,7 +111,7 @@ class OutlineCompiler(object):
 
     def makeMissingRequiredGlyphs(self):
         """
-        Add space and .notdef to the font if they are not present.
+        Add .notdef to the font if it is not present.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the glyph creation
@@ -125,8 +125,6 @@ class OutlineCompiler(object):
         defaultWidth = _roundInt(unitsPerEm * 0.5)
         if ".notdef" not in self.ufo:
             glyphs[".notdef"] = StubGlyph(name=".notdef", width=defaultWidth, unitsPerEm=unitsPerEm, ascender=ascender, descender=descender)
-        if "space" not in self.ufo:
-            glyphs["space"] = StubGlyph(name="space", width=defaultWidth, unitsPerEm=unitsPerEm, ascender=ascender, descender=descender, unicodes=[32])
         return glyphs
 
     def makeOfficialGlyphOrder(self, glyphOrder):
@@ -488,11 +486,11 @@ class OutlineCompiler(object):
             minIndex = min(unicodes)
             maxIndex = max(unicodes)
         else:
-            # the font may have *no* unicode values
-            # (it really happens!) so there needs
-            # to be a fallback. use space for this.
-            minIndex = 0x0020
-            maxIndex = 0x0020
+            # the font may have *no* unicode values (it really happens!) so
+            # there needs to be a fallback. use 0xFFFF, as AFDKO does:
+            # FDK/Tools/Programs/makeotf/makeotf_lib/source/hotconv/map.c
+            minIndex = 0xFFFF
+            maxIndex = 0xFFFF
         if maxIndex > 0xFFFF:
             # the spec says that 0xFFFF should be used
             # as the max if the max exceeds 0xFFFF
@@ -818,8 +816,7 @@ class StubGlyph(object):
 
     """
     This object will be used to create missing glyphs
-    (specifically the space and the .notdef) in the
-    provided UFO.
+    (specifically .notdef) in the provided UFO.
     """
 
     def __init__(self, name, width, unitsPerEm, ascender, descender, unicodes=[]):
