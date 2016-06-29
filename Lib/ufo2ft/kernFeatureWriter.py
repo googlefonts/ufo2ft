@@ -20,7 +20,17 @@ class KernFeatureWriter(object):
     def __init__(self, font):
         self.kerning = dict(font.kerning)
         self.groups = dict(font.groups)
-        self.featxt = font.features.text or ""
+
+        fealines = []
+        if font.features.text:
+            for line in font.features.text.splitlines():
+                comment_start = line.find('#')
+                if comment_start >= 0:
+                    line = line[:comment_start]
+                line = line.strip()
+                if line:
+                    fealines.append(line)
+        self.featxt = '\n'.join(fealines)
 
         # kerning classes found in existing feature text and UFO groups
         self.leftFeaClasses = {}
