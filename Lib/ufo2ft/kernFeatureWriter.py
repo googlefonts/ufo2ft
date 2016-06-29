@@ -82,13 +82,14 @@ class KernFeatureWriter(object):
             self._splitRtlKerning()
 
         # write the lookups and feature
-        lines.append("lookup kern_ltr {")
-        self._addKerning(lines, self.glyphPairKerning)
-        self._addKerning(lines, self.leftClassKerning, enum=True)
-        self._addKerning(lines, self.rightClassKerning, enum=True)
-        self._addKerning(lines, self.classPairKerning)
-        lines.append("} kern_ltr;")
-        lines.append("")
+        if self.ltrScripts or not self.rtlScripts:
+            lines.append("lookup kern_ltr {")
+            self._addKerning(lines, self.glyphPairKerning)
+            self._addKerning(lines, self.leftClassKerning, enum=True)
+            self._addKerning(lines, self.rightClassKerning, enum=True)
+            self._addKerning(lines, self.classPairKerning)
+            lines.append("} kern_ltr;")
+            lines.append("")
 
         if self.rtlScripts:
             lines.append("lookup kern_rtl {")
