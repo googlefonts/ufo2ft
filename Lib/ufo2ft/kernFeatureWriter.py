@@ -68,12 +68,9 @@ class KernFeatureWriter(object):
         # write the feature
         lines.append("feature kern {")
         self._addKerning(lines, self.glyphPairKerning)
-        if self.leftClassKerning:
-            self._addKerning(lines, self.leftClassKerning, enum=True)
-        if self.rightClassKerning:
-            self._addKerning(lines, self.rightClassKerning, enum=True)
-        if self.classPairKerning:
-            self._addKerning(lines, self.classPairKerning)
+        self._addKerning(lines, self.leftClassKerning, enum=True)
+        self._addKerning(lines, self.rightClassKerning, enum=True)
+        self._addKerning(lines, self.classPairKerning)
         lines.append("} kern;")
 
         return linesep.join(lines)
