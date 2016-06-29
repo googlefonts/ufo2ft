@@ -305,7 +305,7 @@ class KernFeatureWriter(object):
         """
 
         name = "@%s" % re.sub(r"[^A-Za-z0-9._]", r"", name)
-        existingClassNames = set(self_.getClasses().keys())
+        existingClassNames = set(self._getClasses().keys())
         i = 1
         origName = name
         while name in existingClassNames:
