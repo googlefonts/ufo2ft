@@ -2,7 +2,10 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 from fontTools.misc.py23 import unichr
 
 import re
-import unicodedata
+try:
+    import unicodedata2 as unicodedata
+except ImportError:
+    import unicodedata
 
 
 class KernFeatureWriter(object):
