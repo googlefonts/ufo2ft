@@ -1,6 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import re
+import unicodedata
 
 
 class KernFeatureWriter(object):
@@ -18,6 +19,7 @@ class KernFeatureWriter(object):
     rightFeaClassRe = r"@MMK_R_(.+)"
 
     def __init__(self, font):
+        self.font = font
         self.kerning = dict(font.kerning)
         self.groups = dict(font.groups)
 
@@ -75,6 +77,10 @@ class KernFeatureWriter(object):
         self._addGlyphClasses(lines)
         lines.append("")
 
+        # split kerning into LTR and RTL lookups, if necessary
+        if self.rtlScripts:
+            self._splitRtlKerning()
+
         # write the lookups and feature
         lines.append("lookup kern_ltr {")
         self._addKerning(lines, self.glyphPairKerning)
@@ -82,21 +88,25 @@ class KernFeatureWriter(object):
         self._addKerning(lines, self.rightClassKerning, enum=True)
         self._addKerning(lines, self.classPairKerning)
         lines.append("} kern_ltr;")
+        lines.append("")
 
         if self.rtlScripts:
             lines.append("lookup kern_rtl {")
-            self._addKerning(lines, self.glyphPairKerning, rtl=True)
-            self._addKerning(lines, self.leftClassKerning, rtl=True, enum=True)
-            self._addKerning(lines, self.rightClassKerning, rtl=True, enum=True)
-            self._addKerning(lines, self.classPairKerning, rtl=True)
+            self._addKerning(lines, self.rtlGlyphPairKerning, rtl=True)
+            self._addKerning(lines, self.rtlLeftClassKerning, rtl=True,
+                             enum=True)
+            self._addKerning(lines, self.rtlRightClassKerning, rtl=True,
+                             enum=True)
+            self._addKerning(lines, self.rtlClassPairKerning, rtl=True)
             lines.append("} kern_rtl;")
+            lines.append("")
 
         lines.append("feature kern {")
         if self.ltrScripts or not self.rtlScripts:
             lines.append("    lookup kern_ltr;")
         if self.rtlScripts:
-            self._addLookupReferences(self.ltrScripts, "kern_ltr")
-            self._addLookupReferences(self.rtlScripts, "kern_rtl")
+            self._addLookupReferences(lines, self.ltrScripts, "kern_ltr")
+            self._addLookupReferences(lines, self.rtlScripts, "kern_rtl")
         lines.append("} kern;")
 
         return linesep.join(lines)
@@ -221,6 +231,29 @@ class KernFeatureWriter(object):
 
         for key, members in sorted(self.groups.items()):
             lines.append("%s = [%s];" % (key, " ".join(members)))
+
+    def _splitRtlKerning(self):
+        """Split RTL kerning into separate dictionaries."""
+
+        self.rtlGlyphPairKerning = {}
+        self.rtlLeftClassKerning = {}
+        self.rtlRightClassKerning = {}
+        self.rtlClassPairKerning = {}
+
+        classes = self._getClasses()
+        allKerning = (
+            (self.glyphPairKerning, self.rtlGlyphPairKerning, (False, False)),
+            (self.leftClassKerning, self.rtlLeftClassKerning, (True, False)),
+            (self.rightClassKerning, self.rtlRightClassKerning, (False, True)),
+            (self.classPairKerning, self.rtlClassPairKerning, (True, True)))
+
+        for origKerning, rtlKerning, (leftIsClass, rightIsClass) in allKerning:
+            for pair in list(origKerning.keys()):
+                lhs, rhs = pair
+                leftGlyphs = classes[lhs] if leftIsClass else [lhs]
+                rightGlyphs = classes[rhs] if rightIsClass else [rhs]
+                if any(self._glyphIsRtl(g) for g in leftGlyphs + rightGlyphs):
+                    rtlKerning[pair] = origKerning.pop(pair)
 
     def _addKerning(self, lines, kerning, rtl=False, enum=False):
         """Add kerning rules for a mapping of pairs to values."""
@@ -351,3 +384,15 @@ class KernFeatureWriter(object):
             # Unicode-9.0 additions
             'adlm',  # ADLAM
             )
+
+    def _glyphIsRtl(self, name):
+        """Return whether the closest-associated unicode character is RTL."""
+
+        delims = ('.', '_')
+        uv = self.font[name].unicode
+        while uv is None and any(d in name for d in delims):
+            name = name[:max(name.rfind(d) for d in delims)]
+            uv = self.font[name].unicode
+        if uv is None:
+            return False
+        return unicodedata.bidirectional(unichr(uv)) in ('R', 'AL')
