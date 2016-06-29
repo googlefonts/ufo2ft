@@ -159,10 +159,7 @@ class KernFeatureWriter(object):
         glyphs (the class members minus the offending members).
         """
 
-        leftClasses = dict(self.leftFeaClasses)
-        leftClasses.update(self.leftUfoClasses)
-        rightClasses = dict(self.rightFeaClasses)
-        rightClasses.update(self.rightUfoClasses)
+        leftClasses, rightClasses = self._getClasses(separate=True)
 
         # maintain list of glyph pair rules seen
         seen = dict(self.glyphPairKerning)
@@ -211,6 +208,20 @@ class KernFeatureWriter(object):
 
         return "[%s]" % " ".join(glyphs)
 
+    def _getClasses(self, separate=False):
+        """Return all kerning classes together."""
+
+        leftClasses = dict(self.leftFeaClasses)
+        leftClasses.update(self.leftUfoClasses)
+        rightClasses = dict(self.rightFeaClasses)
+        rightClasses.update(self.rightUfoClasses)
+        if separate:
+            return leftClasses, rightClasses
+
+        classes = leftClasses
+        classes.update(rightClasses)
+        return classes
+
     def _makeFeaClassName(self, name):
         """Make a glyph class name which is legal to use in feature text.
 
@@ -219,9 +230,7 @@ class KernFeatureWriter(object):
         """
 
         name = "@%s" % re.sub(r"[^A-Za-z0-9._]", r"", name)
-        existingClassNames = (
-            list(self.leftFeaClasses.keys()) + list(self.rightFeaClasses.keys()) +
-            list(self.groups.keys()))
+        existingClassNames = set(self_.getClasses().keys())
         i = 1
         origName = name
         while name in existingClassNames:
