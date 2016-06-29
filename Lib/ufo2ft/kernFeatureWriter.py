@@ -32,6 +32,16 @@ class KernFeatureWriter(object):
                     fealines.append(line)
         self.featxt = '\n'.join(fealines)
 
+        self.ltrScripts = {}
+        self.rtlScripts = {}
+        for script, lang in re.findall(
+                r'languagesystem\s+([a-z]{4})\s+([A-Z]+|dflt)\s*;',
+                self.featxt):
+            if self._scriptIsRtl(script):
+                self.rtlScripts.setdefault(script, []).append(lang)
+            else:
+                self.ltrScripts.setdefault(script, []).append(lang)
+
         # kerning classes found in existing feature text and UFO groups
         self.leftFeaClasses = {}
         self.rightFeaClasses = {}
@@ -65,12 +75,28 @@ class KernFeatureWriter(object):
         self._addGlyphClasses(lines)
         lines.append("")
 
-        # write the feature
-        lines.append("feature kern {")
+        # write the lookups and feature
+        lines.append("lookup kern_ltr {")
         self._addKerning(lines, self.glyphPairKerning)
         self._addKerning(lines, self.leftClassKerning, enum=True)
         self._addKerning(lines, self.rightClassKerning, enum=True)
         self._addKerning(lines, self.classPairKerning)
+        lines.append("} kern_ltr;")
+
+        if self.rtlScripts:
+            lines.append("lookup kern_rtl {")
+            self._addKerning(lines, self.glyphPairKerning, rtl=True)
+            self._addKerning(lines, self.leftClassKerning, rtl=True, enum=True)
+            self._addKerning(lines, self.rightClassKerning, rtl=True, enum=True)
+            self._addKerning(lines, self.classPairKerning, rtl=True)
+            lines.append("} kern_rtl;")
+
+        lines.append("feature kern {")
+        if self.ltrScripts or not self.rtlScripts:
+            lines.append("    lookup kern_ltr;")
+        if self.rtlScripts:
+            self._addLookupReferences(self.ltrScripts, "kern_ltr")
+            self._addLookupReferences(self.rtlScripts, "kern_rtl")
         lines.append("} kern;")
 
         return linesep.join(lines)
@@ -196,12 +222,27 @@ class KernFeatureWriter(object):
         for key, members in sorted(self.groups.items()):
             lines.append("%s = [%s];" % (key, " ".join(members)))
 
-    def _addKerning(self, lines, kerning, enum=False):
+    def _addKerning(self, lines, kerning, rtl=False, enum=False):
         """Add kerning rules for a mapping of pairs to values."""
 
         enum = "enum " if enum else ""
+        valstr = "<%(val)d 0 %(val)d 0>" if rtl else "%(val)d"
+        lineFormat = "    %spos %%(lhs)s %%(rhs)s %s;" % (enum, valstr)
         for (left, right), val in sorted(kerning.items()):
-            lines.append("    %spos %s %s %d;" % (enum, left, right, val))
+            lines.append(lineFormat % {'lhs': left, 'rhs': right, 'val': val})
+
+    def _addLookupReferences(self, lines, languageSystems, lookupName):
+        """Add references to lookup for a set of language systems.
+
+        Language systems are passed in as a dictionary mapping scripts to lists
+        of languages.
+        """
+
+        for script, langs in sorted(languageSystems.items()):
+            lines.append("script %s;" % script)
+            for lang in sorted(langs):
+                lines.append("language %s;" % lang)
+                lines.append("lookup %s;" % lookupName)
 
     def _liststr(self, glyphs):
         """Return string representation of a list of glyph names."""
@@ -248,3 +289,65 @@ class KernFeatureWriter(object):
             if (glyphName in pair) if i is None else (pair[i] == glyphName):
                 hits.append((pair, value))
         return hits
+
+    def _scriptIsRtl(self, script):
+        """Return whether a script is right-to-left for kerning purposes.
+
+        References:
+        https://github.com/Tarobish/Jomhuria/blob/a21c41453ea8e3893e003ae9d5bee9ba7ac42d77/tools/getKernFeatureFromUFO.py#L18
+        https://github.com/behdad/harfbuzz/blob/691086f131cb6c9d97e98730c27673484bf93f87/src/hb-common.cc#L446
+        http://unicode.org/iso15924/iso15924-codes.html
+        """
+
+        return script in (
+            # Unicode-1.1 additions
+            'arab',  # ARABIC
+            'hebr',  # HEBREW
+
+            # Unicode-3.0 additions
+            'syrc',  # SYRIAC
+            'thaa',  # THAANA
+
+            # Unicode-4.0 additions
+            'cprt',  # CYPRIOT
+
+            # Unicode-4.1 additions
+            'khar',  # KHAROSHTHI
+
+            # Unicode-5.0 additions
+            'phnx',  # PHOENICIAN
+            'nkoo',  # NKO
+
+            # Unicode-5.1 additions
+            'lydi',  # LYDIAN
+
+            # Unicode-5.2 additions
+            'avst',  # AVESTAN
+            'armi',  # IMPERIAL_ARAMAIC
+            'phli',  # INSCRIPTIONAL_PAHLAVI
+            'prti',  # INSCRIPTIONAL_PARTHIAN
+            'sarb',  # OLD_SOUTH_ARABIAN
+            'orkh',  # OLD_TURKIC
+            'samr',  # SAMARITAN
+
+            # Unicode-6.0 additions
+            'mand',  # MANDAIC
+
+            # Unicode-6.1 additions
+            'merc',  # MEROITIC_CURSIVE
+            'mero',  # MEROITIC_HIEROGLYPHS
+
+            # Unicode-7.0 additions
+            'mani',  # MANICHAEAN
+            'mend',  # MENDE_KIKAKUI
+            'nbat',  # NABATAEAN
+            'narb',  # OLD_NORTH_ARABIAN
+            'palm',  # PALMYRENE
+            'phlp',  # PSALTER_PAHLAVI
+
+            # Unicode-8.0 additions
+            'hung',  # OLD_HUNGARIAN
+
+            # Unicode-9.0 additions
+            'adlm',  # ADLAM
+            )
