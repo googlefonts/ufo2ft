@@ -397,7 +397,8 @@ class KernFeatureWriter(object):
         uv = self.font[name].unicode
         while uv is None and any(d in name for d in delims):
             name = name[:max(name.rfind(d) for d in delims)]
-            uv = self.font[name].unicode
+            if name in self.font:
+                uv = self.font[name].unicode
         if uv is None:
             return False
         return unicodedata.bidirectional(unichr(uv)) in ('R', 'AL')
