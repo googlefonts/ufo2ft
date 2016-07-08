@@ -63,7 +63,7 @@ class KernFeatureWriter(object):
         if self.rightClassKerning:
             self._addKerning(lines, self.rightClassKerning, enum=True)
         if self.classPairKerning:
-            self._addKerning(lines, self.classPairKerning)
+            self._addKerning(lines, self.classPairKerning, ignoreZero=True)
         lines.append("} kern;")
 
         return linesep.join(lines)
@@ -192,11 +192,13 @@ class KernFeatureWriter(object):
         for key, members in sorted(self.groups.items()):
             lines.append("%s = [%s];" % (key, " ".join(members)))
 
-    def _addKerning(self, lines, kerning, enum=False):
+    def _addKerning(self, lines, kerning, enum=False, ignoreZero=False):
         """Add kerning rules for a mapping of pairs to values."""
 
         enum = "enum " if enum else ""
         for (left, right), val in sorted(kerning.items()):
+            if val == 0 and ignoreZero:
+                continue
             lines.append("    %spos %s %s %d;" % (enum, left, right, val))
 
     def _liststr(self, glyphs):
