@@ -91,7 +91,7 @@ class KernFeatureWriter(object):
             self._addKerning(lines, self.glyphPairKerning)
             self._addKerning(lines, self.leftClassKerning, enum=True)
             self._addKerning(lines, self.rightClassKerning, enum=True)
-            self._addKerning(lines, self.classPairKerning)
+            self._addKerning(lines, self.classPairKerning, ignoreZero=True)
             lines.append("} kern_ltr;")
             lines.append("")
 
@@ -102,7 +102,8 @@ class KernFeatureWriter(object):
                              enum=True)
             self._addKerning(lines, self.rtlRightClassKerning, rtl=True,
                              enum=True)
-            self._addKerning(lines, self.rtlClassPairKerning, rtl=True)
+            self._addKerning(lines, self.rtlClassPairKerning, rtl=True,
+                             ignoreZero=True)
             lines.append("} kern_rtl;")
             lines.append("")
 
@@ -260,13 +261,16 @@ class KernFeatureWriter(object):
                 if any(self._glyphIsRtl(g) for g in leftGlyphs + rightGlyphs):
                     rtlKerning[pair] = origKerning.pop(pair)
 
-    def _addKerning(self, lines, kerning, rtl=False, enum=False):
+    def _addKerning(self, lines, kerning, rtl=False, enum=False,
+                    ignoreZero=False):
         """Add kerning rules for a mapping of pairs to values."""
 
         enum = "enum " if enum else ""
         valstr = "<%(val)d 0 %(val)d 0>" if rtl else "%(val)d"
         lineFormat = "    %spos %%(lhs)s %%(rhs)s %s;" % (enum, valstr)
         for (left, right), val in sorted(kerning.items()):
+            if val == 0 and ignoreZero:
+                continue
             lines.append(lineFormat % {'lhs': left, 'rhs': right, 'val': val})
 
     def _addLookupReferences(self, lines, languageSystems, lookupName):
