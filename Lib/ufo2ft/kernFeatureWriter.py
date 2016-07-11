@@ -253,12 +253,18 @@ class KernFeatureWriter(object):
             (self.rightClassKerning, self.rtlRightClassKerning, (False, True)),
             (self.classPairKerning, self.rtlClassPairKerning, (True, True)))
 
-        for origKerning, rtlKerning, (leftIsClass, rightIsClass) in allKerning:
+        for origKerning, rtlKerning, classFlags in allKerning:
             for pair in list(origKerning.keys()):
-                lhs, rhs = pair
-                leftGlyphs = classes[lhs] if leftIsClass else [lhs]
-                rightGlyphs = classes[rhs] if rightIsClass else [rhs]
-                if any(self._glyphIsRtl(g) for g in leftGlyphs + rightGlyphs):
+                allGlyphs = []
+                for glyphs, isClass in zip(pair, classFlags):
+                    if not isClass:
+                        allGlyphs.append(glyphs)
+                    elif glyphs.startswith('@'):
+                        allGlyphs.extend(classes[glyphs])
+                    else:
+                        assert glyphs.startswith('[') and glyphs.endswith(']')
+                        allGlyphs.extend(glyphs[1:-1].split())
+                if any(self._glyphIsRtl(g) for g in allGlyphs):
                     rtlKerning[pair] = origKerning.pop(pair)
 
     def _addKerning(self, lines, kerning, rtl=False, enum=False,
