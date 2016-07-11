@@ -957,7 +957,8 @@ class OutlineTTFCompiler(OutlineCompiler):
     @staticmethod
     def autoUseMyMetrics(ttGlyph, width, glyphSet):
         """ Set the "USE_MY_METRICS" flag on the first component having the
-        same advance width as the composite glyph, no transform and no shift.
+        same advance width as the composite glyph, no transform and no
+        horizontal shift (but allow it to shift vertically).
         This forces the composite glyph to use the possibly hinted horizontal
         metrics of the sub-glyph, instead of those from the "hmtx" table.
         """
@@ -968,7 +969,7 @@ class OutlineTTFCompiler(OutlineCompiler):
                 # component uses '{first,second}Pt' instead of 'x' and 'y'
                 continue
             if (glyphSet[baseName].width == width and
-                    transform == (1, 0, 0, 1, 0, 0)):
+                    transform[:-1] == (1, 0, 0, 1, 0)):
                 component.flags |= USE_MY_METRICS
                 break
 
