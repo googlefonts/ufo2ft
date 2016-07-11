@@ -1,6 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import unichr
 
+import collections
 import re
 try:
     import unicodedata2 as unicodedata
@@ -38,8 +39,8 @@ class KernFeatureWriter(object):
                     fealines.append(line)
         self.featxt = '\n'.join(fealines)
 
-        self.ltrScripts = {}
-        self.rtlScripts = {}
+        self.ltrScripts = collections.OrderedDict()
+        self.rtlScripts = collections.OrderedDict()
         for script, lang in re.findall(
                 r'languagesystem\s+([a-z]{4})\s+([A-Z]+|dflt)\s*;',
                 self.featxt):
@@ -286,9 +287,9 @@ class KernFeatureWriter(object):
         of languages.
         """
 
-        for script, langs in sorted(languageSystems.items()):
+        for script, langs in languageSystems.items():
             lines.append("script %s;" % script)
-            for lang in sorted(langs):
+            for lang in langs:
                 lines.append("language %s;" % lang)
                 lines.append("lookup %s;" % lookupName)
 
