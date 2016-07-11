@@ -135,6 +135,7 @@ class KernFeatureWriter(object):
             if leftIsClass:
                 self.leftUfoClasses[left] = self.groups[left]
                 if rightIsClass:
+                    self.rightUfoClasses[right] = self.groups[right]
                     self.classPairKerning[glyphPair] = val
                 else:
                     self.leftClassKerning[glyphPair] = val
