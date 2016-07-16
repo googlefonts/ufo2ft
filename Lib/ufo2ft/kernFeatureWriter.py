@@ -72,11 +72,6 @@ class KernFeatureWriter(object):
 
         self._removeConflictingKerningRules()
 
-        if not any([self.glyphPairKerning, self.leftClassKerning,
-                    self.rightClassKerning, self.classPairKerning]):
-            # no kerning pairs, don't write empty feature
-            return ""
-
         # write the glyph classes
         lines = []
         self._addGlyphClasses(lines)
@@ -87,33 +82,45 @@ class KernFeatureWriter(object):
             self._splitRtlKerning()
 
         # write the lookups and feature
+        ltrKern = []
         if self.ltrScripts or not self.rtlScripts:
+            self._addKerning(ltrKern, self.glyphPairKerning)
+            self._addKerning(ltrKern, self.leftClassKerning, enum=True)
+            self._addKerning(ltrKern, self.rightClassKerning, enum=True)
+            self._addKerning(ltrKern, self.classPairKerning, ignoreZero=True)
+        if ltrKern:
             lines.append("lookup kern_ltr {")
-            self._addKerning(lines, self.glyphPairKerning)
-            self._addKerning(lines, self.leftClassKerning, enum=True)
-            self._addKerning(lines, self.rightClassKerning, enum=True)
-            self._addKerning(lines, self.classPairKerning, ignoreZero=True)
+            lines.extend(ltrKern)
             lines.append("} kern_ltr;")
             lines.append("")
 
+        rtlKern = []
         if self.rtlScripts:
-            lines.append("lookup kern_rtl {")
-            self._addKerning(lines, self.rtlGlyphPairKerning, rtl=True)
-            self._addKerning(lines, self.rtlLeftClassKerning, rtl=True,
+            self._addKerning(rtlKern, self.rtlGlyphPairKerning, rtl=True)
+            self._addKerning(rtlKern, self.rtlLeftClassKerning, rtl=True,
                              enum=True)
-            self._addKerning(lines, self.rtlRightClassKerning, rtl=True,
+            self._addKerning(rtlKern, self.rtlRightClassKerning, rtl=True,
                              enum=True)
-            self._addKerning(lines, self.rtlClassPairKerning, rtl=True,
+            self._addKerning(rtlKern, self.rtlClassPairKerning, rtl=True,
                              ignoreZero=True)
+        if rtlKern:
+            lines.append("lookup kern_rtl {")
+            lines.extend(rtlKern)
             lines.append("} kern_rtl;")
             lines.append("")
 
+        if not (ltrKern or rtlKern):
+            # no kerning pairs, don't write empty feature
+            return ""
+
         lines.append("feature kern {")
-        if self.ltrScripts or not self.rtlScripts:
+        if ltrKern:
             lines.append("    lookup kern_ltr;")
         if self.rtlScripts:
-            self._addLookupReferences(lines, self.ltrScripts, "kern_ltr")
-            self._addLookupReferences(lines, self.rtlScripts, "kern_rtl")
+            if ltrKern:
+                self._addLookupReferences(lines, self.ltrScripts, "kern_ltr")
+            if rtlKern:
+                self._addLookupReferences(lines, self.rtlScripts, "kern_rtl")
         lines.append("} kern;")
 
         return linesep.join(lines)
