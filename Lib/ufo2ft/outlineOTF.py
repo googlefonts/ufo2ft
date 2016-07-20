@@ -30,8 +30,11 @@ def _roundInt(v):
 class OutlineCompiler(object):
     """Create a feature-less outline binary."""
 
-    def __init__(self, font, glyphOrder=None):
+    def __init__(self, font, glyphOrder=None, convertCubics=True,
+                 cubicConversionError=2):
         self.ufo = font
+        self.convertCubics = convertCubics
+        self.cubicConversionError = cubicConversionError
         self.log = []
         # make any missing glyphs and store them locally
         missingRequiredGlyphs = self.makeMissingRequiredGlyphs()
@@ -801,6 +804,9 @@ class OutlineTTFCompiler(OutlineCompiler):
     def setupTable_glyf(self):
         """Make the glyf table."""
 
+        if self.convertCubics:
+            from cu2qu.pens import Cu2QuPen
+
         self.otf["loca"] = newTable("loca")
         self.otf["glyf"] = glyf = newTable("glyf")
         glyf.glyphs = {}
@@ -808,7 +814,14 @@ class OutlineTTFCompiler(OutlineCompiler):
 
         for name in self.glyphOrder:
             pen = TTGlyphPen(self.allGlyphs)
+            if self.convertCubics:
+                pen = Cu2QuPen(pen, self.cubicConversionError,
+                               reverse_direction=True)
             self.allGlyphs[name].draw(pen)
+            if self.convertCubics:
+                # travel back through the hairy nest of conversion pens.
+                # why can't there just be a single pen protocol...
+                pen = pen.pen.pen._outPen.pen.pen
             glyf[name] = pen.glyph()
 
 
