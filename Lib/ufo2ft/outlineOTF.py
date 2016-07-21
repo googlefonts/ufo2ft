@@ -663,7 +663,9 @@ class OutlineCompiler(object):
         self.otf["vhea"] = vhea = newTable("vhea")
         font = self.ufo
         head = self.otf["head"]
-        vhea.tableVersion = 1.1
+        # vhea.tableVersion = 0x00011000
+        # see https://github.com/behdad/fonttools/issues/540
+        vhea.tableVersion = 1.0625
         # horizontal metrics
         vhea.ascent = _roundInt(getAttrWithFallback(font.info, "openTypeVheaVertTypoAscender"))
         vhea.descent = _roundInt(getAttrWithFallback(font.info, "openTypeVheaVertTypoDescender"))
