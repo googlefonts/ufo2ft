@@ -804,8 +804,19 @@ class OutlineTTFCompiler(OutlineCompiler):
     def setupTable_glyf(self):
         """Make the glyf table."""
 
+        allGlyphs = self.allGlyphs
         if self.convertCubics:
             from cu2qu.pens import Cu2QuPen
+            allGlyphs = {}
+            for name, glyph in self.allGlyphs.items():
+                if isinstance(glyph, StubGlyph):
+                    allGlyphs[name] = glyph
+                    continue
+                newGlyph = glyph.__class__()
+                glyph.draw(Cu2QuPen(
+                    newGlyph.getPen(), self.cubicConversionError,
+                    reverse_direction=True))
+                allGlyphs[name] = newGlyph
 
         self.otf["loca"] = newTable("loca")
         self.otf["glyf"] = glyf = newTable("glyf")
@@ -813,12 +824,9 @@ class OutlineTTFCompiler(OutlineCompiler):
         glyf.glyphOrder = self.glyphOrder
 
         for name in self.glyphOrder:
-            orig_pen = pen = TTGlyphPen(self.allGlyphs)
-            if self.convertCubics:
-                pen = Cu2QuPen(pen, self.cubicConversionError,
-                               reverse_direction=True)
-            self.allGlyphs[name].draw(pen)
-            glyf[name] = orig_pen.glyph()
+            pen = TTGlyphPen(allGlyphs)
+            allGlyphs[name].draw(pen)
+            glyf[name] = pen.glyph()
 
 
 class StubGlyph(object):
