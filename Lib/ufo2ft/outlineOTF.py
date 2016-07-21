@@ -813,16 +813,12 @@ class OutlineTTFCompiler(OutlineCompiler):
         glyf.glyphOrder = self.glyphOrder
 
         for name in self.glyphOrder:
-            pen = TTGlyphPen(self.allGlyphs)
+            orig_pen = pen = TTGlyphPen(self.allGlyphs)
             if self.convertCubics:
                 pen = Cu2QuPen(pen, self.cubicConversionError,
                                reverse_direction=True)
             self.allGlyphs[name].draw(pen)
-            if self.convertCubics:
-                # travel back through the hairy nest of conversion pens.
-                # why can't there just be a single pen protocol...
-                pen = pen.pen.pen._outPen.pen.pen
-            glyf[name] = pen.glyph()
+            glyf[name] = orig_pen.glyph()
 
 
 class StubGlyph(object):
