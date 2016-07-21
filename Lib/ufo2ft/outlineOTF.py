@@ -3,6 +3,7 @@ from fontTools.misc.py23 import tounicode
 
 import math
 import time
+from collections import Counter
 
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
@@ -643,17 +644,9 @@ class OutlineCompiler(object):
         vorg.minorVersion = 0
         vorg.VOriginRecords = {}
         # Find the most frequent verticalOrigin
-        vorg_count = {}
-        for glyph in self.allGlyphs.values():
-            verticalOrigin = _getVerticalOrigin(glyph)
-            if verticalOrigin not in vorg_count:
-                vorg_count[verticalOrigin] = 1
-            else:
-                vorg_count[verticalOrigin] += 1
-        vorg.defaultVertOriginY = sorted(
-            vorg_count.keys(),
-            key=lambda vertOrig: vorg_count[vertOrig]
-        )[0]
+        vorg_count = Counter(_getVerticalOrigin(glyph)
+                             for glyph in self.allGlyphs.values())
+        vorg.defaultVertOriginY = vorg_count.most_common(1)[0][0]
         if len(vorg_count) > 1:
             for glyphName, glyph in self.allGlyphs.items():
                 vorg.VOriginRecords[glyphName] = glyph.verticalOrigin
