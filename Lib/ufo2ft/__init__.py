@@ -10,10 +10,17 @@ from ufo2ft.outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureOTFCompiler, mtiFeaFiles=None,
                kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter,
-               glyphOrder=None, useProductionNames=True, optimizeCff=True):
-    """Create FontTools CFF font from a UFO."""
+               glyphOrder=None, convertCubics=True, cubicConversionError=2,
+               useProductionNames=True, optimizeCff=True):
+    """Create FontTools CFF font from a UFO.
 
-    outlineCompiler = outlineCompilerClass(ufo, glyphOrder=glyphOrder)
+    Some arguments are only used when generating CFF or TrueType outlines:
+    `convertCubics` and `cubicConversionError` only apply to TrueType, and
+    `optimizeCff` only applies to CFF.
+    """
+
+    outlineCompiler = outlineCompilerClass(
+        ufo, glyphOrder, convertCubics, cubicConversionError)
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(

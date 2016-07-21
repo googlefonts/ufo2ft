@@ -30,8 +30,11 @@ def _roundInt(v):
 class OutlineCompiler(object):
     """Create a feature-less outline binary."""
 
-    def __init__(self, font, glyphOrder=None):
+    def __init__(self, font, glyphOrder=None, convertCubics=True,
+                 cubicConversionError=2):
         self.ufo = font
+        self.convertCubics = convertCubics
+        self.cubicConversionError = cubicConversionError
         self.log = []
         # make any missing glyphs and store them locally
         missingRequiredGlyphs = self.makeMissingRequiredGlyphs()
@@ -801,14 +804,28 @@ class OutlineTTFCompiler(OutlineCompiler):
     def setupTable_glyf(self):
         """Make the glyf table."""
 
+        allGlyphs = self.allGlyphs
+        if self.convertCubics:
+            from cu2qu.pens import Cu2QuPen
+            allGlyphs = {}
+            for name, glyph in self.allGlyphs.items():
+                if isinstance(glyph, StubGlyph):
+                    allGlyphs[name] = glyph
+                    continue
+                newGlyph = glyph.__class__()
+                glyph.draw(Cu2QuPen(
+                    newGlyph.getPen(), self.cubicConversionError,
+                    reverse_direction=True))
+                allGlyphs[name] = newGlyph
+
         self.otf["loca"] = newTable("loca")
         self.otf["glyf"] = glyf = newTable("glyf")
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
         for name in self.glyphOrder:
-            pen = TTGlyphPen(self.allGlyphs)
-            self.allGlyphs[name].draw(pen)
+            pen = TTGlyphPen(allGlyphs)
+            allGlyphs[name].draw(pen)
             glyf[name] = pen.glyph()
 
 
