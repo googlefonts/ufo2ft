@@ -116,6 +116,8 @@ class MarkFeatureWriter(object):
         ruleType = "mark" if isMkmk else "base"
 
         lines.append("  lookup %s {" % lookupName)
+        if isMkmk:
+            lines.append("    lookupflag MarkAttachmentType %s;" % className)
 
         for baseName, x, y in baseGlyphs:
             lines.append(
