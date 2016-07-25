@@ -3,6 +3,7 @@ from fontTools.misc.py23 import tounicode
 
 import math
 import time
+from collections import Counter
 
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
@@ -25,6 +26,16 @@ def _isNonBMP(s):
 
 def _roundInt(v):
     return int(round(v))
+
+
+def _getVerticalOrigin(glyph):
+    height = glyph.height
+    if (hasattr(glyph, "verticalOrigin") and
+            glyph.verticalOrigin is not None):
+        verticalOrigin = glyph.verticalOrigin
+    else:
+        verticalOrigin = height
+    return verticalOrigin
 
 
 class OutlineCompiler(object):
@@ -65,6 +76,13 @@ class OutlineCompiler(object):
         else:
             self.otf = TTFont()
 
+        self.vertical = False
+        for glyph in self.allGlyphs.values():
+            if (hasattr(glyph, "verticalOrigin") and
+                    glyph.verticalOrigin is not None):
+                self.vertical = True
+                break
+
         # populate basic tables
         self.setupTable_head()
         self.setupTable_hhea()
@@ -74,6 +92,9 @@ class OutlineCompiler(object):
         self.setupTable_cmap()
         self.setupTable_OS2()
         self.setupTable_post()
+        if self.vertical:
+            self.setupTable_vhea()
+            self.setupTable_vmtx()
         self.setupOtherTables()
 
         return self.otf
@@ -587,6 +608,103 @@ class OutlineCompiler(object):
         # glyph count
         hhea.numberOfHMetrics = len(self.allGlyphs)
 
+    def setupTable_vmtx(self):
+        """
+        Make the vmtx table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
+
+        self.otf["vmtx"] = vmtx = newTable("vmtx")
+        vmtx.metrics = {}
+        for glyphName, glyph in self.allGlyphs.items():
+            height = glyph.height
+            verticalOrigin = _getVerticalOrigin(glyph)
+            top = 0
+            if len(glyph) or len(glyph.components):
+                # tsb should be consistent with glyf yMax, which is just
+                # maximum y for coordinate data
+                pen = ControlBoundsPen(self.ufo, ignoreSinglePoints=True)
+                glyph.draw(pen)
+                if pen.bounds is not None:
+                    top = pen.bounds[3]
+            # take ceil of tsb/yMax, as fontTools does with max bounds
+            vmtx[glyphName] = (_roundInt(height),
+                               int(math.ceil(verticalOrigin) - math.ceil(top)))
+
+    def setupTable_VORG(self):
+        """
+        Make the VORG table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
+        self.otf["VORG"] = vorg = newTable("VORG")
+        vorg.majorVersion = 1
+        vorg.minorVersion = 0
+        vorg.VOriginRecords = {}
+        # Find the most frequent verticalOrigin
+        vorg_count = Counter(_getVerticalOrigin(glyph)
+                             for glyph in self.allGlyphs.values())
+        vorg.defaultVertOriginY = vorg_count.most_common(1)[0][0]
+        if len(vorg_count) > 1:
+            for glyphName, glyph in self.allGlyphs.items():
+                vorg.VOriginRecords[glyphName] = glyph.verticalOrigin
+        vorg.numVertOriginYMetrics = len(vorg.VOriginRecords)
+
+    def setupTable_vhea(self):
+        """
+        Make the vhea table.
+
+        **This should not be called externally.** Subclasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
+        self.otf["vhea"] = vhea = newTable("vhea")
+        font = self.ufo
+        head = self.otf["head"]
+        # vhea.tableVersion = 0x00011000
+        # see https://github.com/behdad/fonttools/issues/540
+        vhea.tableVersion = 1.0625
+        # horizontal metrics
+        vhea.ascent = _roundInt(getAttrWithFallback(font.info, "openTypeVheaVertTypoAscender"))
+        vhea.descent = _roundInt(getAttrWithFallback(font.info, "openTypeVheaVertTypoDescender"))
+        vhea.lineGap = _roundInt(getAttrWithFallback(font.info, "openTypeVheaVertTypoLineGap"))
+        # vertical metrics
+        heights = []
+        tops = []
+        bottoms = []
+        for glyph in self.allGlyphs.values():
+            top = glyph.topMargin
+            bottom = glyph.rightMargin
+            if top is None:
+                top = 0
+            if bottom is None:
+                bottom = 0
+            heights.append(glyph.height)
+            tops.append(top)
+            bottoms.append(bottom)
+        vhea.advanceHeightMax = _roundInt(max(heights))
+        vhea.minTopSideBearing = _roundInt(max(tops))
+        vhea.minBottomSideBearing = _roundInt(max(bottoms))
+        vhea.yMaxExtent = _roundInt(vhea.minTopSideBearing - (head.yMax - head.yMin))
+        # misc
+        vhea.caretSlopeRise = getAttrWithFallback(font.info, "openTypeVheaCaretSlopeRise")
+        vhea.caretSlopeRun = getAttrWithFallback(font.info, "openTypeVheaCaretSlopeRun")
+        vhea.caretOffset = getAttrWithFallback(font.info, "openTypeVheaCaretOffset")
+        vhea.reserved0 = 0
+        vhea.reserved1 = 0
+        vhea.reserved2 = 0
+        vhea.reserved3 = 0
+        vhea.reserved4 = 0
+        vhea.metricDataFormat = 0
+        # glyph count
+        vhea.numberOfVMetrics = len(self.allGlyphs)
+
+
     def setupTable_post(self):
         """
         Make the post table.
@@ -640,6 +758,8 @@ class OutlineOTFCompiler(OutlineCompiler):
 
     def setupOtherTables(self):
         self.setupTable_CFF()
+        if self.vertical:
+            self.setupTable_VORG()
 
     def setupTable_CFF(self):
         """Make the CFF table."""
