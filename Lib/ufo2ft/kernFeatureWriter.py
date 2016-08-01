@@ -67,6 +67,7 @@ class KernFeatureWriter(object):
         self._collectFeaClasses()
         self._collectFeaClassKerning()
 
+        self._cleanupMissingGlyphs()
         self._correctUfoClassNames()
         self._collectUfoKerning()
 
@@ -166,6 +167,29 @@ class KernFeatureWriter(object):
             for pair, kerningVal in self._getGlyphKerning(rightKey, 1):
                 self.rightClassKerning[pair[0], rightName] = kerningVal
                 del self.kerning[pair]
+
+    def _cleanupMissingGlyphs(self):
+        """Removes glyphs missing in the font from groups or kerning pairs."""
+
+        allGlyphs = set(self.font.keys())
+
+        groups = {}
+        for name, members in self.groups.items():
+            newMembers = set(members).intersection(allGlyphs)
+            if newMembers:
+                groups[name] = list(newMembers)
+
+        kerning = {}
+        for glyphPair, val in sorted(self.kerning.items()):
+            left, right = glyphPair
+            if not left in groups and not left in allGlyphs:
+                continue
+            if not right in groups and not right in allGlyphs:
+                continue
+            kerning[glyphPair] = val
+
+        self.groups = groups
+        self.kerning = kerning
 
     def _correctUfoClassNames(self):
         """Detect and replace illegal class names found in UFO kerning."""
