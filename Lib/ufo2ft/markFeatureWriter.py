@@ -1,5 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+from ufo2ft.kernFeatureWriter import liststr
+
 
 class MarkFeatureWriter(object):
     """Generates a mark or mkmk feature based on glyph anchors.
@@ -116,6 +118,11 @@ class MarkFeatureWriter(object):
         ruleType = "mark" if isMkmk else "base"
 
         lines.append("  lookup %s {" % lookupName)
+        if isMkmk:
+            mkAttachCls = "@%sMkAttach" % lookupName
+            lines.append("    %s = %s;" % (
+                mkAttachCls, liststr([className] + [g[0] for g in baseGlyphs])))
+            lines.append("    lookupflag UseMarkFilteringSet %s;" % mkAttachCls)
 
         for baseName, x, y in baseGlyphs:
             lines.append(
