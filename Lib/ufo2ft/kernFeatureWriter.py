@@ -9,6 +9,11 @@ except ImportError:
     import unicodedata
 
 
+def liststr(glyphs):
+    """Return string representation of a list of glyph names."""
+    return "[%s]" % " ".join(glyphs)
+
+
 class KernFeatureWriter(object):
     """Generates a kerning feature based on glyph class definitions.
 
@@ -225,7 +230,7 @@ class KernFeatureWriter(object):
                     nlGlyphs.append(lGlyph)
                     seen[pair] = val
             if nlGlyphs != lGlyphs:
-                self.leftClassKerning[self._liststr(nlGlyphs), rGlyph] = val
+                self.leftClassKerning[liststr(nlGlyphs), rGlyph] = val
                 del self.leftClassKerning[lClass, rGlyph]
 
         # remove conflicts in left glyph / right class rules
@@ -238,7 +243,7 @@ class KernFeatureWriter(object):
                     nrGlyphs.append(rGlyph)
                     seen[pair] = val
             if nrGlyphs != rGlyphs:
-                self.rightClassKerning[lGlyph, self._liststr(nrGlyphs)] = val
+                self.rightClassKerning[lGlyph, liststr(nrGlyphs)] = val
                 del self.rightClassKerning[lGlyph, rClass]
 
     def _addGlyphClasses(self, lines):
@@ -300,11 +305,6 @@ class KernFeatureWriter(object):
             for lang in langs:
                 lines.append("language %s;" % lang)
                 lines.append("lookup %s;" % lookupName)
-
-    def _liststr(self, glyphs):
-        """Return string representation of a list of glyph names."""
-
-        return "[%s]" % " ".join(glyphs)
 
     def _getClasses(self, separate=False):
         """Return all kerning classes together."""
