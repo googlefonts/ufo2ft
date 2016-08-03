@@ -13,6 +13,7 @@ from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._n_a_m_e import NameRecord
+from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 
 from ufo2ft.fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
 
@@ -943,10 +944,34 @@ class OutlineTTFCompiler(OutlineCompiler):
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
+        allGlyphs = self.allGlyphs
         for name in self.glyphOrder:
+            glyph = allGlyphs[name]
             pen = TTGlyphPen(allGlyphs)
-            allGlyphs[name].draw(pen)
-            glyf[name] = pen.glyph()
+            glyph.draw(pen)
+            ttGlyph = pen.glyph()
+            if ttGlyph.isComposite() and self.autoUseMyMetrics:
+                self.autoUseMyMetrics(ttGlyph, glyph.width, allGlyphs)
+            glyf[name] = ttGlyph
+
+    @staticmethod
+    def autoUseMyMetrics(ttGlyph, width, glyphSet):
+        """ Set the "USE_MY_METRICS" flag on the first component having the
+        same advance width as the composite glyph, no transform and no
+        horizontal shift (but allow it to shift vertically).
+        This forces the composite glyph to use the possibly hinted horizontal
+        metrics of the sub-glyph, instead of those from the "hmtx" table.
+        """
+        for component in ttGlyph.components:
+            try:
+                baseName, transform = component.getComponentInfo()
+            except AttributeError:
+                # component uses '{first,second}Pt' instead of 'x' and 'y'
+                continue
+            if (glyphSet[baseName].width == width and
+                    transform[:-1] == (1, 0, 0, 1, 0)):
+                component.flags |= USE_MY_METRICS
+                break
 
 
 class StubGlyph(object):
