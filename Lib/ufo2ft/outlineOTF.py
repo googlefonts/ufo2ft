@@ -539,6 +539,9 @@ class OutlineCompiler(object):
         hmtx.metrics = {}
         for glyphName, glyph in self.allGlyphs.items():
             width = glyph.width
+            if width < 0:
+                raise ValueError(
+                    "The width should not be negative: '%s'" % (glyphName))
             left = 0
             if len(glyph) or len(glyph.components):
                 # lsb should be consistent with glyf xMin, which is just
