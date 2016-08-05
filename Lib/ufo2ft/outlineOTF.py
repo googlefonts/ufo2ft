@@ -944,7 +944,6 @@ class OutlineTTFCompiler(OutlineCompiler):
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
-        allGlyphs = self.allGlyphs
         for name in self.glyphOrder:
             glyph = allGlyphs[name]
             pen = TTGlyphPen(allGlyphs)
