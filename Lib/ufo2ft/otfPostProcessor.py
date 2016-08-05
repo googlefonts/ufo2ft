@@ -3,6 +3,11 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
 
+try:
+    from compreffor import Compreffor
+except ImportError:
+    Compreffor = None
+
 
 class OTFPostProcessor(object):
     """Does some post-processing operations on a compiled OpenType font, using
@@ -16,11 +21,18 @@ class OTFPostProcessor(object):
         stream.seek(0)
         self.otf = TTFont(stream)
 
-    def process(self, useProductionNames=True, optimizeCff=True):
+    def process(self, useProductionNames=True, optimizeCff=None):
         if useProductionNames:
             self._rename_glyphs_from_ufo()
-        if optimizeCff and 'CFF ' in self.otf:
-            from compreffor import Compreffor
+        # run compreffor by default, if installed; skip if there's no CFF table
+        # or compreffor is not available
+        if ('CFF ' not in self.otf or
+                optimizeCff is False or
+                (optimizeCff is None and Compreffor is None)):
+            pass
+        elif optimizeCff and Compreffor is None:
+            raise ImportError("No module named compreffor")
+        else:
             comp = Compreffor(self.otf)
             comp.compress()
         return self.otf
