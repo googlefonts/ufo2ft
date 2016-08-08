@@ -199,7 +199,7 @@ class KernFeatureWriter(object):
     def _correctUfoClassNames(self):
         """Detect and replace illegal class names found in UFO kerning."""
 
-        for oldName, members in self.groups.items():
+        for oldName, members in list(self.groups.items()):
             newName = self._makeFeaClassName(oldName)
             if oldName == newName:
                 continue
