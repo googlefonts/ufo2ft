@@ -527,37 +527,37 @@ def _test():
     """
     >>> info = _TestInfoObject()
 
-    >>> getAttrWithFallback(info, "familyName")
-    'Family Name'
-    >>> getAttrWithFallback(info, "styleName")
-    'Style Name'
+    >>> print(getAttrWithFallback(info, "familyName"))
+    Family Name
+    >>> print(getAttrWithFallback(info, "styleName"))
+    Style Name
 
     >>> getAttrWithFallback(info, "styleMapFamilyName") == u'Family Name Style Name'
     True
     >>> info.styleMapFamilyName = "Style Map Family Name"
-    >>> getAttrWithFallback(info, "styleMapFamilyName")
-    'Style Map Family Name'
+    >>> print(getAttrWithFallback(info, "styleMapFamilyName"))
+    Style Map Family Name
 
-    >>> getAttrWithFallback(info, "openTypeNamePreferredFamilyName")
-    'Family Name'
-    >>> getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName")
-    'Style Name'
-    >>> getAttrWithFallback(info, "openTypeNameCompatibleFullName")
-    'Style Map Family Name'
+    >>> print(getAttrWithFallback(info, "openTypeNamePreferredFamilyName"))
+    Family Name
+    >>> print(getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"))
+    Style Name
+    >>> print(getAttrWithFallback(info, "openTypeNameCompatibleFullName"))
+    Style Map Family Name
 
     >>> getAttrWithFallback(info, "openTypeHheaAscender")
     750
     >>> getAttrWithFallback(info, "openTypeHheaDescender")
     -250
 
-    >>> getAttrWithFallback(info, "openTypeNameVersion")
-    '0.000'
+    >>> print(getAttrWithFallback(info, "openTypeNameVersion"))
+    Version 0.000
     >>> info.versionMinor = 1
     >>> info.versionMajor = 1
-    >>> getAttrWithFallback(info, "openTypeNameVersion")
-    '1.001'
+    >>> print(getAttrWithFallback(info, "openTypeNameVersion"))
+    Version 1.001
 
-    >>> getAttrWithFallback(info, "openTypeNameUniqueID") == u'1.001;NONE;Style Map Family Name Regular'
+    >>> getAttrWithFallback(info, "openTypeNameUniqueID") == u'Version 1.001;NONE;Style Map Family Name Regular'
     True
 
     >>> getAttrWithFallback(info, "openTypeOS2TypoAscender")
@@ -571,8 +571,8 @@ def _test():
 
     >>> getAttrWithFallback(info, "postscriptSlantAngle")
     0
-    >>> getAttrWithFallback(info, "postscriptWeightName")
-    'Normal'
+    >>> print(getAttrWithFallback(info, "postscriptWeightName"))
+    Normal
     """
 
 if __name__ == "__main__":
