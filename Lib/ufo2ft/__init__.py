@@ -11,7 +11,7 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureOTFCompiler, mtiFeaFiles=None,
                kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter,
                glyphOrder=None, convertCubics=True, cubicConversionError=2,
-               useProductionNames=True, optimizeCff=True):
+               useProductionNames=True, optimizeCff=None):
     """Create FontTools CFF font from a UFO.
 
     Some arguments are only used when generating CFF or TrueType outlines:
