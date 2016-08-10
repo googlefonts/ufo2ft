@@ -289,6 +289,7 @@ staticFallbackData = dict(
     openTypeNameLicenseURL=None,
     openTypeNameDescription=None,
     openTypeNameSampleText=None,
+    openTypeNameRecords=[],
 
     openTypeOS2WidthClass=5,
     openTypeOS2WeightClass=400,
