@@ -86,9 +86,7 @@ class MarkFeatureWriter(object):
             anchorList.extend(self.mkmkAnchorList)
 
         added = set()
-        for _, accentAnchorName in sorted(anchorList):
-            if accentAnchorName in added:
-                continue
+        for accentAnchorName in sorted(set(n for _, n in anchorList)):
             added.add(accentAnchorName)
             self._addClass(lines, accentAnchorName)
 
