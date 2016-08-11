@@ -169,7 +169,7 @@ def openTypeOS2WinDescentFallback(info):
 # postscript
 
 _postscriptFontNameExceptions = set("[](){}<>/%")
-_postscriptFontNameAllowed = set([unichr(i) for i in range(33, 137)])
+_postscriptFontNameAllowed = set([unichr(i) for i in range(33, 127)])
 
 def normalizeStringForPostscript(s, allowSpaces=True):
     s = tounicode(s)
@@ -180,7 +180,10 @@ def normalizeStringForPostscript(s, allowSpaces=True):
         if c in _postscriptFontNameExceptions:
             continue
         if c not in _postscriptFontNameAllowed:
+            # Use compatibility decomposed form, to keep parts in ascii
             c = unicodedata.normalize("NFKD", c)
+            if not set(c) < _postscriptFontNameAllowed:
+                c = tounicode(tobytes(c, errors="replace"))
         normalized.append(tostr(c))
     return "".join(normalized)
 
