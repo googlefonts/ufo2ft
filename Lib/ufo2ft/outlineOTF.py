@@ -12,7 +12,6 @@ from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
-from fontTools.ttLib.tables._n_a_m_e import NameRecord
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 
 from ufo2ft.fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
@@ -266,7 +265,20 @@ class OutlineCompiler(object):
         """
 
         font = self.ufo
+        self.otf["name"] = name = newTable("name")
+        name.names = []
 
+        # Set name records from font.info.openTypeNameRecords
+        for nameRecord in getAttrWithFallback(
+                font.info, "openTypeNameRecords"):
+            nameId = nameRecord["nameID"]
+            platformId = nameRecord["platformID"]
+            platEncId = nameRecord["encodingID"]
+            langId = nameRecord["languageID"]
+            nameVal = nameRecord["string"]
+            name.setName(nameVal, nameId, platformId, platEncId, langId)
+
+        # Build name records
         familyName = getAttrWithFallback(font.info, "styleMapFamilyName")
         styleName = getAttrWithFallback(font.info, "styleMapStyleName").title()
 
@@ -276,49 +288,47 @@ class OutlineCompiler(object):
             fullName += " %s" % styleName
 
         nameVals = {
-            "0": getAttrWithFallback(font.info, "copyright"),
-            "1": familyName,
-            "2": styleName,
-            "3": getAttrWithFallback(font.info, "openTypeNameUniqueID"),
-            "4": fullName,
-            "5": getAttrWithFallback(font.info, "openTypeNameVersion"),
-            "6": getAttrWithFallback(font.info, "postscriptFontName"),
-            "7": getAttrWithFallback(font.info, "trademark"),
-            "8": getAttrWithFallback(font.info, "openTypeNameManufacturer"),
-            "9": getAttrWithFallback(font.info, "openTypeNameDesigner"),
-            "10": getAttrWithFallback(font.info, "openTypeNameDescription"),
-            "11": getAttrWithFallback(font.info, "openTypeNameManufacturerURL"),
-            "12": getAttrWithFallback(font.info, "openTypeNameDesignerURL"),
-            "13": getAttrWithFallback(font.info, "openTypeNameLicense"),
-            "14": getAttrWithFallback(font.info, "openTypeNameLicenseURL")}
+            0: getAttrWithFallback(font.info, "copyright"),
+            1: familyName,
+            2: styleName,
+            3: getAttrWithFallback(font.info, "openTypeNameUniqueID"),
+            4: fullName,
+            5: getAttrWithFallback(font.info, "openTypeNameVersion"),
+            6: getAttrWithFallback(font.info, "postscriptFontName"),
+            7: getAttrWithFallback(font.info, "trademark"),
+            8: getAttrWithFallback(font.info, "openTypeNameManufacturer"),
+            9: getAttrWithFallback(font.info, "openTypeNameDesigner"),
+            10: getAttrWithFallback(font.info, "openTypeNameDescription"),
+            11: getAttrWithFallback(font.info, "openTypeNameManufacturerURL"),
+            12: getAttrWithFallback(font.info, "openTypeNameDesignerURL"),
+            13: getAttrWithFallback(font.info, "openTypeNameLicense"),
+            14: getAttrWithFallback(font.info, "openTypeNameLicenseURL"),
+            16: getAttrWithFallback(
+                font.info, "openTypeNamePreferredFamilyName"),
+            17: getAttrWithFallback(
+                font.info, "openTypeNamePreferredSubfamilyName"),
+        }
 
         # don't add typographic names if they are the same as the legacy ones
-        typographicFamilyName = getAttrWithFallback(font.info,
-            "openTypeNamePreferredFamilyName")
-        typographicSubfamilyName = getAttrWithFallback(font.info,
-            "openTypeNamePreferredSubfamilyName")
-        if nameVals["1"] != typographicFamilyName:
-            nameVals["16"] = typographicFamilyName
-        if nameVals["2"] != typographicSubfamilyName:
-            nameVals["17"] = typographicSubfamilyName
+        if nameVals[1] == nameVals[16]:
+            del nameVals[16]
+        if nameVals[2] == nameVals[17]:
+            del nameVals[17]
+        # postscript font name
+        if nameVals[6]:
+            nameVals[6] = normalizeStringForPostscript(nameVals[6])
 
-        self.otf["name"] = name = newTable("name")
-        name.names = []
         for nameId in sorted(nameVals.keys()):
             nameVal = nameVals[nameId]
             if not nameVal:
                 continue
-            nameIdVal = int(nameId)
-            if nameIdVal == 6:
-                # postscript font name
-                nameVal = normalizeStringForPostscript(nameVal)
-            rec = NameRecord()
-            rec.platformID = 3
-            rec.platEncID = 10 if _isNonBMP(nameVal) else 1
-            rec.langID = 0x409
-            rec.nameID = nameIdVal
-            rec.string = nameVal.encode(rec.getEncoding())
-            name.names.append(rec)
+            platformId = 3
+            platEncId = 10 if _isNonBMP(nameVal) else 1
+            langId = 0x409
+            # Set built name record if not set yet
+            if name.getName(nameId, platformId, platEncId, langId):
+                continue
+            name.setName(nameVal, nameId, platformId, platEncId, langId)
 
     def setupTable_maxp(self):
         """
