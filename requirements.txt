@@ -1,2 +1,3 @@
 git+https://github.com/behdad/fonttools.git
+git+https://github.com/typesupply/defcon.git
 git+https://github.com/unified-font-object/ufoLib.git

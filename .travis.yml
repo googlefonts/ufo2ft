@@ -3,5 +3,9 @@ language: python
 python:
   - "2.7"
   - "3.5"
+branches:
+  only:
+    - master
+
 install: pip install tox-travis
 script: tox
