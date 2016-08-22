@@ -577,6 +577,9 @@ def _test():
     0
     >>> print(getAttrWithFallback(info, "postscriptWeightName"))
     Normal
+
+    >>> print(normalizeStringForPostscript('Sample copyright notice.'))
+    Sample copyright notice.
     """
 
 if __name__ == "__main__":
