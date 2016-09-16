@@ -59,7 +59,7 @@ def maxCtxSubtable(maxCtx, tag, lookupType, st):
 
     # reverse-chained context
     elif tag == 'GSUB' and lookupType == 8:
-        maxCtx = maxCtxContextualRule(maxCtx, st, True)
+        maxCtx = maxCtxContextualRule(maxCtx, st, 'Reverse')
 
     return maxCtx
 
@@ -96,4 +96,6 @@ def maxCtxContextualRule(maxCtx, st, chain):
 
     if not chain:
         return max(maxCtx, st.GlyphCount)
+    elif chain == 'Reverse':
+        return max(maxCtx, st.GlyphCount + st.LookAheadGlyphCount)
     return max(maxCtx, st.InputGlyphCount + st.LookAheadGlyphCount)
