@@ -15,6 +15,7 @@ class OTFPostProcessor(object):
         otf.save(stream)
         stream.seek(0)
         self.otf = TTFont(stream)
+        self._postscriptNames = ufo.lib.get('public.postscriptNames')
 
     def process(self, useProductionNames=True, optimizeCff=True):
         if useProductionNames:
@@ -26,7 +27,7 @@ class OTFPostProcessor(object):
         return self.otf
 
     def _rename_glyphs_from_ufo(self):
-        """Rename glyphs using glif.lib.public.postscriptNames in UFO."""
+        """Rename glyphs using ufo.lib.public.postscriptNames in UFO."""
 
         rename_map = {
             g.name: self._build_production_name(g) for g in self.ufo}
@@ -46,9 +47,10 @@ class OTFPostProcessor(object):
         """Build a production name for a single glyph."""
 
         # use name from Glyphs source if available
-        production_name = glyph.lib.get('public.postscriptName')
-        if production_name:
-            return production_name
+        if self._postscriptNames:
+            production_name = self._postscriptNames.get(glyph.name)
+            if production_name:
+                return production_name
 
         # use name derived from unicode value
         unicode_val = glyph.unicode
