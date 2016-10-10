@@ -275,7 +275,12 @@ class OutlineCompiler(object):
             platformId = nameRecord["platformID"]
             platEncId = nameRecord["encodingID"]
             langId = nameRecord["languageID"]
-            nameVal = nameRecord["string"]
+            # on Python 2, plistLib (used by ufoLib) returns unicode strings
+            # only when plist data contain non-ascii characters, and returns
+            # ascii-encoded bytes when it can. On the other hand, fontTools's
+            # name table `setName` method wants unicode strings, so we must
+            # decode them first
+            nameVal = tounicode(nameRecord["string"], encoding='ascii')
             name.setName(nameVal, nameId, platformId, platEncId, langId)
 
         # Build name records
@@ -322,6 +327,7 @@ class OutlineCompiler(object):
             nameVal = nameVals[nameId]
             if not nameVal:
                 continue
+            nameVal = tounicode(nameVal, encoding='ascii')
             platformId = 3
             platEncId = 10 if _isNonBMP(nameVal) else 1
             langId = 0x409
