@@ -579,7 +579,7 @@ class OutlineCompiler(object):
         """
         self.otf["hhea"] = hhea = newTable("hhea")
         font = self.ufo
-        hhea.tableVersion = 1.0
+        hhea.tableVersion = 0x00010000
         # vertical metrics
         hhea.ascent = _roundInt(getAttrWithFallback(font.info, "openTypeHheaAscender"))
         hhea.descent = _roundInt(getAttrWithFallback(font.info, "openTypeHheaDescender"))
@@ -686,9 +686,7 @@ class OutlineCompiler(object):
         self.otf["vhea"] = vhea = newTable("vhea")
         font = self.ufo
         head = self.otf["head"]
-        # vhea.tableVersion = 0x00011000
-        # see https://github.com/behdad/fonttools/issues/540
-        vhea.tableVersion = 1.0625
+        vhea.tableVersion = 0x00011000
         # horizontal metrics
         vhea.ascent = _roundInt(getAttrWithFallback(font.info, "openTypeVheaVertTypoAscender"))
         vhea.descent = _roundInt(getAttrWithFallback(font.info, "openTypeVheaVertTypoDescender"))
@@ -917,7 +915,7 @@ class OutlineTTFCompiler(OutlineCompiler):
         """Make the maxp table."""
 
         self.otf["maxp"] = maxp = newTable("maxp")
-        maxp.tableVersion = 0b10000
+        maxp.tableVersion = 0x00010000
         maxp.maxZones = 1
         maxp.maxTwilightPoints = 0
         maxp.maxStorage = 0
