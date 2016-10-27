@@ -279,7 +279,7 @@ staticFallbackData = dict(
     openTypeHeadLowestRecPPEM=6,
     openTypeHeadFlags=[0, 1],
 
-    openTypeHheaLineGap=200,
+    openTypeHheaLineGap=0,
     openTypeHheaCaretSlopeRise=1,
     openTypeHheaCaretSlopeRun=0,
     openTypeHheaCaretOffset=0,
@@ -302,7 +302,7 @@ staticFallbackData = dict(
     openTypeOS2FamilyClass=[0, 0],
     openTypeOS2UnicodeRanges=[],
     openTypeOS2CodePageRanges=[],
-    openTypeOS2TypoLineGap=200,
+    openTypeOS2TypoLineGap=0,
     openTypeOS2Type=[2],
 
     openTypeOS2SubscriptXSize=None,
