@@ -57,8 +57,10 @@ def openTypeHeadCreatedFallback(info):
 
 def openTypeHheaAscenderFallback(info):
     """
-    Fallback to *unitsPerEm + descender*.
+    Fallback to *ascender* then *unitsPerEm + descender*.
     """
+    if info.ascender is not None:
+        return info.ascender
     return info.unitsPerEm + info.descender
 
 def openTypeHheaDescenderFallback(info):
@@ -123,8 +125,10 @@ def openTypeNameWWSSubfamilyNameFallback(info):
 
 def openTypeOS2TypoAscenderFallback(info):
     """
-    Fallback to *unitsPerEm + descender*.
+    Fallback to *ascender* then *unitsPerEm + descender*.
     """
+    if info.ascender is not None:
+        return info.ascender
     return info.unitsPerEm + info.descender
 
 def openTypeOS2TypoDescenderFallback(info):
@@ -135,32 +139,27 @@ def openTypeOS2TypoDescenderFallback(info):
 
 def openTypeOS2WinAscentFallback(info):
     """
-    Fallback to the maximum y value of the font's bounding box.
-    If that is not available, fallback to *ascender*.
+    Fallback to *ascender* then the maximum y value of the font's bounding box.
     if the maximum y value is negative, fallback to 0 (zero).
     """
+    if info.ascender is not None:
+        return info.ascender
     font = info.getParent()
-    if font is None:
-        yMax = getAttrWithFallback(info, "ascender")
-    else:
-        bounds = getFontBounds(font)
-        xMin, yMin, xMax, yMax = bounds
+    bounds = getFontBounds(font)
+    xMin, yMin, xMax, yMax = bounds
     if yMax < 0:
         return 0
     return yMax
 
 def openTypeOS2WinDescentFallback(info):
     """
-    Fallback to the minimum y value of the font's bounding box.
-    If that is not available, fallback to *descender*.
+    Fallback to *descender* then the minimum y value of the font's bounding box.
     If the minimum y value is positive, fallback to 0 (zero).
     """
+    if info.descender is not None:
+        return info.descender
     font = info.getParent()
-    if font is None:
-        return abs(getAttrWithFallback(info, "descender"))
     bounds = getFontBounds(font)
-    if bounds is None:
-        return abs(getAttrWithFallback(info, "descender"))
     xMin, yMin, xMax, yMax = bounds
     if yMin > 0:
         return 0
