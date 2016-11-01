@@ -57,11 +57,9 @@ def openTypeHeadCreatedFallback(info):
 
 def openTypeHheaAscenderFallback(info):
     """
-    Fallback to *ascender* then *unitsPerEm + descender*.
+    Fallback to *unitsPerEm * 1.2 + descender*.
     """
-    if info.ascender is not None:
-        return info.ascender
-    return info.unitsPerEm + info.descender
+    return int(info.unitsPerEm * 1.2) + info.descender
 
 def openTypeHheaDescenderFallback(info):
     """
@@ -125,11 +123,9 @@ def openTypeNameWWSSubfamilyNameFallback(info):
 
 def openTypeOS2TypoAscenderFallback(info):
     """
-    Fallback to *ascender* then *unitsPerEm + descender*.
+    Fallback to *unitsPerEm * 1.2 + descender*.
     """
-    if info.ascender is not None:
-        return info.ascender
-    return info.unitsPerEm + info.descender
+    return int(info.unitsPerEm * 1.2) + info.descender
 
 def openTypeOS2TypoDescenderFallback(info):
     """
@@ -139,17 +135,9 @@ def openTypeOS2TypoDescenderFallback(info):
 
 def openTypeOS2WinAscentFallback(info):
     """
-    Fallback to *ascender* then the maximum y value of the font's bounding box.
-    if the maximum y value is negative, fallback to 0 (zero).
+    Fallback to *unitsPerEm * 1.2 + descender*.
     """
-    if info.ascender is not None:
-        return info.ascender
-    font = info.getParent()
-    bounds = getFontBounds(font)
-    xMin, yMin, xMax, yMax = bounds
-    if yMax < 0:
-        return 0
-    return yMax
+    return int(info.unitsPerEm * 1.2) + info.descender
 
 def openTypeOS2WinDescentFallback(info):
     """
