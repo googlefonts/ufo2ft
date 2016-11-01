@@ -57,9 +57,9 @@ def openTypeHeadCreatedFallback(info):
 
 def openTypeHheaAscenderFallback(info):
     """
-    Fallback to *unitsPerEm + descender*.
+    Fallback to *unitsPerEm * 1.2 + descender*.
     """
-    return info.unitsPerEm + info.descender
+    return int(info.unitsPerEm * 1.2) + info.descender
 
 def openTypeHheaDescenderFallback(info):
     """
@@ -123,9 +123,9 @@ def openTypeNameWWSSubfamilyNameFallback(info):
 
 def openTypeOS2TypoAscenderFallback(info):
     """
-    Fallback to *unitsPerEm + descender*.
+    Fallback to *unitsPerEm * 1.2 + descender*.
     """
-    return info.unitsPerEm + info.descender
+    return int(info.unitsPerEm * 1.2) + info.descender
 
 def openTypeOS2TypoDescenderFallback(info):
     """
@@ -135,36 +135,15 @@ def openTypeOS2TypoDescenderFallback(info):
 
 def openTypeOS2WinAscentFallback(info):
     """
-    Fallback to the maximum y value of the font's bounding box.
-    If that is not available, fallback to *ascender*.
-    if the maximum y value is negative, fallback to 0 (zero).
+    Fallback to *unitsPerEm * 1.2 + descender*.
     """
-    font = info.getParent()
-    if font is None:
-        yMax = getAttrWithFallback(info, "ascender")
-    else:
-        bounds = getFontBounds(font)
-        xMin, yMin, xMax, yMax = bounds
-    if yMax < 0:
-        return 0
-    return yMax
+    return int(info.unitsPerEm * 1.2) + info.descender
 
 def openTypeOS2WinDescentFallback(info):
     """
-    Fallback to the minimum y value of the font's bounding box.
-    If that is not available, fallback to *descender*.
-    If the minimum y value is positive, fallback to 0 (zero).
+    Fallback to *descender*.
     """
-    font = info.getParent()
-    if font is None:
-        return abs(getAttrWithFallback(info, "descender"))
-    bounds = getFontBounds(font)
-    if bounds is None:
-        return abs(getAttrWithFallback(info, "descender"))
-    xMin, yMin, xMax, yMax = bounds
-    if yMin > 0:
-        return 0
-    return abs(yMin)
+    return abs(info.descender)
 
 # postscript
 
@@ -279,7 +258,7 @@ staticFallbackData = dict(
     openTypeHeadLowestRecPPEM=6,
     openTypeHeadFlags=[0, 1],
 
-    openTypeHheaLineGap=200,
+    openTypeHheaLineGap=0,
     openTypeHheaCaretSlopeRise=1,
     openTypeHheaCaretSlopeRun=0,
     openTypeHheaCaretOffset=0,
@@ -302,7 +281,7 @@ staticFallbackData = dict(
     openTypeOS2FamilyClass=[0, 0],
     openTypeOS2UnicodeRanges=[],
     openTypeOS2CodePageRanges=[],
-    openTypeOS2TypoLineGap=200,
+    openTypeOS2TypoLineGap=0,
     openTypeOS2Type=[2],
 
     openTypeOS2SubscriptXSize=None,
@@ -506,82 +485,3 @@ def dateStringToTimeValue(date):
         return int(time.mktime(t))
     except OverflowError:
         return 0
-
-# ----
-# Test
-# ----
-
-class _TestInfoObject(object):
-
-    def __init__(self):
-        self.familyName = "Family Name"
-        self.styleName = "Style Name"
-        self.unitsPerEm = 1000
-        self.descender = -250
-        self.xHeight = 450
-        self.capHeight = 600
-        self.ascender = 650
-        self.bounds = (0, -225, 100, 755)
-
-    def getParent(self):
-        return self
-
-
-def _test():
-    """
-    >>> info = _TestInfoObject()
-
-    >>> print(getAttrWithFallback(info, "familyName"))
-    Family Name
-    >>> print(getAttrWithFallback(info, "styleName"))
-    Style Name
-
-    >>> getAttrWithFallback(info, "styleMapFamilyName") == u'Family Name Style Name'
-    True
-    >>> info.styleMapFamilyName = "Style Map Family Name"
-    >>> print(getAttrWithFallback(info, "styleMapFamilyName"))
-    Style Map Family Name
-
-    >>> print(getAttrWithFallback(info, "openTypeNamePreferredFamilyName"))
-    Family Name
-    >>> print(getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"))
-    Style Name
-    >>> print(getAttrWithFallback(info, "openTypeNameCompatibleFullName"))
-    Style Map Family Name
-
-    >>> getAttrWithFallback(info, "openTypeHheaAscender")
-    750
-    >>> getAttrWithFallback(info, "openTypeHheaDescender")
-    -250
-
-    >>> print(getAttrWithFallback(info, "openTypeNameVersion"))
-    Version 0.000
-    >>> info.versionMinor = 1
-    >>> info.versionMajor = 1
-    >>> print(getAttrWithFallback(info, "openTypeNameVersion"))
-    Version 1.001
-
-    >>> getAttrWithFallback(info, "openTypeNameUniqueID") == u'Version 1.001;NONE;Style Map Family Name Regular'
-    True
-
-    >>> getAttrWithFallback(info, "openTypeOS2TypoAscender")
-    750
-    >>> getAttrWithFallback(info, "openTypeOS2TypoDescender")
-    -250
-    >>> getAttrWithFallback(info, "openTypeOS2WinAscent")
-    755
-    >>> getAttrWithFallback(info, "openTypeOS2WinDescent")
-    225
-
-    >>> getAttrWithFallback(info, "postscriptSlantAngle")
-    0
-    >>> print(getAttrWithFallback(info, "postscriptWeightName"))
-    Normal
-
-    >>> print(normalizeStringForPostscript('Sample copyright notice.'))
-    Sample copyright notice.
-    """
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
