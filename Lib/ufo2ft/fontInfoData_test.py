@@ -56,18 +56,18 @@ class GetAttrWithFallbackTest(unittest.TestCase):
         info = TestInfoObject()
 
         self.assertEqual(
-            getAttrWithFallback(info, "openTypeHheaAscender"), 750)
+            getAttrWithFallback(info, "openTypeHheaAscender"), 950)
         self.assertEqual(
             getAttrWithFallback(info, "openTypeHheaDescender"), -250)
 
         self.assertEqual(
-            getAttrWithFallback(info, "openTypeOS2TypoAscender"), 750)
+            getAttrWithFallback(info, "openTypeOS2TypoAscender"), 950)
         self.assertEqual(
             getAttrWithFallback(info, "openTypeOS2TypoDescender"), -250)
         self.assertEqual(
-            getAttrWithFallback(info, "openTypeOS2WinAscent"), 755)
+            getAttrWithFallback(info, "openTypeOS2WinAscent"), 950)
         self.assertEqual(
-            getAttrWithFallback(info, "openTypeOS2WinDescent"), 225)
+            getAttrWithFallback(info, "openTypeOS2WinDescent"), 250)
 
 
 class NormalizeStringForPostscriptTest(unittest.TestCase):
@@ -86,17 +86,6 @@ class TestInfoObject(object):
         self.xHeight = 450
         self.capHeight = 600
         self.ascender = 650
-
-        self.parent = TestFontObject()
-        self.parent.bounds = (0, -225, 100, 755)
-
-    def getParent(self):
-        return self.parent
-
-
-class TestFontObject(object):
-    def __init__(self):
-        self.bounds = None
 
 
 if __name__ == '__main__':
