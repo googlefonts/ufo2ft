@@ -141,17 +141,9 @@ def openTypeOS2WinAscentFallback(info):
 
 def openTypeOS2WinDescentFallback(info):
     """
-    Fallback to *descender* then the minimum y value of the font's bounding box.
-    If the minimum y value is positive, fallback to 0 (zero).
+    Fallback to *descender*.
     """
-    if info.descender is not None:
-        return info.descender
-    font = info.getParent()
-    bounds = getFontBounds(font)
-    xMin, yMin, xMax, yMax = bounds
-    if yMin > 0:
-        return 0
-    return abs(yMin)
+    return abs(info.descender)
 
 # postscript
 
