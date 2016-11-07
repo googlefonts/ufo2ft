@@ -57,9 +57,9 @@ def openTypeHeadCreatedFallback(info):
 
 def openTypeHheaAscenderFallback(info):
     """
-    Fallback to *unitsPerEm * 1.2 + descender*.
+    Fallback to *ascender + typoLineGap*.
     """
-    return int(info.unitsPerEm * 1.2) + info.descender
+    return info.ascender + getAttrWithFallback(info, "openTypeOS2TypoLineGap")
 
 def openTypeHheaDescenderFallback(info):
     """
@@ -123,9 +123,9 @@ def openTypeNameWWSSubfamilyNameFallback(info):
 
 def openTypeOS2TypoAscenderFallback(info):
     """
-    Fallback to *unitsPerEm * 1.2 + descender*.
+    Fallback to *ascender + typoLineGap*.
     """
-    return int(info.unitsPerEm * 1.2) + info.descender
+    return info.ascender + getAttrWithFallback(info, "openTypeOS2TypoLineGap")
 
 def openTypeOS2TypoDescenderFallback(info):
     """
@@ -133,11 +133,17 @@ def openTypeOS2TypoDescenderFallback(info):
     """
     return info.descender
 
+def openTypeOS2TypoLineGapFallback(info):
+    """
+    Fallback to *UPM * 1.2 - ascender + descender*, or zero if that's negative.
+    """
+    return max(int(info.unitsPerEm * 1.2) - info.ascender + info.descender, 0)
+
 def openTypeOS2WinAscentFallback(info):
     """
-    Fallback to *unitsPerEm * 1.2 + descender*.
+    Fallback to *ascender + typoLineGap*.
     """
-    return int(info.unitsPerEm * 1.2) + info.descender
+    return info.ascender + getAttrWithFallback(info, "openTypeOS2TypoLineGap")
 
 def openTypeOS2WinDescentFallback(info):
     """
@@ -281,7 +287,6 @@ staticFallbackData = dict(
     openTypeOS2FamilyClass=[0, 0],
     openTypeOS2UnicodeRanges=[],
     openTypeOS2CodePageRanges=[],
-    openTypeOS2TypoLineGap=0,
     openTypeOS2Type=[2],
 
     openTypeOS2SubscriptXSize=None,
@@ -343,6 +348,7 @@ specialFallbacks = dict(
     openTypeNameWWSSubfamilyName=openTypeNameWWSSubfamilyNameFallback,
     openTypeOS2TypoAscender=openTypeOS2TypoAscenderFallback,
     openTypeOS2TypoDescender=openTypeOS2TypoDescenderFallback,
+    openTypeOS2TypoLineGap=openTypeOS2TypoLineGapFallback,
     openTypeOS2WinAscent=openTypeOS2WinAscentFallback,
     openTypeOS2WinDescent=openTypeOS2WinDescentFallback,
     postscriptFontName=postscriptFontNameFallback,
