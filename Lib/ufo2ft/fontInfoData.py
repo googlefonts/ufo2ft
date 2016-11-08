@@ -123,9 +123,9 @@ def openTypeNameWWSSubfamilyNameFallback(info):
 
 def openTypeOS2TypoAscenderFallback(info):
     """
-    Fallback to *ascender + typoLineGap*.
+    Fallback to *ascender*.
     """
-    return info.ascender + getAttrWithFallback(info, "openTypeOS2TypoLineGap")
+    return info.ascender
 
 def openTypeOS2TypoDescenderFallback(info):
     """

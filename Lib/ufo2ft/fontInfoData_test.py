@@ -61,7 +61,7 @@ class GetAttrWithFallbackTest(unittest.TestCase):
             getAttrWithFallback(info, "openTypeHheaDescender"), -250)
 
         self.assertEqual(
-            getAttrWithFallback(info, "openTypeOS2TypoAscender"), 950)
+            getAttrWithFallback(info, "openTypeOS2TypoAscender"), 650)
         self.assertEqual(
             getAttrWithFallback(info, "openTypeOS2TypoDescender"), -250)
         self.assertEqual(
