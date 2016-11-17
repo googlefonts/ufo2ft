@@ -46,11 +46,10 @@ class OTFPostProcessor(object):
     def _build_production_name(self, glyph):
         """Build a production name for a single glyph."""
 
-        # use name from Glyphs source if available
+        # use PostScript names from UFO lib if available
         if self._postscriptNames:
             production_name = self._postscriptNames.get(glyph.name)
-            if production_name:
-                return production_name
+            return production_name if production_name else glyph.name
 
         # use name derived from unicode value
         unicode_val = glyph.unicode
