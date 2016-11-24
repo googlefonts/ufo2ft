@@ -6,6 +6,21 @@ python:
 branches:
   only:
     - master
+    - /^v\d+\.\d+.*$/
 
 install: pip install tox-travis
 script: tox
+
+deploy:
+  # deploy to PyPI on tags
+  provider: pypi
+  server: https://upload.pypi.org/legacy/
+  on:
+    repo: googlei18n/ufo2ft
+    tags: true
+    all_branches: true
+    python: 3.5
+  user: anthrotype
+  password:
+    secure: DHspoyetqYjFRzbZyqhtnXjFnyK4YtGq+s8U3LZlgUNy/T0fBv71usGqnF9qo+3brT9110zNUeu46SOp2JpLyskZCMqlcV6eB2nkC/t+kuGT4SnMaoX1iku+m96D5hNgMD8iwocYhYKBhQOB5hvlVxjoQO/sRB/0pcc2dzeGeIwVUbSlg+foCL03pCCeOBvWV9wfGczfuLEP3DMhVaskckfFPKuwT0VLRE2ZbUV1T9nSNxUKAATT3ioUgCP5fVNFsFzoAbojYeqT039ic6TXptG6nm5Yo/VM75HNClP7SVJIoDQV8ucHO/R/Uy+P0v43euIuXfY7Zj1xJyDWL1jBcSKmoaZyABcvxdOSp7pioXd7XCEr+GCO4CqmprBist2d5xhHizSi4O3w6ZprB3VbYz/IgKNNm1CpAuERNjEfC+Tl10ANpWrWvIy2M7LYeTDQxmD8czj3AppsUXhfAq++KYwEkgN8mRG3OVI6zkVyutcoHR9b4AKHQICtH2+y5NGZqYlpuCM8lqsEzRNQUNQZkV/MRprzVYOGCJH26GVpaA6w02M6gUMRvguUgkqYpmZw3vHzgEtA5G1UD0PhJWOBQdh0SOYwqG0hfoAnJRNDk/ebyMyxUgN9kHPaYvh1PS8mbu4TKukhCaI9GQjvXE2iks/KzPjGBGnXQpm49mQmJHQ=
+  distributions: sdist bdist_wheel
