@@ -1,3 +1,5 @@
+|Build Status| |PyPI Version|
+
 ufo2ft
 ======
 
@@ -92,3 +94,8 @@ look at ``fontInfoData.py`` in the source code.
 
 In some cases, the fallback values are dynamically generated from other
 data in the info object. These are handled internally with functions.
+
+.. |Build Status| image:: https://travis-ci.org/googlei18n/ufo2ft.svg
+   :target: https://travis-ci.org/googlei18n/ufo2ft
+.. |PyPI Version| image:: https://img.shields.io/pypi/v/ufo2ft.svg
+   :target: https://pypi.org/project/ufo2ft/
