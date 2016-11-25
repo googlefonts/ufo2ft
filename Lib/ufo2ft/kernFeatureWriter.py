@@ -254,7 +254,7 @@ class KernFeatureWriter(object):
                     nlGlyphs.append(lGlyph)
                     seen[pair] = val
             if nlGlyphs != lGlyphs:
-                if len(nlGlyphs) > 0: 
+                if nlGlyphs: 
                     self.leftClassKerning[liststr(nlGlyphs), rGlyph] = val
                 del self.leftClassKerning[lClass, rGlyph]
 
@@ -268,7 +268,7 @@ class KernFeatureWriter(object):
                     nrGlyphs.append(rGlyph)
                     seen[pair] = val
             if nrGlyphs != rGlyphs:
-                if len(nrGlyphs) > 0: 
+                if nrGlyphs: 
                     self.rightClassKerning[lGlyph, liststr(nrGlyphs)] = val
                 del self.rightClassKerning[lGlyph, rClass]
 
