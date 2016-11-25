@@ -254,7 +254,8 @@ class KernFeatureWriter(object):
                     nlGlyphs.append(lGlyph)
                     seen[pair] = val
             if nlGlyphs != lGlyphs:
-                self.leftClassKerning[liststr(nlGlyphs), rGlyph] = val
+                if nlGlyphs: 
+                    self.leftClassKerning[liststr(nlGlyphs), rGlyph] = val
                 del self.leftClassKerning[lClass, rGlyph]
 
         # remove conflicts in left glyph / right class rules
@@ -267,7 +268,8 @@ class KernFeatureWriter(object):
                     nrGlyphs.append(rGlyph)
                     seen[pair] = val
             if nrGlyphs != rGlyphs:
-                self.rightClassKerning[lGlyph, liststr(nrGlyphs)] = val
+                if nrGlyphs: 
+                    self.rightClassKerning[lGlyph, liststr(nrGlyphs)] = val
                 del self.rightClassKerning[lGlyph, rClass]
 
     def _addGlyphClasses(self, lines):
