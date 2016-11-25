@@ -21,9 +21,8 @@ class OTFPostProcessor(object):
         if useProductionNames:
             self._rename_glyphs_from_ufo()
         if optimizeCff and 'CFF ' in self.otf:
-            from compreffor import Compreffor
-            comp = Compreffor(self.otf)
-            comp.compress()
+            from compreffor import compress
+            compress(self.otf)
         return self.otf
 
     def _rename_glyphs_from_ufo(self):
