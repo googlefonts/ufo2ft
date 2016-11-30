@@ -19,6 +19,9 @@ from fontTools.misc.textTools import binary2num
 from fontTools.misc.arrayTools import unionRect
 import ufoLib
 
+from ufo2ft.util import warn
+
+
 # -----------------
 # Special Fallbacks
 # -----------------
@@ -198,14 +201,12 @@ def postscriptSlantAngleFallback(info):
 
 def postscriptUnderlineThicknessFallback(info):
     """Return UPM * 0.05 (50 for 1000 UPM) and warn."""
-    print('WARNING: underline thickness not set in UFO, defaulting to UPM * '
-          '0.05')
+    warn('Underline thickness not set in UFO, defaulting to UPM * 0.05')
     return info.unitsPerEm * 0.05
 
 def postscriptUnderlinePositionFallback(info):
     """Return UPM * -0.075 (-75 for 1000 UPM) and warn."""
-    print('WARNING: underline position not set in UFO, defaulting to UPM * '
-          '-0.075')
+    warn('Underline position not set in UFO, defaulting to UPM * -0.075')
     return info.unitsPerEm * -0.075
 
 _postscriptWeightNameOptions = {
