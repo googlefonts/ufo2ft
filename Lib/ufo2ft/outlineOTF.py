@@ -1,6 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import tounicode
 
+import logging
 import math
 import time
 from collections import Counter
@@ -15,7 +16,8 @@ from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 
 from ufo2ft.fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
-from ufo2ft.util import warn
+
+logger = logging.getLogger(__name__)
 
 
 def _isNonBMP(s):
@@ -220,9 +222,10 @@ class OutlineCompiler(object):
         fullFontRevision = float("%d.%03d" % (versionMajor, versionMinor))
         head.fontRevision = round(fullFontRevision, 3)
         if head.fontRevision != fullFontRevision:
-            warn("Minor version in %s has too many digits and won't fit into "
-                 "the head table's fontRevision field; rounded to %s." %
-                 (fullFontRevision, head.fontRevision))
+            logger.warn(
+                "Minor version in %s has too many digits and won't fit into "
+                "the head table's fontRevision field; rounded to %s." %
+                (fullFontRevision, head.fontRevision))
 
         # upm
         head.unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")

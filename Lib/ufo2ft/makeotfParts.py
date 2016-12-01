@@ -1,5 +1,6 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+import logging
 import os
 import re
 
@@ -7,7 +8,8 @@ from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
 
 from ufo2ft.maxContextCalc import maxCtxFont
-from ufo2ft.util import warn
+
+logger = logging.getLogger(__name__)
 
 
 class FeatureOTFCompiler(object):
@@ -132,7 +134,7 @@ class FeatureOTFCompiler(object):
         for glyph in self.font:
             for anchor in glyph.anchors:
                 if anchor.name is None:
-                    warn("Unnamed anchor discarded in %s" % glyph.name)
+                    logger.warn("Unnamed anchor discarded in %s" % glyph.name)
                     continue
                 anchorNames.add(anchor.name)
 
