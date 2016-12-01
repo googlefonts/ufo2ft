@@ -12,11 +12,13 @@ used externally as well.
 """
 
 from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr
+
 import time
 import unicodedata
-from fontTools.misc.textTools import binary2num
+
 from fontTools.misc.arrayTools import unionRect
+from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr
+from fontTools.misc.textTools import binary2num
 import ufoLib
 
 from ufo2ft.util import warn
