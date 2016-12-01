@@ -204,12 +204,14 @@ def postscriptSlantAngleFallback(info):
 
 def postscriptUnderlineThicknessFallback(info):
     """Return UPM * 0.05 (50 for 1000 UPM) and warn."""
-    logger.warn('Underline thickness not set in UFO, defaulting to UPM * 0.05')
+    logger.warning(
+        'Underline thickness not set in UFO, defaulting to UPM * 0.05')
     return info.unitsPerEm * 0.05
 
 def postscriptUnderlinePositionFallback(info):
     """Return UPM * -0.075 (-75 for 1000 UPM) and warn."""
-    logger.warn('Underline position not set in UFO, defaulting to UPM * -0.075')
+    logger.warning(
+        'Underline position not set in UFO, defaulting to UPM * -0.075')
     return info.unitsPerEm * -0.075
 
 _postscriptWeightNameOptions = {

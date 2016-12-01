@@ -222,10 +222,10 @@ class OutlineCompiler(object):
         fullFontRevision = float("%d.%03d" % (versionMajor, versionMinor))
         head.fontRevision = round(fullFontRevision, 3)
         if head.fontRevision != fullFontRevision:
-            logger.warn(
+            logger.warning(
                 "Minor version in %s has too many digits and won't fit into "
-                "the head table's fontRevision field; rounded to %s." %
-                (fullFontRevision, head.fontRevision))
+                "the head table's fontRevision field; rounded to %s.",
+                fullFontRevision, head.fontRevision)
 
         # upm
         head.unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")

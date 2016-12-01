@@ -134,7 +134,7 @@ class FeatureOTFCompiler(object):
         for glyph in self.font:
             for anchor in glyph.anchors:
                 if anchor.name is None:
-                    logger.warn("Unnamed anchor discarded in %s" % glyph.name)
+                    logger.warning("Unnamed anchor discarded in %s", glyph.name)
                     continue
                 anchorNames.add(anchor.name)
 
