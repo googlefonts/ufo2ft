@@ -7,7 +7,7 @@ import os
 
 def getTestUFO():
     dirname = os.path.dirname(__file__)
-    return Font(os.path.join(dirname, 'testdata', 'TestFont.ufo'))
+    return Font(os.path.join(dirname, 'data', 'TestFont.ufo'))
 
 
 class TestOutlineTTCompiler(unittest.TestCase):
