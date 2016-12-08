@@ -4,4 +4,4 @@ include LICENSE
 include tox.ini
 include *requirements.txt
 
-recursive-include Lib/ufo2ft/testdata *.glif *.plist *.fea
+recursive-include tests/data *.glif *.plist *.fea
