@@ -3,7 +3,6 @@ from fontTools.misc.py23 import tounicode
 
 import logging
 import math
-import time
 from collections import Counter
 
 from fontTools.ttLib import TTFont, newTable
