@@ -18,7 +18,7 @@ import time
 import unicodedata
 
 from fontTools.misc.arrayTools import unionRect
-from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr
+from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr, round2
 from fontTools.misc.textTools import binary2num
 import ufoLib
 
@@ -244,7 +244,7 @@ def postscriptWeightNameFallback(info):
     ===  ===========
     """
     value = getAttrWithFallback(info, "openTypeOS2WeightClass")
-    value = int(round(value * .01) * 100)
+    value = int(round2(value, -2))
     if value < 100:
         value = 100
     elif value > 900:
