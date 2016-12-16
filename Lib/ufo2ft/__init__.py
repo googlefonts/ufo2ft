@@ -7,6 +7,9 @@ from ufo2ft.otfPostProcessor import OTFPostProcessor
 from ufo2ft.outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
 
 
+__version__ = "0.3.0"
+
+
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureOTFCompiler, mtiFeaFiles=None,
                kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter,
