@@ -180,9 +180,9 @@ class KernFeatureWriter(object):
 
         groups = {}
         for name, members in self.groups.items():
-            newMembers = set(members).intersection(allGlyphs)
+            newMembers = [g for g in members if g in allGlyphs]
             if newMembers:
-                groups[name] = list(newMembers)
+                groups[name] = newMembers
 
         kerning = {}
         for glyphPair, val in sorted(self.kerning.items()):
