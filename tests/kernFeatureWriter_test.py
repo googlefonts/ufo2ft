@@ -17,6 +17,27 @@ class KernFeatureWriterTest(unittest.TestCase):
         writer._collectFeaClasses()
         self.assertEquals(writer.leftFeaClasses, expected)
 
+    def test__cleanupMissingGlyphs(self):
+        groups = {
+            "public.kern1.A": ["A", "Aacute", "Abreve", "Acircumflex"],
+            "public.kern2.B": ["B", "D", "E", "F"],
+        }
+        ufo = Font()
+        for glyphs in groups.values():
+            for glyph in glyphs:
+                ufo.newGlyph(glyph)
+        ufo.groups.update(groups)
+        del ufo["Abreve"]
+        del ufo["D"]
+
+        writer = KernFeatureWriter(ufo)
+        self.assertEquals(writer.groups, groups)
+
+        writer._cleanupMissingGlyphs()
+        self.assertEquals(writer.groups, {
+            "public.kern1.A": ["A", "Aacute", "Acircumflex"],
+            "public.kern2.B": ["B", "E", "F"]})
+
 
 if __name__ == '__main__':
     unittest.main()
