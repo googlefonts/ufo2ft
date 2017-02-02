@@ -88,5 +88,7 @@ class TestInfoObject(object):
         self.ascender = 650
 
 
-if __name__ == '__main__':
-    unittest.main()
+if __name__ == "__main__":
+    import sys
+    sys.exit(unittest.main())
+
