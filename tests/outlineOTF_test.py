@@ -76,7 +76,7 @@ class TestGlyphOrder(unittest.TestCase):
         self.assertEqual(compiler.otf.getGlyphOrder(), EXPECTED_ORDER)
 
 
-class TestProductionNames(unittest.TestCase):
+class TestNames(unittest.TestCase):
 
     def setUp(self):
         self.ufo = getTestUFO()
@@ -88,6 +88,27 @@ class TestProductionNames(unittest.TestCase):
     def test_compile_with_production_names(self):
         result = compileTTF(self.ufo, useProductionNames=True)
         self.assertEqual(result.getGlyphOrder(), ['.notdef', 'uni0020', 'uni0061', 'uni0062', 'uni0063'])
+
+    CUSTOM_POSTSCRIPT_NAMES = {
+            '.notdef': '.notdef',
+            'space': 'foo',
+            'a': 'bar',
+            'b': 'baz',
+            'c': 'meh'
+        }
+
+    def test_compile_with_custom_postscript_names(self):
+        self.ufo.lib['public.postscriptNames'] = self.CUSTOM_POSTSCRIPT_NAMES
+        result = compileTTF(self.ufo, useProductionNames=True)
+        self.assertEqual(sorted(result.getGlyphOrder()), sorted(self.CUSTOM_POSTSCRIPT_NAMES.values()))
+
+    def test_compile_with_custom_postscript_names_notdef_preserved(self):
+        custom_names = dict(self.CUSTOM_POSTSCRIPT_NAMES)
+        custom_names['.notdef'] = 'defnot'
+        self.ufo.lib['public.postscriptNames'] = custom_names
+        result = compileTTF(self.ufo, useProductionNames=True)
+        order = sorted(result.getGlyphOrder())
+        self.assertEqual(result.getGlyphOrder(), ['.notdef', 'foo', 'bar', 'baz', 'meh'])
 
 
 if __name__ == "__main__":
