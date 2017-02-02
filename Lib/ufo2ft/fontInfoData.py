@@ -252,6 +252,30 @@ def postscriptWeightNameFallback(info):
     name = _postscriptWeightNameOptions[value]
     return name
 
+def postscriptBlueScaleFallback(info):
+    """
+    Fallback to a calculated value: 3/(4 * *maxZoneHeight*)
+    where *maxZoneHeight* is the tallest zone from *postscriptBlueValues*
+    and *postscriptOtherBlues. If zones are not set, return 0.039625.
+    """
+    blues = getAttrWithFallback(info, "postscriptBlueValues")
+    otherBlues = getAttrWithFallback(info, "postscriptOtherBlues")
+    maxZoneHeight = 0
+    blueScale = 0.039625
+    if len(blues) != 0:
+        compare = zip(blues[0::2], blues[1::2])
+        for x, y in compare:
+            if abs(y-x) > maxZoneHeight:
+                maxZoneHeight = abs(y-x)
+    if len(otherBlues) != 0:
+        compare = zip(otherBlues[0::2], otherBlues[1::2])
+        for x, y in compare:
+            if abs(y-x) > maxZoneHeight:
+                maxZoneHeight = abs(y-x)
+    if maxZoneHeight != 0:
+        blueScale = 3/(4*maxZoneHeight)
+    return blueScale
+
 # --------------
 # Attribute Maps
 # --------------
@@ -324,9 +348,8 @@ staticFallbackData = dict(
     postscriptFamilyOtherBlues=[],
     postscriptStemSnapH=[],
     postscriptStemSnapV=[],
-    postscriptBlueFuzz=1,
+    postscriptBlueFuzz=0,
     postscriptBlueShift=7,
-    postscriptBlueScale=.039625,
     postscriptForceBold=False,
     postscriptDefaultWidthX=200,
     postscriptNominalWidthX=0,
@@ -362,7 +385,8 @@ specialFallbacks = dict(
     postscriptSlantAngle=postscriptSlantAngleFallback,
     postscriptUnderlineThickness=postscriptUnderlineThicknessFallback,
     postscriptUnderlinePosition=postscriptUnderlinePositionFallback,
-    postscriptWeightName=postscriptWeightNameFallback
+    postscriptWeightName=postscriptWeightNameFallback,
+    postscriptBlueScale=postscriptBlueScaleFallback
 )
 
 requiredAttributes = set(ufoLib.fontInfoAttributesVersion2) - (set(staticFallbackData.keys()) | set(specialFallbacks.keys()))
