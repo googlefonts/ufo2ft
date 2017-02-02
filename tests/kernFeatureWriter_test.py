@@ -39,5 +39,7 @@ class KernFeatureWriterTest(unittest.TestCase):
             "public.kern2.B": ["B", "E", "F"]})
 
 
-if __name__ == '__main__':
-    unittest.main()
+if __name__ == "__main__":
+    import sys
+    sys.exit(unittest.main())
+
