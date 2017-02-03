@@ -263,11 +263,13 @@ def postscriptBlueScaleFallback(info):
     maxZoneHeight = 0
     blueScale = 0.039625
     if len(blues) != 0:
+        assert len(blues) % 2 == 0
         compare = zip(blues[0::2], blues[1::2])
         for x, y in compare:
             if abs(y-x) > maxZoneHeight:
                 maxZoneHeight = abs(y-x)
     if len(otherBlues) != 0:
+        assert len(otherBlues) % 2 == 0
         compare = zip(otherBlues[0::2], otherBlues[1::2])
         for x, y in compare:
             if abs(y-x) > maxZoneHeight:
