@@ -70,6 +70,22 @@ class GetAttrWithFallbackTest(unittest.TestCase):
             getAttrWithFallback(info, "openTypeOS2WinDescent"), 250)
 
 
+class PostscriptBlueScaleFallbackTest(unittest.TestCase):
+
+    def test_without_blue_zones(self):
+        info = TestInfoObject()
+        postscriptBlueScale = getAttrWithFallback(info, "postscriptBlueScale")
+        self.assertEqual(postscriptBlueScale, 0.039625)
+
+    def test_with_blue_zones(self):
+        info = TestInfoObject()
+        info.postscriptBlueValues = [-13, 0, 470, 483, 534, 547, 556, 569,
+                                     654, 667, 677, 690, 738, 758]
+        info.postscriptOtherBlues = [-255, -245]
+        postscriptBlueScale = getAttrWithFallback(info, "postscriptBlueScale")
+        self.assertEqual(postscriptBlueScale, 0.0375)
+
+
 class NormalizeStringForPostscriptTest(unittest.TestCase):
     def test_no_change(self):
         self.assertEqual(
