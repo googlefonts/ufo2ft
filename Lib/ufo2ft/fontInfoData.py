@@ -256,24 +256,20 @@ def postscriptBlueScaleFallback(info):
     """
     Fallback to a calculated value: 3/(4 * *maxZoneHeight*)
     where *maxZoneHeight* is the tallest zone from *postscriptBlueValues*
-    and *postscriptOtherBlues. If zones are not set, return 0.039625.
+    and *postscriptOtherBlues*. If zones are not set, return 0.039625.
     """
     blues = getAttrWithFallback(info, "postscriptBlueValues")
     otherBlues = getAttrWithFallback(info, "postscriptOtherBlues")
     maxZoneHeight = 0
     blueScale = 0.039625
-    if len(blues) != 0:
+    if blues:
         assert len(blues) % 2 == 0
-        compare = zip(blues[0::2], blues[1::2])
-        for x, y in compare:
-            if abs(y-x) > maxZoneHeight:
-                maxZoneHeight = abs(y-x)
-    if len(otherBlues) != 0:
+        for x, y in zip(blues[:-1:2], blues[1::2]):
+            maxZoneHeight = max(maxZoneHeight, abs(y-x))
+    if otherBlues:
         assert len(otherBlues) % 2 == 0
-        compare = zip(otherBlues[0::2], otherBlues[1::2])
-        for x, y in compare:
-            if abs(y-x) > maxZoneHeight:
-                maxZoneHeight = abs(y-x)
+        for x, y in zip(otherBlues[:-1:2], otherBlues[1::2]):
+            maxZoneHeight = max(maxZoneHeight, abs(y-x))
     if maxZoneHeight != 0:
         blueScale = 3/(4*maxZoneHeight)
     return blueScale
