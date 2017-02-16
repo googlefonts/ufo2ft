@@ -1,9 +1,10 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-
+from __future__ import \
+    print_function, division, absolute_import, unicode_literals
 import logging
 import os
 import re
-
+from fontTools.misc.py23 import *
+from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
 
@@ -32,8 +33,7 @@ class FeatureOTFCompiler(object):
         """Compile the features.
 
         Starts by generating feature syntax for the kern, mark, and mkmk
-        features. If they already exist, they will not be overwritten unless
-        the compiler's `overwriteFeatures` attribute is True.
+        features. If they already exist, they will not be overwritten.
         """
 
         self.precompile()
@@ -49,8 +49,7 @@ class FeatureOTFCompiler(object):
         **This should not be called externally.** Subclasses
         may override this method if desired.
         """
-
-        self.overwriteFeatures = False
+        pass
 
     def setupFile_features(self):
         """
@@ -66,6 +65,8 @@ class FeatureOTFCompiler(object):
         if self.mtiFeaFiles is not None:
             return
 
+        features = self._findLayoutFeatures()
+
         kernRE = r"feature\s+kern\s+{.*?}\s+kern\s*;"
         markRE = re.compile(kernRE.replace("kern", "mark"), re.DOTALL)
         mkmkRE = re.compile(kernRE.replace("kern", "mkmk"), re.DOTALL)
@@ -75,16 +76,13 @@ class FeatureOTFCompiler(object):
 
         # build the GPOS features as necessary
         autoFeatures = {}
-        if self.overwriteFeatures or not kernRE.search(existing):
+        if "kern" not in features:
             autoFeatures["kern"] = self.writeFeatures_kern()
-        writeMark = self.overwriteFeatures or not markRE.search(existing)
-        writeMkmk = self.overwriteFeatures or not mkmkRE.search(existing)
+        writeMark = "mark" not in features
+        writeMkmk = "mkmk" not in features
         if writeMark or writeMkmk:
             autoFeatures["mark"] = self.writeFeatures_mark(
                 doMark=writeMark, doMkmk=writeMkmk)
-
-        if self.overwriteFeatures:
-            existing = kernRE.sub("", markRE.sub("", mkmkRE.sub("", existing)))
 
         # write the features
         features = [existing]
@@ -155,6 +153,19 @@ class FeatureOTFCompiler(object):
                     self.ligaAnchorPairs.append((tuple(ligaNames), accentName))
 
         self.mkmkAnchorPairs = self.anchorPairs
+
+    def _findLayoutFeatures(self):
+        """Returns what OpenType layout feature tags are present in the UFO."""
+        if self.font.path is None:
+            return set()
+        feapath = os.path.join(self.font.path, "features.fea")
+        if not os.path.exists(feapath):
+            return set()
+        glyphMap = self.outline.getReverseGlyphMap()
+        parser = feaLib.parser.Parser(feapath, glyphMap=glyphMap)
+        doc = parser.parse()
+        return {f.name for f in doc.statements
+                if isinstance(f, feaLib.ast.FeatureBlock)}
 
     def setupFile_featureTables(self):
         """
