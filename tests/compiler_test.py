@@ -22,6 +22,7 @@ def loadUFO(filename):
 
 class CompilerTest(unittest.TestCase):
     _tempdir, _num_tempfiles = None, 0
+    _layoutTables = ["GDEF", "GSUB", "GPOS", "BASE"]
 
     def test_TestFont(self):
         # We have specific unit tests for CFF vs TrueType output, but we run
@@ -30,10 +31,19 @@ class CompilerTest(unittest.TestCase):
         self.expectTTX(compileTTF(loadUFO("TestFont.ufo")), "TestFont.ttx")
         self.expectTTX(compileOTF(loadUFO("TestFont.ufo")), "TestFont-CFF.ttx")
 
-    def test_regressions(self):
-        layout = ["GDEF", "GSUB", "GPOS", "BASE"]
+    def test_features(self):
+        """Checks how the compiler handles features.fea
+
+        The compiler should detect which features are defined by the
+        features.fea inside the compiled UFO, or by feature files that
+        are included from there.  The compiler should only inject
+        auto-generated features (kern, mark, mkmk) if the UFO does
+        not list them in features.fea.
+
+        https://github.com/googlei18n/ufo2ft/issues/108
+        """
         self.expectTTX(compileTTF(loadUFO("Bug108.ufo")), "Bug108.ttx",
-                       tables=layout)
+                       tables=self._layoutTables)
 
     def _temppath(self, suffix):
         if not self._tempdir:
