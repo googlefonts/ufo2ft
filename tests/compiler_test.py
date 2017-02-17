@@ -22,13 +22,28 @@ def loadUFO(filename):
 
 class CompilerTest(unittest.TestCase):
     _tempdir, _num_tempfiles = None, 0
+    _layoutTables = ["GDEF", "GSUB", "GPOS", "BASE"]
 
-    def testTestFont(self):
+    def test_TestFont(self):
         # We have specific unit tests for CFF vs TrueType output, but we run
         # an integration test here to make sure things work end-to-end.
         # No need to test both formats for every single test case.
         self.expectTTX(compileTTF(loadUFO("TestFont.ufo")), "TestFont.ttx")
         self.expectTTX(compileOTF(loadUFO("TestFont.ufo")), "TestFont-CFF.ttx")
+
+    def test_features(self):
+        """Checks how the compiler handles features.fea
+
+        The compiler should detect which features are defined by the
+        features.fea inside the compiled UFO, or by feature files that
+        are included from there.  The compiler should only inject
+        auto-generated features (kern, mark, mkmk) if the UFO does
+        not list them in features.fea.
+
+        https://github.com/googlei18n/ufo2ft/issues/108
+        """
+        self.expectTTX(compileTTF(loadUFO("Bug108.ufo")), "Bug108.ttx",
+                       tables=self._layoutTables)
 
     def _temppath(self, suffix):
         if not self._tempdir:
@@ -49,13 +64,13 @@ class CompilerTest(unittest.TestCase):
                     lines.append(line.rstrip() + os.linesep)
         return lines
 
-    def expectTTX(self, font, expectedTTX):
+    def expectTTX(self, font, expectedTTX, tables=None):
         expected = self._readTTX(getpath(expectedTTX))
         font.recalcTimestamp = False
         font['head'].created, font['head'].modified = 3570196637, 3601822698
         font['head'].checkSumAdjustment = 0x12345678
         path = self._temppath(suffix=".ttx")
-        font.saveXML(path)
+        font.saveXML(path, tables=tables)
         actual = self._readTTX(path)
         if actual != expected:
             for line in difflib.unified_diff(
