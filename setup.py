@@ -32,7 +32,7 @@ setup(
         'pytest>=2.8',
     ],
     install_requires=[
-        "fonttools>=3.1.2",
+        "fonttools>=3.7",
         "ufoLib>=2.0.0",
         "defcon>=0.2.0",
         "cu2qu>=1.1.0",
