@@ -327,22 +327,8 @@
       <Lookup index="0">
         <LookupType value="2"/>
         <LookupFlag value="0"/>
-        <!-- SubTableCount=2 -->
+        <!-- SubTableCount=1 -->
         <PairPos index="0" Format="1">
-          <Coverage Format="1">
-            <Glyph value="uni0061"/>
-          </Coverage>
-          <ValueFormat1 value="0"/>
-          <ValueFormat2 value="0"/>
-          <!-- PairSetCount=1 -->
-          <PairSet index="0">
-            <!-- PairValueCount=1 -->
-            <PairValueRecord index="0">
-              <SecondGlyph value="uni0020"/>
-            </PairValueRecord>
-          </PairSet>
-        </PairPos>
-        <PairPos index="1" Format="1">
           <Coverage Format="1">
             <Glyph value="uni0061"/>
             <Glyph value="uni0062"/>
@@ -351,12 +337,16 @@
           <ValueFormat2 value="0"/>
           <!-- PairSetCount=2 -->
           <PairSet index="0">
-            <!-- PairValueCount=2 -->
+            <!-- PairValueCount=3 -->
             <PairValueRecord index="0">
+              <SecondGlyph value="uni0020"/>
+              <Value1 XAdvance="1"/>
+            </PairValueRecord>
+            <PairValueRecord index="1">
               <SecondGlyph value="uni0061"/>
               <Value1 XAdvance="5"/>
             </PairValueRecord>
-            <PairValueRecord index="1">
+            <PairValueRecord index="2">
               <SecondGlyph value="uni0062"/>
               <Value1 XAdvance="-10"/>
             </PairValueRecord>
