@@ -1,4 +1,4 @@
-fonttools==3.7.2
+fonttools==3.8.0
 ufoLib==2.0.0
 defcon==0.2.2
 cu2qu==1.1.1
