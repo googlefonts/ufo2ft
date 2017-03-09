@@ -883,15 +883,19 @@ class OutlineOTFCompiler(OutlineCompiler):
         if isinstance(stemSnapV, list):
             stemSnapV = [round(i) for i in stemSnapV]
         # only write the blues data if some blues are defined.
-        if (blueValues or otherBlues):
+        if any((blueValues, otherBlues, familyBlues, familyOtherBlues)):
             private.rawDict["BlueFuzz"] = blueFuzz
             private.rawDict["BlueShift"] = blueShift
             private.rawDict["BlueScale"] = blueScale
             private.rawDict["ForceBold"] = forceBold
-            private.rawDict["BlueValues"] = blueValues
-            private.rawDict["OtherBlues"] = otherBlues
-            private.rawDict["FamilyBlues"] = familyBlues
-            private.rawDict["FamilyOtherBlues"] = familyOtherBlues
+            if blueValues:
+                private.rawDict["BlueValues"] = blueValues
+            if otherBlues:
+                private.rawDict["OtherBlues"] = otherBlues
+            if familyBlues:
+                private.rawDict["FamilyBlues"] = familyBlues
+            if familyOtherBlues:
+                private.rawDict["FamilyOtherBlues"] = familyOtherBlues
         # only write the stems if both are defined.
         if (stemSnapH and stemSnapV):
             private.rawDict["StemSnapH"] = stemSnapH
