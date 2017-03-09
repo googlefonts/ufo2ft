@@ -1,6 +1,6 @@
 from fontTools.ttLib import TTFont
 from defcon import Font
-from ufo2ft.outlineOTF import OutlineTTFCompiler
+from ufo2ft.outlineOTF import OutlineTTFCompiler, OutlineOTFCompiler
 from ufo2ft import compileTTF
 import unittest
 import os
@@ -14,12 +14,11 @@ def getTestUFO():
 class TestOutlineTTCompiler(unittest.TestCase):
 
     def setUp(self):
-        self.otf = TTFont()
         self.ufo = getTestUFO()
 
     def test_setupTable_gasp(self):
         compiler = OutlineTTFCompiler(self.ufo)
-        compiler.otf = self.otf
+        compiler.otf = TTFont()
         compiler.setupTable_gasp()
         self.assertTrue('gasp' in compiler.otf)
         self.assertEqual(compiler.otf['gasp'].gaspRange,
@@ -44,6 +43,95 @@ class TestOutlineTTCompiler(unittest.TestCase):
         compiler = OutlineTTFCompiler(self.ufo)
         compiler.compile()
         self.assertTrue('gasp' not in compiler.otf)
+
+
+class TestOutlineOTFCompiler(unittest.TestCase):
+
+    def setUp(self):
+        self.ufo = getTestUFO()
+
+    def test_setupTable_CFF_all_blues_defined(self):
+        self.ufo.info.postscriptBlueFuzz = 2
+        self.ufo.info.postscriptBlueShift = 8
+        self.ufo.info.postscriptBlueScale = 0.049736
+        self.ufo.info.postscriptForceBold = False
+        self.ufo.info.postscriptBlueValues = [-12, 0, 486, 498, 712, 724]
+        self.ufo.info.postscriptOtherBlues = [-217, -205]
+        self.ufo.info.postscriptFamilyBlues = [-12, 0, 486, 498, 712, 724]
+        self.ufo.info.postscriptFamilyOtherBlues = [-217, -205]
+
+        compiler = OutlineOTFCompiler(self.ufo)
+        compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_CFF()
+
+        cff = compiler.otf["CFF "].cff
+        private = cff[list(cff.keys())[0]].Private
+
+        self.assertEqual(private.BlueFuzz, 2)
+        self.assertEqual(private.BlueShift, 8)
+        self.assertEqual(private.BlueScale, 0.049736)
+        self.assertEqual(private.ForceBold, False)
+        self.assertEqual(private.BlueValues, [-12, 0, 486, 498, 712, 724])
+        self.assertEqual(private.OtherBlues, [-217, -205])
+        self.assertEqual(private.FamilyBlues, [-12, 0, 486, 498, 712, 724])
+        self.assertEqual(private.FamilyOtherBlues, [-217, -205])
+
+    def test_setupTable_CFF_no_blues_defined(self):
+        # no blue values defined
+        self.ufo.info.postscriptBlueValues = []
+        self.ufo.info.postscriptOtherBlues = []
+        self.ufo.info.postscriptFamilyBlues = []
+        self.ufo.info.postscriptFamilyOtherBlues = []
+        # the following attributes have no effect
+        self.ufo.info.postscriptBlueFuzz = 2
+        self.ufo.info.postscriptBlueShift = 8
+        self.ufo.info.postscriptBlueScale = 0.049736
+        self.ufo.info.postscriptForceBold = False
+
+        compiler = OutlineOTFCompiler(self.ufo)
+        compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_CFF()
+
+        cff = compiler.otf["CFF "].cff
+        private = cff[list(cff.keys())[0]].Private
+
+        # expect default values as defined in fontTools' cffLib.py
+        self.assertEqual(private.BlueFuzz, 1)
+        self.assertEqual(private.BlueShift, 7)
+        self.assertEqual(private.BlueScale, 0.039625)
+        self.assertEqual(private.ForceBold, False)
+        # CFF PrivateDict has no blues attributes
+        self.assertFalse(hasattr(private, "BlueValues"))
+        self.assertFalse(hasattr(private, "OtherBlues"))
+        self.assertFalse(hasattr(private, "FamilyBlues"))
+        self.assertFalse(hasattr(private, "FamilyOtherBlues"))
+
+    def test_setupTable_CFF_some_blues_defined(self):
+        self.ufo.info.postscriptBlueFuzz = 2
+        self.ufo.info.postscriptForceBold = True
+        self.ufo.info.postscriptBlueValues = []
+        self.ufo.info.postscriptOtherBlues = [-217, -205]
+        self.ufo.info.postscriptFamilyBlues = []
+        self.ufo.info.postscriptFamilyOtherBlues = []
+
+        compiler = OutlineOTFCompiler(self.ufo)
+        compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_CFF()
+
+        cff = compiler.otf["CFF "].cff
+        private = cff[list(cff.keys())[0]].Private
+
+        self.assertEqual(private.BlueFuzz, 2)
+        self.assertEqual(private.BlueShift, 7)  # default
+        self.assertEqual(private.BlueScale, 0.039625)  # default
+        self.assertEqual(private.ForceBold, True)
+        self.assertFalse(hasattr(private, "BlueValues"))
+        self.assertEqual(private.OtherBlues, [-217, -205])
+        self.assertFalse(hasattr(private, "FamilyBlues"))
+        self.assertFalse(hasattr(private, "FamilyOtherBlues"))
 
 
 class TestGlyphOrder(unittest.TestCase):
