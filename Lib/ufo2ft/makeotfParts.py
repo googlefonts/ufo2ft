@@ -6,6 +6,8 @@ from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
 
+from ufo2ft.kernFeatureWriter import KernFeatureWriter
+from ufo2ft.markFeatureWriter import MarkFeatureWriter
 from ufo2ft.maxContextCalc import maxCtxFont
 
 logger = logging.getLogger(__name__)
@@ -19,13 +21,17 @@ class FeatureOTFCompiler(object):
     mtiLib into that respective table.
     """
 
-    def __init__(self, font, outline, kernWriter, markWriter, mtiFeaFiles=None):
+    def __init__(self, font, outline, kernWriterClass=KernFeatureWriter,
+                 markWriterClass=MarkFeatureWriter, mtiFeaFiles=None):
         self.font = font
         self.outline = outline
-        self.kernWriter = kernWriter
-        self.markWriter = markWriter
+        self.kernWriterClass = kernWriterClass
+        self.markWriterClass = markWriterClass
         self.mtiFeaFiles = mtiFeaFiles
-        self.setupAnchorPairs()
+        #
+        self.anchorPairs = []
+        self.ligaAnchorPairs = []
+        self.mkmkAnchorPairs = []
 
     def compile(self):
         """Compile the features.
@@ -34,20 +40,9 @@ class FeatureOTFCompiler(object):
         features. If they already exist, they will not be overwritten.
         """
 
-        self.precompile()
         self.setupFile_features()
         self.setupFile_featureTables()
-
-        # only after compiling features can usMaxContext be calculated
-        self.outline['OS/2'].usMaxContext = maxCtxFont(self.outline)
-
-    def precompile(self):
-        """Set any attributes needed before compilation.
-
-        **This should not be called externally.** Subclasses
-        may override this method if desired.
-        """
-        pass
+        self.postProcess()
 
     def setupFile_features(self):
         """
@@ -80,30 +75,38 @@ class FeatureOTFCompiler(object):
         # write the features
         features = [existing]
         for name, text in sorted(autoFeatures.items()):
+            if text is None:
+                continue
             features.append(text)
         self.features = "\n\n".join(features)
 
     def writeFeatures_kern(self):
         """
-        Write the kern feature to a string and return it.
+        Write the kern feature to a string and return it, or None if kernWriter is None.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
         in a different way if desired.
         """
-        writer = self.kernWriter(self.font)
+
+        if self.kernWriterClass is None:
+            return None
+        writer = self.kernWriterClass(self.font)
         return writer.write()
 
     def writeFeatures_mark(self, doMark=True, doMkmk=True):
         """
-        Write the mark and mkmk features to a string and return it.
+        Write the mark and mkmk features to a string and return it, or None if markWriter is None.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
         in a different way if desired.
         """
 
-        writer = self.markWriter(
+        if self.markWriterClass is None:
+            return None
+        self.setupAnchorPairs()
+        writer = self.markWriterClass(
             self.font, self.anchorPairs, self.mkmkAnchorPairs,
             self.ligaAnchorPairs)
         return writer.write(doMark, doMkmk)
@@ -181,3 +184,13 @@ class FeatureOTFCompiler(object):
             feapath = os.path.join(self.font.path, "features.fea") if self.font.path is not None else None
             addOpenTypeFeaturesFromString(self.outline, self.features,
                                           filename=feapath)
+
+    def postProcess(self):
+        """Set any attributes needed after compilation.
+
+        **This should not be called externally.** Subclasses
+        may override this method if desired.
+        """
+
+        # only after compiling features can usMaxContext be calculated
+        self.outline['OS/2'].usMaxContext = maxCtxFont(self.outline)

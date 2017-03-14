@@ -12,7 +12,7 @@ __version__ = "0.3.5.dev0"
 
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureOTFCompiler, mtiFeaFiles=None,
-               kernWriter=KernFeatureWriter, markWriter=MarkFeatureWriter,
+               kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, convertCubics=True, cubicConversionError=2,
                useProductionNames=True, optimizeCff=True):
     """Create FontTools CFF font from a UFO.
@@ -27,7 +27,8 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
-        ufo, otf, kernWriter, markWriter, mtiFeaFiles=mtiFeaFiles)
+        ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
+        mtiFeaFiles=mtiFeaFiles)
     featureCompiler.compile()
 
     postProcessor = OTFPostProcessor(otf, ufo)
