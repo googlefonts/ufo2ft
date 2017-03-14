@@ -905,7 +905,6 @@ class OutlineOTFCompiler(OutlineCompiler):
         # populate glyphs
         for glyphName in self.glyphOrder:
             glyph = self.allGlyphs[glyphName]
-            unicodes = glyph.unicodes
             charString = self.getCharStringForGlyph(glyph, private, globalSubrs)
             # add to the font
             if glyphName in charStrings:

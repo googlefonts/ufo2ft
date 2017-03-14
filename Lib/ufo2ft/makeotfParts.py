@@ -2,8 +2,6 @@ from __future__ import \
     print_function, division, absolute_import, unicode_literals
 import logging
 import os
-import re
-from fontTools.misc.py23 import *
 from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
@@ -66,11 +64,6 @@ class FeatureOTFCompiler(object):
             return
 
         features = self._findLayoutFeatures()
-
-        kernRE = r"feature\s+kern\s+{.*?}\s+kern\s*;"
-        markRE = re.compile(kernRE.replace("kern", "mark"), re.DOTALL)
-        mkmkRE = re.compile(kernRE.replace("kern", "mkmk"), re.DOTALL)
-        kernRE = re.compile(kernRE, re.DOTALL)
 
         existing = self.font.features.text or ""
 
