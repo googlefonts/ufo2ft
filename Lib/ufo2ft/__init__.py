@@ -11,7 +11,7 @@ __version__ = "0.3.5.dev0"
 
 
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
-               featureCompilerClass=FeaturesCompiler, mtiFeaFiles=None,
+               featuresCompilerClass=FeaturesCompiler, mtiFeaFiles=None,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, convertCubics=True, cubicConversionError=2,
                useProductionNames=True, optimizeCFF=True):
@@ -26,10 +26,10 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
         ufo, glyphOrder, convertCubics, cubicConversionError)
     otf = outlineCompiler.compile()
 
-    featureCompiler = featureCompilerClass(
+    featuresCompiler = featuresCompilerClass(
         ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
         mtiFeaFiles=mtiFeaFiles)
-    featureCompiler.compile()
+    featuresCompiler.compile()
 
     postProcessor = PostProcessor(otf, ufo)
     otf = postProcessor.process(useProductionNames, optimizeCFF)

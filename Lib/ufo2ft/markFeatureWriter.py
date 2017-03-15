@@ -9,16 +9,13 @@ logger = logging.getLogger(__name__)
 class MarkFeatureWriter(object):
     """Generates a mark or mkmk feature based on glyph anchors.
 
-    Takes in lists of (anchorName, accentAnchorName) tuples for mark and mkmk
-    features, and optionally a list of ((anchorName, ...), accentAnchorName)
+    setupAnchorPairs() produces lists of (anchorName, accentAnchorName) tuples
+    for mark and mkmk features, and optionally a list of ((anchorName, ...), accentAnchorName)
     tuples for a liga2mark feature.
     """
 
     def __init__(self, font):
         self.font = font
-        self.anchorList = []
-        self.mkmkAnchorList = []
-        self.ligaAnchorList = []
         self.accentGlyphNames = set()
         self.setupAnchorPairs()
 
