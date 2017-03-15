@@ -113,6 +113,7 @@ class FeaturesCompiler(object):
         if self.markWriterClass is None:
             return None
         writer = self.markWriterClass(self.font)
+        writer.setupAnchorPairs()
         return writer.write(doMark, doMkmk)
 
     def _findLayoutFeatures(self):

@@ -221,7 +221,6 @@ class MarkFeatureWriter(object):
         if not (doMark or doMkmk):
             return ""
 
-        self.setupAnchorPairs()
         lines = []
         self._addClasses(lines, doMark, doMkmk)
         if doMark:
