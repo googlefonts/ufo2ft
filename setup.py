@@ -32,11 +32,11 @@ setup(
         'pytest>=2.8',
     ],
     install_requires=[
-        "fonttools>=3.7",
+        "fonttools>=3.9",
         "ufoLib>=2.0.0",
-        "defcon>=0.2.0",
-        "cu2qu>=1.1.0",
-        "compreffor>=0.4",
+        "defcon>=0.2.3",
+        "cu2qu>=1.1.1",
+        "compreffor>=0.4.4",
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
