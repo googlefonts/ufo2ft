@@ -16,9 +16,10 @@ class MarkFeatureWriterTest(unittest.TestCase):
         glyph.appendAnchor(glyph.anchorClass(
             anchorDict={'name': '_bottom', 'x': 100, 'y': 0}))
         lines = []
-        writer = MarkFeatureWriter(
-            ufo, anchorList=(('bottom', '_bottom'),), mkmkAnchorList=(),
-            ligaAnchorList=((('top_1', 'top_2'), '_top'),))
+        writer = MarkFeatureWriter(ufo)
+        writer.anchorList = (('bottom', '_bottom'),)
+        writer.mkmkAnchorList = ()
+        writer.ligaAnchorList = ((('top_1', 'top_2'), '_top'),)
         writer._addClasses(lines, doMark=True, doMkmk=True)
         self.assertEqual(
             '\n'.join(lines).strip(),

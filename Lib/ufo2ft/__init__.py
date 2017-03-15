@@ -1,17 +1,17 @@
 from __future__ import print_function, division, absolute_import
 
+from ufo2ft.featuresCompiler import FeaturesCompiler
 from ufo2ft.kernFeatureWriter import KernFeatureWriter
-from ufo2ft.makeotfParts import FeatureOTFCompiler
 from ufo2ft.markFeatureWriter import MarkFeatureWriter
-from ufo2ft.otfPostProcessor import OTFPostProcessor
-from ufo2ft.outlineOTF import OutlineOTFCompiler, OutlineTTFCompiler
+from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
+from ufo2ft.postProcessor import PostProcessor
 
 
 __version__ = "0.3.5.dev0"
 
 
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
-               featureCompilerClass=FeatureOTFCompiler, mtiFeaFiles=None,
+               featureCompilerClass=FeaturesCompiler, mtiFeaFiles=None,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, convertCubics=True, cubicConversionError=2,
                useProductionNames=True, optimizeCFF=True):
@@ -31,7 +31,7 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
         mtiFeaFiles=mtiFeaFiles)
     featureCompiler.compile()
 
-    postProcessor = OTFPostProcessor(otf, ufo)
+    postProcessor = PostProcessor(otf, ufo)
     otf = postProcessor.process(useProductionNames, optimizeCFF)
 
     return otf

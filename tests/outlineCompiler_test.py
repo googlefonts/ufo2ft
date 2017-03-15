@@ -1,6 +1,6 @@
 from fontTools.ttLib import TTFont
 from defcon import Font
-from ufo2ft.outlineOTF import OutlineTTFCompiler, OutlineOTFCompiler
+from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
 from ufo2ft import compileTTF
 import unittest
 import os
@@ -11,7 +11,7 @@ def getTestUFO():
     return Font(os.path.join(dirname, 'data', 'TestFont.ufo'))
 
 
-class TestOutlineTTCompiler(unittest.TestCase):
+class OutlineTTFCompilerTest(unittest.TestCase):
 
     def setUp(self):
         self.ufo = getTestUFO()
@@ -45,7 +45,7 @@ class TestOutlineTTCompiler(unittest.TestCase):
         self.assertTrue('gasp' not in compiler.otf)
 
 
-class TestOutlineOTFCompiler(unittest.TestCase):
+class OutlineOTFCompilerTest(unittest.TestCase):
 
     def setUp(self):
         self.ufo = getTestUFO()
@@ -195,7 +195,6 @@ class TestNames(unittest.TestCase):
         custom_names['.notdef'] = 'defnot'
         self.ufo.lib['public.postscriptNames'] = custom_names
         result = compileTTF(self.ufo, useProductionNames=True)
-        order = sorted(result.getGlyphOrder())
         self.assertEqual(result.getGlyphOrder(), ['.notdef', 'foo', 'bar', 'baz', 'meh'])
 
 
