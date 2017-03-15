@@ -36,7 +36,7 @@ def _getVerticalOrigin(glyph):
     return verticalOrigin
 
 
-class OutlineCompiler(object):
+class BaseOutlineCompiler(object):
     """Create a feature-less outline binary."""
 
     def __init__(self, font, glyphOrder=None, convertCubics=True,
@@ -203,7 +203,6 @@ class OutlineCompiler(object):
             rangeGaspBehavior = intListToNum(behavior_bits, 0, 4)
             gasp_ranges[rangeMaxPPEM] = rangeGaspBehavior
         gasp.gaspRange = gasp_ranges
-
 
     def setupTable_head(self):
         """
@@ -772,7 +771,7 @@ class OutlineCompiler(object):
         pass
 
 
-class OutlineOTFCompiler(OutlineCompiler):
+class OutlineOTFCompiler(BaseOutlineCompiler):
     """Compile a .otf font with CFF outlines."""
 
     def precompile(self):
@@ -921,7 +920,7 @@ class OutlineOTFCompiler(OutlineCompiler):
         self.otf.setGlyphOrder(self.glyphOrder)
 
 
-class OutlineTTFCompiler(OutlineCompiler):
+class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines."""
 
     def setupTable_maxp(self):

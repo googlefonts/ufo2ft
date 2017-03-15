@@ -4,7 +4,7 @@ from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
 
 
-class OTFPostProcessor(object):
+class PostProcessor(object):
     """Does some post-processing operations on a compiled OpenType font, using
     info from the source UFO where necessary.
     """
@@ -17,10 +17,10 @@ class OTFPostProcessor(object):
         self.otf = TTFont(stream)
         self._postscriptNames = ufo.lib.get('public.postscriptNames')
 
-    def process(self, useProductionNames=True, optimizeCff=True):
+    def process(self, useProductionNames=True, optimizeCFF=True):
         if useProductionNames:
             self._rename_glyphs_from_ufo()
-        if optimizeCff and 'CFF ' in self.otf:
+        if optimizeCFF and 'CFF ' in self.otf:
             from compreffor import compress
             compress(self.otf)
         return self.otf

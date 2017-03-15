@@ -13,7 +13,7 @@ from ufo2ft.maxContextCalc import maxCtxFont
 logger = logging.getLogger(__name__)
 
 
-class FeatureOTFCompiler(object):
+class FeaturesCompiler(object):
     """Generates OpenType feature tables for a UFO.
 
     If mtiFeaFiles is passed to the constructor, it should be a dictionary
@@ -40,9 +40,18 @@ class FeatureOTFCompiler(object):
         features. If they already exist, they will not be overwritten.
         """
 
+        self.precompile()
         self.setupFile_features()
         self.setupFile_featureTables()
-        self.postProcess()
+        self.postprocess()
+
+    def precompile(self):
+        """Set any attributes needed before compilation.
+
+        **This should not be called externally.** Subclasses
+        may override this method if desired.
+        """
+        pass
 
     def setupFile_features(self):
         """
@@ -185,8 +194,8 @@ class FeatureOTFCompiler(object):
             addOpenTypeFeaturesFromString(self.outline, self.features,
                                           filename=feapath)
 
-    def postProcess(self):
-        """Set any attributes needed after compilation.
+    def postprocess(self):
+        """Make post-compilation calculations.
 
         **This should not be called externally.** Subclasses
         may override this method if desired.
