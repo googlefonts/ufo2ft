@@ -9,11 +9,13 @@ logger = logging.getLogger(__name__)
 class MarkFeatureWriter(object):
     """Generates a mark or mkmk feature based on glyph anchors.
 
-    This class needs the *anchorList* (mark) and *mkmkAnchorList* (mkmk) attributes
-    set with lists of (anchorName, accentAnchorName), and optionally
-    *ligaAnchorList* (liga2mark) with a list of ((anchorName, ...), accentAnchorName) tuples.
+    Takes in lists of (anchorName, accentAnchorName) tuples for the mark
+    (*anchorList*) and mkmk (*mkmkAnchorList*) attributes, and optionally a
+    list of ((anchorName, ...), accentAnchorName) tuples for the liga2mark
+    (*ligaAnchorList*) feature.
 
-    A call to setupAnchorList() will infer these lists from the provided font.
+    Call setAnchorPairs() to set the anchors, or setupAnchorPairs() to inferthem
+    from the provided font.
     """
 
     def __init__(self, font):
@@ -177,6 +179,11 @@ class MarkFeatureWriter(object):
                 self._addMarkToLigaLookup(lines, lookupName, anchorPairs)
 
         lines.append("} %s;\n" % featureName)
+
+    def setAnchorPairs(self, anchorList, mkmkAnchorList=(), ligaAnchorList=()):
+        self.anchorList = anchorList
+        self.mkmkAnchorList = mkmkAnchorList
+        self.ligaAnchorList = ligaAnchorList
 
     def setupAnchorPairs(self):
         """
