@@ -6,6 +6,14 @@ from defcon import Font
 from ufo2ft.markFeatureWriter import MarkFeatureWriter
 
 
+class PrebuiltMarkFeatureWriter(MarkFeatureWriter):
+
+    def setupAnchorPairs(self):
+        self.anchorList = (('bottom', '_bottom'),)
+        self.mkmkAnchorList = ()
+        self.ligaAnchorList = ((('top_1', 'top_2'), '_top'),)
+
+
 class MarkFeatureWriterTest(unittest.TestCase):
     def test_add_classes(self):
         ufo = Font()
@@ -16,11 +24,7 @@ class MarkFeatureWriterTest(unittest.TestCase):
         glyph.appendAnchor(glyph.anchorClass(
             anchorDict={'name': '_bottom', 'x': 100, 'y': 0}))
         lines = []
-        writer = MarkFeatureWriter(ufo)
-        writer.setAnchorPairs(
-            (('bottom', '_bottom'),),
-            mkmkAnchorList=(), ligaAnchorList=((('top_1', 'top_2'), '_top'),)
-        )
+        writer = PrebuiltMarkFeatureWriter(ufo)
         writer._addClasses(lines, doMark=True, doMkmk=True)
         self.assertEqual(
             '\n'.join(lines).strip(),
