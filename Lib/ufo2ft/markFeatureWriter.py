@@ -1,6 +1,9 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
+import logging
 
 from ufo2ft.kernFeatureWriter import liststr
+
+logger = logging.getLogger(__name__)
 
 
 class MarkFeatureWriter(object):
@@ -11,11 +14,11 @@ class MarkFeatureWriter(object):
     tuples for a liga2mark feature.
     """
 
-    def __init__(self, font, anchorList, mkmkAnchorList=(), ligaAnchorList=()):
+    def __init__(self, font):
         self.font = font
-        self.anchorList = anchorList
-        self.mkmkAnchorList = mkmkAnchorList
-        self.ligaAnchorList = ligaAnchorList
+        self.anchorList = []
+        self.mkmkAnchorList = []
+        self.ligaAnchorList = []
         self.accentGlyphNames = set()
 
     def _generateClassName(self, accentAnchorName):
@@ -173,12 +176,52 @@ class MarkFeatureWriter(object):
 
         lines.append("} %s;\n" % featureName)
 
+    def setupAnchorPairs(self):
+        """
+        Try to determine the base-accent anchor pairs to use in building the
+        mark and mkmk features.
+
+        **This should not be called externally.** Subclasses
+        may override this method to set up the anchor pairs
+        in a different way if desired.
+        """
+
+        self.anchorList = []
+        self.ligaAnchorList = []
+
+        anchorNames = set()
+        for glyph in self.font:
+            for anchor in glyph.anchors:
+                if anchor.name is None:
+                    logger.warning("Unnamed anchor discarded in %s", glyph.name)
+                    continue
+                anchorNames.add(anchor.name)
+
+        for baseName in sorted(anchorNames):
+            accentName = "_" + baseName
+            if accentName in anchorNames:
+                self.anchorList.append((baseName, accentName))
+
+                ligaNames = []
+                i = 1
+                while True:
+                    ligaName = "%s_%d" % (baseName, i)
+                    if ligaName not in anchorNames:
+                        break
+                    ligaNames.append(ligaName)
+                    i += 1
+                if ligaNames:
+                    self.ligaAnchorList.append((tuple(ligaNames), accentName))
+
+        self.mkmkAnchorList = self.anchorList
+
     def write(self, doMark=True, doMkmk=True):
         """Write mark and mkmk features, and mark class definitions."""
 
         if not (doMark or doMkmk):
             return ""
 
+        self.setupAnchorPairs()
         lines = []
         self._addClasses(lines, doMark, doMkmk)
         if doMark:

@@ -28,10 +28,6 @@ class FeaturesCompiler(object):
         self.kernWriterClass = kernWriterClass
         self.markWriterClass = markWriterClass
         self.mtiFeaFiles = mtiFeaFiles
-        #
-        self.anchorPairs = []
-        self.ligaAnchorPairs = []
-        self.mkmkAnchorPairs = []
 
     def compile(self):
         """Compile the features.
@@ -91,7 +87,8 @@ class FeaturesCompiler(object):
 
     def writeFeatures_kern(self):
         """
-        Write the kern feature to a string and return it, or None if kernWriter is None.
+        Write the kern feature to a string and return it, or None
+        if kernWriterClass is None.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
@@ -105,7 +102,8 @@ class FeaturesCompiler(object):
 
     def writeFeatures_mark(self, doMark=True, doMkmk=True):
         """
-        Write the mark and mkmk features to a string and return it, or None if markWriter is None.
+        Write the mark and mkmk features to a string and return it, or None
+        if markWriterClass is None.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
@@ -114,50 +112,8 @@ class FeaturesCompiler(object):
 
         if self.markWriterClass is None:
             return None
-        self.setupAnchorPairs()
-        writer = self.markWriterClass(
-            self.font, self.anchorPairs, self.mkmkAnchorPairs,
-            self.ligaAnchorPairs)
+        writer = self.markWriterClass(self.font)
         return writer.write(doMark, doMkmk)
-
-    def setupAnchorPairs(self):
-        """
-        Try to determine the base-accent anchor pairs to use in building the
-        mark and mkmk features.
-
-        **This should not be called externally.** Subclasses
-        may override this method to set up the anchor pairs
-        in a different way if desired.
-        """
-
-        self.anchorPairs = []
-        self.ligaAnchorPairs = []
-
-        anchorNames = set()
-        for glyph in self.font:
-            for anchor in glyph.anchors:
-                if anchor.name is None:
-                    logger.warning("Unnamed anchor discarded in %s", glyph.name)
-                    continue
-                anchorNames.add(anchor.name)
-
-        for baseName in sorted(anchorNames):
-            accentName = "_" + baseName
-            if accentName in anchorNames:
-                self.anchorPairs.append((baseName, accentName))
-
-                ligaNames = []
-                i = 1
-                while True:
-                    ligaName = "%s_%d" % (baseName, i)
-                    if ligaName not in anchorNames:
-                        break
-                    ligaNames.append(ligaName)
-                    i += 1
-                if ligaNames:
-                    self.ligaAnchorPairs.append((tuple(ligaNames), accentName))
-
-        self.mkmkAnchorPairs = self.anchorPairs
 
     def _findLayoutFeatures(self):
         """Returns what OpenType layout feature tags are present in the UFO."""
