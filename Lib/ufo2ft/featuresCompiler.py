@@ -36,18 +36,9 @@ class FeaturesCompiler(object):
         features. If they already exist, they will not be overwritten.
         """
 
-        self.precompile()
         self.setupFile_features()
         self.setupFile_featureTables()
-        self.postprocess()
-
-    def precompile(self):
-        """Set any attributes needed before compilation.
-
-        **This should not be called externally.** Subclasses
-        may override this method if desired.
-        """
-        pass
+        self.postProcess()
 
     def setupFile_features(self):
         """
@@ -151,7 +142,7 @@ class FeaturesCompiler(object):
             addOpenTypeFeaturesFromString(self.outline, self.features,
                                           filename=feapath)
 
-    def postprocess(self):
+    def postProcess(self):
         """Make post-compilation calculations.
 
         **This should not be called externally.** Subclasses
