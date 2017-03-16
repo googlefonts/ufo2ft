@@ -156,26 +156,6 @@ class BaseOutlineCompiler(object):
                 orderedGlyphs.append(glyphName)
         return orderedGlyphs
 
-    def getCharStringForGlyph(self, glyph, private, globalSubrs):
-        """
-        Get a Type2CharString for the *glyph*
-
-        **This should not be called externally.** Subclasses
-        may override this method to handle the charstring creation
-        in a different way if desired.
-        """
-        width = glyph.width
-        # subtract the nominal width
-        postscriptNominalWidthX = getAttrWithFallback(self.ufo.info, "postscriptNominalWidthX")
-        if postscriptNominalWidthX:
-            width = width - postscriptNominalWidthX
-        # round
-        width = round(width)
-        pen = T2CharStringPen(width, self.allGlyphs)
-        glyph.draw(pen)
-        charString = pen.getCharString(private, globalSubrs)
-        return charString
-
     # --------------
     # Table Builders
     # --------------
@@ -761,6 +741,26 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
     """Compile a .otf font with CFF outlines."""
 
     sfntVersion = "OTTO"
+
+    def getCharStringForGlyph(self, glyph, private, globalSubrs):
+        """
+        Get a Type2CharString for the *glyph*
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the charstring creation
+        in a different way if desired.
+        """
+        width = glyph.width
+        # subtract the nominal width
+        postscriptNominalWidthX = getAttrWithFallback(self.ufo.info, "postscriptNominalWidthX")
+        if postscriptNominalWidthX:
+            width = width - postscriptNominalWidthX
+        # round
+        width = round(width)
+        pen = T2CharStringPen(width, self.allGlyphs)
+        glyph.draw(pen)
+        charString = pen.getCharString(private, globalSubrs)
+        return charString
 
     def setupTable_maxp(self):
         """Make the maxp table."""
