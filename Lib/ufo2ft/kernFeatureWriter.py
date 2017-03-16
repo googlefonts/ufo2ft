@@ -187,9 +187,9 @@ class KernFeatureWriter(object):
         kerning = {}
         for glyphPair, val in sorted(self.kerning.items()):
             left, right = glyphPair
-            if not left in groups and not left in allGlyphs:
+            if left not in groups and left not in allGlyphs:
                 continue
-            if not right in groups and not right in allGlyphs:
+            if right not in groups and right not in allGlyphs:
                 continue
             kerning[glyphPair] = val
 
@@ -254,7 +254,7 @@ class KernFeatureWriter(object):
                     nlGlyphs.append(lGlyph)
                     seen[pair] = val
             if nlGlyphs != lGlyphs:
-                if nlGlyphs: 
+                if nlGlyphs:
                     self.leftClassKerning[liststr(nlGlyphs), rGlyph] = val
                 del self.leftClassKerning[lClass, rGlyph]
 
@@ -268,7 +268,7 @@ class KernFeatureWriter(object):
                     nrGlyphs.append(rGlyph)
                     seen[pair] = val
             if nrGlyphs != rGlyphs:
-                if nrGlyphs: 
+                if nrGlyphs:
                     self.rightClassKerning[lGlyph, liststr(nrGlyphs)] = val
                 del self.rightClassKerning[lGlyph, rClass]
 
