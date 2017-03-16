@@ -2,7 +2,7 @@ sudo: false
 language: python
 python:
   - "2.7"
-  - "3.5"
+  - "3.6"
 branches:
   only:
     - master
@@ -19,7 +19,7 @@ deploy:
     repo: googlei18n/ufo2ft
     tags: true
     all_branches: true
-    python: 3.5
+    python: 3.6
   user: anthrotype
   password:
     secure: TKU+9wrb+oMWQycxAGBFkMvftFaJnVh/X22o0JWrAMoo2IiakyU+/cHCmlSAJBuQlAYyKywa3gI9ajf73vlDhCZMRiXiyfYQykxV+G/CfVqyAxXkF5cOTvg0O6xxS4OMrsuMCuRtG6m8l4FryJ9NETQiksDgDcggKXzs7COWeUEfnd15nFEerKzefn2NLJtOIpQqVPs068hrGHZHrDkt1k03ffxgWuBqRjiR1u8WmksZGxedO1v9weUUsQauJ/GpvCVUcepE2b1tvTON2tpucm6Txuf574GBFHL25fFKeppI9CvdjLZFpG0Yx41WJCE1GNL79oimg2ss5SWxojr7t7LLlIRVZBv2CRx4aS2+ACXxU8IYqL0+VMRZNPJsB39aAUUZyuhR2S+LtqzitVeJLLn83aAlcY80s87Z8h0x3XE4YSZ8IwWk2cpUcw1P+UbOP/xo+ZA7+i2EhRRu3hELC6pBImrgpjqrWrlOzG1fzR2q21i+vAgcTodadNFmmQkpD0DuGaxuZ8EMPJbyZBmyumANOfbiCYkGbKVt5Ng4uah8sh7TBj0S/+nNLalb9X0DxBmW+GFOSk8LdNnICEXHaJ8gpWRpbC3yAA4xFAAbYgPHbae4DgWHeMNJhPudHDUdF3IAcOZ0o68oZaO2rloBlWeYcox7La6kSPFjvRIMY2Y=
