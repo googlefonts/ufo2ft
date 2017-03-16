@@ -12,9 +12,9 @@ which work exactly the same way:
 
 .. code:: python
 
+    from defcon import Font
     from ufo2ft import compileOTF
-    from robofab.world import OpenFont
-    ufo = OpenFont('MyFont-Regular.ufo')
+    ufo = Font('MyFont-Regular.ufo')
     otf = compileOTF(ufo)
     otf.save('MyFont-Regular.otf')
 
