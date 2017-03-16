@@ -39,11 +39,8 @@ def _getVerticalOrigin(glyph):
 class BaseOutlineCompiler(object):
     """Create a feature-less outline binary."""
 
-    def __init__(self, font, glyphOrder=None, convertCubics=True,
-                 cubicConversionError=2):
+    def __init__(self, font, glyphOrder=None):
         self.ufo = font
-        self.convertCubics = convertCubics
-        self.cubicConversionError = cubicConversionError
         self.log = []
         # make any missing glyphs and store them locally
         missingRequiredGlyphs = self.makeMissingRequiredGlyphs()
@@ -922,6 +919,12 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
 class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines."""
+
+    def __init__(self, font, glyphOrder=None, convertCubics=True,
+                 cubicConversionError=2):
+        super(OutlineTTFCompiler, self).__init__(font, glyphOrder)
+        self.convertCubics = convertCubics
+        self.cubicConversionError = cubicConversionError
 
     def setupTable_maxp(self):
         """Make the maxp table."""

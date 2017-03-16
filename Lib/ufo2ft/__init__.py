@@ -13,17 +13,13 @@ __version__ = "0.3.5.dev0"
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featuresCompilerClass=FeaturesCompiler, mtiFeaFiles=None,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
-               glyphOrder=None, convertCubics=True, cubicConversionError=2,
-               useProductionNames=True, optimizeCFF=True):
+               glyphOrder=None, useProductionNames=True, optimizeCFF=True):
     """Create FontTools CFF font from a UFO.
 
-    Some arguments are only used when generating CFF or TrueType outlines:
-    `convertCubics` and `cubicConversionError` only apply to TrueType, and
-    `optimizeCff` only applies to CFF.
+    *optimizeCFF* sets whether the CFF table should be subroutinized.
     """
 
-    outlineCompiler = outlineCompilerClass(
-        ufo, glyphOrder, convertCubics, cubicConversionError)
+    outlineCompiler = outlineCompilerClass(ufo, glyphOrder)
     otf = outlineCompiler.compile()
 
     featuresCompiler = featuresCompilerClass(
@@ -37,7 +33,27 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
     return otf
 
 
-def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler, **kwargs):
-    """Create FontTools TrueType font from a UFO."""
+def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
+               featuresCompilerClass=FeaturesCompiler, mtiFeaFiles=None,
+               kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
+               glyphOrder=None, useProductionNames=True,
+               convertCubics=True, cubicConversionError=2):
+    """Create FontTools TrueType font from a UFO.
 
-    return compileOTF(ufo, outlineCompilerClass=outlineCompilerClass, **kwargs)
+    *convertCubics* and *cubicConversionError* specify how the conversion from cubic
+    to quadratic curves should be handled.
+    """
+
+    outlineCompiler = outlineCompilerClass(
+        ufo, glyphOrder, convertCubics, cubicConversionError)
+    otf = outlineCompiler.compile()
+
+    featuresCompiler = featuresCompilerClass(
+        ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
+        mtiFeaFiles=mtiFeaFiles)
+    featuresCompiler.compile()
+
+    postProcessor = PostProcessor(otf, ufo)
+    otf = postProcessor.process(useProductionNames)
+
+    return otf
