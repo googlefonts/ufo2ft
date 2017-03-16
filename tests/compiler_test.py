@@ -1,7 +1,6 @@
 from __future__ import \
     print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import *
-from fontTools.ttLib import TTFont
 from defcon import Font
 from ufo2ft import compileOTF, compileTTF
 import difflib

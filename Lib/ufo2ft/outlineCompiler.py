@@ -36,14 +36,11 @@ def _getVerticalOrigin(glyph):
     return verticalOrigin
 
 
-class OutlineCompiler(object):
+class BaseOutlineCompiler(object):
     """Create a feature-less outline binary."""
 
-    def __init__(self, font, glyphOrder=None, convertCubics=True,
-                 cubicConversionError=2):
+    def __init__(self, font, glyphOrder=None):
         self.ufo = font
-        self.convertCubics = convertCubics
-        self.cubicConversionError = cubicConversionError
         self.log = []
         # make any missing glyphs and store them locally
         missingRequiredGlyphs = self.makeMissingRequiredGlyphs()
@@ -203,7 +200,6 @@ class OutlineCompiler(object):
             rangeGaspBehavior = intListToNum(behavior_bits, 0, 4)
             gasp_ranges[rangeMaxPPEM] = rangeGaspBehavior
         gasp.gaspRange = gasp_ranges
-
 
     def setupTable_head(self):
         """
@@ -772,7 +768,7 @@ class OutlineCompiler(object):
         pass
 
 
-class OutlineOTFCompiler(OutlineCompiler):
+class OutlineOTFCompiler(BaseOutlineCompiler):
     """Compile a .otf font with CFF outlines."""
 
     def precompile(self):
@@ -905,7 +901,6 @@ class OutlineOTFCompiler(OutlineCompiler):
         # populate glyphs
         for glyphName in self.glyphOrder:
             glyph = self.allGlyphs[glyphName]
-            unicodes = glyph.unicodes
             charString = self.getCharStringForGlyph(glyph, private, globalSubrs)
             # add to the font
             if glyphName in charStrings:
@@ -922,8 +917,14 @@ class OutlineOTFCompiler(OutlineCompiler):
         self.otf.setGlyphOrder(self.glyphOrder)
 
 
-class OutlineTTFCompiler(OutlineCompiler):
+class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines."""
+
+    def __init__(self, font, glyphOrder=None, convertCubics=True,
+                 cubicConversionError=2):
+        super(OutlineTTFCompiler, self).__init__(font, glyphOrder)
+        self.convertCubics = convertCubics
+        self.cubicConversionError = cubicConversionError
 
     def setupTable_maxp(self):
         """Make the maxp table."""

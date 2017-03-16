@@ -2,18 +2,18 @@ from __future__ import \
     print_function, division, absolute_import, unicode_literals
 import logging
 import os
-import re
-from fontTools.misc.py23 import *
 from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
 
+from ufo2ft.kernFeatureWriter import KernFeatureWriter
+from ufo2ft.markFeatureWriter import MarkFeatureWriter
 from ufo2ft.maxContextCalc import maxCtxFont
 
 logger = logging.getLogger(__name__)
 
 
-class FeatureOTFCompiler(object):
+class FeaturesCompiler(object):
     """Generates OpenType feature tables for a UFO.
 
     If mtiFeaFiles is passed to the constructor, it should be a dictionary
@@ -21,13 +21,13 @@ class FeatureOTFCompiler(object):
     mtiLib into that respective table.
     """
 
-    def __init__(self, font, outline, kernWriter, markWriter, mtiFeaFiles=None):
+    def __init__(self, font, outline, kernWriterClass=KernFeatureWriter,
+                 markWriterClass=MarkFeatureWriter, mtiFeaFiles=None):
         self.font = font
         self.outline = outline
-        self.kernWriter = kernWriter
-        self.markWriter = markWriter
+        self.kernWriterClass = kernWriterClass
+        self.markWriterClass = markWriterClass
         self.mtiFeaFiles = mtiFeaFiles
-        self.setupAnchorPairs()
 
     def compile(self):
         """Compile the features.
@@ -36,20 +36,9 @@ class FeatureOTFCompiler(object):
         features. If they already exist, they will not be overwritten.
         """
 
-        self.precompile()
         self.setupFile_features()
         self.setupFile_featureTables()
-
-        # only after compiling features can usMaxContext be calculated
-        self.outline['OS/2'].usMaxContext = maxCtxFont(self.outline)
-
-    def precompile(self):
-        """Set any attributes needed before compilation.
-
-        **This should not be called externally.** Subclasses
-        may override this method if desired.
-        """
-        pass
+        self.postProcess()
 
     def setupFile_features(self):
         """
@@ -67,11 +56,6 @@ class FeatureOTFCompiler(object):
 
         features = self._findLayoutFeatures()
 
-        kernRE = r"feature\s+kern\s+{.*?}\s+kern\s*;"
-        markRE = re.compile(kernRE.replace("kern", "mark"), re.DOTALL)
-        mkmkRE = re.compile(kernRE.replace("kern", "mkmk"), re.DOTALL)
-        kernRE = re.compile(kernRE, re.DOTALL)
-
         existing = self.font.features.text or ""
 
         # build the GPOS features as necessary
@@ -87,72 +71,40 @@ class FeatureOTFCompiler(object):
         # write the features
         features = [existing]
         for name, text in sorted(autoFeatures.items()):
+            if text is None:
+                continue
             features.append(text)
         self.features = "\n\n".join(features)
 
     def writeFeatures_kern(self):
         """
-        Write the kern feature to a string and return it.
+        Write the kern feature to a string and return it, or None
+        if kernWriterClass is None.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
         in a different way if desired.
         """
-        writer = self.kernWriter(self.font)
+
+        if self.kernWriterClass is None:
+            return None
+        writer = self.kernWriterClass(self.font)
         return writer.write()
 
     def writeFeatures_mark(self, doMark=True, doMkmk=True):
         """
-        Write the mark and mkmk features to a string and return it.
+        Write the mark and mkmk features to a string and return it, or None
+        if markWriterClass is None.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the string creation
         in a different way if desired.
         """
 
-        writer = self.markWriter(
-            self.font, self.anchorPairs, self.mkmkAnchorPairs,
-            self.ligaAnchorPairs)
+        if self.markWriterClass is None:
+            return None
+        writer = self.markWriterClass(self.font)
         return writer.write(doMark, doMkmk)
-
-    def setupAnchorPairs(self):
-        """
-        Try to determine the base-accent anchor pairs to use in building the
-        mark and mkmk features.
-
-        **This should not be called externally.** Subclasses
-        may override this method to set up the anchor pairs
-        in a different way if desired.
-        """
-
-        self.anchorPairs = []
-        self.ligaAnchorPairs = []
-
-        anchorNames = set()
-        for glyph in self.font:
-            for anchor in glyph.anchors:
-                if anchor.name is None:
-                    logger.warning("Unnamed anchor discarded in %s", glyph.name)
-                    continue
-                anchorNames.add(anchor.name)
-
-        for baseName in sorted(anchorNames):
-            accentName = "_" + baseName
-            if accentName in anchorNames:
-                self.anchorPairs.append((baseName, accentName))
-
-                ligaNames = []
-                i = 1
-                while True:
-                    ligaName = "%s_%d" % (baseName, i)
-                    if ligaName not in anchorNames:
-                        break
-                    ligaNames.append(ligaName)
-                    i += 1
-                if ligaNames:
-                    self.ligaAnchorPairs.append((tuple(ligaNames), accentName))
-
-        self.mkmkAnchorPairs = self.anchorPairs
 
     def _findLayoutFeatures(self):
         """Returns what OpenType layout feature tags are present in the UFO."""
@@ -188,3 +140,13 @@ class FeatureOTFCompiler(object):
             feapath = os.path.join(self.font.path, "features.fea") if self.font.path is not None else None
             addOpenTypeFeaturesFromString(self.outline, self.features,
                                           filename=feapath)
+
+    def postProcess(self):
+        """Make post-compilation calculations.
+
+        **This should not be called externally.** Subclasses
+        may override this method if desired.
+        """
+
+        # only after compiling features can usMaxContext be calculated
+        self.outline['OS/2'].usMaxContext = maxCtxFont(self.outline)
