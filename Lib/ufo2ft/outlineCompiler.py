@@ -39,6 +39,8 @@ def _getVerticalOrigin(glyph):
 class BaseOutlineCompiler(object):
     """Create a feature-less outline binary."""
 
+    sfntVersion = None
+
     def __init__(self, font, glyphOrder=None):
         self.ufo = font
         self.log = []
@@ -65,11 +67,7 @@ class BaseOutlineCompiler(object):
         """
         Compile the OpenType binary.
         """
-        self.precompile()
-        if self.sfnt_version:
-            self.otf = TTFont(sfntVersion=self.sfnt_version)
-        else:
-            self.otf = TTFont()
+        self.otf = TTFont(sfntVersion=self.sfntVersion)
 
         self.vertical = False
         for glyph in self.allGlyphs.values():
@@ -93,15 +91,6 @@ class BaseOutlineCompiler(object):
         self.setupOtherTables()
 
         return self.otf
-
-    def precompile(self):
-        """Set any attributes needed before compilation.
-
-        **This should not be called externally.** Subclasses
-        may override this method if desired.
-        """
-
-        self.sfnt_version = None
 
     def makeFontBoundingBox(self):
         """
@@ -771,8 +760,7 @@ class BaseOutlineCompiler(object):
 class OutlineOTFCompiler(BaseOutlineCompiler):
     """Compile a .otf font with CFF outlines."""
 
-    def precompile(self):
-        self.sfnt_version = "OTTO"
+    sfntVersion = "OTTO"
 
     def setupTable_maxp(self):
         """Make the maxp table."""
@@ -919,6 +907,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
 class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines."""
+
+    sfntVersion = "\000\001\000\000"
 
     def __init__(self, font, glyphOrder=None, convertCubics=True,
                  cubicConversionError=2):
