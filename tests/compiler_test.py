@@ -23,11 +23,14 @@ class CompilerTest(unittest.TestCase):
     _tempdir, _num_tempfiles = None, 0
     _layoutTables = ["GDEF", "GSUB", "GPOS", "BASE"]
 
-    def test_TestFont(self):
-        # We have specific unit tests for CFF vs TrueType output, but we run
-        # an integration test here to make sure things work end-to-end.
-        # No need to test both formats for every single test case.
+    # We have specific unit tests for CFF vs TrueType output, but we run
+    # an integration test here to make sure things work end-to-end.
+    # No need to test both formats for every single test case.
+
+    def test_TestFont_TTF(self):
         self.expectTTX(compileTTF(loadUFO("TestFont.ufo")), "TestFont.ttx")
+
+    def test_TestFont_CFF(self):
         self.expectTTX(compileOTF(loadUFO("TestFont.ufo")), "TestFont-CFF.ttx")
 
     def test_features(self):
