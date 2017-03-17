@@ -8,6 +8,7 @@
     <GlyphID id="2" name="uni0061"/>
     <GlyphID id="3" name="uni0062"/>
     <GlyphID id="4" name="uni0063"/>
+    <GlyphID id="5" name="uni0064"/>
   </GlyphOrder>
 
   <head>
@@ -53,14 +54,14 @@
 
   <maxp>
     <tableVersion value="0x5000"/>
-    <numGlyphs value="5"/>
+    <numGlyphs value="6"/>
   </maxp>
 
   <OS_2>
     <!-- The fields 'usFirstCharIndex' and 'usLastCharIndex'
          will be recalculated by the compiler -->
     <version value="4"/>
-    <xAvgCharWidth value="384"/>
+    <xAvgCharWidth value="383"/>
     <usWeightClass value="500"/>
     <usWidthClass value="5"/>
     <fsType value="00000000 00000000"/>
@@ -94,7 +95,7 @@
     <achVendID value="SOME"/>
     <fsSelection value="00000000 01001000"/>
     <usFirstCharIndex value="32"/>
-    <usLastCharIndex value="99"/>
+    <usLastCharIndex value="100"/>
     <sTypoAscender value="750"/>
     <sTypoDescender value="-250"/>
     <sTypoLineGap value="200"/>
@@ -173,12 +174,14 @@
       <map code="0x61" name="uni0061"/><!-- LATIN SMALL LETTER A -->
       <map code="0x62" name="uni0062"/><!-- LATIN SMALL LETTER B -->
       <map code="0x63" name="uni0063"/><!-- LATIN SMALL LETTER C -->
+      <map code="0x64" name="uni0064"/><!-- LATIN SMALL LETTER D -->
     </cmap_format_4>
     <cmap_format_4 platformID="3" platEncID="1" language="0">
       <map code="0x20" name="uni0020"/><!-- SPACE -->
       <map code="0x61" name="uni0061"/><!-- LATIN SMALL LETTER A -->
       <map code="0x62" name="uni0062"/><!-- LATIN SMALL LETTER B -->
       <map code="0x63" name="uni0063"/><!-- LATIN SMALL LETTER C -->
+      <map code="0x64" name="uni0064"/><!-- LATIN SMALL LETTER D -->
     </cmap_format_4>
   </cmap>
 
@@ -269,6 +272,14 @@
           0 205 50 50 150 0 rrcurveto
           endchar
         </CharString>
+        <CharString name="uni0064">
+          -26 151 197 rmoveto
+          -34 0 -27 -27 0 -33 rrcurveto
+          0 -33 27 -27 34 0 rrcurveto
+          33 0 27 27 0 33 rrcurveto
+          0 33 -27 27 -33 0 rrcurveto
+          endchar
+        </CharString>
       </CharStrings>
     </CFFFont>
 
@@ -350,6 +361,7 @@
     <mtx name="uni0061" width="388" lsb="66"/>
     <mtx name="uni0062" width="410" lsb="100"/>
     <mtx name="uni0063" width="374" lsb="100"/>
+    <mtx name="uni0064" width="374" lsb="90"/>
   </hmtx>
 
 </ttFont>
