@@ -3,7 +3,7 @@ from fontTools.misc.py23 import tounicode, round
 
 import logging
 import math
-from collections import Counter
+from collections import Counter, namedtuple
 
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
@@ -13,10 +13,14 @@ from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
+from fontTools.misc.arrayTools import unionRect
 
-from ufo2ft.fontInfoData import getFontBounds, getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
+from ufo2ft.fontInfoData import getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
 
 logger = logging.getLogger(__name__)
+
+
+BoundingBox = namedtuple("BoundingBox", ["xMin", "yMin", "xMax", "yMax"])
 
 
 def _isNonBMP(s):
@@ -33,7 +37,7 @@ def _getVerticalOrigin(glyph):
         verticalOrigin = glyph.verticalOrigin
     else:
         verticalOrigin = height
-    return verticalOrigin
+    return round(verticalOrigin)
 
 
 class BaseOutlineCompiler(object):
@@ -58,8 +62,9 @@ class BaseOutlineCompiler(object):
             else:
                 glyphOrder = sorted(self.allGlyphs.keys())
         self.glyphOrder = self.makeOfficialGlyphOrder(glyphOrder)
-        # make a reusable bounding box
-        self.fontBoundingBox = tuple(round(i) for i in self.makeFontBoundingBox())
+        # make reusable glyphs/font bounding boxes
+        self.glyphBoundingBoxes = self.makeGlyphsBoundingBoxes()
+        self.fontBoundingBox = self.makeFontBoundingBox()
         # make a reusable character mapping
         self.unicodeToGlyphNameMapping = self.makeUnicodeToGlyphNameMapping()
 
@@ -78,19 +83,41 @@ class BaseOutlineCompiler(object):
 
         # populate basic tables
         self.setupTable_head()
-        self.setupTable_hhea()
         self.setupTable_hmtx()
+        self.setupTable_hhea()
         self.setupTable_name()
         self.setupTable_maxp()
         self.setupTable_cmap()
         self.setupTable_OS2()
         self.setupTable_post()
         if self.vertical:
-            self.setupTable_vhea()
             self.setupTable_vmtx()
+            self.setupTable_vhea()
         self.setupOtherTables()
 
         return self.otf
+
+    def makeGlyphsBoundingBoxes(self):
+        """
+        Make bounding boxes for all the glyphs, and return a dictionary of
+        BoundingBox(xMin, xMax, yMin, yMax) namedtuples keyed by glyph names.
+        The bounding box of empty glyphs (without contours or components) is
+        set to None.
+
+        Float values are rounded to integers using the built-in round().
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the bounds creation
+        in a different way if desired.
+        """
+        glyphBoxes = {}
+        for glyphName, glyph in self.allGlyphs.items():
+            if glyph or glyph.components:
+                bounds = BoundingBox(*(round(v) for v in glyph.controlPointBounds))
+            else:
+                bounds = None
+            glyphBoxes[glyphName] = bounds
+        return glyphBoxes
 
     def makeFontBoundingBox(self):
         """
@@ -100,7 +127,19 @@ class BaseOutlineCompiler(object):
         may override this method to handle the bounds creation
         in a different way if desired.
         """
-        return getFontBounds(self.ufo)
+        if not hasattr(self, "glyphBoundingBoxes"):
+            self.glyphBoundingBoxes = self.makeGlyphsBoundingBoxes()
+        fontBox = None
+        for glyphName, glyphBox in self.glyphBoundingBoxes.items():
+            if glyphBox is None:
+                continue
+            if fontBox is None:
+                fontBox = glyphBox
+            else:
+                fontBox = unionRect(fontBox, glyphBox)
+        if fontBox is None:  # unlikely
+            fontBox = BoundingBox(0, 0, 0, 0)
+        return fontBox
 
     def makeUnicodeToGlyphNameMapping(self):
         """
@@ -534,25 +573,20 @@ class BaseOutlineCompiler(object):
             if width < 0:
                 raise ValueError(
                     "The width should not be negative: '%s'" % (glyphName))
-            left = 0
-            if len(glyph) or len(glyph.components):
-                # lsb should be consistent with glyf xMin, which is just
-                # minimum x for coordinate data
-                pen = ControlBoundsPen(self.ufo, ignoreSinglePoints=True)
-                glyph.draw(pen)
-                left = 0 if pen.bounds is None else pen.bounds[0]
-            # take floor of lsb/xMin, as fontTools does with min bounds
-            hmtx[glyphName] = (round(width), int(math.floor(left)))
+            bounds = self.glyphBoundingBoxes[glyphName]
+            left = bounds.xMin if bounds else 0
+            hmtx[glyphName] = (round(width), left)
 
     def setupTable_hhea(self):
         """
-        Make the hhea table.
+        Make the hhea table. This assumes that the hmtx table was made first.
 
         **This should not be called externally.** Subclasses
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
         self.otf["hhea"] = hhea = newTable("hhea")
+        hmtx = self.otf["hmtx"]
         font = self.ufo
         hhea.tableVersion = 0x00010000
         # vertical metrics
@@ -564,33 +598,23 @@ class BaseOutlineCompiler(object):
         lefts = []
         rights = []
         extents = []
-        for glyph in self.allGlyphs.values():
-            left = glyph.leftMargin
-            right = glyph.rightMargin
-            if left is None:
-                left = 0
-            if right is None:
-                right = 0
-            widths.append(glyph.width)
+        for glyphName in self.allGlyphs:
+            width, left = hmtx[glyphName]
+            widths.append(width)
+            bounds = self.glyphBoundingBoxes[glyphName]
+            if bounds is None:
+                continue
+            right = width - left - (bounds.xMax - bounds.xMin)
             lefts.append(left)
             rights.append(right)
-            # robofab
-            if hasattr(glyph, "box"):
-                bounds = glyph.box
-            # others
-            else:
-                bounds = glyph.bounds
-            if bounds is not None:
-                xMin, yMin, xMax, yMax = bounds
-            else:
-                xMin = 0
-                xMax = 0
-            extent = left + (xMax - xMin) # equation from spec for calculating xMaxExtent: Max(lsb + (xMax - xMin))
+            # equation from the hhea spec for calculating xMaxExtent:
+            #   Max(lsb + (xMax - xMin))
+            extent = left + (bounds.xMax - bounds.xMin)
             extents.append(extent)
-        hhea.advanceWidthMax = round(max(widths))
-        hhea.minLeftSideBearing = round(min(lefts))
-        hhea.minRightSideBearing = round(min(rights))
-        hhea.xMaxExtent = round(max(extents))
+        hhea.advanceWidthMax = max(widths)
+        hhea.minLeftSideBearing = min(lefts)
+        hhea.minRightSideBearing = min(rights)
+        hhea.xMaxExtent = max(extents)
         # misc
         hhea.caretSlopeRise = getAttrWithFallback(font.info, "openTypeHheaCaretSlopeRise")
         hhea.caretSlopeRun = getAttrWithFallback(font.info, "openTypeHheaCaretSlopeRun")
@@ -617,17 +641,9 @@ class BaseOutlineCompiler(object):
         for glyphName, glyph in self.allGlyphs.items():
             height = glyph.height
             verticalOrigin = _getVerticalOrigin(glyph)
-            top = 0
-            if len(glyph) or len(glyph.components):
-                # tsb should be consistent with glyf yMax, which is just
-                # maximum y for coordinate data
-                pen = ControlBoundsPen(self.ufo, ignoreSinglePoints=True)
-                glyph.draw(pen)
-                if pen.bounds is not None:
-                    top = pen.bounds[3]
-            # take ceil of tsb/yMax, as fontTools does with max bounds
-            vmtx[glyphName] = (round(height),
-                               int(math.ceil(verticalOrigin) - math.ceil(top)))
+            bounds = self.glyphBoundingBoxes[glyphName]
+            top = bounds.yMax if bounds else 0
+            vmtx[glyphName] = (round(height), verticalOrigin - top)
 
     def setupTable_VORG(self):
         """
@@ -647,12 +663,13 @@ class BaseOutlineCompiler(object):
         vorg.defaultVertOriginY = vorg_count.most_common(1)[0][0]
         if len(vorg_count) > 1:
             for glyphName, glyph in self.allGlyphs.items():
-                vorg.VOriginRecords[glyphName] = glyph.verticalOrigin
+                vorg.VOriginRecords[glyphName] = _getVerticalOrigin(glyph)
         vorg.numVertOriginYMetrics = len(vorg.VOriginRecords)
 
     def setupTable_vhea(self):
         """
-        Make the vhea table.
+        Make the vhea table. This assumes that the head and vmtx tables were
+        made first.
 
         **This should not be called externally.** Subclasses
         may override or supplement this method to handle the
@@ -661,6 +678,7 @@ class BaseOutlineCompiler(object):
         self.otf["vhea"] = vhea = newTable("vhea")
         font = self.ufo
         head = self.otf["head"]
+        vmtx = self.otf["vmtx"]
         vhea.tableVersion = 0x00011000
         # horizontal metrics
         vhea.ascent = round(getAttrWithFallback(font.info, "openTypeVheaVertTypoAscender"))
@@ -670,20 +688,19 @@ class BaseOutlineCompiler(object):
         heights = []
         tops = []
         bottoms = []
-        for glyph in self.allGlyphs.values():
-            top = glyph.topMargin
-            bottom = glyph.rightMargin
-            if top is None:
-                top = 0
-            if bottom is None:
-                bottom = 0
-            heights.append(glyph.height)
+        for glyphName in self.allGlyphs:
+            height, top = vmtx[glyphName]
+            heights.append(height)
+            bounds = self.glyphBoundingBoxes[glyphName]
+            if bounds is None:
+                continue
+            bottom = height - top - (bounds.yMax - bounds.yMin)
             tops.append(top)
             bottoms.append(bottom)
-        vhea.advanceHeightMax = round(max(heights))
-        vhea.minTopSideBearing = round(max(tops))
-        vhea.minBottomSideBearing = round(max(bottoms))
-        vhea.yMaxExtent = round(vhea.minTopSideBearing - (head.yMax - head.yMin))
+        vhea.advanceHeightMax = max(heights)
+        vhea.minTopSideBearing = max(tops)
+        vhea.minBottomSideBearing = max(bottoms)
+        vhea.yMaxExtent = vhea.minTopSideBearing - (head.yMax - head.yMin)
         # misc
         vhea.caretSlopeRise = getAttrWithFallback(font.info, "openTypeVheaCaretSlopeRise")
         vhea.caretSlopeRun = getAttrWithFallback(font.info, "openTypeVheaCaretSlopeRun")
@@ -696,7 +713,6 @@ class BaseOutlineCompiler(object):
         vhea.metricDataFormat = 0
         # glyph count
         vhea.numberOfVMetrics = len(self.allGlyphs)
-
 
     def setupTable_post(self):
         """
@@ -742,6 +758,49 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
     sfntVersion = "OTTO"
 
+    def __init__(self, font, glyphOrder=None, roundTolerance=None):
+        if roundTolerance is not None:
+            self.roundTolerance = float(roundTolerance)
+        else:
+            # round all coordinates to integers by default
+            self.roundTolerance = 0.5
+        super(OutlineOTFCompiler, self).__init__(font, glyphOrder)
+
+    def makeGlyphsBoundingBoxes(self):
+        """
+        Make bounding boxes for all the glyphs, and return a dictionary of
+        BoundingBox(xMin, xMax, yMin, yMax) namedtuples keyed by glyph names.
+        The bounding box of empty glyphs (without contours or components) is
+        set to None.
+
+        Check that the float values are within the range of the specified
+        self.roundTolerance, and if so use the rounded value; else take the
+        floor or ceiling to ensure that the bounding box encloses the original
+        values.
+        """
+
+        def toInt(value, else_callback):
+            rounded = round(value)
+            if tolerance >= 0.5 or abs(rounded - value) <= tolerance:
+                return rounded
+            else:
+                return int(else_callback(value))
+
+        tolerance = self.roundTolerance
+        glyphBoxes = {}
+        for glyphName, glyph in self.allGlyphs.items():
+            bounds = None
+            if glyph or glyph.components:
+                bounds = glyph.controlPointBounds
+                rounded = []
+                for value in bounds[:2]:
+                    rounded.append(toInt(value, math.floor))
+                for value in bounds[2:]:
+                    rounded.append(toInt(value, math.ceil))
+                bounds = BoundingBox(*rounded)
+            glyphBoxes[glyphName] = bounds
+        return glyphBoxes
+
     def getCharStringForGlyph(self, glyph, private, globalSubrs):
         """
         Get a Type2CharString for the *glyph*
@@ -757,7 +816,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             width = width - postscriptNominalWidthX
         # round
         width = round(width)
-        pen = T2CharStringPen(width, self.allGlyphs)
+        pen = T2CharStringPen(width, self.allGlyphs,
+                              roundTolerance=self.roundTolerance)
         glyph.draw(pen)
         charString = pen.getCharString(private, globalSubrs)
         return charString
@@ -1069,9 +1129,9 @@ class StubGlyph(object):
         pen.lineTo((xMin, yMin))
         pen.closePath()
 
-    def _get_bounds(self):
-        pen = BoundsPen(None)
+    def _get_controlPointBounds(self):
+        pen = ControlBoundsPen(None)
         self.draw(pen)
         return pen.bounds
 
-    bounds = property(_get_bounds)
+    controlPointBounds = property(_get_controlPointBounds)
