@@ -45,6 +45,17 @@ class OutlineTTFCompilerTest(unittest.TestCase):
         compiler.compile()
         self.assertTrue('gasp' not in compiler.otf)
 
+    def test_makeGlyphsBoundingBoxes(self):
+        # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
+        compiler = OutlineTTFCompiler(self.ufo)
+        self.assertEqual(compiler.glyphBoundingBoxes['.notdef'],
+                         (50, 0, 450, 750))
+        # no outline data
+        self.assertEqual(compiler.glyphBoundingBoxes['space'], None)
+        # float coordinates are rounded, so is the bbox
+        self.assertEqual(compiler.glyphBoundingBoxes['d'],
+                         (90, 77, 211, 197))
+
 
 class OutlineOTFCompilerTest(unittest.TestCase):
 
