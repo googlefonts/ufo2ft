@@ -17,7 +17,7 @@ import logging
 import time
 import unicodedata
 
-from fontTools.misc.arrayTools import unionRect
+from fontTools.misc.arrayTools import unionRect, intRect
 from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr, round2
 from fontTools.misc.textTools import binary2num
 import ufoLib
@@ -461,33 +461,6 @@ def preflightInfo(info):
         if not hasattr(info, attr) or getattr(info, attr) is None:
             missingRecommended.add(attr)
     return dict(missingRequired=missingRequired, missingRecommended=missingRecommended)
-
-def getFontBounds(font):
-    """
-    Get a tuple of (xMin, yMin, xMax, yMax) for all
-    glyphs in the given *font*.
-    """
-    rect = None
-    # defcon
-    if hasattr(font, "bounds"):
-        rect = font.bounds
-    # others
-    else:
-        for glyph in font:
-            # robofab
-            if hasattr(glyph,"box"):
-                bounds = glyph.box
-            # others
-            else:
-                bounds = glyph.bounds
-            if rect is None:
-                rect = bounds
-                continue
-            if rect is not None and bounds is not None:
-                rect = unionRect(rect, bounds)
-    if rect is None:
-        rect = (0, 0, 0, 0)
-    return rect
 
 # -----------------
 # Low Level Support
