@@ -1,4 +1,5 @@
 from fontTools.ttLib import TTFont
+from fontTools.misc.py23 import basestring
 from defcon import Font
 from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
 from ufo2ft import compileTTF
@@ -132,6 +133,73 @@ class OutlineOTFCompilerTest(unittest.TestCase):
         self.assertEqual(private.OtherBlues, [-217, -205])
         self.assertFalse(hasattr(private, "FamilyBlues"))
         self.assertFalse(hasattr(private, "FamilyOtherBlues"))
+
+    @staticmethod
+    def get_charstring_program(ttFont, glyphName):
+        cff = ttFont["CFF "].cff
+        charstrings = cff[list(cff.keys())[0]].CharStrings
+        c, _ = charstrings.getItemAndSelector(glyphName)
+        c.decompile()
+        return c.program
+
+    def assertProgramEqual(self, expected, actual):
+        self.assertEqual(len(expected), len(actual))
+        for exp_token, act_token in zip(expected, actual):
+            if isinstance(exp_token, basestring):
+                self.assertEqual(exp_token, act_token)
+            else:
+                self.assertNotIsInstance(act_token, basestring)
+                self.assertAlmostEqual(exp_token, act_token)
+
+    def test_setupTable_CFF_round_all(self):
+        # by default all floats are rounded to integer
+        compiler = OutlineOTFCompiler(self.ufo)
+        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_CFF()
+        # glyph 'd' in TestFont.ufo contains float coordinates
+        program = self.get_charstring_program(otf, "d")
+
+        self.assertProgramEqual(program, [
+            -26, 151, 197, 'rmoveto',
+            -34, 0, -27, -27, 0, -33, 'rrcurveto',
+            0, -33, 27, -27, 34, 0, 'rrcurveto',
+            33, 0, 27, 27, 0, 33, 'rrcurveto',
+            0, 33, -27, 27, -33, 0, 'rrcurveto',
+            'endchar'])
+
+    def test_setupTable_CFF_round_none(self):
+        # roundTolerance=0 means 'don't round, keep all floats'
+        compiler = OutlineOTFCompiler(self.ufo, roundTolerance=0)
+        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_CFF()
+        program = self.get_charstring_program(otf, "d")
+
+        self.assertProgramEqual(program, [
+            -26, 150.66, 197.32, 'rmoveto',
+            -33.66, 0.0, -26.67, -26.99, 0.0, -33.33, 'rrcurveto',
+            0.0, -33.33, 26.67, -26.66, 33.66, 0.0, 'rrcurveto',
+            33.33, 0.0, 26.66, 26.66, 0.0, 33.33, 'rrcurveto',
+            0.0, 33.33, -26.66, 26.99, -33.33, 0.0, 'rrcurveto',
+            'endchar'])
+
+    def test_setupTable_CFF_round_some(self):
+        # only floats 'close enough' are rounded to integer
+        compiler = OutlineOTFCompiler(self.ufo, roundTolerance=0.1)
+        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_CFF()
+        program = self.get_charstring_program(otf, "d")
+
+        # e.g., 26.99 becomes 27, but 150.66 stays as it is
+        self.assertProgramEqual(program, [
+            -26, 150.66, 197.32, 'rmoveto',
+            -33.66, 0, -26.67, -27, 0, -33.33, 'rrcurveto',
+            0, -33.33, 26.67, -26.67, 33.66, 0, 'rrcurveto',
+            33.34, 0, 26.65, 26.67, 0, 33.33, 'rrcurveto',
+            0, 33.33, -26.65, 27, -33.34, 0, 'rrcurveto',
+            'endchar'])
 
 
 class TestGlyphOrder(unittest.TestCase):
