@@ -17,7 +17,6 @@ import logging
 import time
 import unicodedata
 
-from fontTools.misc.arrayTools import unionRect, intRect
 from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr, round2
 from fontTools.misc.textTools import binary2num
 import ufoLib
