@@ -13,13 +13,22 @@ __version__ = "0.4.0.dev0"
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featuresCompilerClass=FeaturesCompiler, mtiFeaFiles=None,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
-               glyphOrder=None, useProductionNames=True, optimizeCFF=True):
+               glyphOrder=None, useProductionNames=True, optimizeCFF=True,
+               roundTolerance=None):
     """Create FontTools CFF font from a UFO.
 
     *optimizeCFF* sets whether the CFF table should be subroutinized.
+
+    *roundTolerance* (float) controls the rounding of point coordinates.
+      It is defined as the maximum absolute difference between the original
+      float and the rounded integer value.
+      By default, all floats are rounded to integer (tolerance 0.5); a value
+      of 0 completely disables rounding; values in between only round floats
+      which are close to their integral part within the tolerated range.
     """
 
-    outlineCompiler = outlineCompilerClass(ufo, glyphOrder)
+    outlineCompiler = outlineCompilerClass(
+        ufo, glyphOrder, roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
     featuresCompiler = featuresCompilerClass(
