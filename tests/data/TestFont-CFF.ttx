@@ -37,8 +37,8 @@
     <descent value="-250"/>
     <lineGap value="200"/>
     <advanceWidthMax value="500"/>
-    <minLeftSideBearing value="0"/>
-    <minRightSideBearing value="0"/>
+    <minLeftSideBearing value="50"/>
+    <minRightSideBearing value="50"/>
     <xMaxExtent value="450"/>
     <caretSlopeRise value="1"/>
     <caretSlopeRun value="0"/>
