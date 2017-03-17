@@ -1,6 +1,6 @@
 from __future__ import print_function, division, absolute_import
 
-from ufo2ft.featuresCompiler import FeaturesCompiler
+from ufo2ft.featureCompiler import FeatureCompiler
 from ufo2ft.kernFeatureWriter import KernFeatureWriter
 from ufo2ft.markFeatureWriter import MarkFeatureWriter
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
@@ -11,7 +11,7 @@ __version__ = "0.4.0.dev0"
 
 
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
-               featuresCompilerClass=FeaturesCompiler, mtiFeaFiles=None,
+               featureCompilerClass=FeatureCompiler, mtiFeaFiles=None,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True, optimizeCFF=True,
                roundTolerance=None):
@@ -31,10 +31,10 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
         ufo, glyphOrder, roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
-    featuresCompiler = featuresCompilerClass(
+    featureCompiler = featureCompilerClass(
         ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
         mtiFeaFiles=mtiFeaFiles)
-    featuresCompiler.compile()
+    featureCompiler.compile()
 
     postProcessor = PostProcessor(otf, ufo)
     otf = postProcessor.process(useProductionNames, optimizeCFF)
@@ -43,7 +43,7 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
 
 
 def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
-               featuresCompilerClass=FeaturesCompiler, mtiFeaFiles=None,
+               featureCompilerClass=FeatureCompiler, mtiFeaFiles=None,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True,
                convertCubics=True, cubicConversionError=2):
@@ -57,10 +57,10 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
         ufo, glyphOrder, convertCubics, cubicConversionError)
     otf = outlineCompiler.compile()
 
-    featuresCompiler = featuresCompilerClass(
+    featureCompiler = featureCompilerClass(
         ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
         mtiFeaFiles=mtiFeaFiles)
-    featuresCompiler.compile()
+    featureCompiler.compile()
 
     postProcessor = PostProcessor(otf, ufo)
     otf = postProcessor.process(useProductionNames)

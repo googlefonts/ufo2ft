@@ -13,7 +13,7 @@ from ufo2ft.maxContextCalc import maxCtxFont
 logger = logging.getLogger(__name__)
 
 
-class FeaturesCompiler(object):
+class FeatureCompiler(object):
     """Generates OpenType feature tables for a UFO.
 
     If mtiFeaFiles is passed to the constructor, it should be a dictionary
