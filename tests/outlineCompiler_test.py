@@ -201,6 +201,23 @@ class OutlineOTFCompilerTest(unittest.TestCase):
             0, 33.33, -26.65, 27, -33.34, 0, 'rrcurveto',
             'endchar'])
 
+    def test_makeGlyphsBoundingBoxes(self):
+        # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
+        compiler = OutlineOTFCompiler(self.ufo)
+        # with default roundTolerance, all coordinates and hence the bounding
+        # box values are rounded with round()
+        self.assertEqual(compiler.glyphBoundingBoxes['d'],
+                         (90, 77, 211, 197))
+
+    def test_makeGlyphsBoundingBoxes_floats(self):
+        # specifying a custom roundTolerance affects which coordinates are
+        # rounded; in this case, the top-most Y coordinate stays a float
+        # (197.32), hence the bbox.yMax (198) is rounded using math.ceiling()
+        compiler = OutlineOTFCompiler(self.ufo, roundTolerance=0.1)
+        self.assertEqual(compiler.glyphBoundingBoxes['d'],
+                         (90, 77, 211, 198))
+
+
 
 class TestGlyphOrder(unittest.TestCase):
 
