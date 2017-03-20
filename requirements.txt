@@ -1,5 +1,5 @@
 fonttools==3.9.1
 ufoLib==2.0.0
-defcon==0.2.4
+defcon==0.2.5
 cu2qu==1.1.1
 compreffor==0.4.4
