@@ -7,7 +7,7 @@ from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
 
-__version__ = "0.4.1.dev0"
+__version__ = "0.4.1"
 
 
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
