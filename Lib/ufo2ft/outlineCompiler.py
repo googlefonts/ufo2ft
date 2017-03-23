@@ -101,7 +101,7 @@ class BaseOutlineCompiler(object):
         """
         Make bounding boxes for all the glyphs, and return a dictionary of
         BoundingBox(xMin, xMax, yMin, yMax) namedtuples keyed by glyph names.
-        The bounding boxA of empty glyphs (without contours or components) is
+        The bounding box of empty glyphs (without contours or components) is
         set to None.
 
         Float values are rounded to integers using the built-in round().
@@ -770,11 +770,11 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         """
         Make bounding boxes for all the glyphs, and return a dictionary of
         BoundingBox(xMin, xMax, yMin, yMax) namedtuples keyed by glyph names.
-        The bounding boxA of empty glyphs (without contours or components) is
+        The bounding box of empty glyphs (without contours or components) is
         set to None.
 
         Check that the float values are within the range of the specified
-        self.roundTolerance, and if so useA the rounded value; else take the
+        self.roundTolerance, and if so use the rounded value; else take the
         floor or ceiling to ensure that the bounding box encloses the original
         values.
         """
