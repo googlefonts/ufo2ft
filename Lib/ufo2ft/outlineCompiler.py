@@ -112,10 +112,11 @@ class BaseOutlineCompiler(object):
         """
         glyphBoxes = {}
         for glyphName, glyph in self.allGlyphs.items():
+            bounds = None
             if glyph or glyph.components:
-                bounds = BoundingBox(*(round(v) for v in glyph.controlPointBounds))
-            else:
-                bounds = None
+                bounds = glyph.controlPointBounds
+                if bounds:
+                    bounds = BoundingBox(*(round(v) for v in bounds))
             glyphBoxes[glyphName] = bounds
         return glyphBoxes
 
@@ -792,12 +793,13 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             bounds = None
             if glyph or glyph.components:
                 bounds = glyph.controlPointBounds
-                rounded = []
-                for value in bounds[:2]:
-                    rounded.append(toInt(value, math.floor))
-                for value in bounds[2:]:
-                    rounded.append(toInt(value, math.ceil))
-                bounds = BoundingBox(*rounded)
+                if bounds:
+                    rounded = []
+                    for value in bounds[:2]:
+                        rounded.append(toInt(value, math.floor))
+                    for value in bounds[2:]:
+                        rounded.append(toInt(value, math.ceil))
+                    bounds = BoundingBox(*rounded)
             glyphBoxes[glyphName] = bounds
         return glyphBoxes
 
