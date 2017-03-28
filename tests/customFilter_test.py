@@ -77,11 +77,11 @@ def glyphShapeEqual(a, b):
     if a.components or b.components:
         logger.error('Can not compare composite glyphs.')
         return False
-    for i in xrange(0, len(a)):
+    for i in range(0, len(a)):
         # For each contour a[i]
         if len(a[i]) != len(b[i]):
             return False
-        for j in xrange(0, len(a[i])):
+        for j in range(0, len(a[i])):
         # For each point a[i][j]
             p1 = a[i][j]
             p2 = b[i][j]
