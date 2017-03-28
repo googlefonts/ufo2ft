@@ -1,10 +1,14 @@
+import unittest
+import os
+import mock
+from mock import patch
+
 from fontTools.ttLib import TTFont
 from fontTools.misc.py23 import basestring
 from defcon import Font
-from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
+from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler, BaseOutlineCompiler, UFO2FT_FILTERS_KEY
 from ufo2ft import compileTTF
-import unittest
-import os
+import defcon
 
 
 def getTestUFO():
@@ -16,6 +20,23 @@ class OutlineTTFCompilerTest(unittest.TestCase):
 
     def setUp(self):
         self.ufo = getTestUFO()
+        self.ufoWithFilter = getTestUFO()
+        self.ufoWithFilter.lib[UFO2FT_FILTERS_KEY] = []
+        self.ufoWithFilter.lib[UFO2FT_FILTERS_KEY].append({
+            'name': 'Transformations',
+            'args': [],
+            'kwargs': {
+                'LSB': 23,
+                'RSB': -22,
+                'SlantCorrection': True,
+                'OffsetX': 10,
+                'OffsetY': 5,
+                'Origin': 0,
+            },
+            'exclude': ['uni0334', 'uni0335', 'uni0336'],
+        })
+        self.expectedFilterArg1 = []
+        self.expectedFilterArg2 = {'Origin': 0, 'LSB': 23, 'SlantCorrection': True, 'OffsetX': 10, 'OffsetY': 5, 'RSB': -22}
 
     def test_setupTable_gasp(self):
         compiler = OutlineTTFCompiler(self.ufo)
@@ -56,6 +77,12 @@ class OutlineTTFCompilerTest(unittest.TestCase):
         self.assertEqual(compiler.glyphBoundingBoxes['d'],
                          (90, 77, 211, 197))
 
+    @patch('ufo2ft.outlineCompiler.TransformationsFilter')
+    def test_applyFilters(self, mockTransformationsFilter):
+        compiler = OutlineTTFCompiler(self.ufoWithFilter)
+        compiler.applyFilters()
+        self.assertTrue(mockTransformationsFilter.called)
+        self.assertEqual(mockTransformationsFilter.call_args, mock.call(self.expectedFilterArg1, self.expectedFilterArg2))
 
 class OutlineOTFCompilerTest(unittest.TestCase):
 
