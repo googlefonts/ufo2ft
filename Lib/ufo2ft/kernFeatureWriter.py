@@ -32,6 +32,7 @@ class KernFeatureWriter(object):
         self.font = font
         self.kerning = dict(font.kerning)
         self.groups = dict(font.groups)
+        self.ignoreMarks = True
 
         fealines = []
         if font.features.text:
@@ -96,6 +97,8 @@ class KernFeatureWriter(object):
             self._addKerning(ltrKern, self.classPairKerning, ignoreZero=True)
         if ltrKern:
             lines.append("lookup kern_ltr {")
+            if self.ignoreMarks:
+                lines.append("    lookupflag IgnoreMarks;")
             lines.extend(ltrKern)
             lines.append("} kern_ltr;")
             lines.append("")
@@ -111,6 +114,8 @@ class KernFeatureWriter(object):
                              ignoreZero=True)
         if rtlKern:
             lines.append("lookup kern_rtl {")
+            if self.ignoreMarks:
+                lines.append("    lookupflag IgnoreMarks;")
             lines.extend(rtlKern)
             lines.append("} kern_rtl;")
             lines.append("")
