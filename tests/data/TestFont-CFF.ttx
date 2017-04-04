@@ -318,7 +318,7 @@
       <!-- LookupCount=1 -->
       <Lookup index="0">
         <LookupType value="2"/>
-        <LookupFlag value="0"/>
+        <LookupFlag value="8"/>
         <!-- SubTableCount=1 -->
         <PairPos index="0" Format="1">
           <Coverage Format="1">
