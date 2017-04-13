@@ -47,6 +47,13 @@ class CompilerTest(unittest.TestCase):
         self.expectTTX(compileTTF(loadUFO("Bug108.ufo")), "Bug108.ttx",
                        tables=self._layoutTables)
 
+    def test_mti_features(self):
+        """Checks handling of UFOs with embdedded MTI/Monotype feature files
+        https://github.com/googlei18n/fontmake/issues/289
+        """
+        self.expectTTX(compileTTF(loadUFO("MTIFeatures.ufo")),
+                       "MTIFeatures.ttx", tables=self._layoutTables)
+
     def _temppath(self, suffix):
         if not self._tempdir:
             self._tempdir = tempfile.mkdtemp()

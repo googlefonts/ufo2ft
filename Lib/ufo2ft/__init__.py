@@ -1,5 +1,9 @@
 from __future__ import print_function, division, absolute_import
 
+import logging
+
+from fontTools.misc.py23 import *
+
 from ufo2ft.featureCompiler import FeatureCompiler
 from ufo2ft.kernFeatureWriter import KernFeatureWriter
 from ufo2ft.markFeatureWriter import MarkFeatureWriter
@@ -8,6 +12,7 @@ from ufo2ft.postProcessor import PostProcessor
 
 
 __version__ = "0.4.3.dev0"
+log = logging.getLogger(__name__)
 
 
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
@@ -33,7 +38,7 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
 
     featureCompiler = featureCompilerClass(
         ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
-        mtiFeaFiles=mtiFeaFiles)
+        mtiFeatures=_getMtiFeatures(ufo, mtiFeaFiles))
     featureCompiler.compile()
 
     postProcessor = PostProcessor(otf, ufo)
@@ -52,17 +57,41 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
     to quadratic curves should be handled.
     """
-
     outlineCompiler = outlineCompilerClass(
         ufo, glyphOrder, convertCubics, cubicConversionError)
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
         ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
-        mtiFeaFiles=mtiFeaFiles)
+        mtiFeatures=_getMtiFeatures(ufo, mtiFeaFiles))
     featureCompiler.compile()
 
     postProcessor = PostProcessor(otf, ufo)
     otf = postProcessor.process(useProductionNames)
 
     return otf
+
+
+def _getMtiFeatures(ufo, mtiFeaFiles=None):
+    features = {}
+    prefix = "com.github.googlei18n.ufo2ft.mtiFeatures/"
+    for fileName in ufo.data.fileNames:
+        if fileName.startswith(prefix) and fileName.endswith(".mti"):
+            content = tounicode(ufo.data[fileName], encoding="utf-8")
+            features[fileName[len(prefix):-4]] = content
+
+    # TODO: Remove the ability to pass MTI feature files as side input
+    # to the compiler. https://github.com/googlei18n/fontmake/issues/289
+    if mtiFeaFiles is not None:
+        log.warn("Future versions of this font compiler will remove "
+                 "the capability to inject MTI features as side input. "
+                 "Instead, please embed your MTI feature files into the "
+                 "compiled UFO sources. See "
+                 "https://github.com/googlei18n/fontmake/issues/289.")
+        # For now, the side input wins over any MTI features inside the UFO.
+        features = {}
+        for table, feapath in mtiFeaFiles.items():
+            with open(feapath, "rt", encoding="utf-8") as feafile:
+                features[table] = feafile.read()
+
+    return features if len(features) > 0 else None
