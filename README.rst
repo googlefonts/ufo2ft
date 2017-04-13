@@ -80,11 +80,20 @@ Additionally, if you have defined any naming data, or any data for that
 matter, in table definitions within your font's features that data will
 be honored.
 
+
 Feature generation
 ~~~~~~~~~~~~~~~~~~
 
 If your font's features do not contain kerning/mark/mkmk features,
 ufo2ft will create them based on your font's kerning/anchor data.
+
+In addition to
+`Adobe OpenType feature files <http://www.adobe.com/devnet/opentype/afdko/topic_feature_file_syntax.html>`__,
+ufo2ft also supports the
+`MTI/Monotype format <http://monotype.github.io/OpenType_Table_Source/otl_source.html>`__.
+For example, a GPOS table in this format would be stored within the UFO at
+``data/com.github.googlei18n.ufo2ft.mtiFeatures/GPOS.mti``.
+
 
 Fallbacks
 ~~~~~~~~~
