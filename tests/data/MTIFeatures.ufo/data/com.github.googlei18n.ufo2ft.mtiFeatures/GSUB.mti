@@ -1,0 +1,17 @@
+FontDame GSUB table
+
+script table begin
+latn	default		0
+script table end
+
+feature table begin
+0	ccmp	0
+feature table end
+
+lookup	0	ligature
+RightToLeft	no
+IgnoreBaseGlyphs	no
+IgnoreLigatures	no
+IgnoreMarks	no
+a	b	c
+lookup end

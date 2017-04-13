@@ -16,18 +16,18 @@ logger = logging.getLogger(__name__)
 class FeatureCompiler(object):
     """Generates OpenType feature tables for a UFO.
 
-    If mtiFeaFiles is passed to the constructor, it should be a dictionary
-    mapping feature table tags to source files which should be compiled by
-    mtiLib into that respective table.
+    If mtiFeatures is passed to the constructor, it should be a dictionary
+    mapping feature table tags to MTI feature declarations for that table.
+    These are passed to mtiCompilation for compilation.
     """
 
     def __init__(self, font, outline, kernWriterClass=KernFeatureWriter,
-                 markWriterClass=MarkFeatureWriter, mtiFeaFiles=None):
+                 markWriterClass=MarkFeatureWriter, mtiFeatures=None):
         self.font = font
         self.outline = outline
         self.kernWriterClass = kernWriterClass
         self.markWriterClass = markWriterClass
-        self.mtiFeaFiles = mtiFeaFiles
+        self.mtiFeatures = mtiFeatures
 
     def compile(self):
         """Compile the features.
@@ -51,7 +51,7 @@ class FeatureCompiler(object):
         in a different way if desired.
         """
 
-        if self.mtiFeaFiles is not None:
+        if self.mtiFeatures is not None:
             return
 
         features = self._findLayoutFeatures()
@@ -129,12 +129,11 @@ class FeatureCompiler(object):
         in a different way if desired.
         """
 
-        if self.mtiFeaFiles is not None:
-            for tag, feapath in self.mtiFeaFiles.items():
-                with open(feapath) as feafile:
-                    table = mtiLib.build(feafile, self.outline)
-                    assert table.tableTag == tag
-                    self.outline[tag] = table
+        if self.mtiFeatures is not None:
+            for tag, features in self.mtiFeatures.items():
+                table = mtiLib.build(features.splitlines(), self.outline)
+                assert table.tableTag == tag
+                self.outline[tag] = table
 
         elif self.features.strip():
             feapath = os.path.join(self.font.path, "features.fea") if self.font.path is not None else None
