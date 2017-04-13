@@ -2,6 +2,8 @@ from __future__ import print_function, division, absolute_import
 
 import logging
 
+from fontTools.misc.py23 import *
+
 from ufo2ft.featureCompiler import FeatureCompiler
 from ufo2ft.kernFeatureWriter import KernFeatureWriter
 from ufo2ft.markFeatureWriter import MarkFeatureWriter
@@ -75,7 +77,8 @@ def _getMtiFeatures(ufo, mtiFeaFiles=None):
     prefix = "com.github.googlei18n.ufo2ft.mtiFeatures/"
     for fileName in ufo.data.fileNames:
         if fileName.startswith(prefix) and fileName.endswith(".mti"):
-            features[fileName[len(prefix):-4]] = ufo.data[fileName]
+            content = tounicode(ufo.data[fileName], encoding="utf-8")
+            features[fileName[len(prefix):-4]] = content
 
     # TODO: Remove the ability to pass MTI feature files as side input
     # to the compiler. https://github.com/googlei18n/fontmake/issues/289
@@ -88,7 +91,7 @@ def _getMtiFeatures(ufo, mtiFeaFiles=None):
         # For now, the side input wins over any MTI features inside the UFO.
         features = {}
         for table, feapath in mtiFeaFiles.items():
-            with open(feapath, "rb") as feafile:
+            with open(feapath, "rt", encoding="utf-8") as feafile:
                 features[table] = feafile.read()
 
     return features if len(features) > 0 else None
