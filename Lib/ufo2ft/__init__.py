@@ -88,7 +88,7 @@ def _getMtiFeatures(ufo, mtiFeaFiles=None):
         # For now, the side input wins over any MTI features inside the UFO.
         features = {}
         for table, feapath in mtiFeaFiles.items():
-            with open(feapath, "r") as feafile:
+            with open(feapath, "rb") as feafile:
                 features[table] = feafile.read()
 
     return features if len(features) > 0 else None
