@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>familyName</key>
+		<string>MTIFeatures</string>
+		<key>note</key>
+		<string>https://github.com/googlei18n/fontmake/issues/289</string>
+		<key>unitsPerEm</key>
+		<integer>1000</integer>
+		<key>xHeight</key>
+		<integer>500</integer>
+		<key>ascender</key>
+		<integer>750</integer>
+		<key>capHeight</key>
+		<integer>750</integer>
+		<key>descender</key>
+		<integer>-250</integer>
+		<key>postscriptUnderlinePosition</key>
+		<integer>-200</integer>
+		<key>postscriptUnderlineThickness</key>
+		<integer>20</integer>
+	</dict>
+</plist>
