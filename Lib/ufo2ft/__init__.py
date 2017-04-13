@@ -83,7 +83,7 @@ def _getMtiFeatures(ufo, mtiFeaFiles=None):
         log.warn("Future versions of this font compiler will remove "
                  "the capability to inject MTI features as side input. "
                  "Instead, please embed your MTI feature files into the "
-                 "comiled UFO sources. See "
+                 "compiled UFO sources. See "
                  "https://github.com/googlei18n/fontmake/issues/289.")
         # For now, the side input wins over any MTI features inside the UFO.
         features = {}
