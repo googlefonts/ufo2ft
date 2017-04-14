@@ -41,7 +41,7 @@ class bump_version(Command):
 
         args = (
             (['--verbose'] if self.verbose > 1 else []) +
-            (['--tag'] if tag else ['--no-tag']) +
+            (['--tag', '--tag-message', message] if tag else ['--no-tag']) +
             (['--message', message] if message is not None else []) +
             [part]
         )
@@ -153,7 +153,7 @@ setup(
     include_package_data=True,
     license="MIT",
     setup_requires=pytest_runner + wheel + (
-        ['bumpversion'] if {'release', 'bump_version'}.intersection(sys.argv) else []),
+        ['bump2version'] if {'release', 'bump_version'}.intersection(sys.argv) else []),
     tests_require=[
         'pytest>=2.8',
     ],
