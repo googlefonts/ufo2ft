@@ -33,18 +33,18 @@ class bump_version(Command):
                         "version part options are mutually exclusive")
         self.part = part or "patch"
 
-    def bumpversion(self, part, tag=False, message=None):
+    def bumpversion(self, part, **kwargs):
         """ Run bumpversion.main() with the specified arguments.
         """
         import bumpversion
 
-        args = (
-            (['--verbose'] if self.verbose > 1 else []) +
-            (['--tag'] if tag else ['--no-tag']) +
-            (['--tag-message', message] if tag and message else []) +
-            (['--message', message] if message else []) +
-            [part]
-        )
+        args = ['--verbose'] if self.verbose > 1 else []
+        for k, v in kwargs.items():
+            k = "--{}".format(k.replace("_", "-"))
+            is_bool = isinstance(v, bool) and v is True
+            args.extend([k] if is_bool else [k, str(v)])
+        args.append(part)
+
         log.debug(
             "$ bumpversion %s" % " ".join(a.replace(" ", "\\ ") for a in args))
 
@@ -69,6 +69,9 @@ class release(bump_version):
     user_options = [
         ("message=", 'm', "message containing the release notes"),
     ]
+
+    # used for the commit message, and the first line of the tag message
+    header = "Release {new_version}"
 
     def initialize_options(self):
         self.message = None
@@ -97,7 +100,7 @@ class release(bump_version):
             from distutils.errors import DistutilsSetupError
             raise DistutilsSetupError("release notes message is empty")
 
-        self.message = "Release {new_version}\n\n%s" % (message)
+        self.message = "%s\n\n%s" % (self.header, message)
 
     @staticmethod
     def edit_release_notes():
@@ -127,13 +130,18 @@ class release(bump_version):
     def run(self):
         log.info("stripping developmental release suffix")
         # drop '.dev0' suffix, commit with given message and create git tag
-        self.bumpversion("release", tag=True,  message=self.message)
+        self.bumpversion("release",
+                         tag=True,
+                         message=self.header,
+                         tag_message=self.message)
 
 
 needs_pytest = {'pytest', 'test'}.intersection(sys.argv)
 pytest_runner = ['pytest_runner'] if needs_pytest else []
 needs_wheel = {'bdist_wheel'}.intersection(sys.argv)
 wheel = ['wheel'] if needs_wheel else []
+needs_bump2version = {'release', 'bump_version'}.intersection(sys.argv)
+bump2version = ['bump2version'] if needs_bump2version else []
 
 with open('README.rst', 'r') as f:
     long_description = f.read()
@@ -152,8 +160,7 @@ setup(
     packages=find_packages("Lib"),
     include_package_data=True,
     license="MIT",
-    setup_requires=pytest_runner + wheel + (
-        ['bump2version'] if {'release', 'bump_version'}.intersection(sys.argv) else []),
+    setup_requires=pytest_runner + wheel + bump2version,
     tests_require=[
         'pytest>=2.8',
     ],
