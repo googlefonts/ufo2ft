@@ -34,15 +34,15 @@ class bump_version(Command):
         self.part = part or "patch"
 
     def bumpversion(self, part, tag=False, message=None):
-        """ Run bumpversion.main() with the specified arguments, and return the
-        new computed version string.
+        """ Run bumpversion.main() with the specified arguments.
         """
         import bumpversion
 
         args = (
             (['--verbose'] if self.verbose > 1 else []) +
-            (['--tag', '--tag-message', message] if tag else ['--no-tag']) +
-            (['--message', message] if message is not None else []) +
+            (['--tag'] if tag else ['--no-tag']) +
+            (['--tag-message', message] if tag and message else []) +
+            (['--message', message] if message else []) +
             [part]
         )
         log.debug(
@@ -81,7 +81,7 @@ class release(bump_version):
             from distutils.errors import DistutilsSetupError
             raise DistutilsSetupError(
                 "current version (%s) has no '.devN' suffix.\n       "
-                "Run 'setup.py bump_version', or use any of "
+                "Run 'setup.py bump_version' with any of "
                 "--major, --minor, --patch options" % current_version)
 
         message = self.message
