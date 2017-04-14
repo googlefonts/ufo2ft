@@ -70,9 +70,6 @@ class release(bump_version):
         ("message=", 'm', "message containing the release notes"),
     ]
 
-    # used for the commit message, and the first line of the tag message
-    header = "Release {new_version}"
-
     def initialize_options(self):
         self.message = None
 
@@ -100,7 +97,7 @@ class release(bump_version):
             from distutils.errors import DistutilsSetupError
             raise DistutilsSetupError("release notes message is empty")
 
-        self.message = "%s\n\n%s" % (self.header, message)
+        self.message = "v{new_version}\n\n%s" % message
 
     @staticmethod
     def edit_release_notes():
@@ -132,7 +129,7 @@ class release(bump_version):
         # drop '.dev0' suffix, commit with given message and create git tag
         self.bumpversion("release",
                          tag=True,
-                         message=self.header,
+                         message="Release {new_version}",
                          tag_message=self.message)
 
 
