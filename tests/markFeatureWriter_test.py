@@ -31,6 +31,21 @@ class MarkFeatureWriterTest(unittest.TestCase):
             'markClass cedilla <anchor 100 0> @MC_bottom;\n\n'
             'markClass grave <anchor 100 200> @MC_top;')
 
+    def test_skip_empty_feature(self):
+        ufo = Font()
+        glyph = ufo.newGlyph('a')
+        glyph.appendAnchor(glyph.anchorClass(
+            anchorDict={'name': 'top', 'x': 100, 'y': 200}))
+        glyph = ufo.newGlyph('acutecomb')
+        glyph.appendAnchor(glyph.anchorClass(
+            anchorDict={'name': '_top', 'x': 100, 'y': 200}))
+
+        writer = MarkFeatureWriter(ufo)
+        fea = writer.write()
+
+        self.assertIn("feature mark", fea)
+        self.assertNotIn("feature mkmk", fea)
+
 
 if __name__ == '__main__':
     unittest.main()
