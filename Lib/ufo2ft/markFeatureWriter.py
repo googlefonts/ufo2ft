@@ -160,19 +160,21 @@ class MarkFeatureWriter(object):
             # nothing to do, don't write empty feature
             return
         featureName = "mkmk" if isMkmk else "mark"
-
-        lines.append("feature %s {" % featureName)
+        feature = []
 
         for i, anchorPair in enumerate(anchorList):
             lookupName = "%s%d" % (featureName, i + 1)
-            self._addMarkLookup(lines, lookupName, isMkmk, anchorPair)
+            self._addMarkLookup(feature, lookupName, isMkmk, anchorPair)
 
         if not isMkmk:
             for i, anchorPairs in enumerate(self.ligaAnchorList):
                 lookupName = "mark2liga%d" % (i + 1)
-                self._addMarkToLigaLookup(lines, lookupName, anchorPairs)
+                self._addMarkToLigaLookup(feature, lookupName, anchorPairs)
 
-        lines.append("} %s;\n" % featureName)
+        if feature:
+            lines.append("feature %s {" % featureName)
+            lines.extend(feature)
+            lines.append("} %s;\n" % featureName)
 
     def setupAnchorPairs(self):
         """
