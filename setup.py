@@ -145,7 +145,7 @@ with open('README.rst', 'r') as f:
 
 setup(
     name="ufo2ft",
-    version="0.5.2.dev0",
+    version="0.5.2",
     author="Tal Leming, James Godfrey-Kittle",
     author_email="tal@typesupply.com",
     maintainer="James Godfrey-Kittle",
