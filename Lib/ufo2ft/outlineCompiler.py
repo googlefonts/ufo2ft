@@ -1023,6 +1023,8 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                 glyph.draw(Cu2QuPen(
                     newGlyph.getPen(), self.cubicConversionError,
                     reverse_direction=True))
+                # the width is needed for autoUseMyMetrics method below
+                newGlyph.width = glyph.width
                 allGlyphs[name] = newGlyph
 
         self.otf["loca"] = newTable("loca")
