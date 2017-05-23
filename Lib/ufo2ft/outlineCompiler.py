@@ -16,9 +16,11 @@ from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 from fontTools.misc.arrayTools import unionRect
 
 from ufo2ft.fontInfoData import getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
+from ufo2ft.customFilter import TransformationsFilter, BaseFilter
 
 logger = logging.getLogger(__name__)
 
+UFO2FT_FILTERS_KEY = 'com.github.googlei18n.ufo2ft.filters'
 
 BoundingBox = namedtuple("BoundingBox", ["xMin", "yMin", "xMax", "yMax"])
 
@@ -81,6 +83,7 @@ class BaseOutlineCompiler(object):
                 self.vertical = True
                 break
 
+        self.applyFilters()
         # populate basic tables
         self.setupTable_head()
         self.setupTable_hmtx()
@@ -97,6 +100,26 @@ class BaseOutlineCompiler(object):
 
         return self.otf
 
+    def applyFilters(self):
+        """Aplly ufo2ft fitlers to all glyphs in current ufo.
+        """
+        if not self.ufo.lib.get(UFO2FT_FILTERS_KEY, None):
+            return
+
+        f = BaseFilter()
+        # Chain filters into one.
+        for filterDict in self.ufo.lib[UFO2FT_FILTERS_KEY]:
+            if filterDict['name'] == 'Transformations':
+                f.add(TransformationsFilter(filterDict.get('args', []), filterDict.get('kwargs', {})))
+            # FIXME? Add more branches to support more filters.
+            else:
+                logger.error('Unknown filter name: {}. Skipping current filter.'.format(filterDict['name']))
+
+        for name, glyph in self.allGlyphs.items():
+            if glyph.components:
+                glyph.decomposeAllComponents()
+            self.allGlyphs[name] = f(glyph)
+       
     def makeGlyphsBoundingBoxes(self):
         """
         Make bounding boxes for all the glyphs, and return a dictionary of

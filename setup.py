@@ -160,6 +160,7 @@ setup(
     setup_requires=pytest_runner + wheel + bump2version,
     tests_require=[
         'pytest>=2.8',
+        'mock>=2.0.0',
     ],
     install_requires=[
         "fonttools>=3.9",
