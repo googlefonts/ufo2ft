@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ascender</key>
+	<real>2146.0</real>
+	<key>capHeight</key>
+	<real>1456.0</real>
+	<key>copyright</key>
+	<string>Copyright 2011 Google Inc. All Rights Reserved.</string>
+	<key>descender</key>
+	<real>-555.0</real>
+	<key>familyName</key>
+	<string>Roboto</string>
+	<key>italicAngle</key>
+	<integer>0</integer>
+	<key>openTypeNameDesigner</key>
+	<string>Christian Robertson</string>
+	<key>openTypeNameDesignerURL</key>
+	<string>Google.com</string>
+	<key>openTypeNameLicense</key>
+	<string>Licensed under the Apache License, Version 2.0</string>
+	<key>openTypeNameLicenseURL</key>
+	<string>http://www.apache.org/licenses/LICENSE-2.0</string>
+	<key>openTypeNameManufacturer</key>
+	<string>Google</string>
+	<key>openTypeNameManufacturerURL</key>
+	<string>Google.com</string>
+	<key>styleName</key>
+	<string>Regular</string>
+	<key>trademark</key>
+	<string>Roboto is a trademark of Google.</string>
+	<key>unitsPerEm</key>
+	<real>2048.0</real>
+	<key>versionMajor</key>
+	<integer>0</integer>
+	<key>versionMinor</key>
+	<integer>0</integer>
+	<key>xHeight</key>
+	<real>1082.0</real>
+</dict>
+</plist>
