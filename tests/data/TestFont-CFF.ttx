@@ -240,44 +240,33 @@
       </Private>
       <CharStrings>
         <CharString name=".notdef">
-          100 450 0 rmoveto
-          0 750 rlineto
-          -400 0 rlineto
-          0 -750 rlineto
+          100 450 hmoveto
+          750 -400 -750 vlineto
           350 50 rmoveto
-          -300 0 rlineto
-          0 650 rlineto
-          300 0 rlineto
+          -300 650 300 hlineto
           endchar
         </CharString>
         <CharString name="uni0020">
           -150 endchar
         </CharString>
         <CharString name="uni0061">
-          -12 66 0 rmoveto
-          128 510 rlineto
-          128 -510 rlineto
+          -12 66 hmoveto
+          128 510 128 -510 rlineto
           endchar
         </CharString>
         <CharString name="uni0062">
           10 100 505 rmoveto
-          210 0 rlineto
-          0 -510 rlineto
-          -210 0 rlineto
+          210 -510 -210 hlineto
           endchar
         </CharString>
         <CharString name="uni0063">
           -26 300 -10 rmoveto
-          -150 0 -50 50 0 205 rrcurveto
-          0 205 50 50 150 0 rrcurveto
+          -150 -50 50 205 205 50 50 150 hvcurveto
           endchar
         </CharString>
         <CharString name="uni0064">
           -26 151 197 rmoveto
-          -34 0 -27 -27 0 -33 rrcurveto
-          0 -33 27 -27 34 0 rrcurveto
-          33 0 27 27 0 33 rrcurveto
-          0 33 -27 27 -33 0 rrcurveto
+          -34 -27 -27 -33 -33 27 -27 34 33 27 27 33 33 -27 27 -33 hvcurveto
           endchar
         </CharString>
       </CharStrings>
