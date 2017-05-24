@@ -6,8 +6,8 @@ from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
 
-from ufo2ft.kernFeatureWriter import KernFeatureWriter
-from ufo2ft.markFeatureWriter import MarkFeatureWriter
+from ufo2ft.featureWriter.kernFeatureWriter import KernFeatureWriter
+from ufo2ft.featureWriter.markFeatureWriter import MarkFeatureWriter
 from ufo2ft.maxContextCalc import maxCtxFont
 
 logger = logging.getLogger(__name__)
@@ -21,12 +21,11 @@ class FeatureCompiler(object):
     These are passed to mtiCompilation for compilation.
     """
 
-    def __init__(self, font, outline, kernWriterClass=KernFeatureWriter,
-                 markWriterClass=MarkFeatureWriter, mtiFeatures=None):
+    def __init__(self, font, outline, featureWriterClasses=(KernFeatureWriter,
+                 MarkFeatureWriter), mtiFeatures=None):
         self.font = font
         self.outline = outline
-        self.kernWriterClass = kernWriterClass
-        self.markWriterClass = markWriterClass
+        self.featureWriterClasses = featureWriterClasses
         self.mtiFeatures = mtiFeatures
 
     def compile(self):
@@ -58,10 +57,8 @@ class FeatureCompiler(object):
 
         existing = self.font.features.text or ""
 
-        # build the GPOS features as necessary
+        # build features as necessary
         autoFeatures = {}
-        if "kern" not in features:
-            autoFeatures["kern"] = self.writeFeatures_kern()
         # the current MarkFeatureWriter writes both mark and mkmk features
         # with shared markClass definitions; to prevent duplicate glyphs in
         # markClass, here we write the features only if none of them is alread
@@ -69,8 +66,13 @@ class FeatureCompiler(object):
         # TODO: Support updating pre-existing markClass definitions to allow
         # writing either mark or mkmk features indipendently from each other
         # https://github.com/googlei18n/fontmake/issues/319
-        if "mark" not in features and "mkmk" not in features:
-            autoFeatures["mark"] = self.writeFeatures_mark()
+        for featureWriter in self.featureWriters:
+            doFeatures = []
+            for feature in featureWriter.features:
+                if feature not in features:
+                    doFeatures.append(feature)
+            if set(doFeatures) == set(featureWriter.features):
+                autoFeatures[featureWriter.features] = featureWriter.write()
 
         # write the features
         features = [existing]
@@ -79,36 +81,6 @@ class FeatureCompiler(object):
                 continue
             features.append(text)
         self.features = "\n\n".join(features)
-
-    def writeFeatures_kern(self):
-        """
-        Write the kern feature to a string and return it, or None
-        if kernWriterClass is None.
-
-        **This should not be called externally.** Subclasses
-        may override this method to handle the string creation
-        in a different way if desired.
-        """
-
-        if self.kernWriterClass is None:
-            return None
-        writer = self.kernWriterClass(self.font)
-        return writer.write()
-
-    def writeFeatures_mark(self, doMark=True, doMkmk=True):
-        """
-        Write the mark and mkmk features to a string and return it, or None
-        if markWriterClass is None.
-
-        **This should not be called externally.** Subclasses
-        may override this method to handle the string creation
-        in a different way if desired.
-        """
-
-        if self.markWriterClass is None:
-            return None
-        writer = self.markWriterClass(self.font)
-        return writer.write(doMark, doMkmk)
 
     def _findLayoutFeatures(self):
         """Returns what OpenType layout feature tags are present in the UFO."""

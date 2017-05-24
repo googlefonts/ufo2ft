@@ -5,8 +5,8 @@ from fontTools.misc.py23 import *
 from ufo2ft.preProcessor import (
     OTFPreProcessor, TTFPreProcessor, TTFInterpolatablePreProcessor)
 from ufo2ft.featureCompiler import FeatureCompiler
-from ufo2ft.kernFeatureWriter import KernFeatureWriter
-from ufo2ft.markFeatureWriter import MarkFeatureWriter
+from ufo2ft.featureWriter.kernFeatureWriter import KernFeatureWriter
+from ufo2ft.featureWriter.markFeatureWriter import MarkFeatureWriter
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
@@ -17,7 +17,7 @@ __version__ = "1.0.0.dev0"
 def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
                outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureCompiler,
-               kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
+               featureWriterClasses=(KernFeatureWriter, MarkFeatureWriter),
                glyphOrder=None, useProductionNames=True, optimizeCFF=True,
                roundTolerance=None, removeOverlaps=False,
                inplace=False):
@@ -33,6 +33,9 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
       By default, all floats are rounded to integer (tolerance 0.5); a value
       of 0 completely disables rounding; values in between only round floats
       which are close to their integral part within the tolerated range.
+
+    *featureWriterClasses* argument is a tuple of FeatureWriter classes.
+    Features will be written by each FeatureWriter in the given order
     """
     preProcessor = preProcessorClass(
         ufo, inplace=inplace, removeOverlaps=removeOverlaps)
@@ -44,7 +47,7 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
-        ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
+        ufo, otf, featureWriterClasses=featureWriterClasses,
         mtiFeatures=_getMtiFeatures(ufo))
     featureCompiler.compile()
 
@@ -57,7 +60,7 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
 def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
                outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler,
-               kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
+               featureWriterClasses=(KernFeatureWriter, MarkFeatureWriter),
                glyphOrder=None, useProductionNames=True,
                convertCubics=True, cubicConversionError=None,
                reverseDirection=True, removeOverlaps=False,
@@ -82,7 +85,7 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
-        ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
+        ufo, otf, featureWriterClasses=featureWriterClasses,
         mtiFeatures=_getMtiFeatures(ufo))
     featureCompiler.compile()
 
@@ -96,8 +99,8 @@ def compileInterpolatableTTFs(ufos,
                               preProcessorClass=TTFInterpolatablePreProcessor,
                               outlineCompilerClass=OutlineTTFCompiler,
                               featureCompilerClass=FeatureCompiler,
-                              kernWriterClass=KernFeatureWriter,
-                              markWriterClass=MarkFeatureWriter,
+                              featureWriterClasses=(
+                                  KernFeatureWriter, MarkFeatureWriter),
                               glyphOrder=None,
                               useProductionNames=True,
                               cubicConversionError=None,
@@ -121,8 +124,7 @@ def compileInterpolatableTTFs(ufos,
         ttf = outlineCompiler.compile()
 
         featureCompiler = featureCompilerClass(
-            ufo, ttf, kernWriterClass=kernWriterClass,
-            markWriterClass=markWriterClass,
+            ufo, ttf, featureWriterClasses=featureWriterClasses,
             mtiFeatures=_getMtiFeatures(ufo))
         featureCompiler.compile()
 
