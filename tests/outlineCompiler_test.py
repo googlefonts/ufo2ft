@@ -203,10 +203,8 @@ class OutlineOTFCompilerTest(unittest.TestCase):
 
         self.assertProgramEqual(program, [
             -26, 151, 197, 'rmoveto',
-            -34, 0, -27, -27, 0, -33, 'rrcurveto',
-            0, -33, 27, -27, 34, 0, 'rrcurveto',
-            33, 0, 27, 27, 0, 33, 'rrcurveto',
-            0, 33, -27, 27, -33, 0, 'rrcurveto',
+            -34, -27, -27, -33, -33, 27, -27, 34, 33, 27, 27, 33, 33, -27,
+                27, -33, 'hvcurveto',
             'endchar'])
 
     def test_setupTable_CFF_round_none(self):
@@ -219,27 +217,23 @@ class OutlineOTFCompilerTest(unittest.TestCase):
 
         self.assertProgramEqual(program, [
             -26, 150.66, 197.32, 'rmoveto',
-            -33.66, 0.0, -26.67, -26.99, 0.0, -33.33, 'rrcurveto',
-            0.0, -33.33, 26.67, -26.66, 33.66, 0.0, 'rrcurveto',
-            33.33, 0.0, 26.66, 26.66, 0.0, 33.33, 'rrcurveto',
-            0.0, 33.33, -26.66, 26.99, -33.33, 0.0, 'rrcurveto',
+            -33.66, -26.67, -26.99, -33.33, -33.33, 26.67, -26.66,
+                33.66, 33.33, 26.66, 26.66, 33.33, 33.33, -26.66, 26.99,
+                -33.33, 'hvcurveto',
             'endchar'])
 
     def test_setupTable_CFF_round_some(self):
         # only floats 'close enough' are rounded to integer
-        compiler = OutlineOTFCompiler(self.ufo, roundTolerance=0.1)
+        compiler = OutlineOTFCompiler(self.ufo, roundTolerance=0.34)
         otf = compiler.otf = TTFont(sfntVersion="OTTO")
 
         compiler.setupTable_CFF()
         program = self.get_charstring_program(otf, "d")
 
-        # e.g., 26.99 becomes 27, but 150.66 stays as it is
         self.assertProgramEqual(program, [
-            -26, 150.66, 197.32, 'rmoveto',
-            -33.66, 0, -26.67, -27, 0, -33.33, 'rrcurveto',
-            0, -33.33, 26.67, -26.67, 33.66, 0, 'rrcurveto',
-            33.34, 0, 26.65, 26.67, 0, 33.33, 'rrcurveto',
-            0, 33.33, -26.65, 27, -33.34, 0, 'rrcurveto',
+            -26, 150.66, 197, 'rmoveto',
+            -33.66, -27, -27, -33, -33, 27, -27, 33.66, 33.34, 26.65, 27, 33,
+                33, -26.65, 27, -33.34, 'hvcurveto',
             'endchar'])
 
     def test_makeGlyphsBoundingBoxes(self):
