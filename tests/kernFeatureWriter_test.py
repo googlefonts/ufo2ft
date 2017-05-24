@@ -3,7 +3,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import unittest
 from defcon import Font
 
-from ufo2ft.kernFeatureWriter import KernFeatureWriter
+from ufo2ft.featureWriter.kernFeatureWriter import KernFeatureWriter
 
 
 class KernFeatureWriterTest(unittest.TestCase):
@@ -42,4 +42,3 @@ class KernFeatureWriterTest(unittest.TestCase):
 if __name__ == "__main__":
     import sys
     sys.exit(unittest.main())
-
