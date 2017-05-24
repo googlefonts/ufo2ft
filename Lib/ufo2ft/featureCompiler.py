@@ -62,11 +62,15 @@ class FeatureCompiler(object):
         autoFeatures = {}
         if "kern" not in features:
             autoFeatures["kern"] = self.writeFeatures_kern()
-        writeMark = "mark" not in features
-        writeMkmk = "mkmk" not in features
-        if writeMark or writeMkmk:
-            autoFeatures["mark"] = self.writeFeatures_mark(
-                doMark=writeMark, doMkmk=writeMkmk)
+        # the current MarkFeatureWriter writes both mark and mkmk features
+        # with shared markClass definitions; to prevent duplicate glyphs in
+        # markClass, here we write the features only if none of them is alread
+        # present.
+        # TODO: Support updating pre-existing markClass definitions to allow
+        # writing either mark or mkmk features indipendently from each other
+        # https://github.com/googlei18n/fontmake/issues/319
+        if "mark" not in features and "mkmk" not in features:
+            autoFeatures["mark"] = self.writeFeatures_mark()
 
         # write the features
         features = [existing]
