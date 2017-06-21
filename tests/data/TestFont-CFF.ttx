@@ -277,6 +277,12 @@
     </GlobalSubrs>
   </CFF>
 
+  <CUST raw="True">
+    <hexdata>
+      0001beef
+    </hexdata>
+  </CUST>
+
   <GPOS>
     <Version value="0x00010000"/>
     <ScriptList>

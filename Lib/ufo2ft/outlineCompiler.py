@@ -1,5 +1,5 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import tounicode, round
+from fontTools.misc.py23 import tounicode, round, BytesIO
 
 import logging
 import math
@@ -94,6 +94,7 @@ class BaseOutlineCompiler(object):
             self.setupTable_vmtx()
             self.setupTable_vhea()
         self.setupOtherTables()
+        self.importTTX()
 
         return self.otf
 
@@ -752,6 +753,26 @@ class BaseOutlineCompiler(object):
         font if desired.
         """
         pass
+
+    def importTTX(self):
+        """
+        Merge TTX files from data director "com.github.fonttools.ttx"
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the bounds creation
+        in a different way if desired.
+        """
+        import os
+        prefix = "com.github.fonttools.ttx"
+        if not hasattr(self.ufo, "data"):
+            return
+        if not self.ufo.data.fileNames:
+            return
+        for path in self.ufo.data.fileNames:
+            foldername, filename = os.path.split(path)
+            if (foldername == prefix and filename.endswith(".ttx")):
+                fp = BytesIO(self.ufo.data[path])
+                self.otf.importXML(fp)
 
 
 class OutlineOTFCompiler(BaseOutlineCompiler):
