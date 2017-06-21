@@ -108,3 +108,11 @@ data in the info object. These are handled internally with functions.
    :target: https://travis-ci.org/googlei18n/ufo2ft
 .. |PyPI Version| image:: https://img.shields.io/pypi/v/ufo2ft.svg
    :target: https://pypi.org/project/ufo2ft/
+
+
+Merging TTX
+~~~~~~~~~~~
+
+If the UFO data directory has a ``com.github.fonttools.ttx`` folder with TTX
+files ending with ``.ttx``, these will be merged in the generated font.
+The index TTX (generated when using using ``ttx -s``) is not required.
