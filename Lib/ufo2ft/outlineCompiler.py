@@ -989,13 +989,25 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
 
 class OutlineTTFCompiler(BaseOutlineCompiler):
-    """Compile a .ttf font with TrueType outlines."""
+    """Compile a .ttf font with TrueType outlines.
+
+    If cubicConversionError is not specified, the default cu2qu error is
+    used. Currently, this is 1/1000 of the EM, or 0.001 * UPM.
+    If a value is specified, this should also be expressed as a fraction
+    of the UPM (e.g. 0.0005), and not in terms of absolute font units.
+    """
 
     sfntVersion = "\000\001\000\000"
 
     def __init__(self, font, glyphOrder=None, convertCubics=True,
-                 cubicConversionError=2):
+                 cubicConversionError=None):
         super(OutlineTTFCompiler, self).__init__(font, glyphOrder)
+        if convertCubics:
+            unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
+            if cubicConversionError is None:
+                from cu2qu.ufo import DEFAULT_MAX_ERR
+                cubicConversionError = DEFAULT_MAX_ERR
+            cubicConversionError *= unitsPerEm
         self.convertCubics = convertCubics
         self.cubicConversionError = cubicConversionError
 
