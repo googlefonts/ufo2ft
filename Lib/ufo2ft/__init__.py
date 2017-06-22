@@ -51,7 +51,7 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler, mtiFeaFiles=None,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True,
-               convertCubics=True, cubicConversionError=2):
+               convertCubics=True, cubicConversionError=None):
     """Create FontTools TrueType font from a UFO.
 
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
