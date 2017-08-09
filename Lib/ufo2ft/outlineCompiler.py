@@ -302,11 +302,17 @@ class BaseOutlineCompiler(object):
         # Build name records
         familyName = getAttrWithFallback(font.info, "styleMapFamilyName")
         styleName = getAttrWithFallback(font.info, "styleMapStyleName").title()
+        preferredFamilyName = getAttrWithFallback(
+            font.info, "openTypeNamePreferredFamilyName")
+        preferredSubfamilyName = getAttrWithFallback(
+            font.info, "openTypeNamePreferredSubfamilyName")
 
-        # If name ID 2 is "Regular", it can be omitted from name ID 4
-        fullName = familyName
-        if styleName != "Regular":
-            fullName += " %s" % styleName
+        # The full name (id 4) is a combination of preferred family and
+        # subfamily names. If the latter is "Regular", it can be omitted.
+        # NOTE Glyphs.app always keeps "Regular" in the full name...
+        fullName = preferredFamilyName
+        if preferredSubfamilyName != "Regular":
+            fullName += " %s" % preferredSubfamilyName
 
         nameVals = {
             0: getAttrWithFallback(font.info, "copyright"),
@@ -324,10 +330,8 @@ class BaseOutlineCompiler(object):
             12: getAttrWithFallback(font.info, "openTypeNameDesignerURL"),
             13: getAttrWithFallback(font.info, "openTypeNameLicense"),
             14: getAttrWithFallback(font.info, "openTypeNameLicenseURL"),
-            16: getAttrWithFallback(
-                font.info, "openTypeNamePreferredFamilyName"),
-            17: getAttrWithFallback(
-                font.info, "openTypeNamePreferredSubfamilyName"),
+            16: preferredFamilyName,
+            17: preferredSubfamilyName,
         }
 
         # don't add typographic names if they are the same as the legacy ones
