@@ -306,13 +306,7 @@ class BaseOutlineCompiler(object):
             font.info, "openTypeNamePreferredFamilyName")
         preferredSubfamilyName = getAttrWithFallback(
             font.info, "openTypeNamePreferredSubfamilyName")
-
-        # The full name (id 4) is a combination of preferred family and
-        # subfamily names. If the latter is "Regular", it can be omitted.
-        # NOTE Glyphs.app always keeps "Regular" in the full name...
-        fullName = preferredFamilyName
-        if preferredSubfamilyName != "Regular":
-            fullName += " %s" % preferredSubfamilyName
+        fullName = "%s %s" % (preferredFamilyName, preferredSubfamilyName)
 
         nameVals = {
             0: getAttrWithFallback(font.info, "copyright"),
