@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from fontTools.pens.boundsPen import BoundsPen
+from fontTools.pens.boundsPen import BoundsPen, ControlBoundsPen
 from ufoLib import UFOReader, UFOWriter
 from ufoLib.pointPen import PointToSegmentPen, SegmentToPointPen
 import os
@@ -63,7 +63,7 @@ class Contour(object):
 
 
 class Glyph(object):
-    def __init__(self, name, parent, anchorClass=None):
+    def __init__(self, name=None, parent=None, anchorClass=None):
         self.name = name
         self.parent = parent
         self.layer = None
@@ -81,6 +81,7 @@ class Glyph(object):
         self.image = None
         self.note = None
         self.cached_bounds = None
+        self.cached_controlPointsBounds = None
 
         if anchorClass is None:
             self.anchorClass = Anchor
@@ -117,12 +118,14 @@ class Glyph(object):
     def addComponent(self, base, transform, identifier=None):
         self.components.append(Component(base, transform))
         self.cached_bounds = None
+        self.cached_controlPointsBounds = None
 
     def addPoint(
             self, pt, segmentType=None, smooth=False, name=None,
             identifier=None):
         self.contours[-1].addPoint(pt + (segmentType, smooth))
         self.cached_bounds = None
+        self.cached_controlPointsBounds = None
 
     def beginPath(self, identifier=None):
         self.contours.append(Contour())
@@ -153,6 +156,15 @@ class Glyph(object):
         return self.cached_bounds
 
     bounds = property(get_bounds)
+
+    def _get_controlPointBounds(self):
+        if self.cached_controlPointsBounds is None:
+            pen = ControlBoundsPen(self.parent)
+            self.draw(pen)
+            self.cached_controlPointsBounds = pen.bounds
+        return self.cached_controlPointsBounds
+
+    controlPointBounds = property(_get_controlPointBounds)
 
     def get_left_margin(self):
         bounds = self.bounds
