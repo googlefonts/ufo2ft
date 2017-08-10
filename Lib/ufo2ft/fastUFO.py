@@ -229,6 +229,7 @@ class Font(object):
         self.lib = {}
         self.layers = {}
         self._defaultLayerName = DEFAULT_LAYER_NAME
+        self.data = DataSet(font=self)
 
         if path is not None:
             reader = UFOReader(path)
@@ -246,6 +247,7 @@ class Font(object):
                     glyph = self.layers[layerName].newGlyph(name)
                     glyphset.readGlyph(
                         glyphName=name, glyphObject=glyph, pointPen=glyph)
+            self.data.fileNames = reader.getDataDirectoryListing()
         if self._defaultLayerName not in self.layers:
             self.newLayer(self._defaultLayerName)
 
@@ -290,6 +292,7 @@ class Font(object):
                 glyphset.writeGlyph(name, glyph, glyph.drawPoints)
             glyphset.writeContents()
         writer.writeLayerContents()
+        self.data.save(writer, saveAs=False)
 
 
 class Layer(object):
@@ -335,3 +338,51 @@ class Anchor(Mapping):
 
     def __len__(self):
         return len(a for a in self._attrs if a in self)
+
+
+class DataSet(object):
+
+    def __init__(self, font=None):
+        if font is not None:
+            self._font = weakref.ref(font)
+        else:
+            self._font = None
+        self._data = {}
+
+    def getParent(self):
+        return self.font
+
+    def _get_font(self):
+        if self._font is not None:
+            return self._font()
+
+    font = property(_get_font)
+
+    @property
+    def fileNames(self):
+        return list(self._data.keys())
+
+    @fileNames.setter
+    def fileNames(self, fileNames):
+        for fileName in fileNames:
+            self._data[fileName] = None
+
+    def __getitem__(self, fileName):
+        if self._data[fileName] is None:
+            path = self.font.path
+            reader = UFOReader(path)
+            path = os.path.join("data", fileName)
+            self._data[fileName] = reader.readBytesFromPath(path)
+        return self._data[fileName]
+
+    def __setitem__(self, fileName, data):
+        self._data[fileName] = data
+
+    def __delitem__(self, fileName):
+        del self._data[fileName]
+
+    def save(self, writer, saveAs=False):
+        for fileName in self.fileNames:
+            data = self[fileName]
+            path = os.path.join("data", fileName)
+            writer.writeBytesToPath(path, data)
