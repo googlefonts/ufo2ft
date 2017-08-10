@@ -249,7 +249,7 @@
       OpenType name Table Unique ID
     </namerecord>
     <namerecord nameID="4" platformID="3" platEncID="1" langID="0x409">
-      Some Font Regular (Style Map Family Name)
+      Some Font (Preferred Family Name) Regular (Preferred Subfamily Name)
     </namerecord>
     <namerecord nameID="5" platformID="3" platEncID="1" langID="0x409">
       OpenType name Table Version
