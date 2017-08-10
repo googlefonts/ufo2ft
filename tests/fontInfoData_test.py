@@ -45,7 +45,7 @@ class GetAttrWithFallbackTest(unittest.TestCase):
 
         self.assertEqual(
             getAttrWithFallback(info, "openTypeNameUniqueID"),
-            "Version 1.001;NONE;Family Name Style Name Regular")
+            "1.001;NONE;FamilyName-StyleName")
 
         self.assertEqual(getAttrWithFallback(info, "postscriptSlantAngle"), 0)
         self.assertEqual(

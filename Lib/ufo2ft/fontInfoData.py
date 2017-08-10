@@ -84,13 +84,12 @@ def openTypeNameVersionFallback(info):
 
 def openTypeNameUniqueIDFallback(info):
     """
-    Fallback to *openTypeNameVersion;openTypeOS2VendorID;styleMapFamilyName styleMapStyleName*.
+    Fallback to *openTypeNameVersion;openTypeOS2VendorID;postscriptFontName*.
     """
-    version = getAttrWithFallback(info, "openTypeNameVersion")
+    version = getAttrWithFallback(info, "openTypeNameVersion").replace("Version ", "")
     vendor = getAttrWithFallback(info, "openTypeOS2VendorID")
-    familyName = getAttrWithFallback(info, "styleMapFamilyName")
-    styleName = getAttrWithFallback(info, "styleMapStyleName").title()
-    return "%s;%s;%s %s" % (version, vendor, familyName, styleName)
+    fontName = getAttrWithFallback(info, "postscriptFontName")
+    return "%s;%s;%s" % (version, vendor, fontName)
 
 def openTypeNamePreferredFamilyNameFallback(info):
     """
