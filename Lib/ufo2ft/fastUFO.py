@@ -205,6 +205,7 @@ class Info(object):
             'openTypeHheaLineGap openTypeOS2TypoAscender '
             'openTypeOS2TypoDescender openTypeOS2TypoLineGap '
             'openTypeOS2WinAscent openTypeOS2WinDescent '
+            'openTypeOS2WidthClass openTypeHeadCreated '
             'openTypeOS2VendorID postscriptDefaultCharacter '
             'postscriptForceBold postscriptIsFixedPitch '
             'postscriptWindowsCharacterSet trademark unitsPerEm '
