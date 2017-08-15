@@ -192,6 +192,7 @@ class Glyph(object):
 class Info(object):
     def __init__(self):
         attrs = (
+            'familyName styleName '
             'guidelines note openTypeGaspRangeRecords openTypeHeadFlags '
             'openTypeNameDescription openTypeNameLicense '
             'openTypeNameLicenseURL openTypeNameRecords '
