@@ -272,6 +272,9 @@ class Font(object):
     def keys(self):
         return self.layers[self._defaultLayerName].keys()
 
+    def __len__(self):
+        return len(self.keys())
+
     def newGlyph(self, name):
         layer = self.layers[self._defaultLayerName]
         glyph = layer.newGlyph(name)
