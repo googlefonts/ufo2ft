@@ -194,7 +194,8 @@ class Info(object):
         attrs = (
             'guidelines note openTypeGaspRangeRecords openTypeHeadFlags '
             'openTypeNameDescription openTypeNameLicense '
-            'openTypeNameLicenseURL openTypeNameRecords openTypeNameSampleText '
+            'openTypeNameLicenseURL openTypeNameRecords '
+            'openTypeNameSampleText '
             'openTypeNameUniqueID openTypeNameVersion '
             'openTypeNameWWSFamilyName openTypeNameWWSSubfamilyName '
             'openTypeOS2CodePageRanges openTypeOS2FamilyClass '
