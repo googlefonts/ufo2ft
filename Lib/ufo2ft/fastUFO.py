@@ -281,6 +281,18 @@ class Font(object):
         self.layers[name] = layer
         return layer
 
+    @property
+    def glyphOrder(self):
+        return self.lib.get('public.glyphOrder', [])
+
+    @glyphOrder.setter
+    def glyphOrder(self, value):
+        if value is None or len(value) == 0:
+            if 'public.glyphOrder' in self.lib:
+                del self.lib['public.glyphOrder']
+            return
+        self.lib['public.glyphOrder'] = value
+
     def save(self, path=None, formatVersion=3):
         if path is not None:
             self.path = path
