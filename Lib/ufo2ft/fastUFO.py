@@ -264,6 +264,9 @@ class Font(object):
         for name in self.keys():
             yield self.layers[self._defaultLayerName][name]
 
+    def __delitem__(self, name):
+        del self.layers[self._defaultLayerName][name]
+
     def keys(self):
         return self.layers[self._defaultLayerName].keys()
 
@@ -311,6 +314,9 @@ class Layer(object):
     def __iter__(self):
         for name in self.keys():
             yield self.glyphs[name]
+
+    def __delitem__(self, name):
+        del self.glyphs[name]
 
     def keys(self):
         return self.glyphs.keys()
