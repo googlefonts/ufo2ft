@@ -240,7 +240,7 @@ class BaseOutlineCompiler(object):
                 fullFontRevision, head.fontRevision)
 
         # upm
-        head.unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
+        head.unitsPerEm = round(getAttrWithFallback(font.info, "unitsPerEm"))
 
         # times
         head.created = dateStringToTimeValue(getAttrWithFallback(font.info, "openTypeHeadCreated")) - mac_epoch_diff
