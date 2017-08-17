@@ -754,7 +754,7 @@ class BaseOutlineCompiler(object):
 
     def importTTX(self):
         """
-        Merge TTX files from data director "com.github.fonttools.ttx"
+        Merge TTX files from data directory "com.github.fonttools.ttx"
 
         **This should not be called externally.** Subclasses
         may override this method to handle the bounds creation
