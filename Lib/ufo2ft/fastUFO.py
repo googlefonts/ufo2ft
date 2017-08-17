@@ -22,6 +22,7 @@ try:
     from collections.abc import Mapping  # python >= 3.3
 except ImportError:
     from collections import Mapping
+from collections import OrderedDict
 
 DEFAULT_LAYER_NAME = 'public.default'
 TRANSFORMATION_INFO = [
@@ -230,8 +231,7 @@ class Font(object):
         self.groups = {}
         self.kerning = {}
         self.lib = {}
-        self.layers = {}
-        self._defaultLayerName = DEFAULT_LAYER_NAME
+        self._layers = LayerSet(font=self)
         self.data = DataSet(font=self)
 
         if path is not None:
@@ -241,7 +241,7 @@ class Font(object):
             self.groups = reader.readGroups()
             self.kerning = reader.readKerning()
             self.lib = reader.readLib()
-            self._defaultLayerName = reader.getDefaultLayerName()
+            defaultLayerName = reader.getDefaultLayerName()
             for layerName in reader.getLayerNames():
                 glyphset = reader.getGlyphSet(layerName)
                 if layerName not in self.layers:
@@ -250,40 +250,42 @@ class Font(object):
                     glyph = self.layers[layerName].newGlyph(name)
                     glyphset.readGlyph(
                         glyphName=name, glyphObject=glyph, pointPen=glyph)
+            self._layers.defaultLayer = self._layers[defaultLayerName]
             self.data.fileNames = reader.getDataDirectoryListing()
-        if self._defaultLayerName not in self.layers:
-            self.newLayer(self._defaultLayerName)
+        if self._layers.defaultLayer is None:
+            layer = self.newLayer(DEFAULT_LAYER_NAME)
+            self._layers.defaultLayer = layer
 
         self.kerningGroupConversionRenameMaps = None
 
     def __contains__(self, name):
-        return name in self.layers[self._defaultLayerName]
+        return name in self._layers.defaultLayer
 
     def __getitem__(self, name):
-        return self.layers[self._defaultLayerName][name]
+        return self.layers.defaultLayer[name]
 
     def __iter__(self):
         for name in self.keys():
-            yield self.layers[self._defaultLayerName][name]
+            yield self.layers.defaultLayer[name]
 
     def __delitem__(self, name):
-        del self.layers[self._defaultLayerName][name]
+        del self.layers.defaultLayer[name]
 
     def keys(self):
-        return self.layers[self._defaultLayerName].keys()
+        return self.layers.defaultLayer.keys()
 
     def __len__(self):
         return len(self.keys())
 
     def newGlyph(self, name):
-        layer = self.layers[self._defaultLayerName]
-        glyph = layer.newGlyph(name)
-        return glyph
+        return self.layers.defaultLayer.newGlyph(name)
 
     def newLayer(self, name):
-        layer = Layer(name, self)
-        self.layers[name] = layer
-        return layer
+        return self.layers.newLayer(name)
+
+    @property
+    def layers(self):
+        return self._layers
 
     @property
     def glyphOrder(self):
@@ -306,21 +308,98 @@ class Font(object):
         writer.writeInfo(self.info)
         writer.writeKerning(self.kerning)
         writer.writeLib(self.lib)
-        for layerName in self.layers:
-            defaultLayer = (layerName == self._defaultLayerName)
-            glyphset = writer.getGlyphSet(layerName, defaultLayer)
-            for name, glyph in sorted(self.layers[layerName].glyphs.items()):
-                glyphset.writeGlyph(name, glyph, glyph.drawPoints)
-            glyphset.writeContents()
-        writer.writeLayerContents()
+        self.layers.save(writer)
         self.data.save(writer, saveAs=False)
 
 
+class LayerSet(object):
+    def __init__(self, font):
+        self._layers = OrderedDict()
+        self._defaultLayer = None
+        self._defaultLayerName = None
+        if font is not None:
+            self._font = weakref.ref(font)
+        else:
+            self._font = None
+
+    @property
+    def font(self):
+        if self._font is not None:
+            return self._font()
+
+    @property
+    def defaultLayer(self):
+        return self._defaultLayer
+
+    @defaultLayer.setter
+    def defaultLayer(self, layer):
+        self._defaultLayer = layer
+        self._defaultLayerName = layer.name
+
+    @property
+    def layerOrder(self):
+        return list(self._layers.keys())
+
+    @layerOrder.setter
+    def layerOrder(self, order):
+        assert set(order) == set(self._layers)
+        new_layers = OrderedDict()
+        for layer_name in order:
+            new_layers[layer_name] = self._layers[layer_name]
+        self._layers = new_layers
+
+    def newLayer(self, name):
+        layer = Layer(name, self)
+        self._layers[name] = layer
+        return layer
+
+    def __iter__(self):
+        for name in self.layerOrder:
+            yield self[name]
+
+    def __getitem__(self, name):
+        if name is None:
+            name = self._defaultLayerName
+        return self._layers[name]
+
+    def __delitem__(self, name):
+        if name is None:
+            name = self._defaultLayerName
+        if name not in self:
+            raise KeyError('%s not in layers' % (name))
+        del self._layers[name]
+
+    def __len__(self):
+        return len(self._layers)
+
+    def __contains__(self, name):
+        if name is None:
+            name = self._defaultLayerName
+        return name in self._layers
+
+    def save(self, writer):
+        for layerName in self._layers:
+            defaultLayer = (layerName == self._defaultLayerName)
+            glyphset = writer.getGlyphSet(layerName, defaultLayer)
+            for name, glyph in sorted(self._layers[layerName].glyphs.items()):
+                glyphset.writeGlyph(name, glyph, glyph.drawPoints)
+            glyphset.writeContents()
+        writer.writeLayerContents()
+
+
 class Layer(object):
-    def __init__(self, name, parent):
+    def __init__(self, name, layerSet):
         self.name = name
-        self.parent = parent
+        if layerSet is not None:
+            self._layerSet = weakref.ref(layerSet)
+        else:
+            self._layerSet = None
         self.glyphs = {}
+
+    @property
+    def layerSet(self):
+        if self._layerSet is not None:
+            return self._layerSet()
 
     def __contains__(self, name):
         return name in self.glyphs
@@ -341,7 +420,7 @@ class Layer(object):
     def newGlyph(self, name):
         glyph = Glyph(name, self)
         glyph.layer = self
-        glyph.font = self.parent
+        glyph.font = self.layerSet.font
         self.glyphs[name] = glyph
         return glyph
 
