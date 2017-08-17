@@ -11,7 +11,7 @@ from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
 
-__version__ = "0.5.4.dev0"
+__version__ = "0.6.0.dev0"
 log = logging.getLogger(__name__)
 
 
