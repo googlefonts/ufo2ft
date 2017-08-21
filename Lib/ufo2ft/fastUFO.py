@@ -299,6 +299,14 @@ class Font(object):
             return
         self.lib['public.glyphOrder'] = value
 
+    @property
+    def guidelines(self):
+        return self.info.guidelines
+
+    @guidelines.setter
+    def guidelines(self, guides):
+        self.info.guidelines = guides
+
     def save(self, path=None, formatVersion=3):
         if path is not None:
             self.path = path
