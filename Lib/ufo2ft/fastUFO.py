@@ -194,7 +194,7 @@ class Info(object):
     def __init__(self):
         attrs = (
             'familyName styleName '
-            'guidelines note openTypeGaspRangeRecords openTypeHeadFlags '
+            'note openTypeGaspRangeRecords openTypeHeadFlags '
             'openTypeNameDescription openTypeNameLicense '
             'openTypeNameLicenseURL openTypeNameRecords '
             'openTypeNameSampleText '
@@ -211,11 +211,16 @@ class Info(object):
             'postscriptForceBold postscriptIsFixedPitch '
             'postscriptWindowsCharacterSet trademark unitsPerEm '
             'postscriptUnderlineThickness postscriptUnderlinePosition '
-            'postscriptFamilyBlues postscriptFamilyOtherBlues'
             'openTypeOS2WidthClass openTypeOS2WeightClass'
         ).split()
         for attr in attrs:
             setattr(self, attr, None)
+        array_attrs = (
+            'guidelines postscriptFamilyBlues postscriptFamilyOtherBlues '
+            'postscriptStemSnapH postscriptStemSnapV'
+        ).split()
+        for attr in array_attrs:
+            setattr(self, attr, [])
 
 
 class Font(object):
