@@ -3,10 +3,10 @@
 	<unicode hex="0061"/>
 	<advance width="388"/>
 	<outline>
-		<contour>
-			<point x="66" y="0" type="line"/>
-			<point x="194" y="510" type="line"/>
-			<point x="322" y="0" type="line"/>
+		<contour identifier="T8s8JabQwz">
+			<point x="66" y="0" type="line" identifier="umpOAKb0oN"/>
+			<point x="194" y="510" type="line" identifier="qnhTEcN6fg"/>
+			<point x="322" y="0" type="line" identifier="RTPDhya9iK"/>
 		</contour>
 	</outline>
 </glyph>

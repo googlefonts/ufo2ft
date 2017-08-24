@@ -13,9 +13,26 @@
 # limitations under the License.
 
 
-from fontTools.pens.boundsPen import BoundsPen
+from fontTools.pens.boundsPen import BoundsPen, ControlBoundsPen
 from ufoLib import UFOReader, UFOWriter
 from ufoLib.pointPen import PointToSegmentPen, SegmentToPointPen
+import os
+import weakref
+try:
+    from collections.abc import Mapping  # python >= 3.3
+except ImportError:
+    from collections import Mapping
+from collections import OrderedDict
+
+DEFAULT_LAYER_NAME = 'public.default'
+TRANSFORMATION_INFO = [
+    ('xScale', 1),
+    ('xyScale', 0),
+    ('yxScale', 0),
+    ('yScale', 1),
+    ('xOffset', 0),
+    ('yOffset', 0)
+]
 
 
 class Features(object):
@@ -47,9 +64,10 @@ class Contour(object):
 
 
 class Glyph(object):
-    def __init__(self, name, parent):
+    def __init__(self, name=None, parent=None, anchorClass=None):
         self.name = name
         self.parent = parent
+        self.layer = None
 
         self.anchors = []
         self.components = []
@@ -64,6 +82,12 @@ class Glyph(object):
         self.image = None
         self.note = None
         self.cached_bounds = None
+        self.cached_controlPointsBounds = None
+
+        if anchorClass is None:
+            self.anchorClass = Anchor
+        else:
+            self.anchorClass = anchorClass
 
     def __getitem__(self, index):
         return self.contours[index]
@@ -89,15 +113,20 @@ class Glyph(object):
     def clearGuidelines(self):
         self.guidelines = []
 
+    def appendAnchor(self, anchor):
+        self.anchors.append(anchor)
+
     def addComponent(self, base, transform, identifier=None):
         self.components.append(Component(base, transform))
         self.cached_bounds = None
+        self.cached_controlPointsBounds = None
 
     def addPoint(
             self, pt, segmentType=None, smooth=False, name=None,
             identifier=None):
         self.contours[-1].addPoint(pt + (segmentType, smooth))
         self.cached_bounds = None
+        self.cached_controlPointsBounds = None
 
     def beginPath(self, identifier=None):
         self.contours.append(Contour())
@@ -129,6 +158,15 @@ class Glyph(object):
 
     bounds = property(get_bounds)
 
+    def _get_controlPointBounds(self):
+        if self.cached_controlPointsBounds is None:
+            pen = ControlBoundsPen(self.parent)
+            self.draw(pen)
+            self.cached_controlPointsBounds = pen.bounds
+        return self.cached_controlPointsBounds
+
+    controlPointBounds = property(_get_controlPointBounds)
+
     def get_left_margin(self):
         bounds = self.bounds
         return bounds[0] if bounds is not None else None
@@ -155,19 +193,35 @@ class Glyph(object):
 class Info(object):
     def __init__(self):
         attrs = (
-            'guidelines note openTypeGaspRangeRecords openTypeHeadFlags '
-            'openTypeNameDescription openTypeNameLicense '
-            'openTypeNameLicenseURL openTypeNameRecords openTypeNameSampleText '
-            'openTypeNameUniqueID openTypeNameVersion '
-            'openTypeNameWWSFamilyName openTypeNameWWSSubfamilyName '
-            'openTypeOS2CodePageRanges openTypeOS2FamilyClass '
-            'openTypeOS2Panose openTypeOS2Type openTypeOS2UnicodeRanges '
-            'openTypeOS2VendorID postscriptDefaultCharacter '
-            'postscriptForceBold postscriptIsFixedPitch '
-            'postscriptWindowsCharacterSet trademark unitsPerEm'
-        ).split()
+            'familyName', 'styleName', 'note', 'openTypeGaspRangeRecords',
+            'openTypeHeadFlags', 'openTypeNameDescription',
+            'openTypeNameLicense', 'openTypeNameLicenseURL',
+            'openTypeNameRecords', 'openTypeNameSampleText',
+            'openTypeNameUniqueID', 'openTypeNameVersion',
+            'openTypeNameWWSFamilyName', 'openTypeNameWWSSubfamilyName',
+            'openTypeOS2CodePageRanges', 'openTypeOS2FamilyClass',
+            'openTypeOS2Panose', 'openTypeOS2Type', 'openTypeOS2UnicodeRanges',
+            'openTypeOS2Selection', 'openTypeHheaAscender',
+            'openTypeHheaDescender', 'openTypeHheaLineGap',
+            'openTypeOS2TypoAscender', 'openTypeOS2TypoDescender',
+            'openTypeOS2TypoLineGap', 'openTypeOS2WinAscent',
+            'openTypeOS2WinDescent', 'openTypeOS2WidthClass',
+            'openTypeHeadCreated', 'openTypeOS2VendorID',
+            'postscriptDefaultCharacter', 'postscriptForceBold',
+            'postscriptIsFixedPitch', 'postscriptWindowsCharacterSet',
+            'trademark', 'unitsPerEm', 'postscriptUnderlineThickness',
+            'postscriptUnderlinePosition', 'openTypeOS2WidthClass',
+            'openTypeOS2WeightClass'
+        )
         for attr in attrs:
             setattr(self, attr, None)
+        array_attrs = (
+            'guidelines', 'postscriptFamilyBlues',
+            'postscriptFamilyOtherBlues', 'postscriptStemSnapH',
+            'postscriptStemSnapV'
+        )
+        for attr in array_attrs:
+            setattr(self, attr, [])
 
 
 class Font(object):
@@ -183,7 +237,8 @@ class Font(object):
         self.groups = {}
         self.kerning = {}
         self.lib = {}
-        self.glyphset = {}
+        self._layers = LayerSet(font=self)
+        self.data = DataSet(font=self)
 
         if path is not None:
             reader = UFOReader(path)
@@ -192,32 +247,71 @@ class Font(object):
             self.groups = reader.readGroups()
             self.kerning = reader.readKerning()
             self.lib = reader.readLib()
-            glyphset = reader.getGlyphSet()
-            for name in glyphset.keys():
-                glyph = Glyph(name, self)
-                glyphset.readGlyph(
-                    glyphName=name, glyphObject=glyph, pointPen=glyph)
-                self.glyphset[name] = glyph
+            defaultLayerName = reader.getDefaultLayerName()
+            for layerName in reader.getLayerNames():
+                glyphset = reader.getGlyphSet(layerName)
+                if layerName not in self.layers:
+                    self.newLayer(layerName)
+                for name in glyphset.keys():
+                    glyph = self.layers[layerName].newGlyph(name)
+                    glyphset.readGlyph(
+                        glyphName=name, glyphObject=glyph, pointPen=glyph)
+            self._layers.defaultLayer = self._layers[defaultLayerName]
+            self.data.fileNames = reader.getDataDirectoryListing()
+        if self._layers.defaultLayer is None:
+            layer = self.newLayer(DEFAULT_LAYER_NAME)
+            self._layers.defaultLayer = layer
 
         self.kerningGroupConversionRenameMaps = None
 
     def __contains__(self, name):
-        return name in self.glyphset
+        return name in self._layers.defaultLayer
 
     def __getitem__(self, name):
-        return self.glyphset[name]
+        return self.layers.defaultLayer[name]
 
     def __iter__(self):
         for name in self.keys():
-            yield self.glyphset[name]
+            yield self.layers.defaultLayer[name]
+
+    def __delitem__(self, name):
+        del self.layers.defaultLayer[name]
 
     def keys(self):
-        return self.glyphset.keys()
+        return self.layers.defaultLayer.keys()
+
+    def __len__(self):
+        return len(self.keys())
 
     def newGlyph(self, name):
-        glyph = Glyph(name, self)
-        self.glyphset[name] = glyph
-        return glyph
+        return self.layers.defaultLayer.newGlyph(name)
+
+    def newLayer(self, name):
+        return self.layers.newLayer(name)
+
+    @property
+    def layers(self):
+        return self._layers
+
+    @property
+    def glyphOrder(self):
+        return self.lib.get('public.glyphOrder', [])
+
+    @glyphOrder.setter
+    def glyphOrder(self, value):
+        if value is None or len(value) == 0:
+            if 'public.glyphOrder' in self.lib:
+                del self.lib['public.glyphOrder']
+            return
+        self.lib['public.glyphOrder'] = value
+
+    @property
+    def guidelines(self):
+        return self.info.guidelines
+
+    @guidelines.setter
+    def guidelines(self, guides):
+        self.info.guidelines = guides
 
     def save(self, path=None, formatVersion=3):
         if path is not None:
@@ -228,8 +322,184 @@ class Font(object):
         writer.writeInfo(self.info)
         writer.writeKerning(self.kerning)
         writer.writeLib(self.lib)
-        glyphset = writer.getGlyphSet()
-        for name, glyph in sorted(self.glyphset.items()):
-            glyphset.writeGlyph(name, glyph, glyph.drawPoints)
-        glyphset.writeContents()
+        self.layers.save(writer)
+        self.data.save(writer, saveAs=False)
+
+
+class LayerSet(object):
+    def __init__(self, font):
+        self._layers = OrderedDict()
+        self._defaultLayer = None
+        self._defaultLayerName = None
+        if font is not None:
+            self._font = weakref.ref(font)
+        else:
+            self._font = None
+
+    @property
+    def font(self):
+        if self._font is not None:
+            return self._font()
+
+    @property
+    def defaultLayer(self):
+        return self._defaultLayer
+
+    @defaultLayer.setter
+    def defaultLayer(self, layer):
+        self._defaultLayer = layer
+        self._defaultLayerName = layer.name
+
+    @property
+    def layerOrder(self):
+        return list(self._layers.keys())
+
+    @layerOrder.setter
+    def layerOrder(self, order):
+        assert set(order) == set(self._layers)
+        new_layers = OrderedDict()
+        for layer_name in order:
+            new_layers[layer_name] = self._layers[layer_name]
+        self._layers = new_layers
+
+    def newLayer(self, name):
+        layer = Layer(name, self)
+        self._layers[name] = layer
+        return layer
+
+    def __iter__(self):
+        for name in self.layerOrder:
+            yield self[name]
+
+    def __getitem__(self, name):
+        if name is None:
+            name = self._defaultLayerName
+        return self._layers[name]
+
+    def __delitem__(self, name):
+        if name is None:
+            name = self._defaultLayerName
+        if name not in self:
+            raise KeyError('%s not in layers' % (name))
+        del self._layers[name]
+
+    def __len__(self):
+        return len(self._layers)
+
+    def __contains__(self, name):
+        if name is None:
+            name = self._defaultLayerName
+        return name in self._layers
+
+    def save(self, writer):
+        for layerName in self._layers:
+            defaultLayer = (layerName == self._defaultLayerName)
+            glyphset = writer.getGlyphSet(layerName, defaultLayer)
+            for name, glyph in sorted(self._layers[layerName].glyphs.items()):
+                glyphset.writeGlyph(name, glyph, glyph.drawPoints)
+            glyphset.writeContents()
         writer.writeLayerContents()
+
+
+class Layer(object):
+    def __init__(self, name, layerSet):
+        self.name = name
+        if layerSet is not None:
+            self._layerSet = weakref.ref(layerSet)
+        else:
+            self._layerSet = None
+        self.glyphs = {}
+
+    @property
+    def layerSet(self):
+        if self._layerSet is not None:
+            return self._layerSet()
+
+    def __contains__(self, name):
+        return name in self.glyphs
+
+    def __getitem__(self, name):
+        return self.glyphs[name]
+
+    def __iter__(self):
+        for name in self.keys():
+            yield self.glyphs[name]
+
+    def __delitem__(self, name):
+        del self.glyphs[name]
+
+    def keys(self):
+        return self.glyphs.keys()
+
+    def newGlyph(self, name):
+        glyph = Glyph(name, self)
+        glyph.layer = self
+        glyph.font = self.layerSet.font
+        self.glyphs[name] = glyph
+        return glyph
+
+
+class Anchor(Mapping):
+    _attrs = ['x', 'y', 'name', 'color', 'identifier']
+
+    def __init__(self, anchorDict):
+        for attr in self._attrs:
+            setattr(self, attr, anchorDict.get(attr))
+
+    def __getitem__(self, name):
+        return getattr(self, name, None)
+
+    def __iter__(self):
+        for key in self._attrs:
+            yield key
+
+    def __len__(self):
+        return len(a for a in self._attrs if a in self)
+
+
+class DataSet(object):
+
+    def __init__(self, font=None):
+        if font is not None:
+            self._font = weakref.ref(font)
+        else:
+            self._font = None
+        self._data = {}
+
+    def getParent(self):
+        return self.font
+
+    def _get_font(self):
+        if self._font is not None:
+            return self._font()
+
+    font = property(_get_font)
+
+    @property
+    def fileNames(self):
+        return list(self._data.keys())
+
+    @fileNames.setter
+    def fileNames(self, fileNames):
+        for fileName in fileNames:
+            self._data[fileName] = None
+
+    def __getitem__(self, fileName):
+        if self._data[fileName] is None:
+            path = self.font.path
+            reader = UFOReader(path)
+            path = os.path.join("data", fileName)
+            self._data[fileName] = reader.readBytesFromPath(path)
+        return self._data[fileName]
+
+    def __setitem__(self, fileName, data):
+        self._data[fileName] = data
+
+    def __delitem__(self, fileName):
+        del self._data[fileName]
+
+    def save(self, writer, saveAs=False):
+        for fileName in self.fileNames:
+            data = self[fileName]
+            path = os.path.join("data", fileName)
+            writer.writeBytesToPath(path, data)
