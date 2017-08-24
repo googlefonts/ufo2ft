@@ -193,32 +193,33 @@ class Glyph(object):
 class Info(object):
     def __init__(self):
         attrs = (
-            'familyName styleName '
-            'note openTypeGaspRangeRecords openTypeHeadFlags '
-            'openTypeNameDescription openTypeNameLicense '
-            'openTypeNameLicenseURL openTypeNameRecords '
-            'openTypeNameSampleText '
-            'openTypeNameUniqueID openTypeNameVersion '
-            'openTypeNameWWSFamilyName openTypeNameWWSSubfamilyName '
-            'openTypeOS2CodePageRanges openTypeOS2FamilyClass '
-            'openTypeOS2Panose openTypeOS2Type openTypeOS2UnicodeRanges '
-            'openTypeOS2Selection openTypeHheaAscender openTypeHheaDescender '
-            'openTypeHheaLineGap openTypeOS2TypoAscender '
-            'openTypeOS2TypoDescender openTypeOS2TypoLineGap '
-            'openTypeOS2WinAscent openTypeOS2WinDescent '
-            'openTypeOS2WidthClass openTypeHeadCreated '
-            'openTypeOS2VendorID postscriptDefaultCharacter '
-            'postscriptForceBold postscriptIsFixedPitch '
-            'postscriptWindowsCharacterSet trademark unitsPerEm '
-            'postscriptUnderlineThickness postscriptUnderlinePosition '
-            'openTypeOS2WidthClass openTypeOS2WeightClass'
-        ).split()
+            'familyName', 'styleName', 'note', 'openTypeGaspRangeRecords',
+            'openTypeHeadFlags', 'openTypeNameDescription',
+            'openTypeNameLicense', 'openTypeNameLicenseURL',
+            'openTypeNameRecords', 'openTypeNameSampleText',
+            'openTypeNameUniqueID', 'openTypeNameVersion',
+            'openTypeNameWWSFamilyName', 'openTypeNameWWSSubfamilyName',
+            'openTypeOS2CodePageRanges', 'openTypeOS2FamilyClass',
+            'openTypeOS2Panose', 'openTypeOS2Type', 'openTypeOS2UnicodeRanges',
+            'openTypeOS2Selection', 'openTypeHheaAscender',
+            'openTypeHheaDescender', 'openTypeHheaLineGap',
+            'openTypeOS2TypoAscender', 'openTypeOS2TypoDescender',
+            'openTypeOS2TypoLineGap', 'openTypeOS2WinAscent',
+            'openTypeOS2WinDescent', 'openTypeOS2WidthClass',
+            'openTypeHeadCreated', 'openTypeOS2VendorID',
+            'postscriptDefaultCharacter', 'postscriptForceBold',
+            'postscriptIsFixedPitch', 'postscriptWindowsCharacterSet',
+            'trademark', 'unitsPerEm', 'postscriptUnderlineThickness',
+            'postscriptUnderlinePosition', 'openTypeOS2WidthClass',
+            'openTypeOS2WeightClass'
+        )
         for attr in attrs:
             setattr(self, attr, None)
         array_attrs = (
-            'guidelines postscriptFamilyBlues postscriptFamilyOtherBlues '
-            'postscriptStemSnapH postscriptStemSnapV'
-        ).split()
+            'guidelines', 'postscriptFamilyBlues',
+            'postscriptFamilyOtherBlues', 'postscriptStemSnapH',
+            'postscriptStemSnapV'
+        )
         for attr in array_attrs:
             setattr(self, attr, [])
 
