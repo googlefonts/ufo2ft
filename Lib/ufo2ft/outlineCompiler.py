@@ -248,10 +248,10 @@ class BaseOutlineCompiler(object):
 
         # bounding box
         xMin, yMin, xMax, yMax = self.fontBoundingBox
-        head.xMin = xMin
-        head.yMin = yMin
-        head.xMax = xMax
-        head.yMax = yMax
+        head.xMin = round(xMin)
+        head.yMin = round(yMin)
+        head.xMax = round(xMax)
+        head.yMax = round(yMax)
 
         # style mapping
         styleMapStyleName = getAttrWithFallback(font.info, "styleMapStyleName")
