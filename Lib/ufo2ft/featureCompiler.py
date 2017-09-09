@@ -21,11 +21,12 @@ class FeatureCompiler(object):
     These are passed to mtiCompilation for compilation.
     """
 
-    def __init__(self, font, outline, featureWriterClasses=(KernFeatureWriter,
-                 MarkFeatureWriter), mtiFeatures=None):
+    def __init__(self, font, outline, featureWriters=None, mtiFeatures=None):
         self.font = font
         self.outline = outline
-        self.featureWriterClasses = featureWriterClasses
+        if featureWriters is None:
+            featureWriters = (KernFeatureWriter(font), MarkFeatureWriter(font))
+        self.featureWriters = featureWriters
         self.mtiFeatures = mtiFeatures
 
     def compile(self):
