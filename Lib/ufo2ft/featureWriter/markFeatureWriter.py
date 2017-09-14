@@ -1,7 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 import logging
 
-from ufo2ft.featureWriter import liststr, BaseFeatureWriter
+from ufo2ft.featureWriter.baseFeatureWriter import liststr, BaseFeatureWriter
 
 logger = logging.getLogger(__name__)
 

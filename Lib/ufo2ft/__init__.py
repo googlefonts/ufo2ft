@@ -5,8 +5,7 @@ from fontTools.misc.py23 import *
 from ufo2ft.preProcessor import (
     OTFPreProcessor, TTFPreProcessor, TTFInterpolatablePreProcessor)
 from ufo2ft.featureCompiler import FeatureCompiler
-from ufo2ft.featureWriter.kernFeatureWriter import KernFeatureWriter
-from ufo2ft.featureWriter.markFeatureWriter import MarkFeatureWriter
+from ufo2ft.featureWriter import KernFeatureWriter, MarkFeatureWriter
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
