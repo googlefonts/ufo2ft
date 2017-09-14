@@ -5,7 +5,7 @@ from fontTools.misc.py23 import *
 from ufo2ft.preProcessor import (
     OTFPreProcessor, TTFPreProcessor, TTFInterpolatablePreProcessor)
 from ufo2ft.featureCompiler import FeatureCompiler
-from ufo2ft.featureWriter import KernFeatureWriter, MarkFeatureWriter
+from ufo2ft.featureWriter import defaultFeatureWriters
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
@@ -45,7 +45,7 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
     otf = outlineCompiler.compile()
 
     if featureWriters is None:
-        featureWriters = (KernFeatureWriter(ufo), MarkFeatureWriter(ufo))
+        featureWriters = defaultFeatureWriters(ufo)
 
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
@@ -85,7 +85,7 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
     otf = outlineCompiler.compile()
 
     if featureWriters is None:
-        featureWriters = (KernFeatureWriter(ufo), MarkFeatureWriter(ufo))
+        featureWriters = defaultFeatureWriters(ufo)
 
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
@@ -126,7 +126,7 @@ def compileInterpolatableTTFs(ufos,
         ttf = outlineCompiler.compile()
 
         if featureWriters is None:
-            featureWriters = (KernFeatureWriter(ufo), MarkFeatureWriter(ufo))
+            featureWriters = defaultFeatureWriters(ufo)
 
         featureCompiler = featureCompilerClass(
             ufo, ttf, featureWriters=featureWriters,
