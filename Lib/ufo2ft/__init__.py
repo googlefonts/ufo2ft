@@ -5,7 +5,7 @@ import logging
 from fontTools.misc.py23 import *
 
 from ufo2ft.featureCompiler import FeatureCompiler
-from ufo2ft.featureWriter import KernFeatureWriter, MarkFeatureWriter
+from ufo2ft.featureWriter import defaultFeatureWriters
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
@@ -38,7 +38,7 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
     otf = outlineCompiler.compile()
 
     if featureWriters is None:
-        featureWriters = (KernFeatureWriter(ufo), MarkFeatureWriter(ufo))
+        featureWriters = defaultFeatureWriters(ufo)
 
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
@@ -65,7 +65,7 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
     otf = outlineCompiler.compile()
 
     if featureWriters is None:
-        featureWriters = (KernFeatureWriter(ufo), MarkFeatureWriter(ufo))
+        featureWriters = defaultFeatureWriters(ufo)
 
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
