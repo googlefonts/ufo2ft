@@ -9,7 +9,7 @@ try:
     import unicodedata2 as unicodedata
 except ImportError:
     import unicodedata
-from ufo2ft.featureWriter import liststr, BaseFeatureWriter
+from ufo2ft.featureWriter.baseFeatureWriter import liststr, BaseFeatureWriter
 
 
 class KernFeatureWriter(BaseFeatureWriter):
