@@ -19,8 +19,8 @@ class KernFeatureWriterTest(unittest.TestCase):
 
     def test__cleanupMissingGlyphs(self):
         groups = {
-            "public.kern1.A": ["A", "Aacute", "Abreve", "Acircumflex"],
-            "public.kern2.B": ["B", "D", "E", "F"],
+            "public.kern1.A": ["A", "Abreve", "Acircumflex", "Aacute"],
+            "public.kern2.B": ["B", "D", "F", "E"],
         }
         ufo = Font()
         for glyphs in groups.values():
