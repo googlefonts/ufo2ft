@@ -187,7 +187,7 @@ class KernFeatureWriter(object):
         for name, members in self.groups.items():
             newMembers = [g for g in members if g in allGlyphs]
             if newMembers:
-                groups[name] = newMembers
+                groups[name] = sorted(newMembers)
 
         kerning = {}
         for glyphPair, val in sorted(self.kerning.items()):
