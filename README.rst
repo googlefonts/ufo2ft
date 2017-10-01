@@ -116,3 +116,12 @@ Merging TTX
 If the UFO data directory has a ``com.github.fonttools.ttx`` folder with TTX
 files ending with ``.ttx``, these will be merged in the generated font.
 The index TTX (generated when using using ``ttx -s``) is not required.
+
+Font modification date
+~~~~~~~~~~~~~~~~~~~~~~
+
+By default ufo2ft will set the ``modified`` field in the ``head`` table to the
+current time. This can be overridden by setting the ``modifiedTime`` argument
+to ``compileOTF``/``compileTTF`` functions, or setting the environment
+variable ``SOURCE_DATE_EPOCH``. The argument takes priority over the
+environment variable.
