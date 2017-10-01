@@ -3,6 +3,7 @@ from fontTools.misc.py23 import tounicode, round, BytesIO
 
 import logging
 import math
+import os
 from collections import Counter, namedtuple
 
 from fontTools.ttLib import TTFont, newTable
@@ -244,7 +245,11 @@ class BaseOutlineCompiler(object):
 
         # times
         head.created = dateStringToTimeValue(getAttrWithFallback(font.info, "openTypeHeadCreated")) - mac_epoch_diff
-        head.modified = dateStringToTimeValue(dateStringForNow()) - mac_epoch_diff
+        source_date_epoch = os.environ.get("SOURCE_DATE_EPOCH")
+        if source_date_epoch is not None:
+            head.modified = int(source_date_epoch) - mac_epoch_diff
+        else:
+            head.modified = dateStringToTimeValue(dateStringForNow()) - mac_epoch_diff
 
         # bounding box
         xMin, yMin, xMax, yMax = self.fontBoundingBox
