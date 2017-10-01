@@ -46,7 +46,7 @@ class BaseOutlineCompiler(object):
 
     sfntVersion = None
 
-    def __init__(self, font, glyphOrder=None):
+    def __init__(self, font, glyphOrder=None, modifiedTime=None):
         self.ufo = font
         self.log = []
         # make any missing glyphs and store them locally
@@ -68,6 +68,7 @@ class BaseOutlineCompiler(object):
         self.fontBoundingBox = self.makeFontBoundingBox()
         # make a reusable character mapping
         self.unicodeToGlyphNameMapping = self.makeUnicodeToGlyphNameMapping()
+        self.modifiedTime = modifiedTime
 
     def compile(self):
         """
@@ -246,7 +247,9 @@ class BaseOutlineCompiler(object):
         # times
         head.created = dateStringToTimeValue(getAttrWithFallback(font.info, "openTypeHeadCreated")) - mac_epoch_diff
         source_date_epoch = os.environ.get("SOURCE_DATE_EPOCH")
-        if source_date_epoch is not None:
+        if self.modifiedTime is not None:
+            head.modified = dateStringToTimeValue(self.modifiedTime) - mac_epoch_diff
+        elif source_date_epoch is not None:
             head.modified = int(source_date_epoch) - mac_epoch_diff
         else:
             head.modified = dateStringToTimeValue(dateStringForNow()) - mac_epoch_diff
@@ -783,13 +786,15 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
     sfntVersion = "OTTO"
 
-    def __init__(self, font, glyphOrder=None, roundTolerance=None):
+    def __init__(self, font, glyphOrder=None, roundTolerance=None,
+                 modifiedTime=None):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
         else:
             # round all coordinates to integers by default
             self.roundTolerance = 0.5
-        super(OutlineOTFCompiler, self).__init__(font, glyphOrder)
+        super(OutlineOTFCompiler, self).__init__(font, glyphOrder,
+                                                 modifiedTime=modifiedTime)
 
     def makeGlyphsBoundingBoxes(self):
         """
@@ -1003,8 +1008,9 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
     sfntVersion = "\000\001\000\000"
 
     def __init__(self, font, glyphOrder=None, convertCubics=True,
-                 cubicConversionError=None):
-        super(OutlineTTFCompiler, self).__init__(font, glyphOrder)
+                 cubicConversionError=None, modifiedTime=None):
+        super(OutlineTTFCompiler, self).__init__(font, glyphOrder,
+                                                 modifiedTime=modifiedTime)
         if convertCubics:
             unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
             if cubicConversionError is None:
