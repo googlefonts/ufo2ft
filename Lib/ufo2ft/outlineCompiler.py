@@ -72,7 +72,7 @@ class BaseOutlineCompiler(object):
         """
         Compile the OpenType binary.
         """
-        self.otf = TTFont(sfntVersion=self.sfntVersion)
+        self.otf = TTFont(sfntVersion=self.sfntVersion, recalcTimestamp=False)
 
         self.vertical = False
         for glyph in self.allGlyphs.values():
