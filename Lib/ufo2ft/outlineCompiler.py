@@ -3,7 +3,6 @@ from fontTools.misc.py23 import tounicode, round, BytesIO
 
 import logging
 import math
-import os
 from collections import Counter, namedtuple
 
 from fontTools.ttLib import TTFont, newTable
@@ -46,7 +45,7 @@ class BaseOutlineCompiler(object):
 
     sfntVersion = None
 
-    def __init__(self, font, glyphOrder=None, modifiedTime=None):
+    def __init__(self, font, glyphOrder=None):
         self.ufo = font
         self.log = []
         # make any missing glyphs and store them locally
@@ -68,13 +67,12 @@ class BaseOutlineCompiler(object):
         self.fontBoundingBox = self.makeFontBoundingBox()
         # make a reusable character mapping
         self.unicodeToGlyphNameMapping = self.makeUnicodeToGlyphNameMapping()
-        self.modifiedTime = modifiedTime
 
     def compile(self):
         """
         Compile the OpenType binary.
         """
-        self.otf = TTFont(sfntVersion=self.sfntVersion, recalcTimestamp=False)
+        self.otf = TTFont(sfntVersion=self.sfntVersion)
 
         self.vertical = False
         for glyph in self.allGlyphs.values():
@@ -246,13 +244,7 @@ class BaseOutlineCompiler(object):
 
         # times
         head.created = dateStringToTimeValue(getAttrWithFallback(font.info, "openTypeHeadCreated")) - mac_epoch_diff
-        source_date_epoch = os.environ.get("SOURCE_DATE_EPOCH")
-        if self.modifiedTime is not None:
-            head.modified = dateStringToTimeValue(self.modifiedTime) - mac_epoch_diff
-        elif source_date_epoch is not None:
-            head.modified = int(source_date_epoch) - mac_epoch_diff
-        else:
-            head.modified = dateStringToTimeValue(dateStringForNow()) - mac_epoch_diff
+        head.modified = dateStringToTimeValue(dateStringForNow()) - mac_epoch_diff
 
         # bounding box
         xMin, yMin, xMax, yMax = self.fontBoundingBox
@@ -786,15 +778,13 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
     sfntVersion = "OTTO"
 
-    def __init__(self, font, glyphOrder=None, roundTolerance=None,
-                 modifiedTime=None):
+    def __init__(self, font, glyphOrder=None, roundTolerance=None):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
         else:
             # round all coordinates to integers by default
             self.roundTolerance = 0.5
-        super(OutlineOTFCompiler, self).__init__(font, glyphOrder,
-                                                 modifiedTime=modifiedTime)
+        super(OutlineOTFCompiler, self).__init__(font, glyphOrder)
 
     def makeGlyphsBoundingBoxes(self):
         """
@@ -1008,9 +998,8 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
     sfntVersion = "\000\001\000\000"
 
     def __init__(self, font, glyphOrder=None, convertCubics=True,
-                 cubicConversionError=None, modifiedTime=None):
-        super(OutlineTTFCompiler, self).__init__(font, glyphOrder,
-                                                 modifiedTime=modifiedTime)
+                 cubicConversionError=None):
+        super(OutlineTTFCompiler, self).__init__(font, glyphOrder)
         if convertCubics:
             unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
             if cubicConversionError is None:

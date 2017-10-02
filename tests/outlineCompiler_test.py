@@ -1,9 +1,7 @@
 from fontTools.ttLib import TTFont
 from fontTools.misc.py23 import basestring
 from defcon import Font
-from ufo2ft.fontInfoData import dateStringToTimeValue
 from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
-from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 from ufo2ft import compileTTF
 import unittest
@@ -324,24 +322,6 @@ class TestNames(unittest.TestCase):
         result = compileTTF(self.ufo, useProductionNames=True)
         self.assertEqual(result.getGlyphOrder(),
                          ['.notdef', 'foo', 'bar', 'baz', 'meh', 'doh'])
-
-
-class TestModifiedTime(unittest.TestCase):
-
-    def setUp(self):
-        self.ufo = getTestUFO()
-
-    def test_modified_time_arg(self):
-        time = "2017/10/1 18:50:27"
-        compiler = OutlineTTFCompiler(self.ufo, modifiedTime=time)
-        compiler.compile()
-        self.assertEqual(compiler.otf["head"].modified + mac_epoch_diff, dateStringToTimeValue(time))
-
-    def test_source_date_epoch(self):
-        os.environ["SOURCE_DATE_EPOCH"] = "150687315"
-        compiler = OutlineTTFCompiler(self.ufo)
-        compiler.compile()
-        self.assertEqual(compiler.otf["head"].modified + mac_epoch_diff, 150687315)
 
 
 if __name__ == "__main__":
