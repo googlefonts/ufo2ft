@@ -14,7 +14,7 @@ class PostProcessor(object):
         stream = BytesIO()
         otf.save(stream)
         stream.seek(0)
-        self.otf = TTFont(stream, recalcTimestamp=False)
+        self.otf = TTFont(stream)
         self._postscriptNames = ufo.lib.get('public.postscriptNames')
 
     def process(self, useProductionNames=True, optimizeCFF=True):
