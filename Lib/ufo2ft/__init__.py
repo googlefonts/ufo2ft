@@ -19,7 +19,7 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureCompiler, mtiFeaFiles=None,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True, optimizeCFF=True,
-               roundTolerance=None, modifiedTime=None):
+               roundTolerance=None):
     """Create FontTools CFF font from a UFO.
 
     *optimizeCFF* sets whether the CFF table should be subroutinized.
@@ -30,14 +30,10 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
       By default, all floats are rounded to integer (tolerance 0.5); a value
       of 0 completely disables rounding; values in between only round floats
       which are close to their integral part within the tolerated range.
-
-    *modifiedTime* sets the font modification time, in the format
-      YYYY/MM/DD HH:MM:SS. By default the current time will be used.
     """
 
     outlineCompiler = outlineCompilerClass(
-        ufo, glyphOrder, roundTolerance=roundTolerance,
-        modifiedTime=modifiedTime)
+        ufo, glyphOrder, roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
@@ -55,15 +51,14 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler, mtiFeaFiles=None,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True,
-               convertCubics=True, cubicConversionError=None, modifiedTime=None):
+               convertCubics=True, cubicConversionError=None):
     """Create FontTools TrueType font from a UFO.
 
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
     to quadratic curves should be handled.
     """
     outlineCompiler = outlineCompilerClass(
-        ufo, glyphOrder, convertCubics, cubicConversionError,
-        modifiedTime=modifiedTime)
+        ufo, glyphOrder, convertCubics, cubicConversionError)
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
