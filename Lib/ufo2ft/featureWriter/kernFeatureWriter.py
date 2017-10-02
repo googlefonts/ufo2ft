@@ -1,4 +1,6 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (
+    print_function, division, absolute_import, unicode_literals
+)
 from fontTools.misc.py23 import unichr
 
 import collections
@@ -7,14 +9,10 @@ try:
     import unicodedata2 as unicodedata
 except ImportError:
     import unicodedata
+from ufo2ft.featureWriter.baseFeatureWriter import liststr, BaseFeatureWriter
 
 
-def liststr(glyphs):
-    """Return string representation of a list of glyph names."""
-    return "[%s]" % " ".join(glyphs)
-
-
-class KernFeatureWriter(object):
+class KernFeatureWriter(BaseFeatureWriter):
     """Generates a kerning feature based on glyph class definitions.
 
     Uses the kerning rules contained in an UFO's kerning data, as well as glyph
@@ -28,7 +26,8 @@ class KernFeatureWriter(object):
     leftFeaClassRe = r"@MMK_L_(.+)"
     rightFeaClassRe = r"@MMK_R_(.+)"
 
-    def __init__(self, font):
+    def __init__(self, font, features=("kern", )):
+        super(KernFeatureWriter, self).__init__(font, features)
         self.font = font
         self.kerning = dict(font.kerning)
         self.groups = dict(font.groups)
@@ -67,7 +66,7 @@ class KernFeatureWriter(object):
         self.rightClassKerning = {}
         self.classPairKerning = {}
 
-    def write(self, linesep="\n"):
+    def write(self, features=None, linesep="\n"):
         """Write kern feature."""
 
         self._collectFeaClasses()
@@ -438,7 +437,7 @@ class KernFeatureWriter(object):
 
             # Unicode-9.0 additions
             'adlm',  # ADLAM
-            )
+        )
 
     def _glyphIsRtl(self, name):
         """Return whether the closest-associated unicode character is RTL."""

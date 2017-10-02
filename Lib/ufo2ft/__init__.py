@@ -5,8 +5,7 @@ import logging
 from fontTools.misc.py23 import *
 
 from ufo2ft.featureCompiler import FeatureCompiler
-from ufo2ft.kernFeatureWriter import KernFeatureWriter
-from ufo2ft.markFeatureWriter import MarkFeatureWriter
+from ufo2ft.featureWriter import defaultFeatureWriters
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
@@ -17,9 +16,8 @@ log = logging.getLogger(__name__)
 
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureCompiler, mtiFeaFiles=None,
-               kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
-               glyphOrder=None, useProductionNames=True, optimizeCFF=True,
-               roundTolerance=None):
+               featureWriters=None, glyphOrder=None, useProductionNames=True,
+               optimizeCFF=True, roundTolerance=None):
     """Create FontTools CFF font from a UFO.
 
     *optimizeCFF* sets whether the CFF table should be subroutinized.
@@ -30,14 +28,20 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
       By default, all floats are rounded to integer (tolerance 0.5); a value
       of 0 completely disables rounding; values in between only round floats
       which are close to their integral part within the tolerated range.
+
+    *featureWriters* argument is a tuple of FeatureWriter instances.
+    Features will be written by each FeatureWriter in the given order
     """
 
     outlineCompiler = outlineCompilerClass(
         ufo, glyphOrder, roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
+    if featureWriters is None:
+        featureWriters = defaultFeatureWriters(ufo)
+
     featureCompiler = featureCompilerClass(
-        ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
+        ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo, mtiFeaFiles))
     featureCompiler.compile()
 
@@ -49,8 +53,7 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
 
 def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler, mtiFeaFiles=None,
-               kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
-               glyphOrder=None, useProductionNames=True,
+               featureWriters=None, glyphOrder=None, useProductionNames=True,
                convertCubics=True, cubicConversionError=None):
     """Create FontTools TrueType font from a UFO.
 
@@ -61,8 +64,11 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
         ufo, glyphOrder, convertCubics, cubicConversionError)
     otf = outlineCompiler.compile()
 
+    if featureWriters is None:
+        featureWriters = defaultFeatureWriters(ufo)
+
     featureCompiler = featureCompilerClass(
-        ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
+        ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo, mtiFeaFiles))
     featureCompiler.compile()
 

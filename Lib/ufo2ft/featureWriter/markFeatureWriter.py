@@ -1,12 +1,12 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 import logging
 
-from ufo2ft.kernFeatureWriter import liststr
+from ufo2ft.featureWriter.baseFeatureWriter import liststr, BaseFeatureWriter
 
 logger = logging.getLogger(__name__)
 
 
-class MarkFeatureWriter(object):
+class MarkFeatureWriter(BaseFeatureWriter):
     """Generates a mark or mkmk feature based on glyph anchors.
 
     setupAnchorPairs() produces lists of (anchorName, accentAnchorName) tuples
@@ -14,7 +14,8 @@ class MarkFeatureWriter(object):
     tuples for a liga2mark feature.
     """
 
-    def __init__(self, font):
+    def __init__(self, font, features=("mark", "mkmk")):
+        super(MarkFeatureWriter, self).__init__(font, features)
         self.font = font
         self.accentGlyphNames = set()
         self.setupAnchorPairs()
@@ -99,7 +100,7 @@ class MarkFeatureWriter(object):
         accentGlyphs = self._createAccentGlyphList(accentAnchorName)
         className = self._generateClassName(accentAnchorName)
 
-        for accentName, x, y in accentGlyphs:
+        for accentName, x, y in sorted(accentGlyphs):
             self.accentGlyphNames.add(accentName)
             lines.append(
                 "markClass %s <anchor %d %d> %s;" %
@@ -215,8 +216,13 @@ class MarkFeatureWriter(object):
 
         self.mkmkAnchorList = self.anchorList
 
-    def write(self, doMark=True, doMkmk=True):
+    def write(self, features=None, linesep="\n"):
         """Write mark and mkmk features, and mark class definitions."""
+
+        if features is None:
+            features = self.features
+        doMark = "mark" in features
+        doMkmk = "mkmk" in features
 
         if not (doMark or doMkmk):
             return ""
@@ -227,4 +233,4 @@ class MarkFeatureWriter(object):
             self._addFeature(lines, isMkmk=False)
         if doMkmk:
             self._addFeature(lines, isMkmk=True)
-        return "\n".join(lines)
+        return linesep.join(lines)
