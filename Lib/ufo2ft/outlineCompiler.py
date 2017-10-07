@@ -7,7 +7,7 @@ from collections import Counter, namedtuple
 
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
-from fontTools.pens.boundsPen import BoundsPen, ControlBoundsPen
+from fontTools.pens.boundsPen import ControlBoundsPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
