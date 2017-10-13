@@ -55,7 +55,7 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True,
                convertCubics=True, cubicConversionError=None,
-               removeOverlaps=False):
+               reverseDirection=True, removeOverlaps=False):
     """Create FontTools TrueType font from a UFO.
 
     *removeOverlaps* performs a union operation on all the glyphs' contours.
@@ -66,6 +66,7 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
     outlineCompiler = outlineCompilerClass(
         ufo, glyphOrder, convertCubics=convertCubics,
         cubicConversionError=cubicConversionError,
+        reverseDirection=reverseDirection,
         removeOverlaps=removeOverlaps)
     otf = outlineCompiler.compile()
 
