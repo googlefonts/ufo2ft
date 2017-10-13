@@ -19,8 +19,10 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureCompiler,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True, optimizeCFF=True,
-               roundTolerance=None):
+               roundTolerance=None, removeOverlaps=False):
     """Create FontTools CFF font from a UFO.
+
+    *removeOverlaps* performs a union operation on all the glyphs' contours.
 
     *optimizeCFF* sets whether the CFF table should be subroutinized.
 
@@ -33,7 +35,8 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
     """
 
     outlineCompiler = outlineCompilerClass(
-        ufo, glyphOrder, roundTolerance=roundTolerance)
+        ufo, glyphOrder, roundTolerance=roundTolerance,
+        removeOverlaps=removeOverlaps)
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
@@ -51,14 +54,19 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True,
-               convertCubics=True, cubicConversionError=None):
+               convertCubics=True, cubicConversionError=None,
+               removeOverlaps=False):
     """Create FontTools TrueType font from a UFO.
+
+    *removeOverlaps* performs a union operation on all the glyphs' contours.
 
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
     to quadratic curves should be handled.
     """
     outlineCompiler = outlineCompilerClass(
-        ufo, glyphOrder, convertCubics, cubicConversionError)
+        ufo, glyphOrder, convertCubics=convertCubics,
+        cubicConversionError=cubicConversionError,
+        removeOverlaps=removeOverlaps)
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
