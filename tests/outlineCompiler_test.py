@@ -58,25 +58,22 @@ class OutlineTTFCompilerTest(unittest.TestCase):
                          (90, 77, 211, 197))
 
     def test_autoUseMyMetrics(self):
-        # make sure we get the same USE_MY_METRICS flags with both values of
-        # 'convertCubics': https://github.com/googlei18n/ufo2ft/issues/136
         ufo = getTestUFO('UseMyMetrics')
-        for convertCubics in (False, True):
-            compiler = OutlineTTFCompiler(ufo, convertCubics=convertCubics)
-            ttf = compiler.compile()
-            # the first component in the 'Iacute' composite glyph ('acute')
-            # does _not_ have the USE_MY_METRICS flag
-            self.assertFalse(
-                ttf['glyf']['Iacute'].components[0].flags & USE_MY_METRICS)
-            # the second component in the 'Iacute' composite glyph ('I')
-            # has the USE_MY_METRICS flag set
-            self.assertTrue(
-                ttf['glyf']['Iacute'].components[1].flags & USE_MY_METRICS)
-            # none of the 'I' components of the 'romanthree' glyph has
-            # the USE_MY_METRICS flag set, because the composite glyph has a
-            # different width
-            for component in ttf['glyf']['romanthree'].components:
-                self.assertFalse(component.flags & USE_MY_METRICS)
+        compiler = OutlineTTFCompiler(ufo)
+        ttf = compiler.compile()
+        # the first component in the 'Iacute' composite glyph ('acute')
+        # does _not_ have the USE_MY_METRICS flag
+        self.assertFalse(
+            ttf['glyf']['Iacute'].components[0].flags & USE_MY_METRICS)
+        # the second component in the 'Iacute' composite glyph ('I')
+        # has the USE_MY_METRICS flag set
+        self.assertTrue(
+            ttf['glyf']['Iacute'].components[1].flags & USE_MY_METRICS)
+        # none of the 'I' components of the 'romanthree' glyph has
+        # the USE_MY_METRICS flag set, because the composite glyph has a
+        # different width
+        for component in ttf['glyf']['romanthree'].components:
+            self.assertFalse(component.flags & USE_MY_METRICS)
 
     def test_autoUseMyMetrics_None(self):
         ufo = getTestUFO('UseMyMetrics')
