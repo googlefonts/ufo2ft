@@ -2,6 +2,7 @@ from __future__ import print_function, division, absolute_import
 
 from fontTools.misc.py23 import *
 
+from ufo2ft.preProcessor import OTFPreProcessor, TTFPreProcessor
 from ufo2ft.featureCompiler import FeatureCompiler
 from ufo2ft.kernFeatureWriter import KernFeatureWriter
 from ufo2ft.markFeatureWriter import MarkFeatureWriter
@@ -12,7 +13,8 @@ from ufo2ft.postProcessor import PostProcessor
 __version__ = "0.6.2"
 
 
-def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
+def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
+               outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureCompiler,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True, optimizeCFF=True,
@@ -30,10 +32,12 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
       of 0 completely disables rounding; values in between only round floats
       which are close to their integral part within the tolerated range.
     """
+    preProcessor = preProcessorClass(ufo, removeOverlaps=removeOverlaps)
+    glyphSet = preProcessor.process()
 
     outlineCompiler = outlineCompilerClass(
-        ufo, glyphOrder, roundTolerance=roundTolerance,
-        removeOverlaps=removeOverlaps)
+        ufo, glyphSet=glyphSet, glyphOrder=glyphOrder,
+        roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
@@ -47,7 +51,8 @@ def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
     return otf
 
 
-def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
+def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
+               outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True,
@@ -60,11 +65,15 @@ def compileTTF(ufo, outlineCompilerClass=OutlineTTFCompiler,
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
     to quadratic curves should be handled.
     """
+    preProcessor = preProcessorClass(
+        ufo, removeOverlaps=removeOverlaps,
+        convertCubics=convertCubics,
+        conversionError=cubicConversionError,
+        reverseDirection=reverseDirection)
+    glyphSet = preProcessor.process()
+
     outlineCompiler = outlineCompilerClass(
-        ufo, glyphOrder, convertCubics=convertCubics,
-        cubicConversionError=cubicConversionError,
-        reverseDirection=reverseDirection,
-        removeOverlaps=removeOverlaps)
+        ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
