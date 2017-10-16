@@ -1050,11 +1050,15 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         for name in self.glyphOrder:
             glyph = allGlyphs[name]
             pen = TTGlyphPen(allGlyphs)
-            glyph.draw(pen)
-            ttGlyph = pen.glyph()
-            if ttGlyph.isComposite() and self.autoUseMyMetrics:
-                self.autoUseMyMetrics(ttGlyph, glyph.width, allGlyphs)
-            glyf[name] = ttGlyph
+            try:
+                glyph.draw(pen)
+            except NotImplementedError:
+                logger.error("%r has invalid curve format; skipped", name)
+            else:
+                ttGlyph = pen.glyph()
+                if ttGlyph.isComposite() and self.autoUseMyMetrics:
+                    self.autoUseMyMetrics(ttGlyph, glyph.width, allGlyphs)
+                glyf[name] = ttGlyph
 
     @staticmethod
     def autoUseMyMetrics(ttGlyph, width, glyphSet):
