@@ -1,7 +1,5 @@
 from __future__ import print_function, division, absolute_import
 
-import logging
-
 from fontTools.misc.py23 import *
 
 from ufo2ft.featureCompiler import FeatureCompiler
@@ -12,7 +10,6 @@ from ufo2ft.postProcessor import PostProcessor
 
 
 __version__ = "0.6.2"
-log = logging.getLogger(__name__)
 
 
 def compileOTF(ufo, outlineCompilerClass=OutlineOTFCompiler,
