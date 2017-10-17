@@ -12,7 +12,7 @@ from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
-from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
+from fontTools.ttLib.tables._g_l_y_f import Glyph, USE_MY_METRICS
 from fontTools.misc.arrayTools import unionRect
 
 from ufo2ft.fontInfoData import getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
@@ -1054,11 +1054,12 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                 glyph.draw(pen)
             except NotImplementedError:
                 logger.error("%r has invalid curve format; skipped", name)
+                ttGlyph = Glyph()
             else:
                 ttGlyph = pen.glyph()
                 if ttGlyph.isComposite() and self.autoUseMyMetrics:
                     self.autoUseMyMetrics(ttGlyph, glyph.width, allGlyphs)
-                glyf[name] = ttGlyph
+            glyf[name] = ttGlyph
 
     @staticmethod
     def autoUseMyMetrics(ttGlyph, width, glyphSet):
