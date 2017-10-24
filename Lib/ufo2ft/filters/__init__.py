@@ -136,7 +136,7 @@ class BaseFilter(object):
         Subclasses must override this method, and return True
         when the glyph was modified.
         """
-        return False
+        raise NotImplementedError
 
     def __call__(self, glyphSet):
         """ Run this filter on all the included glyphs.
