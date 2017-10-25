@@ -109,6 +109,40 @@ class TTFPreProcessor(OTFPreProcessor):
         return filters
 
 
+class TTFInterpolatablePreProcessor(object):
+    """Preprocessor for building TrueType-flavored OpenType fonts with
+    interpolatable quadratic outlines.
+
+    The constructor takes a list of UFO fonts, and the ``process`` method
+    returns the modified glyphsets (list of dicts) in the same order.
+
+    Currently, only the conversion from cubic to quadratic is performed,
+    and no additional filter is applied.
+
+    The ``conversionError`` and ``reverseDirection`` arguments work in the
+    same way as in the ``TTFPreProcessor``.
+    """
+
+    def __init__(self, ufos, inplace=False, conversionError=None,
+                 reverseDirection=True):
+        from cu2qu.ufo import DEFAULT_MAX_ERR
+
+        self.glyphSets = [
+            {g.name: (_copyGlyph(g) if not inplace else g) for g in ufo}
+            for ufo in ufos]
+        self._conversionErrors = [
+            (conversionError or DEFAULT_MAX_ERR) * ufo.info.unitsPerEm
+            for ufo in ufos]
+        self._reverseDirection = reverseDirection
+
+    def process(self):
+        from cu2qu.ufo import fonts_to_quadratic
+
+        fonts_to_quadratic(self.glyphSets, max_err=self._conversionErrors,
+                           reverse_direction=self._reverseDirection)
+        return self.glyphSets
+
+
 def _copyGlyph(glyph):
     # copy everything except unused attributes: 'guidelines', 'note', 'image'
     copy = glyph.__class__()

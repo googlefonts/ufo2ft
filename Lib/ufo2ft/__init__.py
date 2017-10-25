@@ -2,7 +2,8 @@ from __future__ import print_function, division, absolute_import
 
 from fontTools.misc.py23 import *
 
-from ufo2ft.preProcessor import OTFPreProcessor, TTFPreProcessor
+from ufo2ft.preProcessor import (
+    OTFPreProcessor, TTFPreProcessor, TTFInterpolatablePreProcessor)
 from ufo2ft.featureCompiler import FeatureCompiler
 from ufo2ft.kernFeatureWriter import KernFeatureWriter
 from ufo2ft.markFeatureWriter import MarkFeatureWriter
@@ -89,6 +90,46 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
     otf = postProcessor.process(useProductionNames)
 
     return otf
+
+
+def compileInterpolatableTTFs(ufos,
+                              preProcessorClass=TTFInterpolatablePreProcessor,
+                              outlineCompilerClass=OutlineTTFCompiler,
+                              featureCompilerClass=FeatureCompiler,
+                              kernWriterClass=KernFeatureWriter,
+                              markWriterClass=MarkFeatureWriter,
+                              glyphOrder=None,
+                              useProductionNames=True,
+                              cubicConversionError=None,
+                              reverseDirection=True,
+                              inplace=False):
+    """Create FontTools TrueType fonts from a list of UFOs with interpolatable
+    outlines. Cubic curves are converted compatibly to quadratic curves using
+    the Cu2Qu conversion algorithm.
+
+    Return an iterator object that yields a TTFont instance for each UFO.
+    """
+    preProcessor = preProcessorClass(
+        ufos, inplace=inplace,
+        conversionError=cubicConversionError,
+        reverseDirection=reverseDirection)
+    glyphSets = preProcessor.process()
+
+    for ufo, glyphSet in zip(ufos, glyphSets):
+        outlineCompiler = outlineCompilerClass(
+            ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
+        ttf = outlineCompiler.compile()
+
+        featureCompiler = featureCompilerClass(
+            ufo, ttf, kernWriterClass=kernWriterClass,
+            markWriterClass=markWriterClass,
+            mtiFeatures=_getMtiFeatures(ufo))
+        featureCompiler.compile()
+
+        postProcessor = PostProcessor(ttf, ufo)
+        ttf = postProcessor.process(useProductionNames)
+
+        yield ttf
 
 
 def _getMtiFeatures(ufo):
