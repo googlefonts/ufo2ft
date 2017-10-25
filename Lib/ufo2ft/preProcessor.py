@@ -12,8 +12,10 @@ class BasePreProcessor(object):
     the UFO glyphs, such as decomposing composites, removing overlaps, or
     applying custom filters.
 
-    The input UFO is **not** modified. The ``process`` method returns a
-    dictionary containing the modified glyphset, keyed by glyph name.
+    By default the input UFO is **not** modified. The ``process`` method
+    returns a dictionary containing the new modified glyphset, keyed by
+    glyph name. If ``inplace`` is True, the input UFO is modified directly
+    without the need to first copy the glyphs.
 
     Subclasses can override the ``initDefaultFilters`` method and return
     a list of built-in filters which are performed in a predefined order,
@@ -26,9 +28,12 @@ class BasePreProcessor(object):
     "com.github.googlei18n.ufo2ft.filters".
     """
 
-    def __init__(self, ufo, **kwargs):
+    def __init__(self, ufo, inplace=False, **kwargs):
         self.ufo = ufo
-        self.glyphSet = {g.name: _copyGlyph(g) for g in ufo}
+        if inplace:
+            self.glyphSet = {g.name: g for g in ufo}
+        else:
+            self.glyphSet = {g.name: _copyGlyph(g) for g in ufo}
         self.defaultFilters = self.initDefaultFilters(**kwargs)
         self.preFilters, self.postFilters = loadFilters(self.ufo)
 
