@@ -139,7 +139,8 @@ class TTFInterpolatablePreProcessor(object):
         from cu2qu.ufo import fonts_to_quadratic
 
         fonts_to_quadratic(self.glyphSets, max_err=self._conversionErrors,
-                           reverse_direction=self._reverseDirection)
+                           reverse_direction=self._reverseDirection,
+                           dump_stats=True)
         return self.glyphSets
 
 
