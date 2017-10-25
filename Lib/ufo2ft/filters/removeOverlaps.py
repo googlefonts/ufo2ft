@@ -1,8 +1,13 @@
 from __future__ import (
     print_function, division, absolute_import, unicode_literals)
 
-from ufo2ft.filters import BaseFilter, logger
+from ufo2ft.filters import BaseFilter
 from booleanOperations import union, BooleanOperationsError
+
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class RemoveOverlapsFilter(BaseFilter):
