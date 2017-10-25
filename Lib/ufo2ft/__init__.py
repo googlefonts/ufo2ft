@@ -18,7 +18,8 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
                featureCompilerClass=FeatureCompiler,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True, optimizeCFF=True,
-               roundTolerance=None, removeOverlaps=False):
+               roundTolerance=None, removeOverlaps=False,
+               inplace=False):
     """Create FontTools CFF font from a UFO.
 
     *removeOverlaps* performs a union operation on all the glyphs' contours.
@@ -32,7 +33,8 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
       of 0 completely disables rounding; values in between only round floats
       which are close to their integral part within the tolerated range.
     """
-    preProcessor = preProcessorClass(ufo, removeOverlaps=removeOverlaps)
+    preProcessor = preProcessorClass(
+        ufo, inplace=inplace, removeOverlaps=removeOverlaps)
     glyphSet = preProcessor.process()
 
     outlineCompiler = outlineCompilerClass(
@@ -57,7 +59,8 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
                kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
                glyphOrder=None, useProductionNames=True,
                convertCubics=True, cubicConversionError=None,
-               reverseDirection=True, removeOverlaps=False):
+               reverseDirection=True, removeOverlaps=False,
+               inplace=False):
     """Create FontTools TrueType font from a UFO.
 
     *removeOverlaps* performs a union operation on all the glyphs' contours.
@@ -66,7 +69,8 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
     to quadratic curves should be handled.
     """
     preProcessor = preProcessorClass(
-        ufo, removeOverlaps=removeOverlaps,
+        ufo, inplace=inplace,
+        removeOverlaps=removeOverlaps,
         convertCubics=convertCubics,
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection)
