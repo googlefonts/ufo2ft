@@ -83,6 +83,14 @@ class OutlineTTFCompilerTest(unittest.TestCase):
         ttf = compiler.compile()
         self.assertFalse(ttf['glyf']['Iacute'].components[1].flags & USE_MY_METRICS)
 
+    def test_importTTX(self):
+        compiler = OutlineTTFCompiler(self.ufo)
+        otf = compiler.otf = TTFont()
+        compiler.importTTX()
+        self.assertIn("CUST", otf)
+        self.assertEqual(otf["CUST"].data, b"\x00\x01\xbe\xef")
+        self.assertEqual(otf.sfntVersion, "\x00\x01\x00\x00")
+
 
 class OutlineOTFCompilerTest(unittest.TestCase):
 
@@ -249,6 +257,13 @@ class OutlineOTFCompilerTest(unittest.TestCase):
         self.assertEqual(compiler.glyphBoundingBoxes['d'],
                          (90, 77, 211, 198))
 
+    def test_importTTX(self):
+        compiler = OutlineOTFCompiler(self.ufo)
+        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+        compiler.importTTX()
+        self.assertIn("CUST", otf)
+        self.assertEqual(otf["CUST"].data, b"\x00\x01\xbe\xef")
+        self.assertEqual(otf.sfntVersion, "OTTO")
 
 
 class TestGlyphOrder(unittest.TestCase):
