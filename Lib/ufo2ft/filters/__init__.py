@@ -3,6 +3,7 @@ from __future__ import (
 
 import importlib
 import logging
+from fontTools.misc.loggingTools import Timer
 
 
 UFO2FT_FILTERS_KEY = "com.github.googlei18n.ufo2ft.filters"
@@ -138,6 +139,10 @@ class BaseFilter(object):
         """
         raise NotImplementedError
 
+    @property
+    def name(self):
+        return self.__class__.__name__
+
     def __call__(self, glyphSet):
         """ Run this filter on all the included glyphs.
         Return the set of glyphs that were modified, if any.
@@ -145,8 +150,13 @@ class BaseFilter(object):
         filter_ = self.filter
         include = self.include
         modified = set()
-        for glyphName in glyphSet.keys():
-            glyph = glyphSet[glyphName]
-            if include(glyph) and filter_(glyph, glyphSet):
-                modified.add(glyphName)
+
+        with Timer() as t:
+            for glyphName in glyphSet.keys():
+                glyph = glyphSet[glyphName]
+                if include(glyph) and filter_(glyph, glyphSet):
+                    modified.add(glyphName)
+
+        logger.debug("Took %.3fs to run %s on %d glyphs",
+                     t, self.name, len(modified))
         return modified
