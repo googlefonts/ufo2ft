@@ -2,7 +2,7 @@ from __future__ import \
     print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import *
 from defcon import Font
-from ufo2ft import compileOTF, compileTTF
+from ufo2ft import compileOTF, compileTTF, compileInterpolatableTTFs
 import difflib
 import os
 import sys
@@ -53,6 +53,21 @@ class CompilerTest(unittest.TestCase):
         """
         self.expectTTX(compileTTF(loadUFO("MTIFeatures.ufo")),
                        "MTIFeatures.ttx", tables=self._layoutTables)
+
+    def test_removeOverlaps_CFF(self):
+        self.expectTTX(compileOTF(loadUFO("TestFont.ufo"), removeOverlaps=True),
+                       "TestFont-NoOverlaps-CFF.ttx")
+
+    def test_removeOverlaps(self):
+        self.expectTTX(compileTTF(loadUFO("TestFont.ufo"), removeOverlaps=True),
+                       "TestFont-NoOverlaps-TTF.ttx")
+
+    def test_interpolatableTTFs_lazy(self):
+        # two same UFOs **must** be interpolatable
+        ufos = [loadUFO("TestFont.ufo") for _ in range(2)]
+        ttfs = list(compileInterpolatableTTFs(ufos))
+        self.expectTTX(ttfs[0], "TestFont.ttx")
+        self.expectTTX(ttfs[1], "TestFont.ttx")
 
     def _temppath(self, suffix):
         if not self._tempdir:
