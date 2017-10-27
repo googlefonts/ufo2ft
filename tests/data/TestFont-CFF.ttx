@@ -9,6 +9,14 @@
     <GlyphID id="3" name="uni0062"/>
     <GlyphID id="4" name="uni0063"/>
     <GlyphID id="5" name="uni0064"/>
+    <GlyphID id="6" name="uni0065"/>
+    <GlyphID id="7" name="uni0066"/>
+    <GlyphID id="8" name="uni0067"/>
+    <GlyphID id="9" name="uni0068"/>
+    <GlyphID id="10" name="uni0069"/>
+    <GlyphID id="11" name="uni006A"/>
+    <GlyphID id="12" name="uni006B"/>
+    <GlyphID id="13" name="uni006C"/>
   </GlyphOrder>
 
   <head>
@@ -21,9 +29,9 @@
     <unitsPerEm value="1000"/>
     <created value="Fri Feb 17 17:17:17 2017"/>
     <modified value="Sun Feb 18 18:18:18 2018"/>
-    <xMin value="50"/>
-    <yMin value="-10"/>
-    <xMax value="450"/>
+    <xMin value="-55"/>
+    <yMin value="-280"/>
+    <xMax value="454"/>
     <yMax value="750"/>
     <macStyle value="00000000 00000000"/>
     <lowestRecPPEM value="10"/>
@@ -37,10 +45,10 @@
     <ascent value="750"/>
     <descent value="-250"/>
     <lineGap value="200"/>
-    <advanceWidthMax value="500"/>
-    <minLeftSideBearing value="50"/>
-    <minRightSideBearing value="50"/>
-    <xMaxExtent value="450"/>
+    <advanceWidthMax value="600"/>
+    <minLeftSideBearing value="-55"/>
+    <minRightSideBearing value="-66"/>
+    <xMaxExtent value="454"/>
     <caretSlopeRise value="1"/>
     <caretSlopeRun value="0"/>
     <caretOffset value="0"/>
@@ -49,19 +57,19 @@
     <reserved2 value="0"/>
     <reserved3 value="0"/>
     <metricDataFormat value="0"/>
-    <numberOfHMetrics value="5"/>
+    <numberOfHMetrics value="11"/>
   </hhea>
 
   <maxp>
     <tableVersion value="0x5000"/>
-    <numGlyphs value="6"/>
+    <numGlyphs value="14"/>
   </maxp>
 
   <OS_2>
     <!-- The fields 'usFirstCharIndex' and 'usLastCharIndex'
          will be recalculated by the compiler -->
     <version value="4"/>
-    <xAvgCharWidth value="383"/>
+    <xAvgCharWidth value="449"/>
     <usWeightClass value="500"/>
     <usWidthClass value="5"/>
     <fsType value="00000000 00000000"/>
@@ -95,7 +103,7 @@
     <achVendID value="SOME"/>
     <fsSelection value="00000000 01001000"/>
     <usFirstCharIndex value="32"/>
-    <usLastCharIndex value="100"/>
+    <usLastCharIndex value="108"/>
     <sTypoAscender value="750"/>
     <sTypoDescender value="-250"/>
     <sTypoLineGap value="200"/>
@@ -175,6 +183,14 @@
       <map code="0x62" name="uni0062"/><!-- LATIN SMALL LETTER B -->
       <map code="0x63" name="uni0063"/><!-- LATIN SMALL LETTER C -->
       <map code="0x64" name="uni0064"/><!-- LATIN SMALL LETTER D -->
+      <map code="0x65" name="uni0065"/><!-- LATIN SMALL LETTER E -->
+      <map code="0x66" name="uni0066"/><!-- LATIN SMALL LETTER F -->
+      <map code="0x67" name="uni0067"/><!-- LATIN SMALL LETTER G -->
+      <map code="0x68" name="uni0068"/><!-- LATIN SMALL LETTER H -->
+      <map code="0x69" name="uni0069"/><!-- LATIN SMALL LETTER I -->
+      <map code="0x6a" name="uni006A"/><!-- LATIN SMALL LETTER J -->
+      <map code="0x6b" name="uni006B"/><!-- LATIN SMALL LETTER K -->
+      <map code="0x6c" name="uni006C"/><!-- LATIN SMALL LETTER L -->
     </cmap_format_4>
     <cmap_format_4 platformID="3" platEncID="1" language="0">
       <map code="0x20" name="uni0020"/><!-- SPACE -->
@@ -182,6 +198,14 @@
       <map code="0x62" name="uni0062"/><!-- LATIN SMALL LETTER B -->
       <map code="0x63" name="uni0063"/><!-- LATIN SMALL LETTER C -->
       <map code="0x64" name="uni0064"/><!-- LATIN SMALL LETTER D -->
+      <map code="0x65" name="uni0065"/><!-- LATIN SMALL LETTER E -->
+      <map code="0x66" name="uni0066"/><!-- LATIN SMALL LETTER F -->
+      <map code="0x67" name="uni0067"/><!-- LATIN SMALL LETTER G -->
+      <map code="0x68" name="uni0068"/><!-- LATIN SMALL LETTER H -->
+      <map code="0x69" name="uni0069"/><!-- LATIN SMALL LETTER I -->
+      <map code="0x6a" name="uni006A"/><!-- LATIN SMALL LETTER J -->
+      <map code="0x6b" name="uni006B"/><!-- LATIN SMALL LETTER K -->
+      <map code="0x6c" name="uni006C"/><!-- LATIN SMALL LETTER L -->
     </cmap_format_4>
   </cmap>
 
@@ -215,7 +239,7 @@
       <PaintType value="0"/>
       <CharstringType value="2"/>
       <FontMatrix value="0.001 0 0 0.001 0 0"/>
-      <FontBBox value="50 -10 450 750"/>
+      <FontBBox value="-55 -280 454 750"/>
       <StrokeWidth value="0"/>
       <!-- charset is dumped separately as the 'GlyphOrder' element -->
       <Encoding name="StandardEncoding"/>
@@ -237,6 +261,31 @@
         <initialRandomSeed value="0"/>
         <defaultWidthX value="400"/>
         <nominalWidthX value="400"/>
+        <Subrs>
+          <!-- The 'index' attribute is only for humans; it is ignored when parsed. -->
+          <CharString index="0">
+            256 hlineto
+            -128 510 rlineto
+            endchar
+          </CharString>
+          <CharString index="1">
+            200 -55 -80 rmoveto
+            509 hlineto
+            149 -50 50 -205 -204 -50 -50 -149 vhcurveto
+            121 return
+          </CharString>
+          <CharString index="2">
+            rmoveto
+            509 hlineto
+            150 -50 50 -205 -204 -50 -50 -150 vhcurveto
+            endchar
+          </CharString>
+          <CharString index="3">
+            rmoveto
+            -34 -27 -27 -33 -33 27 -27 34 33 27 27 33 33 -27 27 -33 hvcurveto
+            return
+          </CharString>
+        </Subrs>
       </Private>
       <CharStrings>
         <CharString name=".notdef">
@@ -251,23 +300,67 @@
         </CharString>
         <CharString name="uni0061">
           -12 66 hmoveto
-          128 510 128 -510 rlineto
-          endchar
+          -107 callsubr
         </CharString>
         <CharString name="uni0062">
           10 100 505 rmoveto
-          210 -510 -210 hlineto
+          -510 210 510 vlineto
           endchar
         </CharString>
         <CharString name="uni0063">
           -26 300 -10 rmoveto
-          -150 -50 50 205 205 50 50 150 hvcurveto
+          510 vlineto
+          -150 -50 -50 -205 -205 50 -50 150 hvcurveto
           endchar
         </CharString>
         <CharString name="uni0064">
-          -26 151 197 rmoveto
-          -34 -27 -27 -33 -33 27 -27 34 33 27 27 33 33 -27 27 -33 hvcurveto
+          -26 151 197 -104 callsubr
           endchar
+        </CharString>
+        <CharString name="uni0065">
+          -12 66 510 rmoveto
+          128 -435 128 435 rlineto
+          -377 -487 -105 callsubr
+        </CharString>
+        <CharString name="uni0066">
+          10 66 510 rmoveto
+          256 hlineto
+          -128 -435 rlineto
+          -249 -52 -105 callsubr
+        </CharString>
+        <CharString name="uni0067">
+          -12 66 hmoveto
+          -107 callsubr
+        </CharString>
+        <CharString name="uni0068">
+          10 211 657 -104 callsubr
+          -111 -152 rmoveto
+          -510 210 510 vlineto
+          endchar
+        </CharString>
+        <CharString name="uni0069">
+          -106 callsubr
+          80 rmoveto
+          -107 callsubr
+        </CharString>
+        <CharString name="uni006A">
+          -106 callsubr
+          310 rmoveto
+          128 -510 128 510 rlineto
+          endchar
+        </CharString>
+        <CharString name="uni006B">
+          200 66 hmoveto
+          256 hlineto
+          -128 510 rlineto
+          -28 -510 rmoveto
+          -107 callsubr
+        </CharString>
+        <CharString name="uni006C">
+          200 334 hmoveto
+          -128 510 -128 -510 rlineto
+          88 hmoveto
+          -107 callsubr
         </CharString>
       </CharStrings>
     </CFFFont>
@@ -279,7 +372,7 @@
 
   <CUST raw="True">
     <hexdata>
-      0001beef
+      0001beef   
     </hexdata>
   </CUST>
 
@@ -357,6 +450,14 @@
     <mtx name="uni0062" width="410" lsb="100"/>
     <mtx name="uni0063" width="374" lsb="100"/>
     <mtx name="uni0064" width="374" lsb="90"/>
+    <mtx name="uni0065" width="388" lsb="-55"/>
+    <mtx name="uni0066" width="410" lsb="-55"/>
+    <mtx name="uni0067" width="388" lsb="66"/>
+    <mtx name="uni0068" width="410" lsb="100"/>
+    <mtx name="uni0069" width="600" lsb="-55"/>
+    <mtx name="uni006A" width="600" lsb="-55"/>
+    <mtx name="uni006B" width="600" lsb="66"/>
+    <mtx name="uni006C" width="600" lsb="78"/>
   </hmtx>
 
 </ttFont>
