@@ -33,8 +33,9 @@ def loadFilters(ufo):
     """
     preFilters, postFilters = [], []
     for filterDict in ufo.lib.get(UFO2FT_FILTERS_KEY, []):
+        namespace = filterDict.get("namespace", "ufo2ft.filters")
         try:
-            filterClass = getFilterClass(filterDict["name"])
+            filterClass = getFilterClass(filterDict["name"], namespace)
         except (ImportError, AttributeError):
             from pprint import pformat
             logger.exception("Failed to load filter: %s", pformat(filterDict))
