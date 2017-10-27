@@ -1,4 +1,4 @@
-|Build Status| |PyPI Version|
+|Build Status| |PyPI Version| |Codecov|
 
 ufo2ft
 ======
@@ -104,15 +104,16 @@ look at ``fontInfoData.py`` in the source code.
 In some cases, the fallback values are dynamically generated from other
 data in the info object. These are handled internally with functions.
 
-.. |Build Status| image:: https://travis-ci.org/googlei18n/ufo2ft.svg
-   :target: https://travis-ci.org/googlei18n/ufo2ft
-.. |PyPI Version| image:: https://img.shields.io/pypi/v/ufo2ft.svg
-   :target: https://pypi.org/project/ufo2ft/
-
-
 Merging TTX
 ~~~~~~~~~~~
 
 If the UFO data directory has a ``com.github.fonttools.ttx`` folder with TTX
 files ending with ``.ttx``, these will be merged in the generated font.
 The index TTX (generated when using using ``ttx -s``) is not required.
+
+.. |Build Status| image:: https://travis-ci.org/googlei18n/ufo2ft.svg
+   :target: https://travis-ci.org/googlei18n/ufo2ft
+.. |PyPI Version| image:: https://img.shields.io/pypi/v/ufo2ft.svg
+   :target: https://pypi.org/project/ufo2ft/
+.. |Codecov| image:: https://codecov.io/gh/googlei18n/ufo2ft/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/googlei18n/ufo2ft
