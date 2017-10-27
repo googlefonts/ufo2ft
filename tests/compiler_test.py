@@ -54,6 +54,14 @@ class CompilerTest(unittest.TestCase):
         self.expectTTX(compileTTF(loadUFO("MTIFeatures.ufo")),
                        "MTIFeatures.ttx", tables=self._layoutTables)
 
+    def test_removeOverlaps_CFF(self):
+        self.expectTTX(compileOTF(loadUFO("TestFont.ufo"), removeOverlaps=True),
+                       "TestFont-NoOverlaps-CFF.ttx")
+
+    def test_removeOverlaps(self):
+        self.expectTTX(compileTTF(loadUFO("TestFont.ufo"), removeOverlaps=True),
+                       "TestFont-NoOverlaps-TTF.ttx")
+
     def _temppath(self, suffix):
         if not self._tempdir:
             self._tempdir = tempfile.mkdtemp()
