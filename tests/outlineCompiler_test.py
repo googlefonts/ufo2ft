@@ -58,25 +58,22 @@ class OutlineTTFCompilerTest(unittest.TestCase):
                          (90, 77, 211, 197))
 
     def test_autoUseMyMetrics(self):
-        # make sure we get the same USE_MY_METRICS flags with both values of
-        # 'convertCubics': https://github.com/googlei18n/ufo2ft/issues/136
         ufo = getTestUFO('UseMyMetrics')
-        for convertCubics in (False, True):
-            compiler = OutlineTTFCompiler(ufo, convertCubics=convertCubics)
-            ttf = compiler.compile()
-            # the first component in the 'Iacute' composite glyph ('acute')
-            # does _not_ have the USE_MY_METRICS flag
-            self.assertFalse(
-                ttf['glyf']['Iacute'].components[0].flags & USE_MY_METRICS)
-            # the second component in the 'Iacute' composite glyph ('I')
-            # has the USE_MY_METRICS flag set
-            self.assertTrue(
-                ttf['glyf']['Iacute'].components[1].flags & USE_MY_METRICS)
-            # none of the 'I' components of the 'romanthree' glyph has
-            # the USE_MY_METRICS flag set, because the composite glyph has a
-            # different width
-            for component in ttf['glyf']['romanthree'].components:
-                self.assertFalse(component.flags & USE_MY_METRICS)
+        compiler = OutlineTTFCompiler(ufo)
+        ttf = compiler.compile()
+        # the first component in the 'Iacute' composite glyph ('acute')
+        # does _not_ have the USE_MY_METRICS flag
+        self.assertFalse(
+            ttf['glyf']['Iacute'].components[0].flags & USE_MY_METRICS)
+        # the second component in the 'Iacute' composite glyph ('I')
+        # has the USE_MY_METRICS flag set
+        self.assertTrue(
+            ttf['glyf']['Iacute'].components[1].flags & USE_MY_METRICS)
+        # none of the 'I' components of the 'romanthree' glyph has
+        # the USE_MY_METRICS flag set, because the composite glyph has a
+        # different width
+        for component in ttf['glyf']['romanthree'].components:
+            self.assertFalse(component.flags & USE_MY_METRICS)
 
     def test_autoUseMyMetrics_None(self):
         ufo = getTestUFO('UseMyMetrics')
@@ -85,6 +82,14 @@ class OutlineTTFCompilerTest(unittest.TestCase):
         compiler.autoUseMyMetrics = None
         ttf = compiler.compile()
         self.assertFalse(ttf['glyf']['Iacute'].components[1].flags & USE_MY_METRICS)
+
+    def test_importTTX(self):
+        compiler = OutlineTTFCompiler(self.ufo)
+        otf = compiler.otf = TTFont()
+        compiler.importTTX()
+        self.assertIn("CUST", otf)
+        self.assertEqual(otf["CUST"].data, b"\x00\x01\xbe\xef")
+        self.assertEqual(otf.sfntVersion, "\x00\x01\x00\x00")
 
 
 class OutlineOTFCompilerTest(unittest.TestCase):
@@ -252,6 +257,13 @@ class OutlineOTFCompilerTest(unittest.TestCase):
         self.assertEqual(compiler.glyphBoundingBoxes['d'],
                          (90, 77, 211, 198))
 
+    def test_importTTX(self):
+        compiler = OutlineOTFCompiler(self.ufo)
+        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+        compiler.importTTX()
+        self.assertIn("CUST", otf)
+        self.assertEqual(otf["CUST"].data, b"\x00\x01\xbe\xef")
+        self.assertEqual(otf.sfntVersion, "OTTO")
 
 
 class TestGlyphOrder(unittest.TestCase):
@@ -260,13 +272,15 @@ class TestGlyphOrder(unittest.TestCase):
         self.ufo = getTestUFO()
 
     def test_compile_original_glyph_order(self):
-        DEFAULT_ORDER = ['.notdef', 'space', 'a', 'b', 'c', 'd']
+        DEFAULT_ORDER = ['.notdef', 'space', 'a', 'b', 'c', 'd',
+                         'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
         compiler = OutlineTTFCompiler(self.ufo)
         compiler.compile()
         self.assertEqual(compiler.otf.getGlyphOrder(), DEFAULT_ORDER)
 
     def test_compile_tweaked_glyph_order(self):
-        NEW_ORDER = ['.notdef', 'space', 'b', 'a', 'c', 'd']
+        NEW_ORDER = ['.notdef', 'space', 'b', 'a', 'c', 'd',
+                     'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
         self.ufo.lib['public.glyphOrder'] = NEW_ORDER
         compiler = OutlineTTFCompiler(self.ufo)
         compiler.compile()
@@ -277,7 +291,8 @@ class TestGlyphOrder(unittest.TestCase):
         ufo2ft always puts .notdef first.
         """
         NEW_ORDER = ['b', 'a', 'c', 'd', 'space', '.notdef']
-        EXPECTED_ORDER = ['.notdef', 'b', 'a', 'c', 'd', 'space']
+        EXPECTED_ORDER = ['.notdef', 'b', 'a', 'c', 'd', 'space',
+                          'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
         self.ufo.lib['public.glyphOrder'] = NEW_ORDER
         compiler = OutlineTTFCompiler(self.ufo)
         compiler.compile()
@@ -292,13 +307,17 @@ class TestNames(unittest.TestCase):
     def test_compile_without_production_names(self):
         result = compileTTF(self.ufo, useProductionNames=False)
         self.assertEqual(result.getGlyphOrder(),
-                         ['.notdef', 'space', 'a', 'b', 'c', 'd'])
+                         ['.notdef', 'space', 'a', 'b', 'c', 'd',
+                          'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'])
 
     def test_compile_with_production_names(self):
         result = compileTTF(self.ufo, useProductionNames=True)
         self.assertEqual(result.getGlyphOrder(),
                          ['.notdef', 'uni0020', 'uni0061', 'uni0062',
-                          'uni0063', 'uni0064'])
+                          'uni0063', 'uni0064', 'uni0065', 'uni0066',
+                          'uni0067', 'uni0068', 'uni0069', 'uni006A',
+                          'uni006B', 'uni006C',
+                         ])
 
     CUSTOM_POSTSCRIPT_NAMES = {
             '.notdef': '.notdef',
@@ -306,7 +325,15 @@ class TestNames(unittest.TestCase):
             'a': 'bar',
             'b': 'baz',
             'c': 'meh',
-            'd': 'doh'
+            'd': 'doh',
+            'e': 'bim',
+            'f': 'bum',
+            'g': 'bam',
+            'h': 'bib',
+            'i': 'bob',
+            'j': 'bub',
+            'k': 'kkk',
+            'l': 'lll',
         }
 
     def test_compile_with_custom_postscript_names(self):
@@ -321,7 +348,9 @@ class TestNames(unittest.TestCase):
         self.ufo.lib['public.postscriptNames'] = custom_names
         result = compileTTF(self.ufo, useProductionNames=True)
         self.assertEqual(result.getGlyphOrder(),
-                         ['.notdef', 'foo', 'bar', 'baz', 'meh', 'doh'])
+                         ['.notdef', 'foo', 'bar', 'baz', 'meh', 'doh',
+                          'bim', 'bum', 'bam', 'bib', 'bob', 'bub',
+                          'kkk', 'lll'])
 
 
 if __name__ == "__main__":

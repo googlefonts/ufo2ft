@@ -34,9 +34,19 @@ class PostProcessor(object):
         rename_map[".notdef"] = ".notdef"
         rename = lambda names: [rename_map[n] for n in names]
 
-        self.otf.setGlyphOrder(rename(self.otf.getGlyphOrder()))
-        if 'CFF ' in self.otf:
-            cff = self.otf['CFF '].cff.topDictIndex[0]
+        otf = self.otf
+        otf.setGlyphOrder(rename(otf.getGlyphOrder()))
+
+        # we need to compile format 2 'post' table so that the 'extraNames'
+        # attribute is updated with the list of the names outside the
+        # standard Macintosh glyph order; otherwise, if one dumps the font
+        # to TTX directly before compiling first, the post table will not
+        # contain the extraNames.
+        if 'post' in otf and otf['post'].formatType == 2.0:
+            otf['post'].compile(self.otf)
+
+        if 'CFF ' in otf:
+            cff = otf['CFF '].cff.topDictIndex[0]
             char_strings = cff.CharStrings.charStrings
             cff.CharStrings.charStrings = {
                 rename_map.get(n, n): v for n, v in char_strings.items()}

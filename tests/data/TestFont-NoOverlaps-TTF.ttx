@@ -64,7 +64,7 @@
     <!-- Most of this table will be recalculated by the compiler -->
     <tableVersion value="0x10000"/>
     <numGlyphs value="14"/>
-    <maxPoints value="12"/>
+    <maxPoints value="18"/>
     <maxContours value="2"/>
     <maxCompositePoints value="16"/>
     <maxCompositeContours value="2"/>
@@ -264,19 +264,17 @@
 
     <TTGlyph name="uni0065" xMin="-55" yMin="23" xMax="454" yMax="510">
       <contour>
+        <pt x="-55" y="23" on="1"/>
+        <pt x="-55" y="92" on="0"/>
+        <pt x="-20" y="176" on="0"/>
+        <pt x="69" y="218" on="0"/>
+        <pt x="151" y="222" on="1"/>
         <pt x="66" y="510" on="1"/>
         <pt x="322" y="510" on="1"/>
-        <pt x="194" y="75" on="1"/>
-      </contour>
-      <contour>
-        <pt x="-55" y="23" on="1"/>
-        <pt x="-55" y="98" on="0"/>
-        <pt x="-13" y="185" on="0"/>
-        <pt x="97" y="223" on="0"/>
-        <pt x="199" y="223" on="1"/>
-        <pt x="302" y="223" on="0"/>
-        <pt x="412" y="185" on="0"/>
-        <pt x="454" y="98" on="0"/>
+        <pt x="237" y="222" on="1"/>
+        <pt x="324" y="219" on="0"/>
+        <pt x="418" y="178" on="0"/>
+        <pt x="454" y="93" on="0"/>
         <pt x="454" y="23" on="1"/>
       </contour>
       <instructions/>
@@ -284,20 +282,26 @@
 
     <TTGlyph name="uni0066" xMin="-55" yMin="23" xMax="454" yMax="510">
       <contour>
+        <pt x="-55" y="23" on="1"/>
+        <pt x="-55" y="92" on="0"/>
+        <pt x="-20" y="176" on="0"/>
+        <pt x="69" y="218" on="0"/>
+        <pt x="151" y="222" on="1"/>
         <pt x="66" y="510" on="1"/>
-        <pt x="194" y="75" on="1"/>
         <pt x="322" y="510" on="1"/>
+        <pt x="237" y="222" on="1"/>
+        <pt x="324" y="219" on="0"/>
+        <pt x="418" y="178" on="0"/>
+        <pt x="454" y="93" on="0"/>
+        <pt x="454" y="23" on="1"/>
       </contour>
       <contour>
-        <pt x="-55" y="23" on="1"/>
-        <pt x="-55" y="98" on="0"/>
-        <pt x="-13" y="185" on="0"/>
-        <pt x="97" y="223" on="0"/>
         <pt x="199" y="223" on="1"/>
-        <pt x="302" y="223" on="0"/>
-        <pt x="412" y="185" on="0"/>
-        <pt x="454" y="98" on="0"/>
-        <pt x="454" y="23" on="1"/>
+        <pt x="173" y="223" on="0"/>
+        <pt x="151" y="222" on="1"/>
+        <pt x="194" y="75" on="1"/>
+        <pt x="237" y="222" on="1"/>
+        <pt x="219" y="223" on="0"/>
       </contour>
       <instructions/>
     </TTGlyph>
@@ -314,19 +318,16 @@
     <TTGlyph name="uni0069" xMin="-55" yMin="-80" xMax="454" yMax="510">
       <contour>
         <pt x="-55" y="-80" on="1"/>
-        <pt x="-55" y="-6" on="0"/>
-        <pt x="-13" y="82" on="0"/>
-        <pt x="97" y="119" on="0"/>
-        <pt x="199" y="119" on="1"/>
-        <pt x="302" y="119" on="0"/>
-        <pt x="412" y="82" on="0"/>
-        <pt x="454" y="-6" on="0"/>
-        <pt x="454" y="-80" on="1"/>
-      </contour>
-      <contour>
-        <pt x="66" y="0" on="1"/>
+        <pt x="-55" y="-20" on="0"/>
+        <pt x="-29" y="59" on="0"/>
+        <pt x="36" y="104" on="0"/>
+        <pt x="94" y="113" on="1"/>
         <pt x="194" y="510" on="1"/>
-        <pt x="322" y="0" on="1"/>
+        <pt x="293" y="114" on="1"/>
+        <pt x="357" y="106" on="0"/>
+        <pt x="426" y="62" on="0"/>
+        <pt x="454" y="-19" on="0"/>
+        <pt x="454" y="-80" on="1"/>
       </contour>
       <instructions/>
     </TTGlyph>
@@ -334,19 +335,20 @@
     <TTGlyph name="uni006A" xMin="-55" yMin="-280" xMax="454" yMax="230">
       <contour>
         <pt x="-55" y="-80" on="1"/>
-        <pt x="-55" y="-6" on="0"/>
-        <pt x="-13" y="82" on="0"/>
-        <pt x="97" y="119" on="0"/>
-        <pt x="199" y="119" on="1"/>
-        <pt x="302" y="119" on="0"/>
-        <pt x="412" y="82" on="0"/>
-        <pt x="454" y="-6" on="0"/>
-        <pt x="454" y="-80" on="1"/>
-      </contour>
-      <contour>
+        <pt x="-55" y="-20" on="0"/>
+        <pt x="-29" y="59" on="0"/>
+        <pt x="36" y="104" on="0"/>
+        <pt x="95" y="113" on="1"/>
         <pt x="66" y="230" on="1"/>
         <pt x="322" y="230" on="1"/>
+        <pt x="293" y="114" on="1"/>
+        <pt x="356" y="106" on="0"/>
+        <pt x="426" y="62" on="0"/>
+        <pt x="454" y="-19" on="0"/>
+        <pt x="454" y="-80" on="1"/>
+        <pt x="244" y="-80" on="1"/>
         <pt x="194" y="-280" on="1"/>
+        <pt x="144" y="-80" on="1"/>
       </contour>
       <instructions/>
     </TTGlyph>

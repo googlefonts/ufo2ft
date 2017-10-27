@@ -7,12 +7,12 @@ from collections import Counter, namedtuple
 
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
-from fontTools.pens.boundsPen import BoundsPen, ControlBoundsPen
+from fontTools.pens.boundsPen import ControlBoundsPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
-from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
+from fontTools.ttLib.tables._g_l_y_f import Glyph, USE_MY_METRICS
 from fontTools.misc.arrayTools import unionRect
 
 from ufo2ft.fontInfoData import getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
@@ -45,22 +45,16 @@ class BaseOutlineCompiler(object):
 
     sfntVersion = None
 
-    def __init__(self, font, glyphOrder=None):
+    def __init__(self, font, glyphSet=None, glyphOrder=None):
         self.ufo = font
-        self.log = []
-        # make any missing glyphs and store them locally
-        missingRequiredGlyphs = self.makeMissingRequiredGlyphs()
-        # make a dict of all glyphs
-        self.allGlyphs = {}
-        for glyph in font:
-            self.allGlyphs[glyph.name] = glyph
-        self.allGlyphs.update(missingRequiredGlyphs)
+        # use the previously filtered glyphSet, if any
+        if glyphSet is None:
+            glyphSet = {g.name: g for g in font}
+        self.makeMissingRequiredGlyphs(font, glyphSet)
+        self.allGlyphs = glyphSet
         # store the glyph order
         if glyphOrder is None:
-            if hasattr(font, 'glyphOrder'):
-                glyphOrder = font.glyphOrder
-            else:
-                glyphOrder = sorted(self.allGlyphs.keys())
+            glyphOrder = font.glyphOrder
         self.glyphOrder = self.makeOfficialGlyphOrder(glyphOrder)
         # make reusable glyphs/font bounding boxes
         self.glyphBoundingBoxes = self.makeGlyphsBoundingBoxes()
@@ -111,11 +105,18 @@ class BaseOutlineCompiler(object):
         may override this method to handle the bounds creation
         in a different way if desired.
         """
+
+        def getControlPointBounds(glyph):
+            pen.init()
+            glyph.draw(pen)
+            return pen.bounds
+
         glyphBoxes = {}
+        pen = ControlBoundsPen(self.allGlyphs)
         for glyphName, glyph in self.allGlyphs.items():
             bounds = None
             if glyph or glyph.components:
-                bounds = glyph.controlPointBounds
+                bounds = getControlPointBounds(glyph)
                 if bounds:
                     bounds = BoundingBox(*(round(v) for v in bounds))
             glyphBoxes[glyphName] = bounds
@@ -158,42 +159,46 @@ class BaseOutlineCompiler(object):
                 mapping[uni] = glyphName
         return mapping
 
-    def makeMissingRequiredGlyphs(self):
+    @staticmethod
+    def makeMissingRequiredGlyphs(font, glyphSet):
         """
-        Add .notdef to the font if it is not present.
+        Add .notdef to the glyph set if it is not present.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the glyph creation
         in a different way if desired.
         """
-        glyphs = {}
-        font = self.ufo
+        if ".notdef" in glyphSet:
+            return
+
         unitsPerEm = round(getAttrWithFallback(font.info, "unitsPerEm"))
         ascender = round(getAttrWithFallback(font.info, "ascender"))
         descender = round(getAttrWithFallback(font.info, "descender"))
         defaultWidth = round(unitsPerEm * 0.5)
-        if ".notdef" not in self.ufo:
-            glyphs[".notdef"] = StubGlyph(name=".notdef", width=defaultWidth, unitsPerEm=unitsPerEm, ascender=ascender, descender=descender)
-        return glyphs
+        glyphSet[".notdef"] = StubGlyph(name=".notdef",
+                                        width=defaultWidth,
+                                        unitsPerEm=unitsPerEm,
+                                        ascender=ascender,
+                                        descender=descender)
 
     def makeOfficialGlyphOrder(self, glyphOrder):
         """
-        Make a the final glyph order.
+        Make the final glyph order.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the order creation
         in a different way if desired.
         """
-
         orderedGlyphs = [".notdef"]
         for glyphName in glyphOrder:
             if glyphName == ".notdef":
                 continue
-            if glyphName not in self.ufo:
+            if glyphName not in self.allGlyphs:
                 continue
             orderedGlyphs.append(glyphName)
+        orderedGlyphSet = set(orderedGlyphs)
         for glyphName in sorted(self.allGlyphs.keys()):
-            if glyphName not in orderedGlyphs:
+            if glyphName not in orderedGlyphSet:
                 orderedGlyphs.append(glyphName)
         return orderedGlyphs
 
@@ -761,7 +766,11 @@ class BaseOutlineCompiler(object):
         in a different way if desired.
         """
         import os
+        import re
+
         prefix = "com.github.fonttools.ttx"
+        sfntVersionRE = re.compile('(^<ttFont\s+)(sfntVersion=".*"\s+)(.*>$)',
+                                   flags=re.MULTILINE)
         if not hasattr(self.ufo, "data"):
             return
         if not self.ufo.data.fileNames:
@@ -769,7 +778,11 @@ class BaseOutlineCompiler(object):
         for path in self.ufo.data.fileNames:
             foldername, filename = os.path.split(path)
             if (foldername == prefix and filename.endswith(".ttx")):
-                fp = BytesIO(self.ufo.data[path])
+                ttx = self.ufo.data[path].decode('utf-8')
+                # strip 'sfntVersion' attribute from ttFont element,
+                # if present, to avoid overwriting the current value
+                ttx = sfntVersionRE.sub(r'\1\3', ttx)
+                fp = BytesIO(ttx.encode('utf-8'))
                 self.otf.importXML(fp)
 
 
@@ -778,13 +791,15 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
     sfntVersion = "OTTO"
 
-    def __init__(self, font, glyphOrder=None, roundTolerance=None):
+    def __init__(self, font, glyphSet=None, glyphOrder=None,
+                 roundTolerance=None):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
         else:
             # round all coordinates to integers by default
             self.roundTolerance = 0.5
-        super(OutlineOTFCompiler, self).__init__(font, glyphOrder)
+        super(OutlineOTFCompiler, self).__init__(
+            font, glyphSet=glyphSet, glyphOrder=glyphOrder)
 
     def makeGlyphsBoundingBoxes(self):
         """
@@ -799,6 +814,11 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         values.
         """
 
+        def getControlPointBounds(glyph):
+            pen.init()
+            glyph.draw(pen)
+            return pen.bounds
+
         def toInt(value, else_callback):
             rounded = round(value)
             if tolerance >= 0.5 or abs(rounded - value) <= tolerance:
@@ -808,10 +828,11 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
         tolerance = self.roundTolerance
         glyphBoxes = {}
+        pen = ControlBoundsPen(self.allGlyphs)
         for glyphName, glyph in self.allGlyphs.items():
             bounds = None
             if glyph or glyph.components:
-                bounds = glyph.controlPointBounds
+                bounds = getControlPointBounds(glyph)
                 if bounds:
                     rounded = []
                     for value in bounds[:2]:
@@ -891,7 +912,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         if trademark:
             trademark = normalizeStringForPostscript(trademark.replace("\u00A9", "Copyright"))
         if trademark != self.ufo.info.trademark:
-            self.log.append("[Warning] The trademark was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % trademark)
+            logger.warning("The trademark was normalized for storage in the "
+                           "CFF table and consequently some characters were "
+                           "dropped: '%s'", trademark)
         if trademark is None:
             trademark = ""
         topDict.Notice = trademark
@@ -899,7 +922,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         if copyright:
             copyright = normalizeStringForPostscript(copyright.replace("\u00A9", "Copyright"))
         if copyright != self.ufo.info.copyright:
-            self.log.append("[Warning] The copyright was normalized for storage in the CFF table and consequently some characters were dropped: '%s'" % copyright)
+            logger.warning("The copyright was normalized for storage in the "
+                           "CFF table and consequently some characters were "
+                           "dropped: '%s'", copyright)
         if copyright is None:
             copyright = ""
         topDict.Copyright = copyright
@@ -988,26 +1013,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
 class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines.
-
-    If cubicConversionError is not specified, the default cu2qu error is
-    used. Currently, this is 1/1000 of the EM, or 0.001 * UPM.
-    If a value is specified, this should also be expressed as a fraction
-    of the UPM (e.g. 0.0005), and not in terms of absolute font units.
     """
 
     sfntVersion = "\000\001\000\000"
-
-    def __init__(self, font, glyphOrder=None, convertCubics=True,
-                 cubicConversionError=None):
-        super(OutlineTTFCompiler, self).__init__(font, glyphOrder)
-        if convertCubics:
-            unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
-            if cubicConversionError is None:
-                from cu2qu.ufo import DEFAULT_MAX_ERR
-                cubicConversionError = DEFAULT_MAX_ERR
-            cubicConversionError *= unitsPerEm
-        self.convertCubics = convertCubics
-        self.cubicConversionError = cubicConversionError
 
     def setupTable_maxp(self):
         """Make the maxp table."""
@@ -1026,7 +1034,6 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
-
         super(OutlineTTFCompiler, self).setupTable_post()
         post = self.otf["post"]
         post.formatType = 2.0
@@ -1042,34 +1049,24 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
     def setupTable_glyf(self):
         """Make the glyf table."""
 
-        allGlyphs = self.allGlyphs
-        if self.convertCubics:
-            from cu2qu.pens import Cu2QuPen
-            allGlyphs = {}
-            for name, glyph in self.allGlyphs.items():
-                if isinstance(glyph, StubGlyph):
-                    allGlyphs[name] = glyph
-                    continue
-                newGlyph = glyph.__class__()
-                glyph.draw(Cu2QuPen(
-                    newGlyph.getPen(), self.cubicConversionError,
-                    reverse_direction=True))
-                # the width is needed for autoUseMyMetrics method below
-                newGlyph.width = glyph.width
-                allGlyphs[name] = newGlyph
-
         self.otf["loca"] = newTable("loca")
         self.otf["glyf"] = glyf = newTable("glyf")
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
+        allGlyphs = self.allGlyphs
         for name in self.glyphOrder:
             glyph = allGlyphs[name]
             pen = TTGlyphPen(allGlyphs)
-            glyph.draw(pen)
-            ttGlyph = pen.glyph()
-            if ttGlyph.isComposite() and self.autoUseMyMetrics:
-                self.autoUseMyMetrics(ttGlyph, glyph.width, allGlyphs)
+            try:
+                glyph.draw(pen)
+            except NotImplementedError:
+                logger.error("%r has invalid curve format; skipped", name)
+                ttGlyph = Glyph()
+            else:
+                ttGlyph = pen.glyph()
+                if ttGlyph.isComposite() and self.autoUseMyMetrics:
+                    self.autoUseMyMetrics(ttGlyph, glyph.width, allGlyphs)
             glyf[name] = ttGlyph
 
     @staticmethod
