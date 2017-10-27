@@ -116,8 +116,9 @@ class TTFInterpolatablePreProcessor(object):
     The constructor takes a list of UFO fonts, and the ``process`` method
     returns the modified glyphsets (list of dicts) in the same order.
 
-    Currently, only the conversion from cubic to quadratic is performed,
-    and no additional filter is applied.
+    Currently, only the conversion from cubic to quadratic, and the
+    decomposition of mixed contour/component glyphs is performed,
+    and no additional custom filter is applied.
 
     The ``conversionError`` and ``reverseDirection`` arguments work in the
     same way as in the ``TTFPreProcessor``.
@@ -141,6 +142,11 @@ class TTFInterpolatablePreProcessor(object):
         fonts_to_quadratic(self.glyphSets, max_err=self._conversionErrors,
                            reverse_direction=self._reverseDirection,
                            dump_stats=True)
+
+        decompose = DecomposeComponentsFilter(include=lambda g: len(g))
+        for glyphSet in self.glyphSets:
+            decompose(glyphSet)
+
         return self.glyphSets
 
 
