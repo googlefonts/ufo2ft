@@ -272,13 +272,15 @@ class TestGlyphOrder(unittest.TestCase):
         self.ufo = getTestUFO()
 
     def test_compile_original_glyph_order(self):
-        DEFAULT_ORDER = ['.notdef', 'space', 'a', 'b', 'c', 'd']
+        DEFAULT_ORDER = ['.notdef', 'space', 'a', 'b', 'c', 'd',
+                         'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
         compiler = OutlineTTFCompiler(self.ufo)
         compiler.compile()
         self.assertEqual(compiler.otf.getGlyphOrder(), DEFAULT_ORDER)
 
     def test_compile_tweaked_glyph_order(self):
-        NEW_ORDER = ['.notdef', 'space', 'b', 'a', 'c', 'd']
+        NEW_ORDER = ['.notdef', 'space', 'b', 'a', 'c', 'd',
+                     'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
         self.ufo.lib['public.glyphOrder'] = NEW_ORDER
         compiler = OutlineTTFCompiler(self.ufo)
         compiler.compile()
@@ -289,7 +291,8 @@ class TestGlyphOrder(unittest.TestCase):
         ufo2ft always puts .notdef first.
         """
         NEW_ORDER = ['b', 'a', 'c', 'd', 'space', '.notdef']
-        EXPECTED_ORDER = ['.notdef', 'b', 'a', 'c', 'd', 'space']
+        EXPECTED_ORDER = ['.notdef', 'b', 'a', 'c', 'd', 'space',
+                          'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
         self.ufo.lib['public.glyphOrder'] = NEW_ORDER
         compiler = OutlineTTFCompiler(self.ufo)
         compiler.compile()
@@ -304,13 +307,17 @@ class TestNames(unittest.TestCase):
     def test_compile_without_production_names(self):
         result = compileTTF(self.ufo, useProductionNames=False)
         self.assertEqual(result.getGlyphOrder(),
-                         ['.notdef', 'space', 'a', 'b', 'c', 'd'])
+                         ['.notdef', 'space', 'a', 'b', 'c', 'd',
+                          'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'])
 
     def test_compile_with_production_names(self):
         result = compileTTF(self.ufo, useProductionNames=True)
         self.assertEqual(result.getGlyphOrder(),
                          ['.notdef', 'uni0020', 'uni0061', 'uni0062',
-                          'uni0063', 'uni0064'])
+                          'uni0063', 'uni0064', 'uni0065', 'uni0066',
+                          'uni0067', 'uni0068', 'uni0069', 'uni006A',
+                          'uni006B', 'uni006C',
+                         ])
 
     CUSTOM_POSTSCRIPT_NAMES = {
             '.notdef': '.notdef',
@@ -318,7 +325,15 @@ class TestNames(unittest.TestCase):
             'a': 'bar',
             'b': 'baz',
             'c': 'meh',
-            'd': 'doh'
+            'd': 'doh',
+            'e': 'bim',
+            'f': 'bum',
+            'g': 'bam',
+            'h': 'bib',
+            'i': 'bob',
+            'j': 'bub',
+            'k': 'kkk',
+            'l': 'lll',
         }
 
     def test_compile_with_custom_postscript_names(self):
@@ -333,7 +348,9 @@ class TestNames(unittest.TestCase):
         self.ufo.lib['public.postscriptNames'] = custom_names
         result = compileTTF(self.ufo, useProductionNames=True)
         self.assertEqual(result.getGlyphOrder(),
-                         ['.notdef', 'foo', 'bar', 'baz', 'meh', 'doh'])
+                         ['.notdef', 'foo', 'bar', 'baz', 'meh', 'doh',
+                          'bim', 'bum', 'bam', 'bib', 'bob', 'bub',
+                          'kkk', 'lll'])
 
 
 if __name__ == "__main__":

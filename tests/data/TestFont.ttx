@@ -9,6 +9,14 @@
     <GlyphID id="3" name="uni0062"/>
     <GlyphID id="4" name="uni0063"/>
     <GlyphID id="5" name="uni0064"/>
+    <GlyphID id="6" name="uni0065"/>
+    <GlyphID id="7" name="uni0066"/>
+    <GlyphID id="8" name="uni0067"/>
+    <GlyphID id="9" name="uni0068"/>
+    <GlyphID id="10" name="uni0069"/>
+    <GlyphID id="11" name="uni006A"/>
+    <GlyphID id="12" name="uni006B"/>
+    <GlyphID id="13" name="uni006C"/>
   </GlyphOrder>
 
   <head>
@@ -21,9 +29,9 @@
     <unitsPerEm value="1000"/>
     <created value="Fri Feb 17 17:17:17 2017"/>
     <modified value="Sun Feb 18 18:18:18 2018"/>
-    <xMin value="50"/>
-    <yMin value="-10"/>
-    <xMax value="450"/>
+    <xMin value="-55"/>
+    <yMin value="-280"/>
+    <xMax value="454"/>
     <yMax value="750"/>
     <macStyle value="00000000 00000000"/>
     <lowestRecPPEM value="10"/>
@@ -37,10 +45,10 @@
     <ascent value="750"/>
     <descent value="-250"/>
     <lineGap value="200"/>
-    <advanceWidthMax value="500"/>
-    <minLeftSideBearing value="50"/>
-    <minRightSideBearing value="50"/>
-    <xMaxExtent value="450"/>
+    <advanceWidthMax value="600"/>
+    <minLeftSideBearing value="-55"/>
+    <minRightSideBearing value="-66"/>
+    <xMaxExtent value="454"/>
     <caretSlopeRise value="1"/>
     <caretSlopeRun value="0"/>
     <caretOffset value="0"/>
@@ -49,17 +57,17 @@
     <reserved2 value="0"/>
     <reserved3 value="0"/>
     <metricDataFormat value="0"/>
-    <numberOfHMetrics value="5"/>
+    <numberOfHMetrics value="11"/>
   </hhea>
 
   <maxp>
     <!-- Most of this table will be recalculated by the compiler -->
     <tableVersion value="0x10000"/>
-    <numGlyphs value="6"/>
+    <numGlyphs value="14"/>
     <maxPoints value="12"/>
     <maxContours value="2"/>
-    <maxCompositePoints value="0"/>
-    <maxCompositeContours value="0"/>
+    <maxCompositePoints value="16"/>
+    <maxCompositeContours value="2"/>
     <maxZones value="1"/>
     <maxTwilightPoints value="0"/>
     <maxStorage value="0"/>
@@ -67,15 +75,15 @@
     <maxInstructionDefs value="0"/>
     <maxStackElements value="0"/>
     <maxSizeOfInstructions value="0"/>
-    <maxComponentElements value="0"/>
-    <maxComponentDepth value="0"/>
+    <maxComponentElements value="2"/>
+    <maxComponentDepth value="1"/>
   </maxp>
 
   <OS_2>
     <!-- The fields 'usFirstCharIndex' and 'usLastCharIndex'
          will be recalculated by the compiler -->
     <version value="4"/>
-    <xAvgCharWidth value="383"/>
+    <xAvgCharWidth value="449"/>
     <usWeightClass value="500"/>
     <usWidthClass value="5"/>
     <fsType value="00000000 00000000"/>
@@ -109,7 +117,7 @@
     <achVendID value="SOME"/>
     <fsSelection value="00000000 01001000"/>
     <usFirstCharIndex value="32"/>
-    <usLastCharIndex value="100"/>
+    <usLastCharIndex value="108"/>
     <sTypoAscender value="750"/>
     <sTypoDescender value="-250"/>
     <sTypoLineGap value="200"/>
@@ -131,6 +139,14 @@
     <mtx name="uni0062" width="410" lsb="100"/>
     <mtx name="uni0063" width="374" lsb="100"/>
     <mtx name="uni0064" width="374" lsb="90"/>
+    <mtx name="uni0065" width="388" lsb="-55"/>
+    <mtx name="uni0066" width="410" lsb="-55"/>
+    <mtx name="uni0067" width="388" lsb="66"/>
+    <mtx name="uni0068" width="410" lsb="100"/>
+    <mtx name="uni0069" width="600" lsb="-55"/>
+    <mtx name="uni006A" width="600" lsb="-55"/>
+    <mtx name="uni006B" width="600" lsb="66"/>
+    <mtx name="uni006C" width="600" lsb="78"/>
   </hmtx>
 
   <cmap>
@@ -141,6 +157,14 @@
       <map code="0x62" name="uni0062"/><!-- LATIN SMALL LETTER B -->
       <map code="0x63" name="uni0063"/><!-- LATIN SMALL LETTER C -->
       <map code="0x64" name="uni0064"/><!-- LATIN SMALL LETTER D -->
+      <map code="0x65" name="uni0065"/><!-- LATIN SMALL LETTER E -->
+      <map code="0x66" name="uni0066"/><!-- LATIN SMALL LETTER F -->
+      <map code="0x67" name="uni0067"/><!-- LATIN SMALL LETTER G -->
+      <map code="0x68" name="uni0068"/><!-- LATIN SMALL LETTER H -->
+      <map code="0x69" name="uni0069"/><!-- LATIN SMALL LETTER I -->
+      <map code="0x6a" name="uni006A"/><!-- LATIN SMALL LETTER J -->
+      <map code="0x6b" name="uni006B"/><!-- LATIN SMALL LETTER K -->
+      <map code="0x6c" name="uni006C"/><!-- LATIN SMALL LETTER L -->
     </cmap_format_4>
     <cmap_format_4 platformID="3" platEncID="1" language="0">
       <map code="0x20" name="uni0020"/><!-- SPACE -->
@@ -148,6 +172,14 @@
       <map code="0x62" name="uni0062"/><!-- LATIN SMALL LETTER B -->
       <map code="0x63" name="uni0063"/><!-- LATIN SMALL LETTER C -->
       <map code="0x64" name="uni0064"/><!-- LATIN SMALL LETTER D -->
+      <map code="0x65" name="uni0065"/><!-- LATIN SMALL LETTER E -->
+      <map code="0x66" name="uni0066"/><!-- LATIN SMALL LETTER F -->
+      <map code="0x67" name="uni0067"/><!-- LATIN SMALL LETTER G -->
+      <map code="0x68" name="uni0068"/><!-- LATIN SMALL LETTER H -->
+      <map code="0x69" name="uni0069"/><!-- LATIN SMALL LETTER I -->
+      <map code="0x6a" name="uni006A"/><!-- LATIN SMALL LETTER J -->
+      <map code="0x6b" name="uni006B"/><!-- LATIN SMALL LETTER K -->
+      <map code="0x6c" name="uni006C"/><!-- LATIN SMALL LETTER L -->
     </cmap_format_4>
   </cmap>
 
@@ -181,8 +213,8 @@
     <TTGlyph name="uni0061" xMin="66" yMin="0" xMax="322" yMax="510">
       <contour>
         <pt x="66" y="0" on="1"/>
-        <pt x="322" y="0" on="1"/>
         <pt x="194" y="510" on="1"/>
+        <pt x="322" y="0" on="1"/>
       </contour>
       <instructions/>
     </TTGlyph>
@@ -190,9 +222,9 @@
     <TTGlyph name="uni0062" xMin="100" yMin="-5" xMax="310" yMax="505">
       <contour>
         <pt x="100" y="505" on="1"/>
-        <pt x="100" y="-5" on="1"/>
-        <pt x="310" y="-5" on="1"/>
         <pt x="310" y="505" on="1"/>
+        <pt x="310" y="-5" on="1"/>
+        <pt x="100" y="-5" on="1"/>
       </contour>
       <instructions/>
     </TTGlyph>
@@ -200,14 +232,14 @@
     <TTGlyph name="uni0063" xMin="100" yMin="-10" xMax="300" yMax="500">
       <contour>
         <pt x="300" y="-10" on="1"/>
-        <pt x="300" y="500" on="1"/>
-        <pt x="225" y="500" on="0"/>
-        <pt x="138" y="458" on="0"/>
-        <pt x="100" y="348" on="0"/>
-        <pt x="100" y="245" on="1"/>
-        <pt x="100" y="142" on="0"/>
-        <pt x="138" y="32" on="0"/>
         <pt x="225" y="-10" on="0"/>
+        <pt x="138" y="32" on="0"/>
+        <pt x="100" y="142" on="0"/>
+        <pt x="100" y="245" on="1"/>
+        <pt x="100" y="348" on="0"/>
+        <pt x="138" y="458" on="0"/>
+        <pt x="225" y="500" on="0"/>
+        <pt x="300" y="500" on="1"/>
       </contour>
       <instructions/>
     </TTGlyph>
@@ -228,6 +260,105 @@
         <pt x="125" y="197" on="0"/>
       </contour>
       <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="uni0065" xMin="-55" yMin="23" xMax="454" yMax="510">
+      <contour>
+        <pt x="66" y="510" on="1"/>
+        <pt x="322" y="510" on="1"/>
+        <pt x="194" y="75" on="1"/>
+      </contour>
+      <contour>
+        <pt x="-55" y="23" on="1"/>
+        <pt x="-55" y="98" on="0"/>
+        <pt x="-13" y="185" on="0"/>
+        <pt x="97" y="223" on="0"/>
+        <pt x="199" y="223" on="1"/>
+        <pt x="302" y="223" on="0"/>
+        <pt x="412" y="185" on="0"/>
+        <pt x="454" y="98" on="0"/>
+        <pt x="454" y="23" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="uni0066" xMin="-55" yMin="23" xMax="454" yMax="510">
+      <contour>
+        <pt x="66" y="510" on="1"/>
+        <pt x="194" y="75" on="1"/>
+        <pt x="322" y="510" on="1"/>
+      </contour>
+      <contour>
+        <pt x="-55" y="23" on="1"/>
+        <pt x="-55" y="98" on="0"/>
+        <pt x="-13" y="185" on="0"/>
+        <pt x="97" y="223" on="0"/>
+        <pt x="199" y="223" on="1"/>
+        <pt x="302" y="223" on="0"/>
+        <pt x="412" y="185" on="0"/>
+        <pt x="454" y="98" on="0"/>
+        <pt x="454" y="23" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="uni0067" xMin="66" yMin="0" xMax="322" yMax="510">
+      <component glyphName="uni0061" x="0" y="0" flags="0x204"/>
+    </TTGlyph>
+
+    <TTGlyph name="uni0068" xMin="100" yMin="-5" xMax="310" yMax="657">
+      <component glyphName="uni0064" x="60" y="460" flags="0x4"/>
+      <component glyphName="uni0062" x="0" y="0" flags="0x204"/>
+    </TTGlyph>
+
+    <TTGlyph name="uni0069" xMin="-55" yMin="-80" xMax="454" yMax="510">
+      <contour>
+        <pt x="-55" y="-80" on="1"/>
+        <pt x="-55" y="-6" on="0"/>
+        <pt x="-13" y="82" on="0"/>
+        <pt x="97" y="119" on="0"/>
+        <pt x="199" y="119" on="1"/>
+        <pt x="302" y="119" on="0"/>
+        <pt x="412" y="82" on="0"/>
+        <pt x="454" y="-6" on="0"/>
+        <pt x="454" y="-80" on="1"/>
+      </contour>
+      <contour>
+        <pt x="66" y="0" on="1"/>
+        <pt x="194" y="510" on="1"/>
+        <pt x="322" y="0" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="uni006A" xMin="-55" yMin="-280" xMax="454" yMax="230">
+      <contour>
+        <pt x="-55" y="-80" on="1"/>
+        <pt x="-55" y="-6" on="0"/>
+        <pt x="-13" y="82" on="0"/>
+        <pt x="97" y="119" on="0"/>
+        <pt x="199" y="119" on="1"/>
+        <pt x="302" y="119" on="0"/>
+        <pt x="412" y="82" on="0"/>
+        <pt x="454" y="-6" on="0"/>
+        <pt x="454" y="-80" on="1"/>
+      </contour>
+      <contour>
+        <pt x="66" y="230" on="1"/>
+        <pt x="322" y="230" on="1"/>
+        <pt x="194" y="-280" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="uni006B" xMin="66" yMin="0" xMax="422" yMax="510">
+      <component glyphName="uni0061" x="0" y="0" flags="0x4"/>
+      <component glyphName="uni0061" x="100" y="0" flags="0x4"/>
+    </TTGlyph>
+
+    <TTGlyph name="uni006C" xMin="78" yMin="0" xMax="422" yMax="510">
+      <component glyphName="uni0061" x="400" y="0" scalex="-1.0" scaley="1.0" flags="0x4"/>
+      <component glyphName="uni0061" x="100" y="0" flags="0x4"/>
     </TTGlyph>
 
   </glyf>
@@ -310,6 +441,19 @@
     </psNames>
     <extraNames>
       <!-- following are the name that are not taken from the standard Mac glyph order -->
+      <psName name="uni0020"/>
+      <psName name="uni0061"/>
+      <psName name="uni0062"/>
+      <psName name="uni0063"/>
+      <psName name="uni0064"/>
+      <psName name="uni0065"/>
+      <psName name="uni0066"/>
+      <psName name="uni0067"/>
+      <psName name="uni0068"/>
+      <psName name="uni0069"/>
+      <psName name="uni006A"/>
+      <psName name="uni006B"/>
+      <psName name="uni006C"/>
     </extraNames>
   </post>
 
@@ -320,7 +464,7 @@
 
   <CUST raw="True">
     <hexdata>
-      0001beef
+      0001beef   
     </hexdata>
   </CUST>
 
