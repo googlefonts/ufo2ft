@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class RemoveOverlapsFilter(BaseFilter):
 
-    def filter(self, glyph, glyphSet=None):
+    def filter(self, glyph):
         if not len(glyph):
             return False
 
