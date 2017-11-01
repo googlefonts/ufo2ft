@@ -35,15 +35,16 @@ class BasePreProcessor(object):
         else:
             self.glyphSet = {g.name: _copyGlyph(g) for g in ufo}
         self.defaultFilters = self.initDefaultFilters(**kwargs)
-        self.preFilters, self.postFilters = loadFilters(self.ufo)
+        self.preFilters, self.postFilters = loadFilters(ufo)
 
     def initDefaultFilters(self, **kwargs):
         return []
 
     def process(self):
+        ufo = self.ufo
         glyphSet = self.glyphSet
         for func in self.preFilters + self.defaultFilters + self.postFilters:
-            func(glyphSet)
+            func(ufo, glyphSet)
         return glyphSet
 
 
@@ -103,7 +104,6 @@ class TTFPreProcessor(OTFPreProcessor):
             from ufo2ft.filters.cubicToQuadratic import CubicToQuadraticFilter
             filters.append(
                 CubicToQuadraticFilter(conversionError=conversionError,
-                                       unitsPerEm=self.ufo.info.unitsPerEm,
                                        reverseDirection=reverseDirection))
 
         return filters
@@ -128,6 +128,7 @@ class TTFInterpolatablePreProcessor(object):
                  reverseDirection=True):
         from cu2qu.ufo import DEFAULT_MAX_ERR
 
+        self.ufos = ufos
         self.glyphSets = [
             {g.name: (_copyGlyph(g) if not inplace else g) for g in ufo}
             for ufo in ufos]
@@ -144,8 +145,8 @@ class TTFInterpolatablePreProcessor(object):
                            dump_stats=True)
 
         decompose = DecomposeComponentsFilter(include=lambda g: len(g))
-        for glyphSet in self.glyphSets:
-            decompose(glyphSet)
+        for ufo, glyphSet in zip(self.ufos, self.glyphSets):
+            decompose(ufo, glyphSet)
 
         return self.glyphSets
 
