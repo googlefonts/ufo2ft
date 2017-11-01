@@ -3,6 +3,7 @@ from __future__ import (
 
 import importlib
 import logging
+from fontTools.misc.py23 import SimpleNamespace
 from fontTools.misc.loggingTools import Timer
 
 
@@ -62,6 +63,8 @@ class BaseFilter(object):
     _kwargs = {}
 
     def __init__(self, *args, **kwargs):
+        self.options = options = SimpleNamespace()
+
         # process positional arguments
         num_required = len(self._args)
         num_args = len(args)
@@ -81,12 +84,12 @@ class BaseFilter(object):
                     num_extra,
                     "s" if num_extra > 1 else "",
                     ", ".join(extra)))
-        for option, value in zip(self._args, args):
-            setattr(self, option, value)
+        for key, value in zip(self._args, args):
+            setattr(options, key, value)
 
         # process optional keyword arguments
-        for option, default in self._kwargs.items():
-            setattr(self, option, kwargs.pop(option, default))
+        for key, default in self._kwargs.items():
+            setattr(options, key, kwargs.pop(key, default))
 
         # process special include/exclude arguments
         include = kwargs.pop('include', None)
@@ -133,7 +136,21 @@ class BaseFilter(object):
         """
         pass
 
-    def filter(self, glyph, glyphSet=None):
+    def set_context(self, font, glyphSet):
+        """ Return a dictionary that will be used to populate a `self.context`
+        namespace, which is reset before each new filter call.
+
+        Subclasses can override this to provide contextual information
+        which depends on other data in the font that is not available in
+        the glyphs objects currently being filtered, or set any other
+        temporary attributes.
+
+        The default implementation simply return the current font and glyphSet
+        as the context.
+        """
+        return dict(font=font, glyphSet=glyphSet)
+
+    def filter(self, glyph):
         """ This is where the filter is applied to a single glyph.
         Subclasses must override this method, and return True
         when the glyph was modified.
@@ -144,10 +161,20 @@ class BaseFilter(object):
     def name(self):
         return self.__class__.__name__
 
-    def __call__(self, glyphSet):
+    def __call__(self, font, glyphSet=None):
         """ Run this filter on all the included glyphs.
-        Return the set of glyphs that were modified, if any.
+        Return the set of glyph names that were modified, if any.
+
+        If `glyphSet` (dict) argument is provided, run the filter on
+        the glyphs contained therein (which may be copies).
+        Otherwise, run the filter in-place on the font's default
+        glyph set.
         """
+        if glyphSet is None:
+            glyphSet = font
+
+        self.context = SimpleNamespace(**self.set_context(font, glyphSet))
+
         filter_ = self.filter
         include = self.include
         modified = set()
@@ -155,7 +182,7 @@ class BaseFilter(object):
         with Timer() as t:
             for glyphName in glyphSet.keys():
                 glyph = glyphSet[glyphName]
-                if include(glyph) and filter_(glyph, glyphSet):
+                if include(glyph) and filter_(glyph):
                     modified.add(glyphName)
 
         logger.debug("Took %.3fs to run %s on %d glyphs",
