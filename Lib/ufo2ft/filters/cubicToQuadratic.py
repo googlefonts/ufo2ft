@@ -29,7 +29,7 @@ class CubicToQuadraticFilter(BaseFilter):
             logger.info('New spline lengths: %s' % (', '.join(
                 '%s: %d' % (l, stats[l]) for l in sorted(stats.keys()))))
 
-    def filter(self, glyph, glyphSet=None):
+    def filter(self, glyph):
         if not len(glyph):
             return False
 
