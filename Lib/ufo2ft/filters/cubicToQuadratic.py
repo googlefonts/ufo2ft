@@ -15,25 +15,19 @@ class CubicToQuadraticFilter(BaseFilter):
 
     _kwargs = {
         'conversionError': None,
-        'unitsPerEm': 1000,
         'reverseDirection': True,
     }
 
-    def start(self):
-        relativeError = self.conversionError or DEFAULT_MAX_ERR
-        self.absoluteError = relativeError * self.unitsPerEm
-        self.stats = None
+    def set_context(self, font, glyphSet):
+        relativeError = self.options.conversionError or DEFAULT_MAX_ERR
+        absoluteError = relativeError * font.info.unitsPerEm
+        return dict(absoluteError=absoluteError, stats=dict())
 
-    def __call__(self, glyphSet):
-        self.stats = {}
-        if super(CubicToQuadraticFilter, self).__call__(glyphSet):
-            self.dump_stats()
-
-    def dump_stats(self):
-        stats = self.stats
-        logger.info('New spline lengths: %s' % (', '.join(
-                    '%s: %d' % (l, stats[l]) for l in sorted(stats.keys()))))
-        self.stats = None
+    def __call__(self, font, glyphSet=None):
+        if super(CubicToQuadraticFilter, self).__call__(font, glyphSet):
+            stats = self.context.stats
+            logger.info('New spline lengths: %s' % (', '.join(
+                '%s: %d' % (l, stats[l]) for l in sorted(stats.keys()))))
 
     def filter(self, glyph, glyphSet=None):
         if not len(glyph):
@@ -41,9 +35,9 @@ class CubicToQuadraticFilter(BaseFilter):
 
         pen = Cu2QuPointPen(
             glyph.getPointPen(),
-            self.absoluteError,
-            reverse_direction=self.reverseDirection,
-            stats=self.stats)
+            self.context.absoluteError,
+            reverse_direction=self.options.reverseDirection,
+            stats=self.context.stats)
         contours = list(glyph)
         glyph.clearContours()
         for contour in contours:

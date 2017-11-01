@@ -9,10 +9,10 @@ from ufo2ft.filters import BaseFilter
 
 class DecomposeComponentsFilter(BaseFilter):
 
-    def filter(self, glyph, glyphSet=None):
+    def filter(self, glyph):
         if not glyph.components:
             return False
-        _deepCopyContours(glyphSet, glyph, glyph, Transform())
+        _deepCopyContours(self.context.glyphSet, glyph, glyph, Transform())
         glyph.clearComponents()
         return True
 
