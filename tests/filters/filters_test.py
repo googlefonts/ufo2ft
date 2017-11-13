@@ -1,5 +1,4 @@
-from __future__ import (
-    print_function, division, absolute_import, unicode_literals)
+from __future__ import print_function, division, absolute_import
 
 from ufo2ft.filters import getFilterClass, BaseFilter
 from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
