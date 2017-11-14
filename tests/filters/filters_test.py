@@ -46,6 +46,12 @@ def test_getFilterClass():
     with _TempModule("myfilters") as temp_pkg, \
             _TempModule("myfilters.fooBar") as temp_module:
         temp_pkg.module.__dict__['fooBar'] = temp_module
+
+        with pytest.raises(AttributeError):
+            # this fails because `myfilters.fooBar` module does not
+            # have a `FooBarFilter` class
+            getFilterClass("Foo Bar", pkg="myfilters")
+
         temp_module.module.__dict__['FooBarFilter'] = FooBarFilter
 
         # this will attempt to import the `FooBarFilter` class from the
