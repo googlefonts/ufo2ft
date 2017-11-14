@@ -101,14 +101,17 @@ class BaseFilter(object):
             # 'include' can be a function (e.g. lambda) that takes a
             # glyph object and returns True/False based on some test
             self.include = include
+            self._include_repr = lambda: repr(include)
         elif include is not None:
             # or it can be a list of glyph names to be included
             included = set(include)
             self.include = lambda g: g.name in included
+            self._include_repr = lambda: repr(include)
         elif exclude is not None:
             # alternatively one can provide a list of names to not include
             excluded = set(exclude)
             self.include = lambda g: g.name not in excluded
+            self._exclude_repr = lambda: repr(exclude)
         else:
             # by default, all glyphs are included
             self.include = lambda g: True
@@ -126,9 +129,18 @@ class BaseFilter(object):
         self.start()
 
     def __repr__(self):
-        items = ("{0}={1!r}".format(k, v)
-                 for k, v in sorted(self.__dict__.items())
-                 if v is not None and not k.startswith("_"))
+        items = []
+        if self._args:
+            items.append(", ".join(
+                repr(getattr(self.options, arg)) for arg in self._args))
+        if self._kwargs:
+            items.append(", ".join(
+                "{0}={1!r}".format(k, getattr(self.options, k))
+                for k in sorted(self._kwargs)))
+        if hasattr(self, "_include_repr"):
+            items.append("include={}".format(self._include_repr()))
+        elif hasattr(self, "_exclude_repr"):
+            items.append("exclude={}".format(self._exclude_repr()))
         return "{0}({1})".format(type(self).__name__, ", ".join(items))
 
     def start(self):
