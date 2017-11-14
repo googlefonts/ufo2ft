@@ -1,7 +1,6 @@
 from __future__ import print_function, division, absolute_import
 
 from ufo2ft.filters import getFilterClass, BaseFilter
-from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
 
 import sys
 import types
@@ -32,20 +31,34 @@ class _TempModule(object):
         self._saved_module = []
 
 
+class FooBarFilter(BaseFilter):
+    """A filter that does nothing."""
+
+    _args = ("a", "b")
+    _kwargs = {"c": 0}
+
+    def filter(self, glyph):
+        return False
+
+
+@pytest.fixture(scope="module", autouse=True)
+def fooBar():
+    """Make a temporary 'ufo2ft.filters.fooBar' module containing a
+    'FooBarFilter' class for testing the filter loading machinery.
+    """
+    with _TempModule("ufo2ft.filters.fooBar") as temp_module:
+        temp_module.module.__dict__["FooBarFilter"] = FooBarFilter
+        yield
+
+
 def test_getFilterClass():
-    assert getFilterClass("Remove Overlaps") == RemoveOverlapsFilter
-    assert getFilterClass("RemoveOverlaps") == RemoveOverlapsFilter
-    assert getFilterClass("removeOverlaps") == RemoveOverlapsFilter
+    assert getFilterClass("Foo Bar") == FooBarFilter
+    assert getFilterClass("FooBar") == FooBarFilter
+    assert getFilterClass("fooBar") == FooBarFilter
     with pytest.raises(ImportError):
-        getFilterClass("Foo Bar")
+        getFilterClass("Baz")
 
-    class FooBarFilter(BaseFilter):
-        def filter(self, glyph):
-            return False
-
-    with _TempModule("myfilters") as temp_pkg, \
-            _TempModule("myfilters.fooBar") as temp_module:
-        temp_pkg.module.__dict__['fooBar'] = temp_module
+    with _TempModule("myfilters.fooBar") as temp_module:
 
         with pytest.raises(AttributeError):
             # this fails because `myfilters.fooBar` module does not
