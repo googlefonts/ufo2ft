@@ -18,7 +18,7 @@ import math
 import time
 import unicodedata
 
-from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr, round2
+from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr, round, round2
 from fontTools.misc.textTools import binary2num
 import ufoLib
 
@@ -77,8 +77,8 @@ def openTypeHheaCaretSlopeRiseFallback(info):
     """
     Fallback to *caretSlopeRise*.
     """
-    italicAngle = postscriptSlantAngleFallback(info)
-    if italicAngle:
+    italicAngle = getAttrWithFallback(info, "italicAngle")
+    if italicAngle != 0:
         return 1000
     return 1
 
@@ -86,11 +86,9 @@ def openTypeHheaCaretSlopeRunFallback(info):
     """
     Fallback to *caretSlopeRun*.
     """
-    f = lambda a, b: int((math.tan(math.radians(-a)) * 1000) + b)
-    italicAngle = postscriptSlantAngleFallback(info)
-    if italicAngle:
-        b = 0.5 if italicAngle < 0 else -0.5
-        return f(italicAngle, b)
+    italicAngle = getAttrWithFallback(info, "italicAngle")
+    if italicAngle != 0:
+        return round(math.tan(math.radians(-italicAngle)) * 1000)
     return 0
 
 # name
