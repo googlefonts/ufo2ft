@@ -1,7 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 import logging
 
-from ufo2ft.featureWriter.baseFeatureWriter import liststr, BaseFeatureWriter
+from ufo2ft.featureWriters.baseFeatureWriter import BaseFeatureWriter
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +121,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
         if isMkmk:
             mkAttachCls = "@%sMkAttach" % lookupName
             lines.append("    %s = %s;" % (
-                mkAttachCls, liststr([className] + [g[0] for g in baseGlyphs])))
+                mkAttachCls,
+                self.liststr([className] + [g[0] for g in baseGlyphs])))
             lines.append("    lookupflag UseMarkFilteringSet %s;" % mkAttachCls)
 
         for baseName, x, y in baseGlyphs:

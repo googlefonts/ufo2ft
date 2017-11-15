@@ -3,7 +3,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import unittest
 from defcon import Font
 
-from ufo2ft.featureWriter.markFeatureWriter import MarkFeatureWriter
+from ufo2ft.featureWriters import MarkFeatureWriter
 
 
 class PrebuiltMarkFeatureWriter(MarkFeatureWriter):
