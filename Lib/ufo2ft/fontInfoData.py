@@ -14,6 +14,7 @@ used externally as well.
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import logging
+import math
 import time
 import unicodedata
 
@@ -71,6 +72,26 @@ def openTypeHheaDescenderFallback(info):
     Fallback to *descender*.
     """
     return info.descender
+
+def openTypeHheaCaretSlopeRiseFallback(info):
+    """
+    Fallback to *caretSlopeRise*.
+    """
+    italicAngle = postscriptSlantAngleFallback(info)
+    if italicAngle:
+        return 1000
+    return 1
+
+def openTypeHheaCaretSlopeRunFallback(info):
+    """
+    Fallback to *caretSlopeRun*.
+    """
+    f = lambda a, b: int((math.tan(math.radians(-a)) * 1000) + b)
+    italicAngle = postscriptSlantAngleFallback(info)
+    if italicAngle:
+        b = 0.5 if italicAngle < 0 else -0.5
+        return f(italicAngle, b)
+    return 0
 
 # name
 
@@ -291,8 +312,6 @@ staticFallbackData = dict(
     openTypeHeadFlags=[0, 1],
 
     openTypeHheaLineGap=0,
-    openTypeHheaCaretSlopeRise=1,
-    openTypeHheaCaretSlopeRun=0,
     openTypeHheaCaretOffset=0,
 
     openTypeNameDesigner=None,
@@ -364,6 +383,8 @@ specialFallbacks = dict(
     openTypeHeadCreated=openTypeHeadCreatedFallback,
     openTypeHheaAscender=openTypeHheaAscenderFallback,
     openTypeHheaDescender=openTypeHheaDescenderFallback,
+    openTypeHheaCaretSlopeRise=openTypeHheaCaretSlopeRiseFallback,
+    openTypeHheaCaretSlopeRun=openTypeHheaCaretSlopeRunFallback,
     openTypeNameVersion=openTypeNameVersionFallback,
     openTypeNameUniqueID=openTypeNameUniqueIDFallback,
     openTypeNamePreferredFamilyName=openTypeNamePreferredFamilyNameFallback,
