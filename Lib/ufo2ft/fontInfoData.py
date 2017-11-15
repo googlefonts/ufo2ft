@@ -75,20 +75,31 @@ def openTypeHheaDescenderFallback(info):
 
 def openTypeHheaCaretSlopeRiseFallback(info):
     """
-    Fallback to *caretSlopeRise*.
+    Fallback to *openTypeHheaCaretSlopeRise*. If the italicAngle is zero,
+    return 1. If italicAngle is non-zero, compute the slope rise from the
+    complementary openTypeHheaCaretSlopeRun, if the latter is defined.
+    Else, default to an arbitrary fixed reference point (1000).
     """
     italicAngle = getAttrWithFallback(info, "italicAngle")
     if italicAngle != 0:
-        return 1000
+        if (hasattr(info, "openTypeHheaCaretSlopeRun") and
+                info.openTypeHheaCaretSlopeRun is not None):
+            slopeRun = info.openTypeHheaCaretSlopeRun
+            return round(slopeRun / math.tan(math.radians(-italicAngle)))
+        else:
+            return 1000  # just an arbitrary non-zero reference point
     return 1
 
 def openTypeHheaCaretSlopeRunFallback(info):
     """
-    Fallback to *caretSlopeRun*.
+    Fallback to *openTypeHheaCaretSlopeRun*. If the italicAngle is zero,
+    return 0. If italicAngle is non-zero, compute the slope run from the
+    complementary openTypeHheaCaretSlopeRise.
     """
     italicAngle = getAttrWithFallback(info, "italicAngle")
     if italicAngle != 0:
-        return round(math.tan(math.radians(-italicAngle)) * 1000)
+        slopeRise = getAttrWithFallback(info, "openTypeHheaCaretSlopeRise")
+        return round(math.tan(math.radians(-italicAngle)) * slopeRise)
     return 0
 
 # name

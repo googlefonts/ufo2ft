@@ -89,6 +89,21 @@ class GetAttrWithFallbackTest(unittest.TestCase):
         self.assertEqual(
             getAttrWithFallback(info, "openTypeHheaCaretSlopeRun"), -213)
 
+        info.openTypeHheaCaretSlopeRise = 2048
+        self.assertFalse(hasattr(info, "openTypeHheaCaretSlopeRun"))
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRise"), 2048)
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRun"), -435)
+
+        del info.openTypeHheaCaretSlopeRise
+        info.openTypeHheaCaretSlopeRun = 200
+        self.assertFalse(hasattr(info, "openTypeHheaCaretSlopeRise"))
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRise"), -941)
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRun"), 200)
+
 
 class PostscriptBlueScaleFallbackTest(unittest.TestCase):
 
