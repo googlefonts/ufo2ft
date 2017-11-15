@@ -69,6 +69,26 @@ class GetAttrWithFallbackTest(unittest.TestCase):
         self.assertEqual(
             getAttrWithFallback(info, "openTypeOS2WinDescent"), 250)
 
+    def test_caret_slope(self):
+        info = TestInfoObject()
+
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRise"), 1)
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRun"), 0)
+
+        info.italicAngle = -12
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRise"), 1000)
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRun"), 213)
+
+        info.italicAngle = 12
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRise"), 1000)
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHheaCaretSlopeRun"), -213)
+
 
 class PostscriptBlueScaleFallbackTest(unittest.TestCase):
 
@@ -102,7 +122,9 @@ class TestInfoObject(object):
         self.xHeight = 450
         self.capHeight = 600
         self.ascender = 650
-
+        self.italicAngle = 0
+        self.openTypeHheaCaretSlopeRiseFallback = None
+        self.openTypeHheaCaretSlopeRunFallback = None
 
 if __name__ == "__main__":
     import sys
