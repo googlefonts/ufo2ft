@@ -6,8 +6,8 @@ from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
 
-from ufo2ft.featureWriter.kernFeatureWriter import KernFeatureWriter
-from ufo2ft.featureWriter.markFeatureWriter import MarkFeatureWriter
+from ufo2ft.featureWriters import KernFeatureWriter
+from ufo2ft.featureWriters import MarkFeatureWriter
 from ufo2ft.maxContextCalc import maxCtxFont
 
 logger = logging.getLogger(__name__)

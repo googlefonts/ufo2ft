@@ -9,7 +9,7 @@ try:
     import unicodedata2 as unicodedata
 except ImportError:
     import unicodedata
-from ufo2ft.featureWriter.baseFeatureWriter import liststr, BaseFeatureWriter
+from ufo2ft.featureWriters import BaseFeatureWriter
 
 
 class KernFeatureWriter(BaseFeatureWriter):
@@ -247,6 +247,7 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         # maintain list of glyph pair rules seen
         seen = dict(self.glyphPairKerning)
+        liststr = self.liststr
 
         # remove conflicts in left class / right glyph rules
         for (lClass, rGlyph), val in list(self.leftClassKerning.items()):

@@ -2,11 +2,6 @@ from __future__ import (
     print_function, division, absolute_import, unicode_literals)
 
 
-def liststr(glyphs):
-    """Return string representation of a list of glyph names."""
-    return "[%s]" % " ".join(glyphs)
-
-
 class BaseFeatureWriter(object):
     """Abstract features writer"""
 
@@ -17,3 +12,8 @@ class BaseFeatureWriter(object):
     def write(self, **kwargs):
         """Write features and class definitions"""
         raise NotImplementedError
+
+    @staticmethod
+    def liststr(glyphs):
+        """Return string representation of a list of glyph names."""
+        return "[%s]" % " ".join(glyphs)
