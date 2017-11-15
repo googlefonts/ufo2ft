@@ -3,5 +3,7 @@ from .kernFeatureWriter import KernFeatureWriter
 from .markFeatureWriter import MarkFeatureWriter
 
 
-def defaultFeatureWriters(font):
-    return [KernFeatureWriter(font), MarkFeatureWriter(font)]
+DEFAULT_FEATURE_WRITERS = [
+    KernFeatureWriter,
+    MarkFeatureWriter,
+]

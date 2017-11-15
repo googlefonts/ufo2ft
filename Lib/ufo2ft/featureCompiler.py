@@ -6,8 +6,7 @@ from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
 
-from ufo2ft.featureWriters import KernFeatureWriter
-from ufo2ft.featureWriters import MarkFeatureWriter
+from ufo2ft.featureWriters import DEFAULT_FEATURE_WRITERS
 from ufo2ft.maxContextCalc import maxCtxFont
 
 logger = logging.getLogger(__name__)
@@ -16,17 +15,21 @@ logger = logging.getLogger(__name__)
 class FeatureCompiler(object):
     """Generates OpenType feature tables for a UFO.
 
+    *featureWriterClasses* argument is a list of BaseFeatureWriter subclasses.
+    Features will be written by each feature writer in the given order.
+    The default value is [KernFeatureWriter, MarkFeatureWriter].
+
     If mtiFeatures is passed to the constructor, it should be a dictionary
     mapping feature table tags to MTI feature declarations for that table.
-    These are passed to mtiCompilation for compilation.
+    These are passed to mtiLib for compilation.
     """
 
-    def __init__(self, font, outline, featureWriters=None, mtiFeatures=None):
+    def __init__(self, font, outline,
+                 featureWriterClasses=DEFAULT_FEATURE_WRITERS,
+                 mtiFeatures=None):
         self.font = font
         self.outline = outline
-        if featureWriters is None:
-            featureWriters = (KernFeatureWriter(font), MarkFeatureWriter(font))
-        self.featureWriters = featureWriters
+        self.featureWriters = [FW(font) for FW in featureWriterClasses]
         self.mtiFeatures = mtiFeatures
 
     def compile(self):
