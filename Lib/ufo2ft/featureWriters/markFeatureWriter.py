@@ -14,13 +14,18 @@ class MarkFeatureWriter(BaseFeatureWriter):
     tuples for a liga2mark feature.
     """
 
-    def __init__(self, font, features=("mark", "mkmk")):
-        super(MarkFeatureWriter, self).__init__(font, features)
-        self.font = font
-        self.accentGlyphNames = set()
+    features = [
+        "mark",
+        "mkmk",
+    ]
+
+    def set_context(self, font):
+        super(MarkFeatureWriter, self).set_context(font)
+        self.context.accentGlyphNames = set()
         self.setupAnchorPairs()
 
-    def _generateClassName(self, accentAnchorName):
+    @staticmethod
+    def _generateClassName(accentAnchorName):
         """Generate a mark class name shared by class definition and positioning
         statements.
         """
@@ -33,7 +38,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         """
 
         glyphList = []
-        for glyph in self.font:
+        for glyph in self.context.font:
             for anchor in glyph.anchors:
                 if accentAnchorName == anchor.name:
                     glyphList.append((glyph.name, anchor.x, anchor.y))
@@ -47,8 +52,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
         """
 
         glyphList = []
-        for glyph in self.font:
-            if isMkmk != (glyph.name in self.accentGlyphNames):
+        accentGlyphNames = set(self.context.accentGlyphNames)
+        for glyph in self.context.font:
+            if isMkmk != (glyph.name in accentGlyphNames):
                 continue
             for anchor in glyph.anchors:
                 if anchorName == anchor.name:
@@ -62,7 +68,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         """
 
         glyphList = []
-        for glyph in self.font:
+        for glyph in self.context.font:
             points = []
             for anchorName in anchorNames:
                 found = False
@@ -82,10 +88,10 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
         anchorList = []
         if doMark:
-            anchorList.extend(self.anchorList)
-            anchorList.extend(self.ligaAnchorList)
+            anchorList.extend(self.context.anchorList)
+            anchorList.extend(self.context.ligaAnchorList)
         if doMkmk:
-            anchorList.extend(self.mkmkAnchorList)
+            anchorList.extend(self.context.mkmkAnchorList)
 
         added = set()
         for accentAnchorName in sorted(set(n for _, n in anchorList)):
@@ -100,8 +106,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
         accentGlyphs = self._createAccentGlyphList(accentAnchorName)
         className = self._generateClassName(accentAnchorName)
 
+        accentGlyphNames = self.context.accentGlyphNames
         for accentName, x, y in sorted(accentGlyphs):
-            self.accentGlyphNames.add(accentName)
+            accentGlyphNames.add(accentName)
             lines.append(
                 "markClass %s <anchor %d %d> %s;" %
                 (accentName, x, y, className))
@@ -157,8 +164,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
     def _addFeature(self, lines, isMkmk=False):
         """Write a single feature."""
 
-        anchorList = self.mkmkAnchorList if isMkmk else self.anchorList
-        if not anchorList and (isMkmk or not self.ligaAnchorList):
+        anchorList = (self.context.mkmkAnchorList if isMkmk
+                      else self.context.anchorList)
+        if not anchorList and (isMkmk or not self.context.ligaAnchorList):
             # nothing to do, don't write empty feature
             return
         featureName = "mkmk" if isMkmk else "mark"
@@ -169,7 +177,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
             self._addMarkLookup(feature, lookupName, isMkmk, anchorPair)
 
         if not isMkmk:
-            for i, anchorPairs in enumerate(self.ligaAnchorList):
+            for i, anchorPairs in enumerate(self.context.ligaAnchorList):
                 lookupName = "mark2liga%d" % (i + 1)
                 self._addMarkToLigaLookup(feature, lookupName, anchorPairs)
 
@@ -188,11 +196,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
         in a different way if desired.
         """
 
-        self.anchorList = []
-        self.ligaAnchorList = []
+        self.context.anchorList = anchorList = []
+        self.context.ligaAnchorList = ligaAnchorList = []
 
         anchorNames = set()
-        for glyph in self.font:
+        for glyph in self.context.font:
             for anchor in glyph.anchors:
                 if anchor.name is None:
                     logger.warning("Unnamed anchor discarded in %s", glyph.name)
@@ -202,7 +210,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         for baseName in sorted(anchorNames):
             accentName = "_" + baseName
             if accentName in anchorNames:
-                self.anchorList.append((baseName, accentName))
+                anchorList.append((baseName, accentName))
 
                 ligaNames = []
                 i = 1
@@ -213,17 +221,14 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     ligaNames.append(ligaName)
                     i += 1
                 if ligaNames:
-                    self.ligaAnchorList.append((tuple(ligaNames), accentName))
+                    ligaAnchorList.append((tuple(ligaNames), accentName))
 
-        self.mkmkAnchorList = self.anchorList
+        self.context.mkmkAnchorList = anchorList
 
-    def write(self, features=None, linesep="\n"):
+    def _write(self):
         """Write mark and mkmk features, and mark class definitions."""
-
-        if features is None:
-            features = self.features
-        doMark = "mark" in features
-        doMkmk = "mkmk" in features
+        doMark = "mark" in self.features
+        doMkmk = "mkmk" in self.features
 
         if not (doMark or doMkmk):
             return ""
@@ -234,4 +239,4 @@ class MarkFeatureWriter(BaseFeatureWriter):
             self._addFeature(lines, isMkmk=False)
         if doMkmk:
             self._addFeature(lines, isMkmk=True)
-        return linesep.join(lines)
+        return self.linesep.join(lines)
