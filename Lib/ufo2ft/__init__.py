@@ -16,7 +16,7 @@ __version__ = "1.0.0.dev0"
 def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
                outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureCompiler,
-               featureWriterClasses=DEFAULT_FEATURE_WRITERS,
+               featureWriters=DEFAULT_FEATURE_WRITERS,
                glyphOrder=None,
                useProductionNames=True,
                optimizeCFF=True,
@@ -36,9 +36,9 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
       of 0 completely disables rounding; values in between only round floats
       which are close to their integral part within the tolerated range.
 
-    *featureWriterClasses* argument is a list of BaseFeatureWriter subclasses.
-    Features will be written by each feature writer in the given order
-    The default value is [KernFeatureWriter, MarkFeatureWriter].
+    *featureWriters* argument is a list of BaseFeatureWriter subclasses or
+    pre-initialized instances. Features will be written by each feature writer
+    in the given order (default: [KernFeatureWriter, MarkFeatureWriter]).
     """
     preProcessor = preProcessorClass(
         ufo, inplace=inplace, removeOverlaps=removeOverlaps)
@@ -50,7 +50,7 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
-        ufo, otf, featureWriterClasses=featureWriterClasses,
+        ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo))
     featureCompiler.compile()
 
@@ -63,7 +63,7 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
 def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
                outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler,
-               featureWriterClasses=DEFAULT_FEATURE_WRITERS,
+               featureWriters=DEFAULT_FEATURE_WRITERS,
                glyphOrder=None,
                useProductionNames=True,
                convertCubics=True,
@@ -91,7 +91,7 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
     otf = outlineCompiler.compile()
 
     featureCompiler = featureCompilerClass(
-        ufo, otf, featureWriterClasses=featureWriterClasses,
+        ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo))
     featureCompiler.compile()
 
@@ -105,7 +105,7 @@ def compileInterpolatableTTFs(ufos,
                               preProcessorClass=TTFInterpolatablePreProcessor,
                               outlineCompilerClass=OutlineTTFCompiler,
                               featureCompilerClass=FeatureCompiler,
-                              featureWriterClasses=DEFAULT_FEATURE_WRITERS,
+                              featureWriters=DEFAULT_FEATURE_WRITERS,
                               glyphOrder=None,
                               useProductionNames=True,
                               cubicConversionError=None,
@@ -129,7 +129,7 @@ def compileInterpolatableTTFs(ufos,
         ttf = outlineCompiler.compile()
 
         featureCompiler = featureCompilerClass(
-            ufo, ttf, featureWriterClasses=featureWriterClasses,
+            ufo, ttf, featureWriters=featureWriters,
             mtiFeatures=_getMtiFeatures(ufo))
         featureCompiler.compile()
 

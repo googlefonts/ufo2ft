@@ -13,9 +13,10 @@ class KernFeatureWriterTest(unittest.TestCase):
 
         ufo = Font()
         ufo.features.text = text
-        writer = KernFeatureWriter(ufo)
+        writer = KernFeatureWriter()
+        writer.set_context(ufo)
         writer._collectFeaClasses()
-        self.assertEquals(writer.leftFeaClasses, expected)
+        self.assertEquals(writer.context.leftFeaClasses, expected)
 
     def test__cleanupMissingGlyphs(self):
         groups = {
@@ -30,11 +31,12 @@ class KernFeatureWriterTest(unittest.TestCase):
         del ufo["Abreve"]
         del ufo["D"]
 
-        writer = KernFeatureWriter(ufo)
-        self.assertEquals(writer.groups, groups)
+        writer = KernFeatureWriter()
+        writer.set_context(ufo)
+        self.assertEquals(writer.context.groups, groups)
 
         writer._cleanupMissingGlyphs()
-        self.assertEquals(writer.groups, {
+        self.assertEquals(writer.context.groups, {
             "public.kern1.A": ["A", "Aacute", "Acircumflex"],
             "public.kern2.B": ["B", "E", "F"]})
 

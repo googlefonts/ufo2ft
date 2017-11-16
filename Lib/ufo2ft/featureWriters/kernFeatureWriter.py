@@ -23,15 +23,18 @@ class KernFeatureWriter(BaseFeatureWriter):
     classes, which can be overridden.
     """
 
+    features = ["kern"]
     leftFeaClassRe = r"@MMK_L_(.+)"
     rightFeaClassRe = r"@MMK_R_(.+)"
+    options = dict(
+        ignoreMarks=True,
+    )
 
-    def __init__(self, font, features=("kern", )):
-        super(KernFeatureWriter, self).__init__(font, features)
-        self.font = font
-        self.kerning = dict(font.kerning)
-        self.groups = dict(font.groups)
-        self.ignoreMarks = True
+    def set_context(self, font):
+        ctx = super(KernFeatureWriter, self).set_context(font)
+
+        ctx.kerning = dict(font.kerning)
+        ctx.groups = dict(font.groups)
 
         fealines = []
         if font.features.text:
@@ -42,32 +45,31 @@ class KernFeatureWriter(BaseFeatureWriter):
                 line = line.strip()
                 if line:
                     fealines.append(line)
-        self.featxt = '\n'.join(fealines)
+        ctx.featxt = '\n'.join(fealines)
 
-        self.ltrScripts = collections.OrderedDict()
-        self.rtlScripts = collections.OrderedDict()
+        ctx.ltrScripts = collections.OrderedDict()
+        ctx.rtlScripts = collections.OrderedDict()
         for script, lang in re.findall(
                 r'languagesystem\s+([a-z]{4})\s+([A-Z]+|dflt)\s*;',
-                self.featxt):
+                ctx.featxt):
             if self._scriptIsRtl(script):
-                self.rtlScripts.setdefault(script, []).append(lang)
+                ctx.rtlScripts.setdefault(script, []).append(lang)
             else:
-                self.ltrScripts.setdefault(script, []).append(lang)
+                ctx.ltrScripts.setdefault(script, []).append(lang)
 
         # kerning classes found in existing feature text and UFO groups
-        self.leftFeaClasses = {}
-        self.rightFeaClasses = {}
-        self.leftUfoClasses = {}
-        self.rightUfoClasses = {}
+        ctx.leftFeaClasses = {}
+        ctx.rightFeaClasses = {}
+        ctx.leftUfoClasses = {}
+        ctx.rightUfoClasses = {}
 
         # kerning rule collections, mapping pairs to values
-        self.glyphPairKerning = {}
-        self.leftClassKerning = {}
-        self.rightClassKerning = {}
-        self.classPairKerning = {}
+        ctx.glyphPairKerning = {}
+        ctx.leftClassKerning = {}
+        ctx.rightClassKerning = {}
+        ctx.classPairKerning = {}
 
-    def write(self, features=None, linesep="\n"):
-        """Write kern feature."""
+    def _write(self):
 
         self._collectFeaClasses()
         self._collectFeaClassKerning()
@@ -84,36 +86,53 @@ class KernFeatureWriter(BaseFeatureWriter):
         lines.append("")
 
         # split kerning into LTR and RTL lookups, if necessary
-        if self.rtlScripts:
+        rtlScripts = self.context.rtlScripts
+        if rtlScripts:
             self._splitRtlKerning()
 
         # write the lookups and feature
+        ltrScripts = self.context.ltrScripts
         ltrKern = []
-        if self.ltrScripts or not self.rtlScripts:
-            self._addKerning(ltrKern, self.glyphPairKerning)
-            self._addKerning(ltrKern, self.leftClassKerning, enum=True)
-            self._addKerning(ltrKern, self.rightClassKerning, enum=True)
-            self._addKerning(ltrKern, self.classPairKerning, ignoreZero=True)
+        if ltrScripts or not rtlScripts:
+            self._addKerning(ltrKern,
+                             self.context.glyphPairKerning)
+            self._addKerning(ltrKern,
+                             self.context.leftClassKerning,
+                             enum=True)
+            self._addKerning(ltrKern,
+                             self.context.rightClassKerning,
+                             enum=True)
+            self._addKerning(ltrKern,
+                             self.context.classPairKerning,
+                             ignoreZero=True)
         if ltrKern:
             lines.append("lookup kern_ltr {")
-            if self.ignoreMarks:
+            if self.options.ignoreMarks:
                 lines.append("    lookupflag IgnoreMarks;")
             lines.extend(ltrKern)
             lines.append("} kern_ltr;")
             lines.append("")
 
         rtlKern = []
-        if self.rtlScripts:
-            self._addKerning(rtlKern, self.rtlGlyphPairKerning, rtl=True)
-            self._addKerning(rtlKern, self.rtlLeftClassKerning, rtl=True,
+        if rtlScripts:
+            self._addKerning(rtlKern,
+                             self.context.rtlGlyphPairKerning,
+                             rtl=True)
+            self._addKerning(rtlKern,
+                             self.context.rtlLeftClassKerning,
+                             rtl=True,
                              enum=True)
-            self._addKerning(rtlKern, self.rtlRightClassKerning, rtl=True,
+            self._addKerning(rtlKern,
+                             self.context.rtlRightClassKerning,
+                             rtl=True,
                              enum=True)
-            self._addKerning(rtlKern, self.rtlClassPairKerning, rtl=True,
+            self._addKerning(rtlKern,
+                             self.context.rtlClassPairKerning,
+                             rtl=True,
                              ignoreZero=True)
         if rtlKern:
             lines.append("lookup kern_rtl {")
-            if self.ignoreMarks:
+            if self.options.ignoreMarks:
                 lines.append("    lookupflag IgnoreMarks;")
             lines.extend(rtlKern)
             lines.append("} kern_rtl;")
@@ -126,24 +145,27 @@ class KernFeatureWriter(BaseFeatureWriter):
         lines.append("feature kern {")
         if ltrKern:
             lines.append("    lookup kern_ltr;")
-        if self.rtlScripts:
+        if rtlScripts:
             if ltrKern:
-                self._addLookupReferences(lines, self.ltrScripts, "kern_ltr")
+                self._addLookupReferences(lines, ltrScripts, "kern_ltr")
             if rtlKern:
-                self._addLookupReferences(lines, self.rtlScripts, "kern_rtl")
+                self._addLookupReferences(lines, rtlScripts, "kern_rtl")
         lines.append("} kern;")
 
-        return linesep.join(lines)
+        return self.linesep.join(lines)
 
     def _collectFeaClasses(self):
         """Parse glyph classes from existing feature text."""
 
+        featxt = self.context.featxt
+        leftFeaClasses = self.context.leftFeaClasses
+        rightFeaClasses = self.context.rightFeaClasses
         for name, contents in re.findall(
-                r'(@[\w.]+)\s*=\s*\[([\s\w.@-]*)\]\s*;', self.featxt, re.M):
+                r'(@[\w.]+)\s*=\s*\[([\s\w.@-]*)\]\s*;', featxt, re.M):
             if re.match(self.leftFeaClassRe, name):
-                self.leftFeaClasses[name] = contents.split()
+                leftFeaClasses[name] = contents.split()
             elif re.match(self.rightFeaClassRe, name):
-                self.rightFeaClasses[name] = contents.split()
+                rightFeaClasses[name] = contents.split()
 
     def _collectFeaClassKerning(self):
         """Set up class kerning rules from class definitions in feature text.
@@ -152,44 +174,51 @@ class KernFeatureWriter(BaseFeatureWriter):
         the kerning values associated with that class.
         """
 
-        for leftName, leftContents in self.leftFeaClasses.items():
+        leftFeaClasses = self.context.leftFeaClasses
+        rightFeaClasses = self.context.rightFeaClasses
+        kerning = self.context.kerning
+        classPairKerning = self.context.classPairKerning
+        leftClassKerning = self.context.leftClassKerning
+        rightClassKerning = self.context.rightClassKerning
+
+        for leftName, leftContents in leftFeaClasses.items():
             leftKey = leftContents[0]
 
             # collect rules with two classes
-            for rightName, rightContents in self.rightFeaClasses.items():
+            for rightName, rightContents in rightFeaClasses.items():
                 rightKey = rightContents[0]
                 pair = leftKey, rightKey
-                kerningVal = self.kerning.get(pair)
+                kerningVal = kerning.get(pair)
                 if kerningVal is None:
                     continue
-                self.classPairKerning[leftName, rightName] = kerningVal
-                del self.kerning[pair]
+                classPairKerning[leftName, rightName] = kerningVal
+                del kerning[pair]
 
             # collect rules with left class and right glyph
             for pair, kerningVal in self._getGlyphKerning(leftKey, 0):
-                self.leftClassKerning[leftName, pair[1]] = kerningVal
-                del self.kerning[pair]
+                leftClassKerning[leftName, pair[1]] = kerningVal
+                del kerning[pair]
 
         # collect rules with left glyph and right class
-        for rightName, rightContents in self.rightFeaClasses.items():
+        for rightName, rightContents in rightFeaClasses.items():
             rightKey = rightContents[0]
             for pair, kerningVal in self._getGlyphKerning(rightKey, 1):
-                self.rightClassKerning[pair[0], rightName] = kerningVal
-                del self.kerning[pair]
+                rightClassKerning[pair[0], rightName] = kerningVal
+                del kerning[pair]
 
     def _cleanupMissingGlyphs(self):
         """Removes glyphs missing in the font from groups or kerning pairs."""
 
-        allGlyphs = set(self.font.keys())
+        allGlyphs = set(self.context.font.keys())
 
         groups = {}
-        for name, members in self.groups.items():
+        for name, members in self.context.groups.items():
             newMembers = [g for g in members if g in allGlyphs]
             if newMembers:
                 groups[name] = newMembers
 
         kerning = {}
-        for glyphPair, val in sorted(self.kerning.items()):
+        for glyphPair, val in sorted(self.context.kerning.items()):
             left, right = glyphPair
             if left not in groups and left not in allGlyphs:
                 continue
@@ -197,43 +226,53 @@ class KernFeatureWriter(BaseFeatureWriter):
                 continue
             kerning[glyphPair] = val
 
-        self.groups = groups
-        self.kerning = kerning
+        self.context.groups = groups
+        self.context.kerning = kerning
 
     def _correctUfoClassNames(self):
         """Detect and replace illegal class names found in UFO kerning."""
 
-        for oldName, members in list(self.groups.items()):
+        groups = self.context.groups
+        kerning = self.context.kerning
+        for oldName, members in list(groups.items()):
             newName = self._makeFeaClassName(oldName)
             if oldName == newName:
                 continue
-            self.groups[newName] = members
-            del self.groups[oldName]
+            groups[newName] = members
+            del groups[oldName]
             for oldPair, kerningVal in self._getGlyphKerning(oldName):
                 left, right = oldPair
                 newPair = (newName, right) if left == oldName else (left, newName)
-                self.kerning[newPair] = kerningVal
-                del self.kerning[oldPair]
+                kerning[newPair] = kerningVal
+                del kerning[oldPair]
 
     def _collectUfoKerning(self):
         """Sort UFO kerning rules into glyph pair or class rules."""
 
-        for glyphPair, val in sorted(self.kerning.items()):
+        groups = self.context.groups
+        leftUfoClasses = self.context.leftUfoClasses
+        rightUfoClasses = self.context.rightUfoClasses
+        classPairKerning = self.context.classPairKerning
+        leftClassKerning = self.context.leftClassKerning
+        rightClassKerning = self.context.rightClassKerning
+        glyphPairKerning = self.context.glyphPairKerning
+
+        for glyphPair, val in sorted(self.context.kerning.items()):
             left, right = glyphPair
-            leftIsClass = left in self.groups
-            rightIsClass = right in self.groups
+            leftIsClass = left in groups
+            rightIsClass = right in groups
             if leftIsClass:
-                self.leftUfoClasses[left] = self.groups[left]
+                leftUfoClasses[left] = groups[left]
                 if rightIsClass:
-                    self.rightUfoClasses[right] = self.groups[right]
-                    self.classPairKerning[glyphPair] = val
+                    rightUfoClasses[right] = groups[right]
+                    classPairKerning[glyphPair] = val
                 else:
-                    self.leftClassKerning[glyphPair] = val
+                    leftClassKerning[glyphPair] = val
             elif rightIsClass:
-                self.rightUfoClasses[right] = self.groups[right]
-                self.rightClassKerning[glyphPair] = val
+                rightUfoClasses[right] = groups[right]
+                rightClassKerning[glyphPair] = val
             else:
-                self.glyphPairKerning[glyphPair] = val
+                glyphPairKerning[glyphPair] = val
 
     def _removeConflictingKerningRules(self):
         """Remove any conflicting pair and class rules.
@@ -246,11 +285,12 @@ class KernFeatureWriter(BaseFeatureWriter):
         leftClasses, rightClasses = self._getClasses(separate=True)
 
         # maintain list of glyph pair rules seen
-        seen = dict(self.glyphPairKerning)
+        seen = dict(self.context.glyphPairKerning)
         liststr = self.liststr
 
         # remove conflicts in left class / right glyph rules
-        for (lClass, rGlyph), val in list(self.leftClassKerning.items()):
+        leftClassKerning = self.context.leftClassKerning
+        for (lClass, rGlyph), val in list(leftClassKerning.items()):
             lGlyphs = leftClasses[lClass]
             nlGlyphs = []
             for lGlyph in lGlyphs:
@@ -260,11 +300,12 @@ class KernFeatureWriter(BaseFeatureWriter):
                     seen[pair] = val
             if nlGlyphs != lGlyphs:
                 if nlGlyphs:
-                    self.leftClassKerning[liststr(nlGlyphs), rGlyph] = val
-                del self.leftClassKerning[lClass, rGlyph]
+                    leftClassKerning[liststr(nlGlyphs), rGlyph] = val
+                del leftClassKerning[lClass, rGlyph]
 
         # remove conflicts in left glyph / right class rules
-        for (lGlyph, rClass), val in list(self.rightClassKerning.items()):
+        rightClassKerning = self.context.rightClassKerning
+        for (lGlyph, rClass), val in list(rightClassKerning.items()):
             rGlyphs = rightClasses[rClass]
             nrGlyphs = []
             for rGlyph in rGlyphs:
@@ -274,29 +315,37 @@ class KernFeatureWriter(BaseFeatureWriter):
                     seen[pair] = val
             if nrGlyphs != rGlyphs:
                 if nrGlyphs:
-                    self.rightClassKerning[lGlyph, liststr(nrGlyphs)] = val
-                del self.rightClassKerning[lGlyph, rClass]
+                    rightClassKerning[lGlyph, liststr(nrGlyphs)] = val
+                del rightClassKerning[lGlyph, rClass]
 
     def _addGlyphClasses(self, lines):
         """Add glyph classes for the input font's groups."""
 
-        for key, members in sorted(self.groups.items()):
+        for key, members in sorted(self.context.groups.items()):
             lines.append("%s = [%s];" % (key, " ".join(members)))
 
     def _splitRtlKerning(self):
         """Split RTL kerning into separate dictionaries."""
 
-        self.rtlGlyphPairKerning = {}
-        self.rtlLeftClassKerning = {}
-        self.rtlRightClassKerning = {}
-        self.rtlClassPairKerning = {}
+        self.context.rtlGlyphPairKerning = {}
+        self.context.rtlLeftClassKerning = {}
+        self.context.rtlRightClassKerning = {}
+        self.context.rtlClassPairKerning = {}
 
         classes = self._getClasses()
         allKerning = (
-            (self.glyphPairKerning, self.rtlGlyphPairKerning, (False, False)),
-            (self.leftClassKerning, self.rtlLeftClassKerning, (True, False)),
-            (self.rightClassKerning, self.rtlRightClassKerning, (False, True)),
-            (self.classPairKerning, self.rtlClassPairKerning, (True, True)))
+            (self.context.glyphPairKerning,
+             self.context.rtlGlyphPairKerning,
+             (False, False)),
+            (self.context.leftClassKerning,
+             self.context.rtlLeftClassKerning,
+             (True, False)),
+            (self.context.rightClassKerning,
+             self.context.rtlRightClassKerning,
+             (False, True)),
+            (self.context.classPairKerning,
+             self.context.rtlClassPairKerning,
+             (True, True)))
 
         for origKerning, rtlKerning, classFlags in allKerning:
             for pair in list(origKerning.keys()):
@@ -312,7 +361,8 @@ class KernFeatureWriter(BaseFeatureWriter):
                 if any(self._glyphIsRtl(g) for g in allGlyphs):
                     rtlKerning[pair] = origKerning.pop(pair)
 
-    def _addKerning(self, lines, kerning, rtl=False, enum=False,
+    @staticmethod
+    def _addKerning(lines, kerning, rtl=False, enum=False,
                     ignoreZero=False):
         """Add kerning rules for a mapping of pairs to values."""
 
@@ -324,7 +374,8 @@ class KernFeatureWriter(BaseFeatureWriter):
                 continue
             lines.append(lineFormat % {'lhs': left, 'rhs': right, 'val': val})
 
-    def _addLookupReferences(self, lines, languageSystems, lookupName):
+    @staticmethod
+    def _addLookupReferences(lines, languageSystems, lookupName):
         """Add references to lookup for a set of language systems.
 
         Language systems are passed in as a dictionary mapping scripts to lists
@@ -340,10 +391,10 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _getClasses(self, separate=False):
         """Return all kerning classes together."""
 
-        leftClasses = dict(self.leftFeaClasses)
-        leftClasses.update(self.leftUfoClasses)
-        rightClasses = dict(self.rightFeaClasses)
-        rightClasses.update(self.rightUfoClasses)
+        leftClasses = dict(self.context.leftFeaClasses)
+        leftClasses.update(self.context.leftUfoClasses)
+        rightClasses = dict(self.context.rightFeaClasses)
+        rightClasses.update(self.context.rightUfoClasses)
         if separate:
             return leftClasses, rightClasses
 
@@ -373,12 +424,13 @@ class KernFeatureWriter(BaseFeatureWriter):
         """
 
         hits = []
-        for pair, value in self.kerning.items():
+        for pair, value in self.context.kerning.items():
             if (glyphName in pair) if i is None else (pair[i] == glyphName):
                 hits.append((pair, value))
         return hits
 
-    def _scriptIsRtl(self, script):
+    @staticmethod
+    def _scriptIsRtl(script):
         """Return whether a script is right-to-left for kerning purposes.
 
         References:
@@ -443,12 +495,13 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _glyphIsRtl(self, name):
         """Return whether the closest-associated unicode character is RTL."""
 
+        font = self.context.font
         delims = ('.', '_')
-        uv = self.font[name].unicode
+        uv = font[name].unicode
         while uv is None and any(d in name for d in delims):
             name = name[:max(name.rfind(d) for d in delims)]
-            if name in self.font:
-                uv = self.font[name].unicode
+            if name in font:
+                uv = font[name].unicode
         if uv is None:
             return False
         return unicodedata.bidirectional(unichr(uv)) in ('R', 'AL')

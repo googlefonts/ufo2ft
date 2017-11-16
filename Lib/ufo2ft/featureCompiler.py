@@ -2,9 +2,13 @@ from __future__ import \
     print_function, division, absolute_import, unicode_literals
 import logging
 import os
+from inspect import isclass
+from tempfile import NamedTemporaryFile
+
 from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
+from fontTools.misc.py23 import UnicodeIO
 
 from ufo2ft.featureWriters import DEFAULT_FEATURE_WRITERS
 from ufo2ft.maxContextCalc import maxCtxFont
@@ -15,7 +19,10 @@ logger = logging.getLogger(__name__)
 class FeatureCompiler(object):
     """Generates OpenType feature tables for a UFO.
 
-    *featureWriterClasses* argument is a list of BaseFeatureWriter subclasses.
+    *featureWriters* argument is a list that can contain either subclasses
+    of BaseFeatureWriter or pre-initialized instances (or a mix of the two).
+    Classes are initialized without arguments so will use default options.
+
     Features will be written by each feature writer in the given order.
     The default value is [KernFeatureWriter, MarkFeatureWriter].
 
@@ -25,11 +32,15 @@ class FeatureCompiler(object):
     """
 
     def __init__(self, font, outline,
-                 featureWriterClasses=DEFAULT_FEATURE_WRITERS,
+                 featureWriters=DEFAULT_FEATURE_WRITERS,
                  mtiFeatures=None):
         self.font = font
         self.outline = outline
-        self.featureWriters = [FW(font) for FW in featureWriterClasses]
+        self.featureWriters = []
+        for writer in featureWriters:
+            if isclass(writer):
+                writer = writer()
+            self.featureWriters.append(writer)
         self.mtiFeatures = mtiFeatures
 
     def compile(self):
@@ -57,12 +68,10 @@ class FeatureCompiler(object):
         if self.mtiFeatures is not None:
             return
 
-        features = self._findLayoutFeatures()
-
-        existing = self.font.features.text or ""
+        existingFeatures = self._findLayoutFeatures()
 
         # build features as necessary
-        autoFeatures = {}
+        autoFeatures = []
         # the current MarkFeatureWriter writes both mark and mkmk features
         # with shared markClass definitions; to prevent duplicate glyphs in
         # markClass, here we write the features only if none of them is alread
@@ -70,31 +79,27 @@ class FeatureCompiler(object):
         # TODO: Support updating pre-existing markClass definitions to allow
         # writing either mark or mkmk features indipendently from each other
         # https://github.com/googlei18n/fontmake/issues/319
-        for featureWriter in self.featureWriters:
-            doFeatures = []
-            for feature in featureWriter.features:
-                if feature not in features:
-                    doFeatures.append(feature)
-            if set(doFeatures) == set(featureWriter.features):
-                autoFeatures[featureWriter.features] = featureWriter.write()
+        font = self.font
+        for fw in self.featureWriters:
+            if (fw.mode == "append" or (
+                    fw.mode == "skip" and
+                    all(fea not in existingFeatures for fea in fw.features))):
+                autoFeatures.append(fw.write(font))
 
         # write the features
-        features = [existing]
-        for name, text in sorted(autoFeatures.items()):
-            if text is None:
-                continue
-            features.append(text)
-        self.features = "\n\n".join(features)
+        self.features = "\n\n".join([font.features.text or ""] + autoFeatures)
 
     def _findLayoutFeatures(self):
         """Returns what OpenType layout feature tags are present in the UFO."""
-        if self.font.path is None:
+        featxt = self.font.features.text
+        if not featxt:
             return set()
-        feapath = os.path.join(self.font.path, "features.fea")
-        if not os.path.exists(feapath):
-            return set()
+        buf = UnicodeIO(featxt)
+        # the path is only used by the lexer to resolve 'include' statements
+        if self.font.path is not None:
+            buf.name = os.path.join(self.font.path, "features.fea")
         glyphMap = self.outline.getReverseGlyphMap()
-        parser = feaLib.parser.Parser(feapath, glyphMap=glyphMap)
+        parser = feaLib.parser.Parser(buf, glyphMap)
         doc = parser.parse()
         return {f.name for f in doc.statements
                 if isinstance(f, feaLib.ast.FeatureBlock)}
@@ -116,9 +121,26 @@ class FeatureCompiler(object):
                 self.outline[tag] = table
 
         elif self.features.strip():
-            feapath = os.path.join(self.font.path, "features.fea") if self.font.path is not None else None
-            addOpenTypeFeaturesFromString(self.outline, self.features,
-                                          filename=feapath)
+            # save generated features to a temp file if things go wrong...
+            with NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(self.features.encode("utf-8"))
+            # the path to features.fea is only used by the lexer to resolve
+            # the relative "include" statements
+            if self.font.path is not None:
+                feapath = os.path.join(self.font.path, "features.fea")
+            else:
+                # in-memory UFO has no path, can't do 'include' either
+                feapath = None
+            # if compilation succedes or fails for unrelated reasons, clean
+            # up the temporary file
+            try:
+                addOpenTypeFeaturesFromString(self.outline, self.features,
+                                              filename=feapath)
+            except feaLib.error.FeatureLibError:
+                logger.error("Compilation failed! Inspect temporary file: %r",
+                             tmp.name)
+                raise
+            os.remove(tmp.name)
 
     def postProcess(self):
         """Make post-compilation calculations.

@@ -9,9 +9,9 @@ from ufo2ft.featureWriters import MarkFeatureWriter
 class PrebuiltMarkFeatureWriter(MarkFeatureWriter):
 
     def setupAnchorPairs(self):
-        self.anchorList = (('bottom', '_bottom'),)
-        self.mkmkAnchorList = ()
-        self.ligaAnchorList = ((('top_1', 'top_2'), '_top'),)
+        self.context.anchorList = (('bottom', '_bottom'),)
+        self.context.mkmkAnchorList = ()
+        self.context.ligaAnchorList = ((('top_1', 'top_2'), '_top'),)
 
 
 class MarkFeatureWriterTest(unittest.TestCase):
@@ -24,7 +24,8 @@ class MarkFeatureWriterTest(unittest.TestCase):
         glyph.appendAnchor(glyph.anchorClass(
             anchorDict={'name': '_bottom', 'x': 100, 'y': 0}))
         lines = []
-        writer = PrebuiltMarkFeatureWriter(ufo)
+        writer = PrebuiltMarkFeatureWriter()
+        writer.set_context(ufo)
         writer._addClasses(lines, doMark=True, doMkmk=True)
         self.assertEqual(
             '\n'.join(lines).strip(),
@@ -40,8 +41,8 @@ class MarkFeatureWriterTest(unittest.TestCase):
         glyph.appendAnchor(glyph.anchorClass(
             anchorDict={'name': '_top', 'x': 100, 'y': 200}))
 
-        writer = MarkFeatureWriter(ufo)
-        fea = writer.write()
+        writer = MarkFeatureWriter()
+        fea = writer.write(ufo)
 
         self.assertIn("feature mark", fea)
         self.assertNotIn("feature mkmk", fea)
