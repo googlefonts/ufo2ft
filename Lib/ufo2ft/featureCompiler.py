@@ -8,7 +8,7 @@ from tempfile import NamedTemporaryFile
 from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
-from fontTools.misc.py23 import UnicodeIO
+from fontTools.misc.py23 import UnicodeIO, tobytes
 
 from ufo2ft.featureWriters import DEFAULT_FEATURE_WRITERS
 from ufo2ft.maxContextCalc import maxCtxFont
@@ -121,9 +121,6 @@ class FeatureCompiler(object):
                 self.outline[tag] = table
 
         elif self.features.strip():
-            # save generated features to a temp file if things go wrong...
-            with NamedTemporaryFile(delete=False) as tmp:
-                tmp.write(self.features.encode("utf-8"))
             # the path to features.fea is only used by the lexer to resolve
             # the relative "include" statements
             if self.font.path is not None:
@@ -131,6 +128,12 @@ class FeatureCompiler(object):
             else:
                 # in-memory UFO has no path, can't do 'include' either
                 feapath = None
+
+            # save generated features to a temp file if things go wrong...
+            data = tobytes(self.features, encoding="utf-8")
+            with NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(data)
+
             # if compilation succedes or fails for unrelated reasons, clean
             # up the temporary file
             try:
@@ -140,7 +143,11 @@ class FeatureCompiler(object):
                 logger.error("Compilation failed! Inspect temporary file: %r",
                              tmp.name)
                 raise
-            os.remove(tmp.name)
+            except:
+                os.remove(tmp.name)
+                raise
+            else:
+                os.remove(tmp.name)
 
     def postProcess(self):
         """Make post-compilation calculations.
