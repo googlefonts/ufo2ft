@@ -16,6 +16,8 @@ __version__ = "1.0.0.dev0"
 def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
                outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureCompiler,
+               kernWriterClass=None,  # deprecated
+               markWriterClass=None,  # deprecated
                featureWriters=DEFAULT_FEATURE_WRITERS,
                glyphOrder=None,
                useProductionNames=True,
@@ -49,6 +51,8 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
         roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
+    _replaceDeprecatedFeatureWriters(
+        featureWriters, kernWriterClass, markWriterClass)
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo))
@@ -63,6 +67,8 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
 def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
                outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler,
+               kernWriterClass=None,  # deprecated
+               markWriterClass=None,  # deprecated
                featureWriters=DEFAULT_FEATURE_WRITERS,
                glyphOrder=None,
                useProductionNames=True,
@@ -90,6 +96,8 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
         ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
     otf = outlineCompiler.compile()
 
+    _replaceDeprecatedFeatureWriters(
+        featureWriters, kernWriterClass, markWriterClass)
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo))
@@ -147,3 +155,25 @@ def _getMtiFeatures(ufo):
             content = tounicode(ufo.data[fileName], encoding="utf-8")
             features[fileName[len(prefix):-4]] = content
     return features if len(features) > 0 else None
+
+
+def _deprecateArgument(arg, repl):
+    import warnings
+    warnings.warn("%r is deprecated; use %r instead" % (arg, repl),
+                  category=UserWarning, stacklevel=3)
+
+
+def _replaceDeprecatedFeatureWriters(featureWriters,
+                                     kernWriterClass=None,
+                                     markWriterClass=None):
+    if kernWriterClass is not None:
+        _deprecateArgument("kernWriterClass", "featureWriters")
+        for i, writer in enumerate(featureWriters):
+            if "kern" in writer.features:
+                featureWriters[i] = kernWriterClass
+
+    if markWriterClass is not None:
+        _deprecateArgument("markWriterClass", "featureWriters")
+        for i, writer in enumerate(featureWriters):
+            if "mark" in writer.features:
+                featureWriters[i] = markWriterClass
