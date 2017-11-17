@@ -17,12 +17,10 @@ class PrebuiltMarkFeatureWriter(MarkFeatureWriter):
 class MarkFeatureWriterTest(unittest.TestCase):
     def test_add_classes(self):
         ufo = Font()
-        glyph = ufo.newGlyph('grave')
-        glyph.appendAnchor(glyph.anchorClass(
-            anchorDict={'name': '_top', 'x': 100, 'y': 200}))
-        glyph = ufo.newGlyph('cedilla')
-        glyph.appendAnchor(glyph.anchorClass(
-            anchorDict={'name': '_bottom', 'x': 100, 'y': 0}))
+        ufo.newGlyph('grave').appendAnchor(
+            {'name': '_top', 'x': 100, 'y': 200})
+        ufo.newGlyph('cedilla').appendAnchor(
+            {'name': '_bottom', 'x': 100, 'y': 0})
         lines = []
         writer = PrebuiltMarkFeatureWriter()
         writer.set_context(ufo)
@@ -34,18 +32,37 @@ class MarkFeatureWriterTest(unittest.TestCase):
 
     def test_skip_empty_feature(self):
         ufo = Font()
-        glyph = ufo.newGlyph('a')
-        glyph.appendAnchor(glyph.anchorClass(
-            anchorDict={'name': 'top', 'x': 100, 'y': 200}))
-        glyph = ufo.newGlyph('acutecomb')
-        glyph.appendAnchor(glyph.anchorClass(
-            anchorDict={'name': '_top', 'x': 100, 'y': 200}))
+        ufo.newGlyph('a').appendAnchor(
+            {'name': 'top', 'x': 100, 'y': 200})
+        ufo.newGlyph('acutecomb').appendAnchor(
+            {'name': '_top', 'x': 100, 'y': 200})
 
         writer = MarkFeatureWriter()
         fea = writer.write(ufo)
 
         self.assertIn("feature mark", fea)
         self.assertNotIn("feature mkmk", fea)
+
+    def test_only_write_one(self):
+        ufo = Font()
+        ufo.newGlyph('a').appendAnchor({'name': 'top', 'x': 100, 'y': 200})
+        ufo.newGlyph('acutecomb').appendAnchor(
+            {'name': '_top', 'x': 100, 'y': 200})
+        glyph = ufo.newGlyph('tildecomb')
+        glyph.appendAnchor({'name': '_top', 'x': 100, 'y': 200})
+        glyph.appendAnchor({'name': 'top', 'x': 100, 'y': 300})
+
+        writer = MarkFeatureWriter()  # by default both mark + mkmk are built
+        fea = writer.write(ufo)
+
+        self.assertIn("feature mark", fea)
+        self.assertIn("feature mkmk", fea)
+
+        writer = MarkFeatureWriter(features=["mkmk"])  # only builds "mkmk"
+        fea = writer.write(ufo)
+
+        self.assertNotIn("feature mark", fea)
+        self.assertIn("feature mkmk", fea)
 
 
 if __name__ == '__main__':
