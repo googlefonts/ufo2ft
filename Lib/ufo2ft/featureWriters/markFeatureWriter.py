@@ -1,7 +1,9 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 import logging
+from collections import OrderedDict
 
 from ufo2ft.featureWriters import BaseFeatureWriter
+from ufo2ft.util import makeOfficialGlyphOrder
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     def set_context(self, font):
         super(MarkFeatureWriter, self).set_context(font)
+        glyphOrder = makeOfficialGlyphOrder(self.context.font)
+        self.context.glyphSet = OrderedDict(((gn, font[gn]) for gn in glyphOrder))
         self.context.accentGlyphNames = set()
         self.setupAnchorPairs()
 
@@ -38,10 +42,10 @@ class MarkFeatureWriter(BaseFeatureWriter):
         """
 
         glyphList = []
-        for glyph in self.context.font:
+        for glyphName, glyph in self.context.glyphSet.items():
             for anchor in glyph.anchors:
                 if accentAnchorName == anchor.name:
-                    glyphList.append((glyph.name, anchor.x, anchor.y))
+                    glyphList.append((glyphName, anchor.x, anchor.y))
                     break
         return glyphList
 
@@ -53,12 +57,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
         glyphList = []
         accentGlyphNames = set(self.context.accentGlyphNames)
-        for glyph in self.context.font:
-            if isMkmk != (glyph.name in accentGlyphNames):
+        for glyphName, glyph in self.context.glyphSet.items():
+            if isMkmk != (glyphName in accentGlyphNames):
                 continue
             for anchor in glyph.anchors:
                 if anchorName == anchor.name:
-                    glyphList.append((glyph.name, anchor.x, anchor.y))
+                    glyphList.append((glyphName, anchor.x, anchor.y))
                     break
         return glyphList
 
@@ -68,7 +72,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         """
 
         glyphList = []
-        for glyph in self.context.font:
+        for glyphName, glyph in self.context.glyphSet.items():
             points = []
             for anchorName in anchorNames:
                 found = False
@@ -80,7 +84,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 if not found:
                     break
             if points:
-                glyphList.append((glyph.name, tuple(points)))
+                glyphList.append((glyphName, tuple(points)))
         return glyphList
 
     def _addClasses(self, lines, doMark, doMkmk):
@@ -200,7 +204,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         self.context.ligaAnchorList = ligaAnchorList = []
 
         anchorNames = set()
-        for glyph in self.context.font:
+        for glyphName, glyph in self.context.glyphSet.items():
             for anchor in glyph.anchors:
                 if anchor.name is None:
                     logger.warning("Unnamed anchor discarded in %s", glyph.name)
