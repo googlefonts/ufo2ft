@@ -12,7 +12,7 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
     """
     if glyphOrder is None:
         glyphOrder = getattr(font, "glyphOrder", ())
-    orderedGlyphs = [".notdef"]
+    orderedGlyphs = [".notdef"] if ".notdef" in font else []
     for glyphName in glyphOrder:
         if glyphName == ".notdef":
             continue
