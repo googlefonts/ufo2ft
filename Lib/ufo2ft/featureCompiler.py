@@ -32,10 +32,12 @@ class FeatureCompiler(object):
     """
 
     def __init__(self, font, outline,
-                 featureWriters=DEFAULT_FEATURE_WRITERS,
+                 featureWriters=None,
                  mtiFeatures=None):
         self.font = font
         self.outline = outline
+        if featureWriters is None:
+            featureWriters = DEFAULT_FEATURE_WRITERS
         self.featureWriters = []
         for writer in featureWriters:
             if isclass(writer):

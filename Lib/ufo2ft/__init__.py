@@ -5,7 +5,6 @@ from fontTools.misc.py23 import *
 from ufo2ft.preProcessor import (
     OTFPreProcessor, TTFPreProcessor, TTFInterpolatablePreProcessor)
 from ufo2ft.featureCompiler import FeatureCompiler
-from ufo2ft.featureWriters import DEFAULT_FEATURE_WRITERS
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
@@ -18,7 +17,7 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
                featureCompilerClass=FeatureCompiler,
                kernWriterClass=None,  # deprecated
                markWriterClass=None,  # deprecated
-               featureWriters=DEFAULT_FEATURE_WRITERS,
+               featureWriters=None,
                glyphOrder=None,
                useProductionNames=True,
                optimizeCFF=True,
@@ -69,7 +68,7 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
                featureCompilerClass=FeatureCompiler,
                kernWriterClass=None,  # deprecated
                markWriterClass=None,  # deprecated
-               featureWriters=DEFAULT_FEATURE_WRITERS,
+               featureWriters=None,
                glyphOrder=None,
                useProductionNames=True,
                convertCubics=True,
@@ -113,7 +112,7 @@ def compileInterpolatableTTFs(ufos,
                               preProcessorClass=TTFInterpolatablePreProcessor,
                               outlineCompilerClass=OutlineTTFCompiler,
                               featureCompilerClass=FeatureCompiler,
-                              featureWriters=DEFAULT_FEATURE_WRITERS,
+                              featureWriters=None,
                               glyphOrder=None,
                               useProductionNames=True,
                               cubicConversionError=None,
