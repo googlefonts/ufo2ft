@@ -22,11 +22,16 @@ class MarkFeatureWriter(BaseFeatureWriter):
     ]
 
     def set_context(self, font):
-        super(MarkFeatureWriter, self).set_context(font)
-        glyphOrder = makeOfficialGlyphOrder(self.context.font)
-        self.context.glyphSet = OrderedDict(((gn, font[gn]) for gn in glyphOrder))
-        self.context.accentGlyphNames = set()
+        ctx = super(MarkFeatureWriter, self).set_context(font)
+
+        glyphOrder = makeOfficialGlyphOrder(font)
+        ctx.glyphSet = OrderedDict(((gn, font[gn]) for gn in glyphOrder))
+
+        ctx.accentGlyphNames = set()
+
         self.setupAnchorPairs()
+
+        return ctx
 
     @staticmethod
     def _generateClassName(accentAnchorName):
