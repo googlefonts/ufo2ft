@@ -12,15 +12,15 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
     """
     if glyphOrder is None:
         glyphOrder = getattr(font, "glyphOrder", ())
-    orderedGlyphs = [".notdef"] if ".notdef" in font else []
-    for glyphName in glyphOrder:
-        if glyphName == ".notdef":
+    names = set(font.keys())
+    order = []
+    if ".notdef" in names:
+        names.remove(".notdef")
+        order.append(".notdef")
+    for name in glyphOrder:
+        if name not in names:
             continue
-        if glyphName not in font:
-            continue
-        orderedGlyphs.append(glyphName)
-    orderedGlyphSet = set(orderedGlyphs)
-    for glyphName in sorted(font.keys()):
-        if glyphName not in orderedGlyphSet:
-            orderedGlyphs.append(glyphName)
-    return orderedGlyphs
+        names.remove(name)
+        order.append(name)
+    order.extend(sorted(names))
+    return order
