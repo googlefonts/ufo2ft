@@ -6,7 +6,9 @@ import math
 from collections import Counter, namedtuple
 
 from fontTools.ttLib import TTFont, newTable
-from fontTools.cffLib import TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex, PrivateDict, IndexedStrings
+from fontTools.cffLib import (
+    TopDictIndex, TopDict, CharStrings, SubrsIndex, GlobalSubrsIndex,
+    PrivateDict, IndexedStrings)
 from fontTools.pens.boundsPen import ControlBoundsPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -15,7 +17,10 @@ from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._g_l_y_f import Glyph, USE_MY_METRICS
 from fontTools.misc.arrayTools import unionRect
 
-from ufo2ft.fontInfoData import getAttrWithFallback, dateStringToTimeValue, dateStringForNow, intListToNum, normalizeStringForPostscript
+from ufo2ft.fontInfoData import (
+    getAttrWithFallback, dateStringToTimeValue, dateStringForNow,
+    intListToNum, normalizeStringForPostscript)
+from ufo2ft.util import makeOfficialGlyphOrder
 
 logger = logging.getLogger(__name__)
 
@@ -189,18 +194,7 @@ class BaseOutlineCompiler(object):
         may override this method to handle the order creation
         in a different way if desired.
         """
-        orderedGlyphs = [".notdef"]
-        for glyphName in glyphOrder:
-            if glyphName == ".notdef":
-                continue
-            if glyphName not in self.allGlyphs:
-                continue
-            orderedGlyphs.append(glyphName)
-        orderedGlyphSet = set(orderedGlyphs)
-        for glyphName in sorted(self.allGlyphs.keys()):
-            if glyphName not in orderedGlyphSet:
-                orderedGlyphs.append(glyphName)
-        return orderedGlyphs
+        return makeOfficialGlyphOrder(self.allGlyphs, glyphOrder)
 
     # --------------
     # Table Builders
