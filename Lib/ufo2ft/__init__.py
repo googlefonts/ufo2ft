@@ -5,8 +5,6 @@ from fontTools.misc.py23 import *
 from ufo2ft.preProcessor import (
     OTFPreProcessor, TTFPreProcessor, TTFInterpolatablePreProcessor)
 from ufo2ft.featureCompiler import FeatureCompiler
-from ufo2ft.kernFeatureWriter import KernFeatureWriter
-from ufo2ft.markFeatureWriter import MarkFeatureWriter
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
@@ -17,9 +15,14 @@ __version__ = "1.0.0.dev0"
 def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
                outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureCompiler,
-               kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
-               glyphOrder=None, useProductionNames=True, optimizeCFF=True,
-               roundTolerance=None, removeOverlaps=False,
+               kernWriterClass=None,  # deprecated
+               markWriterClass=None,  # deprecated
+               featureWriters=None,
+               glyphOrder=None,
+               useProductionNames=True,
+               optimizeCFF=True,
+               roundTolerance=None,
+               removeOverlaps=False,
                inplace=False):
     """Create FontTools CFF font from a UFO.
 
@@ -33,6 +36,11 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
       By default, all floats are rounded to integer (tolerance 0.5); a value
       of 0 completely disables rounding; values in between only round floats
       which are close to their integral part within the tolerated range.
+
+    *featureWriters* argument is a list of BaseFeatureWriter subclasses or
+      pre-initialized instances. Features will be written by each feature
+      writer in the given order. If featureWriters is None, the default
+      feature writers [KernFeatureWriter, MarkFeatureWriter] are used.
     """
     preProcessor = preProcessorClass(
         ufo, inplace=inplace, removeOverlaps=removeOverlaps)
@@ -43,8 +51,10 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
         roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
+    _replaceDeprecatedFeatureWriters(
+        featureWriters, kernWriterClass, markWriterClass)
     featureCompiler = featureCompilerClass(
-        ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
+        ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo))
     featureCompiler.compile()
 
@@ -57,10 +67,15 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
 def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
                outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler,
-               kernWriterClass=KernFeatureWriter, markWriterClass=MarkFeatureWriter,
-               glyphOrder=None, useProductionNames=True,
-               convertCubics=True, cubicConversionError=None,
-               reverseDirection=True, removeOverlaps=False,
+               kernWriterClass=None,  # deprecated
+               markWriterClass=None,  # deprecated
+               featureWriters=None,
+               glyphOrder=None,
+               useProductionNames=True,
+               convertCubics=True,
+               cubicConversionError=None,
+               reverseDirection=True,
+               removeOverlaps=False,
                inplace=False):
     """Create FontTools TrueType font from a UFO.
 
@@ -81,8 +96,10 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
         ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
     otf = outlineCompiler.compile()
 
+    _replaceDeprecatedFeatureWriters(
+        featureWriters, kernWriterClass, markWriterClass)
     featureCompiler = featureCompilerClass(
-        ufo, otf, kernWriterClass=kernWriterClass, markWriterClass=markWriterClass,
+        ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo))
     featureCompiler.compile()
 
@@ -96,8 +113,7 @@ def compileInterpolatableTTFs(ufos,
                               preProcessorClass=TTFInterpolatablePreProcessor,
                               outlineCompilerClass=OutlineTTFCompiler,
                               featureCompilerClass=FeatureCompiler,
-                              kernWriterClass=KernFeatureWriter,
-                              markWriterClass=MarkFeatureWriter,
+                              featureWriters=None,
                               glyphOrder=None,
                               useProductionNames=True,
                               cubicConversionError=None,
@@ -121,8 +137,7 @@ def compileInterpolatableTTFs(ufos,
         ttf = outlineCompiler.compile()
 
         featureCompiler = featureCompilerClass(
-            ufo, ttf, kernWriterClass=kernWriterClass,
-            markWriterClass=markWriterClass,
+            ufo, ttf, featureWriters=featureWriters,
             mtiFeatures=_getMtiFeatures(ufo))
         featureCompiler.compile()
 
@@ -140,3 +155,25 @@ def _getMtiFeatures(ufo):
             content = tounicode(ufo.data[fileName], encoding="utf-8")
             features[fileName[len(prefix):-4]] = content
     return features if len(features) > 0 else None
+
+
+def _deprecateArgument(arg, repl):
+    import warnings
+    warnings.warn("%r is deprecated; use %r instead" % (arg, repl),
+                  category=UserWarning, stacklevel=3)
+
+
+def _replaceDeprecatedFeatureWriters(featureWriters,
+                                     kernWriterClass=None,
+                                     markWriterClass=None):
+    if kernWriterClass is not None:
+        _deprecateArgument("kernWriterClass", "featureWriters")
+        for i, writer in enumerate(featureWriters):
+            if "kern" in writer.features:
+                featureWriters[i] = kernWriterClass
+
+    if markWriterClass is not None:
+        _deprecateArgument("markWriterClass", "featureWriters")
+        for i, writer in enumerate(featureWriters):
+            if "mark" in writer.features:
+                featureWriters[i] = markWriterClass
