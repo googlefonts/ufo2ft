@@ -38,8 +38,9 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
       which are close to their integral part within the tolerated range.
 
     *featureWriters* argument is a list of BaseFeatureWriter subclasses or
-    pre-initialized instances. Features will be written by each feature writer
-    in the given order (default: [KernFeatureWriter, MarkFeatureWriter]).
+      pre-initialized instances. Features will be written by each feature
+      writer in the given order. If featureWriters is None, the default
+      feature writers [KernFeatureWriter, MarkFeatureWriter] are used.
     """
     preProcessor = preProcessorClass(
         ufo, inplace=inplace, removeOverlaps=removeOverlaps)
