@@ -69,6 +69,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.rightClassKerning = {}
         ctx.classPairKerning = {}
 
+        return ctx
+
     def _write(self):
 
         self._collectFeaClasses()
