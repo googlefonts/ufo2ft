@@ -51,20 +51,23 @@ class TransformationsFilter(BaseFilter):
                              % self.options.Origin)
 
     def set_context(self, font, glyphSet):
+        ctx = super(TransformationsFilter, self).set_context(font, glyphSet)
+
         origin = self.options.Origin
         if origin is self.Origin.BASELINE:
-            value = 0
+            ctx.origin_height = 0
         elif origin is self.Origin.CAP_HEIGHT:
-            value = font.info.capHeight
+            ctx.origin_height = font.info.capHeight
         elif origin is self.Origin.HALF_CAP_HEIGHT:
-            value = round(font.info.capHeight/2)
+            ctx.origin_height = round(font.info.capHeight/2)
         elif origin is self.Origin.X_HEIGHT:
-            value = font.info.xHeight
+            ctx.origin_height = font.info.xHeight
         elif origin is self.Origin.HALF_X_HEIGHT:
-            value = round(font.info.xHeight/2)
+            ctx.origin_height = round(font.info.xHeight/2)
         else:
             raise AssertionError(origin)
-        return dict(origin_height=value)
+
+        return ctx
 
     @staticmethod
     def transform(glyph, matrix):
