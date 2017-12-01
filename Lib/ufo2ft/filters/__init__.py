@@ -198,6 +198,9 @@ class BaseFilter(object):
                 if include(glyph) and filter_(glyph):
                     modified.add(glyphName)
 
-        logger.debug("Took %.3fs to run %s on %d glyphs",
-                     t, self.name, len(modified))
+        num = len(modified)
+        if num > 0:
+            logger.debug("Took %.3fs to run %s on %d glyph%s",
+                         t, self.name, len(modified),
+                         "" if num == 1 else "s")
         return modified
