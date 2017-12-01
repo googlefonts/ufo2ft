@@ -19,9 +19,14 @@ class CubicToQuadraticFilter(BaseFilter):
     }
 
     def set_context(self, font, glyphSet):
+        ctx = super(CubicToQuadraticFilter, self).set_context(font, glyphSet)
+
         relativeError = self.options.conversionError or DEFAULT_MAX_ERR
-        absoluteError = relativeError * font.info.unitsPerEm
-        return dict(absoluteError=absoluteError, stats=dict())
+        ctx.absoluteError = relativeError * font.info.unitsPerEm
+
+        ctx.stats = {}
+
+        return ctx
 
     def __call__(self, font, glyphSet=None):
         if super(CubicToQuadraticFilter, self).__call__(font, glyphSet):
