@@ -50,23 +50,23 @@ class TransformationsFilter(BaseFilter):
             raise ValueError("%r is not a valid Origin value"
                              % self.options.Origin)
 
-    def set_context(self, font, glyphSet):
-        ctx = super(TransformationsFilter, self).set_context(font, glyphSet)
-
-        origin = self.options.Origin
+    def get_origin_height(self, font, origin):
         if origin is self.Origin.BASELINE:
-            ctx.origin_height = 0
+            return 0
         elif origin is self.Origin.CAP_HEIGHT:
-            ctx.origin_height = font.info.capHeight
+            return font.info.capHeight
         elif origin is self.Origin.HALF_CAP_HEIGHT:
-            ctx.origin_height = round(font.info.capHeight/2)
+            return round(font.info.capHeight/2)
         elif origin is self.Origin.X_HEIGHT:
-            ctx.origin_height = font.info.xHeight
+            return font.info.xHeight
         elif origin is self.Origin.HALF_X_HEIGHT:
-            ctx.origin_height = round(font.info.xHeight/2)
+            return round(font.info.xHeight/2)
         else:
             raise AssertionError(origin)
 
+    def set_context(self, font, glyphSet):
+        ctx = super(TransformationsFilter, self).set_context(font, glyphSet)
+        ctx.origin_height = self.get_origin_height(font, self.options.Origin)
         return ctx
 
     @staticmethod
