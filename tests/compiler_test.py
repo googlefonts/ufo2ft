@@ -3,6 +3,8 @@ from __future__ import \
 from fontTools.misc.py23 import *
 from defcon import Font
 from ufo2ft import compileOTF, compileTTF, compileInterpolatableTTFs
+from ufo2ft.featureWriters import KernFeatureWriter, MarkFeatureWriter
+import warnings
 import difflib
 import os
 import sys
@@ -32,6 +34,35 @@ class CompilerTest(unittest.TestCase):
 
     def test_TestFont_CFF(self):
         self.expectTTX(compileOTF(loadUFO("TestFont.ufo")), "TestFont-CFF.ttx")
+
+    def test_deprecated_arguments(self):
+        ufo = loadUFO("TestFont.ufo")
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", UserWarning)
+
+            compileTTF(ufo, kernWriterClass=KernFeatureWriter)
+
+            self.assertEqual(len(w), 1)
+            self.assertEqual(w[-1].category, UserWarning)
+            self.assertIn(
+                "'kernWriterClass' is deprecated; use 'featureWriters'",
+                str(w[-1].message))
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", UserWarning)
+
+            compileOTF(ufo, markWriterClass=MarkFeatureWriter)
+
+            self.assertEqual(len(w), 1)
+            self.assertEqual(w[-1].category, UserWarning)
+            self.assertIn(
+                "'markWriterClass' is deprecated; use 'featureWriters'",
+                str(w[-1].message))
+
+        with self.assertRaises(TypeError):
+            compileTTF(ufo, kernWriterClass=KernFeatureWriter,
+                       featureWriters=[MarkFeatureWriter])
 
     def test_features(self):
         """Checks how the compiler handles features.fea

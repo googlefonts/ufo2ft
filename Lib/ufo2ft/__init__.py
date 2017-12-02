@@ -51,7 +51,7 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
         roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
-    _replaceDeprecatedFeatureWriters(
+    featureWriters = _replaceDeprecatedFeatureWriters(
         featureWriters, kernWriterClass, markWriterClass)
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
@@ -96,7 +96,7 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
         ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
     otf = outlineCompiler.compile()
 
-    _replaceDeprecatedFeatureWriters(
+    featureWriters = _replaceDeprecatedFeatureWriters(
         featureWriters, kernWriterClass, markWriterClass)
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
@@ -166,14 +166,29 @@ def _deprecateArgument(arg, repl):
 def _replaceDeprecatedFeatureWriters(featureWriters,
                                      kernWriterClass=None,
                                      markWriterClass=None):
+    if not any([kernWriterClass, markWriterClass]):
+        return featureWriters
+
+    if featureWriters is not None:
+        raise TypeError(
+            "the new 'featureWriters' argument, and the old (deprecated) "
+            "'kernWriterClass' and 'markWriterClass' arguments are mutually "
+            "exclusive.")
+
+    featureWriters = []
+
     if kernWriterClass is not None:
         _deprecateArgument("kernWriterClass", "featureWriters")
-        for i, writer in enumerate(featureWriters):
-            if "kern" in writer.features:
-                featureWriters[i] = kernWriterClass
+        featureWriters.append(kernWriterClass)
+    else:
+        from ufo2ft.featureWriters import KernFeatureWriter
+        featureWriters.append(KernFeatureWriter)
 
     if markWriterClass is not None:
         _deprecateArgument("markWriterClass", "featureWriters")
-        for i, writer in enumerate(featureWriters):
-            if "mark" in writer.features:
-                featureWriters[i] = markWriterClass
+        featureWriters.append(markWriterClass)
+    else:
+        from ufo2ft.featureWriters import MarkFeatureWriter
+        featureWriters.append(MarkFeatureWriter)
+
+    return featureWriters
