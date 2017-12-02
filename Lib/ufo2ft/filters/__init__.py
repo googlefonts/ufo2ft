@@ -149,18 +149,19 @@ class BaseFilter(object):
         pass
 
     def set_context(self, font, glyphSet):
-        """ Return a dictionary that will be used to populate a `self.context`
-        namespace, which is reset before each new filter call.
+        """ Populate a `self.context` namespace, which is reset before each
+        new filter call.
 
         Subclasses can override this to provide contextual information
         which depends on other data in the font that is not available in
         the glyphs objects currently being filtered, or set any other
         temporary attributes.
 
-        The default implementation simply return the current font and glyphSet
-        as the context.
+        The default implementation simply sets the current font and glyphSet,
+        and returns the namespace instance.
         """
-        return dict(font=font, glyphSet=glyphSet)
+        self.context = SimpleNamespace(font=font, glyphSet=glyphSet)
+        return self.context
 
     def filter(self, glyph):
         """ This is where the filter is applied to a single glyph.
@@ -185,7 +186,7 @@ class BaseFilter(object):
         if glyphSet is None:
             glyphSet = font
 
-        self.context = SimpleNamespace(**self.set_context(font, glyphSet))
+        self.set_context(font, glyphSet)
 
         filter_ = self.filter
         include = self.include
@@ -197,6 +198,9 @@ class BaseFilter(object):
                 if include(glyph) and filter_(glyph):
                     modified.add(glyphName)
 
-        logger.debug("Took %.3fs to run %s on %d glyphs",
-                     t, self.name, len(modified))
+        num = len(modified)
+        if num > 0:
+            logger.debug("Took %.3fs to run %s on %d glyph%s",
+                         t, self.name, len(modified),
+                         "" if num == 1 else "s")
         return modified
