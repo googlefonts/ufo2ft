@@ -158,9 +158,13 @@ class BaseFilter(object):
         temporary attributes.
 
         The default implementation simply sets the current font and glyphSet,
-        and returns the namespace instance.
+        and initializes an empty set that keeps track of the names of the
+        glyphs that were modified.
+
+        Returns the namespace instance.
         """
         self.context = SimpleNamespace(font=font, glyphSet=glyphSet)
+        self.context.modified = set()
         return self.context
 
     def filter(self, glyph):
@@ -186,14 +190,17 @@ class BaseFilter(object):
         if glyphSet is None:
             glyphSet = font
 
-        self.set_context(font, glyphSet)
+        context = self.set_context(font, glyphSet)
 
         filter_ = self.filter
         include = self.include
-        modified = set()
+        modified = context.modified
 
         with Timer() as t:
-            for glyphName in glyphSet.keys():
+            # we sort the glyph names to make loop deterministic
+            for glyphName in sorted(glyphSet.keys()):
+                if glyphName in modified:
+                    continue
                 glyph = glyphSet[glyphName]
                 if include(glyph) and filter_(glyph):
                     modified.add(glyphName)

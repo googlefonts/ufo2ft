@@ -34,9 +34,25 @@ import pytest
                 'name': 'b',
                 'width': 450,
                 'outline': [
-                    ('addComponent', ("a", (1, 0, 0, 1, 100, 200))),
+                    ('addComponent', ('a', (1, 0, 0, 1, 0, 0))),
+                    ('addComponent', ('c', (1, 0, 0, 1, 0, 0))),
                 ]
-            }
+            },
+            {
+                'name': 'c',
+                'outline': [
+                    ('moveTo', ((0, 0),)),
+                    ('lineTo', ((300, 0),)),
+                    ('lineTo', ((150, 300),)),
+                    ('closePath', ()),
+                ]
+            },
+            {
+                'name': 'd',
+                'outline': [
+                    ('addComponent', ('b', (1, 0, 0, 1, 0, 0)))
+                ],
+            },
         ],
     }
 ])
@@ -46,7 +62,7 @@ def font(request):
     font.info.xHeight = request.param['xHeight']
     for param in request.param['glyphs']:
         glyph = font.newGlyph(param['name'])
-        glyph.width = param['width']
+        glyph.width = param.get('width', 0)
         pen = glyph.getPen()
         for operator, operands in param.get('outline', []):
             getattr(pen, operator)(*operands)
@@ -86,7 +102,8 @@ class TransformationsFilterTest(object):
         assert (a[0][0].x, a[0][0].y) == (-10, 0)
         assert (a.anchors[1].x, a.anchors[1].y) == (90, -200)
 
-        font["b"].components[0].transformation[:2] == (90, 200)
+        # base glyph was already transformed, component didn't change
+        assert font["b"].components[0].transformation[-2:] == (0, 0)
 
     def test_OffsetY(self, font):
         filter_ = TransformationsFilter(OffsetY=51)
@@ -96,7 +113,7 @@ class TransformationsFilterTest(object):
         assert (a[0][0].x, a[0][0].y) == (0, 51)
         assert (a.anchors[1].x, a.anchors[1].y) == (100, -149)
 
-        font["b"].components[0].transformation[:2] == (100, 251)
+        assert font["b"].components[0].transformation[-2:] == (0, 0)
 
     def test_OffsetXY(self, font):
         filter_ = TransformationsFilter(OffsetX=-10, OffsetY=51)
@@ -106,7 +123,7 @@ class TransformationsFilterTest(object):
         assert (a[0][0].x, a[0][0].y) == (-10, 51)
         assert (a.anchors[1].x, a.anchors[1].y) == (90, -149)
 
-        font["b"].components[0].transformation[:2] == (90, 251)
+        assert font["b"].components[0].transformation[-2:] == (0, 0)
 
     def test_ScaleX(self, font, origin):
         # different Origin heights should not affect horizontal scale
@@ -163,3 +180,18 @@ class TransformationsFilterTest(object):
         with CapturingLogHandler(log, level="DEBUG") as captor:
             filter_(font)
         assert captor.assertRegex("transforming")
+
+    def test_composite_glyphs(self, font):
+        filter_ = TransformationsFilter(
+            OffsetX=-10, OffsetY=51, ScaleX=50, ScaleY=50, exclude={'c'})
+        assert filter_(font)
+
+        b = font["b"]
+        # component 'a' was not transformed, because base glyph was included
+        assert b.components[0].transformation == (1, 0, 0, 1, 0, 0)
+        # component 'c' was transformed, because base glyph was not included
+        assert b.components[1].transformation == (.5, 0, 0, .5, -10, 51)
+
+        d = font["d"]
+        # component 'b' was not transformed, because base glyph was included
+        assert d.components[0].transformation == (1, 0, 0, 1, 0, 0)
