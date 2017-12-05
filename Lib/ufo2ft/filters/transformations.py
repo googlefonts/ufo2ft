@@ -8,7 +8,7 @@ import logging
 from ufo2ft.filters import BaseFilter
 
 from fontTools.misc.py23 import round
-from fontTools.misc.transform import Identity
+from fontTools.misc.transform import Transform, Identity
 from fontTools.pens.recordingPen import RecordingPen
 from fontTools.pens.transformPen import TransformPen as _TransformPen
 
@@ -24,15 +24,26 @@ log = logging.getLogger(__name__)
 
 class TransformPen(_TransformPen):
 
-    def __init__(self, outPen, transformation, exclude=None):
+    def __init__(self, outPen, transformation, modified=None):
         super(TransformPen, self).__init__(outPen, transformation)
-        self.exclude = exclude if exclude is not None else set()
+        self.modified = modified if modified is not None else set()
+        self._inverted = self._transformation.inverse()
 
     def addComponent(self, baseGlyph, transformation):
-        if baseGlyph in self.exclude:
-            self._outPen.addComponent(baseGlyph, transformation)
-        else:
-            super(TransformPen, self).addComponent(baseGlyph, transformation)
+        if baseGlyph in self.modified:
+
+            if transformation[:4] == (1, 0, 0, 1):
+                # if the component's transform only has a simple offset, then
+                # we don't need to transform the component again
+                self._outPen.addComponent(baseGlyph, transformation)
+                return
+
+            # multiply the component's transformation matrix with the inverse
+            # of the filter's transformation matrix to compensate for the
+            # transformation already applied to the base glyph
+            transformation = Transform(*transformation).transform(self._inverted)
+
+        super(TransformPen, self).addComponent(baseGlyph, transformation)
 
 
 class TransformationsFilter(BaseFilter):
@@ -55,7 +66,6 @@ class TransformationsFilter(BaseFilter):
         'ScaleY': 100,
         'Slant': 0,
         'Origin': 4,  # BASELINE
-        'DEBUG': False,  # enables logging
     }
 
     def start(self):
@@ -113,17 +123,11 @@ class TransformationsFilter(BaseFilter):
                 not (glyph or glyph.components or glyph.anchors)):
             return False  # nothing to do
 
-        if self.options.DEBUG:
-            log.debug("transforming %r with %r", glyph.name, matrix)
-
         modified = self.context.modified
         glyphSet = self.context.glyphSet
         for component in glyph.components:
             base_name = component.baseGlyph
             if base_name in modified:
-                if self.options.DEBUG:  # pragma: no cover
-                    log.debug("base glyph %r already transformed; "
-                              "skip component", base_name)
                 continue
             base_glyph = glyphSet[base_name]
             if self.include(base_glyph) and self.filter(base_glyph):
@@ -140,7 +144,7 @@ class TransformationsFilter(BaseFilter):
         outpen = glyph.getPen()
         filterpen = TransformPen(outpen,
                                  matrix,
-                                 exclude=modified)
+                                 modified)
         rec.replay(filterpen)
 
         # anchors are not drawn through the pen API,
