@@ -4,6 +4,9 @@ from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
 
 
+UFO2FT_PREFIX = 'com.github.googlei18n.ufo2ft.'
+
+
 class PostProcessor(object):
     """Does some post-processing operations on a compiled OpenType font, using
     info from the source UFO where necessary.
@@ -17,7 +20,20 @@ class PostProcessor(object):
         self.otf = TTFont(stream)
         self._postscriptNames = ufo.lib.get('public.postscriptNames')
 
-    def process(self, useProductionNames=True, optimizeCFF=True):
+    def process(self, useProductionNames=None, optimizeCFF=True):
+        """
+        useProductionNames:
+          Rename glyphs using using 'public.postscriptNames' in UFO lib,
+          if present. Else, generate uniXXXX names from the glyphs' unicode.
+          If 'com.github.googlei18n.ufo2ft.useProductionNames' key in the UFO
+          lib is present and is set to False, do not modify the glyph names.
+
+        optimizeCFF:
+          Run compreffor to subroubtinize CFF table, if present.
+        """
+        if useProductionNames is None:
+            useProductionNames = self.ufo.lib.get(
+                UFO2FT_PREFIX + "useProductionNames", True)
         if useProductionNames:
             self._rename_glyphs_from_ufo()
         if optimizeCFF and 'CFF ' in self.otf:

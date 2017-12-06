@@ -305,19 +305,31 @@ class TestNames(unittest.TestCase):
         self.ufo = getTestUFO()
 
     def test_compile_without_production_names(self):
+        expected = ['.notdef', 'space', 'a', 'b', 'c', 'd',
+                    'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
+
         result = compileTTF(self.ufo, useProductionNames=False)
-        self.assertEqual(result.getGlyphOrder(),
-                         ['.notdef', 'space', 'a', 'b', 'c', 'd',
-                          'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'])
+        self.assertEqual(result.getGlyphOrder(), expected)
+
+        self.ufo.lib["com.github.googlei18n.ufo2ft.useProductionNames"] = False
+        result = compileTTF(self.ufo)
+        self.assertEqual(result.getGlyphOrder(), expected)
 
     def test_compile_with_production_names(self):
+        expected = ['.notdef', 'uni0020', 'uni0061', 'uni0062',
+                    'uni0063', 'uni0064', 'uni0065', 'uni0066',
+                    'uni0067', 'uni0068', 'uni0069', 'uni006A',
+                    'uni006B', 'uni006C']
+
+        result = compileTTF(self.ufo)
+        self.assertEqual(result.getGlyphOrder(), expected)
+
         result = compileTTF(self.ufo, useProductionNames=True)
-        self.assertEqual(result.getGlyphOrder(),
-                         ['.notdef', 'uni0020', 'uni0061', 'uni0062',
-                          'uni0063', 'uni0064', 'uni0065', 'uni0066',
-                          'uni0067', 'uni0068', 'uni0069', 'uni006A',
-                          'uni006B', 'uni006C',
-                         ])
+        self.assertEqual(result.getGlyphOrder(), expected)
+
+        self.ufo.lib["com.github.googlei18n.ufo2ft.useProductionNames"] = True
+        result = compileTTF(self.ufo)
+        self.assertEqual(result.getGlyphOrder(), expected)
 
     CUSTOM_POSTSCRIPT_NAMES = {
             '.notdef': '.notdef',
