@@ -123,30 +123,59 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 (accentName, x, y, className))
         lines.append("")
 
-    def _addMarkLookup(self, lines, lookupName, isMkmk, anchorPair):
+    def _addMarkLookup(self, lines, lookupName, anchorPair):
         """Add a mark lookup for one tuple in the writer's anchor list."""
 
+        # NOTE: cannot use a combined lookup for this because
+        # https://github.com/fonttools/fonttools/pull/941
+
         anchorName, accentAnchorName = anchorPair
-        baseGlyphs = self._createBaseGlyphList(anchorName, isMkmk)
+        baseGlyphs = self._createBaseGlyphList(anchorName, isMkmk=False)
         if not baseGlyphs:
             return
         className = self._generateClassName(accentAnchorName)
-        ruleType = "mark" if isMkmk else "base"
 
         lines.append("  lookup %s {" % lookupName)
-        if isMkmk:
-            mkAttachCls = "@%sMkAttach" % lookupName
-            lines.append("    %s = %s;" % (
-                mkAttachCls,
-                self.liststr([className] + [g[0] for g in baseGlyphs])))
-            lines.append("    lookupflag UseMarkFilteringSet %s;" % mkAttachCls)
 
         for baseName, x, y in baseGlyphs:
-            lines.append(
-                "    pos %s %s <anchor %d %d> mark %s;" %
-                (ruleType, baseName, x, y, className))
+            lines.append("    pos base %s <anchor %d %d> mark %s;" %
+                         (baseName, x, y, className))
 
         lines.append("  } %s;" % lookupName)
+
+    def _addCombinedMkmkLookup(self, lines, lookupName, anchorList):
+        """Add a mkmk lookup for ALL the tuples in the writer's anchor list."""
+
+        innerLines = []
+        classNames = set()
+        allBaseGlyphs = set()
+
+        for anchorPair in anchorList:
+            anchorName, accentAnchorName = anchorPair
+            baseGlyphs = self._createBaseGlyphList(anchorName, isMkmk=True)
+            if not baseGlyphs:
+                continue
+            allBaseGlyphs.update(baseGlyphs)
+            className = self._generateClassName(accentAnchorName)
+            classNames.add(className)
+
+            for baseName, x, y in baseGlyphs:
+                innerLines.append("    pos mark %s <anchor %d %d> mark %s;" %
+                                  (baseName, x, y, className))
+
+        # Only write the lookup if it has some "pos mark ..." lines
+        if innerLines:
+            lines.append("  lookup %s {" % lookupName)
+
+            # FIXME: (jany) not sure about that one
+            mkAttachCls = "@%sMkAttach" % lookupName
+            lines.append("    %s = %s;" % (mkAttachCls, self.liststr(
+                list(classNames) + [g[0] for g in allBaseGlyphs])))
+            lines.append(
+                "    lookupflag UseMarkFilteringSet %s;" % mkAttachCls)
+
+            lines.extend(innerLines)
+            lines.append("  } %s;" % lookupName)
 
     def _addMarkToLigaLookup(self, lines, lookupName, anchorPairs):
         """Add a mark lookup containing mark-to-ligature position rules."""
@@ -181,9 +210,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
         featureName = "mkmk" if isMkmk else "mark"
         feature = []
 
-        for i, anchorPair in enumerate(anchorList):
-            lookupName = "%s%d" % (featureName, i + 1)
-            self._addMarkLookup(feature, lookupName, isMkmk, anchorPair)
+        if isMkmk:
+            lookupName = featureName + "0"
+            self._addCombinedMkmkLookup(feature, lookupName, anchorList)
+        else:
+            for i, anchorPair in enumerate(anchorList):
+                lookupName = "%s%d" % (featureName, i + 1)
+                self._addMarkLookup(feature, lookupName, anchorPair)
 
         if not isMkmk:
             for i, anchorPairs in enumerate(self.context.ligaAnchorList):
