@@ -1,5 +1,7 @@
 from __future__ import print_function, division, absolute_import
 
+import os
+
 from fontTools.misc.py23 import *
 
 from ufo2ft.preProcessor import (
@@ -157,7 +159,7 @@ def compileInterpolatableTTFs(ufos,
 
 def _getMtiFeatures(ufo):
     features = {}
-    prefix = "com.github.googlei18n.ufo2ft.mtiFeatures/"
+    prefix = "com.github.googlei18n.ufo2ft.mtiFeatures" + os.path.sep
     for fileName in ufo.data.fileNames:
         if fileName.startswith(prefix) and fileName.endswith(".mti"):
             content = tounicode(ufo.data[fileName], encoding="utf-8")
