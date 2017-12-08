@@ -1,4 +1,4 @@
-|Build Status| |PyPI Version| |Codecov|
+|Travis CI Status| |Appveyor CI Status| |PyPI Version| |Codecov|
 
 ufo2ft
 ======
@@ -111,8 +111,10 @@ If the UFO data directory has a ``com.github.fonttools.ttx`` folder with TTX
 files ending with ``.ttx``, these will be merged in the generated font.
 The index TTX (generated when using using ``ttx -s``) is not required.
 
-.. |Build Status| image:: https://travis-ci.org/googlei18n/ufo2ft.svg
+.. |Travis CI Status| image:: https://travis-ci.org/googlei18n/ufo2ft.svg
    :target: https://travis-ci.org/googlei18n/ufo2ft
+.. |Appveyor CI status| image:: https://ci.appveyor.com/api/projects/status/jaw9bi221plmjlny/branch/master?svg=true
+   :target: https://ci.appveyor.com/project/fonttools/ufo2ft/branch/master
 .. |PyPI Version| image:: https://img.shields.io/pypi/v/ufo2ft.svg
    :target: https://pypi.org/project/ufo2ft/
 .. |Codecov| image:: https://codecov.io/gh/googlei18n/ufo2ft/branch/master/graph/badge.svg
