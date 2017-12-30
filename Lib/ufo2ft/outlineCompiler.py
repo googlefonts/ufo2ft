@@ -906,9 +906,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         if trademark:
             trademark = normalizeStringForPostscript(trademark.replace("\u00A9", "Copyright"))
         if trademark != self.ufo.info.trademark:
-            logger.warning("The trademark was normalized for storage in the "
-                           "CFF table and consequently some characters were "
-                           "dropped: '%s'", trademark)
+            logger.info("The trademark was normalized for storage in the "
+                        "CFF table and consequently some characters were "
+                        "dropped: '%s'", trademark)
         if trademark is None:
             trademark = ""
         topDict.Notice = trademark
@@ -916,9 +916,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         if copyright:
             copyright = normalizeStringForPostscript(copyright.replace("\u00A9", "Copyright"))
         if copyright != self.ufo.info.copyright:
-            logger.warning("The copyright was normalized for storage in the "
-                           "CFF table and consequently some characters were "
-                           "dropped: '%s'", copyright)
+            logger.info("The copyright was normalized for storage in the "
+                        "CFF table and consequently some characters were "
+                        "dropped: '%s'", copyright)
         if copyright is None:
             copyright = ""
         topDict.Copyright = copyright
