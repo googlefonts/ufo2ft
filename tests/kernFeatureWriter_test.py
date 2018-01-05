@@ -125,6 +125,34 @@ class KernFeatureWriterTest(unittest.TestCase):
                 lookup kern_ltr;
             } kern;""")
 
+    # https://github.com/googlei18n/ufo2ft/issues/198
+    @unittest.expectedFailure
+    def test_arabic_numerals(self):
+        ufo = Font()
+        for name, code in [("four-ar", 0x664), ("seven-ar", 0x667)]:
+            glyph = ufo.newGlyph(name)
+            glyph.unicode = code
+        ufo.kerning.update({
+            ('four-ar', 'seven-ar'): -30,
+        })
+        ufo.features.text = dedent("""
+            languagesystem DFLT dflt;
+            languagesystem arab dflt;
+        """)
+
+        writer = KernFeatureWriter()
+        kern = writer.write(ufo)
+
+        assert kern == dedent("""
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;""")
+
 
 if __name__ == "__main__":
     import sys
