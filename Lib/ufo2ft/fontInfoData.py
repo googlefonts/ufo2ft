@@ -15,8 +15,10 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import logging
 import math
+from datetime import datetime
 import time
 import unicodedata
+import os
 
 from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr, round, round2
 from fontTools.misc.textTools import binary2num
@@ -55,9 +57,14 @@ def dateStringForNow():
 
 def openTypeHeadCreatedFallback(info):
     """
-    Fallback to now.
+    Fallback to the environment variable SOURCE_DATE_EPOCH if set, otherwise
+    now.
     """
-    return dateStringForNow()
+    if "SOURCE_DATE_EPOCH" in os.environ:
+        t = datetime.fromtimestamp(int(os.environ["SOURCE_DATE_EPOCH"]))
+        return t.strftime("%Y/%m/%d %H:%M:%S")
+    else:
+        return dateStringForNow()
 
 # hhea
 
