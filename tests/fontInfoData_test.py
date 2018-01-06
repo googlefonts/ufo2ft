@@ -109,11 +109,15 @@ class GetAttrWithFallbackTest(unittest.TestCase):
         info = TestInfoObject()
 
         os.environ["SOURCE_DATE_EPOCH"] = '1514485183'
-        self.assertEqual(
-            getAttrWithFallback(info, "openTypeHeadCreated"), '2017/12/28 18:19:43')
-        del os.environ["SOURCE_DATE_EPOCH"]
+        try:
+            self.assertEqual(
+                getAttrWithFallback(info, "openTypeHeadCreated"),
+                '2017/12/28 18:19:43')
+        finally:
+            del os.environ["SOURCE_DATE_EPOCH"]
         self.assertNotEqual(
-            getAttrWithFallback(info, "openTypeHeadCreated"), '2017/12/28 18:19:43')
+            getAttrWithFallback(info, "openTypeHeadCreated"),
+            '2017/12/28 18:19:43')
 
 
 class PostscriptBlueScaleFallbackTest(unittest.TestCase):
