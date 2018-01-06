@@ -1,6 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import unittest
+import os
 from ufo2ft.fontInfoData import (
     getAttrWithFallback,
     normalizeStringForPostscript)
@@ -104,6 +105,16 @@ class GetAttrWithFallbackTest(unittest.TestCase):
         self.assertEqual(
             getAttrWithFallback(info, "openTypeHheaCaretSlopeRun"), 200)
 
+    def test_head_created(self):
+        info = TestInfoObject()
+
+        os.environ["SOURCE_DATE_EPOCH"] = '1514485183'
+        self.assertEqual(
+            getAttrWithFallback(info, "openTypeHeadCreated"), '2017/12/28 18:19:43')
+        del os.environ["SOURCE_DATE_EPOCH"]
+        self.assertNotEqual(
+            getAttrWithFallback(info, "openTypeHeadCreated"), '2017/12/28 18:19:43')
+
 
 class PostscriptBlueScaleFallbackTest(unittest.TestCase):
 
@@ -144,4 +155,3 @@ class TestInfoObject(object):
 if __name__ == "__main__":
     import sys
     sys.exit(unittest.main())
-
