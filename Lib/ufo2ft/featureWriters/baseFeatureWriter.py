@@ -3,7 +3,7 @@ from __future__ import (
 from fontTools.misc.py23 import SimpleNamespace
 
 
-_SUPPORTED_MODES = ("skip", "append")
+_SUPPORTED_MODES = ("skip", "append", "prepend")
 
 
 class BaseFeatureWriter(object):
@@ -19,7 +19,10 @@ class BaseFeatureWriter(object):
     1) "skip" (default) will not write anything if any of the features
        listed is already present;
     2) "append" will add additional lookups to an existing feature,
-       if it's already present.
+       if present, or it will add a new one at the end of all features.
+    3) "prepend" will add additional lookups to an existing feature
+       before an already existing one, or will add a new one at the
+       beginning of the features.
 
     The 'options' class attribute contains a mapping of option
     names with their default values. These can be overridden on an
