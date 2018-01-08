@@ -126,7 +126,6 @@ class KernFeatureWriterTest(unittest.TestCase):
             } kern;""")
 
     # https://github.com/googlei18n/ufo2ft/issues/198
-    @unittest.expectedFailure
     def test_arabic_numerals(self):
         ufo = Font()
         for name, code in [("four-ar", 0x664), ("seven-ar", 0x667)]:
