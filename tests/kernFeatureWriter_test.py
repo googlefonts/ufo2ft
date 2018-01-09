@@ -2,7 +2,6 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from textwrap import dedent
 
-import unittest
 from defcon import Font
 
 from ufo2ft.featureCompiler import FeatureCompiler
@@ -10,10 +9,12 @@ from ufo2ft.featureWriters import KernFeatureWriter
 
 from fontTools.misc.py23 import SimpleNamespace
 
+import pytest
 
-class KernFeatureWriterTest(unittest.TestCase):
 
-    def test_collect_fea_classes(self):
+class KernFeatureWriterTest(object):
+
+    def test__collectFeaClasses(self):
         text = '@MMK_L_v = [v w y];'
         expected = {'@MMK_L_v': ['v', 'w', 'y']}
 
@@ -22,7 +23,7 @@ class KernFeatureWriterTest(unittest.TestCase):
         writer = KernFeatureWriter()
         writer.set_context(ufo)
         writer._collectFeaClasses()
-        self.assertEquals(writer.context.leftFeaClasses, expected)
+        assert writer.context.leftFeaClasses == expected
 
     def test__cleanupMissingGlyphs(self):
         groups = {
@@ -39,12 +40,12 @@ class KernFeatureWriterTest(unittest.TestCase):
 
         writer = KernFeatureWriter()
         writer.set_context(ufo)
-        self.assertEquals(writer.context.groups, groups)
+        assert writer.context.groups == groups
 
         writer._cleanupMissingGlyphs()
-        self.assertEquals(writer.context.groups, {
+        assert writer.context.groups == {
             "public.kern1.A": ["A", "Aacute", "Acircumflex"],
-            "public.kern2.B": ["B", "E", "F"]})
+            "public.kern2.B": ["B", "E", "F"]}
 
     def test_ignoreMarks(self):
         font = Font()
@@ -142,7 +143,7 @@ class KernFeatureWriterTest(unittest.TestCase):
             """) + existing
 
     # https://github.com/googlei18n/ufo2ft/issues/198
-    @unittest.expectedFailure
+    @pytest.mark.xfail
     def test_arabic_numerals(self):
         ufo = Font()
         for name, code in [("four-ar", 0x664), ("seven-ar", 0x667)]:
@@ -172,4 +173,4 @@ class KernFeatureWriterTest(unittest.TestCase):
 
 if __name__ == "__main__":
     import sys
-    sys.exit(unittest.main())
+    sys.exit(pytest.main(sys.argv))
