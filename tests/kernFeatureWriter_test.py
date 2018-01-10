@@ -200,6 +200,32 @@ class KernFeatureWriterTest(object):
         assert list(writer.context.rtlScripts.items()) == [
             ("arab", ["dflt", "URD"])]
 
+    def test__correctUfoClassNames(self):
+        font = Font()
+        font.groups.update({
+            "public.kern1.foo$": ["A", "B", "C"],
+            "public.kern1.foo@": ["D", "E", "F"],
+            "@public.kern2.bar": ["G", "H", "I"],
+            "public.kern2.bar&": ["L", "M", "N"],
+        })
+        font.kerning.update({
+            ("public.kern1.foo$", "@public.kern2.bar"): 10,
+            ("public.kern1.foo@", "public.kern2.bar&"): -10,
+        })
+
+        writer = KernFeatureWriter()
+        writer.set_context(font)
+        writer._correctUfoClassNames()
+
+        assert writer.context.groups == {
+            "public.kern1.foo": ["A", "B", "C"],
+            "public.kern1.foo_1": ["D", "E", "F"],
+            "public.kern2.bar": ["G", "H", "I"],
+            "public.kern2.bar_1": ["L", "M", "N"]}
+        assert writer.context.kerning == {
+            ("public.kern1.foo", "public.kern2.bar"): 10,
+            ("public.kern1.foo_1", "public.kern2.bar_1"): -10}
+
 
 if __name__ == "__main__":
     import sys
