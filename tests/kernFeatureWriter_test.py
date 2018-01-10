@@ -29,23 +29,35 @@ class KernFeatureWriterTest(object):
         groups = {
             "public.kern1.A": ["A", "Aacute", "Abreve", "Acircumflex"],
             "public.kern2.B": ["B", "D", "E", "F"],
+            "public.kern1.C": ["foobar"],
+        }
+        kerning = {
+            ("public.kern1.A", "public.kern2.B"): 10,
+            ("public.kern1.A", "baz"): -25,
+            ("baz", "public.kern2.B"): -20,
+            ("public.kern1.C", "public.kern2.B"): 20,
         }
         ufo = Font()
+        exclude = {"Abreve", "D", "foobar"}
         for glyphs in groups.values():
             for glyph in glyphs:
+                if glyph in exclude:
+                    continue
                 ufo.newGlyph(glyph)
         ufo.groups.update(groups)
-        del ufo["Abreve"]
-        del ufo["D"]
+        ufo.kerning.update(kerning)
 
         writer = KernFeatureWriter()
         writer.set_context(ufo)
         assert writer.context.groups == groups
+        assert writer.context.kerning == kerning
 
         writer._cleanupMissingGlyphs()
         assert writer.context.groups == {
             "public.kern1.A": ["A", "Aacute", "Acircumflex"],
             "public.kern2.B": ["B", "E", "F"]}
+        assert writer.context.kerning == {
+            ("public.kern1.A", "public.kern2.B"): 10}
 
     def test_ignoreMarks(self):
         font = Font()
@@ -169,6 +181,24 @@ class KernFeatureWriterTest(object):
             feature kern {
                 lookup kern_ltr;
             } kern;""")
+
+    def test_set_context(self):
+        font = Font()
+        font.features.text = dedent("""
+            languagesystem DFLT dflt;
+            languagesystem latn dflt;
+            languagesystem latn TRK;
+            languagesystem arab dflt;
+            languagesystem arab URD;
+        """)
+
+        writer = KernFeatureWriter()
+        writer.set_context(font)
+
+        assert list(writer.context.ltrScripts.items()) == [
+            ("latn", ["dflt", "TRK"])]
+        assert list(writer.context.rtlScripts.items()) == [
+            ("arab", ["dflt", "URD"])]
 
 
 if __name__ == "__main__":
