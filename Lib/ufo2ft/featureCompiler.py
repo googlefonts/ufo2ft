@@ -4,6 +4,7 @@ import logging
 import os
 from inspect import isclass
 from tempfile import NamedTemporaryFile
+from collections import deque
 
 from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
@@ -71,9 +72,10 @@ class FeatureCompiler(object):
             return
 
         existingFeatures = self._findLayoutFeatures()
+        font = self.font
 
         # build features as necessary
-        autoFeatures = []
+        features = deque([font.features.text or ""])
         # the current MarkFeatureWriter writes both mark and mkmk features
         # with shared markClass definitions; to prevent duplicate glyphs in
         # markClass, here we write the features only if none of them is alread
@@ -81,15 +83,16 @@ class FeatureCompiler(object):
         # TODO: Support updating pre-existing markClass definitions to allow
         # writing either mark or mkmk features indipendently from each other
         # https://github.com/googlei18n/fontmake/issues/319
-        font = self.font
         for fw in self.featureWriters:
-            if (fw.mode == "append" or (
+            if fw.mode == "prepend":
+                features.appendleft(fw.write(font))
+            elif (fw.mode == "append" or (
                     fw.mode == "skip" and
                     all(fea not in existingFeatures for fea in fw.features))):
-                autoFeatures.append(fw.write(font))
+                features.append(fw.write(font))
 
         # write the features
-        self.features = "\n\n".join([font.features.text or ""] + autoFeatures)
+        self.features = "\n\n".join(features)
 
     def _findLayoutFeatures(self):
         """Returns what OpenType layout feature tags are present in the UFO."""
