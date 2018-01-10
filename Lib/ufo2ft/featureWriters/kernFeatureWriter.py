@@ -236,8 +236,9 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         groups = self.context.groups
         kerning = self.context.kerning
-        for oldName, members in list(groups.items()):
-            newName = self._makeFeaClassName(oldName)
+        existingClassNames = set()
+        for oldName, members in sorted(groups.items()):
+            newName = self._makeFeaClassName(oldName, existingClassNames)
             if oldName == newName:
                 continue
             groups[newName] = members
@@ -324,7 +325,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         """Add glyph classes for the input font's groups."""
 
         for key, members in sorted(self.context.groups.items()):
-            lines.append("%s = [%s];" % (key, " ".join(members)))
+            lines.append("@%s = [%s];" % (key, " ".join(members)))
 
     def _splitRtlKerning(self):
         """Split RTL kerning into separate dictionaries."""
@@ -404,20 +405,20 @@ class KernFeatureWriter(BaseFeatureWriter):
         classes.update(rightClasses)
         return classes
 
-    def _makeFeaClassName(self, name):
+    def _makeFeaClassName(self, name, existingClassNames):
         """Make a glyph class name which is legal to use in feature text.
 
-        Ensures the name starts with "@" and only includes characters in
-        "A-Za-z0-9._", and isn't already defined.
+        Ensures the name only includes characters in "A-Za-z0-9._", and
+        isn't already defined.
         """
 
-        name = "@%s" % re.sub(r"[^A-Za-z0-9._]", r"", name)
-        existingClassNames = set(self._getClasses().keys())
+        name = re.sub(r"[^A-Za-z0-9._]", r"", name)
         i = 1
         origName = name
         while name in existingClassNames:
             name = "%s_%d" % (origName, i)
             i += 1
+        existingClassNames.add(name)
         return name
 
     def _getGlyphKerning(self, glyphName, i=None):
