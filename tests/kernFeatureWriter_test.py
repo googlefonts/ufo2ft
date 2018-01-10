@@ -226,6 +226,39 @@ class KernFeatureWriterTest(object):
             ("public.kern1.foo", "public.kern2.bar"): 10,
             ("public.kern1.foo_1", "public.kern2.bar_1"): -10}
 
+    def test__collectUfoKerning(self):
+        font = Font()
+        for i in range(0x49, 0x4A):  # A..H
+            font.newGlyph(chr(i))
+        font.groups.update({
+            "public.kern1.foo": ["A", "B"],
+            "public.kern2.bar": ["C", "D"],
+            "public.kern1.baz": ["E", "F"],
+        })
+        font.kerning.update({
+            ("public.kern1.foo", "public.kern2.bar"): 10,
+            ("public.kern1.baz", "public.kern2.bar"): -10,
+            ("public.kern1.foo", "D"): 15,
+            ("A", "public.kern2.bar"): 5,
+            ("G", "H"): -5,
+        })
+
+        writer = KernFeatureWriter()
+        writer.set_context(font)
+        writer._collectUfoKerning()
+        ctx = writer.context
+
+        assert ctx.leftUfoClasses == {
+            "public.kern1.foo": ["A", "B"],
+            "public.kern1.baz": ["E", "F"]}
+        assert ctx.rightUfoClasses == {"public.kern2.bar": ["C", "D"]}
+        assert ctx.classPairKerning == {
+            ("public.kern1.foo", "public.kern2.bar"): 10,
+            ("public.kern1.baz", "public.kern2.bar"): -10}
+        assert ctx.leftClassKerning == {("public.kern1.foo", "D"): 15}
+        assert ctx.rightClassKerning == {("A", "public.kern2.bar"): 5}
+        assert ctx.glyphPairKerning == {("G", "H"): -5}
+
 
 if __name__ == "__main__":
     import sys
