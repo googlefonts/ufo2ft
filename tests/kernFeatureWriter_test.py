@@ -125,6 +125,22 @@ class KernFeatureWriterTest(unittest.TestCase):
                 lookup kern_ltr;
             } kern;""")
 
+        writer = KernFeatureWriter(mode="prepend")
+        compiler = FeatureCompiler(ufo, outline, featureWriters=[writer])
+        compiler.setupFile_features()
+
+        assert compiler.features == dedent("""
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+
+            """) + existing
+
     # https://github.com/googlei18n/ufo2ft/issues/198
     @unittest.expectedFailure
     def test_arabic_numerals(self):
