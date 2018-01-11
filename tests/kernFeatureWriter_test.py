@@ -14,17 +14,6 @@ import pytest
 
 class KernFeatureWriterTest(object):
 
-    def test__collectFeaClasses(self):
-        text = '@MMK_L_v = [v w y];'
-        expected = {'@MMK_L_v': ['v', 'w', 'y']}
-
-        ufo = Font()
-        ufo.features.text = text
-        writer = KernFeatureWriter()
-        writer.set_context(ufo)
-        writer._collectFeaClasses()
-        assert writer.context.leftFeaClasses == expected
-
     def test__cleanupMissingGlyphs(self):
         groups = {
             "public.kern1.A": ["A", "Aacute", "Abreve", "Acircumflex"],

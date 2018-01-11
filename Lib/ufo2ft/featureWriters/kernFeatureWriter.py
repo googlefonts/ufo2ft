@@ -13,19 +13,11 @@ from ufo2ft.featureWriters import BaseFeatureWriter
 
 
 class KernFeatureWriter(BaseFeatureWriter):
-    """Generates a kerning feature based on glyph class definitions.
-
-    Uses the kerning rules contained in an UFO's kerning data, as well as glyph
-    classes from parsed feature text. Class-based rules are set based on the
-    existing rules for their key glyphs.
-
-    Uses class attributes to match glyph class names in feature text as kerning
-    classes, which can be overridden.
+    """Generates a kerning feature based on groups and rules contained
+    in an UFO's kerning data.
     """
 
     features = ["kern"]
-    leftFeaClassRe = r"@MMK_L_(.+)"
-    rightFeaClassRe = r"@MMK_R_(.+)"
     options = dict(
         ignoreMarks=True,
     )
@@ -57,9 +49,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             else:
                 ctx.ltrScripts.setdefault(script, []).append(lang)
 
-        # kerning classes found in existing feature text and UFO groups
-        ctx.leftFeaClasses = {}
-        ctx.rightFeaClasses = {}
+        # kerning classes found in UFO groups
         ctx.leftUfoClasses = {}
         ctx.rightUfoClasses = {}
 
@@ -72,10 +62,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         return ctx
 
     def _write(self):
-
-        self._collectFeaClasses()
-        self._collectFeaClassKerning()
-
         self._cleanupMissingGlyphs()
         self._correctUfoClassNames()
         self._collectUfoKerning()
@@ -155,58 +141,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         lines.append("} kern;")
 
         return self.linesep.join(lines)
-
-    def _collectFeaClasses(self):
-        """Parse glyph classes from existing feature text."""
-
-        featxt = self.context.featxt
-        leftFeaClasses = self.context.leftFeaClasses
-        rightFeaClasses = self.context.rightFeaClasses
-        for name, contents in re.findall(
-                r'(@[\w.]+)\s*=\s*\[([\s\w.@-]*)\]\s*;', featxt, re.M):
-            if re.match(self.leftFeaClassRe, name):
-                leftFeaClasses[name] = contents.split()
-            elif re.match(self.rightFeaClassRe, name):
-                rightFeaClasses[name] = contents.split()
-
-    def _collectFeaClassKerning(self):
-        """Set up class kerning rules from class definitions in feature text.
-
-        The first glyph from each class (called it's "key") is used to determine
-        the kerning values associated with that class.
-        """
-
-        leftFeaClasses = self.context.leftFeaClasses
-        rightFeaClasses = self.context.rightFeaClasses
-        kerning = self.context.kerning
-        classPairKerning = self.context.classPairKerning
-        leftClassKerning = self.context.leftClassKerning
-        rightClassKerning = self.context.rightClassKerning
-
-        for leftName, leftContents in leftFeaClasses.items():
-            leftKey = leftContents[0]
-
-            # collect rules with two classes
-            for rightName, rightContents in rightFeaClasses.items():
-                rightKey = rightContents[0]
-                pair = leftKey, rightKey
-                kerningVal = kerning.get(pair)
-                if kerningVal is None:
-                    continue
-                classPairKerning[leftName, rightName] = kerningVal
-                del kerning[pair]
-
-            # collect rules with left class and right glyph
-            for pair, kerningVal in self._getGlyphKerning(leftKey, 0):
-                leftClassKerning[leftName, pair[1]] = kerningVal
-                del kerning[pair]
-
-        # collect rules with left glyph and right class
-        for rightName, rightContents in rightFeaClasses.items():
-            rightKey = rightContents[0]
-            for pair, kerningVal in self._getGlyphKerning(rightKey, 1):
-                rightClassKerning[pair[0], rightName] = kerningVal
-                del kerning[pair]
 
     def _cleanupMissingGlyphs(self):
         """Removes glyphs missing in the font from groups or kerning pairs."""
@@ -394,10 +328,8 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _getClasses(self, separate=False):
         """Return all kerning classes together."""
 
-        leftClasses = dict(self.context.leftFeaClasses)
-        leftClasses.update(self.context.leftUfoClasses)
-        rightClasses = dict(self.context.rightFeaClasses)
-        rightClasses.update(self.context.rightUfoClasses)
+        leftClasses = self.context.leftUfoClasses
+        rightClasses = self.context.rightUfoClasses
         if separate:
             return leftClasses, rightClasses
 
