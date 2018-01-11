@@ -291,21 +291,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         seen = dict(self.context.glyphPairKerning)
         liststr = self.liststr
 
-        # remove conflicts in left class / right glyph rules
-        leftClassKerning = self.context.leftClassKerning
-        for (lClass, rGlyph), val in list(leftClassKerning.items()):
-            lGlyphs = leftClasses[lClass]
-            nlGlyphs = []
-            for lGlyph in lGlyphs:
-                pair = lGlyph, rGlyph
-                if pair not in seen:
-                    nlGlyphs.append(lGlyph)
-                    seen[pair] = val
-            if nlGlyphs != lGlyphs:
-                if nlGlyphs:
-                    leftClassKerning[liststr(nlGlyphs), rGlyph] = val
-                del leftClassKerning[lClass, rGlyph]
-
         # remove conflicts in left glyph / right class rules
         rightClassKerning = self.context.rightClassKerning
         for (lGlyph, rClass), val in list(rightClassKerning.items()):
@@ -320,6 +305,21 @@ class KernFeatureWriter(BaseFeatureWriter):
                 if nrGlyphs:
                     rightClassKerning[lGlyph, liststr(nrGlyphs)] = val
                 del rightClassKerning[lGlyph, rClass]
+
+        # remove conflicts in left class / right glyph rules
+        leftClassKerning = self.context.leftClassKerning
+        for (lClass, rGlyph), val in list(leftClassKerning.items()):
+            lGlyphs = leftClasses[lClass]
+            nlGlyphs = []
+            for lGlyph in lGlyphs:
+                pair = lGlyph, rGlyph
+                if pair not in seen:
+                    nlGlyphs.append(lGlyph)
+                    seen[pair] = val
+            if nlGlyphs != lGlyphs:
+                if nlGlyphs:
+                    leftClassKerning[liststr(nlGlyphs), rGlyph] = val
+                del leftClassKerning[lClass, rGlyph]
 
     def _addGlyphClasses(self, lines):
         """Add glyph classes for the input font's groups."""
