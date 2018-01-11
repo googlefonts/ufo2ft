@@ -50,8 +50,8 @@ class KernFeatureWriter(BaseFeatureWriter):
                 ctx.ltrScripts.setdefault(script, []).append(lang)
 
         # kerning classes found in UFO groups
-        ctx.leftUfoClasses = {}
-        ctx.rightUfoClasses = {}
+        ctx.leftClasses = {}
+        ctx.rightClasses = {}
 
         # kerning rule collections, mapping pairs to values
         ctx.glyphPairKerning = {}
@@ -63,8 +63,8 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def _write(self):
         self._cleanupMissingGlyphs()
-        self._correctUfoClassNames()
-        self._collectUfoKerning()
+        self._correctClassNames()
+        self._collectKerning()
 
         self._removeConflictingKerningRules()
 
@@ -165,7 +165,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         self.context.groups = groups
         self.context.kerning = kerning
 
-    def _correctUfoClassNames(self):
+    def _correctClassNames(self):
         """Detect and replace illegal class names found in UFO kerning."""
 
         groups = self.context.groups
@@ -183,12 +183,12 @@ class KernFeatureWriter(BaseFeatureWriter):
                 kerning[newPair] = kerningVal
                 del kerning[oldPair]
 
-    def _collectUfoKerning(self):
+    def _collectKerning(self):
         """Sort UFO kerning rules into glyph pair or class rules."""
 
         groups = self.context.groups
-        leftUfoClasses = self.context.leftUfoClasses
-        rightUfoClasses = self.context.rightUfoClasses
+        leftClasses = self.context.leftClasses
+        rightClasses = self.context.rightClasses
         classPairKerning = self.context.classPairKerning
         leftClassKerning = self.context.leftClassKerning
         rightClassKerning = self.context.rightClassKerning
@@ -199,14 +199,14 @@ class KernFeatureWriter(BaseFeatureWriter):
             leftIsClass = left in groups
             rightIsClass = right in groups
             if leftIsClass:
-                leftUfoClasses[left] = groups[left]
+                leftClasses[left] = groups[left]
                 if rightIsClass:
-                    rightUfoClasses[right] = groups[right]
+                    rightClasses[right] = groups[right]
                     classPairKerning[glyphPair] = val
                 else:
                     leftClassKerning[glyphPair] = val
             elif rightIsClass:
-                rightUfoClasses[right] = groups[right]
+                rightClasses[right] = groups[right]
                 rightClassKerning[glyphPair] = val
             else:
                 glyphPairKerning[glyphPair] = val
@@ -328,8 +328,8 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _getClasses(self, separate=False):
         """Return all kerning classes together."""
 
-        leftClasses = self.context.leftUfoClasses
-        rightClasses = self.context.rightUfoClasses
+        leftClasses = self.context.leftClasses
+        rightClasses = self.context.rightClasses
         if separate:
             return leftClasses, rightClasses
 
