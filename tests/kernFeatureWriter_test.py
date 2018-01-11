@@ -189,7 +189,7 @@ class KernFeatureWriterTest(object):
         assert list(writer.context.rtlScripts.items()) == [
             ("arab", ["dflt", "URD"])]
 
-    def test__correctUfoClassNames(self):
+    def test__correctClassNames(self):
         font = Font()
         font.groups.update({
             "public.kern1.foo$": ["A", "B", "C"],
@@ -204,7 +204,7 @@ class KernFeatureWriterTest(object):
 
         writer = KernFeatureWriter()
         writer.set_context(font)
-        writer._correctUfoClassNames()
+        writer._correctClassNames()
 
         assert writer.context.groups == {
             "public.kern1.foo": ["A", "B", "C"],
@@ -215,7 +215,7 @@ class KernFeatureWriterTest(object):
             ("public.kern1.foo", "public.kern2.bar"): 10,
             ("public.kern1.foo_1", "public.kern2.bar_1"): -10}
 
-    def test__collectUfoKerning(self):
+    def test__collectKerning(self):
         font = Font()
         for i in range(0x49, 0x4A):  # A..H
             font.newGlyph(chr(i))
@@ -234,13 +234,13 @@ class KernFeatureWriterTest(object):
 
         writer = KernFeatureWriter()
         writer.set_context(font)
-        writer._collectUfoKerning()
+        writer._collectKerning()
         ctx = writer.context
 
-        assert ctx.leftUfoClasses == {
+        assert ctx.leftClasses == {
             "public.kern1.foo": ["A", "B"],
             "public.kern1.baz": ["E", "F"]}
-        assert ctx.rightUfoClasses == {"public.kern2.bar": ["C", "D"]}
+        assert ctx.rightClasses == {"public.kern2.bar": ["C", "D"]}
         assert ctx.classPairKerning == {
             ("public.kern1.foo", "public.kern2.bar"): 10,
             ("public.kern1.baz", "public.kern2.bar"): -10}
@@ -269,7 +269,7 @@ class KernFeatureWriterTest(object):
 
         writer = KernFeatureWriter()
         writer.set_context(font)
-        writer._collectUfoKerning()
+        writer._collectKerning()
         writer._removeConflictingKerningRules()
 
         # glyph+glyph exception prevails over glyph+group:
