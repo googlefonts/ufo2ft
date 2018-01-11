@@ -259,6 +259,41 @@ class KernFeatureWriterTest(object):
         assert ctx.rightClassKerning == {("A", "public.kern2.bar"): 5}
         assert ctx.glyphPairKerning == {("G", "H"): -5}
 
+    def test__removeConflictingKerningRules(self):
+        font = Font()
+        font.groups.update({
+            "public.kern1.O": ["O", "D", "Q"],
+            "public.kern2.E": ["E", "F"],
+            "public.kern1.J": ["J", "U"],
+            "public.kern2.C": ["C", "G"],
+        })
+        for glyphs in font.groups.values():
+            for glyph in glyphs:
+                font.newGlyph(glyph)
+        font.kerning.update({
+            ("public.kern1.O", "F"): -200,  # Q + F = -200
+            ("Q", "public.kern2.E"): -250,  # Q + F = -250
+            ("U", "public.kern2.C"): 100, # U + G = 100
+            ("U", "G"): 50,
+            ("D", "F"): -300,
+        })
+
+        writer = KernFeatureWriter()
+        writer.set_context(font)
+        writer._collectUfoKerning()
+        writer._removeConflictingKerningRules()
+
+        # glyph+glyph exception prevails over glyph+group:
+        # U + G is 50, not 100, as G is pruned from public.kern2.C
+        assert writer.context.rightClassKerning == {
+            ("Q", "public.kern2.E"): -250,
+            ("U", "[C]"): 100}
+
+        # the glyph+group prevails over group+glyph
+        # http://unifiedfontobject.org/versions/ufo3/kerning.plist/
+        # Q + F is -250, not -200, and Q is pruned from public.kern1.O
+        assert writer.context.leftClassKerning == {("[O]", "F"): -200}
+
 
 if __name__ == "__main__":
     import sys
