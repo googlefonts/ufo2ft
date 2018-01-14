@@ -9,12 +9,29 @@ from collections import deque
 from fontTools import feaLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools import mtiLib
-from fontTools.misc.py23 import UnicodeIO, tobytes
+from fontTools.misc.py23 import UnicodeIO, tobytes, tounicode
 
 from ufo2ft.featureWriters import DEFAULT_FEATURE_WRITERS
 from ufo2ft.maxContextCalc import maxCtxFont
 
 logger = logging.getLogger(__name__)
+
+
+def parseLayoutFeatures(font):
+    """ Parse OpenType layout features in the UFO and return a
+    feaLib.ast.FeatureFile instance.
+    """
+    featxt = tounicode(font.features.text, "utf-8")
+    if not featxt:
+        return feaLib.ast.FeatureFile()
+    buf = UnicodeIO(featxt)
+    # the path is only used by the lexer to resolve 'include' statements
+    if font.path is not None:
+        buf.name = os.path.join(font.path, "features.fea")
+    glyphNames = set(font.keys())
+    parser = feaLib.parser.Parser(buf, glyphNames)
+    doc = parser.parse()
+    return doc
 
 
 class FeatureCompiler(object):
@@ -71,8 +88,11 @@ class FeatureCompiler(object):
         if self.mtiFeatures is not None:
             return
 
-        existingFeatures = self._findLayoutFeatures()
         font = self.font
+        feaTree = parseLayoutFeatures(font)
+
+        existingFeatures = {f.name for f in feaTree.statements
+                            if isinstance(f, feaLib.ast.FeatureBlock)}
 
         # build features as necessary
         features = deque([font.features.text or ""])
@@ -93,21 +113,6 @@ class FeatureCompiler(object):
 
         # write the features
         self.features = "\n\n".join(features)
-
-    def _findLayoutFeatures(self):
-        """Returns what OpenType layout feature tags are present in the UFO."""
-        featxt = self.font.features.text
-        if not featxt:
-            return set()
-        buf = UnicodeIO(featxt)
-        # the path is only used by the lexer to resolve 'include' statements
-        if self.font.path is not None:
-            buf.name = os.path.join(self.font.path, "features.fea")
-        glyphMap = self.outline.getReverseGlyphMap()
-        parser = feaLib.parser.Parser(buf, glyphMap)
-        doc = parser.parse()
-        return {f.name for f in doc.statements
-                if isinstance(f, feaLib.ast.FeatureBlock)}
 
     def setupFile_featureTables(self):
         """
