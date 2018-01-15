@@ -103,8 +103,8 @@ class FeatureCompiler(object):
         # the path is only used by the lexer to resolve 'include' statements
         if self.font.path is not None:
             buf.name = os.path.join(self.font.path, "features.fea")
-        glyphMap = self.outline.getReverseGlyphMap()
-        parser = feaLib.parser.Parser(buf, glyphMap)
+        glyphNames = self.outline.getGlyphOrder()
+        parser = feaLib.parser.Parser(buf, glyphNames=glyphNames)
         doc = parser.parse()
         return {f.name for f in doc.statements
                 if isinstance(f, feaLib.ast.FeatureBlock)}
