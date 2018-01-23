@@ -13,25 +13,9 @@ from fontTools.misc.py23 import UnicodeIO, tobytes, tounicode
 
 from ufo2ft.featureWriters import DEFAULT_FEATURE_WRITERS
 from ufo2ft.maxContextCalc import maxCtxFont
+from ufo2ft.util import parseLayoutFeatures
 
 logger = logging.getLogger(__name__)
-
-
-def parseLayoutFeatures(font):
-    """ Parse OpenType layout features in the UFO and return a
-    feaLib.ast.FeatureFile instance.
-    """
-    featxt = tounicode(font.features.text, "utf-8")
-    if not featxt:
-        return feaLib.ast.FeatureFile()
-    buf = UnicodeIO(featxt)
-    # the path is only used by the lexer to resolve 'include' statements
-    if font.path is not None:
-        buf.name = os.path.join(font.path, "features.fea")
-    glyphNames = set(font.keys())
-    parser = feaLib.parser.Parser(buf, glyphNames)
-    doc = parser.parse()
-    return doc
 
 
 class FeatureCompiler(object):
