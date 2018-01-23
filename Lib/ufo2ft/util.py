@@ -4,6 +4,9 @@ try:
 except ImportError:
     from inspect import getargspec  # PY2
 from copy import deepcopy
+from fontTools.misc.py23 import tounicode, UnicodeIO
+from fontTools import feaLib
+import os
 
 
 def makeOfficialGlyphOrder(font, glyphOrder=None):
@@ -65,3 +68,20 @@ def copyGlyphSet(font, layerName=None):
         glyph.drawPoints(pointPen)
         glyphSet[glyph.name] = copy
     return glyphSet
+
+
+def parseLayoutFeatures(font):
+    """ Parse OpenType layout features in the UFO and return a
+    feaLib.ast.FeatureFile instance.
+    """
+    featxt = tounicode(font.features.text or "", "utf-8")
+    if not featxt:
+        return feaLib.ast.FeatureFile()
+    buf = UnicodeIO(featxt)
+    # the path is only used by the lexer to resolve 'include' statements
+    if font.path is not None:
+        buf.name = os.path.join(font.path, "features.fea")
+    glyphNames = set(font.keys())
+    parser = feaLib.parser.Parser(buf, glyphNames)
+    doc = parser.parse()
+    return doc
