@@ -61,7 +61,7 @@ def openTypeHeadCreatedFallback(info):
     now.
     """
     if "SOURCE_DATE_EPOCH" in os.environ:
-        t = datetime.fromtimestamp(int(os.environ["SOURCE_DATE_EPOCH"]))
+        t = datetime.utcfromtimestamp(int(os.environ["SOURCE_DATE_EPOCH"]))
         return t.strftime("%Y/%m/%d %H:%M:%S")
     else:
         return dateStringForNow()
