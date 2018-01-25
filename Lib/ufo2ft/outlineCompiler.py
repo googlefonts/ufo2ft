@@ -611,9 +611,9 @@ class BaseOutlineCompiler(object):
             extent = left + (bounds.xMax - bounds.xMin)
             extents.append(extent)
         hhea.advanceWidthMax = max(widths)
-        hhea.minLeftSideBearing = min(lefts)
-        hhea.minRightSideBearing = min(rights)
-        hhea.xMaxExtent = max(extents)
+        hhea.minLeftSideBearing = min(lefts) if lefts else 0
+        hhea.minRightSideBearing = min(rights) if rights else 0
+        hhea.xMaxExtent = max(extents) if extents else 0
         # misc
         hhea.caretSlopeRise = getAttrWithFallback(font.info, "openTypeHheaCaretSlopeRise")
         hhea.caretSlopeRun = getAttrWithFallback(font.info, "openTypeHheaCaretSlopeRun")
