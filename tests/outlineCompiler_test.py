@@ -91,6 +91,16 @@ class OutlineTTFCompilerTest(unittest.TestCase):
         self.assertEqual(otf["CUST"].data, b"\x00\x01\xbe\xef")
         self.assertEqual(otf.sfntVersion, "\x00\x01\x00\x00")
 
+    def test_no_contour_glyphs(self):
+        for glyph in self.ufo:
+            glyph.clearContours()
+        compiler = OutlineTTFCompiler(self.ufo)
+        compiler.compile()
+        self.assertEqual(compiler.otf['hhea'].advanceWidthMax, 600)
+        self.assertEqual(compiler.otf['hhea'].minLeftSideBearing, 0)
+        self.assertEqual(compiler.otf['hhea'].minRightSideBearing, 0)
+        self.assertEqual(compiler.otf['hhea'].xMaxExtent, 0)
+
 
 class OutlineOTFCompilerTest(unittest.TestCase):
 
@@ -264,6 +274,16 @@ class OutlineOTFCompilerTest(unittest.TestCase):
         self.assertIn("CUST", otf)
         self.assertEqual(otf["CUST"].data, b"\x00\x01\xbe\xef")
         self.assertEqual(otf.sfntVersion, "OTTO")
+
+    def test_no_contour_glyphs(self):
+        for glyph in self.ufo:
+            glyph.clearContours()
+        compiler = OutlineOTFCompiler(self.ufo)
+        compiler.compile()
+        self.assertEqual(compiler.otf['hhea'].advanceWidthMax, 600)
+        self.assertEqual(compiler.otf['hhea'].minLeftSideBearing, 0)
+        self.assertEqual(compiler.otf['hhea'].minRightSideBearing, 0)
+        self.assertEqual(compiler.otf['hhea'].xMaxExtent, 0)
 
 
 class TestGlyphOrder(unittest.TestCase):
