@@ -158,10 +158,16 @@ class BaseOutlineCompiler(object):
         in a different way if desired.
         """
         mapping = {}
-        for glyphName, glyph in self.allGlyphs.items():
-            unicodes = glyph.unicodes
+        allGlyphs = self.allGlyphs
+        for glyphName in self.glyphOrder:
+            unicodes = allGlyphs[glyphName].unicodes
             for uni in unicodes:
-                mapping[uni] = glyphName
+                if uni not in mapping:
+                    mapping[uni] = glyphName
+                else:
+                    logger.warning("U+%04X is already mapped to '%s'; "
+                                   "skipped duplicate mapping for '%s'"
+                                   % (uni, mapping[uni], glyphName))
         return mapping
 
     @staticmethod
