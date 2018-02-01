@@ -20,7 +20,7 @@ from fontTools.misc.arrayTools import unionRect
 from ufo2ft.fontInfoData import (
     getAttrWithFallback, dateStringToTimeValue, dateStringForNow,
     intListToNum, normalizeStringForPostscript)
-from ufo2ft.util import makeOfficialGlyphOrder
+from ufo2ft.util import makeOfficialGlyphOrder, makeUnicodeToGlyphNameMapping
 
 logger = logging.getLogger(__name__)
 
@@ -157,18 +157,7 @@ class BaseOutlineCompiler(object):
         may override this method to handle the mapping creation
         in a different way if desired.
         """
-        mapping = {}
-        allGlyphs = self.allGlyphs
-        for glyphName in self.glyphOrder:
-            unicodes = allGlyphs[glyphName].unicodes
-            for uni in unicodes:
-                if uni not in mapping:
-                    mapping[uni] = glyphName
-                else:
-                    logger.warning("U+%04X is already mapped to '%s'; "
-                                   "skipped duplicate mapping for '%s'"
-                                   % (uni, mapping[uni], glyphName))
-        return mapping
+        return makeUnicodeToGlyphNameMapping(self.allGlyphs, self.glyphOrder)
 
     @staticmethod
     def makeMissingRequiredGlyphs(font, glyphSet):

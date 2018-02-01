@@ -7,6 +7,10 @@ from copy import deepcopy
 from fontTools.misc.py23 import tounicode, UnicodeIO
 from fontTools import feaLib
 import os
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def makeOfficialGlyphOrder(font, glyphOrder=None):
@@ -68,6 +72,29 @@ def copyGlyphSet(font, layerName=None):
         glyph.drawPoints(pointPen)
         glyphSet[glyph.name] = copy
     return glyphSet
+
+
+def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
+    """ Make a unicode: glyph name mapping for this glyph set (dict or Font).
+
+    If multiple glyphs are mapped to the same unicode codepoint, we take
+    the first one that appears in the font's glyphOrder, and skip any other
+    duplicate mappings with a warning message.
+    """
+    if glyphOrder is None:
+        glyphOrder = makeOfficialGlyphOrder(font)
+    mapping = {}
+    for glyphName in glyphOrder:
+        glyph = font[glyphName]
+        unicodes = glyph.unicodes
+        for uni in unicodes:
+            if uni not in mapping:
+                mapping[uni] = glyphName
+            else:
+                logger.warning("U+%04X is already mapped to '%s'; "
+                               "skipped duplicate mapping for '%s'"
+                               % (uni, mapping[uni], glyphName))
+    return mapping
 
 
 def parseLayoutFeatures(font):
