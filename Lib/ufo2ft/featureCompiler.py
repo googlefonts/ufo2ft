@@ -56,6 +56,8 @@ class FeatureCompiler(object):
         self.autoFeatures = {tag for tag in supportedFeatures
                              if tag not in excludeAutoFeatures}
 
+        self.cmap = outline["cmap"].getBestCmap()
+
         # TODO: split MTI feature compiler to a separate class
         self.mtiFeatures = mtiFeatures
 
@@ -88,7 +90,8 @@ class FeatureCompiler(object):
 
         for writer in self.featureWriters:
             writer.write(self.font, self.featureFile,
-                         features=self.autoFeatures)
+                         features=self.autoFeatures,
+                         cmap=self.cmap)
 
     def setupFile_featureTables(self):
         """

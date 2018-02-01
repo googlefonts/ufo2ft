@@ -28,7 +28,7 @@ class BaseFeatureWriter(object):
             options[k] = kwargs[k]
         self.options = SimpleNamespace(**options)
 
-    def set_context(self, font, feaFile, features=None):
+    def set_context(self, font, feaFile, features=None, cmap=None):
         """ Populate a temporary `self.context` namespace, which is reset
         before each new call to `_write` method, and return the object.
 
@@ -39,11 +39,14 @@ class BaseFeatureWriter(object):
         if features is None:
             # generate all supported features by default
             features = set(self.supportedFeatures)
+        if cmap is None:
+            from ufo2ft.util import makeUnicodeToGlyphNameMapping
+            cmap = makeUnicodeToGlyphNameMapping(font)
         self.context = SimpleNamespace(
-            font=font, feaFile=feaFile, features=features)
+            font=font, feaFile=feaFile, features=features, cmap=cmap)
         return self.context
 
-    def write(self, font, feaFile, features=None):
+    def write(self, font, feaFile, features=None, cmap=None):
         """Write features and class definitions for this font.
 
         Resets the `self.context` and delegates to ``self._write()` method.
@@ -57,7 +60,7 @@ class BaseFeatureWriter(object):
                 # none included, nothing to do
                 return False
 
-        self.set_context(font, feaFile, features)
+        self.set_context(font, feaFile, features, cmap)
         try:
             result = self._write()
             if not result:
