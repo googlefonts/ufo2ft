@@ -3,4 +3,4 @@ ufoLib==2.1.1
 defcon==0.3.5
 cu2qu==1.4.0
 compreffor==0.4.6
-booleanOperations==0.7.1
+booleanOperations==0.8.0
