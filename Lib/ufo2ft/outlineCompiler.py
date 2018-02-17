@@ -736,8 +736,6 @@ class BaseOutlineCompiler(object):
         post.underlinePosition = round(underlinePosition)
         underlineThickness = getAttrWithFallback(font.info, "postscriptUnderlineThickness")
         post.underlineThickness = round(underlineThickness)
-        # determine if the font has a fixed width
-        widths = set([glyph.width for glyph in self.allGlyphs.values()])
         post.isFixedPitch = getAttrWithFallback(font.info, "postscriptIsFixedPitch")
         # misc
         post.minMemType42 = 0
