@@ -419,10 +419,11 @@ class BaseOutlineCompiler(object):
         table creation in a different way if desired.
         """
         self.otf["OS/2"] = os2 = newTable("OS/2")
+        hmtx = self.otf["hmtx"]
         font = self.ufo
         os2.version = 0x0004
         # average glyph width
-        widths = [glyph.width for glyph in self.allGlyphs.values() if glyph.width > 0]
+        widths = [width for width, _ in hmtx.metrics.values() if width > 0]
         os2.xAvgCharWidth = round(sum(widths) / len(widths))
         # weight and width classes
         os2.usWeightClass = getAttrWithFallback(font.info, "openTypeOS2WeightClass")
@@ -568,13 +569,13 @@ class BaseOutlineCompiler(object):
         self.otf["hmtx"] = hmtx = newTable("hmtx")
         hmtx.metrics = {}
         for glyphName, glyph in self.allGlyphs.items():
-            width = glyph.width
+            width = round(glyph.width)
             if width < 0:
                 raise ValueError(
                     "The width should not be negative: '%s'" % (glyphName))
             bounds = self.glyphBoundingBoxes[glyphName]
             left = bounds.xMin if bounds else 0
-            hmtx[glyphName] = (round(width), left)
+            hmtx[glyphName] = (width, left)
 
     def setupTable_hhea(self):
         """
@@ -638,11 +639,14 @@ class BaseOutlineCompiler(object):
         self.otf["vmtx"] = vmtx = newTable("vmtx")
         vmtx.metrics = {}
         for glyphName, glyph in self.allGlyphs.items():
-            height = glyph.height
+            height = round(glyph.height)
+            if height < 0:
+                raise ValueError(
+                    "The height should not be negative: '%s'" % (glyphName))
             verticalOrigin = _getVerticalOrigin(glyph)
             bounds = self.glyphBoundingBoxes[glyphName]
             top = bounds.yMax if bounds else 0
-            vmtx[glyphName] = (round(height), verticalOrigin - top)
+            vmtx[glyphName] = (height, verticalOrigin - top)
 
     def setupTable_VORG(self):
         """
