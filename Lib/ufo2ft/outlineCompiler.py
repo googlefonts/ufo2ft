@@ -639,11 +639,14 @@ class BaseOutlineCompiler(object):
         self.otf["vmtx"] = vmtx = newTable("vmtx")
         vmtx.metrics = {}
         for glyphName, glyph in self.allGlyphs.items():
-            height = glyph.height
+            height = round(glyph.height)
+            if height < 0:
+                raise ValueError(
+                    "The height should not be negative: '%s'" % (glyphName))
             verticalOrigin = _getVerticalOrigin(glyph)
             bounds = self.glyphBoundingBoxes[glyphName]
             top = bounds.yMax if bounds else 0
-            vmtx[glyphName] = (round(height), verticalOrigin - top)
+            vmtx[glyphName] = (height, verticalOrigin - top)
 
     def setupTable_VORG(self):
         """
