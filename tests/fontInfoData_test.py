@@ -2,9 +2,12 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import unittest
 import os
+import random
+import time
 from ufo2ft.fontInfoData import (
     getAttrWithFallback,
-    normalizeStringForPostscript)
+    normalizeStringForPostscript,
+    dateStringToTimeValue)
 
 
 class GetAttrWithFallbackTest(unittest.TestCase):
@@ -155,6 +158,15 @@ class TestInfoObject(object):
         self.italicAngle = 0
         self.openTypeHheaCaretSlopeRiseFallback = None
         self.openTypeHheaCaretSlopeRunFallback = None
+
+
+class DateStringToTimeValueTest(unittest.TestCase):
+
+    def test_roundtrip_random_timestamp(self):
+        timestamp = random.randint(0, 10**10)
+        ds = time.strftime("%Y/%m/%d %H:%M:%S", time.gmtime(timestamp))
+        self.assertEqual(dateStringToTimeValue(ds), timestamp)
+
 
 if __name__ == "__main__":
     import sys
