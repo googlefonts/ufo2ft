@@ -15,7 +15,8 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import logging
 import math
-from datetime import datetime, tzinfo, timedelta
+from datetime import datetime
+import calendar
 import time
 import unicodedata
 import os
@@ -521,19 +522,9 @@ def intListToNum(intList, start, length):
     all = " ".join(all)
     return binary2num(all)
 
-class UTC(tzinfo):
-    def utcoffset(self, dt):
-        return timedelta(0)
-
-    def tzname(self, dt):
-        return "UTC"
-
-    def dst(self, dt):
-        return timedelta(0)
-
 def dateStringToTimeValue(date):
     try:
-        t = datetime.strptime(date, "%Y/%m/%d %H:%M:%S").replace(tzinfo=UTC())
-        return int(time.mktime(t.timetuple()))
+        t = time.strptime(date, "%Y/%m/%d %H:%M:%S")
+        return calendar.timegm(t)
     except ValueError:
         return 0
