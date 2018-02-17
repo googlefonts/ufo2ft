@@ -1050,6 +1050,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
+        hmtx = self.otf["hmtx"]
         allGlyphs = self.allGlyphs
         for name in self.glyphOrder:
             glyph = allGlyphs[name]
@@ -1062,24 +1063,25 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
             else:
                 ttGlyph = pen.glyph()
                 if ttGlyph.isComposite() and self.autoUseMyMetrics:
-                    self.autoUseMyMetrics(ttGlyph, glyph.width, allGlyphs)
+                    self.autoUseMyMetrics(ttGlyph, name, hmtx)
             glyf[name] = ttGlyph
 
     @staticmethod
-    def autoUseMyMetrics(ttGlyph, width, glyphSet):
+    def autoUseMyMetrics(ttGlyph, glyphName, hmtx):
         """ Set the "USE_MY_METRICS" flag on the first component having the
         same advance width as the composite glyph, no transform and no
         horizontal shift (but allow it to shift vertically).
         This forces the composite glyph to use the possibly hinted horizontal
         metrics of the sub-glyph, instead of those from the "hmtx" table.
         """
+        width = hmtx[glyphName][0]
         for component in ttGlyph.components:
             try:
                 baseName, transform = component.getComponentInfo()
             except AttributeError:
                 # component uses '{first,second}Pt' instead of 'x' and 'y'
                 continue
-            if (glyphSet[baseName].width == width and
+            if (hmtx[baseName][0] == width and
                     transform[:-1] == (1, 0, 0, 1, 0)):
                 component.flags |= USE_MY_METRICS
                 break
