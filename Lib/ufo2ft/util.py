@@ -77,9 +77,8 @@ def copyGlyphSet(font, layerName=None):
 def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
     """ Make a unicode: glyph name mapping for this glyph set (dict or Font).
 
-    If multiple glyphs are mapped to the same unicode codepoint, we take
-    the first one that appears in the font's glyphOrder, and skip any other
-    duplicate mappings with a warning message.
+    Raises InvalidFontData exception if multiple glyphs are mapped to the
+    same unicode codepoint.
     """
     if glyphOrder is None:
         glyphOrder = makeOfficialGlyphOrder(font)
@@ -91,9 +90,10 @@ def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
             if uni not in mapping:
                 mapping[uni] = glyphName
             else:
-                logger.warning("U+%04X is already mapped to '%s'; "
-                               "skipped duplicate mapping for '%s'"
-                               % (uni, mapping[uni], glyphName))
+                from ufo2ft.errors import InvalidFontData
+                InvalidFontData(
+                    "cannot map '%s' to U+%04X; already mapped to '%s'"
+                    % (glyphName, uni, mapping[uni]))
     return mapping
 
 
