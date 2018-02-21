@@ -84,7 +84,8 @@ def _propagate_glyph_anchors(font, composite, processed):
         anchor_dict = {'name': name, 'x': x, 'y': y}
         try:
             composite.appendAnchor(anchor_dict)
-        except TypeError:
+        except TypeError:  # pragma: no cover
+            # fontParts API
             composite.appendAnchor(name, (x, y))
 
 
