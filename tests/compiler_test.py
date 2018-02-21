@@ -64,16 +64,19 @@ class CompilerTest(object):
         otf = compileOTF(testufo)
         expectTTX(otf, "TestFont-CFF.ttx")
 
-    def test_features(self, FontClass):
-        """Checks how the compiler handles features.fea
+    def test_included_features(self, FontClass):
+        """Checks how the compiler handles include statements in features.fea.
 
         The compiler should detect which features are defined by the
         features.fea inside the compiled UFO, or by feature files that
-        are included from there.  The compiler should only inject
-        auto-generated features (kern, mark, mkmk) if the UFO does
-        not list them in features.fea.
+        are included from there.
 
         https://github.com/googlei18n/ufo2ft/issues/108
+
+        Relative paths should be resolved taking the UFO path as reference,
+        not the embedded features.fea file.
+
+        https://github.com/unified-font-object/ufo-spec/issues/55
         """
         ufo = FontClass(getpath("Bug108.ufo"))
         ttf = compileTTF(ufo)
