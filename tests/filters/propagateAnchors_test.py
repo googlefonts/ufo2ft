@@ -76,6 +76,9 @@ import pytest
                     ('addComponent', ('a', (1, 0, 0, 1, 0, 0))),
                     ('addComponent', ('macroncomb', (1, 0, 0, 1, 175, 0))),
                 ],
+                'anchors': [
+                    (176, 481, 'top'),
+                ],
             },
             {
                 'name': 'adieresis',
@@ -100,6 +103,14 @@ import pytest
                     ('addComponent', ('a', (1, 0, 0, 1, 0, 0))),
                     ('addComponent', ('dieresiscomb', (1, 0, 0, 1, 175, 0))),
                     ('addComponent', ('macroncomb', (1, 0, 0, 1, 175, 180))),
+                ],
+            },
+            {
+                'name': 'a_a',
+                'width': 700,
+                'outline': [
+                    ('addComponent', ('a', (1, 0, 0, 1, 0, 0))),
+                    ('addComponent', ('a', (1, 0, 0, 1, 350, 0))),
                 ],
             },
         ],
@@ -138,13 +149,23 @@ class PropagateAnchorsFilterTest(object):
         )
 
     def test_two_component_glyph(self, font):
-        name = 'amacron'
+        name = 'adieresis'
         philter = PropagateAnchorsFilter(include={name})
         assert philter(font) == {name}
         assert (
             [(a.name, a.x, a.y) for a in font[name].anchors] ==
             [('bottom', 175, 0),
              ('top', 175, 480)]
+        )
+
+    def test_one_anchor_two_component_glyph(self, font):
+        name = 'amacron'
+        philter = PropagateAnchorsFilter(include={name})
+        assert philter(font) == {name}
+        assert (
+            [(a.name, a.x, a.y) for a in font[name].anchors] ==
+            [('top', 176, 481),
+             ('bottom', 175, 0)]
         )
 
     def test_three_component_glyph(self, font):
@@ -166,15 +187,27 @@ class PropagateAnchorsFilterTest(object):
             [('bottom', 175, 0),
              ('top', 175, 660)]
         )
+    def test_ligature_glyph(self, font):
+        name = 'a_a'
+        philter = PropagateAnchorsFilter(include={name})
+        assert philter(font) == {name}
+        assert (
+            [(a.name, a.x, a.y) for a in font[name].anchors] ==
+            [('bottom_1', 175, 0),
+             ('bottom_2', 525, 0),
+             ('top_1', 175, 300),
+             ('top_2', 525, 300)]
+        )
 
     def test_whole_font(self, font):
         philter = PropagateAnchorsFilter()
         modified = philter(font)
         assert modified == set(['a-cyr', 'amacron', 'adieresis',
-                                'adieresismacron', 'amacrondieresis'])
+                                'adieresismacron', 'amacrondieresis',
+                                'a_a'])
 
     def test_logger(self, font):
         with CapturingLogHandler(logger, level="INFO") as captor:
             philter = PropagateAnchorsFilter()
             modified = philter(font)
-        captor.assertRegex('Glyphs with propagated anchors: 5')
+        captor.assertRegex('Glyphs with propagated anchors: 6')
