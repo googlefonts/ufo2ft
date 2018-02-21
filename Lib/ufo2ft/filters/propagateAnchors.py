@@ -82,7 +82,10 @@ def _propagate_glyph_anchors(font, composite, processed):
     # we sort propagated anchors to append in a deterministic order
     for name, (x, y) in sorted(to_add.items()):
         anchor_dict = {'name': name, 'x': x, 'y': y}
-        parent.appendAnchor(glyph.anchorClass(anchorDict=anchor_dict))
+        try:
+            composite.appendAnchor(anchor_dict)
+        except TypeError:
+            composite.appendAnchor(name, (x, y))
 
 
 def _get_anchor_data(anchor_data, font, components, anchor_name):
