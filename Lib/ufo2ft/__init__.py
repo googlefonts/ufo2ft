@@ -17,8 +17,6 @@ __version__ = "1.1.1.dev0"
 def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
                outlineCompilerClass=OutlineOTFCompiler,
                featureCompilerClass=FeatureCompiler,
-               kernWriterClass=None,  # deprecated
-               markWriterClass=None,  # deprecated
                featureWriters=None,
                glyphOrder=None,
                useProductionNames=None,
@@ -61,8 +59,6 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
         roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
-    featureWriters = _replaceDeprecatedFeatureWriters(
-        featureWriters, kernWriterClass, markWriterClass)
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo))
@@ -77,8 +73,6 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
 def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
                outlineCompilerClass=OutlineTTFCompiler,
                featureCompilerClass=FeatureCompiler,
-               kernWriterClass=None,  # deprecated
-               markWriterClass=None,  # deprecated
                featureWriters=None,
                glyphOrder=None,
                useProductionNames=None,
@@ -106,8 +100,6 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
         ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
     otf = outlineCompiler.compile()
 
-    featureWriters = _replaceDeprecatedFeatureWriters(
-        featureWriters, kernWriterClass, markWriterClass)
     featureCompiler = featureCompilerClass(
         ufo, otf, featureWriters=featureWriters,
         mtiFeatures=_getMtiFeatures(ufo))
@@ -155,50 +147,3 @@ def compileInterpolatableTTFs(ufos,
         ttf = postProcessor.process(useProductionNames)
 
         yield ttf
-
-
-def _getMtiFeatures(ufo):
-    features = {}
-    prefix = "com.github.googlei18n.ufo2ft.mtiFeatures" + os.path.sep
-    for fileName in ufo.data.fileNames:
-        if fileName.startswith(prefix) and fileName.endswith(".mti"):
-            content = tounicode(ufo.data[fileName], encoding="utf-8")
-            features[fileName[len(prefix):-4]] = content
-    return features if len(features) > 0 else None
-
-
-def _deprecateArgument(arg, repl):
-    import warnings
-    warnings.warn("%r is deprecated; use %r instead" % (arg, repl),
-                  category=UserWarning, stacklevel=3)
-
-
-def _replaceDeprecatedFeatureWriters(featureWriters,
-                                     kernWriterClass=None,
-                                     markWriterClass=None):
-    if not any([kernWriterClass, markWriterClass]):
-        return featureWriters
-
-    if featureWriters is not None:
-        raise TypeError(
-            "the new 'featureWriters' argument, and the old (deprecated) "
-            "'kernWriterClass' and 'markWriterClass' arguments are mutually "
-            "exclusive.")
-
-    featureWriters = []
-
-    if kernWriterClass is not None:
-        _deprecateArgument("kernWriterClass", "featureWriters")
-        featureWriters.append(kernWriterClass)
-    else:
-        from ufo2ft.featureWriters import KernFeatureWriter
-        featureWriters.append(KernFeatureWriter)
-
-    if markWriterClass is not None:
-        _deprecateArgument("markWriterClass", "featureWriters")
-        featureWriters.append(markWriterClass)
-    else:
-        from ufo2ft.featureWriters import MarkFeatureWriter
-        featureWriters.append(MarkFeatureWriter)
-
-    return featureWriters
