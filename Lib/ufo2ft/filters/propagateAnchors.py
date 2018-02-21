@@ -39,7 +39,8 @@ class PropagateAnchorsFilter(BaseFilter):
     def filter(self, glyph):
         if not glyph.components:
             return False
-        _propagate_glyph_anchors(self.context.font, glyph, self.context.processed)
+        _propagate_glyph_anchors(self.context.font, glyph,
+                                 self.context.processed)
         return True
 
 
