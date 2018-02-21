@@ -2,7 +2,6 @@ from __future__ import \
     print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import *
 from ufo2ft import compileOTF, compileTTF, compileInterpolatableTTFs
-from ufo2ft.featureWriters import KernFeatureWriter, MarkFeatureWriter
 import warnings
 import difflib
 import os
@@ -64,31 +63,6 @@ class CompilerTest(object):
     def test_TestFont_CFF(self, testufo):
         otf = compileOTF(testufo)
         expectTTX(otf, "TestFont-CFF.ttx")
-
-    def test_deprecated_arguments(self, testufo):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always", UserWarning)
-
-            compileTTF(testufo, kernWriterClass=KernFeatureWriter)
-
-            assert len(w) == 1
-            assert w[-1].category == UserWarning
-            assert ("'kernWriterClass' is deprecated; use 'featureWriters'"
-                    in str(w[-1].message))
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always", UserWarning)
-
-            compileOTF(testufo, markWriterClass=MarkFeatureWriter)
-
-            assert len(w) == 1
-            assert w[-1].category == UserWarning
-            assert ("'markWriterClass' is deprecated; use 'featureWriters'"
-                    in str(w[-1].message))
-
-        with pytest.raises(TypeError):
-            compileTTF(testufo, kernWriterClass=KernFeatureWriter,
-                       featureWriters=[MarkFeatureWriter])
 
     def test_features(self, FontClass):
         """Checks how the compiler handles features.fea
