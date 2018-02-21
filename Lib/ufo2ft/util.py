@@ -105,9 +105,12 @@ def parseLayoutFeatures(font):
     if not featxt:
         return feaLib.ast.FeatureFile()
     buf = UnicodeIO(featxt)
-    # the path is only used by the lexer to resolve 'include' statements
+    # the path is used by the lexer to resolve 'include' statements
+    # and print filename in error messages. For the UFO spec, this
+    # should be the path of the UFO, not the inner features.fea:
+    # https://github.com/unified-font-object/ufo-spec/issues/55
     if font.path is not None:
-        buf.name = os.path.join(font.path, "features.fea")
+        buf.name = font.path
     glyphNames = set(font.keys())
     parser = feaLib.parser.Parser(buf, glyphNames)
     doc = parser.parse()
