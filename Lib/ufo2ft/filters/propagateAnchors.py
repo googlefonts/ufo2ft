@@ -44,7 +44,7 @@ class PropagateAnchorsFilter(BaseFilter):
         return True
 
 
-def _propagate_glyph_anchors(ufo, composite, processed):
+def _propagate_glyph_anchors(font, composite, processed):
     """
     Propagate anchors from base glyphs to a given composite
     glyph, and to all composite glyphs used in between.
@@ -59,8 +59,8 @@ def _propagate_glyph_anchors(ufo, composite, processed):
     anchor_names = set()
     to_add = {}
     for component in composite.components:
-        glyph = ufo[component.baseGlyph]
-        _propagate_glyph_anchors(ufo, glyph, processed)
+        glyph = font[component.baseGlyph]
+        _propagate_glyph_anchors(font, glyph, processed)
         if any(a.name.startswith('_') for a in glyph.anchors):
             mark_components.append(component)
         else:
@@ -71,10 +71,10 @@ def _propagate_glyph_anchors(ufo, composite, processed):
         # don't add if composite glyph already contains this anchor OR any
         # associated ligature anchors (e.g. "top_1, top_2" for "top")
         if not any(a.name.startswith(anchor_name) for a in composite.anchors):
-            _get_anchor_data(to_add, ufo, base_components, anchor_name)
+            _get_anchor_data(to_add, font, base_components, anchor_name)
 
     for component in mark_components:
-        _adjust_anchors(to_add, ufo, component)
+        _adjust_anchors(to_add, font, component)
 
     # we sort propagated anchors to append in a deterministic order
     for name, (x, y) in sorted(to_add.items()):
@@ -82,12 +82,12 @@ def _propagate_glyph_anchors(ufo, composite, processed):
         parent.appendAnchor(glyph.anchorClass(anchorDict=anchor_dict))
 
 
-def _get_anchor_data(anchor_data, ufo, components, anchor_name):
+def _get_anchor_data(anchor_data, font, components, anchor_name):
     """Get data for an anchor from a list of components."""
 
     anchors = []
     for component in components:
-        for anchor in ufo[component.baseGlyph].anchors:
+        for anchor in font[component.baseGlyph].anchors:
             if anchor.name == anchor_name:
                 anchors.append((anchor, component))
                 break
@@ -102,14 +102,14 @@ def _get_anchor_data(anchor_data, ufo, components, anchor_name):
         anchor_data[anchor.name] = t.transformPoint((anchor.x, anchor.y))
 
 
-def _adjust_anchors(anchor_data, ufo, component):
+def _adjust_anchors(anchor_data, font, component):
     """
     Adjust base anchors to which a mark component may have been attached, by
     moving the base anchor attached to a mark anchor to the position of
     the mark component's base anchor.
     """
 
-    glyph = ufo[component.baseGlyph]
+    glyph = font[component.baseGlyph]
     t = Transform(*component.transformation)
     for anchor in glyph.anchors:
         # only adjust if this anchor has data and the component also contains
