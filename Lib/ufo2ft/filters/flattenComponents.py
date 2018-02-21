@@ -14,7 +14,7 @@ class FlattenComponentsFilter(BaseFilter):
             modified = self.context.modified
             if modified:
                 logger.info('Flattened composite glyphs: %i' %
-                         len(modified))
+                            len(modified))
             return modified
 
     def filter(self, glyph):
@@ -23,7 +23,7 @@ class FlattenComponentsFilter(BaseFilter):
             return flattened
         pen = glyph.getPen()
         for comp in list(glyph.components):
-            flattened_tuples = _flattenComponent(comp)
+            flattened_tuples = _flattenComponent(self.context.glyphSet, comp)
             if flattened_tuples[0] != (comp.baseGlyph, comp.transformation):
                 flattened = True
             glyph.removeComponent(comp)
@@ -34,17 +34,17 @@ class FlattenComponentsFilter(BaseFilter):
         return flattened
 
 
-def _flattenComponent(component):
-    """Returns list of tuples (baseGlyph, transform) of nested component."""
+def _flattenComponent(glyphSet, component):
+    """Returns a list of tuples (baseGlyph, transform) of nested component."""
 
-    glyph = component.font[component.baseGlyph]
+    glyph = glyphSet[component.baseGlyph]
     if not glyph.components:
         transformation = Transform(*component.transformation)
         return [(component.baseGlyph, transformation)]
 
     all_flattened_components = []
     for nested in glyph.components:
-        flattened_components = _flattenComponent(nested)
+        flattened_components = _flattenComponent(glyphSet, nested)
         for i, (_, tr) in enumerate(flattened_components):
             tr = tr.transform(component.transformation)
             flattened_components[i] = (flattened_components[i][0], tr)
