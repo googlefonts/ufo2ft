@@ -54,6 +54,9 @@ def _propagate_glyph_anchors(font, composite, processed):
         return
     processed.add(composite.name)
 
+    if not composite.components:
+        return
+
     base_components = []
     mark_components = []
     anchor_names = set()
