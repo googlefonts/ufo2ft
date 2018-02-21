@@ -44,18 +44,21 @@ class PropagateAnchorsFilter(BaseFilter):
         return True
 
 
-def _propagate_glyph_anchors(ufo, parent, processed):
-    """Propagate anchors for a single parent glyph."""
+def _propagate_glyph_anchors(ufo, composite, processed):
+    """
+    Propagate anchors from base glyphs to a given composite
+    glyph, and to all composite glyphs used in between.
+    """
 
-    if parent.name in processed:
+    if composite.name in processed:
         return
-    processed.add(parent.name)
+    processed.add(composite.name)
 
     base_components = []
     mark_components = []
     anchor_names = set()
     to_add = {}
-    for component in parent.components:
+    for component in composite.components:
         glyph = ufo[component.baseGlyph]
         _propagate_glyph_anchors(ufo, glyph, processed)
         if any(a.name.startswith('_') for a in glyph.anchors):
@@ -65,9 +68,9 @@ def _propagate_glyph_anchors(ufo, parent, processed):
             anchor_names |= {a.name for a in glyph.anchors}
 
     for anchor_name in anchor_names:
-        # don't add if parent already contains this anchor OR any associated
-        # ligature anchors (e.g. "top_1, top_2" for "top")
-        if not any(a.name.startswith(anchor_name) for a in parent.anchors):
+        # don't add if composite glyph already contains this anchor OR any
+        # associated ligature anchors (e.g. "top_1, top_2" for "top")
+        if not any(a.name.startswith(anchor_name) for a in composite.anchors):
             _get_anchor_data(to_add, ufo, base_components, anchor_name)
 
     for component in mark_components:
@@ -100,7 +103,11 @@ def _get_anchor_data(anchor_data, ufo, components, anchor_name):
 
 
 def _adjust_anchors(anchor_data, ufo, component):
-    """Adjust anchors to which a mark component may have been attached."""
+    """
+    Adjust base anchors to which a mark component may have been attached, by
+    moving the base anchor attached to a mark anchor to the position of
+    the mark component's base anchor.
+    """
 
     glyph = ufo[component.baseGlyph]
     t = Transform(*component.transformation)
