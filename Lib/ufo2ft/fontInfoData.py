@@ -46,15 +46,10 @@ def styleMapFamilyNameFallback(info):
 
 # head
 
+_date_format = "%Y/%m/%d %H:%M:%S"
+
 def dateStringForNow():
-    year, month, day, hour, minute, second, weekDay, yearDay, isDST = time.localtime()
-    year = str(year)
-    month = str(month).zfill(2)
-    day = str(day).zfill(2)
-    hour = str(hour).zfill(2)
-    minute = str(minute).zfill(2)
-    second = str(second).zfill(2)
-    return "%s/%s/%s %s:%s:%s" % (year, month, day, hour, minute, second)
+    return time.strftime(_date_format, time.gmtime())
 
 def openTypeHeadCreatedFallback(info):
     """
@@ -63,7 +58,7 @@ def openTypeHeadCreatedFallback(info):
     """
     if "SOURCE_DATE_EPOCH" in os.environ:
         t = datetime.utcfromtimestamp(int(os.environ["SOURCE_DATE_EPOCH"]))
-        return t.strftime("%Y/%m/%d %H:%M:%S")
+        return t.strftime(_date_format)
     else:
         return dateStringForNow()
 
