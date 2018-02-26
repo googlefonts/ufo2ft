@@ -285,6 +285,49 @@ class OutlineOTFCompilerTest(unittest.TestCase):
         self.assertEqual(compiler.otf['hhea'].minRightSideBearing, 0)
         self.assertEqual(compiler.otf['hhea'].xMaxExtent, 0)
 
+    def test_optimized_default_and_nominal_widths(self):
+        ufo = Font()
+        ufo.info.unitsPerEm = 1000
+        for glyphName, width in ((".notdef", 500),
+                                 ("space", 250),
+                                 ("a", 388),
+                                 ("b", 410),
+                                 ("c", 374),
+                                 ("d", 374),
+                                 ("e", 388),
+                                 ("f", 410),
+                                 ("g", 388),
+                                 ("h", 410),
+                                 ("i", 600),
+                                 ("j", 600),
+                                 ("k", 600),
+                                 ("l", 600)):
+            glyph = ufo.newGlyph(glyphName)
+            glyph.width = width
+
+        compiler = OutlineOTFCompiler(ufo)
+        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_hmtx()
+        compiler.setupTable_CFF()
+
+        cff = compiler.otf["CFF "].cff
+        topDict = cff[list(cff.keys())[0]]
+        private = topDict.Private
+
+        self.assertEqual(private.defaultWidthX, 600)
+        self.assertEqual(private.nominalWidthX, 303)
+
+        charStrings = topDict.CharStrings
+        # the following have width == defaultWidthX, so it's omitted
+        for g in ("i", "j", "k", "l"):
+            self.assertEqual(charStrings.getItemAndSelector(g)[0].program,
+                             ["endchar"])
+        # 'space' has width 250, so the width encoded in its charstring is:
+        # 250 - nominalWidthX
+        self.assertEqual(charStrings.getItemAndSelector("space")[0].program,
+                         [-53, "endchar"])
+
 
 class TestGlyphOrder(unittest.TestCase):
 
