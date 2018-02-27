@@ -848,12 +848,16 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         in a different way if desired.
         """
         width = glyph.width
-        # subtract the nominal width
-        postscriptNominalWidthX = getAttrWithFallback(self.ufo.info, "postscriptNominalWidthX")
-        if postscriptNominalWidthX:
-            width = width - postscriptNominalWidthX
-        # round
-        width = round(width)
+        defaultWidth = private.defaultWidthX
+        nominalWidth = private.nominalWidthX
+        if width == defaultWidth:
+            # if width equals the default it can be omitted from charstring
+            width = None
+        else:
+            # subtract the nominal width
+            width -= nominalWidth
+        if width is not None:
+            width = round(width)
         pen = T2CharStringPen(width, self.allGlyphs,
                               roundTolerance=self.roundTolerance)
         glyph.draw(pen)
@@ -939,10 +943,19 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         unitsPerEm = round(getAttrWithFallback(info, "unitsPerEm"))
         topDict.FontMatrix = [1.0 / unitsPerEm, 0, 0, 1.0 / unitsPerEm, 0, 0]
         # populate the width values
-        defaultWidthX = round(getAttrWithFallback(info, "postscriptDefaultWidthX"))
+        if not any(hasattr(info, attr) and getattr(info, attr) is not None
+                   for attr in ("postscriptDefaultWidthX",
+                                "postscriptNominalWidthX")):
+            # no custom values set in fontinfo.plist; compute optimal ones
+            from fontTools.cffLib.width import optimizeWidths
+            hmtx = self.otf['hmtx']
+            widths = [m[0] for m in hmtx.metrics.values()]
+            defaultWidthX, nominalWidthX = optimizeWidths(widths)
+        else:
+            defaultWidthX = round(getAttrWithFallback(info, "postscriptDefaultWidthX"))
+            nominalWidthX = round(getAttrWithFallback(info, "postscriptNominalWidthX"))
         if defaultWidthX:
             private.rawDict["defaultWidthX"] = defaultWidthX
-        nominalWidthX = round(getAttrWithFallback(info, "postscriptNominalWidthX"))
         if nominalWidthX:
             private.rawDict["nominalWidthX"] = nominalWidthX
         # populate hint data
