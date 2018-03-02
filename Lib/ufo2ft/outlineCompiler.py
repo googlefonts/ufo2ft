@@ -1112,6 +1112,7 @@ class StubGlyph(object):
         self.descender = descender
         self.unicodes = unicodes
         self.components = []
+        self.anchors = []
         if unicodes:
             self.unicode = unicodes[0]
         else:
