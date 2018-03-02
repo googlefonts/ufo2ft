@@ -7,6 +7,8 @@ from copy import deepcopy
 from fontTools.misc.py23 import tounicode, UnicodeIO
 from fontTools import feaLib
 import os
+from fontTools import ttLib
+from fontTools import subset
 import logging
 
 
@@ -124,3 +126,24 @@ def parseLayoutFeatures(font):
                            "contained in it.")
         raise
     return doc
+
+
+def compileGSUB(featureFile, glyphOrder):
+    """ Compile and return a GSUB table from `featureFile` (feaLib
+    FeatureFile), using the given `glyphOrder` (list of glyph names).
+    """
+    font = ttLib.TTFont()
+    font.setGlyphOrder(glyphOrder)
+    feaLib.builder.addOpenTypeFeatures(font, featureFile, tables={"GSUB"})
+    return font["GSUB"]
+
+
+def closeGlyphsOverGSUB(gsub, glyphs):
+    """ Use the FontTools subsetter to perform a closure over the GSUB table
+    given the initial `glyphs` (set of glyph names, str). Update the set
+    in-place adding all the glyph names that can be reached via GSUB
+    substitutions from this initial set.
+    """
+    subsetter = subset.Subsetter()
+    subsetter.glyphs = glyphs
+    gsub.closure_glyphs(subsetter)
