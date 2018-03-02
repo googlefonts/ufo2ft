@@ -1,442 +1,418 @@
 from __future__ import (
     print_function, division, absolute_import, unicode_literals
 )
-from fontTools.misc.py23 import unichr
+from fontTools.misc.py23 import unichr, round
+
+from fontTools import unicodedata
+from fontTools.feaLib import ast
+
+from ufo2ft.featureWriters import BaseFeatureWriter
+from ufo2ft.util import closeGlyphsOverGSUB
 
 import collections
-import re
-try:
-    import unicodedata2 as unicodedata
-except ImportError:
-    import unicodedata
-from ufo2ft.featureWriters import BaseFeatureWriter
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+SIDE1_PREFIX = "public.kern1."
+SIDE2_PREFIX = "public.kern2."
+
+DFLT_SCRIPTS = {"Zyyy", "Zinh"}
+
+# In HarfBuzz the 'dist' feature is automatically enabled for these shapers:
+#   src/hb-ot-shape-complex-myanmar.cc
+#   src/hb-ot-shape-complex-use.cc
+#   src/hb-ot-shape-complex-dist.cc
+#   src/hb-ot-shape-complex-khmer.cc
+# We derived the list of scripts associated to each dist-enabled shaper from
+# `hb_ot_shape_complex_categorize` in src/hb-ot-shape-complex-private.hh
+DIST_ENABLED_SCRIPTS = {
+    # Indic shaper's scripts
+    # Unicode-1.1 additions
+    "Beng",  # Bengali
+    "Deva",  # Devanagari
+    "Gujr",  # Gujarati
+    "Guru",  # Gurmukhi
+    "Knda",  # Kannada
+    "Mlym",  # Malayalam
+    "Orya",  # Oriya
+    "Taml",  # Tamil
+    "Telu",  # Telugu
+    # Unicode-3.0 additions
+    "Sinh",  # Sinhala
+
+    # Khmer shaper
+    "Khmr",  # Khmer
+
+    # Myanmar shaper
+    "Mymr",  # Myanmar
+
+    # USE shaper's scripts
+    # Unicode-3.2 additions
+    "Buhd",  # Buhid
+    "Hano",  # Hanunoo
+    "Tglg",  # Tagalog
+    "Tagb",  # Tagbanwa
+    # Unicode-4.0 additions
+    "Limb",  # Limbu
+    "Tale",  # Tai Le
+    # Unicode-4.1 additions
+    "Bugi",  # Buginese
+    "Khar",  # Kharoshthi
+    "Sylo",  # Syloti Nagri
+    "Tfng",  # Tifinagh
+    # Unicode-5.0 additions
+    "Bali",  # Balinese
+    # Unicode-5.1 additions
+    "Cham",  # Cham
+    "Kali",  # Kayah Li
+    "Lepc",  # Lepcha
+    "Rjng",  # Rejang
+    "Saur",  # Saurashtra
+    "Sund",  # Sundanese
+    # Unicode-5.2 additions
+    "Egyp",  # Egyptian Hieroglyphs
+    "Java",  # Javanese
+    "Kthi",  # Kaithi
+    "Mtei",  # Meetei Mayek
+    "Lana",  # Tai Tham
+    "Tavt",  # Tai Viet
+    # Unicode-6.0 additions
+    "Batk",  # Batak
+    "Brah",  # Brahmi
+    # Unicode-6.1 additions
+    "Cakm",  # Chakma
+    "Shrd",  # Sharada
+    "Takr",  # Takri
+    # Unicode-7.0 additions
+    "Dupl",  # Duployan
+    "Gran",  # Grantha
+    "Khoj",  # Khojki
+    "Sind",  # Khudawadi
+    "Mahj",  # Mahajani
+    "Modi",  # Modi
+    "Hmng",  # Pahawh Hmong
+    "Sidd",  # Siddham
+    "Tirh",  # Tirhuta
+    # Unicode-8.0 additions
+    "Ahom",  # Ahom
+    "Mult",  # Multani
+    # Unicode-9.0 additions
+    "Bhks",  # Bhaiksuki
+    "Marc",  # Marchen
+    "Newa",  # Newa
+    # Unicode-10.0 additions
+    "Gonm",  # Masaram Gondi
+    "Soyo",  # Soyombo
+    "Zanb",  # Zanabazar Square
+}
+
+PUBLIC_PREFIX = "public."
+
+KerningPair = collections.namedtuple("KerningPair",
+                                     "name1 name2 value flags glyphs directions")
 
 
 class KernFeatureWriter(BaseFeatureWriter):
     """Generates a kerning feature based on groups and rules contained
     in an UFO's kerning data.
+
+    There are currently two possible writing modes:
+    1) "append" (default) will add additional lookups to an existing feature,
+       if present, or it will add a new one at the end of all features.
+    2) "skip" will not write anything if any of the features is already present;
     """
 
-    features = ["kern"]
+    features = frozenset(["kern", "dist"])
+    mode = "append"
     options = dict(
         ignoreMarks=True,
     )
 
-    def set_context(self, font):
-        ctx = super(KernFeatureWriter, self).set_context(font)
+    def _write(self, feaFile):
+        ltrLangSyses, rtlLangSyses = self.getLanguageSystems(feaFile)
 
-        ctx.kerning = dict(font.kerning)
-        ctx.groups = dict(font.groups)
+        font = self.context.font
 
-        fealines = []
-        if font.features.text:
-            for line in font.features.text.splitlines():
-                comment_start = line.find('#')
-                if comment_start >= 0:
-                    line = line[:comment_start]
-                line = line.strip()
-                if line:
-                    fealines.append(line)
-        ctx.featxt = '\n'.join(fealines)
+        cmap = self.makeUnicodeToGlyphNameMapping()
+        scriptDirections = self.getCmapScriptHorizontalDirections(cmap)
 
-        ctx.ltrScripts = collections.OrderedDict()
-        ctx.rtlScripts = collections.OrderedDict()
-        for script, lang in re.findall(
-                r'languagesystem\s+([a-z]{4})\s+([A-Z]+|dflt)\s*;',
-                ctx.featxt):
-            if self._scriptIsRtl(script):
-                ctx.rtlScripts.setdefault(script, []).append(lang)
-            else:
-                ctx.ltrScripts.setdefault(script, []).append(lang)
+        side1Groups, side2Groups = self.getKerningGroups(font)
+        side1Classes = self.makeGlyphClassDefinitions(side1Groups,
+                                                      PUBLIC_PREFIX)
+        side2Classes = self.makeGlyphClassDefinitions(side2Groups,
+                                                      PUBLIC_PREFIX)
 
-        # kerning classes found in UFO groups
-        ctx.leftClasses = {}
-        ctx.rightClasses = {}
+        kerning = self.getKerningPairs(font, side1Classes, side2Classes)
 
-        # kerning rule collections, mapping pairs to values
-        ctx.glyphPairKerning = {}
-        ctx.leftClassKerning = {}
-        ctx.rightClassKerning = {}
-        ctx.classPairKerning = {}
+        anyLTR = "LTR" in scriptDirections
+        anyRTL = "RTL" in scriptDirections
 
-        return ctx
+        # if there's any RTL scripts in the cmap, we attempt to split the
+        # kern lookups into LTR and RTL
+        if anyRTL:
+            gsub = self.compileGSUB(feaFile)
+            glyphsByDirection = self.groupGlyphsByDirection(cmap, gsub)
+            self.updatePairsDirection(kerning, glyphsByDirection)
 
-    def _write(self):
-        self._cleanupMissingGlyphs()
-        self._correctClassNames()
-        self._collectKerning()
+        # write the lookup
+        ignoreMarks = self.options.ignoreMarks
+        if anyLTR or not anyRTL:
+            ltrKern = self.makeKerningLookup(
+                "kern_ltr", kerning,
+                ignoreMarks=ignoreMarks,
+                rtl=False)
+        else:
+            ltrKern = None
 
-        self._removeConflictingKerningRules()
-
-        # write the glyph classes
-        lines = []
-        self._addGlyphClasses(lines)
-        lines.append("")
-
-        # split kerning into LTR and RTL lookups, if necessary
-        rtlScripts = self.context.rtlScripts
-        if rtlScripts:
-            self._splitRtlKerning()
-
-        # write the lookups and feature
-        ltrScripts = self.context.ltrScripts
-        ltrKern = []
-        if ltrScripts or not rtlScripts:
-            self._addKerning(ltrKern,
-                             self.context.glyphPairKerning)
-            self._addKerning(ltrKern,
-                             self.context.leftClassKerning,
-                             enum=True)
-            self._addKerning(ltrKern,
-                             self.context.rightClassKerning,
-                             enum=True)
-            self._addKerning(ltrKern,
-                             self.context.classPairKerning,
-                             ignoreZero=True)
-        if ltrKern:
-            lines.append("lookup kern_ltr {")
-            if self.options.ignoreMarks:
-                lines.append("    lookupflag IgnoreMarks;")
-            lines.extend(ltrKern)
-            lines.append("} kern_ltr;")
-            lines.append("")
-
-        rtlKern = []
-        if rtlScripts:
-            self._addKerning(rtlKern,
-                             self.context.rtlGlyphPairKerning,
-                             rtl=True)
-            self._addKerning(rtlKern,
-                             self.context.rtlLeftClassKerning,
-                             rtl=True,
-                             enum=True)
-            self._addKerning(rtlKern,
-                             self.context.rtlRightClassKerning,
-                             rtl=True,
-                             enum=True)
-            self._addKerning(rtlKern,
-                             self.context.rtlClassPairKerning,
-                             rtl=True,
-                             ignoreZero=True)
-        if rtlKern:
-            lines.append("lookup kern_rtl {")
-            if self.options.ignoreMarks:
-                lines.append("    lookupflag IgnoreMarks;")
-            lines.extend(rtlKern)
-            lines.append("} kern_rtl;")
-            lines.append("")
+        if anyRTL:
+            rtlKern = self.makeKerningLookup(
+                "kern_rtl", kerning,
+                ignoreMarks=ignoreMarks,
+                rtl=True)
+        else:
+            rtlKern = None
 
         if not (ltrKern or rtlKern):
             # no kerning pairs, don't write empty feature
-            return ""
-
-        lines.append("feature kern {")
-        if ltrKern:
-            lines.append("    lookup kern_ltr;")
-        if rtlScripts:
-            if ltrKern:
-                self._addLookupReferences(lines, ltrScripts, "kern_ltr")
-            if rtlKern:
-                self._addLookupReferences(lines, rtlScripts, "kern_rtl")
-        lines.append("} kern;")
-
-        return self.linesep.join(lines)
-
-    def _cleanupMissingGlyphs(self):
-        """Removes glyphs missing in the font from groups or kerning pairs."""
-
-        allGlyphs = set(self.context.font.keys())
-
-        groups = {}
-        for name, members in self.context.groups.items():
-            newMembers = [g for g in members if g in allGlyphs]
-            if newMembers:
-                groups[name] = newMembers
-
-        kerning = {}
-        for glyphPair, val in sorted(self.context.kerning.items()):
-            left, right = glyphPair
-            if left not in groups and left not in allGlyphs:
-                continue
-            if right not in groups and right not in allGlyphs:
-                continue
-            kerning[glyphPair] = val
-
-        self.context.groups = groups
-        self.context.kerning = kerning
-
-    def _correctClassNames(self):
-        """Detect and replace illegal class names found in UFO kerning."""
-
-        groups = self.context.groups
-        kerning = self.context.kerning
-        existingClassNames = set()
-        for oldName, members in sorted(groups.items()):
-            newName = self._makeFeaClassName(oldName, existingClassNames)
-            if oldName == newName:
-                continue
-            groups[newName] = members
-            del groups[oldName]
-            for oldPair, kerningVal in self._getGlyphKerning(oldName):
-                left, right = oldPair
-                newPair = (newName, right) if left == oldName else (left, newName)
-                kerning[newPair] = kerningVal
-                del kerning[oldPair]
-
-    def _collectKerning(self):
-        """Sort UFO kerning rules into glyph pair or class rules."""
-
-        groups = self.context.groups
-        leftClasses = self.context.leftClasses
-        rightClasses = self.context.rightClasses
-        classPairKerning = self.context.classPairKerning
-        leftClassKerning = self.context.leftClassKerning
-        rightClassKerning = self.context.rightClassKerning
-        glyphPairKerning = self.context.glyphPairKerning
-
-        for glyphPair, val in sorted(self.context.kerning.items()):
-            left, right = glyphPair
-            leftIsClass = left in groups
-            rightIsClass = right in groups
-            if leftIsClass:
-                leftClasses[left] = groups[left]
-                if rightIsClass:
-                    rightClasses[right] = groups[right]
-                    classPairKerning[glyphPair] = val
-                else:
-                    leftClassKerning[glyphPair] = val
-            elif rightIsClass:
-                rightClasses[right] = groups[right]
-                rightClassKerning[glyphPair] = val
-            else:
-                glyphPairKerning[glyphPair] = val
-
-    def _removeConflictingKerningRules(self):
-        """Remove any conflicting pair and class rules.
-
-        If conflicts are detected in a class rule, the offending class members
-        are removed from the rule and the class name is replaced with a list of
-        glyphs (the class members minus the offending members).
-        """
-
-        leftClasses, rightClasses = self._getClasses(separate=True)
-
-        # maintain list of glyph pair rules seen
-        seen = dict(self.context.glyphPairKerning)
-        liststr = self.liststr
-
-        # remove conflicts in left glyph / right class rules
-        rightClassKerning = self.context.rightClassKerning
-        for (lGlyph, rClass), val in list(rightClassKerning.items()):
-            rGlyphs = rightClasses[rClass]
-            nrGlyphs = []
-            for rGlyph in rGlyphs:
-                pair = lGlyph, rGlyph
-                if pair not in seen:
-                    nrGlyphs.append(rGlyph)
-                    seen[pair] = val
-            if nrGlyphs != rGlyphs:
-                if nrGlyphs:
-                    rightClassKerning[lGlyph, liststr(nrGlyphs)] = val
-                del rightClassKerning[lGlyph, rClass]
-
-        # remove conflicts in left class / right glyph rules
-        leftClassKerning = self.context.leftClassKerning
-        for (lClass, rGlyph), val in list(leftClassKerning.items()):
-            lGlyphs = leftClasses[lClass]
-            nlGlyphs = []
-            for lGlyph in lGlyphs:
-                pair = lGlyph, rGlyph
-                if pair not in seen:
-                    nlGlyphs.append(lGlyph)
-                    seen[pair] = val
-            if nlGlyphs != lGlyphs:
-                if nlGlyphs:
-                    leftClassKerning[liststr(nlGlyphs), rGlyph] = val
-                del leftClassKerning[lClass, rGlyph]
-
-    def _addGlyphClasses(self, lines):
-        """Add glyph classes for the input font's groups."""
-
-        for key, members in sorted(self.context.groups.items()):
-            lines.append("@%s = [%s];" % (key, " ".join(members)))
-
-    def _splitRtlKerning(self):
-        """Split RTL kerning into separate dictionaries."""
-
-        self.context.rtlGlyphPairKerning = {}
-        self.context.rtlLeftClassKerning = {}
-        self.context.rtlRightClassKerning = {}
-        self.context.rtlClassPairKerning = {}
-
-        classes = self._getClasses()
-        allKerning = (
-            (self.context.glyphPairKerning,
-             self.context.rtlGlyphPairKerning,
-             (False, False)),
-            (self.context.leftClassKerning,
-             self.context.rtlLeftClassKerning,
-             (True, False)),
-            (self.context.rightClassKerning,
-             self.context.rtlRightClassKerning,
-             (False, True)),
-            (self.context.classPairKerning,
-             self.context.rtlClassPairKerning,
-             (True, True)))
-
-        for origKerning, rtlKerning, classFlags in allKerning:
-            for pair in list(origKerning.keys()):
-                allGlyphs = []
-                for glyphs, isClass in zip(pair, classFlags):
-                    if not isClass:
-                        allGlyphs.append(glyphs)
-                    elif glyphs.startswith('@'):
-                        allGlyphs.extend(classes[glyphs])
-                    else:
-                        assert glyphs.startswith('[') and glyphs.endswith(']')
-                        allGlyphs.extend(glyphs[1:-1].split())
-                if any(self._glyphIsRtl(g) for g in allGlyphs):
-                    rtlKerning[pair] = origKerning.pop(pair)
-
-    @staticmethod
-    def _addKerning(lines, kerning, rtl=False, enum=False,
-                    ignoreZero=False):
-        """Add kerning rules for a mapping of pairs to values."""
-
-        enum = "enum " if enum else ""
-        valstr = "<%(val)d 0 %(val)d 0>" if rtl else "%(val)d"
-        lineFormat = "    %spos %%(lhs)s %%(rhs)s %s;" % (enum, valstr)
-        for (left, right), val in sorted(kerning.items()):
-            if val == 0 and ignoreZero:
-                continue
-            lines.append(lineFormat % {'lhs': left, 'rhs': right, 'val': val})
-
-    @staticmethod
-    def _addLookupReferences(lines, languageSystems, lookupName):
-        """Add references to lookup for a set of language systems.
-
-        Language systems are passed in as a dictionary mapping scripts to lists
-        of languages.
-        """
-
-        for script, langs in languageSystems.items():
-            lines.append("script %s;" % script)
-            for lang in langs:
-                lines.append("language %s;" % lang)
-                lines.append("lookup %s;" % lookupName)
-
-    def _getClasses(self, separate=False):
-        """Return all kerning classes together."""
-
-        leftClasses = self.context.leftClasses
-        rightClasses = self.context.rightClasses
-        if separate:
-            return leftClasses, rightClasses
-
-        classes = leftClasses
-        classes.update(rightClasses)
-        return classes
-
-    def _makeFeaClassName(self, name, existingClassNames):
-        """Make a glyph class name which is legal to use in feature text.
-
-        Ensures the name only includes characters in "A-Za-z0-9._", and
-        isn't already defined.
-        """
-
-        name = re.sub(r"[^A-Za-z0-9._]", r"", name)
-        i = 1
-        origName = name
-        while name in existingClassNames:
-            name = "%s_%d" % (origName, i)
-            i += 1
-        existingClassNames.add(name)
-        return name
-
-    def _getGlyphKerning(self, glyphName, i=None):
-        """Return the kerning rules which include glyphName, optionally only
-        checking one side of each pair if index `i` is provided.
-        """
-
-        hits = []
-        for pair, value in self.context.kerning.items():
-            if (glyphName in pair) if i is None else (pair[i] == glyphName):
-                hits.append((pair, value))
-        return hits
-
-    @staticmethod
-    def _scriptIsRtl(script):
-        """Return whether a script is right-to-left for kerning purposes.
-
-        References:
-        https://github.com/Tarobish/Jomhuria/blob/a21c41453ea8e3893e003ae9d5bee9ba7ac42d77/tools/getKernFeatureFromUFO.py#L18
-        https://github.com/behdad/harfbuzz/blob/691086f131cb6c9d97e98730c27673484bf93f87/src/hb-common.cc#L446
-        http://unicode.org/iso15924/iso15924-codes.html
-        """
-
-        return script in (
-            # Unicode-1.1 additions
-            'arab',  # ARABIC
-            'hebr',  # HEBREW
-
-            # Unicode-3.0 additions
-            'syrc',  # SYRIAC
-            'thaa',  # THAANA
-
-            # Unicode-4.0 additions
-            'cprt',  # CYPRIOT
-
-            # Unicode-4.1 additions
-            'khar',  # KHAROSHTHI
-
-            # Unicode-5.0 additions
-            'phnx',  # PHOENICIAN
-            'nkoo',  # NKO
-
-            # Unicode-5.1 additions
-            'lydi',  # LYDIAN
-
-            # Unicode-5.2 additions
-            'avst',  # AVESTAN
-            'armi',  # IMPERIAL_ARAMAIC
-            'phli',  # INSCRIPTIONAL_PAHLAVI
-            'prti',  # INSCRIPTIONAL_PARTHIAN
-            'sarb',  # OLD_SOUTH_ARABIAN
-            'orkh',  # OLD_TURKIC
-            'samr',  # SAMARITAN
-
-            # Unicode-6.0 additions
-            'mand',  # MANDAIC
-
-            # Unicode-6.1 additions
-            'merc',  # MEROITIC_CURSIVE
-            'mero',  # MEROITIC_HIEROGLYPHS
-
-            # Unicode-7.0 additions
-            'mani',  # MANICHAEAN
-            'mend',  # MENDE_KIKAKUI
-            'nbat',  # NABATAEAN
-            'narb',  # OLD_NORTH_ARABIAN
-            'palm',  # PALMYRENE
-            'phlp',  # PSALTER_PAHLAVI
-
-            # Unicode-8.0 additions
-            'hung',  # OLD_HUNGARIAN
-
-            # Unicode-9.0 additions
-            'adlm',  # ADLAM
-        )
-
-    def _glyphIsRtl(self, name):
-        """Return whether the closest-associated unicode character is RTL."""
-
-        font = self.context.font
-        delims = ('.', '_')
-        uv = font[name].unicode
-        while uv is None and any(d in name for d in delims):
-            name = name[:max(name.rfind(d) for d in delims)]
-            if name in font:
-                uv = font[name].unicode
-        if uv is None:
             return False
-        return unicodedata.bidirectional(unichr(uv)) in ('R', 'AL')
+
+        onlyDFLT = not (ltrLangSyses or rtlLangSyses)
+        if ltrKern and rtlKern and onlyDFLT:
+            raise ValueError(
+                "cannot use DFLT script for both LTR and RTL kern lookups; "
+                "add 'languagesystems' to feature file and try again")
+
+        kern = ast.FeatureBlock("kern")
+
+        dfltLangSys = {"DFLT": ["dflt"]}
+
+        if ltrKern and rtlKern:
+            # register different lookups each under different scripts
+            if ltrLangSyses:
+                self.addLookupReference(kern, ltrKern, ltrLangSyses)
+            elif rtlLangSyses:
+                # no LTR languagesystems: use DFLT for LTR kerning
+                self.addLookupReference(kern, ltrKern, dfltLangSys)
+            else:
+                self.addLookupReference(kern, ltrKern)
+
+            if rtlLangSyses:
+                self.addLookupReference(kern, rtlKern, rtlLangSyses)
+            elif ltrLangSyses:
+                # no RTL languagesystems: use DFLT for RTL kerning
+                self.addLookupReference(kern, rtlKern, dfltLangSys)
+            else:
+                self.addLookupReference(kern, rtlKern)
+
+        elif ltrKern:
+            self.addLookupReference(kern, ltrKern)
+        else:
+            self.addLookupReference(kern, rtlKern)
+
+        # extend feature file with the new generated statements
+        statements = feaFile.statements
+
+        # add glyph class definitions
+        for classes in (side1Classes, side2Classes):
+            statements.extend([c for _, c in sorted(classes.items())])
+
+        # add empty line to separate classes from following statements
+        if statements:
+            statements.append(ast.Comment(""))
+
+        # add the lookup and feature blocks
+        if ltrKern:
+            statements.append(ltrKern)
+        if rtlKern:
+            statements.append(rtlKern)
+
+        statements.append(kern)
+        return True
+
+    @staticmethod
+    def getLanguageSystems(feaFile):
+        ltrLangSyses = collections.OrderedDict()
+        rtlLangSyses = collections.OrderedDict()
+        for ls in [st for st in feaFile.statements
+                   if isinstance(st, ast.LanguageSystemStatement)]:
+            if ls.script == "DFLT":
+                continue
+            sc = unicodedata.ot_tag_to_script(ls.script)
+            if unicodedata.script_horizontal_direction(sc) == "LTR":
+                ltrLangSyses.setdefault(ls.script, []).append(ls.language)
+            else:
+                rtlLangSyses.setdefault(ls.script, []).append(ls.language)
+        return ltrLangSyses, rtlLangSyses
+
+    @staticmethod
+    def getCmapScriptHorizontalDirections(cmap):
+        directions = set()
+        for uv in cmap:
+            sc = unicodedata.script(unichr(uv))
+            if sc in DFLT_SCRIPTS:
+                continue
+            directions.add(unicodedata.script_horizontal_direction(sc))
+            if len(directions) == 2:
+                break
+        return directions
+
+    @staticmethod
+    def getKerningGroups(font):
+        allGlyphs = set(font.keys())
+        side1Groups = {}
+        side2Groups = {}
+        for name, members in font.groups.items():
+            # prune non-existent glyphs
+            members = [g for g in members if g in allGlyphs]
+            if not members:
+                # skip empty groups
+                continue
+            if name.startswith(SIDE1_PREFIX):
+                side1Groups[name] = members
+            elif name.startswith(SIDE2_PREFIX):
+                side2Groups[name] = members
+            else:
+                # skip groups without UFO3 public.kern{1,2} prefix
+                continue
+        return side1Groups, side2Groups
+
+    @staticmethod
+    def getKerningPairs(font, side1Classes, side2Classes):
+        allGlyphs = set(font.keys())
+        kerning = font.kerning
+
+        pairsByFlags = {}
+        for (side1, side2) in kerning:
+            # filter out pairs that reference missing groups or glyphs
+            if side1 not in side1Classes and side1 not in allGlyphs:
+                continue
+            if side2 not in side2Classes and side2 not in allGlyphs:
+                continue
+            flags = (side1 in side1Classes, side2 in side2Classes)
+            pairsByFlags.setdefault(flags, set()).add((side1, side2))
+
+        result = []
+        for flags, pairs in sorted(pairsByFlags.items()):
+            firstIsClass, secondIsClass = flags
+            for side1, side2 in sorted(pairs):
+                if firstIsClass:
+                    classDef1 = side1Classes[side1]
+                    name1 = ast.GlyphClassName(classDef1)
+                    glyphs1 = set(classDef1.glyphSet())
+                else:
+                    name1 = ast.GlyphName(side1)
+                    glyphs1 = {side1}
+
+                if secondIsClass:
+                    classDef2 = side2Classes[side2]
+                    name2 = ast.GlyphClassName(classDef2)
+                    glyphs2 = set(classDef2.glyphSet())
+                else:
+                    name2 = ast.GlyphName(side2)
+                    glyphs2 = {side2}
+
+                pair = KerningPair(name1=name1,
+                                   name2=name2,
+                                   value=kerning[side1, side2],
+                                   flags=flags,
+                                   glyphs=(glyphs1 | glyphs2),
+                                   directions=set())
+                result.append(pair)
+
+        return result
+
+    @staticmethod
+    def groupGlyphsByDirection(cmap, gsub):
+        directions = {}
+        for uv, glyphName in cmap.items():
+            direction = _getUnicodeDirection(uv)
+            directions.setdefault(direction, set()).add(glyphName)
+
+        noDirectionGlyphs = directions.get(None, set())
+        if noDirectionGlyphs:
+            closeGlyphsOverGSUB(gsub, noDirectionGlyphs)
+
+        for direction, glyphs in directions.items():
+            if direction is None:
+                continue
+            s = glyphs | noDirectionGlyphs
+            closeGlyphsOverGSUB(gsub, s)
+            glyphs.update(s - noDirectionGlyphs)
+
+        return directions
+
+    @staticmethod
+    def updatePairsDirection(kerning, directions):
+        for pair in kerning:
+            for direction, glyphs in directions.items():
+                if direction is None:
+                    continue
+                if not pair.glyphs.isdisjoint(glyphs):
+                    pair.directions.add(direction)
+    @staticmethod
+    def makeKerningValueRecord(value, rtl=False):
+        value = round(value)
+        return ast.ValueRecord(xPlacement=value if rtl else None,
+                               yPlacement=0 if rtl else None,
+                               xAdvance=value,
+                               yAdvance=0 if rtl else None)
+
+    @classmethod
+    def makePairPosRule(cls, pair, rtl=False):
+        firstIsClass, secondIsClass = pair.flags
+        enumerated = firstIsClass ^ secondIsClass
+
+        if rtl and "N" in pair.directions:
+            # numbers are shaped LTR even in RTL scripts
+            rtl = False
+
+        valuerecord = cls.makeKerningValueRecord(pair.value, rtl)
+
+        return ast.PairPosStatement(glyphs1=pair.name1,
+                                    valuerecord1=valuerecord,
+                                    glyphs2=pair.name2,
+                                    valuerecord2=None,
+                                    enumerated=enumerated)
+
+    @classmethod
+    def makeKerningLookup(cls, name, kerning, ignoreMarks=True,
+                          rtl=False):
+        rules = []
+        for pair in kerning:
+            if rtl:
+                if pair.directions.isdisjoint({"R", "N"}):
+                    continue
+            elif "R" in pair.directions:
+                continue
+            if all(pair.flags) and pair.value == 0:
+                # ignore zero-valued class kern pairs
+                continue
+            rules.append(cls.makePairPosRule(pair, rtl))
+
+        if rules:
+            lookup = ast.LookupBlock(name)
+            if ignoreMarks:
+                lookup.statements.append(cls.makeLookupFlag("IgnoreMarks"))
+            lookup.statements.extend(rules)
+            return lookup
+
+
+STRONG_LTR_BIDI_TYPE = "L"
+STRONG_RTL_BIDI_TYPES = {"R", "AL"}
+LTR_NUMBER_BIDI_TYPES = {"AN", "EN"}
+
+
+def _getUnicodeDirection(uv):
+    # return "R", "L", "N" (for numbers), or None for everything else
+    char = unichr(uv)
+    bidiType = unicodedata.bidirectional(char)
+    if bidiType in STRONG_RTL_BIDI_TYPES:
+        return "R"
+    elif bidiType == STRONG_LTR_BIDI_TYPE:
+        return "L"
+    elif bidiType in LTR_NUMBER_BIDI_TYPES:
+        return "N"
+    else:
+        return None
