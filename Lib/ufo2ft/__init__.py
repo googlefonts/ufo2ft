@@ -6,7 +6,7 @@ from fontTools.misc.py23 import *
 
 from ufo2ft.preProcessor import (
     OTFPreProcessor, TTFPreProcessor, TTFInterpolatablePreProcessor)
-from ufo2ft.featureCompiler import FeatureCompiler
+from ufo2ft.featureCompiler import getDefaultFeatureCompiler
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
@@ -16,7 +16,7 @@ __version__ = "1.1.1.dev0"
 
 def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
                outlineCompilerClass=OutlineOTFCompiler,
-               featureCompilerClass=FeatureCompiler,
+               featureCompilerClass=None,
                featureWriters=None,
                glyphOrder=None,
                useProductionNames=None,
@@ -59,9 +59,12 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
         roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
+    if featureCompilerClass is None:
+        featureCompilerClass = getDefaultFeatureCompiler(ufo)
     featureCompiler = featureCompilerClass(
-        ufo, otf, featureWriters=featureWriters,
-        mtiFeatures=_getMtiFeatures(ufo))
+        ufo, otf,
+        glyphSet=glyphSet,
+        featureWriters=featureWriters)
     featureCompiler.compile()
 
     postProcessor = PostProcessor(otf, ufo)
@@ -72,7 +75,7 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
 
 def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
                outlineCompilerClass=OutlineTTFCompiler,
-               featureCompilerClass=FeatureCompiler,
+               featureCompilerClass=None,
                featureWriters=None,
                glyphOrder=None,
                useProductionNames=None,
@@ -100,9 +103,12 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
         ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
     otf = outlineCompiler.compile()
 
+    if featureCompilerClass is None:
+        featureCompilerClass = getDefaultFeatureCompiler(ufo)
     featureCompiler = featureCompilerClass(
-        ufo, otf, featureWriters=featureWriters,
-        mtiFeatures=_getMtiFeatures(ufo))
+        ufo, otf,
+        glyphSet=glyphSet,
+        featureWriters=featureWriters)
     featureCompiler.compile()
 
     postProcessor = PostProcessor(otf, ufo)
@@ -114,7 +120,7 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
 def compileInterpolatableTTFs(ufos,
                               preProcessorClass=TTFInterpolatablePreProcessor,
                               outlineCompilerClass=OutlineTTFCompiler,
-                              featureCompilerClass=FeatureCompiler,
+                              featureCompilerClass=None,
                               featureWriters=None,
                               glyphOrder=None,
                               useProductionNames=None,
@@ -138,9 +144,12 @@ def compileInterpolatableTTFs(ufos,
             ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
         ttf = outlineCompiler.compile()
 
+        if featureCompilerClass is None:
+            featureCompilerClass = getDefaultFeatureCompiler(ufo)
         featureCompiler = featureCompilerClass(
-            ufo, ttf, featureWriters=featureWriters,
-            mtiFeatures=_getMtiFeatures(ufo))
+            ufo, ttf,
+            glyphSet=glyphSet,
+            featureWriters=featureWriters)
         featureCompiler.compile()
 
         postProcessor = PostProcessor(ttf, ufo)
