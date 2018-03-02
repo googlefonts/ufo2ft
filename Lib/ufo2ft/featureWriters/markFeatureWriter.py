@@ -5,6 +5,8 @@ from collections import OrderedDict
 from ufo2ft.featureWriters import BaseFeatureWriter
 from ufo2ft.util import makeOfficialGlyphOrder
 
+from fontTools.feaLib import ast
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,22 +18,31 @@ class MarkFeatureWriter(BaseFeatureWriter):
     tuples for a liga2mark feature.
     """
 
-    features = [
+    features = frozenset([
         "mark",
         "mkmk",
-    ]
+    ])
+    _SUPPORTED_MODES = frozenset(["skip"])
 
-    def set_context(self, font):
-        ctx = super(MarkFeatureWriter, self).set_context(font)
-
-        glyphOrder = makeOfficialGlyphOrder(font)
-        ctx.glyphSet = OrderedDict(((gn, font[gn]) for gn in glyphOrder))
-
+    def set_context(self, font, compiler=None):
+        ctx = super(MarkFeatureWriter, self).set_context(font,
+                                                         compiler=compiler)
+        ctx.glyphSet = self._makeOrderedGlyphSet(font, compiler)
         ctx.accentGlyphNames = set()
 
         self.setupAnchorPairs()
 
-        return ctx
+    @staticmethod
+    def _makeOrderedGlyphSet(font, compiler=None):
+        # return glyph set as an OrderedDict sorted by glyphOrder to write
+        # mark/mkmk classes and rules in a deterministic order
+        if compiler is not None:
+            glyphSet = compiler.glyphSet
+            glyphOrder = compiler.ttFont.getGlyphOrder()
+        else:
+            glyphSet = font
+            glyphOrder = makeOfficialGlyphOrder(font)
+        return OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
 
     @staticmethod
     def _generateClassName(accentAnchorName):
@@ -39,7 +50,76 @@ class MarkFeatureWriter(BaseFeatureWriter):
         statements.
         """
 
-        return "@MC%s" % accentAnchorName
+        return "MC%s" % accentAnchorName
+
+    def _makeMarkClassDefinitions(self, markClasses):
+        """Return list of MarkClassDefinition statements for all the anchors
+        used in mark and/or mkmk.
+        """
+        anchorList = []
+        if "mark" in self.features:
+            anchorList.extend(self.context.anchorList)
+            anchorList.extend(self.context.ligaAnchorList)
+        if "mkmk" in self.features:
+            anchorList.extend(self.context.mkmkAnchorList)
+
+        mcdefs = []
+        for accentAnchorName in sorted(set(n for _, n in anchorList)):
+            mcdefs.extend(self._makeMarkClasses(markClasses, accentAnchorName))
+        return mcdefs
+
+    def _makeMarkClasses(self, markClasses, accentAnchorName):
+        """Create MarkClassDefinition statements for one accent anchor, and
+        return an iterator.
+        Remembers the accent glyph names, for use when generating base glyph
+        lists.
+        """
+        accentGlyphs = self._createAccentGlyphList(accentAnchorName)
+        className = self._generateClassName(accentAnchorName)
+
+        accentGlyphNames = self.context.accentGlyphNames
+        for accentName, x, y in sorted(accentGlyphs):
+            accentGlyphNames.add(accentName)
+            mc = self._makeMarkClass(markClasses, accentName, x, y, className)
+            if mc is not None:
+                yield mc
+
+    @classmethod
+    def _makeMarkClass(cls, markClasses, accentName, x, y, className):
+        glyphs = ast.GlyphName(accentName)
+        anchor = cls._makeAnchorFormatA(x, y)
+        className = cls.makeFeaClassName(className)
+        markClass = markClasses.get(className)
+        if markClass is None:
+            markClass = ast.MarkClass(className)
+            markClasses[className] = markClass
+        else:
+            if accentName in markClass.glyphs:
+                mcdef = markClass.glyphs[accentName]
+                if cls._anchorsAreEqual(anchor, mcdef.anchor):
+                    logger.debug("Glyph %s already defined in markClass @%s",
+                                 accentName, className)
+                    return None
+                else:
+                    # same accent glyph defined with different anchors for the
+                    # same markClass; make a new unique markClass definition
+                    newClassName = cls.makeFeaClassName(className, markClasses)
+                    markClass = ast.MarkClass(newClassName)
+                    markClasses[newClassName] = markClass
+        mcdef = ast.MarkClassDefinition(markClass, anchor, glyphs)
+        markClass.addDefinition(mcdef)
+        return mcdef
+
+    @staticmethod
+    def _anchorsAreEqual(a1, a2):
+        for attr in ("x", "y", "contourpoint", "xDeviceTable", "yDeviceTable"):
+            if getattr(a1, attr) != getattr(a2, attr):
+                return False
+        return True
+
+    @staticmethod
+    def _makeAnchorFormatA(x, y):
+        return ast.Anchor(x=round(x), y=round(y))
 
     def _createAccentGlyphList(self, accentAnchorName):
         """Return a list of <name, x, y> tuples for glyphs containing an anchor
@@ -61,6 +141,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         """
 
         glyphList = []
+        # XXX why is it necessary to copy the accentGlyphNames set here?
         accentGlyphNames = set(self.context.accentGlyphNames)
         for glyphName, glyph in self.context.glyphSet.items():
             if isMkmk != (glyphName in accentGlyphNames):
@@ -92,108 +173,120 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 glyphList.append((glyphName, tuple(points)))
         return glyphList
 
-    def _addClasses(self, lines, doMark, doMkmk):
-        """Write class definitions for anchors used in mark and/or mkmk."""
-
-        anchorList = []
-        if doMark:
-            anchorList.extend(self.context.anchorList)
-            anchorList.extend(self.context.ligaAnchorList)
-        if doMkmk:
-            anchorList.extend(self.context.mkmkAnchorList)
-
-        added = set()
-        for accentAnchorName in sorted(set(n for _, n in anchorList)):
-            added.add(accentAnchorName)
-            self._addClass(lines, accentAnchorName)
-
-    def _addClass(self, lines, accentAnchorName):
-        """Write class definition statements for one accent anchor. Remembers
-        the accent glyph names, for use when generating base glyph lists.
+    def _makeMarkFeature(self, markClasses, isMkmk=False):
+        """Return a mark or mkmk FeatureBlock statement, or None if there is
+        nothing to generate.
         """
-
-        accentGlyphs = self._createAccentGlyphList(accentAnchorName)
-        className = self._generateClassName(accentAnchorName)
-
-        accentGlyphNames = self.context.accentGlyphNames
-        for accentName, x, y in sorted(accentGlyphs):
-            accentGlyphNames.add(accentName)
-            lines.append(
-                "markClass %s <anchor %d %d> %s;" %
-                (accentName, x, y, className))
-        lines.append("")
-
-    def _addMarkLookup(self, lines, lookupName, isMkmk, anchorPair):
-        """Add a mark lookup for one tuple in the writer's anchor list."""
-
-        anchorName, accentAnchorName = anchorPair
-        baseGlyphs = self._createBaseGlyphList(anchorName, isMkmk)
-        if not baseGlyphs:
-            return
-        className = self._generateClassName(accentAnchorName)
-        ruleType = "mark" if isMkmk else "base"
-
-        lines.append("  lookup %s {" % lookupName)
-        if isMkmk:
-            mkAttachCls = "@%sMkAttach" % lookupName
-            lines.append("    %s = %s;" % (
-                mkAttachCls,
-                self.liststr([className] + [g[0] for g in baseGlyphs])))
-            lines.append("    lookupflag UseMarkFilteringSet %s;" % mkAttachCls)
-
-        for baseName, x, y in baseGlyphs:
-            lines.append(
-                "    pos %s %s <anchor %d %d> mark %s;" %
-                (ruleType, baseName, x, y, className))
-
-        lines.append("  } %s;" % lookupName)
-
-    def _addMarkToLigaLookup(self, lines, lookupName, anchorPairs):
-        """Add a mark lookup containing mark-to-ligature position rules."""
-
-        anchorNames, accentAnchorName = anchorPairs
-        baseGlyphs = self._createLigaGlyphList(anchorNames)
-        if not baseGlyphs:
-            return
-        className = self._generateClassName(accentAnchorName)
-
-        lines.append("  lookup %s {" % lookupName)
-
-        for baseName, points in baseGlyphs:
-            lines.append("    pos ligature %s" % baseName)
-            for x, y in points:
-                lines.append("      <anchor %d %d> mark %s" % (x, y, className))
-                lines.append("      ligComponent")
-            # don't need last ligComponent statement
-            lines.pop()
-            lines.append("      ;")
-
-        lines.append("  } %s;" % lookupName)
-
-    def _addFeature(self, lines, isMkmk=False):
-        """Write a single feature."""
-
         anchorList = (self.context.mkmkAnchorList if isMkmk
                       else self.context.anchorList)
         if not anchorList and (isMkmk or not self.context.ligaAnchorList):
             # nothing to do, don't write empty feature
             return
-        featureName = "mkmk" if isMkmk else "mark"
-        feature = []
 
-        for i, anchorPair in enumerate(anchorList):
-            lookupName = "%s%d" % (featureName, i + 1)
-            self._addMarkLookup(feature, lookupName, isMkmk, anchorPair)
+        featureName = "mkmk" if isMkmk else "mark"
+        lookups = []
+
+        for i, anchorPair in enumerate(anchorList, 1):
+            lookup = self._makeMarkLookup(
+                markClasses, "%s%d" % (featureName, i), isMkmk, anchorPair)
+            if lookup:
+                lookups.append(lookup)
 
         if not isMkmk:
-            for i, anchorPairs in enumerate(self.context.ligaAnchorList):
-                lookupName = "mark2liga%d" % (i + 1)
-                self._addMarkToLigaLookup(feature, lookupName, anchorPairs)
+            for i, anchorPairs in enumerate(self.context.ligaAnchorList, 1):
+                lookup = self._makeMarkToLigaLookup(
+                    markClasses, "mark2liga%d" % i, anchorPairs)
+                if lookup:
+                    lookups.append(lookup)
 
-        if feature:
-            lines.append("feature %s {" % featureName)
-            lines.extend(feature)
-            lines.append("} %s;\n" % featureName)
+        if lookups:
+            feature = ast.FeatureBlock(featureName)
+            feature.statements.extend(lookups)
+            return feature
+
+    def _makeMarkLookup(self, markClasses, lookupName, isMkmk, anchorPair):
+        """Return a mark (or mkmk) lookup for one tuple in the writer's
+        anchor list, or None if there are no glyphs with given anchor.
+        """
+        anchorName, accentAnchorName = anchorPair
+        baseGlyphs = self._createBaseGlyphList(anchorName, isMkmk)
+        if not baseGlyphs:
+            return
+
+        className = self._generateClassName(accentAnchorName)
+        ruleType = "mark" if isMkmk else "base"
+
+        statements = []
+        if isMkmk:
+            mkAttachMembers = list(markClasses[className].glyphs)
+            mkAttachMembers.extend(g[0] for g in baseGlyphs)
+            mkAttachCls = self.makeGlyphClassDefinition(
+                lookupName + "MkAttach", mkAttachMembers)
+            statements.append(mkAttachCls)
+            statements.append(
+                self.makeLookupFlag(markFilteringSet=mkAttachCls))
+
+        for baseName, x, y in baseGlyphs:
+            statements.append(
+                self._makeMarkPosRule(
+                    markClasses, ruleType, baseName, x, y, className))
+
+        if statements:
+            lookup = ast.LookupBlock(lookupName)
+            lookup.statements.extend(statements)
+            return lookup
+
+    @classmethod
+    def _makeMarkPosRule(cls, markClasses, ruleType, baseName, x, y, className):
+        """Return a MarkBasePosStatement for given rule type (either "base" or
+        "mark"), glyph name, anchor and markClass name.
+        """
+        base = ast.GlyphName(baseName)
+        anchor = cls._makeAnchorFormatA(x, y)
+        markClass = markClasses[className]
+        marks = [(anchor, markClass)]
+        if ruleType == "base":
+            return ast.MarkBasePosStatement(base, marks)
+        elif ruleType == "mark":
+            return ast.MarkMarkPosStatement(base, marks)
+        else:
+            raise AssertionError(ruleType)
+
+    def _makeMarkToLigaLookup(self, markClasses, lookupName, anchorPairs):
+        """Return a mark lookup containing mark-to-ligature position rules
+        for the given anchor pairs, or None if there are no glyphs with
+        those anchors.
+        """
+        anchorNames, accentAnchorName = anchorPairs
+        baseGlyphs = self._createLigaGlyphList(anchorNames)
+        if not baseGlyphs:
+            return
+
+        className = self._generateClassName(accentAnchorName)
+
+        statements = []
+        for baseName, points in baseGlyphs:
+            statements.append(
+                self._makeMarkLigPosRule(
+                    markClasses, baseName, points, className))
+
+        if statements:
+            lookup = ast.LookupBlock(lookupName)
+            lookup.statements.extend(statements)
+            return lookup
+
+    @classmethod
+    def _makeMarkLigPosRule(cls, markClasses, baseName, points, className):
+        """Return a MarkLigPosStatement for given ligature glyph, list of
+        anchor points, and markClass name.
+        """
+        ligature = ast.GlyphName(baseName)
+        markClass = markClasses[className]
+        marks = []
+        for x, y in points:
+            anchor = cls._makeAnchorFormatA(x, y)
+            marks.append([(anchor, markClass)])
+        return ast.MarkLigPosStatement(ligature, marks)
 
     def setupAnchorPairs(self):
         """
@@ -234,18 +327,26 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
         self.context.mkmkAnchorList = anchorList
 
-    def _write(self):
+    def _write(self, feaFile):
         """Write mark and mkmk features, and mark class definitions."""
         doMark = "mark" in self.features
         doMkmk = "mkmk" in self.features
 
-        if not (doMark or doMkmk):
-            return ""
+        # dict of mark classes in the feature file keyed by name
+        markClasses = feaFile.markClasses
 
-        lines = []
-        self._addClasses(lines, doMark, doMkmk)
+        markClassDefs = self._makeMarkClassDefinitions(markClasses)
         if doMark:
-            self._addFeature(lines, isMkmk=False)
+            mark = self._makeMarkFeature(markClasses, isMkmk=False)
         if doMkmk:
-            self._addFeature(lines, isMkmk=True)
-        return self.linesep.join(lines)
+            mkmk = self._makeMarkFeature(markClasses, isMkmk=True)
+
+        if not (mark or mkmk):
+            return False
+
+        feaFile.statements.extend(markClassDefs)
+        if mark:
+            feaFile.statements.append(mark)
+        if mkmk:
+            feaFile.statements.append(mkmk)
+        return True
