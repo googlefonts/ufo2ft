@@ -109,9 +109,18 @@ def parseLayoutFeatures(font):
     # and print filename in error messages. For the UFO spec, this
     # should be the path of the UFO, not the inner features.fea:
     # https://github.com/unified-font-object/ufo-spec/issues/55
-    if font.path is not None:
-        buf.name = font.path
+    ufoPath = font.path
+    if ufoPath is not None:
+        buf.name = ufoPath
     glyphNames = set(font.keys())
     parser = feaLib.parser.Parser(buf, glyphNames)
-    doc = parser.parse()
+    try:
+        doc = parser.parse()
+    except feaLib.error.IncludedFeaNotFound as e:
+        if ufoPath and os.path.exists(os.path.join(ufoPath), e.args[0]):
+            logger.warning("Please change the file name in the include(...); "
+                           "statement to be relative to the UFO itself, "
+                           "instead of relative to the 'features.fea' file "
+                           "contained in it.")
+        raise
     return doc
