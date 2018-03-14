@@ -79,12 +79,19 @@ class BaseOutlineCompiler(object):
         """
         self.otf = TTFont(sfntVersion=self.sfntVersion)
 
-        self.vertical = False
-        for glyph in self.allGlyphs.values():
-            if (hasattr(glyph, "verticalOrigin") and
-                    glyph.verticalOrigin is not None):
-                self.vertical = True
-                break
+        # only compile vertical metrics tables if vhea metrics a defined
+        vertical_metrics = [
+            "openTypeVheaVertTypoAscender",
+            "openTypeVheaVertTypoDescender",
+            "openTypeVheaVertTypoLineGap",
+            "openTypeVheaCaretSlopeRise",
+            "openTypeVheaCaretSlopeRun",
+            "openTypeVheaCaretOffset",
+        ]
+        self.vertical = all(
+            getAttrWithFallback(self.ufo.info, metric) is not None
+            for metric in vertical_metrics
+        )
 
         # populate basic tables
         self.setupTable_head()
