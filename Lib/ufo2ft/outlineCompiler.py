@@ -596,6 +596,96 @@ class BaseOutlineCompiler(object):
             left = bounds.xMin if bounds else 0
             hmtx[glyphName] = (width, left)
 
+    def _setupTable_hhea_or_vhea(self, tag):
+        """
+        Make the hhea table or the vhea table. This assume the hmtx or
+        the vmtx were respectively made first.
+        """
+        if tag == "hhea":
+            isHhea = True
+        else:
+            isHhea = False
+        self.otf[tag] = table = newTable(tag)
+        mtxTable = self.otf[tag[0] + "mtx"]
+        font = self.ufo
+        if isHhea:
+            table.tableVersion = 0x00010000
+        else:
+            table.tableVersion = 0x00011000
+        # Vertical metrics in hhea, horizontal metrics in vhea
+        # and caret info.
+        # The hhea metrics names are formed as:
+        #   "openType" + tag.title() + "Ascender", etc.
+        # While vhea metrics names are formed as:
+        #   "openType" + tag.title() + "VertTypo" + "Ascender", etc.
+        # Caret info names only differ by tag.title().
+        commonPrefix = "openType%s" % tag.title()
+        if isHhea:
+            metricsPrefix = commonPrefix
+        else:
+            metricsPrefix = "openType%sVertTypo" % tag.title()
+        metricsDict = {
+            "ascent": "%sAscender" % metricsPrefix,
+            "descent": "%sDescender" % metricsPrefix,
+            "lineGap": "%sLineGap" % metricsPrefix,
+            "caretSlopeRise": "%sCaretSlopeRise" % commonPrefix,
+            "caretSlopeRun": "%sCaretSlopeRun" % commonPrefix,
+            "caretOffset": "%sCaretOffset" % commonPrefix,
+        }
+        for otfName, ufoName in metricsDict.items():
+            setattr(table, otfName,
+                    getAttrWithFallback(font.info, ufoName))
+        # Horizontal metrics in hhea, vertical metrics in vhea
+        advances = []  # width in hhea, height in vhea
+        firstSideBearings = []  # left in hhea, top in vhea
+        secondSideBearings = []  # right in hhea, bottom in vhea
+        extents = []
+        for glyphName in self.allGlyphs:
+            advance, firstSideBearing = mtxTable[glyphName]
+            advances.append(advance)
+            bounds = self.glyphBoundingBoxes[glyphName]
+            if bounds is None:
+                continue
+            if isHhea:
+                boundsAdvance = (bounds.xMax - bounds.xMin)
+                # equation from the hhea spec for calculating xMaxExtent:
+                #   Max(lsb + (xMax - xMin))
+                extent = firstSideBearing + boundsAdvance
+            else:
+                boundsAdvance = (bounds.yMax - bounds.yMin)
+                # equation from the vhea spec for calculating yMaxExtent:
+                #   Max(tsb - (yMax - yMin)).
+                extent = firstSideBearing - boundsAdvance
+            secondSideBearing = advance - firstSideBearing - boundsAdvance
+
+            firstSideBearings.append(firstSideBearing)
+            secondSideBearings.append(secondSideBearing)
+            extents.append(extent)
+        setattr(table,
+                "advance%sMax" % ("Width" if isHhea else "Height"),
+                max(advances) if advances else 0)
+        setattr(table,
+                "min%sSideBearing" % ("Left" if isHhea else "Top"),
+                min(firstSideBearings) if firstSideBearings else 0)
+        setattr(table,
+                "min%sSideBearing" % ("Right" if isHhea else "Bottom"),
+                min(secondSideBearings) if secondSideBearings else 0)
+        setattr(table,
+                "%sMaxExtent" % ("x" if isHhea else "y"),
+                max(extents) if extents else 0)
+        if isHhea:
+            reserved = range(4)
+        else:
+            # vhea.reserved0 is caretOffset for legacy reasons
+            reserved = range(1, 5)
+        for i in reserved:
+            setattr(table, "reserved%i" % i, 0)
+        table.metricDataFormat = 0
+        # glyph count
+        setattr(table,
+                "numberOf%sMetrics" % ("H" if isHhea else "V"),
+                len(self.allGlyphs))
+
     def setupTable_hhea(self):
         """
         Make the hhea table. This assumes that the hmtx table was made first.
@@ -604,47 +694,7 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
-        self.otf["hhea"] = hhea = newTable("hhea")
-        hmtx = self.otf["hmtx"]
-        font = self.ufo
-        hhea.tableVersion = 0x00010000
-        # vertical metrics
-        hhea.ascent = round(getAttrWithFallback(font.info, "openTypeHheaAscender"))
-        hhea.descent = round(getAttrWithFallback(font.info, "openTypeHheaDescender"))
-        hhea.lineGap = round(getAttrWithFallback(font.info, "openTypeHheaLineGap"))
-        # horizontal metrics
-        widths = []
-        lefts = []
-        rights = []
-        extents = []
-        for glyphName in self.allGlyphs:
-            width, left = hmtx[glyphName]
-            widths.append(width)
-            bounds = self.glyphBoundingBoxes[glyphName]
-            if bounds is None:
-                continue
-            right = width - left - (bounds.xMax - bounds.xMin)
-            lefts.append(left)
-            rights.append(right)
-            # equation from the hhea spec for calculating xMaxExtent:
-            #   Max(lsb + (xMax - xMin))
-            extent = left + (bounds.xMax - bounds.xMin)
-            extents.append(extent)
-        hhea.advanceWidthMax = max(widths)
-        hhea.minLeftSideBearing = min(lefts) if lefts else 0
-        hhea.minRightSideBearing = min(rights) if rights else 0
-        hhea.xMaxExtent = max(extents) if extents else 0
-        # misc
-        hhea.caretSlopeRise = getAttrWithFallback(font.info, "openTypeHheaCaretSlopeRise")
-        hhea.caretSlopeRun = getAttrWithFallback(font.info, "openTypeHheaCaretSlopeRun")
-        hhea.caretOffset = round(getAttrWithFallback(font.info, "openTypeHheaCaretOffset"))
-        hhea.reserved0 = 0
-        hhea.reserved1 = 0
-        hhea.reserved2 = 0
-        hhea.reserved3 = 0
-        hhea.metricDataFormat = 0
-        # glyph count
-        hhea.numberOfHMetrics = len(self.allGlyphs)
+        self._setupTable_hhea_or_vhea("hhea")
 
     def setupTable_vmtx(self):
         """
@@ -698,44 +748,7 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
-        self.otf["vhea"] = vhea = newTable("vhea")
-        font = self.ufo
-        head = self.otf["head"]
-        vmtx = self.otf["vmtx"]
-        vhea.tableVersion = 0x00011000
-        # horizontal metrics
-        vhea.ascent = round(getAttrWithFallback(font.info, "openTypeVheaVertTypoAscender"))
-        vhea.descent = round(getAttrWithFallback(font.info, "openTypeVheaVertTypoDescender"))
-        vhea.lineGap = round(getAttrWithFallback(font.info, "openTypeVheaVertTypoLineGap"))
-        # vertical metrics
-        heights = []
-        tops = []
-        bottoms = []
-        for glyphName in self.allGlyphs:
-            height, top = vmtx[glyphName]
-            heights.append(height)
-            bounds = self.glyphBoundingBoxes[glyphName]
-            if bounds is None:
-                continue
-            bottom = height - top - (bounds.yMax - bounds.yMin)
-            tops.append(top)
-            bottoms.append(bottom)
-        vhea.advanceHeightMax = max(heights)
-        vhea.minTopSideBearing = min(tops) if tops else 0
-        vhea.minBottomSideBearing = min(bottoms) if bottoms else 0
-        vhea.yMaxExtent = vhea.minTopSideBearing - (head.yMax - head.yMin)
-        # misc
-        vhea.caretSlopeRise = getAttrWithFallback(font.info, "openTypeVheaCaretSlopeRise")
-        vhea.caretSlopeRun = getAttrWithFallback(font.info, "openTypeVheaCaretSlopeRun")
-        vhea.caretOffset = getAttrWithFallback(font.info, "openTypeVheaCaretOffset")
-        vhea.reserved0 = 0
-        vhea.reserved1 = 0
-        vhea.reserved2 = 0
-        vhea.reserved3 = 0
-        vhea.reserved4 = 0
-        vhea.metricDataFormat = 0
-        # glyph count
-        vhea.numberOfVMetrics = len(self.allGlyphs)
+        self._setupTable_hhea_or_vhea("vhea")
 
     def setupTable_post(self):
         """
