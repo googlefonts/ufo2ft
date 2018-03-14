@@ -721,8 +721,8 @@ class BaseOutlineCompiler(object):
             tops.append(top)
             bottoms.append(bottom)
         vhea.advanceHeightMax = max(heights)
-        vhea.minTopSideBearing = max(tops)
-        vhea.minBottomSideBearing = max(bottoms)
+        vhea.minTopSideBearing = min(tops) if tops else 0
+        vhea.minBottomSideBearing = min(bottoms) if bottoms else 0
         vhea.yMaxExtent = vhea.minTopSideBearing - (head.yMax - head.yMin)
         # misc
         vhea.caretSlopeRise = getAttrWithFallback(font.info, "openTypeVheaCaretSlopeRise")
