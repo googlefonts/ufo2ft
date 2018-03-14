@@ -535,4 +535,41 @@
     </LookupList>
   </GPOS>
 
+  <vhea>
+    <tableVersion value="0x00011000"/>
+    <ascent value="750"/>
+    <descent value="-250"/>
+    <lineGap value="200"/>
+    <advanceHeightMax value="1000"/>
+    <minTopSideBearing value="0"/>
+    <minBottomSideBearing value="-80"/>
+    <yMaxExtent value="1030"/>
+    <caretSlopeRise value="0"/>
+    <caretSlopeRun value="1"/>
+    <caretOffset value="0"/>
+    <reserved1 value="0"/>
+    <reserved2 value="0"/>
+    <reserved3 value="0"/>
+    <reserved4 value="0"/>
+    <metricDataFormat value="0"/>
+    <numberOfVMetrics value="12"/>
+  </vhea>
+
+  <vmtx>
+    <mtx name=".notdef" height="1000" tsb="0"/>
+    <mtx name="uni0020" height="250" tsb="750"/>
+    <mtx name="uni0061" height="750" tsb="240"/>
+    <mtx name="uni0062" height="750" tsb="245"/>
+    <mtx name="uni0063" height="750" tsb="250"/>
+    <mtx name="uni0064" height="750" tsb="553"/>
+    <mtx name="uni0065" height="750" tsb="240"/>
+    <mtx name="uni0066" height="750" tsb="240"/>
+    <mtx name="uni0067" height="750" tsb="240"/>
+    <mtx name="uni0068" height="1000" tsb="93"/>
+    <mtx name="uni0069" height="750" tsb="240"/>
+    <mtx name="uni006A" height="1000" tsb="520"/>
+    <mtx name="uni006B" height="1000" tsb="240"/>
+    <mtx name="uni006C" height="1000" tsb="240"/>
+  </vmtx>
+
 </ttFont>
