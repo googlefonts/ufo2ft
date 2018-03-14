@@ -41,13 +41,13 @@ def _isNonBMP(s):
     return False
 
 
-def _getVerticalOrigin(glyph):
-    height = glyph.height
+def _getVerticalOrigin(font, glyph):
+    font_ascender = font['hhea'].ascent
     if (hasattr(glyph, "verticalOrigin") and
             glyph.verticalOrigin is not None):
         verticalOrigin = glyph.verticalOrigin
     else:
-        verticalOrigin = height
+        verticalOrigin = font_ascender
     return round(verticalOrigin)
 
 
@@ -655,7 +655,7 @@ class BaseOutlineCompiler(object):
             if height < 0:
                 raise ValueError(
                     "The height should not be negative: '%s'" % (glyphName))
-            verticalOrigin = _getVerticalOrigin(glyph)
+            verticalOrigin = _getVerticalOrigin(self.otf, glyph)
             bounds = self.glyphBoundingBoxes[glyphName]
             top = bounds.yMax if bounds else 0
             vmtx[glyphName] = (height, verticalOrigin - top)
@@ -673,12 +673,13 @@ class BaseOutlineCompiler(object):
         vorg.minorVersion = 0
         vorg.VOriginRecords = {}
         # Find the most frequent verticalOrigin
-        vorg_count = Counter(_getVerticalOrigin(glyph)
+        vorg_count = Counter(_getVerticalOrigin(self.otf, glyph)
                              for glyph in self.allGlyphs.values())
         vorg.defaultVertOriginY = vorg_count.most_common(1)[0][0]
         if len(vorg_count) > 1:
             for glyphName, glyph in self.allGlyphs.items():
-                vorg.VOriginRecords[glyphName] = _getVerticalOrigin(glyph)
+                vorg.VOriginRecords[glyphName] = _getVerticalOrigin(
+                    self.otf, glyph)
         vorg.numVertOriginYMetrics = len(vorg.VOriginRecords)
 
     def setupTable_vhea(self):
