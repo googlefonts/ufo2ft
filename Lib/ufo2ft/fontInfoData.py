@@ -325,9 +325,12 @@ staticFallbackData = dict(
     openTypeVheaVertTypoAscender=None,
     openTypeVheaVertTypoDescender=None,
     openTypeVheaVertTypoLineGap=None,
-    openTypeVheaCaretSlopeRise=None,
-    openTypeVheaCaretSlopeRun=None,
-    openTypeVheaCaretOffset=None,
+    # fallback to horizontal caret:
+    # a value of 0 for the rise
+    # and a value of 1 for the run.
+    openTypeVheaCaretSlopeRise=0,
+    openTypeVheaCaretSlopeRun=1,
+    openTypeVheaCaretOffset=0,
 
     postscriptUniqueID=None,
     postscriptWeightName=None,
