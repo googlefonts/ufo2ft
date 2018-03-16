@@ -931,7 +931,6 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         topDict.FullName = getAttrWithFallback(info, "postscriptFullName")
         topDict.FamilyName = getAttrWithFallback(info, "openTypeNamePreferredFamilyName")
         topDict.Weight = getAttrWithFallback(info, "postscriptWeightName")
-        topDict.FontName = psName
         # populate various numbers
         topDict.isFixedPitch = getAttrWithFallback(info, "postscriptIsFixedPitch")
         topDict.ItalicAngle = getAttrWithFallback(info, "italicAngle")
