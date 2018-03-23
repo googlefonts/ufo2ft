@@ -195,6 +195,7 @@ class PropagateAnchorsFilterTest(object):
             [('bottom', 175, 0),
              ('top', 175, 660)]
         )
+
     def test_ligature_glyph(self, font):
         name = 'a_a'
         philter = PropagateAnchorsFilter(include={name})
@@ -226,5 +227,5 @@ class PropagateAnchorsFilterTest(object):
     def test_logger(self, font):
         with CapturingLogHandler(logger, level="INFO") as captor:
             philter = PropagateAnchorsFilter()
-            modified = philter(font)
+            philter(font)
         captor.assertRegex('Glyphs with propagated anchors: 6')
