@@ -113,6 +113,14 @@ import pytest
                     ('addComponent', ('a', (1, 0, 0, 1, 350, 0))),
                 ],
             },
+            {
+                'name': 'emacron',
+                'width': 350,
+                'outline': [
+                    ('addComponent', ('e', (1, 0, 0, 1, 0, 0))),
+                    ('addComponent', ('macroncomb', (1, 0, 0, 1, 175, 0))),
+                ],
+            },
         ],
     }
 ])
@@ -205,6 +213,15 @@ class PropagateAnchorsFilterTest(object):
         assert modified == set(['a-cyr', 'amacron', 'adieresis',
                                 'adieresismacron', 'amacrondieresis',
                                 'a_a'])
+
+    def test_fail_during_anchor_propagation(self, font):
+        name = 'emacron'
+        with CapturingLogHandler(logger, level="WARNING") as captor:
+            philter = PropagateAnchorsFilter(include={name})
+            philter(font)
+        captor.assertRegex(
+            'Anchors not propagated for inexistent component e '
+            'in glyph emacron')
 
     def test_logger(self, font):
         with CapturingLogHandler(logger, level="INFO") as captor:
