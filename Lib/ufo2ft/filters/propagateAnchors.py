@@ -39,9 +39,10 @@ class PropagateAnchorsFilter(BaseFilter):
     def filter(self, glyph):
         if not glyph.components:
             return False
+        before = len(glyph.anchors)
         _propagate_glyph_anchors(self.context.glyphSet, glyph,
                                  self.context.processed)
-        return True
+        return len(glyph.anchors) > before
 
 
 def _propagate_glyph_anchors(glyphSet, composite, processed):
@@ -62,13 +63,19 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
     anchor_names = set()
     to_add = {}
     for component in composite.components:
-        glyph = glyphSet[component.baseGlyph]
-        _propagate_glyph_anchors(glyphSet, glyph, processed)
-        if any(a.name.startswith('_') for a in glyph.anchors):
-            mark_components.append(component)
+        try:
+            glyph = glyphSet[component.baseGlyph]
+        except KeyError:
+            logger.warning(
+                'Anchors not propagated for inexistent component {} '
+                'in glyph {}'.format(component.baseGlyph, composite.name))
         else:
-            base_components.append(component)
-            anchor_names |= {a.name for a in glyph.anchors}
+            _propagate_glyph_anchors(glyphSet, glyph, processed)
+            if any(a.name.startswith('_') for a in glyph.anchors):
+                mark_components.append(component)
+            else:
+                base_components.append(component)
+                anchor_names |= {a.name for a in glyph.anchors}
 
     for anchor_name in anchor_names:
         # don't add if composite glyph already contains this anchor OR any
