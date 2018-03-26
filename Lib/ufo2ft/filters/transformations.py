@@ -80,6 +80,21 @@ class TransformationsFilter(BaseFilter):
         if self.options.Origin not in self.Origin:
             raise ValueError("%r is not a valid Origin value"
                              % self.options.Origin)
+        metrics = dict()
+        options_to_ufo_metrics = dict(
+            Width="width",
+            LSB="leftMargin",
+            RSB="rightMargin",
+            Height="height",
+            TSB="topMargin",
+            BSB="bottomMargin",
+            VerticalOrigin="verticalOrigin",
+        )
+        for option, attr in options_to_ufo_metrics.items():
+            value = getattr(self.options, option)
+            if value is not None:
+                metrics[attr] = value
+        self.metrics = metrics
 
     def get_origin_height(self, font, origin):
         if origin is self.Origin.BASELINE:
@@ -99,23 +114,6 @@ class TransformationsFilter(BaseFilter):
         ctx = super(TransformationsFilter, self).set_context(font, glyphSet)
 
         origin_height = self.get_origin_height(font, self.options.Origin)
-
-        # Metrics
-        ctx.metrics = dict()
-        if self.options.Width:
-            ctx.metrics["width"] = self.options.Width
-        if self.options.RSB:
-            ctx.metrics["rightMargin"] = self.options.RSB
-        if self.options.LSB:
-            ctx.metrics["leftMargin"] = self.options.LSB
-        if self.options.Height:
-            ctx.metrics["height"] = self.options.Height
-        if self.options.TSB:
-            ctx.metrics["topMargin"] = self.options.TSB
-        if self.options.BSB:
-            ctx.metrics["bottomMargin"] = self.options.BSB
-        if self.options.VerticalOrigin:
-            ctx.metrics["verticalOrigin"] = self.options.VerticalOrigin
 
         m = Identity
         dx, dy = self.options.OffsetX, self.options.OffsetY
@@ -143,7 +141,7 @@ class TransformationsFilter(BaseFilter):
         return ctx
 
     def filter(self, glyph, isComponent=False):
-        metrics = self.context.metrics
+        metrics = self.metrics
         matrix = self.context.matrix
         if ((not metrics and matrix == Identity) or
                 not (glyph or glyph.components or glyph.anchors)):
@@ -164,20 +162,16 @@ class TransformationsFilter(BaseFilter):
                 modified.add(base_name)
 
         if not isComponent:
-            for attr in ["height", "width",
-                         "leftMargin", "rightMargin",
-                         "topMargin", "bottomMargin",
-                         "verticalOrigin"]:
-                if attr in metrics:
-                    value = getattr(glyph, attr)
-                    if value is not None:
-                        value += metrics.get(attr)
-                        setattr(glyph, attr, value)
-                    else:
-                        logger.warning(
-                            "Cannot add %i to undefined %s in %s",
-                            metrics.get(attr), attr, glyph.name
-                        )
+            for attr, value in metrics.items():
+                current_value = getattr(glyph, attr)
+                if current_value is not None:
+                    value += current_value
+                    setattr(glyph, attr, value)
+                else:
+                    logger.warning(
+                        "Cannot add %i to undefined %s in %s",
+                        value, attr, glyph.name
+                    )
 
         rec = RecordingPen()
         glyph.draw(rec)
