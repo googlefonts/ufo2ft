@@ -19,7 +19,7 @@ def IntEnum(typename, field_names):
         range(len(field_names)))
 
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class TransformPen(_TransformPen):
