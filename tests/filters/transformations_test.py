@@ -18,6 +18,8 @@ import pytest
             {
                 'name': 'a',
                 'width': 350,
+                'height': 400,
+                'verticalOrigin': 350,
                 'outline': [
                     ('moveTo', ((0, 0),)),
                     ('lineTo', ((300, 0),)),
@@ -33,6 +35,8 @@ import pytest
             {
                 'name': 'b',
                 'width': 450,
+                'height': 400,
+                'verticalOrigin': 350,
                 'outline': [
                     ('addComponent', ('a', (1, 0, 0, 1, 0, 0))),
                     ('addComponent', ('c', (1, 0, 0, 1, 0, 0))),
@@ -63,6 +67,8 @@ def font(request):
     for param in request.param['glyphs']:
         glyph = font.newGlyph(param['name'])
         glyph.width = param.get('width', 0)
+        glyph.height = param.get('height', 0)
+        glyph.verticalOrigin = param.get('verticalOrigin', None)
         pen = glyph.getPen()
         for operator, operands in param.get('outline', []):
             getattr(pen, operator)(*operands)
@@ -192,3 +198,99 @@ class TransformationsFilterTest(object):
         # its original transform had a scale, so it was necessary to
         # compensate for the transformation applied on the base glyph
         assert d.components[0].transformation == (1, 0, 0, -1, 0, 102)
+
+    @pytest.mark.parametrize(
+        "name",
+        ["a", "b", "c", "d"])
+    def test_Width(self, font, name):
+        value = -2
+        filter_ = TransformationsFilter(
+            Width=value, include={name})
+        glyph = font[name]
+        previousWidth = glyph.width
+        assert {name} == filter_(font)
+        assert glyph.width == previousWidth + value
+
+    @pytest.mark.parametrize(
+        "name",
+        ["a", "b", "c", "d"])
+    def test_Height(self, font, name):
+        value = -4
+        filter_ = TransformationsFilter(
+            Height=value, include={name})
+        glyph = font[name]
+        previousHeight = glyph.height
+        assert {name} == filter_(font)
+        assert glyph.height == previousHeight + value
+
+    @pytest.mark.parametrize(
+        "name",
+        ["a", "b", "c", "d"])
+    def test_LSB(self, font, name):
+        value = -10
+        filter_ = TransformationsFilter(
+            LSB=value, include={name})
+        glyph = font[name]
+        previousLeftMargin = glyph.leftMargin
+        assert {name} == filter_(font)
+        assert glyph.leftMargin == previousLeftMargin + value
+
+    @pytest.mark.parametrize(
+        "name",
+        ["a", "b", "c", "d"])
+    def test_RSB(self, font, name):
+        value = +10
+        filter_ = TransformationsFilter(
+            RSB=value, include={name})
+        glyph = font[name]
+        previousRightMargin = glyph.rightMargin
+        assert {name} == filter_(font)
+        assert glyph.rightMargin == previousRightMargin + value
+
+    @pytest.mark.parametrize(
+        "name",
+        ["a", "b", "c", "d"])
+    def test_TSB(self, font, name):
+        value = -12
+        filter_ = TransformationsFilter(
+            TSB=value, include={name})
+        glyph = font[name]
+        previousTopMargin = glyph.topMargin
+        assert {name} == filter_(font)
+        assert glyph.topMargin == previousTopMargin + value
+
+    @pytest.mark.parametrize(
+        "name",
+        ["a", "b", "c", "d"])
+    def test_BSB(self, font, name):
+        value = +12
+        filter_ = TransformationsFilter(
+            BSB=value, include={name})
+        glyph = font[name]
+        previousBottomMargin = glyph.bottomMargin
+        assert {name} == filter_(font)
+        assert glyph.bottomMargin == previousBottomMargin + value
+
+    @pytest.mark.parametrize(
+        "name",
+        ["a", "b"])
+    def test_verticalOrigin(self, font, name):
+        value = +13
+        filter_ = TransformationsFilter(
+            VerticalOrigin=value, include={name})
+        glyph = font[name]
+        previousVerticalOrigin = glyph.verticalOrigin
+        assert {name} == filter_(font)
+        assert glyph.verticalOrigin == previousVerticalOrigin + value
+
+    @pytest.mark.parametrize(
+        "name",
+        ["c", "d"])
+    def test_verticalOrigin_undefined(self, font, name):
+        value = +14
+        with CapturingLogHandler(logger, level="WARNING") as captor:
+            filter_ = TransformationsFilter(
+                VerticalOrigin=value, include={name})
+            filter_(font)
+        captor.assertRegex(
+            "Cannot add %i to undefined verticalOrigin in %s" % (value, name))

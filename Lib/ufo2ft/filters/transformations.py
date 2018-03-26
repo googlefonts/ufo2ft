@@ -66,6 +66,14 @@ class TransformationsFilter(BaseFilter):
         'ScaleY': 100,
         'Slant': 0,
         'Origin': 4,  # BASELINE
+        'Width': None,
+        'LSB': None,
+        'RSB': None,
+        # Not in Glyphs SDK:
+        'Height': None,
+        'TSB': None,
+        'BSB': None,
+        'VerticalOrigin': None,
     }
 
     def start(self):
@@ -92,6 +100,23 @@ class TransformationsFilter(BaseFilter):
 
         origin_height = self.get_origin_height(font, self.options.Origin)
 
+        # Metrics
+        ctx.metrics = dict()
+        if self.options.Width:
+            ctx.metrics["width"] = self.options.Width
+        if self.options.RSB:
+            ctx.metrics["rightMargin"] = self.options.RSB
+        if self.options.LSB:
+            ctx.metrics["leftMargin"] = self.options.LSB
+        if self.options.Height:
+            ctx.metrics["height"] = self.options.Height
+        if self.options.TSB:
+            ctx.metrics["topMargin"] = self.options.TSB
+        if self.options.BSB:
+            ctx.metrics["bottomMargin"] = self.options.BSB
+        if self.options.VerticalOrigin:
+            ctx.metrics["verticalOrigin"] = self.options.VerticalOrigin
+
         m = Identity
         dx, dy = self.options.OffsetX, self.options.OffsetY
         if dx != 0 or dy != 0:
@@ -117,9 +142,10 @@ class TransformationsFilter(BaseFilter):
 
         return ctx
 
-    def filter(self, glyph):
+    def filter(self, glyph, isComponent=False):
+        metrics = self.context.metrics
         matrix = self.context.matrix
-        if (matrix == Identity or
+        if ((not metrics and matrix == Identity) or
                 not (glyph or glyph.components or glyph.anchors)):
             return False  # nothing to do
 
@@ -130,11 +156,28 @@ class TransformationsFilter(BaseFilter):
             if base_name in modified:
                 continue
             base_glyph = glyphSet[base_name]
-            if self.include(base_glyph) and self.filter(base_glyph):
+            if self.include(base_glyph) and \
+                    self.filter(base_glyph, isComponent=True):
                 # base glyph is included but was not transformed yet; we
                 # call filter recursively until all the included bases are
                 # transformed, or there are no more components
                 modified.add(base_name)
+
+        if not isComponent:
+            for attr in ["height", "width",
+                         "leftMargin", "rightMargin",
+                         "topMargin", "bottomMargin",
+                         "verticalOrigin"]:
+                if attr in metrics:
+                    value = getattr(glyph, attr)
+                    if value is not None:
+                        value += metrics.get(attr)
+                        setattr(glyph, attr, value)
+                    else:
+                        logger.warning(
+                            "Cannot add %i to undefined %s in %s",
+                            metrics.get(attr), attr, glyph.name
+                        )
 
         rec = RecordingPen()
         glyph.draw(rec)
