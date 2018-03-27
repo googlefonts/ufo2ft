@@ -165,8 +165,7 @@ class TransformationsFilter(BaseFilter):
             for attr, value in metrics.items():
                 current_value = getattr(glyph, attr)
                 if current_value is not None:
-                    value += current_value
-                    setattr(glyph, attr, value)
+                    setattr(glyph, attr, value + current_value)
                 else:
                     logger.warning(
                         "Cannot add %i to undefined %s in %s",
