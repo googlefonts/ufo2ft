@@ -52,6 +52,14 @@ class GetAttrWithFallbackTest(unittest.TestCase):
             "1.001;NONE;FamilyName-StyleName")
 
         self.assertEqual(getAttrWithFallback(info, "postscriptSlantAngle"), 0)
+
+    def test_unecessary_metadata(self):
+        info = TestInfoObject()
+
+        self.assertEqual(
+            getAttrWithFallback(info, "postscriptWeightName"),
+            None)
+        info.postscriptWeightName = "Normal"
         self.assertEqual(
             getAttrWithFallback(info, "postscriptWeightName"),
             "Normal")

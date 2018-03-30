@@ -21,7 +21,7 @@ import time
 import unicodedata
 import os
 
-from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr, round, round2
+from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr, round
 from fontTools.misc.textTools import binary2num
 import ufoLib
 
@@ -245,44 +245,6 @@ def postscriptUnderlinePositionFallback(info):
         'Underline position not set in UFO, defaulting to UPM * -0.075')
     return info.unitsPerEm * -0.075
 
-_postscriptWeightNameOptions = {
-    100 : "Thin",
-    200 : "Extra-light",
-    300 : "Light",
-    400 : "Normal",
-    500 : "Medium",
-    600 : "Semi-bold",
-    700 : "Bold",
-    800 : "Extra-bold",
-    900 : "Black"
-}
-
-def postscriptWeightNameFallback(info):
-    """
-    Fallback to the closest match of the *openTypeOS2WeightClass*
-    in this table:
-
-    ===  ===========
-    100  Thin
-    200  Extra-light
-    300  Light
-    400  Normal
-    500  Medium
-    600  Semi-bold
-    700  Bold
-    800  Extra-bold
-    900  Black
-    ===  ===========
-    """
-    value = getAttrWithFallback(info, "openTypeOS2WeightClass")
-    value = int(round2(value, -2))
-    if value < 100:
-        value = 100
-    elif value > 900:
-        value = 900
-    name = _postscriptWeightNameOptions[value]
-    return name
-
 def postscriptBlueScaleFallback(info):
     """
     Fallback to a calculated value: 3/(4 * *maxZoneHeight*)
@@ -368,6 +330,7 @@ staticFallbackData = dict(
     openTypeVheaCaretOffset=None,
 
     postscriptUniqueID=None,
+    postscriptWeightName=None,
     postscriptIsFixedPitch=False,
     postscriptBlueValues=[],
     postscriptOtherBlues=[],
@@ -414,7 +377,6 @@ specialFallbacks = dict(
     postscriptSlantAngle=postscriptSlantAngleFallback,
     postscriptUnderlineThickness=postscriptUnderlineThicknessFallback,
     postscriptUnderlinePosition=postscriptUnderlinePositionFallback,
-    postscriptWeightName=postscriptWeightNameFallback,
     postscriptBlueScale=postscriptBlueScaleFallback
 )
 
