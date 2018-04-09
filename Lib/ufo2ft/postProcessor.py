@@ -2,6 +2,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
+import fontTools.agl
 
 
 UFO2FT_PREFIX = 'com.github.googlei18n.ufo2ft.'
@@ -76,29 +77,54 @@ class PostProcessor(object):
             production_name = self._postscriptNames.get(glyph.name)
             return production_name if production_name else glyph.name
 
-        # use name derived from unicode value
-        unicode_val = glyph.unicode
-        if glyph.unicode is not None:
-            return '%s%04X' % (
-                'u' if unicode_val > 0xffff else 'uni', unicode_val)
+        if glyph.name == ".null":
+            return "uni0000"
 
-        # use production name + last (non-script) suffix if possible
-        parts = glyph.name.rsplit('.', 1)
-        if len(parts) == 2 and parts[0] in self.ufo:
-            return '%s.%s' % (
-                self._build_production_name(self.ufo[parts[0]]), parts[1])
-
-        # use ligature name, making sure to look up components with suffixes
-        parts = glyph.name.split('.', 1)
-        if len(parts) == 2:
-            liga_parts = ['%s.%s' % (n, parts[1]) for n in parts[0].split('_')]
+        if "." in glyph.name:
+            name, rest = glyph.name.split(".", 1)
+            rest = "." + rest
         else:
-            liga_parts = glyph.name.split('_')
-        if len(liga_parts) > 1 and all(n in self.ufo for n in liga_parts):
-            unicode_vals = [self.ufo[n].unicode for n in liga_parts]
-            if all(v and v <= 0xffff for v in unicode_vals):
-                return 'uni' + ''.join('%04X' % v for v in unicode_vals)
-            return '_'.join(
-                self._build_production_name(self.ufo[n]) for n in liga_parts)
+            name, rest = glyph.name, ""
 
-        return glyph.name
+        def name_for_unicode_value(unicode_val):
+            agl_match = fontTools.agl.UV2AGL.get(unicode_val)
+            if agl_match:
+                return agl_match
+            else:
+                return '%s%04X' % (
+                    'u' if unicode_val > 0xffff else 'uni', unicode_val)
+
+        # Try to use the Unicode value first. It it points to an entry in the
+        # AGLFN, return the AGLFN name with whatever the glyph name has
+        # appended to it (i.e. 'n.case' with the correct Unicode value returns
+        # 'n.case'). Otherwise, return a "uniXXXX" or "uXXXXXX" name with
+        # whatever the glyph name has appended to it (i.e. 'ie.case' with the
+        # correct Unicode value becomes 'uni0435.case')
+        unicode_val = glyph.unicode
+        if unicode_val is not None:
+            return name_for_unicode_value(unicode_val) + rest
+
+        # Otherwise, infer the Unicode value(s) from the base name(s). This
+        # helps when e.g. "n" has a Unicode value but "n.case" doesn't. If a
+        # component's base glyph doesn't have a Unicode value, just use it
+        # verbatim.
+        components = []
+        for component in name.split("_"):
+            if component in self.ufo:
+                unicode_val = self.ufo[component].unicode
+                if unicode_val:
+                    components.append(unicode_val)
+                else:
+                    components.append(component)  # Might be a helper glyph
+            else:
+                components.append(component)  # XXX: raise error?
+
+        # If we don't have any AGLFN names and stay within the Unicode BMP, we
+        # can compress the name.
+        if all(isinstance(v, int) and v <= 0xffff and
+               v not in fontTools.agl.UV2AGL for v in components):
+            return 'uni' + ''.join('%04X' % v for v in components) + rest
+        else:
+            return "_".join([name_for_unicode_value(u) if isinstance(u, int)
+                             else u
+                             for u in components]) + rest
