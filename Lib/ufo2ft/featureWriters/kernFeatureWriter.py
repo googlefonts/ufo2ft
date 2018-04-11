@@ -34,7 +34,17 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx = super(KernFeatureWriter, self).set_context(font)
 
         ctx.kerning = dict(font.kerning)
-        ctx.groups = dict(font.groups)
+
+        if font.ufoFormatVersion < 3:
+            ctx.groups = dict(font.groups)
+        else:
+            # The UFO3 spec allows groups to be kerning classes only when
+            # they're prefixed with /public\.kern[12]\./.
+            ctx.groups = {
+                k: v
+                for k, v in font.groups.items() if
+                k.startswith("public.kern1.") or k.startswith("public.kern2.")
+            }
 
         fealines = []
         if font.features.text:
