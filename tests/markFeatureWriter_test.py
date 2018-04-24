@@ -64,6 +64,27 @@ class MarkFeatureWriterTest(unittest.TestCase):
         self.assertNotIn("feature mark", fea)
         self.assertIn("feature mkmk", fea)
 
+    def test_only_one_lookup_for_mkmk(self):
+        # We want only one lookup with several subtables for mkmk to fix
+        # thai mark positioning issues in InDesign.
+        ufo = Font()
+        mark = ufo.newGlyph('mark')
+        mark.appendAnchor({'name': '_topB', 'x': 0, 'y': 100})
+        mark.appendAnchor({'name': 'topA', 'x': 0, 'y': 200})
+        mark.appendAnchor({'name': 'topB', 'x': 0, 'y': 250})
+        otherMark = ufo.newGlyph('otherMark')
+        otherMark.appendAnchor({'name': '_topA', 'x': 0, 'y': 100})
+        otherMark.appendAnchor({'name': 'topA', 'x': 0, 'y': 200})
+        otherMark.appendAnchor({'name': 'topB', 'x': 0, 'y': 250})
+
+        writer = MarkFeatureWriter()
+        fea = writer.write(ufo)
+
+        self.assertNotIn("feature mark", fea)
+        self.assertIn("feature mkmk", fea)
+
+        self.assertEqual(1, fea.count("lookup "))
+
 
 if __name__ == '__main__':
     unittest.main()
