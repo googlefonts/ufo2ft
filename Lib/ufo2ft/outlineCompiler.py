@@ -427,7 +427,6 @@ class BaseOutlineCompiler(object):
         if widths:
             os2.xAvgCharWidth = round(sum(widths) / len(widths))
         else:
-            logger.warn("All glyphs have a zero width. Is this intentional?")
             os2.xAvgCharWidth = 0
         # weight and width classes
         os2.usWeightClass = getAttrWithFallback(font.info, "openTypeOS2WeightClass")
