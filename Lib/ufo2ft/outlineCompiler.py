@@ -424,7 +424,10 @@ class BaseOutlineCompiler(object):
         os2.version = 0x0004
         # average glyph width
         widths = [width for width, _ in hmtx.metrics.values() if width > 0]
-        os2.xAvgCharWidth = round(sum(widths) / len(widths))
+        if widths:
+            os2.xAvgCharWidth = round(sum(widths) / len(widths))
+        else:
+            os2.xAvgCharWidth = 0
         # weight and width classes
         os2.usWeightClass = getAttrWithFallback(font.info, "openTypeOS2WeightClass")
         os2.usWidthClass = getAttrWithFallback(font.info, "openTypeOS2WidthClass")
