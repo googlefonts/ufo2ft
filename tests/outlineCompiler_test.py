@@ -101,6 +101,12 @@ class OutlineTTFCompilerTest(unittest.TestCase):
         self.assertEqual(compiler.otf['hhea'].minRightSideBearing, 0)
         self.assertEqual(compiler.otf['hhea'].xMaxExtent, 0)
 
+    def test_os2_no_widths(self):
+        for glyph in self.ufo:
+            glyph.width = 0
+        compiler = OutlineTTFCompiler(self.ufo)
+        compiler.compile()
+        self.assertEqual(compiler.otf['OS/2'].xAvgCharWidth, 0)
 
 class OutlineOTFCompilerTest(unittest.TestCase):
 
