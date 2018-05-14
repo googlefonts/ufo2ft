@@ -142,7 +142,8 @@ class TTFInterpolatablePreProcessor(object):
 
         fonts_to_quadratic(self.glyphSets, max_err=self._conversionErrors,
                            reverse_direction=self._reverseDirection,
-                           dump_stats=True)
+                           dump_stats=True,
+                           remember_curve_type=False)
 
         decompose = DecomposeComponentsFilter(include=lambda g: len(g))
         for ufo, glyphSet in zip(self.ufos, self.glyphSets):
