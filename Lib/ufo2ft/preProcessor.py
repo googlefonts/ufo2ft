@@ -3,8 +3,7 @@ from __future__ import (
 
 from ufo2ft.filters import loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
-
-from copy import deepcopy
+from ufo2ft.util import copyGlyphSet
 
 
 class BasePreProcessor(object):
@@ -33,7 +32,7 @@ class BasePreProcessor(object):
         if inplace:
             self.glyphSet = {g.name: g for g in ufo}
         else:
-            self.glyphSet = {g.name: _copyGlyph(g) for g in ufo}
+            self.glyphSet = copyGlyphSet(ufo)
         self.defaultFilters = self.initDefaultFilters(**kwargs)
         self.preFilters, self.postFilters = loadFilters(ufo)
 
@@ -129,9 +128,10 @@ class TTFInterpolatablePreProcessor(object):
         from cu2qu.ufo import DEFAULT_MAX_ERR
 
         self.ufos = ufos
-        self.glyphSets = [
-            {g.name: (_copyGlyph(g) if not inplace else g) for g in ufo}
-            for ufo in ufos]
+        if inplace:
+            self.glyphSets = [{g.name: g for g in ufo} for ufo in ufos]
+        else:
+            self.glyphSets = [copyGlyphSet(ufo) for ufo in ufos]
         self._conversionErrors = [
             (conversionError or DEFAULT_MAX_ERR) * ufo.info.unitsPerEm
             for ufo in ufos]
@@ -150,17 +150,3 @@ class TTFInterpolatablePreProcessor(object):
             decompose(ufo, glyphSet)
 
         return self.glyphSets
-
-
-def _copyGlyph(glyph):
-    # copy everything except unused attributes: 'guidelines', 'note', 'image'
-    copy = glyph.__class__()
-    copy.name = glyph.name
-    copy.width = glyph.width
-    copy.height = glyph.height
-    copy.unicodes = list(glyph.unicodes)
-    copy.anchors = [dict(a) for a in glyph.anchors]
-    copy.lib = deepcopy(glyph.lib)
-    pointPen = copy.getPointPen()
-    glyph.drawPoints(pointPen)
-    return copy
