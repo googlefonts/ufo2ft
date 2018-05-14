@@ -1,8 +1,8 @@
 from __future__ import print_function, division, absolute_import
 from ufo2ft.filters.flattenComponents import FlattenComponentsFilter, logger
 from fontTools.misc.loggingTools import CapturingLogHandler
-import defcon
 import pytest
+
 
 @pytest.fixture(params=[
     {
@@ -48,8 +48,8 @@ import pytest
         ],
     }
 ])
-def font(request):
-    font = defcon.Font()
+def font(request, FontClass):
+    font = FontClass()
     for param in request.param['glyphs']:
         glyph = font.newGlyph(param['name'])
         glyph.width = param.get('width', 0)

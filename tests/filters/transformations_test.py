@@ -2,7 +2,6 @@ from __future__ import print_function, division, absolute_import
 from ufo2ft.filters.transformations import TransformationsFilter, log
 from fontTools.misc.loggingTools import CapturingLogHandler
 from fontTools.misc.py23 import isclose
-import defcon
 import pytest
 
 
@@ -56,8 +55,8 @@ import pytest
         ],
     }
 ])
-def font(request):
-    font = defcon.Font()
+def font(request, FontClass):
+    font = FontClass()
     font.info.capHeight = request.param['capHeight']
     font.info.xHeight = request.param['xHeight']
     for param in request.param['glyphs']:
