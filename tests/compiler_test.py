@@ -1,15 +1,13 @@
 from __future__ import \
     print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import *
-from defcon import Font
 from ufo2ft import compileOTF, compileTTF, compileInterpolatableTTFs
 from ufo2ft.featureWriters import KernFeatureWriter, MarkFeatureWriter
 import warnings
 import difflib
 import os
 import sys
-import tempfile
-import unittest
+import pytest
 
 
 def getpath(filename):
@@ -17,54 +15,82 @@ def getpath(filename):
     return os.path.join(dirname, 'data', filename)
 
 
-def loadUFO(filename):
-    return Font(getpath(filename))
+@pytest.fixture
+def testufo(FontClass):
+    return FontClass(getpath("TestFont.ufo"))
 
 
-class CompilerTest(unittest.TestCase):
-    _tempdir, _num_tempfiles = None, 0
+def readLines(f):
+    f.seek(0)
+    lines = []
+    for line in f.readlines():
+        # Elide ttLibVersion because it frequently changes.
+        # Use os-native line separators so we can run difflib.
+        if line.startswith("<ttFont "):
+            lines.append("<ttFont>" + os.linesep)
+        else:
+            lines.append(line.rstrip() + os.linesep)
+    return lines
+
+
+def expectTTX(font, expectedTTX, tables=None):
+    with open(getpath(expectedTTX), "r", encoding="utf-8") as f:
+        expected = readLines(f)
+    font.recalcTimestamp = False
+    font['head'].created, font['head'].modified = 3570196637, 3601822698
+    font['head'].checkSumAdjustment = 0x12345678
+    f = UnicodeIO()
+    font.saveXML(f, tables=tables)
+    actual = readLines(f)
+    if actual != expected:
+        for line in difflib.unified_diff(
+                expected, actual, fromfile=expectedTTX, tofile=path):
+            sys.stderr.write(line)
+        pytest.fail("TTX output is different from expected")
+
+
+class CompilerTest(object):
+
     _layoutTables = ["GDEF", "GSUB", "GPOS", "BASE"]
 
     # We have specific unit tests for CFF vs TrueType output, but we run
     # an integration test here to make sure things work end-to-end.
     # No need to test both formats for every single test case.
 
-    def test_TestFont_TTF(self):
-        self.expectTTX(compileTTF(loadUFO("TestFont.ufo")), "TestFont.ttx")
+    def test_TestFont_TTF(self, testufo):
+        ttf = compileTTF(testufo)
+        expectTTX(ttf, "TestFont.ttx")
 
-    def test_TestFont_CFF(self):
-        self.expectTTX(compileOTF(loadUFO("TestFont.ufo")), "TestFont-CFF.ttx")
+    def test_TestFont_CFF(self, testufo):
+        otf = compileOTF(testufo)
+        expectTTX(otf, "TestFont-CFF.ttx")
 
-    def test_deprecated_arguments(self):
-        ufo = loadUFO("TestFont.ufo")
+    def test_deprecated_arguments(self, testufo):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", UserWarning)
+
+            compileTTF(testufo, kernWriterClass=KernFeatureWriter)
+
+            assert len(w) == 1
+            assert w[-1].category == UserWarning
+            assert ("'kernWriterClass' is deprecated; use 'featureWriters'"
+                    in str(w[-1].message))
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always", UserWarning)
 
-            compileTTF(ufo, kernWriterClass=KernFeatureWriter)
+            compileOTF(testufo, markWriterClass=MarkFeatureWriter)
 
-            self.assertEqual(len(w), 1)
-            self.assertEqual(w[-1].category, UserWarning)
-            self.assertIn(
-                "'kernWriterClass' is deprecated; use 'featureWriters'",
-                str(w[-1].message))
+            assert len(w) == 1
+            assert w[-1].category == UserWarning
+            assert ("'markWriterClass' is deprecated; use 'featureWriters'"
+                    in str(w[-1].message))
 
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always", UserWarning)
-
-            compileOTF(ufo, markWriterClass=MarkFeatureWriter)
-
-            self.assertEqual(len(w), 1)
-            self.assertEqual(w[-1].category, UserWarning)
-            self.assertIn(
-                "'markWriterClass' is deprecated; use 'featureWriters'",
-                str(w[-1].message))
-
-        with self.assertRaises(TypeError):
-            compileTTF(ufo, kernWriterClass=KernFeatureWriter,
+        with pytest.raises(TypeError):
+            compileTTF(testufo, kernWriterClass=KernFeatureWriter,
                        featureWriters=[MarkFeatureWriter])
 
-    def test_features(self):
+    def test_features(self, FontClass):
         """Checks how the compiler handles features.fea
 
         The compiler should detect which features are defined by the
@@ -75,64 +101,33 @@ class CompilerTest(unittest.TestCase):
 
         https://github.com/googlei18n/ufo2ft/issues/108
         """
-        self.expectTTX(compileTTF(loadUFO("Bug108.ufo")), "Bug108.ttx",
-                       tables=self._layoutTables)
+        ufo = FontClass(getpath("Bug108.ufo"))
+        ttf = compileTTF(ufo)
+        expectTTX(ttf, "Bug108.ttx", tables=self._layoutTables)
 
-    def test_mti_features(self):
+    def test_mti_features(self, FontClass):
         """Checks handling of UFOs with embdedded MTI/Monotype feature files
         https://github.com/googlei18n/fontmake/issues/289
         """
-        self.expectTTX(compileTTF(loadUFO("MTIFeatures.ufo")),
-                       "MTIFeatures.ttx", tables=self._layoutTables)
+        ufo = FontClass(getpath("MTIFeatures.ufo"))
+        ttf = compileTTF(ufo)
+        expectTTX(ttf, "MTIFeatures.ttx", tables=self._layoutTables)
 
-    def test_removeOverlaps_CFF(self):
-        self.expectTTX(compileOTF(loadUFO("TestFont.ufo"), removeOverlaps=True),
-                       "TestFont-NoOverlaps-CFF.ttx")
+    def test_removeOverlaps_CFF(self, testufo):
+        otf = compileOTF(testufo, removeOverlaps=True)
+        expectTTX(otf, "TestFont-NoOverlaps-CFF.ttx")
 
-    def test_removeOverlaps(self):
-        self.expectTTX(compileTTF(loadUFO("TestFont.ufo"), removeOverlaps=True),
-                       "TestFont-NoOverlaps-TTF.ttx")
+    def test_removeOverlaps(self, testufo):
+        ttf = compileTTF(testufo, removeOverlaps=True)
+        expectTTX(ttf, "TestFont-NoOverlaps-TTF.ttx")
 
-    def test_interpolatableTTFs_lazy(self):
+    def test_interpolatableTTFs_lazy(self, FontClass):
         # two same UFOs **must** be interpolatable
-        ufos = [loadUFO("TestFont.ufo") for _ in range(2)]
+        ufos = [FontClass(getpath("TestFont.ufo")) for _ in range(2)]
         ttfs = list(compileInterpolatableTTFs(ufos))
-        self.expectTTX(ttfs[0], "TestFont.ttx")
-        self.expectTTX(ttfs[1], "TestFont.ttx")
-
-    def _temppath(self, suffix):
-        if not self._tempdir:
-            self._tempdir = tempfile.mkdtemp()
-        self._num_tempfiles += 1
-        return os.path.join(self._tempdir,
-                            "tmp%d%s" % (self._num_tempfiles, suffix))
-
-    def _readTTX(self, path):
-        lines = []
-        with open(path, "r", encoding="utf-8") as ttx:
-            for line in ttx.readlines():
-                # Elide ttLibVersion because it frequently changes.
-                # Use os-native line separators so we can run difflib.
-                if line.startswith("<ttFont "):
-                    lines.append("<ttFont>" + os.linesep)
-                else:
-                    lines.append(line.rstrip() + os.linesep)
-        return lines
-
-    def expectTTX(self, font, expectedTTX, tables=None):
-        expected = self._readTTX(getpath(expectedTTX))
-        font.recalcTimestamp = False
-        font['head'].created, font['head'].modified = 3570196637, 3601822698
-        font['head'].checkSumAdjustment = 0x12345678
-        path = self._temppath(suffix=".ttx")
-        font.saveXML(path, tables=tables)
-        actual = self._readTTX(path)
-        if actual != expected:
-            for line in difflib.unified_diff(
-                    expected, actual, fromfile=expectedTTX, tofile=path):
-                sys.stderr.write(line)
-            self.fail("TTX output is different from expected")
+        expectTTX(ttfs[0], "TestFont.ttx")
+        expectTTX(ttfs[1], "TestFont.ttx")
 
 
 if __name__ == "__main__":
-    sys.exit(unittest.main())
+    sys.exit(pytest.main(sys.argv))
