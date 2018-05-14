@@ -1,5 +1,8 @@
 from __future__ import print_function, division, absolute_import
-import inspect
+try:
+    from inspect import getfullargspec as getargspec  # PY3
+except ImportError:
+    from inspect import getargspec  # PY2
 from copy import deepcopy
 
 
@@ -40,7 +43,7 @@ def copyGlyphSet(font, layerName=None):
     # defcon.Glyph doesn't take a name argument, ufoLib2 requires one...
     g = next(iter(layer))
     cls = g.__class__
-    if "name" in inspect.getfullargspec(cls.__init__).args:
+    if "name" in getargspec(cls.__init__).args:
         def newGlyph(name):
             return cls(name=name)
     else:
