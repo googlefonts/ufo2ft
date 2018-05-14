@@ -2,6 +2,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
+from ufo2ft.maxContextCalc import maxCtxFont
 
 
 UFO2FT_PREFIX = 'com.github.googlei18n.ufo2ft.'
@@ -39,6 +40,8 @@ class PostProcessor(object):
         if optimizeCFF and 'CFF ' in self.otf:
             from compreffor import compress
             compress(self.otf)
+        if 'OS/2' in self.otf:
+            self.otf['OS/2'].usMaxContext = maxCtxFont(self.otf)
         return self.otf
 
     def _rename_glyphs_from_ufo(self):
