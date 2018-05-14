@@ -1,6 +1,9 @@
-fonttools==3.23.0
+fonttools==3.26.0
 ufoLib==2.1.1
 defcon==0.5.1
 cu2qu==1.5.0
 compreffor==0.4.6
 booleanOperations==0.8.0
+
+# alternative UFO implementation (still experimental)
+-e git+https://github.com/fonttools/ufoLib2.git#egg=ufoLib2
