@@ -12,7 +12,6 @@ from fontTools import mtiLib
 
 from ufo2ft.featureWriters import (
     KernFeatureWriter, MarkFeatureWriter, loadFeatureWriters)
-from ufo2ft.maxContextCalc import maxCtxFont
 from ufo2ft.util import parseLayoutFeatures
 
 
@@ -24,20 +23,28 @@ class BaseFeatureCompiler(object):
     layout tables from these.
     """
 
-    def __init__(self, ufo, ttFont, glyphSet=None, **kwargs):
+    def __init__(self, ufo, ttFont=None, glyphSet=None, **kwargs):
         """
         Args:
           ufo: an object representing a UFO (defcon.Font or equivalent)
             containing the features source data.
           ttFont: a fontTools TTFont object where the generated OpenType
-            tables are added.
+            tables are added. If None, an empty TTFont is used, with
+            the same glyph order as the ufo object.
           glyphSet: a (optional) dict containing pre-processed copies of
             the UFO glyphs.
         """
         self.ufo = ufo
+
+        if ttFont is None:
+            from fontTools.ttLib import TTFont
+            from ufo2ft.util import makeOfficialGlyphOrder
+            ttFont = TTFont()
+            ttFont.setGlyphOrder(makeOfficialGlyphOrder(ufo))
         self.ttFont = ttFont
+
         if glyphSet is not None:
-            assert set(ttFont.getGlyphOrder()) == glyphSet.keys()
+            assert set(ttFont.getGlyphOrder()) == set(glyphSet.keys())
             self.glyphSet = glyphSet
         else:
             self.glyphSet = ufo
@@ -59,19 +66,10 @@ class BaseFeatureCompiler(object):
         """
         raise NotImplementedError
 
-    def postProcess(self):
-        """Make post-compilation calculations.
-
-        **This should not be called externally.** Subclasses
-        can override this method.
-        """
-        # only after compiling features can usMaxContext be calculated
-        self.ttFont['OS/2'].usMaxContext = maxCtxFont(self.ttFont)
-
     def compile(self):
         self.setupFile_features()
         self.setupFile_featureTables()
-        self.postProcess()
+        return self.ttFont
 
 
 class FeatureCompiler(BaseFeatureCompiler):
@@ -84,7 +82,8 @@ class FeatureCompiler(BaseFeatureCompiler):
         MarkFeatureWriter,
     ]
 
-    def __init__(self, ufo, ttFont,
+    def __init__(self, ufo,
+                 ttFont=None,
                  glyphSet=None,
                  featureWriters=None,
                  **kwargs):
@@ -200,13 +199,3 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
             table = mtiLib.build(features.splitlines(), self.ttFont)
             assert table.tableTag == tag
             self.ttFont[tag] = table
-
-
-def getDefaultFeatureCompiler(ufo):
-    """ If font has any MTI feature file return MtiFeatureCompiler,
-    else return the default (FEA) FeatureCompiler.
-    """
-    if any(fn.startswith(MTI_FEATURES_PREFIX) and fn.endswith(".mti")
-           for fn in ufo.data.fileNames):
-        return MtiFeatureCompiler
-    return FeatureCompiler

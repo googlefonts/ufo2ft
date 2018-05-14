@@ -6,7 +6,8 @@ from fontTools.misc.py23 import *
 
 from ufo2ft.preProcessor import (
     OTFPreProcessor, TTFPreProcessor, TTFInterpolatablePreProcessor)
-from ufo2ft.featureCompiler import getDefaultFeatureCompiler
+from ufo2ft.featureCompiler import (
+    FeatureCompiler, MtiFeatureCompiler, MTI_FEATURES_PREFIX)
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 
@@ -59,13 +60,11 @@ def compileOTF(ufo, preProcessorClass=OTFPreProcessor,
         roundTolerance=roundTolerance)
     otf = outlineCompiler.compile()
 
-    if featureCompilerClass is None:
-        featureCompilerClass = getDefaultFeatureCompiler(ufo)
-    featureCompiler = featureCompilerClass(
+    compileFeatures(
         ufo, otf,
         glyphSet=glyphSet,
-        featureWriters=featureWriters)
-    featureCompiler.compile()
+        featureWriters=featureWriters,
+        featureCompilerClass=featureCompilerClass)
 
     postProcessor = PostProcessor(otf, ufo)
     otf = postProcessor.process(useProductionNames, optimizeCFF)
@@ -103,13 +102,11 @@ def compileTTF(ufo, preProcessorClass=TTFPreProcessor,
         ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
     otf = outlineCompiler.compile()
 
-    if featureCompilerClass is None:
-        featureCompilerClass = getDefaultFeatureCompiler(ufo)
-    featureCompiler = featureCompilerClass(
+    compileFeatures(
         ufo, otf,
         glyphSet=glyphSet,
-        featureWriters=featureWriters)
-    featureCompiler.compile()
+        featureWriters=featureWriters,
+        featureCompilerClass=featureCompilerClass)
 
     postProcessor = PostProcessor(otf, ufo)
     otf = postProcessor.process(useProductionNames)
@@ -144,15 +141,37 @@ def compileInterpolatableTTFs(ufos,
             ufo, glyphSet=glyphSet, glyphOrder=glyphOrder)
         ttf = outlineCompiler.compile()
 
-        if featureCompilerClass is None:
-            featureCompilerClass = getDefaultFeatureCompiler(ufo)
-        featureCompiler = featureCompilerClass(
+        compileFeatures(
             ufo, ttf,
             glyphSet=glyphSet,
-            featureWriters=featureWriters)
-        featureCompiler.compile()
+            featureWriters=featureWriters,
+            featureCompilerClass=featureCompilerClass)
 
         postProcessor = PostProcessor(ttf, ufo)
         ttf = postProcessor.process(useProductionNames)
 
         yield ttf
+
+
+def compileFeatures(ufo, ttFont=None, glyphSet=None, featureWriters=None,
+                    featureCompilerClass=None):
+    """ Compile OpenType Layout features from `ufo` into FontTools OTL tables.
+    If `ttFont` is None, a new TTFont object is created containing the new
+    tables, else the provided `ttFont` is updated with the new tables.
+
+    If no explicit `featureCompilerClass` is provided, the one used will
+    depend on whether the ufo contains any MTI feature files in its 'data'
+    directory (thus the `MTIFeatureCompiler` is used) or not (then the
+    default FeatureCompiler for Adobe FDK features is used).
+    """
+    if featureCompilerClass is None:
+        if any(fn.startswith(MTI_FEATURES_PREFIX) and fn.endswith(".mti")
+               for fn in ufo.data.fileNames):
+            featureCompilerClass = MtiFeatureCompiler
+        else:
+            featureCompilerClass = FeatureCompiler
+    featureCompiler = featureCompilerClass(
+        ufo, ttFont,
+        glyphSet=glyphSet,
+        featureWriters=featureWriters)
+    return featureCompiler.compile()
