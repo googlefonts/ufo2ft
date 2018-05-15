@@ -1,6 +1,7 @@
 from __future__ import (
     print_function, division, absolute_import, unicode_literals)
 from fontTools.misc.py23 import SimpleNamespace
+from fontTools import unicodedata
 from fontTools.feaLib import ast
 import collections
 import re
@@ -125,17 +126,35 @@ class BaseFeatureWriter(object):
 
     # ast helpers
 
+    @staticmethod
+    def getLanguageSystems(feaFile):
+        """Return dictionary keyed by Unicode script code containing lists of
+        (OT_SCRIPT_TAG, [OT_LANGUAGE_TAG, ...]) tuples (excluding "DFLT").
+        """
+        languagesByScript = collections.OrderedDict()
+        for ls in [st for st in feaFile.statements
+                   if isinstance(st, ast.LanguageSystemStatement)]:
+            if ls.script == "DFLT":
+                continue
+            languagesByScript.setdefault(ls.script, []).append(ls.language)
+
+        langSysMap = collections.OrderedDict()
+        for script, languages in languagesByScript.items():
+            sc = unicodedata.ot_tag_to_script(script)
+            langSysMap.setdefault(sc, []).append((script, languages))
+        return langSysMap
+
+    @staticmethod
+    def findFeatureTags(feaFile):
+        return {f.name for f in feaFile.statements
+                if isinstance(f, ast.FeatureBlock)}
+
     LOOKUP_FLAGS = {
         "RightToLeft": 1,
         "IgnoreBaseGlyphs": 2,
         "IgnoreLigatures": 4,
         "IgnoreMarks": 8,
     }
-
-    @staticmethod
-    def findFeatureTags(feaFile):
-        return {f.name for f in feaFile.statements
-                if isinstance(f, ast.FeatureBlock)}
 
     @classmethod
     def makeLookupFlag(cls, name=None, markAttachment=None,
@@ -158,13 +177,12 @@ class BaseFeatureWriter(object):
     def makeGlyphClassDefinitions(cls, groups, stripPrefix=""):
         """ Given a groups dictionary ({str: list[str]}), create feaLib
         GlyphClassDefinition objects for each group.
-        Return an OrderedDict (sorted alphabetically) keyed by the original
-        group name.
+        Return a dict keyed by the original group name.
 
         If `stripPrefix` (str) is provided and a group name starts with it,
         the string will be stripped from the beginning of the class name.
         """
-        classDefs = collections.OrderedDict()
+        classDefs = {}
         classNames = set()
         lengthPrefix = len(stripPrefix)
         for groupName, members in sorted(groups.items()):
@@ -202,25 +220,22 @@ class BaseFeatureWriter(object):
         return name
 
     @staticmethod
-    def addLookupReference(feature, lookup, languageSystems=None):
+    def addLookupReference(feature, lookup, script=None, languages=None):
         """Add reference to a named lookup to the feature's statements.
-        If 'languageSystems' is provided, only register the named lookup for
-        the given scripts and languages; otherwise add a global reference
-        which will be registered for all the scripts and languages in the
-        feature file's `languagesystems` statements.
-
-        Language systems are passed in as an ordered dictionary mapping
-        scripts to lists of languages.
+        If `script` (str) and `languages` (sequence of str) are provided,
+        only register the lookup for the given script and languages;
+        otherwise add a global reference which will be registered for all
+        the scripts and languages in the feature file's `languagesystems`
+        statements.
         """
-        if not languageSystems:
+        if not script:
             feature.statements.append(
                 ast.LookupReferenceStatement(lookup))
             return
 
-        for script, languages in languageSystems.items():
-            feature.statements.append(ast.ScriptStatement(script))
-            for language in languages:
-                feature.statements.append(
-                    ast.LanguageStatement(language, include_default=False))
-                feature.statements.append(
-                    ast.LookupReferenceStatement(lookup))
+        feature.statements.append(ast.ScriptStatement(script))
+        for language in languages or ("dflt",):
+            feature.statements.append(
+                ast.LanguageStatement(language, include_default=False))
+            feature.statements.append(
+                ast.LookupReferenceStatement(lookup))
