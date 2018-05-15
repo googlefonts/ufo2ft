@@ -95,18 +95,17 @@ class KernFeatureWriter(BaseFeatureWriter):
         # write the lookups and feature
         ltrScripts = self.context.ltrScripts
         ltrKern = []
-        if ltrScripts or not rtlScripts:
-            self._addKerning(ltrKern,
-                             self.context.glyphPairKerning)
-            self._addKerning(ltrKern,
-                             self.context.leftClassKerning,
-                             enum=True)
-            self._addKerning(ltrKern,
-                             self.context.rightClassKerning,
-                             enum=True)
-            self._addKerning(ltrKern,
-                             self.context.classPairKerning,
-                             ignoreZero=True)
+        self._addKerning(ltrKern,
+                         self.context.glyphPairKerning)
+        self._addKerning(ltrKern,
+                         self.context.leftClassKerning,
+                         enum=True)
+        self._addKerning(ltrKern,
+                         self.context.rightClassKerning,
+                         enum=True)
+        self._addKerning(ltrKern,
+                         self.context.classPairKerning,
+                         ignoreZero=True)
         if ltrKern:
             lines.append("lookup kern_ltr {")
             if self.options.ignoreMarks:
@@ -147,11 +146,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         lines.append("feature kern {")
         if ltrKern:
             lines.append("    lookup kern_ltr;")
-        if rtlScripts:
-            if ltrKern:
-                self._addLookupReferences(lines, ltrScripts, "kern_ltr")
-            if rtlKern:
-                self._addLookupReferences(lines, rtlScripts, "kern_rtl")
+        if rtlKern:
+            self._addLookupReferences(lines, rtlScripts, "kern_rtl")
         lines.append("} kern;")
 
         return self.linesep.join(lines)
