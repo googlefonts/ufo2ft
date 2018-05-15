@@ -43,7 +43,7 @@ def expectTTX(font, expectedTTX, tables=None):
     actual = readLines(f)
     if actual != expected:
         for line in difflib.unified_diff(
-                expected, actual, fromfile=expectedTTX, tofile=path):
+                expected, actual, fromfile=expectedTTX, tofile="<generated>"):
             sys.stderr.write(line)
         pytest.fail("TTX output is different from expected")
 
