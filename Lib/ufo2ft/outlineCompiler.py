@@ -506,10 +506,14 @@ class BaseOutlineCompiler(object):
         os2.panose = panose
         # Unicode ranges
         uniRanges = getAttrWithFallback(font.info, "openTypeOS2UnicodeRanges")
-        os2.ulUnicodeRange1 = intListToNum(uniRanges, 0, 32)
-        os2.ulUnicodeRange2 = intListToNum(uniRanges, 32, 32)
-        os2.ulUnicodeRange3 = intListToNum(uniRanges, 64, 32)
-        os2.ulUnicodeRange4 = intListToNum(uniRanges, 96, 32)
+        if uniRanges is not None:
+            os2.ulUnicodeRange1 = intListToNum(uniRanges, 0, 32)
+            os2.ulUnicodeRange2 = intListToNum(uniRanges, 32, 32)
+            os2.ulUnicodeRange3 = intListToNum(uniRanges, 64, 32)
+            os2.ulUnicodeRange4 = intListToNum(uniRanges, 96, 32)
+        else:
+            os2.recalcUnicodeRanges(self.otf)
+
         # codepage ranges
         codepageRanges = getAttrWithFallback(font.info, "openTypeOS2CodePageRanges")
         os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
