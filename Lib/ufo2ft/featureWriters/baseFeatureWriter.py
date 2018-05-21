@@ -97,7 +97,7 @@ class BaseFeatureWriter(object):
 
         return self.context
 
-    def canContinue(self):
+    def shouldContinue(self):
         """ Decide whether to start generating features or return early.
         Returns a boolean: True to proceed, False to skip.
 
@@ -117,7 +117,7 @@ class BaseFeatureWriter(object):
         """
         self.setContext(font, feaFile, compiler=compiler)
         try:
-            if self.canContinue():
+            if self.shouldContinue():
                 return self._write()
             else:
                 return False
