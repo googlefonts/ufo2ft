@@ -4,11 +4,9 @@ try:
 except ImportError:
     from inspect import getargspec  # PY2
 from copy import deepcopy
-from fontTools.misc.py23 import tounicode, UnicodeIO
-from fontTools import feaLib
-import os
 from fontTools import ttLib
 from fontTools import subset
+from fontTools.feaLib.builder import addOpenTypeFeatures
 import logging
 
 
@@ -99,43 +97,14 @@ def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
     return mapping
 
 
-def parseLayoutFeatures(font):
-    """ Parse OpenType layout features in the UFO and return a
-    feaLib.ast.FeatureFile instance.
-    """
-    featxt = tounicode(font.features.text or "", "utf-8")
-    if not featxt:
-        return feaLib.ast.FeatureFile()
-    buf = UnicodeIO(featxt)
-    # the path is used by the lexer to resolve 'include' statements
-    # and print filename in error messages. For the UFO spec, this
-    # should be the path of the UFO, not the inner features.fea:
-    # https://github.com/unified-font-object/ufo-spec/issues/55
-    ufoPath = font.path
-    if ufoPath is not None:
-        buf.name = ufoPath
-    glyphNames = set(font.keys())
-    parser = feaLib.parser.Parser(buf, glyphNames)
-    try:
-        doc = parser.parse()
-    except feaLib.error.IncludedFeaNotFound as e:
-        if ufoPath and os.path.exists(os.path.join(ufoPath), e.args[0]):
-            logger.warning("Please change the file name in the include(...); "
-                           "statement to be relative to the UFO itself, "
-                           "instead of relative to the 'features.fea' file "
-                           "contained in it.")
-        raise
-    return doc
-
-
 def compileGSUB(featureFile, glyphOrder):
     """ Compile and return a GSUB table from `featureFile` (feaLib
     FeatureFile), using the given `glyphOrder` (list of glyph names).
     """
     font = ttLib.TTFont()
     font.setGlyphOrder(glyphOrder)
-    feaLib.builder.addOpenTypeFeatures(font, featureFile, tables={"GSUB"})
-    return font["GSUB"]
+    addOpenTypeFeatures(font, featureFile, tables={"GSUB"})
+    return font.get("GSUB")
 
 
 def closeGlyphsOverGSUB(gsub, glyphs):
@@ -147,3 +116,36 @@ def closeGlyphsOverGSUB(gsub, glyphs):
     subsetter = subset.Subsetter()
     subsetter.glyphs = glyphs
     gsub.closure_glyphs(subsetter)
+
+
+def classifyGlyphs(unicodeFunc, cmap, gsub=None):
+    """ 'unicodeFunc' is a callable that takes a Unicode codepoint and
+    returns a string denoting some Unicode property associated with the
+    given character (or None if a character is considered 'neutral').
+    'cmap' is a dictionary mapping Unicode codepoints to glyph names.
+    'gsub' is an (optional) fonttools GSUB table object, used to find all
+    the glyphs that are "reachable" via substitutions from the initial
+    sets of glyphs defined in the cmap.
+
+    Returns a dictionary of glyph sets associated with the given Unicode
+    properties.
+    """
+    glyphSets = {}
+    neutralGlyphs = set()
+    for uv, glyphName in cmap.items():
+        key = unicodeFunc(uv)
+        if key is None:
+            neutralGlyphs.add(glyphName)
+        else:
+            glyphSets.setdefault(key, set()).add(glyphName)
+
+    if gsub is not None:
+        if neutralGlyphs:
+            closeGlyphsOverGSUB(gsub, neutralGlyphs)
+
+        for glyphs in glyphSets.values():
+            s = glyphs | neutralGlyphs
+            closeGlyphsOverGSUB(gsub, s)
+            glyphs.update(s - neutralGlyphs)
+
+    return glyphSets
