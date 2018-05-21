@@ -49,13 +49,16 @@ def loadFeatureWriters(ufo):
             className = wdict["class"]
             options = wdict.get("options", {})
             if not isinstance(options, dict):
-                raise TypeError("expected options dict, found %s"
-                                % type(options).__name__)
+                raise TypeError(
+                    "expected options dict, found %s" % type(options).__name__
+                )
             module = importlib.import_module(moduleName)
             klass = getattr(module, className)
-            if not (isclass(klass) and hasattr(klass, 'write')):
-                raise TypeError("expected feature writer class, found %s"
-                                % type(klass).__name__)
+            if not (isclass(klass) and hasattr(klass, "write")):
+                raise TypeError(
+                    "expected feature writer class, found %s"
+                    % type(klass).__name__
+                )
             writer = klass(**options)
         except (KeyError, ImportError, AttributeError, TypeError, ValueError):
             logger.exception("failed to load feature writer: %r", wdict)
