@@ -172,23 +172,41 @@ class FeatureCompiler(BaseFeatureCompiler):
             import warnings
 
             warnings.warn(
-                "mtiFeatures argument is deprecated; "
-                "use MtiLibFeatureCompiler",
+                "mtiFeatures argument is ignored; "
+                "you should use MtiLibFeatureCompiler",
                 category=UserWarning,
                 stacklevel=2,
             )
 
     def initFeatureWriters(self, featureWriters=None):
+        """ Initialize feature writer classes as specified in the UFO lib.
+        If none are defined in the UFO, the default feature writers are used:
+        currently, KernFeatureWriter and MarkFeatureWriter.
+        The 'featureWriters' argument can be used to override these.
+        The method sets the `self.featureWriters` attribute with the list of
+        writers.
+
+        Note that the writers that generate GSUB features are placed first in
+        this list, before all others. This is because the GSUB table may be
+        used in the subsequent feature writers to resolve substitutions from
+        glyphs with unicodes to their alternates.
+        """
         if featureWriters is None:
             featureWriters = loadFeatureWriters(self.ufo)
             if featureWriters is None:
                 featureWriters = self.defaultFeatureWriters
 
-        self.featureWriters = []
+        gsubWriters = []
+        others = []
         for writer in featureWriters:
             if isclass(writer):
                 writer = writer()
-            self.featureWriters.append(writer)
+            if writer.tableTag == "GSUB":
+                gsubWriters.append(writer)
+            else:
+                others.append(writer)
+
+        self.featureWriters = gsubWriters + others
 
     def setupFeatures(self):
         """
