@@ -358,17 +358,14 @@ class MarkFeatureWriter(BaseFeatureWriter):
         feaFile = self.context.feaFile
         # dict of mark classes defined in the feature file keyed by name
         markClasses = feaFile.markClasses
-
         markClassDefs = self._makeMarkClassDefinitions(markClasses)
+
         features = {}
-        if "mark" in self.context.todo:
-            mark = self._makeMarkFeature(markClasses, isMkmk=False)
-            if mark is not None:
-                features["mark"] = mark
-        if "mkmk" in self.context.todo:
-            mkmk = self._makeMarkFeature(markClasses, isMkmk=True)
-            if mkmk is not None:
-                features["mkmk"] = mkmk
+        for tag in ("mark", "mkmk"):
+            if tag in self.context.todo:
+                f = self._makeMarkFeature(markClasses, isMkmk=(tag == "mkmk"))
+                if f is not None:
+                    features[tag] = f
         if not features:
             return False
 
