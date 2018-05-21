@@ -1,5 +1,9 @@
-from __future__ import \
-    print_function, division, absolute_import, unicode_literals
+from __future__ import (
+    print_function,
+    division,
+    absolute_import,
+    unicode_literals,
+)
 import logging
 import os
 from inspect import isclass
@@ -12,7 +16,11 @@ from fontTools.feaLib.error import IncludedFeaNotFound, FeatureLibError
 from fontTools import mtiLib
 
 from ufo2ft.featureWriters import (
-    KernFeatureWriter, MarkFeatureWriter, loadFeatureWriters, ast)
+    KernFeatureWriter,
+    MarkFeatureWriter,
+    loadFeatureWriters,
+    ast,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -39,10 +47,12 @@ def parseLayoutFeatures(font):
         doc = parser.parse()
     except IncludedFeaNotFound as e:
         if ufoPath and os.path.exists(os.path.join(ufoPath), e.args[0]):
-            logger.warning("Please change the file name in the include(...); "
-                           "statement to be relative to the UFO itself, "
-                           "instead of relative to the 'features.fea' file "
-                           "contained in it.")
+            logger.warning(
+                "Please change the file name in the include(...); "
+                "statement to be relative to the UFO itself, "
+                "instead of relative to the 'features.fea' file "
+                "contained in it."
+            )
         raise
     return doc
 
@@ -68,6 +78,7 @@ class BaseFeatureCompiler(object):
         if ttFont is None:
             from fontTools.ttLib import TTFont
             from ufo2ft.util import makeOfficialGlyphOrder
+
             ttFont = TTFont()
             ttFont.setGlyphOrder(makeOfficialGlyphOrder(ufo))
         self.ttFont = ttFont
@@ -122,8 +133,12 @@ class BaseFeatureCompiler(object):
 
 def _deprecateMethod(arg, repl):
     import warnings
-    warnings.warn("%r method is deprecated; use %r instead" % (arg, repl),
-                  category=UserWarning, stacklevel=3)
+
+    warnings.warn(
+        "%r method is deprecated; use %r instead" % (arg, repl),
+        category=UserWarning,
+        stacklevel=3,
+    )
 
 
 class FeatureCompiler(BaseFeatureCompiler):
@@ -131,16 +146,11 @@ class FeatureCompiler(BaseFeatureCompiler):
     Feature File stored in the UFO, using fontTools.feaLib as compiler.
     """
 
-    defaultFeatureWriters = [
-        KernFeatureWriter,
-        MarkFeatureWriter,
-    ]
+    defaultFeatureWriters = [KernFeatureWriter, MarkFeatureWriter]
 
-    def __init__(self, ufo,
-                 ttFont=None,
-                 glyphSet=None,
-                 featureWriters=None,
-                 **kwargs):
+    def __init__(
+        self, ufo, ttFont=None, glyphSet=None, featureWriters=None, **kwargs
+    ):
         """
         Args:
           featureWriters: a list of BaseFeatureWriter subclasses or
@@ -160,9 +170,13 @@ class FeatureCompiler(BaseFeatureCompiler):
 
         if kwargs.get("mtiFeatures") is not None:
             import warnings
-            warnings.warn("mtiFeatures argument is deprecated; "
-                          "use MtiLibFeatureCompiler",
-                          category=UserWarning, stacklevel=2)
+
+            warnings.warn(
+                "mtiFeatures argument is deprecated; "
+                "use MtiLibFeatureCompiler",
+                category=UserWarning,
+                stacklevel=2,
+            )
 
     def initFeatureWriters(self, featureWriters=None):
         if featureWriters is None:
@@ -194,8 +208,7 @@ class FeatureCompiler(BaseFeatureCompiler):
             self.features = featureFile.asFea()
         else:
             # no featureWriters, simply read existing features' text
-            self.features = tounicode(
-                self.ufo.features.text or "", "utf-8")
+            self.features = tounicode(self.ufo.features.text or "", "utf-8")
 
     def buildTables(self):
         """
@@ -215,16 +228,18 @@ class FeatureCompiler(BaseFeatureCompiler):
         # resolved, and we work from a string which does't exist on disk
         path = self.ufo.path if not self.featureWriters else None
         try:
-            addOpenTypeFeaturesFromString(self.ttFont, self.features,
-                                          filename=path)
+            addOpenTypeFeaturesFromString(
+                self.ttFont, self.features, filename=path
+            )
         except FeatureLibError:
             if path is None:
                 # if compilation fails, create temporary file for inspection
                 data = tobytes(self.features, encoding="utf-8")
                 with NamedTemporaryFile(delete=False) as tmp:
                     tmp.write(data)
-                logger.error("Compilation failed! Inspect temporary file: %r",
-                             tmp.name)
+                logger.error(
+                    "Compilation failed! Inspect temporary file: %r", tmp.name
+                )
             raise
 
 
