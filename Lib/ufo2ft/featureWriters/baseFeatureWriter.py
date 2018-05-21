@@ -1,16 +1,24 @@
 from __future__ import (
-    print_function, division, absolute_import, unicode_literals)
+    print_function,
+    division,
+    absolute_import,
+    unicode_literals,
+)
 from fontTools.misc.py23 import SimpleNamespace
 from fontTools import unicodedata
-from fontTools.feaLib import ast
 import collections
 import re
+import logging
 
-from ufo2ft.util import compileGSUB
+from ufo2ft.featureWriters import ast
 
 
 class BaseFeatureWriter(object):
     """Abstract features writer.
+
+    The `tableTag` class attribute (str) states the tag of the OpenType
+    Layout table which the generated features are intended for.
+    For example: "GPOS", "GSUB", "BASE", etc.
 
     The `features` class attribute defines the set of all the features
     that this writer supports. If you want to only write some of the
@@ -31,6 +39,7 @@ class BaseFeatureWriter(object):
     instance by passing keyword arguments to the constructor.
     """
 
+    tableTag = None
     features = frozenset()
     mode = "skip"
     options = {}
@@ -58,18 +67,47 @@ class BaseFeatureWriter(object):
             options[k] = kwargs[k]
         self.options = SimpleNamespace(**options)
 
-    def set_context(self, font, compiler=None):
+        logger = ".".join([self.__class__.__module__, self.__class__.__name__])
+        self.log = logging.getLogger(logger)
+
+    def setContext(self, font, feaFile, compiler=None):
         """ Populate a temporary `self.context` namespace, which is reset
-        before each new call to `_write` method.
+        after each new call to `_write` method.
         Subclasses can override this to provide contextual information
-        which depends on other data in the font, or set any other
-        temporary attributes.
-        The default implementation simply sets the current font, a compiler
-        instance (optional, when called from FeatureCompiler), and returns
-        the namepace instance.
+        which depends on other data, or set any temporary attributes.
+
+        The default implementation sets:
+        - the current font;
+        - the current FeatureFile object;
+        - the current compiler instance (only present when this writer was
+          instantiated from a FeatureCompiler);
+        - a set of features (tags) to be generated. If self.mode is "skip",
+          these are all the features which are _not_ already present.
+
+        Returns the context namespace instance.
         """
-        self.context = SimpleNamespace(font=font, compiler=compiler)
+        todo = set(self.features)
+        if self.mode == "skip":
+            existing = ast.findFeatureTags(feaFile)
+            todo.difference_update(existing)
+
+        self.context = SimpleNamespace(
+            font=font, feaFile=feaFile, compiler=compiler, todo=todo
+        )
+
         return self.context
+
+    def canContinue(self):
+        """ Decide whether to start generating features or return early.
+        Returns a boolean: True to proceed, False to skip.
+
+        Sublcasses may override this to skip generation based on the presence
+        or lack of other required pieces of font data.
+        """
+        if not self.context.todo:
+            self.log.debug("No features to be generated; skipped")
+            return False
+        return True
 
     def write(self, font, feaFile, compiler=None):
         """Write features and class definitions for this font to a feaLib
@@ -77,18 +115,16 @@ class BaseFeatureWriter(object):
         Returns True if feature file was modified, False if no new features
         were generated.
         """
-        if self.mode == "skip":
-            existingFeatures = self.findFeatureTags(feaFile)
-            if existingFeatures.intersection(self.features):
-                return False
-
-        self.set_context(font, compiler=compiler)
+        self.setContext(font, feaFile, compiler=compiler)
         try:
-            return self._write(feaFile)
+            if self.canContinue():
+                return self._write()
+            else:
+                return False
         finally:
             del self.context
 
-    def _write(self, feaFile):
+    def _write(self):
         """Subclasses must override this."""
         raise NotImplementedError
 
@@ -106,136 +142,20 @@ class BaseFeatureWriter(object):
                 cmap = table.getBestCmap()
         if cmap is None:
             from ufo2ft.util import makeUnicodeToGlyphNameMapping
+
             cmap = makeUnicodeToGlyphNameMapping(self.context.font)
         return cmap
 
-    def compileGSUB(self, feaFile):
-        """Compile a temporary GSUB table from feature file, to be used
-        with the FontTools subsetter to find all the glyphs that are
-        "reachable" via substitutions from an initial set of glyphs
-        with specific unicode properties.
+    def compileGSUB(self):
+        """Compile a temporary GSUB table from the current feature file.
         """
+        from ufo2ft.util import compileGSUB
+
         compiler = self.context.compiler
         if compiler is not None:
             glyphOrder = compiler.ttFont.getGlyphOrder()
         else:
-            # the 'real' order doesn't matter because the table is meant to
-            # be thrown away
+            # the 'real' glyph order doesn't matter because the table is not
+            # compiled to binary, only the glyph names are used
             glyphOrder = sorted(self.context.font.keys())
-        return compileGSUB(feaFile, glyphOrder)
-
-    # ast helpers
-
-    @staticmethod
-    def getLanguageSystems(feaFile):
-        """Return dictionary keyed by Unicode script code containing lists of
-        (OT_SCRIPT_TAG, [OT_LANGUAGE_TAG, ...]) tuples (excluding "DFLT").
-        """
-        languagesByScript = collections.OrderedDict()
-        for ls in [st for st in feaFile.statements
-                   if isinstance(st, ast.LanguageSystemStatement)]:
-            if ls.script == "DFLT":
-                continue
-            languagesByScript.setdefault(ls.script, []).append(ls.language)
-
-        langSysMap = collections.OrderedDict()
-        for script, languages in languagesByScript.items():
-            sc = unicodedata.ot_tag_to_script(script)
-            langSysMap.setdefault(sc, []).append((script, languages))
-        return langSysMap
-
-    @staticmethod
-    def findFeatureTags(feaFile):
-        return {f.name for f in feaFile.statements
-                if isinstance(f, ast.FeatureBlock)}
-
-    LOOKUP_FLAGS = {
-        "RightToLeft": 1,
-        "IgnoreBaseGlyphs": 2,
-        "IgnoreLigatures": 4,
-        "IgnoreMarks": 8,
-    }
-
-    @classmethod
-    def makeLookupFlag(cls, name=None, markAttachment=None,
-                       markFilteringSet=None):
-        value = 0 if name is None else cls.LOOKUP_FLAGS[name]
-
-        if markAttachment is not None:
-            assert isinstance(markAttachment, ast.GlyphClassDefinition)
-            markAttachment = ast.GlyphClassName(markAttachment)
-
-        if markFilteringSet is not None:
-            assert isinstance(markFilteringSet, ast.GlyphClassDefinition)
-            markFilteringSet = ast.GlyphClassName(markFilteringSet)
-
-        return ast.LookupFlagStatement(value,
-                                       markAttachment=markAttachment,
-                                       markFilteringSet=markFilteringSet)
-
-    @classmethod
-    def makeGlyphClassDefinitions(cls, groups, stripPrefix=""):
-        """ Given a groups dictionary ({str: list[str]}), create feaLib
-        GlyphClassDefinition objects for each group.
-        Return a dict keyed by the original group name.
-
-        If `stripPrefix` (str) is provided and a group name starts with it,
-        the string will be stripped from the beginning of the class name.
-        """
-        classDefs = {}
-        classNames = set()
-        lengthPrefix = len(stripPrefix)
-        for groupName, members in sorted(groups.items()):
-            originalGroupName = groupName
-            if stripPrefix and groupName.startswith(stripPrefix):
-                groupName = groupName[lengthPrefix:]
-            className = cls.makeFeaClassName(groupName, classNames)
-            classNames.add(className)
-            classDef = cls.makeGlyphClassDefinition(className, members)
-            classDefs[originalGroupName] = classDef
-        return classDefs
-
-    @staticmethod
-    def makeGlyphClassDefinition(className, members):
-        glyphNames = [ast.GlyphName(g) for g in members]
-        glyphClass = ast.GlyphClass(glyphNames)
-        classDef = ast.GlyphClassDefinition(className, glyphClass)
-        return classDef
-
-    @staticmethod
-    def makeFeaClassName(name, existingClassNames=None):
-        """Make a glyph class name which is legal to use in feature text.
-
-        Ensures the name only includes characters in "A-Za-z0-9._", and
-        isn't already defined.
-        """
-        name = re.sub(r"[^A-Za-z0-9._]", r"", name)
-        if existingClassNames is None:
-            return name
-        i = 1
-        origName = name
-        while name in existingClassNames:
-            name = "%s_%d" % (origName, i)
-            i += 1
-        return name
-
-    @staticmethod
-    def addLookupReference(feature, lookup, script=None, languages=None):
-        """Add reference to a named lookup to the feature's statements.
-        If `script` (str) and `languages` (sequence of str) are provided,
-        only register the lookup for the given script and languages;
-        otherwise add a global reference which will be registered for all
-        the scripts and languages in the feature file's `languagesystems`
-        statements.
-        """
-        if not script:
-            feature.statements.append(
-                ast.LookupReferenceStatement(lookup))
-            return
-
-        feature.statements.append(ast.ScriptStatement(script))
-        for language in languages or ("dflt",):
-            feature.statements.append(
-                ast.LanguageStatement(language, include_default=False))
-            feature.statements.append(
-                ast.LookupReferenceStatement(lookup))
+        return compileGSUB(self.context.feaFile, glyphOrder)
