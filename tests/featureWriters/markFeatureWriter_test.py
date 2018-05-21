@@ -10,6 +10,7 @@ from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import MarkFeatureWriter, ast
 
 import pytest
+from . import FeatureWriterTest
 
 
 @pytest.fixture
@@ -28,19 +29,9 @@ def testufo(FontClass):
     return ufo
 
 
-class MarkFeatureWriterTest(object):
+class MarkFeatureWriterTest(FeatureWriterTest):
 
     FeatureWriter = MarkFeatureWriter
-
-    @classmethod
-    def writeFeatures(cls, ufo, **kwargs):
-        writer = cls.FeatureWriter(**kwargs)
-        feaFile = parseLayoutFeatures(ufo)
-        n = len(feaFile.statements)
-        if writer.write(ufo, feaFile):
-            new = ast.FeatureFile()
-            new.statements = feaFile.statements[n:]
-            return new
 
     def test__makeMarkClassDefinitions_empty(self, FontClass):
         ufo = FontClass()

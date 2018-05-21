@@ -11,6 +11,7 @@ from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
 
 import pytest
+from . import FeatureWriterTest
 
 
 def makeUFO(cls, glyphMap, groups=None, kerning=None, features=None):
@@ -54,19 +55,9 @@ def getPairPosRules(lookup):
     ]
 
 
-class KernFeatureWriterTest(object):
+class KernFeatureWriterTest(FeatureWriterTest):
 
     FeatureWriter = KernFeatureWriter
-
-    @classmethod
-    def writeFeatures(cls, ufo, **kwargs):
-        writer = cls.FeatureWriter(**kwargs)
-        feaFile = parseLayoutFeatures(ufo)
-        n = len(feaFile.statements)
-        if writer.write(ufo, feaFile):
-            new = ast.FeatureFile()
-            new.statements = feaFile.statements[n:]
-            return new
 
     def test_cleanup_missing_glyphs(self, FontClass):
         groups = {
