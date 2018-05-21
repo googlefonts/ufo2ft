@@ -5,17 +5,46 @@ import os
 from inspect import isclass
 from tempfile import NamedTemporaryFile
 
-from fontTools.misc.py23 import tobytes, tounicode
+from fontTools.misc.py23 import tobytes, tounicode, UnicodeIO
+from fontTools.feaLib.parser import Parser
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
-from fontTools.feaLib.error import FeatureLibError
+from fontTools.feaLib.error import IncludedFeaNotFound, FeatureLibError
 from fontTools import mtiLib
 
 from ufo2ft.featureWriters import (
-    KernFeatureWriter, MarkFeatureWriter, loadFeatureWriters)
-from ufo2ft.util import parseLayoutFeatures
+    KernFeatureWriter, MarkFeatureWriter, loadFeatureWriters, ast)
 
 
 logger = logging.getLogger(__name__)
+
+
+def parseLayoutFeatures(font):
+    """ Parse OpenType layout features in the UFO and return a
+    feaLib.ast.FeatureFile instance.
+    """
+    featxt = tounicode(font.features.text or "", "utf-8")
+    if not featxt:
+        return ast.FeatureFile()
+    buf = UnicodeIO(featxt)
+    # the path is used by the lexer to resolve 'include' statements
+    # and print filename in error messages. For the UFO spec, this
+    # should be the path of the UFO, not the inner features.fea:
+    # https://github.com/unified-font-object/ufo-spec/issues/55
+    ufoPath = font.path
+    if ufoPath is not None:
+        buf.name = ufoPath
+    glyphNames = set(font.keys())
+    parser = Parser(buf, glyphNames)
+    try:
+        doc = parser.parse()
+    except IncludedFeaNotFound as e:
+        if ufoPath and os.path.exists(os.path.join(ufoPath), e.args[0]):
+            logger.warning("Please change the file name in the include(...); "
+                           "statement to be relative to the UFO itself, "
+                           "instead of relative to the 'features.fea' file "
+                           "contained in it.")
+        raise
+    return doc
 
 
 class BaseFeatureCompiler(object):
@@ -49,16 +78,15 @@ class BaseFeatureCompiler(object):
         else:
             self.glyphSet = ufo
 
-    def setupFile_features(self):
-        """
-        Make the features source file.
+    def setupFeatures(self):
+        """ Make the features source.
 
         **This should not be called externally.** Subclasses
-        may override this method.
+        must override this method.
         """
         raise NotImplementedError
 
-    def setupFile_featureTables(self):
+    def buildTables(self):
         """ Compile OpenType feature tables from the source.
 
         **This should not be called externally.** Subclasses
@@ -66,10 +94,36 @@ class BaseFeatureCompiler(object):
         """
         raise NotImplementedError
 
+    def setupFile_features(self):
+        """ DEPRECATED. Use 'setupFeatures' instead. """
+        _deprecateMethod("setupFile_features", "setupFeatures")
+        self.setupFeatures()
+
+    def setupFile_featureTables(self):
+        """ DEPRECATED. Use 'setupFeatures' instead. """
+        _deprecateMethod("setupFile_featureTables", "buildTables")
+        self.buildTables()
+
     def compile(self):
-        self.setupFile_features()
-        self.setupFile_featureTables()
+        if "setupFile_features" in self.__class__.__dict__:
+            _deprecateMethod("setupFile_features", "setupFeatures")
+            self.setupFile_features()
+        else:
+            self.setupFeatures()
+
+        if "setupFile_featureTables" in self.__class__.__dict__:
+            _deprecateMethod("setupFile_featureTables", "buildTables")
+            self.setupFile_featureTables()
+        else:
+            self.buildTables()
+
         return self.ttFont
+
+
+def _deprecateMethod(arg, repl):
+    import warnings
+    warnings.warn("%r method is deprecated; use %r instead" % (arg, repl),
+                  category=UserWarning, stacklevel=3)
 
 
 class FeatureCompiler(BaseFeatureCompiler):
@@ -122,9 +176,9 @@ class FeatureCompiler(BaseFeatureCompiler):
                 writer = writer()
             self.featureWriters.append(writer)
 
-    def setupFile_features(self):
+    def setupFeatures(self):
         """
-        Make the features source file.
+        Make the features source.
 
         **This should not be called externally.** Subclasses
         may override this method to handle the file creation
@@ -143,7 +197,7 @@ class FeatureCompiler(BaseFeatureCompiler):
             self.features = tounicode(
                 self.ufo.features.text or "", "utf-8")
 
-    def setupFile_featureTables(self):
+    def buildTables(self):
         """
         Compile OpenType feature tables from the source.
         Raises a FeaLibError if the feature compilation was unsuccessful.
@@ -184,7 +238,7 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
     fontTools.mtiLib.
     """
 
-    def setupFile_features(self):
+    def setupFeatures(self):
         ufo = self.ufo
         features = {}
         prefixLength = len(MTI_FEATURES_PREFIX)
@@ -194,7 +248,7 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
                 features[fn[prefixLength:-4]] = content
         self.mtiFeatures = features
 
-    def setupFile_featureTables(self):
+    def buildTables(self):
         for tag, features in self.mtiFeatures.items():
             table = mtiLib.build(features.splitlines(), self.ttFont)
             assert table.tableTag == tag
