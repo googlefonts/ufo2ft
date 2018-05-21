@@ -1,20 +1,74 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (
+    print_function,
+    division,
+    absolute_import,
+    unicode_literals,
+)
 
 from textwrap import dedent
 
-from defcon import Font
-
-from ufo2ft.featureCompiler import FeatureCompiler
-from ufo2ft.featureWriters import KernFeatureWriter
-
-from fontTools.misc.py23 import SimpleNamespace
+from ufo2ft.featureCompiler import parseLayoutFeatures
+from ufo2ft.featureWriters import KernFeatureWriter, ast
 
 import pytest
 
 
+def makeUFO(cls, glyphMap, groups=None, kerning=None, features=None):
+    ufo = cls()
+    for name, uni in glyphMap.items():
+        glyph = ufo.newGlyph(name)
+        if uni is not None:
+            glyph.unicode = uni
+    if groups is not None:
+        ufo.groups.update(groups)
+    if kerning is not None:
+        ufo.kerning.update(kerning)
+    if features is not None:
+        ufo.features.text = features
+    return ufo
+
+
+# TODO move to some test support module?
+# ast helpers
+
+
+def getClassDefs(feaFile):
+    return [
+        s
+        for s in feaFile.statements
+        if isinstance(s, ast.GlyphClassDefinition)
+    ]
+
+
+def getGlyphs(classDef):
+    return [str(g) for g in classDef.glyphs.glyphSet()]
+
+
+def getLookups(feaFile):
+    return [s for s in feaFile.statements if isinstance(s, ast.LookupBlock)]
+
+
+def getPairPosRules(lookup):
+    return [
+        s for s in lookup.statements if isinstance(s, ast.PairPosStatement)
+    ]
+
+
 class KernFeatureWriterTest(object):
 
-    def test__cleanupMissingGlyphs(self):
+    FeatureWriter = KernFeatureWriter
+
+    @classmethod
+    def writeFeatures(cls, ufo, **kwargs):
+        writer = cls.FeatureWriter(**kwargs)
+        feaFile = parseLayoutFeatures(ufo)
+        n = len(feaFile.statements)
+        if writer.write(ufo, feaFile):
+            new = ast.FeatureFile()
+            new.statements = feaFile.statements[n:]
+            return new
+
+    def test_cleanup_missing_glyphs(self, FontClass):
         groups = {
             "public.kern1.A": ["A", "Aacute", "Abreve", "Acircumflex"],
             "public.kern2.B": ["B", "D", "E", "F"],
@@ -26,7 +80,7 @@ class KernFeatureWriterTest(object):
             ("baz", "public.kern2.B"): -20,
             ("public.kern1.C", "public.kern2.B"): 20,
         }
-        ufo = Font()
+        ufo = FontClass()
         exclude = {"Abreve", "D", "foobar"}
         for glyphs in groups.values():
             for glyph in glyphs:
@@ -37,30 +91,36 @@ class KernFeatureWriterTest(object):
         ufo.kerning.update(kerning)
 
         writer = KernFeatureWriter()
-        writer.set_context(ufo)
-        assert writer.context.groups == groups
-        assert writer.context.kerning == kerning
+        feaFile = parseLayoutFeatures(ufo)
+        writer.write(ufo, feaFile)
 
-        writer._cleanupMissingGlyphs()
-        assert writer.context.groups == {
-            "public.kern1.A": ["A", "Aacute", "Acircumflex"],
-            "public.kern2.B": ["B", "E", "F"]}
-        assert writer.context.kerning == {
-            ("public.kern1.A", "public.kern2.B"): 10}
+        classDefs = getClassDefs(feaFile)
+        assert len(classDefs) == 2
+        assert classDefs[0].name == "kern1.A"
+        assert classDefs[1].name == "kern2.B"
+        assert getGlyphs(classDefs[0]) == ["A", "Aacute", "Acircumflex"]
+        assert getGlyphs(classDefs[1]) == ["B", "E", "F"]
 
-    def test_ignoreMarks(self):
-        font = Font()
+        lookups = getLookups(feaFile)
+        assert len(lookups) == 1
+        kern_ltr = lookups[0]
+        assert kern_ltr.name == "kern_ltr"
+        rules = getPairPosRules(kern_ltr)
+        assert len(rules) == 1
+        assert str(rules[0]) == "pos @kern1.A @kern2.B 10;"
+
+    def test_ignoreMarks(self, FontClass):
+        font = FontClass()
         for name in ("one", "four", "six"):
             font.newGlyph(name)
-        font.kerning.update({
-            ('four', 'six'): -55.0,
-            ('one', 'six'): -30.0,
-        })
+        font.kerning.update({("four", "six"): -55.0, ("one", "six"): -30.0})
         # default is ignoreMarks=True
         writer = KernFeatureWriter()
-        kern = writer.write(font)
+        feaFile = ast.FeatureFile()
+        assert writer.write(font, feaFile)
 
-        assert kern == dedent("""
+        assert str(feaFile) == dedent(
+            """\
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos four six -55;
@@ -69,12 +129,16 @@ class KernFeatureWriterTest(object):
 
             feature kern {
                 lookup kern_ltr;
-            } kern;""")
+            } kern;
+            """
+        )
 
         writer = KernFeatureWriter(ignoreMarks=False)
-        kern = writer.write(font)
+        feaFile = ast.FeatureFile()
+        assert writer.write(font, feaFile)
 
-        assert kern == dedent("""
+        assert str(feaFile) == dedent(
+            """\
             lookup kern_ltr {
                 pos four six -55;
                 pos one six -30;
@@ -82,56 +146,31 @@ class KernFeatureWriterTest(object):
 
             feature kern {
                 lookup kern_ltr;
-            } kern;""")
+            } kern;
+            """
+        )
 
-    def test_mode(self):
-
-        class MockTTFont:
-            def getReverseGlyphMap(self):
-                return {"one": 0, "four": 1, "six": 2, "seven": 3}
-
-        outline = MockTTFont()
-
-        ufo = Font()
+    def test_mode(self, FontClass):
+        ufo = FontClass()
         for name in ("one", "four", "six", "seven"):
             ufo.newGlyph(name)
-        existing = dedent("""
+        existing = dedent(
+            """\
             feature kern {
                 pos one four' -50 six;
             } kern;
-            """)
+            """
+        )
         ufo.features.text = existing
-        ufo.kerning.update({
-            ('seven', 'six'): 25.0,
-        })
+        ufo.kerning.update({("seven", "six"): 25.0})
 
-        writer = KernFeatureWriter()  # default mode="skip"
-        compiler = FeatureCompiler(ufo, outline, featureWriters=[writer])
-        compiler.setupFile_features()
+        writer = KernFeatureWriter()  # default mode="append"
+        feaFile = parseLayoutFeatures(ufo)
+        assert writer.write(ufo, feaFile)
 
-        assert compiler.features == existing
+        expected = existing + dedent(
+            """
 
-        writer = KernFeatureWriter(mode="append")
-        compiler = FeatureCompiler(ufo, outline, featureWriters=[writer])
-        compiler.setupFile_features()
-
-        assert compiler.features == existing + dedent("""
-
-
-            lookup kern_ltr {
-                lookupflag IgnoreMarks;
-                pos seven six 25;
-            } kern_ltr;
-
-            feature kern {
-                lookup kern_ltr;
-            } kern;""")
-
-        writer = KernFeatureWriter(mode="prepend")
-        compiler = FeatureCompiler(ufo, outline, featureWriters=[writer])
-        compiler.setupFile_features()
-
-        assert compiler.features == dedent("""
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -140,150 +179,288 @@ class KernFeatureWriterTest(object):
             feature kern {
                 lookup kern_ltr;
             } kern;
+            """
+        )
 
-            """) + existing
+        assert str(feaFile) == expected
 
-    # https://github.com/googlei18n/ufo2ft/issues/198
-    @pytest.mark.xfail
-    def test_arabic_numerals(self):
-        ufo = Font()
+        # pass "append" mode explicitly
+        writer = KernFeatureWriter(mode="append")
+        feaFile = parseLayoutFeatures(ufo)
+        assert writer.write(ufo, feaFile)
+
+        assert str(feaFile) == expected
+
+        # pass optional "skip" mode
+        writer = KernFeatureWriter(mode="skip")
+        feaFile = parseLayoutFeatures(ufo)
+        assert not writer.write(ufo, feaFile)
+
+        assert str(feaFile) == existing
+
+    def test_arabic_numerals(self, FontClass):
+        """ Test that arabic numerals (with bidi type AN) are kerned LTR.
+        https://github.com/googlei18n/ufo2ft/issues/198
+        https://github.com/googlei18n/ufo2ft/pull/200
+        """
+        ufo = FontClass()
         for name, code in [("four-ar", 0x664), ("seven-ar", 0x667)]:
             glyph = ufo.newGlyph(name)
             glyph.unicode = code
-        ufo.kerning.update({
-            ('four-ar', 'seven-ar'): -30,
-        })
-        ufo.features.text = dedent("""
+        ufo.kerning.update({("four-ar", "seven-ar"): -30})
+        ufo.features.text = dedent(
+            """
             languagesystem DFLT dflt;
             languagesystem arab dflt;
-        """)
+            """
+        )
 
-        writer = KernFeatureWriter()
-        kern = writer.write(ufo)
+        generated = self.writeFeatures(ufo)
 
-        assert kern == dedent("""
-            lookup kern_ltr {
+        assert str(generated) == dedent(
+            """
+            lookup kern_rtl {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
-            } kern_ltr;
+            } kern_rtl;
 
             feature kern {
-                lookup kern_ltr;
-            } kern;""")
+                lookup kern_rtl;
+            } kern;
+            """
+        )
 
-    def test_set_context(self):
-        font = Font()
-        font.features.text = dedent("""
+    def test__groupScriptsByTagAndDirection(self, FontClass):
+        font = FontClass()
+        font.features.text = dedent(
+            """
             languagesystem DFLT dflt;
             languagesystem latn dflt;
             languagesystem latn TRK;
             languagesystem arab dflt;
             languagesystem arab URD;
-        """)
+            languagesystem deva dflt;
+            languagesystem dev2 dflt;
+            """
+        )
 
-        writer = KernFeatureWriter()
-        writer.set_context(font)
+        feaFile = parseLayoutFeatures(font)
+        scripts = ast.getScriptLanguageSystems(feaFile)
+        scriptGroups = KernFeatureWriter._groupScriptsByTagAndDirection(
+            scripts
+        )
 
-        assert list(writer.context.ltrScripts.items()) == [
-            ("latn", ["dflt", "TRK"])]
-        assert list(writer.context.rtlScripts.items()) == [
-            ("arab", ["dflt", "URD"])]
+        assert "kern" in scriptGroups
+        assert list(scriptGroups["kern"]["LTR"]) == [
+            ("latn", ["dflt", "TRK "])
+        ]
+        assert list(scriptGroups["kern"]["RTL"]) == [
+            ("arab", ["dflt", "URD "])
+        ]
 
-    def test__correctClassNames(self):
-        font = Font()
-        font.groups.update({
-            "public.kern1.foo$": ["A", "B", "C"],
-            "public.kern1.foo@": ["D", "E", "F"],
-            "@public.kern2.bar": ["G", "H", "I"],
-            "public.kern2.bar&": ["L", "M", "N"],
-        })
-        font.kerning.update({
-            ("public.kern1.foo$", "@public.kern2.bar"): 10,
-            ("public.kern1.foo@", "public.kern2.bar&"): -10,
-        })
+        assert "dist" in scriptGroups
+        assert list(scriptGroups["dist"]["LTR"]) == [
+            ("deva", ["dflt"]),
+            ("dev2", ["dflt"]),
+        ]
 
-        writer = KernFeatureWriter()
-        writer.set_context(font)
-        writer._correctClassNames()
-
-        assert writer.context.groups == {
-            "public.kern1.foo": ["A", "B", "C"],
-            "public.kern1.foo_1": ["D", "E", "F"],
-            "public.kern2.bar": ["G", "H", "I"],
-            "public.kern2.bar_1": ["L", "M", "N"]}
-        assert writer.context.kerning == {
-            ("public.kern1.foo", "public.kern2.bar"): 10,
-            ("public.kern1.foo_1", "public.kern2.bar_1"): -10}
-
-    def test__collectKerning(self):
-        font = Font()
-        for i in range(0x49, 0x4A):  # A..H
+    def test_getKerningClasses(self, FontClass):
+        font = FontClass()
+        for i in range(65, 65 + 6):  # A..F
             font.newGlyph(chr(i))
-        font.groups.update({
-            "public.kern1.foo": ["A", "B"],
-            "public.kern2.bar": ["C", "D"],
-            "public.kern1.baz": ["E", "F"],
-        })
-        font.kerning.update({
-            ("public.kern1.foo", "public.kern2.bar"): 10,
-            ("public.kern1.baz", "public.kern2.bar"): -10,
-            ("public.kern1.foo", "D"): 15,
-            ("A", "public.kern2.bar"): 5,
-            ("G", "H"): -5,
-        })
+        font.groups.update(
+            {"public.kern1.A": ["A", "B"], "public.kern2.C": ["C", "D"]}
+        )
+        # simulate a name clash between pre-existing class definitions in
+        # feature file, and those generated by the feature writer
+        font.features.text = "@kern1.A = [E F];"
 
         writer = KernFeatureWriter()
-        writer.set_context(font)
-        writer._collectKerning()
-        ctx = writer.context
+        feaFile = parseLayoutFeatures(font)
+        side1Classes, side2Classes = KernFeatureWriter.getKerningClasses(
+            font, feaFile
+        )
 
-        assert ctx.leftClasses == {
-            "public.kern1.foo": ["A", "B"],
-            "public.kern1.baz": ["E", "F"]}
-        assert ctx.rightClasses == {"public.kern2.bar": ["C", "D"]}
-        assert ctx.classPairKerning == {
-            ("public.kern1.foo", "public.kern2.bar"): 10,
-            ("public.kern1.baz", "public.kern2.bar"): -10}
-        assert ctx.leftClassKerning == {("public.kern1.foo", "D"): 15}
-        assert ctx.rightClassKerning == {("A", "public.kern2.bar"): 5}
-        assert ctx.glyphPairKerning == {("G", "H"): -5}
+        assert "public.kern1.A" in side1Classes
+        # the new class gets a unique name
+        assert side1Classes["public.kern1.A"].name == "kern1.A_1"
+        assert getGlyphs(side1Classes["public.kern1.A"]) == ["A", "B"]
 
-    def test__removeConflictingKerningRules(self):
-        font = Font()
-        font.groups.update({
-            "public.kern1.O": ["O", "D", "Q"],
-            "public.kern2.E": ["E", "F"],
-            "public.kern1.J": ["J", "U"],
-            "public.kern2.C": ["C", "G"],
-        })
-        for glyphs in font.groups.values():
-            for glyph in glyphs:
-                font.newGlyph(glyph)
-        font.kerning.update({
-            ("public.kern1.O", "F"): -200,  # Q + F = -200
-            ("Q", "public.kern2.E"): -250,  # Q + F = -250
-            ("U", "public.kern2.C"): 100, # U + G = 100
-            ("U", "G"): 50,
-            ("D", "F"): -300,
-        })
+        assert "public.kern2.C" in side2Classes
+        assert side2Classes["public.kern2.C"].name == "kern2.C"
+        assert getGlyphs(side2Classes["public.kern2.C"]) == ["C", "D"]
 
-        writer = KernFeatureWriter()
-        writer.set_context(font)
-        writer._collectKerning()
-        writer._removeConflictingKerningRules()
+    def test_correct_invalid_class_names(self, FontClass):
+        font = FontClass()
+        for i in range(65, 65 + 12):  # A..L
+            font.newGlyph(chr(i))
+        font.groups.update(
+            {
+                "public.kern1.foo$": ["A", "B", "C"],
+                "public.kern1.foo@": ["D", "E", "F"],
+                "@public.kern2.bar": ["G", "H", "I"],
+                "public.kern2.bar&": ["J", "K", "L"],
+            }
+        )
+        font.kerning.update(
+            {
+                ("public.kern1.foo$", "@public.kern2.bar"): 10,
+                ("public.kern1.foo@", "public.kern2.bar&"): -10,
+            }
+        )
 
-        # glyph+glyph exception prevails over glyph+group:
-        # U + G is 50, not 100, as G is pruned from public.kern2.C
-        assert writer.context.rightClassKerning == {
-            ("Q", "public.kern2.E"): -250,
-            ("U", "[C]"): 100}
+        side1Classes, side2Classes = KernFeatureWriter.getKerningClasses(font)
 
-        # the glyph+group prevails over group+glyph
-        # http://unifiedfontobject.org/versions/ufo3/kerning.plist/
-        # Q + F is -250, not -200, and Q is pruned from public.kern1.O
-        assert writer.context.leftClassKerning == {("[O]", "F"): -200}
+        assert side1Classes["public.kern1.foo$"].name == "kern1.foo"
+        assert side1Classes["public.kern1.foo@"].name == "kern1.foo_1"
+        # no valid 'public.kern{1,2}.' prefix, skipped
+        assert "@public.kern2.bar" not in side2Classes
+        assert side2Classes["public.kern2.bar&"].name == "kern2.bar"
+
+    def test_getKerningPairs(self, FontClass):
+        font = FontClass()
+        for i in range(65, 65 + 8):  # A..H
+            font.newGlyph(chr(i))
+        font.groups.update(
+            {
+                "public.kern1.foo": ["A", "B"],
+                "public.kern2.bar": ["C", "D"],
+                "public.kern1.baz": ["E", "F"],
+            }
+        )
+        font.kerning.update(
+            {
+                ("public.kern1.foo", "public.kern2.bar"): 10,
+                ("public.kern1.baz", "public.kern2.bar"): -10,
+                ("public.kern1.foo", "D"): 15,
+                ("A", "public.kern2.bar"): 5,
+                ("G", "H"): -5,
+            }
+        )
+
+        s1c, s2c = KernFeatureWriter.getKerningClasses(font)
+        pairs = KernFeatureWriter.getKerningPairs(font, s1c, s2c)
+        assert len(pairs) == 5
+
+        assert "G H -5" in repr(pairs[0])
+        assert (pairs[0].firstIsClass, pairs[0].secondIsClass) == (
+            False,
+            False,
+        )
+        assert pairs[0].glyphs == {"G", "H"}
+
+        assert "A @kern2.bar 5" in repr(pairs[1])
+        assert (pairs[1].firstIsClass, pairs[1].secondIsClass) == (False, True)
+        assert pairs[1].glyphs == {"A", "C", "D"}
+
+        assert "@kern1.foo D 15" in repr(pairs[2])
+        assert (pairs[2].firstIsClass, pairs[2].secondIsClass) == (True, False)
+        assert pairs[2].glyphs == {"A", "B", "D"}
+
+        assert "@kern1.baz @kern2.bar -10" in repr(pairs[3])
+        assert (pairs[3].firstIsClass, pairs[3].secondIsClass) == (True, True)
+        assert pairs[3].glyphs == {"C", "D", "E", "F"}
+
+        assert "@kern1.foo @kern2.bar 10" in repr(pairs[4])
+        assert (pairs[4].firstIsClass, pairs[4].secondIsClass) == (True, True)
+        assert pairs[4].glyphs == {"A", "B", "C", "D"}
+
+    def test_both_ltr_and_rtl_kerning(self, FontClass, caplog):
+        import logging
+
+        caplog.set_level(logging.DEBUG)
+
+        glyphs = {
+            ".notdef": None,
+            "four": 0x34,
+            "seven": 0x37,
+            "A": 0x41,
+            "V": 0x56,
+            "Aacute": 0xC1,
+            "alef-ar": 0x627,
+            "reh-ar": 0x631,
+            "zain-ar": 0x632,
+            "lam-ar": 0x644,
+            "four-ar": 0x664,
+            "seven-ar": 0x667,
+            # # we also add glyphs without unicode codepoint, but linked to
+            # # an encoded 'character' glyph by some GSUB rule
+            "alef-ar.isol": None,
+            "lam-ar.init": None,
+            "reh-ar.fina": None,
+        }
+        groups = {
+            "public.kern1.A": ["A", "Aacute"],
+            "public.kern1.reh": ["reh-ar", "zain-ar", "reh-ar.fina"],
+            "public.kern2.alef": ["alef-ar", "alef-ar.isol"],
+        }
+        kerning = {
+            ("public.kern1.A", "V"): -40,
+            ("seven", "four"): -25,
+            ("reh-ar.fina", "lam-ar.init"): -80,
+            ("public.kern1.reh", "public.kern2.alef"): -100,
+            ("four-ar", "seven-ar"): -30,
+        }
+        features = dedent(
+            """\
+            languagesystem DFLT dflt;
+            languagesystem latn dflt;
+            languagesystem latn TRK;
+            languagesystem arab dflt;
+            languagesystem arab URD;
+
+            feature init {
+                script arab;
+                sub lam-ar by lam-ar.init;
+                language URD;
+            } init;
+
+            feature fina {
+                script arab;
+                sub reh-ar by reh-ar.fina;
+                language URD;
+            } fina;
+            """
+        )
+
+        ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+
+        newFeatures = self.writeFeatures(ufo)
+
+        assert str(newFeatures) == dedent(
+            """\
+            @kern1.A = [A Aacute];
+            @kern1.reh = [reh-ar zain-ar reh-ar.fina];
+            @kern2.alef = [alef-ar alef-ar.isol];
+
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven four -25;
+                enum pos @kern1.A V -40;
+            } kern_ltr;
+
+            lookup kern_rtl {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+                pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
+                pos @kern1.reh @kern2.alef <-100 0 -100 0>;
+            } kern_rtl;
+
+            feature kern {
+                script latn;
+                language dflt;
+                lookup kern_ltr;
+                language TRK;
+                script arab;
+                language dflt;
+                lookup kern_rtl;
+                language URD;
+            } kern;
+            """
+        )
 
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(pytest.main(sys.argv))
