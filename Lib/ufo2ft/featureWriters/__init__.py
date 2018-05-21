@@ -7,12 +7,6 @@ from inspect import isclass
 import logging
 
 
-DEFAULT_FEATURE_WRITERS = [
-    KernFeatureWriter,
-    MarkFeatureWriter,
-]
-
-
 __all__ = [
     "BaseFeatureWriter",
     "KernFeatureWriter",
