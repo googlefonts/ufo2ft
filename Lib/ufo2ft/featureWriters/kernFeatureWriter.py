@@ -1,24 +1,19 @@
 from __future__ import (
-    print_function, division, absolute_import, unicode_literals
+    print_function,
+    division,
+    absolute_import,
+    unicode_literals,
 )
-from fontTools.misc.py23 import unichr, round
+from fontTools.misc.py23 import unichr, round, basestring, SimpleNamespace
 
 from fontTools import unicodedata
-from fontTools.feaLib import ast
 
-from ufo2ft.featureWriters import BaseFeatureWriter
-from ufo2ft.util import closeGlyphsOverGSUB
+from ufo2ft.featureWriters import BaseFeatureWriter, ast
+from ufo2ft.util import classifyGlyphs
 
-import collections
-import logging
-
-
-logger = logging.getLogger(__name__)
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
-
-DFLT_SCRIPTS = {"Zyyy", "Zinh"}
 
 # In HarfBuzz the 'dist' feature is automatically enabled for these shapers:
 #   src/hb-ot-shape-complex-myanmar.cc
@@ -41,13 +36,10 @@ DIST_ENABLED_SCRIPTS = {
     "Telu",  # Telugu
     # Unicode-3.0 additions
     "Sinh",  # Sinhala
-
     # Khmer shaper
     "Khmr",  # Khmer
-
     # Myanmar shaper
     "Mymr",  # Myanmar
-
     # USE shaper's scripts
     # Unicode-3.2 additions
     "Buhd",  # Buhid
@@ -108,10 +100,92 @@ DIST_ENABLED_SCRIPTS = {
     "Zanb",  # Zanabazar Square
 }
 
-PUBLIC_PREFIX = "public."
 
-KerningPair = collections.namedtuple("KerningPair",
-                                     "name1 name2 value flags glyphs directions")
+# we consider the 'Common' and 'Inherited' scripts as neutral for
+# determining a kerning pair's horizontal direction
+DFLT_SCRIPTS = {"Zyyy", "Zinh"}
+
+
+def unicodeScriptDirection(uv):
+    sc = unicodedata.script(unichr(uv))
+    if sc in DFLT_SCRIPTS:
+        return None
+    return unicodedata.script_horizontal_direction(sc)
+
+
+STRONG_LTR_BIDI_TYPE = "L"
+STRONG_RTL_BIDI_TYPES = {"R", "AL"}
+LTR_NUMBER_BIDI_TYPES = {"AN", "EN"}
+
+
+def unicodeBidiType(uv):
+    # return "R", "L", "N" (for numbers), or None for everything else
+    char = unichr(uv)
+    bidiType = unicodedata.bidirectional(char)
+    if bidiType in STRONG_RTL_BIDI_TYPES:
+        return "R"
+    elif bidiType == STRONG_LTR_BIDI_TYPE:
+        return "L"
+    elif bidiType in LTR_NUMBER_BIDI_TYPES:
+        return "N"
+    else:
+        return None
+
+
+class KerningPair(object):
+
+    __slots__ = ("side1", "side2", "value", "directions", "bidiTypes")
+
+    def __init__(self, side1, side2, value, directions=None, bidiTypes=None):
+        if isinstance(side1, basestring):
+            self.side1 = ast.GlyphName(side1)
+        elif isinstance(side1, ast.GlyphClassDefinition):
+            self.side1 = ast.GlyphClassName(side1)
+        else:
+            raise AssertionError(side1)
+
+        if isinstance(side2, basestring):
+            self.side2 = ast.GlyphName(side2)
+        elif isinstance(side2, ast.GlyphClassDefinition):
+            self.side2 = ast.GlyphClassName(side2)
+        else:
+            raise AssertionError(side2)
+
+        self.value = value
+        self.directions = directions or set()
+        self.bidiTypes = bidiTypes or set()
+
+    @property
+    def firstIsClass(self):
+        return isinstance(self.side1, ast.GlyphClassName)
+
+    @property
+    def secondIsClass(self):
+        return isinstance(self.side2, ast.GlyphClassName)
+
+    @property
+    def glyphs(self):
+        if self.firstIsClass:
+            classDef1 = self.side1.glyphclass
+            glyphs1 = set(g.asFea() for g in classDef1.glyphSet())
+        else:
+            glyphs1 = {self.side1.asFea()}
+        if self.secondIsClass:
+            classDef2 = self.side2.glyphclass
+            glyphs2 = set(g.asFea() for g in classDef2.glyphSet())
+        else:
+            glyphs2 = {self.side2.asFea()}
+        return glyphs1 | glyphs2
+
+    def __repr__(self):
+        return "<%s %s %s %s%s%s>" % (
+            self.__class__.__name__,
+            self.side1,
+            self.side2,
+            self.value,
+            " %r" % self.directions if self.directions else "",
+            " %r" % self.bidiTypes if self.bidiTypes else "",
+        )
 
 
 class KernFeatureWriter(BaseFeatureWriter):
@@ -121,100 +195,56 @@ class KernFeatureWriter(BaseFeatureWriter):
     There are currently two possible writing modes:
     1) "append" (default) will add additional lookups to an existing feature,
        if present, or it will add a new one at the end of all features.
-    2) "skip" will not write anything if any of the features is already present;
+    2) "skip" will not write anything if the features are already present;
     """
 
+    tableTag = "GPOS"
     features = frozenset(["kern", "dist"])
     mode = "append"
-    options = dict(
-        ignoreMarks=True,
-    )
+    options = dict(ignoreMarks=True)
 
-    def _write(self, feaFile):
-        ltrLangSyses, rtlLangSyses = self.getLanguageSystems(feaFile)
+    def setContext(self, font, feaFile, compiler=None):
+        ctx = super(KernFeatureWriter, self).setContext(
+            font, feaFile, compiler=compiler
+        )
+        ctx.kerning = self.getKerningData(font, feaFile)
 
-        font = self.context.font
+        feaScripts = ast.getScriptLanguageSystems(feaFile)
+        ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaScripts)
 
-        cmap = self.makeUnicodeToGlyphNameMapping()
-        scriptDirections = self.getCmapScriptHorizontalDirections(cmap)
+        return ctx
 
-        side1Groups, side2Groups = self.getKerningGroups(font)
-        side1Classes = self.makeGlyphClassDefinitions(side1Groups,
-                                                      PUBLIC_PREFIX)
-        side2Classes = self.makeGlyphClassDefinitions(side2Groups,
-                                                      PUBLIC_PREFIX)
-
-        kerning = self.getKerningPairs(font, side1Classes, side2Classes)
-
-        anyLTR = "LTR" in scriptDirections
-        anyRTL = "RTL" in scriptDirections
-
-        # if there's any RTL scripts in the cmap, we attempt to split the
-        # kern lookups into LTR and RTL
-        if anyRTL:
-            gsub = self.compileGSUB(feaFile)
-            glyphsByDirection = self.groupGlyphsByDirection(cmap, gsub)
-            self.updatePairsDirection(kerning, glyphsByDirection)
-
-        # write the lookup
-        ignoreMarks = self.options.ignoreMarks
-        if anyLTR or not anyRTL:
-            ltrKern = self.makeKerningLookup(
-                "kern_ltr", kerning,
-                ignoreMarks=ignoreMarks,
-                rtl=False)
-        else:
-            ltrKern = None
-
-        if anyRTL:
-            rtlKern = self.makeKerningLookup(
-                "kern_rtl", kerning,
-                ignoreMarks=ignoreMarks,
-                rtl=True)
-        else:
-            rtlKern = None
-
-        if not (ltrKern or rtlKern):
-            # no kerning pairs, don't write empty feature
+    def shouldContinue(self):
+        if not self.context.kerning.pairs:
+            self.log.debug("No kerning data; skipped")
             return False
 
-        onlyDFLT = not (ltrLangSyses or rtlLangSyses)
-        if ltrKern and rtlKern and onlyDFLT:
-            raise ValueError(
-                "cannot use DFLT script for both LTR and RTL kern lookups; "
-                "add 'languagesystems' to feature file and try again")
+        if (
+            "dist" in self.context.todo
+            and "dist" not in self.context.scriptGroups
+        ):
+            self.log.debug(
+                "No dist-enabled scripts defined in languagesystem "
+                "statements; dist feature will not be generated"
+            )
+            self.context.todo.remove("dist")
 
-        kern = ast.FeatureBlock("kern")
+        return super(KernFeatureWriter, self).shouldContinue()
 
-        dfltLangSys = {"DFLT": ["dflt"]}
+    def _write(self):
+        lookups = self._makeKerningLookups()
+        if not lookups:
+            self.log.debug("kerning lookups empty; skipped")
+            return False
 
-        if ltrKern and rtlKern:
-            # register different lookups each under different scripts
-            if ltrLangSyses:
-                self.addLookupReference(kern, ltrKern, ltrLangSyses)
-            elif rtlLangSyses:
-                # no LTR languagesystems: use DFLT for LTR kerning
-                self.addLookupReference(kern, ltrKern, dfltLangSys)
-            else:
-                self.addLookupReference(kern, ltrKern)
-
-            if rtlLangSyses:
-                self.addLookupReference(kern, rtlKern, rtlLangSyses)
-            elif ltrLangSyses:
-                # no RTL languagesystems: use DFLT for RTL kerning
-                self.addLookupReference(kern, rtlKern, dfltLangSys)
-            else:
-                self.addLookupReference(kern, rtlKern)
-
-        elif ltrKern:
-            self.addLookupReference(kern, ltrKern)
-        else:
-            self.addLookupReference(kern, rtlKern)
+        features = self._makeFeatureBlocks(lookups)
 
         # extend feature file with the new generated statements
-        statements = feaFile.statements
+        statements = self.context.feaFile.statements
 
-        # add glyph class definitions
+        # first add the glyph class definitions
+        side1Classes = self.context.kerning.side1Classes
+        side2Classes = self.context.kerning.side2Classes
         for classes in (side1Classes, side2Classes):
             statements.extend([c for _, c in sorted(classes.items())])
 
@@ -222,41 +252,22 @@ class KernFeatureWriter(BaseFeatureWriter):
         if statements:
             statements.append(ast.Comment(""))
 
-        # add the lookup and feature blocks
-        if ltrKern:
-            statements.append(ltrKern)
-        if rtlKern:
-            statements.append(rtlKern)
-
-        statements.append(kern)
+        # finally add the lookup and feature blocks
+        for _, lookup in sorted(lookups.items()):
+            statements.append(lookup)
+        if "kern" in features:
+            statements.append(features["kern"])
+        if "dist" in features:
+            statements.append(features["dist"])
         return True
 
-    @staticmethod
-    def getLanguageSystems(feaFile):
-        ltrLangSyses = collections.OrderedDict()
-        rtlLangSyses = collections.OrderedDict()
-        for ls in [st for st in feaFile.statements
-                   if isinstance(st, ast.LanguageSystemStatement)]:
-            if ls.script == "DFLT":
-                continue
-            sc = unicodedata.ot_tag_to_script(ls.script)
-            if unicodedata.script_horizontal_direction(sc) == "LTR":
-                ltrLangSyses.setdefault(ls.script, []).append(ls.language)
-            else:
-                rtlLangSyses.setdefault(ls.script, []).append(ls.language)
-        return ltrLangSyses, rtlLangSyses
-
-    @staticmethod
-    def getCmapScriptHorizontalDirections(cmap):
-        directions = set()
-        for uv in cmap:
-            sc = unicodedata.script(unichr(uv))
-            if sc in DFLT_SCRIPTS:
-                continue
-            directions.add(unicodedata.script_horizontal_direction(sc))
-            if len(directions) == 2:
-                break
-        return directions
+    @classmethod
+    def getKerningData(cls, font, feaFile=None):
+        side1Classes, side2Classes = cls.getKerningClasses(font, feaFile)
+        pairs = cls.getKerningPairs(font, side1Classes, side2Classes)
+        return SimpleNamespace(
+            side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
+        )
 
     @staticmethod
     def getKerningGroups(font):
@@ -278,6 +289,17 @@ class KernFeatureWriter(BaseFeatureWriter):
                 continue
         return side1Groups, side2Groups
 
+    @classmethod
+    def getKerningClasses(cls, font, feaFile=None):
+        side1Groups, side2Groups = cls.getKerningGroups(font)
+        side1Classes = ast.makeGlyphClassDefinitions(
+            side1Groups, feaFile, stripPrefix="public."
+        )
+        side2Classes = ast.makeGlyphClassDefinitions(
+            side2Groups, feaFile, stripPrefix="public."
+        )
+        return side1Classes, side2Classes
+
     @staticmethod
     def getKerningPairs(font, side1Classes, side2Classes):
         allGlyphs = set(font.keys())
@@ -295,124 +317,202 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         result = []
         for flags, pairs in sorted(pairsByFlags.items()):
-            firstIsClass, secondIsClass = flags
             for side1, side2 in sorted(pairs):
+                value = kerning[side1, side2]
+                if all(flags) and value == 0:
+                    # ignore zero-valued class kern pairs
+                    continue
+                firstIsClass, secondIsClass = flags
                 if firstIsClass:
-                    classDef1 = side1Classes[side1]
-                    name1 = ast.GlyphClassName(classDef1)
-                    glyphs1 = set(classDef1.glyphSet())
-                else:
-                    name1 = ast.GlyphName(side1)
-                    glyphs1 = {side1}
-
+                    side1 = side1Classes[side1]
                 if secondIsClass:
-                    classDef2 = side2Classes[side2]
-                    name2 = ast.GlyphClassName(classDef2)
-                    glyphs2 = set(classDef2.glyphSet())
-                else:
-                    name2 = ast.GlyphName(side2)
-                    glyphs2 = {side2}
-
-                pair = KerningPair(name1=name1,
-                                   name2=name2,
-                                   value=kerning[side1, side2],
-                                   flags=flags,
-                                   glyphs=(glyphs1 | glyphs2),
-                                   directions=set())
-                result.append(pair)
-
+                    side2 = side2Classes[side2]
+                result.append(KerningPair(side1, side2, value))
         return result
 
-    @staticmethod
-    def groupGlyphsByDirection(cmap, gsub):
-        directions = {}
-        for uv, glyphName in cmap.items():
-            direction = _getUnicodeDirection(uv)
-            directions.setdefault(direction, set()).add(glyphName)
-
-        noDirectionGlyphs = directions.get(None, set())
-        if noDirectionGlyphs:
-            closeGlyphsOverGSUB(gsub, noDirectionGlyphs)
-
-        for direction, glyphs in directions.items():
-            if direction is None:
-                continue
-            s = glyphs | noDirectionGlyphs
-            closeGlyphsOverGSUB(gsub, s)
-            glyphs.update(s - noDirectionGlyphs)
-
-        return directions
-
-    @staticmethod
-    def updatePairsDirection(kerning, directions):
-        for pair in kerning:
-            for direction, glyphs in directions.items():
-                if direction is None:
-                    continue
+    def _intersectPairs(self, attribute, glyphSets):
+        allKeys = set()
+        for pair in self.context.kerning.pairs:
+            for key, glyphs in glyphSets.items():
                 if not pair.glyphs.isdisjoint(glyphs):
-                    pair.directions.add(direction)
+                    getattr(pair, attribute).add(key)
+                    allKeys.add(key)
+        return allKeys
+
     @staticmethod
-    def makeKerningValueRecord(value, rtl=False):
-        value = round(value)
-        return ast.ValueRecord(xPlacement=value if rtl else None,
-                               yPlacement=0 if rtl else None,
-                               xAdvance=value,
-                               yAdvance=0 if rtl else None)
+    def _groupScriptsByTagAndDirection(feaScripts):
+        # Read scripts/languages defined in feaFile's 'languagesystem'
+        # statements and group them by the feature tag (kern or dist)
+        # they are associated with, and the global script's horizontal
+        # direction (DFLT is excluded)
+        scriptGroups = {}
+        for scriptCode, scriptLangSys in feaScripts.items():
+            direction = unicodedata.script_horizontal_direction(scriptCode)
+            if scriptCode in DIST_ENABLED_SCRIPTS:
+                tag = "dist"
+            else:
+                tag = "kern"
+            scriptGroups.setdefault(tag, {}).setdefault(direction, []).extend(
+                scriptLangSys
+            )
+        return scriptGroups
 
-    @classmethod
-    def makePairPosRule(cls, pair, rtl=False):
-        firstIsClass, secondIsClass = pair.flags
-        enumerated = firstIsClass ^ secondIsClass
-
-        if rtl and "N" in pair.directions:
-            # numbers are shaped LTR even in RTL scripts
+    @staticmethod
+    def _makePairPosRule(pair, rtl=False):
+        enumerated = pair.firstIsClass ^ pair.secondIsClass
+        value = round(pair.value)
+        if rtl and "N" in pair.bidiTypes:
+            # numbers are always shaped LTR even in RTL scripts
             rtl = False
+        valuerecord = ast.ValueRecord(
+            xPlacement=value if rtl else None,
+            yPlacement=0 if rtl else None,
+            xAdvance=value,
+            yAdvance=0 if rtl else None,
+        )
+        return ast.PairPosStatement(
+            glyphs1=pair.side1,
+            valuerecord1=valuerecord,
+            glyphs2=pair.side2,
+            valuerecord2=None,
+            enumerated=enumerated,
+        )
 
-        valuerecord = cls.makeKerningValueRecord(pair.value, rtl)
-
-        return ast.PairPosStatement(glyphs1=pair.name1,
-                                    valuerecord1=valuerecord,
-                                    glyphs2=pair.name2,
-                                    valuerecord2=None,
-                                    enumerated=enumerated)
-
-    @classmethod
-    def makeKerningLookup(cls, name, kerning, ignoreMarks=True,
-                          rtl=False):
+    def _makeKerningLookup(self, name, rtl=None):
+        pairs = self.context.kerning.pairs
+        assert pairs
         rules = []
-        for pair in kerning:
-            if rtl:
-                if pair.directions.isdisjoint({"R", "N"}):
+        for pair in pairs:
+            if rtl is not None:
+                if "RTL" in pair.directions and "LTR" in pair.directions:
+                    self.log.warning(
+                        "skipped kern pair with ambiguous direction: %r", pair
+                    )
                     continue
-            elif "R" in pair.directions:
-                continue
-            if all(pair.flags) and pair.value == 0:
-                # ignore zero-valued class kern pairs
-                continue
-            rules.append(cls.makePairPosRule(pair, rtl))
-
+                elif "RTL" in pair.directions:
+                    if not rtl:
+                        self.log.debug(
+                            "RTL pair excluded from LTR kern lookup: %r", pair
+                        )
+                        continue
+                elif "LTR" in pair.directions:
+                    if rtl:
+                        self.log.debug(
+                            "LTR pair excluded from RTL kern lookup: %r", pair
+                        )
+                        continue
+                else:
+                    assert not pair.directions
+                    if rtl:
+                        self.log.debug(
+                            "kern pair with unknown direction excluded from "
+                            "RTL kern lookup: %r",
+                            pair,
+                        )
+                        continue
+            rules.append(self._makePairPosRule(pair, rtl=rtl))
         if rules:
             lookup = ast.LookupBlock(name)
-            if ignoreMarks:
-                lookup.statements.append(cls.makeLookupFlag("IgnoreMarks"))
+            if self.options.ignoreMarks:
+                lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
             lookup.statements.extend(rules)
             return lookup
 
+    def _makeKerningLookups(self):
+        cmap = self.makeUnicodeToGlyphNameMapping()
+        if any(unicodeScriptDirection(uv) == "RTL" for uv in cmap):
+            # If there are any characters from globally RTL scripts in the
+            # cmap, we compile a temporary GSUB table to resolve substitutions
+            # and group glyphs by script horizontal direction and bidirectional
+            # type. We then mark each kerning pair with these properties when
+            # any of the glyphs involved in a pair intersects these groups.
+            gsub = self.compileGSUB()
+            dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
+            directions = self._intersectPairs("directions", dirGlyphs)
+            shouldSplit = "RTL" in directions
+            if shouldSplit:
+                bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
+                self._intersectPairs("bidiTypes", bidiGlyphs)
+        else:
+            shouldSplit = False
 
-STRONG_LTR_BIDI_TYPE = "L"
-STRONG_RTL_BIDI_TYPES = {"R", "AL"}
-LTR_NUMBER_BIDI_TYPES = {"AN", "EN"}
+        lookups = {}
+        if shouldSplit:
+            # make two LTR/RTL lookups excluding pairs from the opposite group
+            for rtl in (False, True):
+                key = "RTL" if rtl else "LTR"
+                lookupName = "kern_" + key.lower()
+                lookup = self._makeKerningLookup(lookupName, rtl=rtl)
+                if lookup is not None:
+                    lookups[key] = lookup
+        else:
+            # only make a single (implicitly LTR) lookup including all pairs
+            lookups["LTR"] = self._makeKerningLookup("kern_ltr")
+        return lookups
 
+    def _makeFeatureBlocks(self, lookups):
+        features = {}
+        scriptGroups = self.context.scriptGroups
+        if "kern" in self.context.todo:
+            features["kern"] = ast.FeatureBlock("kern")
+            self._registerKernLookups(features["kern"], lookups, scriptGroups)
+        if "dist" in self.context.todo:
+            features["dist"] = ast.FeatureBlock("dist")
+            self._registerDistLookups(features["dist"], lookups, scriptGroups)
+        return features
 
-def _getUnicodeDirection(uv):
-    # return "R", "L", "N" (for numbers), or None for everything else
-    char = unichr(uv)
-    bidiType = unicodedata.bidirectional(char)
-    if bidiType in STRONG_RTL_BIDI_TYPES:
-        return "R"
-    elif bidiType == STRONG_LTR_BIDI_TYPE:
-        return "L"
-    elif bidiType in LTR_NUMBER_BIDI_TYPES:
-        return "N"
-    else:
-        return None
+    @staticmethod
+    def _registerKernLookups(feature, lookups, scriptGroups):
+        distScripts = scriptGroups.get("dist", {})
+        kernScripts = scriptGroups.get("kern", {})
+        ltrScripts = kernScripts.get("LTR", [])
+        rtlScripts = kernScripts.get("RTL", [])
+        ltrLkp = lookups.get("LTR")
+        rtlLkp = lookups.get("RTL")
+        if ltrLkp and rtlLkp:
+            if ltrScripts and rtlScripts:
+                for script, langs in ltrScripts:
+                    ast.addLookupReference(feature, ltrLkp, script, langs)
+                for script, langs in rtlScripts:
+                    ast.addLookupReference(feature, rtlLkp, script, langs)
+            elif ltrScripts:
+                ast.addLookupReference(feature, rtlLkp, script="DFLT")
+                for script, langs in ltrScripts:
+                    ast.addLookupReference(feature, ltrLkp, script, langs)
+            elif rtlScripts:
+                ast.addLookupReference(feature, ltrLkp, script="DFLT")
+                for script, langs in rtlScripts:
+                    ast.addLookupReference(feature, rtlLkp, script, langs)
+            else:
+                raise ValueError(
+                    "cannot use DFLT script for both LTR and RTL kern "
+                    "lookups; add 'languagesystems' to features"
+                )
+        elif ltrLkp:
+            if not (rtlScripts or distScripts):
+                ast.addLookupReference(feature, ltrLkp)
+            else:
+                ast.addLookupReference(feature, ltrLkp, script="DFLT")
+                for script, langs in ltrScripts:
+                    ast.addLookupReference(feature, ltrLkp, script, langs)
+        elif rtlLkp:
+            if not (ltrScripts or distScripts):
+                ast.addLookupReference(feature, rtlLkp)
+            else:
+                ast.addLookupReference(feature, rtlLkp, script="DFLT")
+                for script, langs in rtlScripts:
+                    ast.addLookupReference(feature, rtlLkp, script, langs)
+        else:
+            raise AssertionError(lookups)
+
+    @staticmethod
+    def _registerDistLookups(feature, lookups, scriptGroups):
+        scripts = scriptGroups.get("dist", {})
+        ltrLkp = lookups.get("LTR")
+        if ltrLkp:
+            for script, langs in scripts.get("LTR", []):
+                ast.addLookupReference(feature, ltrLkp, script, langs)
+        rtlLkp = lookups.get("RTL")
+        if rtlLkp:
+            for script, langs in scripts.get("RTL", []):
+                ast.addLookupReference(feature, rtlLkp, script, langs)
