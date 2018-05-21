@@ -1,4 +1,5 @@
 from __future__ import print_function, division, absolute_import
+
 try:
     from inspect import getfullargspec as getargspec  # PY3
 except ImportError:
@@ -51,9 +52,12 @@ def copyGlyphSet(font, layerName=None):
     g = next(iter(layer))
     cls = g.__class__
     if "name" in getargspec(cls.__init__).args:
+
         def newGlyph(name):
             return cls(name=name)
+
     else:
+
         def newGlyph(name):
             g = cls()
             g.name = name
@@ -91,9 +95,11 @@ def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
                 mapping[uni] = glyphName
             else:
                 from ufo2ft.errors import InvalidFontData
+
                 InvalidFontData(
                     "cannot map '%s' to U+%04X; already mapped to '%s'"
-                    % (glyphName, uni, mapping[uni]))
+                    % (glyphName, uni, mapping[uni])
+                )
     return mapping
 
 
