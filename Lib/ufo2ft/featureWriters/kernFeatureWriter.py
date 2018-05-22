@@ -238,6 +238,9 @@ class KernFeatureWriter(BaseFeatureWriter):
             return False
 
         features = self._makeFeatureBlocks(lookups)
+        if not features:
+            self.log.debug("kerning features empty; skipped")
+            return False
 
         # extend feature file with the new generated statements
         statements = self.context.feaFile.statements
@@ -450,18 +453,24 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
-        scriptGroups = self.context.scriptGroups
         if "kern" in self.context.todo:
-            features["kern"] = ast.FeatureBlock("kern")
-            self._registerKernLookups(features["kern"], lookups, scriptGroups)
+            kern = ast.FeatureBlock("kern")
+            self._registerKernLookups(kern, lookups)
+            if kern.statements:
+                features["kern"] = kern
         if "dist" in self.context.todo:
-            features["dist"] = ast.FeatureBlock("dist")
-            self._registerDistLookups(features["dist"], lookups, scriptGroups)
+            dist = ast.FeatureBlock("dist")
+            self._registerDistLookups(dist, lookups)
+            if dist.statements:
+                features["dist"] = dist
         return features
 
-    @staticmethod
-    def _registerKernLookups(feature, lookups, scriptGroups):
-        distScripts = scriptGroups.get("dist", {})
+    def _registerKernLookups(self, feature, lookups):
+        scriptGroups = self.context.scriptGroups
+        if "dist" in self.context.todo:
+            distScripts = scriptGroups["dist"]
+        else:
+            distScripts = {}
         kernScripts = scriptGroups.get("kern", {})
         ltrScripts = kernScripts.get("LTR", [])
         rtlScripts = kernScripts.get("RTL", [])
@@ -482,10 +491,12 @@ class KernFeatureWriter(BaseFeatureWriter):
                 for script, langs in rtlScripts:
                     ast.addLookupReference(feature, rtlLkp, script, langs)
             else:
-                raise ValueError(
-                    "cannot use DFLT script for both LTR and RTL kern "
-                    "lookups; add 'languagesystems' to features"
-                )
+                if not (distScripts.get("LTR") and distScripts.get("RTL")):
+                    raise ValueError(
+                        "cannot use DFLT script for both LTR and RTL kern "
+                        "lookups; add 'languagesystems' to features for at "
+                        "least one LTR or RTL script using the kern feature"
+                    )
         elif ltrLkp:
             if not (rtlScripts or distScripts):
                 ast.addLookupReference(feature, ltrLkp)
@@ -503,9 +514,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         else:
             raise AssertionError(lookups)
 
-    @staticmethod
-    def _registerDistLookups(feature, lookups, scriptGroups):
-        scripts = scriptGroups.get("dist", {})
+    def _registerDistLookups(self, feature, lookups):
+        scripts = self.context.scriptGroups["dist"]
         ltrLkp = lookups.get("LTR")
         if ltrLkp:
             for script, langs in scripts.get("LTR", []):
