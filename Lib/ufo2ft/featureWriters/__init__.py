@@ -32,14 +32,28 @@ FEATURE_WRITERS_KEY = "com.github.googlei18n.ufo2ft.featureWriters"
 
 
 def isValidFeatureWriter(klass):
-    """Return True if 'klass' is a valid feature writer class."""
+    """Return True if 'klass' is a valid feature writer class.
+    A valid feature writer class is a class (of type 'type'), that has
+    two required attributes:
+    1) 'tableTag' (str), which can be "GSUB", "GPOS", or other similar tags.
+    2) 'write' (bound method), with the signature matching the same method
+       from the BaseFeatureWriter class:
+
+           def write(self, font, feaFile, compiler=None)
+    """
     if not isclass(klass):
         logger.error("%r is not a class", klass)
+        return False
+    if not hasattr(klass, "tableTag"):
+        logger.error("%r does not have required 'tableTag' attribute", klass)
         return False
     if not hasattr(klass, "write"):
         logger.error("%r does not have a required 'write' method", klass)
         return False
-    if getargspec(klass.write) != getargspec(BaseFeatureWriter.write).args:
+    if (
+        getargspec(klass.write).args
+        != getargspec(BaseFeatureWriter.write).args
+    ):
         logger.error("%r 'write' method has incorrect signature", klass)
         return False
     return True
