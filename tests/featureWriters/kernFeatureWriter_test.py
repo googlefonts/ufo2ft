@@ -317,6 +317,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 "public.kern1.foo": ["A", "B"],
                 "public.kern2.bar": ["C", "D"],
                 "public.kern1.baz": ["E", "F"],
+                "public.kern2.nul": ["G", "H"],
             }
         )
         font.kerning.update(
@@ -326,6 +327,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 ("public.kern1.foo", "D"): 15,
                 ("A", "public.kern2.bar"): 5,
                 ("G", "H"): -5,
+                # class-class zero-value pairs are skipped
+                ("public.kern1.foo", "public.kern2.nul"): 0,
             }
         )
 
