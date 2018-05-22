@@ -280,13 +280,11 @@ class KernFeatureWriter(BaseFeatureWriter):
             if not members:
                 # skip empty groups
                 continue
+            # skip groups without UFO3 public.kern{1,2} prefix
             if name.startswith(SIDE1_PREFIX):
                 side1Groups[name] = members
             elif name.startswith(SIDE2_PREFIX):
                 side2Groups[name] = members
-            else:
-                # skip groups without UFO3 public.kern{1,2} prefix
-                continue
         return side1Groups, side2Groups
 
     @classmethod
