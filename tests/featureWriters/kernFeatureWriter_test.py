@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 from textwrap import dedent
+import logging
 
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
@@ -27,10 +28,6 @@ def makeUFO(cls, glyphMap, groups=None, kerning=None, features=None):
     if features is not None:
         ufo.features.text = features
     return ufo
-
-
-# TODO move to some test support module?
-# ast helpers
 
 
 def getClassDefs(feaFile):
@@ -359,11 +356,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert (pairs[4].firstIsClass, pairs[4].secondIsClass) == (True, True)
         assert pairs[4].glyphs == {"A", "B", "C", "D"}
 
-    def test_both_ltr_and_rtl_kerning(self, FontClass, caplog):
-        import logging
-
-        caplog.set_level(logging.DEBUG)
-
+    def test_kern_LTR_and_RTL(self, FontClass):
         glyphs = {
             ".notdef": None,
             "four": 0x34,
@@ -452,6 +445,236 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern;
             """
         )
+
+    def test_kern_LTR_and_RTL_one_uses_DFLT(self, FontClass):
+        glyphs = {"A": 0x41, "V": 0x56, "reh-ar": 0x631, "alef-ar": 0x627}
+        kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
+        features = "languagesystem latn dflt;"
+        ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
+        generated = self.writeFeatures(ufo)
+
+        assert str(generated) == dedent(
+            """
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos A V -40;
+            } kern_ltr;
+
+            lookup kern_rtl {
+                lookupflag IgnoreMarks;
+                pos reh-ar alef-ar <-100 0 -100 0>;
+            } kern_rtl;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_rtl;
+                script latn;
+                language dflt;
+                lookup kern_ltr;
+            } kern;
+            """
+        )
+
+        features = dedent("languagesystem arab dflt;")
+        ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
+        generated = self.writeFeatures(ufo)
+
+        assert str(generated) == dedent(
+            """
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos A V -40;
+            } kern_ltr;
+
+            lookup kern_rtl {
+                lookupflag IgnoreMarks;
+                pos reh-ar alef-ar <-100 0 -100 0>;
+            } kern_rtl;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_ltr;
+                script arab;
+                language dflt;
+                lookup kern_rtl;
+            } kern;
+            """
+        )
+
+    def test_kern_LTR_and_RTL_cannot_use_DFLT(self, FontClass):
+        glyphs = {"A": 0x41, "V": 0x56, "reh-ar": 0x631, "alef-ar": 0x627}
+        kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
+        ufo = makeUFO(FontClass, glyphs, kerning=kerning)
+        with pytest.raises(ValueError, match="cannot use DFLT script"):
+            self.writeFeatures(ufo)
+
+    def test_dist_LTR(self, FontClass):
+        glyphs = {"aaMatra_kannada": 0x0CBE, "ailength_kannada": 0xCD6}
+        groups = {
+            "public.kern1.KND_aaMatra_R": ["aaMatra_kannada"],
+            "public.kern2.KND_ailength_L": ["aaMatra_kannada"],
+        }
+        kerning = {
+            ("public.kern1.KND_aaMatra_R", "public.kern2.KND_ailength_L"): 34
+        }
+        features = dedent(
+            """\
+            languagesystem DFLT dflt;
+            languagesystem latn dflt;
+            languagesystem knda dflt;
+            languagesystem knd2 dflt;
+            """
+        )
+
+        ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+        generated = self.writeFeatures(ufo)
+
+        assert str(generated) == dedent(
+            """\
+            @kern1.KND_aaMatra_R = [aaMatra_kannada];
+            @kern2.KND_ailength_L = [aaMatra_kannada];
+
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos @kern1.KND_aaMatra_R @kern2.KND_ailength_L 34;
+            } kern_ltr;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_ltr;
+                script latn;
+                language dflt;
+                lookup kern_ltr;
+            } kern;
+
+            feature dist {
+                script knda;
+                language dflt;
+                lookup kern_ltr;
+                script knd2;
+                language dflt;
+                lookup kern_ltr;
+            } dist;
+            """
+        )
+
+    def test_dist_RTL(self, FontClass):
+        glyphs = {"u10A06": 0x10A06, "u10A1E": 0x10A1E}
+        kerning = {("u10A1E", "u10A06"): 117}
+        features = dedent(
+            """\
+            languagesystem DFLT dflt;
+            languagesystem arab dflt;
+            languagesystem khar dflt;
+            """
+        )
+        ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
+        generated = self.writeFeatures(ufo)
+
+        assert str(generated) == dedent(
+            """
+            lookup kern_rtl {
+                lookupflag IgnoreMarks;
+                pos u10A1E u10A06 <117 0 117 0>;
+            } kern_rtl;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_rtl;
+                script arab;
+                language dflt;
+                lookup kern_rtl;
+            } kern;
+
+            feature dist {
+                script khar;
+                language dflt;
+                lookup kern_rtl;
+            } dist;
+            """
+        )
+
+    def test_dist_LTR_and_RTL(self, FontClass):
+        glyphs = {
+            "aaMatra_kannada": 0x0CBE,
+            "ailength_kannada": 0xCD6,
+            "u10A06": 0x10A06,
+            "u10A1E": 0x10A1E,
+        }
+        groups = {
+            "public.kern1.KND_aaMatra_R": ["aaMatra_kannada"],
+            "public.kern2.KND_ailength_L": ["aaMatra_kannada"],
+        }
+        kerning = {
+            ("public.kern1.KND_aaMatra_R", "public.kern2.KND_ailength_L"): 34,
+            ("u10A1E", "u10A06"): 117,
+        }
+        features = dedent(
+            """\
+            languagesystem DFLT dflt;
+            languagesystem knda dflt;
+            languagesystem knd2 dflt;
+            languagesystem khar dflt;
+            """
+        )
+
+        ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+        generated = self.writeFeatures(ufo)
+
+        assert str(generated) == dedent(
+            """\
+            @kern1.KND_aaMatra_R = [aaMatra_kannada];
+            @kern2.KND_ailength_L = [aaMatra_kannada];
+
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos @kern1.KND_aaMatra_R @kern2.KND_ailength_L 34;
+            } kern_ltr;
+
+            lookup kern_rtl {
+                lookupflag IgnoreMarks;
+                pos u10A1E u10A06 <117 0 117 0>;
+            } kern_rtl;
+
+            feature dist {
+                script knda;
+                language dflt;
+                lookup kern_ltr;
+                script knd2;
+                language dflt;
+                lookup kern_ltr;
+                script khar;
+                language dflt;
+                lookup kern_rtl;
+            } dist;
+            """
+        )
+
+    def test_skip_ambiguous_direction_pair(self, FontClass, caplog):
+        caplog.set_level(logging.ERROR)
+
+        ufo = FontClass()
+        ufo.newGlyph("bar").unicodes = [0x73, 0x627]
+        ufo.kerning[("bar", "bar")] = 10
+        ufo.features.text = dedent(
+            """\
+            languagesystem DFLT dflt;
+            languagesystem latn dflt;
+            languagesystem arab dflt;
+            """
+        )
+
+        logger = "ufo2ft.featureWriters.kernFeatureWriter.KernFeatureWriter"
+        with caplog.at_level(logging.WARNING, logger=logger):
+            generated = self.writeFeatures(ufo)
+
+        assert not generated
+        assert len(caplog.records) == 2
+        assert "skipped kern pair with ambiguous direction" in caplog.text
 
 
 if __name__ == "__main__":
