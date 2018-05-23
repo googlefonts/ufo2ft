@@ -1,6 +1,14 @@
+# -*- coding: utf-8 -*-
+from __future__ import (
+    print_function,
+    absolute_import,
+    division,
+    unicode_literals,
+)
 from fontTools.ttLib import TTFont
-from fontTools.misc.py23 import basestring
+from fontTools.misc.py23 import basestring, unichr, byteord
 from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
+from ufo2ft.fontInfoData import intListToNum
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 from ufo2ft import compileTTF
 import os
@@ -20,6 +28,19 @@ def testufo(FontClass):
 @pytest.fixture
 def use_my_metrics_ufo(FontClass):
     return FontClass(getpath("UseMyMetrics.ufo"))
+
+
+@pytest.fixture
+def emptyufo(FontClass):
+    font = FontClass()
+    font.info.unitsPerEm = 1000
+    font.info.familyName = "Test Font"
+    font.info.styleName = "Regular"
+    font.info.ascender = 750
+    font.info.descender = -250
+    font.info.xHeight = 500
+    font.info.capHeight = 750
+    return font
 
 
 class OutlineTTFCompilerTest(object):
@@ -571,6 +592,62 @@ class TestNames(object):
             "kkk",
             "lll",
         ]
+
+
+ASCII = [unichr(c) for c in range(0x20, 0x7E)]
+
+
+@pytest.mark.parametrize(
+    "unicodes, expected",
+    [
+        [ASCII + ["Þ"], {0}],  # Latin 1
+        [ASCII + ["Ľ"], {1}],  # Latin 2: Eastern Europe
+        [ASCII + ["Ľ", "┤"], {1, 58}],  # Latin 2
+        [["Б"], {2}],  # Cyrillic
+        [["Б", "Ѕ", "┤"], {2, 57}],  # IBM Cyrillic
+        [["Б", "╜", "┤"], {2, 49}],  # MS-DOS Russian
+        [["Ά"], {3}],  # Greek
+        [["Ά", "½", "┤"], {3, 48}],  # IBM Greek
+        [["Ά", "√", "┤"], {3, 60}],  # Greek, former 437 G
+        [ASCII + ["İ"], {4}],  # Turkish
+        [ASCII + ["İ", "┤"], {4, 56}],  # IBM turkish
+        [["א"], {5}],  # Hebrew
+        [["א", "√", "┤"], {5, 53}],  # Hebrew
+        [["ر"], {6}],  # Arabic
+        [["ر", "√"], {6, 51}],  # Arabic
+        [["ر", "√", "┤"], {6, 51, 61}],  # Arabic; ASMO 708
+        [ASCII + ["ŗ"], {7}],  # Windows Baltic
+        [ASCII + ["ŗ", "┤"], {7, 59}],  # MS-DOS Baltic
+        [ASCII + ["₫"], {8}],  # Vietnamese
+        [["ๅ"], {16}],  # Thai
+        [["エ"], {17}],  # JIS/Japan
+        [["ㄅ"], {18}],  # Chinese: Simplified chars
+        [["ㄱ"], {19}],  # Korean wansung
+        [["央"], {20}],  # Chinese: Traditional chars
+        [["곴"], {21}],  # Korean Johab
+        [ASCII + ["♥"], {30}],  # OEM Character Set
+        [ASCII + ["þ", "┤"], {54}],  # MS-DOS Icelandic
+        [ASCII + ["╚"], {62, 63}],  # WE/Latin 1
+        [ASCII + ["┤", "√", "Å"], {50}],  # MS-DOS Nordic
+        [ASCII + ["┤", "√", "é"], {52}],  # MS-DOS Canadian French
+        [ASCII + ["┤", "√", "õ"], {55}],  # MS-DOS Portuguese
+        [ASCII + ["‰", "∑"], {29}],  # Macintosh Character Set (US Roman)
+    ],
+)
+def test_calcCodePageRanges(emptyufo, unicodes, expected):
+    font = emptyufo
+    for i, c in enumerate(unicodes):
+        font.newGlyph("glyph%d" % i).unicode = byteord(c)
+
+    compiler = OutlineOTFCompiler(font)
+    compiler.compile()
+
+    assert compiler.otf["OS/2"].ulCodePageRange1 == intListToNum(
+        expected, start=0, length=32
+    )
+    assert compiler.otf["OS/2"].ulCodePageRange2 == intListToNum(
+        expected, start=32, length=32
+    )
 
 
 if __name__ == "__main__":
