@@ -340,7 +340,7 @@ staticFallbackData = dict(
     postscriptStemSnapV=[],
     postscriptBlueFuzz=0,
     postscriptBlueShift=7,
-    postscriptForceBold=False,
+    postscriptForceBold=0,
     postscriptDefaultWidthX=200,
     postscriptNominalWidthX=0,
 
