@@ -10,7 +10,7 @@ import pytest
 
 def getpath(filename):
     dirname = os.path.dirname(__file__)
-    return os.path.join(dirname, 'data', filename)
+    return os.path.join(dirname, "data", filename)
 
 
 @pytest.fixture
@@ -29,52 +29,50 @@ class OutlineTTFCompilerTest(object):
         compiler = OutlineTTFCompiler(testufo)
         compiler.otf = TTFont()
         compiler.setupTable_gasp()
-        assert 'gasp' in compiler.otf
-        assert compiler.otf['gasp'].gaspRange == {7: 10, 65535: 15}
+        assert "gasp" in compiler.otf
+        assert compiler.otf["gasp"].gaspRange == {7: 10, 65535: 15}
 
     def test_compile_with_gasp(self, testufo):
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
-        assert 'gasp' in compiler.otf
-        assert compiler.otf['gasp'].gaspRange == {7: 10, 65535: 15}
+        assert "gasp" in compiler.otf
+        assert compiler.otf["gasp"].gaspRange == {7: 10, 65535: 15}
 
     def test_compile_without_gasp(self, testufo):
         testufo.info.openTypeGaspRangeRecords = None
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
-        assert 'gasp' not in compiler.otf
+        assert "gasp" not in compiler.otf
 
     def test_compile_empty_gasp(self, testufo):
         # ignore empty gasp
         testufo.info.openTypeGaspRangeRecords = []
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
-        assert 'gasp' not in compiler.otf
+        assert "gasp" not in compiler.otf
 
     def test_makeGlyphsBoundingBoxes(self, testufo):
         # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
         compiler = OutlineTTFCompiler(testufo)
-        assert compiler.glyphBoundingBoxes['.notdef'] == (50, 0, 450, 750)
+        assert compiler.glyphBoundingBoxes[".notdef"] == (50, 0, 450, 750)
         # no outline data
-        assert compiler.glyphBoundingBoxes['space'] == None
+        assert compiler.glyphBoundingBoxes["space"] == None
         # float coordinates are rounded, so is the bbox
-        assert compiler.glyphBoundingBoxes['d'] == (90, 77, 211, 197)
+        assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
 
     def test_autoUseMyMetrics(self, use_my_metrics_ufo):
         compiler = OutlineTTFCompiler(use_my_metrics_ufo)
         ttf = compiler.compile()
         # the first component in the 'Iacute' composite glyph ('acute')
         # does _not_ have the USE_MY_METRICS flag
-        assert not (
-            ttf['glyf']['Iacute'].components[0].flags & USE_MY_METRICS)
+        assert not (ttf["glyf"]["Iacute"].components[0].flags & USE_MY_METRICS)
         # the second component in the 'Iacute' composite glyph ('I')
         # has the USE_MY_METRICS flag set
-        assert (
-            ttf['glyf']['Iacute'].components[1].flags & USE_MY_METRICS)
+        assert ttf["glyf"]["Iacute"].components[1].flags & USE_MY_METRICS
         # none of the 'I' components of the 'romanthree' glyph has
         # the USE_MY_METRICS flag set, because the composite glyph has a
         # different width
-        for component in ttf['glyf']['romanthree'].components:
+        for component in ttf["glyf"]["romanthree"].components:
             assert not (component.flags & USE_MY_METRICS)
 
     def test_autoUseMyMetrics_None(self, use_my_metrics_ufo):
@@ -82,7 +80,7 @@ class OutlineTTFCompilerTest(object):
         # setting 'autoUseMyMetrics' attribute to None disables the feature
         compiler.autoUseMyMetrics = None
         ttf = compiler.compile()
-        assert not (ttf['glyf']['Iacute'].components[1].flags & USE_MY_METRICS)
+        assert not (ttf["glyf"]["Iacute"].components[1].flags & USE_MY_METRICS)
 
     def test_importTTX(self, testufo):
         compiler = OutlineTTFCompiler(testufo)
@@ -97,17 +95,18 @@ class OutlineTTFCompilerTest(object):
             glyph.clearContours()
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
-        assert compiler.otf['hhea'].advanceWidthMax == 600
-        assert compiler.otf['hhea'].minLeftSideBearing == 0
-        assert compiler.otf['hhea'].minRightSideBearing == 0
-        assert compiler.otf['hhea'].xMaxExtent == 0
+        assert compiler.otf["hhea"].advanceWidthMax == 600
+        assert compiler.otf["hhea"].minLeftSideBearing == 0
+        assert compiler.otf["hhea"].minRightSideBearing == 0
+        assert compiler.otf["hhea"].xMaxExtent == 0
 
     def test_os2_no_widths(self, testufo):
         for glyph in testufo:
             glyph.width = 0
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
-        assert compiler.otf['OS/2'].xAvgCharWidth == 0
+        assert compiler.otf["OS/2"].xAvgCharWidth == 0
+
 
 class OutlineOTFCompilerTest(object):
 
@@ -220,11 +219,33 @@ class OutlineOTFCompilerTest(object):
         # glyph 'd' in TestFont.ufo contains float coordinates
         program = self.get_charstring_program(otf, "d")
 
-        self.assertProgramEqual(program, [
-            -26, 151, 197, 'rmoveto',
-            -34, -27, -27, -33, -33, 27, -27, 34, 33, 27, 27, 33, 33, -27,
-                27, -33, 'hvcurveto',
-            'endchar'])
+        self.assertProgramEqual(
+            program,
+            [
+                -26,
+                151,
+                197,
+                "rmoveto",
+                -34,
+                -27,
+                -27,
+                -33,
+                -33,
+                27,
+                -27,
+                34,
+                33,
+                27,
+                27,
+                33,
+                33,
+                -27,
+                27,
+                -33,
+                "hvcurveto",
+                "endchar",
+            ],
+        )
 
     def test_setupTable_CFF_round_none(self, testufo):
         # roundTolerance=0 means 'don't round, keep all floats'
@@ -234,12 +255,33 @@ class OutlineOTFCompilerTest(object):
         compiler.setupTable_CFF()
         program = self.get_charstring_program(otf, "d")
 
-        self.assertProgramEqual(program, [
-            -26, 150.66, 197.32, 'rmoveto',
-            -33.66, -26.67, -26.99, -33.33, -33.33, 26.67, -26.66,
-                33.66, 33.33, 26.66, 26.66, 33.33, 33.33, -26.66, 26.99,
-                -33.33, 'hvcurveto',
-            'endchar'])
+        self.assertProgramEqual(
+            program,
+            [
+                -26,
+                150.66,
+                197.32,
+                "rmoveto",
+                -33.66,
+                -26.67,
+                -26.99,
+                -33.33,
+                -33.33,
+                26.67,
+                -26.66,
+                33.66,
+                33.33,
+                26.66,
+                26.66,
+                33.33,
+                33.33,
+                -26.66,
+                26.99,
+                -33.33,
+                "hvcurveto",
+                "endchar",
+            ],
+        )
 
     def test_setupTable_CFF_round_some(self, testufo):
         # only floats 'close enough' are rounded to integer
@@ -249,25 +291,47 @@ class OutlineOTFCompilerTest(object):
         compiler.setupTable_CFF()
         program = self.get_charstring_program(otf, "d")
 
-        self.assertProgramEqual(program, [
-            -26, 150.66, 197, 'rmoveto',
-            -33.66, -27, -27, -33, -33, 27, -27, 33.66, 33.34, 26.65, 27, 33,
-                33, -26.65, 27, -33.34, 'hvcurveto',
-            'endchar'])
+        self.assertProgramEqual(
+            program,
+            [
+                -26,
+                150.66,
+                197,
+                "rmoveto",
+                -33.66,
+                -27,
+                -27,
+                -33,
+                -33,
+                27,
+                -27,
+                33.66,
+                33.34,
+                26.65,
+                27,
+                33,
+                33,
+                -26.65,
+                27,
+                -33.34,
+                "hvcurveto",
+                "endchar",
+            ],
+        )
 
     def test_makeGlyphsBoundingBoxes(self, testufo):
         # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
         compiler = OutlineOTFCompiler(testufo)
         # with default roundTolerance, all coordinates and hence the bounding
         # box values are rounded with round()
-        assert compiler.glyphBoundingBoxes['d'] == (90, 77, 211, 197)
+        assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
 
     def test_makeGlyphsBoundingBoxes_floats(self, testufo):
         # specifying a custom roundTolerance affects which coordinates are
         # rounded; in this case, the top-most Y coordinate stays a float
         # (197.32), hence the bbox.yMax (198) is rounded using math.ceiling()
         compiler = OutlineOTFCompiler(testufo, roundTolerance=0.1)
-        assert compiler.glyphBoundingBoxes['d'] == (90, 77, 211, 198)
+        assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 198)
 
     def test_importTTX(self, testufo):
         compiler = OutlineOTFCompiler(testufo)
@@ -282,28 +346,30 @@ class OutlineOTFCompilerTest(object):
             glyph.clearContours()
         compiler = OutlineOTFCompiler(testufo)
         compiler.compile()
-        assert compiler.otf['hhea'].advanceWidthMax == 600
-        assert compiler.otf['hhea'].minLeftSideBearing == 0
-        assert compiler.otf['hhea'].minRightSideBearing == 0
-        assert compiler.otf['hhea'].xMaxExtent == 0
+        assert compiler.otf["hhea"].advanceWidthMax == 600
+        assert compiler.otf["hhea"].minLeftSideBearing == 0
+        assert compiler.otf["hhea"].minRightSideBearing == 0
+        assert compiler.otf["hhea"].xMaxExtent == 0
 
     def test_optimized_default_and_nominal_widths(self, FontClass):
         ufo = FontClass()
         ufo.info.unitsPerEm = 1000
-        for glyphName, width in ((".notdef", 500),
-                                 ("space", 250),
-                                 ("a", 388),
-                                 ("b", 410),
-                                 ("c", 374),
-                                 ("d", 374),
-                                 ("e", 388),
-                                 ("f", 410),
-                                 ("g", 388),
-                                 ("h", 410),
-                                 ("i", 600),
-                                 ("j", 600),
-                                 ("k", 600),
-                                 ("l", 600)):
+        for glyphName, width in (
+            (".notdef", 500),
+            ("space", 250),
+            ("a", 388),
+            ("b", 410),
+            ("c", 374),
+            ("d", 374),
+            ("e", 388),
+            ("f", 410),
+            ("g", 388),
+            ("h", 410),
+            ("i", 600),
+            ("j", 600),
+            ("k", 600),
+            ("l", 600),
+        ):
             glyph = ufo.newGlyph(glyphName)
             glyph.width = width
 
@@ -326,23 +392,53 @@ class OutlineOTFCompilerTest(object):
             assert charStrings.getItemAndSelector(g)[0].program == ["endchar"]
         # 'space' has width 250, so the width encoded in its charstring is:
         # 250 - nominalWidthX
-        assert (charStrings.getItemAndSelector("space")[0].program
-                == [-53, "endchar"])
+        assert charStrings.getItemAndSelector("space")[0].program == [
+            -53,
+            "endchar",
+        ]
 
 
 class TestGlyphOrder(object):
 
     def test_compile_original_glyph_order(self, testufo):
-        DEFAULT_ORDER = ['.notdef', 'space', 'a', 'b', 'c', 'd',
-                         'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
+        DEFAULT_ORDER = [
+            ".notdef",
+            "space",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+        ]
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == DEFAULT_ORDER
 
     def test_compile_tweaked_glyph_order(self, testufo):
-        NEW_ORDER = ['.notdef', 'space', 'b', 'a', 'c', 'd',
-                     'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
-        testufo.lib['public.glyphOrder'] = NEW_ORDER
+        NEW_ORDER = [
+            ".notdef",
+            "space",
+            "b",
+            "a",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+        ]
+        testufo.lib["public.glyphOrder"] = NEW_ORDER
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == NEW_ORDER
@@ -351,10 +447,24 @@ class TestGlyphOrder(object):
         """Move space and .notdef to end of glyph ids
         ufo2ft always puts .notdef first.
         """
-        NEW_ORDER = ['b', 'a', 'c', 'd', 'space', '.notdef']
-        EXPECTED_ORDER = ['.notdef', 'b', 'a', 'c', 'd', 'space',
-                          'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
-        testufo.lib['public.glyphOrder'] = NEW_ORDER
+        NEW_ORDER = ["b", "a", "c", "d", "space", ".notdef"]
+        EXPECTED_ORDER = [
+            ".notdef",
+            "b",
+            "a",
+            "c",
+            "d",
+            "space",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+        ]
+        testufo.lib["public.glyphOrder"] = NEW_ORDER
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
@@ -363,8 +473,22 @@ class TestGlyphOrder(object):
 class TestNames(object):
 
     def test_compile_without_production_names(self, testufo):
-        expected = ['.notdef', 'space', 'a', 'b', 'c', 'd',
-                    'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
+        expected = [
+            ".notdef",
+            "space",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+        ]
 
         result = compileTTF(testufo, useProductionNames=False)
         assert result.getGlyphOrder() == expected
@@ -374,10 +498,22 @@ class TestNames(object):
         assert result.getGlyphOrder() == expected
 
     def test_compile_with_production_names(self, testufo):
-        expected = ['.notdef', 'uni0020', 'uni0061', 'uni0062',
-                    'uni0063', 'uni0064', 'uni0065', 'uni0066',
-                    'uni0067', 'uni0068', 'uni0069', 'uni006A',
-                    'uni006B', 'uni006C']
+        expected = [
+            ".notdef",
+            "uni0020",
+            "uni0061",
+            "uni0062",
+            "uni0063",
+            "uni0064",
+            "uni0065",
+            "uni0066",
+            "uni0067",
+            "uni0068",
+            "uni0069",
+            "uni006A",
+            "uni006B",
+            "uni006C",
+        ]
 
         result = compileTTF(testufo)
         assert result.getGlyphOrder() == expected
@@ -390,40 +526,55 @@ class TestNames(object):
         assert result.getGlyphOrder() == expected
 
     CUSTOM_POSTSCRIPT_NAMES = {
-            '.notdef': '.notdef',
-            'space': 'foo',
-            'a': 'bar',
-            'b': 'baz',
-            'c': 'meh',
-            'd': 'doh',
-            'e': 'bim',
-            'f': 'bum',
-            'g': 'bam',
-            'h': 'bib',
-            'i': 'bob',
-            'j': 'bub',
-            'k': 'kkk',
-            'l': 'lll',
-        }
+        ".notdef": ".notdef",
+        "space": "foo",
+        "a": "bar",
+        "b": "baz",
+        "c": "meh",
+        "d": "doh",
+        "e": "bim",
+        "f": "bum",
+        "g": "bam",
+        "h": "bib",
+        "i": "bob",
+        "j": "bub",
+        "k": "kkk",
+        "l": "lll",
+    }
 
     def test_compile_with_custom_postscript_names(self, testufo):
-        testufo.lib['public.postscriptNames'] = self.CUSTOM_POSTSCRIPT_NAMES
+        testufo.lib["public.postscriptNames"] = self.CUSTOM_POSTSCRIPT_NAMES
         result = compileTTF(testufo, useProductionNames=True)
-        assert (sorted(result.getGlyphOrder())
-                == sorted(self.CUSTOM_POSTSCRIPT_NAMES.values()))
+        assert sorted(result.getGlyphOrder()) == sorted(
+            self.CUSTOM_POSTSCRIPT_NAMES.values()
+        )
 
     def test_compile_with_custom_postscript_names_notdef_preserved(
-            self, testufo):
+        self, testufo
+    ):
         custom_names = dict(self.CUSTOM_POSTSCRIPT_NAMES)
-        custom_names['.notdef'] = 'defnot'
-        testufo.lib['public.postscriptNames'] = custom_names
+        custom_names[".notdef"] = "defnot"
+        testufo.lib["public.postscriptNames"] = custom_names
         result = compileTTF(testufo, useProductionNames=True)
-        assert (result.getGlyphOrder()
-                == ['.notdef', 'foo', 'bar', 'baz', 'meh', 'doh',
-                    'bim', 'bum', 'bam', 'bib', 'bob', 'bub',
-                    'kkk', 'lll'])
+        assert result.getGlyphOrder() == [
+            ".notdef",
+            "foo",
+            "bar",
+            "baz",
+            "meh",
+            "doh",
+            "bim",
+            "bum",
+            "bam",
+            "bib",
+            "bob",
+            "bub",
+            "kkk",
+            "lll",
+        ]
 
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(pytest.main(sys.argv))
