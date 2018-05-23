@@ -6,4 +6,4 @@ compreffor==0.4.6
 booleanOperations==0.8.0
 
 # alternative UFO implementation (still experimental)
--e git+https://github.com/fonttools/ufoLib2.git#egg=ufoLib2
+ufoLib2==0.1.2

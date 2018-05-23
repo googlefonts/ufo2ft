@@ -1,53 +1,64 @@
 from __future__ import (
-    print_function, division, absolute_import, unicode_literals)
+    print_function,
+    division,
+    absolute_import,
+    unicode_literals,
+)
 from fontTools.misc.py23 import SimpleNamespace
+from fontTools import unicodedata
+import collections
+import re
+import logging
 
-
-_SUPPORTED_MODES = ("skip", "append", "prepend")
+from ufo2ft.featureWriters import ast
 
 
 class BaseFeatureWriter(object):
     """Abstract features writer.
 
-    The 'features' class attribute defines the list of all the features
+    The `tableTag` class attribute (str) states the tag of the OpenType
+    Layout table which the generated features are intended for.
+    For example: "GPOS", "GSUB", "BASE", etc.
+
+    The `features` class attribute defines the set of all the features
     that this writer supports. If you want to only write some of the
-    available features you can provide a smaller list to 'features'
+    available features you can provide a smaller sequence to 'features'
     constructor argument. By the default all the features supported by
     this writer will be outputted.
 
-    There are currently two possible writing modes:
+    Two writing modes are defined here:
     1) "skip" (default) will not write anything if any of the features
        listed is already present;
     2) "append" will add additional lookups to an existing feature,
        if present, or it will add a new one at the end of all features.
-    3) "prepend" will add additional lookups to an existing feature
-       before an already existing one, or will add a new one at the
-       beginning of the features.
+    Subclasses can set a different default mode or define a different
+    set of `_SUPPORTED_MODES`.
 
-    The 'options' class attribute contains a mapping of option
+    The `options` class attribute contains a mapping of option
     names with their default values. These can be overridden on an
-    instance by passing keword arguments to the constructor.
+    instance by passing keyword arguments to the constructor.
     """
 
-    features = []
+    tableTag = None
+    features = frozenset()
     mode = "skip"
     options = {}
 
-    def __init__(self, features=None, mode=None, linesep="\n", **kwargs):
+    _SUPPORTED_MODES = frozenset(["skip", "append"])
+
+    def __init__(self, features=None, mode=None, **kwargs):
         if features is not None:
-            default_features = set(self.__class__.features)
-            self.features = []
-            for feat in features:
-                if feat not in default_features:
-                    raise ValueError(feat)
-                self.features.append(feat)
+            features = frozenset(features)
+            assert features, "features cannot be empty"
+            unsupported = features.difference(self.__class__.features)
+            if unsupported:
+                raise ValueError("unsupported: %s" % ", ".join(unsupported))
+            self.features = features
 
         if mode is not None:
-            if mode not in _SUPPORTED_MODES:
-                raise ValueError(mode)
             self.mode = mode
-
-        self.linesep = linesep
+        if self.mode not in self._SUPPORTED_MODES:
+            raise ValueError(self.mode)
 
         options = dict(self.__class__.options)
         for k in kwargs:
@@ -56,37 +67,95 @@ class BaseFeatureWriter(object):
             options[k] = kwargs[k]
         self.options = SimpleNamespace(**options)
 
-    def set_context(self, font):
-        """ Populate a `self.context` namespace, which is reset before each
-        new call to `_write` method.
+        logger = ".".join([self.__class__.__module__, self.__class__.__name__])
+        self.log = logging.getLogger(logger)
 
+    def setContext(self, font, feaFile, compiler=None):
+        """ Populate a temporary `self.context` namespace, which is reset
+        after each new call to `_write` method.
         Subclasses can override this to provide contextual information
-        which depends on other data in the font that is not available in
-        the glyphs objects currently being filtered, or set any other
-        temporary attributes.
+        which depends on other data, or set any temporary attributes.
 
-        The default implementation simply sets the current font, and
-        returns the namepace instance.
+        The default implementation sets:
+        - the current font;
+        - the current FeatureFile object;
+        - the current compiler instance (only present when this writer was
+          instantiated from a FeatureCompiler);
+        - a set of features (tags) to be generated. If self.mode is "skip",
+          these are all the features which are _not_ already present.
+
+        Returns the context namespace instance.
         """
-        self.context = SimpleNamespace(font=font)
+        todo = set(self.features)
+        if self.mode == "skip":
+            existing = ast.findFeatureTags(feaFile)
+            todo.difference_update(existing)
+
+        self.context = SimpleNamespace(
+            font=font, feaFile=feaFile, compiler=compiler, todo=todo
+        )
+
         return self.context
 
-    def write(self, font):
-        """Write features and class definitions for this font.
+    def shouldContinue(self):
+        """ Decide whether to start generating features or return early.
+        Returns a boolean: True to proceed, False to skip.
 
-        Resets the `self.context` and delegates to ``self._write()` method.
-
-        Returns a string containing the text of the features that are
-        listed in `self.features`.
+        Sublcasses may override this to skip generation based on the presence
+        or lack of other required pieces of font data.
         """
-        self.set_context(font)
-        return self._write()
+        if not self.context.todo:
+            self.log.debug("No features to be generated; skipped")
+            return False
+        return True
+
+    def write(self, font, feaFile, compiler=None):
+        """Write features and class definitions for this font to a feaLib
+        FeatureFile object.
+        Returns True if feature file was modified, False if no new features
+        were generated.
+        """
+        self.setContext(font, feaFile, compiler=compiler)
+        try:
+            if self.shouldContinue():
+                return self._write()
+            else:
+                return False
+        finally:
+            del self.context
 
     def _write(self):
         """Subclasses must override this."""
         raise NotImplementedError
 
-    @staticmethod
-    def liststr(glyphs):
-        """Return string representation of a list of glyph names."""
-        return "[%s]" % " ".join(glyphs)
+    def makeUnicodeToGlyphNameMapping(self):
+        """Return the Unicode to glyph name mapping for the current font.
+        """
+        # Try to get the "best" Unicode cmap subtable if this writer is running
+        # in the context of a FeatureCompiler, else create a new mapping from
+        # the UFO glyphs
+        compiler = self.context.compiler
+        cmap = None
+        if compiler is not None:
+            table = compiler.ttFont.get("cmap")
+            if table is not None:
+                cmap = table.getBestCmap()
+        if cmap is None:
+            from ufo2ft.util import makeUnicodeToGlyphNameMapping
+
+            cmap = makeUnicodeToGlyphNameMapping(self.context.font)
+        return cmap
+
+    def compileGSUB(self):
+        """Compile a temporary GSUB table from the current feature file.
+        """
+        from ufo2ft.util import compileGSUB
+
+        compiler = self.context.compiler
+        if compiler is not None:
+            glyphOrder = compiler.ttFont.getGlyphOrder()
+        else:
+            # the 'real' glyph order doesn't matter because the table is not
+            # compiled to binary, only the glyph names are used
+            glyphOrder = sorted(self.context.font.keys())
+        return compileGSUB(self.context.feaFile, glyphOrder)

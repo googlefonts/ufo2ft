@@ -21,7 +21,12 @@ from fontTools.misc.arrayTools import unionRect
 from ufo2ft.fontInfoData import (
     getAttrWithFallback, dateStringToTimeValue, dateStringForNow,
     intListToNum, normalizeStringForPostscript)
-from ufo2ft.util import makeOfficialGlyphOrder, calcCodePageRanges
+from ufo2ft.util import (
+    makeOfficialGlyphOrder,
+    makeUnicodeToGlyphNameMapping,
+    calcCodePageRanges,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -158,12 +163,7 @@ class BaseOutlineCompiler(object):
         may override this method to handle the mapping creation
         in a different way if desired.
         """
-        mapping = {}
-        for glyphName, glyph in self.allGlyphs.items():
-            unicodes = glyph.unicodes
-            for uni in unicodes:
-                mapping[uni] = glyphName
-        return mapping
+        return makeUnicodeToGlyphNameMapping(self.allGlyphs, self.glyphOrder)
 
     @staticmethod
     def makeMissingRequiredGlyphs(font, glyphSet):
@@ -1126,6 +1126,7 @@ class StubGlyph(object):
         self.descender = descender
         self.unicodes = unicodes
         self.components = []
+        self.anchors = []
         if unicodes:
             self.unicode = unicodes[0]
         else:
