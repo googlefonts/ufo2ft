@@ -2,7 +2,6 @@ from __future__ import \
     print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import *
 from ufo2ft import compileOTF, compileTTF, compileInterpolatableTTFs
-from ufo2ft.featureWriters import KernFeatureWriter, MarkFeatureWriter
 import warnings
 import difflib
 import os
@@ -44,7 +43,7 @@ def expectTTX(font, expectedTTX, tables=None):
     actual = readLines(f)
     if actual != expected:
         for line in difflib.unified_diff(
-                expected, actual, fromfile=expectedTTX, tofile=path):
+                expected, actual, fromfile=expectedTTX, tofile="<generated>"):
             sys.stderr.write(line)
         pytest.fail("TTX output is different from expected")
 
@@ -65,41 +64,19 @@ class CompilerTest(object):
         otf = compileOTF(testufo)
         expectTTX(otf, "TestFont-CFF.ttx")
 
-    def test_deprecated_arguments(self, testufo):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always", UserWarning)
-
-            compileTTF(testufo, kernWriterClass=KernFeatureWriter)
-
-            assert len(w) == 1
-            assert w[-1].category == UserWarning
-            assert ("'kernWriterClass' is deprecated; use 'featureWriters'"
-                    in str(w[-1].message))
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always", UserWarning)
-
-            compileOTF(testufo, markWriterClass=MarkFeatureWriter)
-
-            assert len(w) == 1
-            assert w[-1].category == UserWarning
-            assert ("'markWriterClass' is deprecated; use 'featureWriters'"
-                    in str(w[-1].message))
-
-        with pytest.raises(TypeError):
-            compileTTF(testufo, kernWriterClass=KernFeatureWriter,
-                       featureWriters=[MarkFeatureWriter])
-
-    def test_features(self, FontClass):
-        """Checks how the compiler handles features.fea
+    def test_included_features(self, FontClass):
+        """Checks how the compiler handles include statements in features.fea.
 
         The compiler should detect which features are defined by the
         features.fea inside the compiled UFO, or by feature files that
-        are included from there.  The compiler should only inject
-        auto-generated features (kern, mark, mkmk) if the UFO does
-        not list them in features.fea.
+        are included from there.
 
         https://github.com/googlei18n/ufo2ft/issues/108
+
+        Relative paths should be resolved taking the UFO path as reference,
+        not the embedded features.fea file.
+
+        https://github.com/unified-font-object/ufo-spec/issues/55
         """
         ufo = FontClass(getpath("Bug108.ufo"))
         ttf = compileTTF(ufo)
