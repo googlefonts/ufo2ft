@@ -1,6 +1,5 @@
 from fontTools.ttLib import TTFont
 from fontTools.misc.py23 import basestring
-from defcon import Font
 from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 from ufo2ft import compileTTF
@@ -56,7 +55,7 @@ class OutlineTTFCompilerTest(object):
         compiler = OutlineTTFCompiler(testufo)
         assert compiler.glyphBoundingBoxes[".notdef"] == (50, 0, 450, 750)
         # no outline data
-        assert compiler.glyphBoundingBoxes["space"] == None
+        assert compiler.glyphBoundingBoxes["space"] is None
         # float coordinates are rounded, so is the bbox
         assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
 
@@ -131,7 +130,7 @@ class OutlineOTFCompilerTest(object):
         assert private.BlueFuzz == 2
         assert private.BlueShift == 8
         assert private.BlueScale == 0.049736
-        assert private.ForceBold == False
+        assert private.ForceBold == 0
         assert private.BlueValues == [-12, 0, 486, 498, 712, 724]
         assert private.OtherBlues == [-217, -205]
         assert private.FamilyBlues == [-12, 0, 486, 498, 712, 724]
@@ -161,7 +160,7 @@ class OutlineOTFCompilerTest(object):
         assert private.BlueFuzz == 1
         assert private.BlueShift == 7
         assert private.BlueScale == 0.039625
-        assert private.ForceBold == False
+        assert private.ForceBold == 0
         # CFF PrivateDict has no blues attributes
         assert not hasattr(private, "BlueValues")
         assert not hasattr(private, "OtherBlues")
@@ -187,7 +186,7 @@ class OutlineOTFCompilerTest(object):
         assert private.BlueFuzz == 2
         assert private.BlueShift == 7  # default
         assert private.BlueScale == 0.039625  # default
-        assert private.ForceBold == True
+        assert private.ForceBold is True
         assert not hasattr(private, "BlueValues")
         assert private.OtherBlues == [-217, -205]
         assert not hasattr(private, "FamilyBlues")
@@ -374,7 +373,7 @@ class OutlineOTFCompilerTest(object):
             glyph.width = width
 
         compiler = OutlineOTFCompiler(ufo)
-        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+        compiler.otf = TTFont(sfntVersion="OTTO")
 
         compiler.setupTable_hmtx()
         compiler.setupTable_CFF()
