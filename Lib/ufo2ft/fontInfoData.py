@@ -304,8 +304,8 @@ staticFallbackData = dict(
     openTypeOS2VendorID="NONE",
     openTypeOS2Panose=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     openTypeOS2FamilyClass=[0, 0],
-    openTypeOS2UnicodeRanges=[],
-    openTypeOS2CodePageRanges=[],
+    openTypeOS2UnicodeRanges=None,
+    openTypeOS2CodePageRanges=None,
     openTypeOS2Type=[2],
 
     openTypeOS2SubscriptXSize=None,

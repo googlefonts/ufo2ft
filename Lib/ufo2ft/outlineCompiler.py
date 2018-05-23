@@ -1,5 +1,5 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import tounicode, round, BytesIO
+from fontTools.misc.py23 import byteord, tounicode, round, unichr, BytesIO
 
 import logging
 import math
@@ -410,6 +410,90 @@ class BaseOutlineCompiler(object):
             # update tables registry
             cmap.tables = [cmap4_0_3, cmap4_3_1, cmap12_0_4, cmap12_3_10]
 
+    def _calcCodepageRanges(self):
+        codepageRanges = set()
+
+        unicodes = self.unicodeToGlyphNameMapping.keys()
+        chars = [unichr(u) for u in unicodes]
+
+        hasAscii = set(range(0x20, 0x7E)).issubset(unicodes)
+        hasLineart = "┤" in chars
+
+        for char in chars:
+            if char == "Þ" and hasAscii:
+                codepageRanges.add(0)           # Latin 1
+            elif char == "Ľ" and hasAscii:
+                codepageRanges.add(1)           # Latin 2: Eastern Europe
+                if hasLineart:
+                    codepageRanges.add(58)      # Latin 2
+            elif char == "Б":
+                codepageRanges.add(2)           # Cyrillic
+                if "Ѕ" in chars and hasLineart:
+                    codepageRanges.add(57)      # IBM Cyrillic
+                if "╜" in chars and hasLineart:
+                    codepageRanges.add(49)      # MS-DOS Russian
+            elif char == "Ά":
+                codepageRanges.add(3)           # Greek
+                if hasLineart and "½" in chars:
+                    codepageRanges.add(48)      # IBM Greek
+                if hasLineart and "√" in chars:
+                    codepageRanges.add(60)      # Greek, former 437 G
+            elif char == "İ" and hasAscii:
+                codepageRanges.add(4)           # Turkish
+                if hasLineart:
+                    codepageRanges.add(56)      # IBM turkish
+            elif char == "א":
+                codepageRanges.add(5)           # Hebrew
+                if hasLineart and "√" in chars:
+                    codepageRanges.add(53)      # Hebrew
+            elif char == "ر":
+                codepageRanges.add(6)           # Arabic
+                if "√" in chars:
+                    codepageRanges.add(51)      # Arabic
+                if hasLineart:
+                    codepageRanges.add(61)      # Arabic; ASMO 708
+            elif char == "ŗ" and hasAscii:
+                codepageRanges.add(7)           # Windows Baltic
+                if hasLineart:
+                    codepageRanges.add(59)      # MS-DOS Baltic
+            elif char == "₫" and hasAscii:
+                codepageRanges.add(8)           # Vietnamese
+            elif char == "ๅ":
+                codepageRanges.add(16)          # Thai
+            elif char == "エ":
+                codepageRanges.add(17)          # JIS/Japan
+            elif char == "ㄅ":
+                codepageRanges.add(18)          # Chinese: Simplified chars
+            elif char == "ㄱ":
+                codepageRanges.add(19)          # Korean wansung
+            elif char == "央":
+                codepageRanges.add(20)          # Chinese: Traditional chars
+            elif char == "곴":
+                codepageRanges.add(21)          # Korean Johab
+            elif char == "♥" and hasAscii:
+                codepageRanges.add(30)          # OEM Character Set
+           # TODO: Symbol bit has a special meaning (check the spec), we need
+           # to confirm if this is wanted by default.
+           #elif unichr(0xF000) <= char <= unichr(0xF0FF):
+           #    codepageRanges.add(31)          # Symbol Character Set
+            elif char == "þ" and hasAscii and hasLineart:
+                codepageRanges.add(54)          # MS-DOS Icelandic
+            elif char == "╚" and hasAscii:
+                codepageRanges.add(62)          # WE/Latin 1
+                codepageRanges.add(63)          # US
+            elif hasAscii and hasLineart and "√" in chars:
+                if char == "Å":
+                    codepageRanges.add(50)      # MS-DOS Nordic
+                elif char == "é":
+                    codepageRanges.add(52)      # MS-DOS Canadian French
+                elif char == "õ":
+                    codepageRanges.add(55)      # MS-DOS Portuguese
+
+        if hasAscii and "‰" in chars and "∑" in chars:
+            codepageRanges.add(29)              # Macintosh Character Set (US Roman)
+
+        return codepageRanges
+
     def setupTable_OS2(self):
         """
         Make the OS/2 table.
@@ -506,12 +590,18 @@ class BaseOutlineCompiler(object):
         os2.panose = panose
         # Unicode ranges
         uniRanges = getAttrWithFallback(font.info, "openTypeOS2UnicodeRanges")
-        os2.ulUnicodeRange1 = intListToNum(uniRanges, 0, 32)
-        os2.ulUnicodeRange2 = intListToNum(uniRanges, 32, 32)
-        os2.ulUnicodeRange3 = intListToNum(uniRanges, 64, 32)
-        os2.ulUnicodeRange4 = intListToNum(uniRanges, 96, 32)
+        if uniRanges is not None:
+            os2.ulUnicodeRange1 = intListToNum(uniRanges, 0, 32)
+            os2.ulUnicodeRange2 = intListToNum(uniRanges, 32, 32)
+            os2.ulUnicodeRange3 = intListToNum(uniRanges, 64, 32)
+            os2.ulUnicodeRange4 = intListToNum(uniRanges, 96, 32)
+        else:
+            os2.recalcUnicodeRanges(self.otf)
+
         # codepage ranges
         codepageRanges = getAttrWithFallback(font.info, "openTypeOS2CodePageRanges")
+        if codepageRanges is None:
+            codepageRanges = self._calcCodepageRanges()
         os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
         os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
         # vendor id
