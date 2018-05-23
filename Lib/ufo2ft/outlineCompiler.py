@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import tounicode, round, BytesIO
+from fontTools.misc.py23 import byteord, tounicode, round, unichr, BytesIO
 
 import logging
 import math
@@ -20,7 +21,12 @@ from fontTools.misc.arrayTools import unionRect
 from ufo2ft.fontInfoData import (
     getAttrWithFallback, dateStringToTimeValue, dateStringForNow,
     intListToNum, normalizeStringForPostscript)
-from ufo2ft.util import makeOfficialGlyphOrder, makeUnicodeToGlyphNameMapping
+from ufo2ft.util import (
+    makeOfficialGlyphOrder,
+    makeUnicodeToGlyphNameMapping,
+    calcCodePageRanges,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -501,14 +507,22 @@ class BaseOutlineCompiler(object):
         os2.panose = panose
         # Unicode ranges
         uniRanges = getAttrWithFallback(font.info, "openTypeOS2UnicodeRanges")
-        os2.ulUnicodeRange1 = intListToNum(uniRanges, 0, 32)
-        os2.ulUnicodeRange2 = intListToNum(uniRanges, 32, 32)
-        os2.ulUnicodeRange3 = intListToNum(uniRanges, 64, 32)
-        os2.ulUnicodeRange4 = intListToNum(uniRanges, 96, 32)
+        if uniRanges is not None:
+            os2.ulUnicodeRange1 = intListToNum(uniRanges, 0, 32)
+            os2.ulUnicodeRange2 = intListToNum(uniRanges, 32, 32)
+            os2.ulUnicodeRange3 = intListToNum(uniRanges, 64, 32)
+            os2.ulUnicodeRange4 = intListToNum(uniRanges, 96, 32)
+        else:
+            os2.recalcUnicodeRanges(self.otf)
+
         # codepage ranges
         codepageRanges = getAttrWithFallback(font.info, "openTypeOS2CodePageRanges")
+        if codepageRanges is None:
+            unicodes = self.unicodeToGlyphNameMapping.keys()
+            codepageRanges = calcCodePageRanges(unicodes)
         os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
         os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
+
         # vendor id
         os2.achVendID = tounicode(
             getAttrWithFallback(font.info, "openTypeOS2VendorID"),
