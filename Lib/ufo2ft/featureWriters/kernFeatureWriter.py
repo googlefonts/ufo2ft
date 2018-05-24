@@ -379,38 +379,15 @@ class KernFeatureWriter(BaseFeatureWriter):
             enumerated=enumerated,
         )
 
-    def _makeKerningLookup(self, name, rtl=None):
-        pairs = self.context.kerning.pairs
+    def _makeKerningLookup(self, name, pairs, exclude=None, rtl=False):
         assert pairs
         rules = []
         for pair in pairs:
-            if rtl is not None:
-                if "RTL" in pair.directions and "LTR" in pair.directions:
-                    self.log.warning(
-                        "skipped kern pair with ambiguous direction: %r", pair
-                    )
-                    continue
-                elif "RTL" in pair.directions:
-                    if not rtl:
-                        self.log.debug(
-                            "RTL pair excluded from LTR kern lookup: %r", pair
-                        )
-                        continue
-                elif "LTR" in pair.directions:
-                    if rtl:
-                        self.log.debug(
-                            "LTR pair excluded from RTL kern lookup: %r", pair
-                        )
-                        continue
-                else:
-                    assert not pair.directions
-                    if rtl:
-                        self.log.debug(
-                            "kern pair with unknown direction excluded from "
-                            "RTL kern lookup: %r",
-                            pair,
-                        )
-                        continue
+            if exclude is not None and exclude(pair):
+                self.log.debug(
+                    "pair excluded from '%s' lookup: %r", name, pair
+                )
+                continue
             rules.append(self._makePairPosRule(pair, rtl=rtl))
         if rules:
             lookup = ast.LookupBlock(name)
@@ -439,16 +416,59 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         lookups = {}
         if shouldSplit:
-            # make two LTR/RTL lookups excluding pairs from the opposite group
-            for rtl in (False, True):
-                key = "RTL" if rtl else "LTR"
-                lookupName = "kern_" + key.lower()
-                lookup = self._makeKerningLookup(lookupName, rtl=rtl)
-                if lookup is not None:
-                    lookups[key] = lookup
+            # make one DFLT lookup with script-agnostic characters, and two
+            # LTR/RTL lookups excluding pairs from the opposite group.
+            # We drop kerning pairs with ambiguous direction.
+            pairs = []
+            for pair in self.context.kerning.pairs:
+                if "RTL" in pair.directions and "LTR" in pair.directions:
+                    self.log.warning(
+                        "skipped kern pair with ambiguous direction: %r", pair
+                    )
+                    continue
+                pairs.append(pair)
+            if not pairs:
+                return lookups
+
+            dfltKern = self._makeKerningLookup(
+                "kern_dflt",
+                pairs,
+                exclude=(
+                    lambda pair: {"LTR", "RTL"}.intersection(pair.directions)
+                ),
+                rtl=False,
+            )
+            if dfltKern:
+                lookups["DFLT"] = dfltKern
+
+            ltrKern = self._makeKerningLookup(
+                "kern_ltr",
+                pairs,
+                exclude=(
+                    lambda pair: not pair.directions
+                    or "RTL" in pair.directions
+                ),
+                rtl=False,
+            )
+            if ltrKern:
+                lookups["LTR"] = ltrKern
+
+            rtlKern = self._makeKerningLookup(
+                "kern_rtl",
+                pairs,
+                exclude=(
+                    lambda pair: not pair.directions
+                    or "LTR" in pair.directions
+                ),
+                rtl=True,
+            )
+            if rtlKern:
+                lookups["RTL"] = rtlKern
         else:
             # only make a single (implicitly LTR) lookup including all pairs
-            lookups["LTR"] = self._makeKerningLookup("kern_ltr")
+            lookups["LTR"] = self._makeKerningLookup(
+                "kern_ltr", self.context.kerning.pairs
+            )
         return lookups
 
     def _makeFeatureBlocks(self, lookups):
@@ -466,6 +486,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         return features
 
     def _registerKernLookups(self, feature, lookups):
+        if "DFLT" in lookups:
+            ast.addLookupReference(feature, lookups["DFLT"])
         scriptGroups = self.context.scriptGroups
         if "dist" in self.context.todo:
             distScripts = scriptGroups["dist"]
@@ -511,8 +533,6 @@ class KernFeatureWriter(BaseFeatureWriter):
                 ast.addLookupReference(feature, rtlLkp, script="DFLT")
                 for script, langs in rtlScripts:
                     ast.addLookupReference(feature, rtlLkp, script, langs)
-        else:
-            raise AssertionError(lookups)
 
     def _registerDistLookups(self, feature, lookups):
         scripts = self.context.scriptGroups["dist"]
