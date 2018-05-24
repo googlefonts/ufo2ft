@@ -1,4 +1,5 @@
 |Travis CI Status| |Appveyor CI Status| |PyPI Version| |Codecov|
+|Gitter Chat|
 
 ufo2ft
 ======
@@ -119,3 +120,6 @@ The index TTX (generated when using using ``ttx -s``) is not required.
    :target: https://pypi.org/project/ufo2ft/
 .. |Codecov| image:: https://codecov.io/gh/googlei18n/ufo2ft/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/googlei18n/ufo2ft
+.. |Gitter Chat| image:: https://badges.gitter.im/fonttools-dev/ufo2ft.svg
+   :alt: Join the chat at https://gitter.im/fonttools-dev/ufo2ft
+   :target: https://gitter.im/fonttools-dev/ufo2ft?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
