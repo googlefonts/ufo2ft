@@ -420,9 +420,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
             @kern1.reh = [reh-ar zain-ar reh-ar.fina];
             @kern2.alef = [alef-ar alef-ar.isol];
 
-            lookup kern_ltr {
+            lookup kern_dflt {
                 lookupflag IgnoreMarks;
                 pos seven four -25;
+            } kern_dflt;
+
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
                 enum pos @kern1.A V -40;
             } kern_ltr;
 
@@ -434,6 +438,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_rtl;
 
             feature kern {
+                lookup kern_dflt;
                 script latn;
                 language dflt;
                 lookup kern_ltr;
@@ -658,8 +663,12 @@ class KernFeatureWriterTest(FeatureWriterTest):
         caplog.set_level(logging.ERROR)
 
         ufo = FontClass()
+        ufo.newGlyph("A").unicode = 0x41
+        ufo.newGlyph("reh-ar").unicode = 0x631
         ufo.newGlyph("bar").unicodes = [0x73, 0x627]
-        ufo.kerning[("bar", "bar")] = 10
+        ufo.kerning.update(
+            {("bar", "bar"): 1, ("bar", "A"): 2, ("reh-ar", "A"): 3}
+        )
         ufo.features.text = dedent(
             """\
             languagesystem DFLT dflt;
@@ -673,8 +682,45 @@ class KernFeatureWriterTest(FeatureWriterTest):
             generated = self.writeFeatures(ufo)
 
         assert not generated
-        assert len(caplog.records) == 2
+        assert len(caplog.records) == 3
         assert "skipped kern pair with ambiguous direction" in caplog.text
+
+    def test_kern_RTL_and_DFLT_numbers(self, FontClass):
+        glyphs = {
+            "four": 0x34,
+            "seven": 0x37,
+            "bet-hb": 0x5D1,
+            "yod-hb": 0x5D9,
+        }
+        kerning = {("seven", "four"): -25, ("yod-hb", "bet-hb"): -100}
+        features = dedent(
+            """\
+            languagesystem DFLT dflt;
+            languagesystem hebr dflt;
+            """
+        )
+
+        ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
+        generated = self.writeFeatures(ufo)
+
+        assert str(generated) == dedent(
+            """
+            lookup kern_dflt {
+                lookupflag IgnoreMarks;
+                pos seven four -25;
+            } kern_dflt;
+
+            lookup kern_rtl {
+                lookupflag IgnoreMarks;
+                pos yod-hb bet-hb <-100 0 -100 0>;
+            } kern_rtl;
+
+            feature kern {
+                lookup kern_dflt;
+                lookup kern_rtl;
+            } kern;
+            """
+        )
 
 
 if __name__ == "__main__":
