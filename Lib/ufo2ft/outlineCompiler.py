@@ -654,8 +654,8 @@ class BaseOutlineCompiler(object):
             else:
                 boundsAdvance = (bounds.yMax - bounds.yMin)
                 # equation from the vhea spec for calculating yMaxExtent:
-                #   Max(tsb - (yMax - yMin)).
-                extent = firstSideBearing - boundsAdvance
+                #   Max(tsb + (yMax - yMin)).
+                extent = firstSideBearing + boundsAdvance
             secondSideBearing = advance - firstSideBearing - boundsAdvance
 
             firstSideBearings.append(firstSideBearing)
