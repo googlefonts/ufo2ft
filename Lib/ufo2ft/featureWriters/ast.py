@@ -15,6 +15,7 @@ import re
 # we re-export here all the feaLib AST classes so they can be used from
 # writer modules with a single `from ufo2ft.featureWriters import ast`
 import sys
+
 self = sys.modules[__name__]
 for name in getattr(ast, "__all__", dir(ast)):
     if isinstance(getattr(ast, name), type):
@@ -141,10 +142,10 @@ def makeFeaClassName(name, existingClassNames=None):
     return name
 
 
-def addLookupReference(
-    feature, lookup, script=None, languages=None, exclude_dflt=False
+def addLookupReferences(
+    feature, lookups, script=None, languages=None, exclude_dflt=False
 ):
-    """Add reference to a named lookup to the feature's statements.
+    """Add references to named lookups to the feature's statements.
     If `script` (str) and `languages` (sequence of str) are provided,
     only register the lookup for the given script and languages,
     optionally with `exclude_dflt` directive.
@@ -152,8 +153,10 @@ def addLookupReference(
     the scripts and languages in the feature file's `languagesystems`
     statements.
     """
+    assert lookups
     if not script:
-        feature.statements.append(ast.LookupReferenceStatement(lookup))
+        for lookup in lookups:
+            feature.statements.append(ast.LookupReferenceStatement(lookup))
         return
 
     feature.statements.append(ast.ScriptStatement(script))
@@ -162,15 +165,31 @@ def addLookupReference(
             feature.statements.append(
                 ast.LanguageStatement(language, include_default=False)
             )
-            feature.statements.append(ast.LookupReferenceStatement(lookup))
+            for lookup in lookups:
+                feature.statements.append(ast.LookupReferenceStatement(lookup))
     else:
         feature.statements.append(
             ast.LanguageStatement("dflt", include_default=True)
         )
-        feature.statements.append(ast.LookupReferenceStatement(lookup))
+        for lookup in lookups:
+            feature.statements.append(ast.LookupReferenceStatement(lookup))
         for language in languages or ():
             if language == "dflt":
                 continue
             feature.statements.append(
                 ast.LanguageStatement(language, include_default=True)
             )
+
+
+def addLookupReference(
+    feature, lookup, script=None, languages=None, exclude_dflt=False
+):
+    """Shortcut for addLookupReferences, but for a single lookup.
+    """
+    return addLookupReferences(
+        feature,
+        (lookup,),
+        script=script,
+        languages=languages,
+        exclude_dflt=exclude_dflt,
+    )
