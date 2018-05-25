@@ -19,7 +19,7 @@ def IntEnum(typename, field_names):
         range(len(field_names)))
 
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class TransformPen(_TransformPen):
@@ -66,12 +66,35 @@ class TransformationsFilter(BaseFilter):
         'ScaleY': 100,
         'Slant': 0,
         'Origin': 4,  # BASELINE
+        'Width': None,
+        'LSB': None,
+        'RSB': None,
+        # Not in Glyphs SDK:
+        'Height': None,
+        'TSB': None,
+        'BSB': None,
+        'VerticalOrigin': None,
     }
 
     def start(self):
         if self.options.Origin not in self.Origin:
             raise ValueError("%r is not a valid Origin value"
                              % self.options.Origin)
+        metrics = dict()
+        options_to_ufo_metrics = dict(
+            Width="width",
+            LSB="leftMargin",
+            RSB="rightMargin",
+            Height="height",
+            TSB="topMargin",
+            BSB="bottomMargin",
+            VerticalOrigin="verticalOrigin",
+        )
+        for option, attr in options_to_ufo_metrics.items():
+            value = getattr(self.options, option)
+            if value is not None:
+                metrics[attr] = value
+        self.metrics = metrics
 
     def get_origin_height(self, font, origin):
         if origin is self.Origin.BASELINE:
@@ -117,9 +140,10 @@ class TransformationsFilter(BaseFilter):
 
         return ctx
 
-    def filter(self, glyph):
+    def filter(self, glyph, isComponent=False):
+        metrics = self.metrics
         matrix = self.context.matrix
-        if (matrix == Identity or
+        if ((not metrics and matrix == Identity) or
                 not (glyph or glyph.components or glyph.anchors)):
             return False  # nothing to do
 
@@ -130,11 +154,23 @@ class TransformationsFilter(BaseFilter):
             if base_name in modified:
                 continue
             base_glyph = glyphSet[base_name]
-            if self.include(base_glyph) and self.filter(base_glyph):
+            if self.include(base_glyph) and \
+                    self.filter(base_glyph, isComponent=True):
                 # base glyph is included but was not transformed yet; we
                 # call filter recursively until all the included bases are
                 # transformed, or there are no more components
                 modified.add(base_name)
+
+        if not isComponent:
+            for attr, value in metrics.items():
+                current_value = getattr(glyph, attr)
+                if current_value is not None:
+                    setattr(glyph, attr, value + current_value)
+                else:
+                    logger.warning(
+                        "Cannot add %i to undefined %s in %s",
+                        value, attr, glyph.name
+                    )
 
         rec = RecordingPen()
         glyph.draw(rec)
