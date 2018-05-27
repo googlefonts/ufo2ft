@@ -27,8 +27,7 @@ class BaseFeatureWriter(object):
     this writer will be outputted.
 
     Two writing modes are defined here:
-    1) "skip" (default) will not write anything if any of the features
-       listed is already present;
+    1) "skip" (default) will not write features if already present;
     2) "append" will add additional lookups to an existing feature,
        if present, or it will add a new one at the end of all features.
     Subclasses can set a different default mode or define a different
