@@ -8,6 +8,7 @@ import logging
 import os
 from inspect import isclass
 from tempfile import NamedTemporaryFile
+from collections import OrderedDict
 
 from fontTools.misc.py23 import tobytes, tounicode, UnicodeIO
 from fontTools.feaLib.parser import Parser
@@ -83,11 +84,12 @@ class BaseFeatureCompiler(object):
             ttFont.setGlyphOrder(makeOfficialGlyphOrder(ufo))
         self.ttFont = ttFont
 
+        glyphOrder = ttFont.getGlyphOrder()
         if glyphSet is not None:
-            assert set(ttFont.getGlyphOrder()) == set(glyphSet.keys())
-            self.glyphSet = glyphSet
+            assert set(glyphOrder) == set(glyphSet.keys())
         else:
-            self.glyphSet = ufo
+            glyphSet = ufo
+        self.glyphSet = OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
 
     def setupFeatures(self):
         """ Make the features source.
