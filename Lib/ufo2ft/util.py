@@ -13,6 +13,7 @@ from copy import deepcopy
 from fontTools.misc.py23 import unichr
 from fontTools import ttLib
 from fontTools import subset
+from fontTools import unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
 import logging
 
@@ -161,6 +162,18 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
             glyphs.update(s - neutralGlyphs)
 
     return glyphSets
+
+
+def unicodeInScripts(uv, scripts):
+    """ Check UnicodeData's ScriptExtension property for unicode codepoint
+    'uv' and return True if it intersects with the set of 'scripts' provided,
+    False if it does not intersect.
+    Return None for 'Common' script ('Zyyy').
+    """
+    sx = unicodedata.script_extension(unichr(uv))
+    if "Zyyy" in sx:
+        return None
+    return not sx.isdisjoint(scripts)
 
 
 def calcCodePageRanges(unicodes):

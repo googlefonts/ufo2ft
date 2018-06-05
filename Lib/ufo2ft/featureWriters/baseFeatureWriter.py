@@ -5,9 +5,7 @@ from __future__ import (
     unicode_literals,
 )
 from fontTools.misc.py23 import SimpleNamespace
-from fontTools import unicodedata
-import collections
-import re
+from collections import OrderedDict
 import logging
 
 from ufo2ft.featureWriters import ast
@@ -27,8 +25,7 @@ class BaseFeatureWriter(object):
     this writer will be outputted.
 
     Two writing modes are defined here:
-    1) "skip" (default) will not write anything if any of the features
-       listed is already present;
+    1) "skip" (default) will not write features if already present;
     2) "append" will add additional lookups to an existing feature,
        if present, or it will add a new one at the end of all features.
     Subclasses can set a different default mode or define a different
@@ -143,8 +140,25 @@ class BaseFeatureWriter(object):
         if cmap is None:
             from ufo2ft.util import makeUnicodeToGlyphNameMapping
 
-            cmap = makeUnicodeToGlyphNameMapping(self.context.font)
+            if compiler is not None:
+                glyphSet = compiler.glyphSet
+            else:
+                glyphSet = self.context.font
+            cmap = makeUnicodeToGlyphNameMapping(glyphSet)
         return cmap
+
+    def getOrderedGlyphSet(self):
+        """Return OrderedDict[glyphName, glyph] sorted by glyphOrder.
+        """
+        compiler = self.context.compiler
+        if compiler is not None:
+            return compiler.glyphSet
+
+        from ufo2ft.util import makeOfficialGlyphOrder
+
+        glyphSet = self.context.font
+        glyphOrder = makeOfficialGlyphOrder(self.context.font)
+        return OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
 
     def compileGSUB(self):
         """Compile a temporary GSUB table from the current feature file.
@@ -153,9 +167,19 @@ class BaseFeatureWriter(object):
 
         compiler = self.context.compiler
         if compiler is not None:
+            # The result is cached in the compiler instance, so if another
+            # writer requests one it is not compiled again.
+            if hasattr(compiler, "_gsub"):
+                return compiler._gsub
+
             glyphOrder = compiler.ttFont.getGlyphOrder()
         else:
             # the 'real' glyph order doesn't matter because the table is not
             # compiled to binary, only the glyph names are used
             glyphOrder = sorted(self.context.font.keys())
-        return compileGSUB(self.context.feaFile, glyphOrder)
+
+        gsub = compileGSUB(self.context.feaFile, glyphOrder)
+
+        if compiler and not hasattr(compiler, "_gsub"):
+            compiler._gsub = gsub
+        return gsub
