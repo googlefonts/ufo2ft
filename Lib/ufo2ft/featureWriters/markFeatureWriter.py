@@ -14,6 +14,12 @@ from ufo2ft.util import unicodeInScripts, classifyGlyphs
 
 
 class AbstractMarkPos(object):
+    """Object containing all the mark attachments for glyph 'name'.
+    The 'marks' is a list of NamedAnchor objects.
+    Provides methods to filter marks given some callable, and convert
+    itself to feaLib AST 'pos' statements for mark2base, mark2liga and
+    mark2mark lookups.
+    """
 
     Statement = None
 
@@ -89,6 +95,17 @@ def parseAnchorName(
     ligaNumRE=LIGA_NUM_RE,
     ignoreRE=None,
 ):
+    """Parse anchor name and return a tuple that specifies:
+    1) whether the anchor is a "mark" anchor (bool);
+    2) the "key" name of the anchor, i.e. the name after stripping all the
+       prefixes and suffixes, which identifies the class it belongs to (str);
+    3) An optional number (int), starting from 1, which identifies that index
+       of the ligature component the anchor refers to.
+
+    The 'ignoreRE' argument is an optional regex pattern (str) identifying
+    sub-strings in the anchor name that should be ignored when parsing the
+    three elements above.
+    """
     number = None
     if ignoreRE is not None:
         anchorName = re.sub(ignoreRE, "", anchorName)
@@ -123,9 +140,11 @@ def parseAnchorName(
 
 
 class NamedAnchor(object):
+    """A position with a name, and an associated markClass."""
 
     __slots__ = ("name", "x", "y", "isMark", "key", "number", "markClass")
 
+    # subclasses can customize these to use different anchor naming schemes
     markPrefix = MARK_PREFIX
     ignoreRE = None
     ligaSeparator = LIGA_SEPARATOR
@@ -166,6 +185,37 @@ class NamedAnchor(object):
 
 
 class MarkFeatureWriter(BaseFeatureWriter):
+    """Generates a mark, mkmk, abvm and blwm features based on glyph anchors.
+
+    Only supported mode is 'skip': i.e. if any of the supported features is
+    already present in the feature file, it is not generated again.
+
+    Anchors prefixed with "_" are considered mark anchors; any glyph
+    containing those is as such considered a mark glyph, thus added to
+    markClass definitions, and in mark-to-mark lookups (if the glyph also
+    contains other non-underscore-prefixed anchors).
+
+    Anchors suffixed with a number, e.g. "top_1", "bottom_2", etc., are used
+    for ligature glyphs. The number refers to the index (counting from 1) of
+    the ligature component where the mark is meant to be attached.
+
+    It is possible that a ligature component has no marks defined, in which
+    case one can have an anchor with an empty name and only the number (e.g.
+    '_3'), which is encoded as '<anchor NULL>' in the generated 'pos ligature'
+    statement.
+
+    If the glyph set contains glyphs whose unicode codepoint's script extension
+    property intersects with one of the "Indic" script codes defined below,
+    then the "abvm" and "blwm" features are also generated for those glyphs,
+    as well as for alternate glyphs only accessible via GSUB substitutions.
+
+    The "abvm" (above-base marks) and "blwm" (below-base marks) features
+    include all mark2base, mark2liga and mark2mark attachments for Indic glyphs
+    containing anchors from predefined lists of "above" and "below" anchor
+    names (see below). If Indic glyphs contain anchors with names not in those
+    lists, the anchors' vertical position relative to the half of the UPEM
+    square is used to decide whether they are considered above or below.
+    """
 
     tableTag = "GPOS"
     features = frozenset(["mark", "mkmk", "abvm", "blwm"])
@@ -339,7 +389,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     def _setBaseAnchorMarkClasses(self):
         markClasses = self.context.markClasses
-        for glyphName, anchors in self.context.anchorLists.items():
+        for anchors in self.context.anchorLists.values():
             for anchor in anchors:
                 if anchor.isMark or not anchor.key:
                     continue
