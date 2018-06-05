@@ -1,6 +1,8 @@
 from __future__ import print_function, division, absolute_import
 import sys
+import os
 import types
+import contextlib
 from fontTools.misc.py23 import tostr
 
 
@@ -28,3 +30,13 @@ class _TempModule(object):
         else:
             del sys.modules[self.mod_name]
         self._saved_module = []
+
+
+@contextlib.contextmanager
+def pushd(target):
+    saved = os.getcwd()
+    os.chdir(target)
+    try:
+        yield saved
+    finally:
+        os.chdir(saved)
