@@ -43,11 +43,11 @@ def parseLayoutFeatures(font):
     if ufoPath is not None:
         buf.name = ufoPath
     glyphNames = set(font.keys())
-    parser = Parser(buf, glyphNames)
     try:
+        parser = Parser(buf, glyphNames)
         doc = parser.parse()
     except IncludedFeaNotFound as e:
-        if ufoPath and os.path.exists(os.path.join(ufoPath), e.args[0]):
+        if ufoPath and os.path.exists(os.path.join(ufoPath, e.args[0])):
             logger.warning(
                 "Please change the file name in the include(...); "
                 "statement to be relative to the UFO itself, "
