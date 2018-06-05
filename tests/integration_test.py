@@ -48,7 +48,7 @@ def expectTTX(font, expectedTTX, tables=None):
         pytest.fail("TTX output is different from expected")
 
 
-class CompilerTest(object):
+class IntegrationTest(object):
 
     _layoutTables = ["GDEF", "GSUB", "GPOS", "BASE"]
 
