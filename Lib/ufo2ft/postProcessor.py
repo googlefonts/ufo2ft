@@ -3,9 +3,10 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
 from ufo2ft.maxContextCalc import maxCtxFont
-
-
-UFO2FT_PREFIX = 'com.github.googlei18n.ufo2ft.'
+from ufo2ft.constants import (
+    USE_PRODUCTION_NAMES,
+    GLYPHS_DONT_USE_PRODUCTION_NAMES
+)
 
 
 class PostProcessor(object):
@@ -26,15 +27,21 @@ class PostProcessor(object):
         useProductionNames:
           Rename glyphs using using 'public.postscriptNames' in UFO lib,
           if present. Else, generate uniXXXX names from the glyphs' unicode.
+
           If 'com.github.googlei18n.ufo2ft.useProductionNames' key in the UFO
           lib is present and is set to False, do not modify the glyph names.
+
+          Alternatively, if "com.schriftgestaltung.Don't use Production Names"
+          key is present if the UFO lib, and is set to True, do not modify
+          the glyph names.
 
         optimizeCFF:
           Run compreffor to subroubtinize CFF table, if present.
         """
         if useProductionNames is None:
             useProductionNames = self.ufo.lib.get(
-                UFO2FT_PREFIX + "useProductionNames", True)
+                USE_PRODUCTION_NAMES,
+                not self.ufo.lib.get(GLYPHS_DONT_USE_PRODUCTION_NAMES))
         if useProductionNames:
             self._rename_glyphs_from_ufo()
         if optimizeCFF and 'CFF ' in self.otf:
