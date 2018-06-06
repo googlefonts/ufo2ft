@@ -10,6 +10,10 @@ from fontTools.misc.py23 import basestring, unichr, byteord
 from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
 from ufo2ft.fontInfoData import intListToNum
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
+from ufo2ft.constants import (
+    USE_PRODUCTION_NAMES,
+    GLYPHS_DONT_USE_PRODUCTION_NAMES,
+)
 from ufo2ft import compileTTF
 import os
 import pytest
@@ -418,7 +422,7 @@ class OutlineOTFCompilerTest(object):
         ]
 
 
-class TestGlyphOrder(object):
+class GlyphOrderTest(object):
 
     def test_compile_original_glyph_order(self, testufo):
         DEFAULT_ORDER = [
@@ -490,9 +494,21 @@ class TestGlyphOrder(object):
         assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
 
 
-class TestNames(object):
+class NamesTest(object):
 
-    def test_compile_without_production_names(self, testufo):
+    @pytest.mark.parametrize(
+        "prod_names_key, prod_names_value",
+        [
+            (USE_PRODUCTION_NAMES, False),
+            (GLYPHS_DONT_USE_PRODUCTION_NAMES, True),
+        ],
+        ids=[
+            "useProductionNames",
+            "Don't use Production Names",
+        ]
+    )
+    def test_compile_without_production_names(self, testufo, prod_names_key,
+                                              prod_names_value):
         expected = [
             ".notdef",
             "space",
@@ -513,11 +529,23 @@ class TestNames(object):
         result = compileTTF(testufo, useProductionNames=False)
         assert result.getGlyphOrder() == expected
 
-        testufo.lib["com.github.googlei18n.ufo2ft.useProductionNames"] = False
+        testufo.lib[prod_names_key] = prod_names_value
         result = compileTTF(testufo)
         assert result.getGlyphOrder() == expected
 
-    def test_compile_with_production_names(self, testufo):
+    @pytest.mark.parametrize(
+        "prod_names_key, prod_names_value",
+        [
+            (USE_PRODUCTION_NAMES, True),
+            (GLYPHS_DONT_USE_PRODUCTION_NAMES, False),
+        ],
+        ids=[
+            "useProductionNames",
+            "Don't use Production Names",
+        ]
+    )
+    def test_compile_with_production_names(self, testufo, prod_names_key,
+                                           prod_names_value):
         expected = [
             ".notdef",
             "uni0020",
@@ -541,7 +569,7 @@ class TestNames(object):
         result = compileTTF(testufo, useProductionNames=True)
         assert result.getGlyphOrder() == expected
 
-        testufo.lib["com.github.googlei18n.ufo2ft.useProductionNames"] = True
+        testufo.lib[prod_names_key] = prod_names_value
         result = compileTTF(testufo)
         assert result.getGlyphOrder() == expected
 
