@@ -1126,10 +1126,15 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
             except AttributeError:
                 # component uses '{first,second}Pt' instead of 'x' and 'y'
                 continue
-            if (hmtx[baseName][0] == width and
-                    transform[:-1] == (1, 0, 0, 1, 0)):
-                component.flags |= USE_MY_METRICS
-                break
+            try:
+                baseMetrics = hmtx[baseName]
+            except KeyError:
+                continue  # ignore missing components
+            else:
+                if (baseMetrics[0] == width and
+                        transform[:-1] == (1, 0, 0, 1, 0)):
+                    component.flags |= USE_MY_METRICS
+                    break
 
 
 class StubGlyph(object):
