@@ -5,6 +5,10 @@ from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.misc.transform import Transform, Identity
 from fontTools.pens.transformPen import TransformPen
 from ufo2ft.filters import BaseFilter
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class DecomposeComponentsFilter(BaseFilter):
@@ -20,10 +24,17 @@ class DecomposeComponentsFilter(BaseFilter):
 def _deepCopyContours(glyphSet, parent, component, transformation):
     """Copy contours from component to parent, including nested components."""
 
-    for nested in component.components:
-        _deepCopyContours(
-            glyphSet, parent, glyphSet[nested.baseGlyph],
-            transformation.transform(nested.transformation))
+    for nestedComponent in component.components:
+        try:
+            nestedBaseGlyph = glyphSet[nestedComponent.baseGlyph]
+        except KeyError:
+            logger.warning(
+                "dropping non-existent component '%s' in glyph '%s'",
+                nestedComponent.baseGlyph, parent.name)
+        else:
+            _deepCopyContours(
+                glyphSet, parent, nestedBaseGlyph,
+                transformation.transform(nestedComponent.transformation))
 
     if component != parent:
         if transformation == Identity:
