@@ -101,6 +101,7 @@ def compileTTF(
     convertCubics=True,
     cubicConversionError=None,
     reverseDirection=True,
+    rememberCurveType=True,
     removeOverlaps=False,
     inplace=False,
 ):
@@ -118,6 +119,7 @@ def compileTTF(
         convertCubics=convertCubics,
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection,
+        rememberCurveType=rememberCurveType,
     )
     glyphSet = preProcessor.process()
 
