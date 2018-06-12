@@ -88,6 +88,11 @@ class TTFPreProcessor(OTFPreProcessor):
     convention. Thus, by default the direction is reversed, in order to
     conform to opposite clockwise convention for TrueType outlines.
     You can disable this by setting ``reverseDirection`` to False.
+
+    If both ``inplace`` and ``rememberCurveType`` options are True, the curve
+    type "quadratic" is saved in font' lib under a private cu2qu key; the
+    preprocessor will not try to convert them again if the curve type is
+    already set to "quadratic".
     """
 
     def initDefaultFilters(self, removeOverlaps=False, convertCubics=True,
@@ -125,8 +130,8 @@ class TTFInterpolatablePreProcessor(object):
     decomposition of mixed contour/component glyphs is performed,
     and no additional custom filter is applied.
 
-    The ``conversionError`` and ``reverseDirection`` arguments work in the
-    same way as in the ``TTFPreProcessor``.
+    The ``conversionError``, ``reverseDirection`` and ``rememberCurveType``
+    arguments work in the same way as in the ``TTFPreProcessor``.
     """
 
     def __init__(self, ufos, inplace=False, conversionError=None,
