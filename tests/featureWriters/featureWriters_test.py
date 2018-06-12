@@ -11,9 +11,34 @@ from ufo2ft.featureWriters import (
     loadFeatureWriters,
     loadFeatureWriterFromString,
 )
+
+try:
+    from plistlib import loads, FMT_XML
+    def readPlistFromString(s):
+        return loads(s, fmt=FMT_XML)
+except ImportError:
+    from plistlib import readPlistFromString
+
 import pytest
 from ..testSupport import _TempModule
 
+
+TEST_LIB_PLIST = readPlistFromString("""
+<dict>
+    <key>com.github.googlei18n.ufo2ft.featureWriters</key>
+    <array>
+        <dict>
+            <key>class</key>
+            <string>KernFeatureWriter</string>
+            <key>options</key>
+            <dict>
+                <key>mode</key>
+                <string>skip</string>
+            </dict>
+        </dict>
+    </array>
+</dict>
+""".encode("utf-8"))
 
 class FooBarWriter(BaseFeatureWriter):
 
@@ -49,6 +74,7 @@ VALID_SPEC_LISTS = [
             "options": {"a": 1},
         }
     ],
+    TEST_LIB_PLIST[FEATURE_WRITERS_KEY],
 ]
 
 
