@@ -166,12 +166,12 @@ setup(
         'pytest>=2.8',
     ],
     install_requires=[
-        "fonttools>=3.26.0",
+        "fonttools>=3.27.1",
         "ufoLib>=2.1.0",
         "defcon>=0.4.0",
         "cu2qu>=1.5.0",
         "compreffor>=0.4.5",
-        "booleanOperations>=0.7.1",
+        "booleanOperations>=0.8.0",
     ],
     cmdclass={
         "release": release,
