@@ -131,6 +131,40 @@ class OutlineTTFCompilerTest(object):
         compiler.compile()
         assert compiler.otf["OS/2"].xAvgCharWidth == 0
 
+    def test_missing_component(self, emptyufo):
+        ufo = emptyufo
+        a = ufo.newGlyph("a")
+        pen = a.getPen()
+        pen.moveTo((0, 0))
+        pen.lineTo((100, 0))
+        pen.lineTo((100, 100))
+        pen.lineTo((0, 100))
+        pen.closePath()
+
+        # a mixed contour/component glyph, which is decomposed by the
+        # TTGlyphPen; one of the components does not exist thus should
+        # be dropped
+        b = ufo.newGlyph("b")
+        pen = b.getPen()
+        pen.moveTo((0, 200))
+        pen.lineTo((100, 200))
+        pen.lineTo((50, 300))
+        pen.closePath()
+        pen.addComponent("a", (1, 0, 0, 1, 0, 0))
+        pen.addComponent("c", (1, 0, 0, 1, 0, 0))  # missing
+
+        d = ufo.newGlyph("d")
+        pen = d.getPen()
+        pen.addComponent("c", (1, 0, 0, 1, 0, 0))  # missing
+
+        compiler = OutlineTTFCompiler(ufo)
+        ttFont = compiler.compile()
+        glyf = ttFont["glyf"]
+
+        assert glyf["a"].numberOfContours == 1
+        assert glyf["b"].numberOfContours == 2
+        assert glyf["d"].numberOfContours == 0
+
 
 class OutlineOTFCompilerTest(object):
 
