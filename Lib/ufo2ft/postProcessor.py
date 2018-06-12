@@ -7,6 +7,10 @@ from ufo2ft.constants import (
     USE_PRODUCTION_NAMES,
     GLYPHS_DONT_USE_PRODUCTION_NAMES
 )
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class PostProcessor(object):
@@ -46,6 +50,8 @@ class PostProcessor(object):
             self._rename_glyphs_from_ufo()
         if optimizeCFF and 'CFF ' in self.otf:
             from compreffor import compress
+
+            logger.info("Subroutinizing CFF table")
             compress(self.otf)
         if 'OS/2' in self.otf:
             self.otf['OS/2'].usMaxContext = maxCtxFont(self.otf)
