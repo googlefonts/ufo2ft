@@ -2,7 +2,7 @@ from __future__ import (
     print_function, division, absolute_import, unicode_literals)
 
 from ufo2ft.filters import BaseFilter
-from cu2qu.ufo import DEFAULT_MAX_ERR
+from cu2qu.ufo import DEFAULT_MAX_ERR, CURVE_TYPE_LIB_KEY
 from cu2qu.pens import Cu2QuPointPen
 
 import logging
@@ -16,6 +16,7 @@ class CubicToQuadraticFilter(BaseFilter):
     _kwargs = {
         'conversionError': None,
         'reverseDirection': True,
+        'rememberCurveType': False,
     }
 
     def set_context(self, font, glyphSet):
@@ -29,10 +30,28 @@ class CubicToQuadraticFilter(BaseFilter):
         return ctx
 
     def __call__(self, font, glyphSet=None):
-        if super(CubicToQuadraticFilter, self).__call__(font, glyphSet):
+        if self.options.rememberCurveType:
+            curve_type = font.lib.get(CURVE_TYPE_LIB_KEY, "cubic")
+            if curve_type == "quadratic":
+                logger.info("Curves already converted to quadratic")
+                return set()
+            elif curve_type == "cubic":
+                pass  # keep converting
+            else:
+                raise NotImplementedError(curve_type)
+
+        modified = super(CubicToQuadraticFilter, self).__call__(font, glyphSet)
+        if modified:
             stats = self.context.stats
             logger.info('New spline lengths: %s' % (', '.join(
                 '%s: %d' % (l, stats[l]) for l in sorted(stats.keys()))))
+
+        if self.options.rememberCurveType:
+            curve_type = font.lib.get(CURVE_TYPE_LIB_KEY, "cubic")
+            if curve_type != "quadratic":
+                font.lib[CURVE_TYPE_LIB_KEY] = "quadratic"
+
+        return modified
 
     def filter(self, glyph):
         if not len(glyph):
