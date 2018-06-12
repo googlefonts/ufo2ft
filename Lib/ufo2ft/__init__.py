@@ -59,6 +59,9 @@ def compileOTF(
       has the 'com.github.googlei18n.ufo2ft.useProductionNames' key. If this
       is missing or True (default), the glyphs are renamed. Set to False
       to keep the original names.
+
+    **inplace** (bool) specifies whether the filters should modify the input
+      UFO's glyphs, a copy should be made first.
     """
     preProcessor = preProcessorClass(
         ufo, inplace=inplace, removeOverlaps=removeOverlaps
