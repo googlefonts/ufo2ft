@@ -157,6 +157,11 @@ class OutlineTTFCompilerTest(object):
         pen = d.getPen()
         pen.addComponent("c", (1, 0, 0, 1, 0, 0))  # missing
 
+        e = ufo.newGlyph("e")
+        pen = e.getPen()
+        pen.addComponent("a", (1, 0, 0, 1, 0, 0))
+        pen.addComponent("c", (1, 0, 0, 1, 0, 0))  # missing
+
         compiler = OutlineTTFCompiler(ufo)
         ttFont = compiler.compile()
         glyf = ttFont["glyf"]
@@ -164,6 +169,8 @@ class OutlineTTFCompilerTest(object):
         assert glyf["a"].numberOfContours == 1
         assert glyf["b"].numberOfContours == 2
         assert glyf["d"].numberOfContours == 0
+        assert glyf["e"].numberOfContours == -1  # composite glyph
+        assert len(glyf["e"].components) == 1
 
 
 class OutlineOTFCompilerTest(object):
