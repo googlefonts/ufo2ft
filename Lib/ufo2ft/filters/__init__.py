@@ -187,6 +187,8 @@ class BaseFilter(object):
         Otherwise, run the filter in-place on the font's default
         glyph set.
         """
+        logger.info("Running %s on %s", self.name, _LazyFontName(font))
+
         if glyphSet is None:
             glyphSet = font
 
@@ -211,3 +213,14 @@ class BaseFilter(object):
                          t, self.name, len(modified),
                          "" if num == 1 else "s")
         return modified
+
+
+class _LazyFontName(object):
+
+    def __init__(self, font):
+        self.font = font
+
+    def __str__(self):
+        from ufo2ft.fontInfoData import getAttrWithFallback
+
+        return getAttrWithFallback(self.font.info, "postscriptFontName")
