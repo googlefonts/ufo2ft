@@ -141,7 +141,7 @@ class TTFInterpolatablePreProcessor(object):
         self.ufos = ufos
         self.inplace = inplace
         if inplace:
-            self.glyphSets = ufos
+            self.glyphSets = [{g.name: g for g in ufo} for ufo in ufos]
         else:
             self.glyphSets = [copyGlyphSet(ufo) for ufo in ufos]
         self._conversionErrors = [
@@ -154,7 +154,7 @@ class TTFInterpolatablePreProcessor(object):
         from cu2qu.ufo import fonts_to_quadratic
 
         fonts_to_quadratic(
-            self.glyphSets,
+            self.ufos if self.inplace else self.glyphSets,
             max_err=self._conversionErrors,
             reverse_direction=self._reverseDirection,
             dump_stats=True,
