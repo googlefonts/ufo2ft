@@ -29,6 +29,7 @@ class BasePreProcessor(object):
 
     def __init__(self, ufo, inplace=False, **kwargs):
         self.ufo = ufo
+        self.inplace = inplace
         if inplace:
             self.glyphSet = {g.name: g for g in ufo}
         else:
@@ -37,7 +38,7 @@ class BasePreProcessor(object):
         self.preFilters, self.postFilters = loadFilters(ufo)
 
     def initDefaultFilters(self, **kwargs):
-        return []
+        return []  # pragma: no cover
 
     def process(self):
         ufo = self.ufo
@@ -90,7 +91,8 @@ class TTFPreProcessor(OTFPreProcessor):
     """
 
     def initDefaultFilters(self, removeOverlaps=False, convertCubics=True,
-                           conversionError=None, reverseDirection=True):
+                           conversionError=None, reverseDirection=True,
+                           rememberCurveType=True):
         # len(g) is the number of contours, so we include the all glyphs
         # that have both components and at least one contour
         filters = [DecomposeComponentsFilter(include=lambda g: len(g))]
@@ -101,10 +103,14 @@ class TTFPreProcessor(OTFPreProcessor):
 
         if convertCubics:
             from ufo2ft.filters.cubicToQuadratic import CubicToQuadraticFilter
-            filters.append(
-                CubicToQuadraticFilter(conversionError=conversionError,
-                                       reverseDirection=reverseDirection))
 
+            filters.append(
+                CubicToQuadraticFilter(
+                    conversionError=conversionError,
+                    reverseDirection=reverseDirection,
+                    rememberCurveType=rememberCurveType and self.inplace,
+                )
+            )
         return filters
 
 
@@ -124,26 +130,31 @@ class TTFInterpolatablePreProcessor(object):
     """
 
     def __init__(self, ufos, inplace=False, conversionError=None,
-                 reverseDirection=True):
+                 reverseDirection=True, rememberCurveType=True):
         from cu2qu.ufo import DEFAULT_MAX_ERR
 
         self.ufos = ufos
+        self.inplace = inplace
         if inplace:
-            self.glyphSets = [{g.name: g for g in ufo} for ufo in ufos]
+            self.glyphSets = ufos
         else:
             self.glyphSets = [copyGlyphSet(ufo) for ufo in ufos]
         self._conversionErrors = [
             (conversionError or DEFAULT_MAX_ERR) * ufo.info.unitsPerEm
             for ufo in ufos]
         self._reverseDirection = reverseDirection
+        self._rememberCurveType = rememberCurveType
 
     def process(self):
         from cu2qu.ufo import fonts_to_quadratic
 
-        fonts_to_quadratic(self.glyphSets, max_err=self._conversionErrors,
-                           reverse_direction=self._reverseDirection,
-                           dump_stats=True,
-                           remember_curve_type=False)
+        fonts_to_quadratic(
+            self.glyphSets,
+            max_err=self._conversionErrors,
+            reverse_direction=self._reverseDirection,
+            dump_stats=True,
+            remember_curve_type=self._rememberCurveType and self.inplace,
+        )
 
         decompose = DecomposeComponentsFilter(include=lambda g: len(g))
         for ufo, glyphSet in zip(self.ufos, self.glyphSets):
