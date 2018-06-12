@@ -5,6 +5,7 @@ import importlib
 import logging
 from fontTools.misc.py23 import SimpleNamespace
 from fontTools.misc.loggingTools import Timer
+from ufo2ft.util import _LazyFontName
 
 
 UFO2FT_FILTERS_KEY = "com.github.googlei18n.ufo2ft.filters"
@@ -213,14 +214,3 @@ class BaseFilter(object):
                          t, self.name, len(modified),
                          "" if num == 1 else "s")
         return modified
-
-
-class _LazyFontName(object):
-
-    def __init__(self, font):
-        self.font = font
-
-    def __str__(self):
-        from ufo2ft.fontInfoData import getAttrWithFallback
-
-        return getAttrWithFallback(self.font.info, "postscriptFontName")

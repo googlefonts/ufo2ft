@@ -16,9 +16,12 @@ from ufo2ft.featureCompiler import (
 )
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
+import logging
 
 
 __version__ = "2.0.0.dev0"
+
+logger = logging.getLogger(__name__)
 
 
 def compileOTF(
@@ -63,11 +66,13 @@ def compileOTF(
     **inplace** (bool) specifies whether the filters should modify the input
       UFO's glyphs, a copy should be made first.
     """
+    logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
         ufo, inplace=inplace, removeOverlaps=removeOverlaps
     )
     glyphSet = preProcessor.process()
 
+    logger.info("Building OpenType tables")
     outlineCompiler = outlineCompilerClass(
         ufo,
         glyphSet=glyphSet,
@@ -112,6 +117,7 @@ def compileTTF(
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
     to quadratic curves should be handled.
     """
+    logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
         ufo,
         inplace=inplace,
@@ -123,6 +129,7 @@ def compileTTF(
     )
     glyphSet = preProcessor.process()
 
+    logger.info("Building OpenType tables")
     outlineCompiler = outlineCompilerClass(
         ufo, glyphSet=glyphSet, glyphOrder=glyphOrder
     )
@@ -160,6 +167,9 @@ def compileInterpolatableTTFs(
 
     Return an iterator object that yields a TTFont instance for each UFO.
     """
+    from ufo2ft.util import _LazyFontName
+
+    logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
         ufos,
         inplace=inplace,
@@ -169,6 +179,8 @@ def compileInterpolatableTTFs(
     glyphSets = preProcessor.process()
 
     for ufo, glyphSet in zip(ufos, glyphSets):
+        logger.info("Building OpenType tables for %s", _LazyFontName(ufo))
+
         outlineCompiler = outlineCompilerClass(
             ufo, glyphSet=glyphSet, glyphOrder=glyphOrder
         )
