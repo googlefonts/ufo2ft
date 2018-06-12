@@ -263,3 +263,14 @@ def calcCodePageRanges(unicodes):
         codepageRanges.add(29)              # Macintosh Character Set (US Roman)
 
     return codepageRanges
+
+
+class _LazyFontName(object):
+
+    def __init__(self, font):
+        self.font = font
+
+    def __str__(self):
+        from ufo2ft.fontInfoData import getAttrWithFallback
+
+        return getAttrWithFallback(self.font.info, "postscriptFontName")
