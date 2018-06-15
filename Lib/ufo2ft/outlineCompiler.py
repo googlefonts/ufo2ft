@@ -634,7 +634,7 @@ class BaseOutlineCompiler(object):
         }
         for otfName, ufoName in metricsDict.items():
             setattr(table, otfName,
-                    getAttrWithFallback(font.info, ufoName))
+                    round(getAttrWithFallback(font.info, ufoName)))
         # Horizontal metrics in hhea, vertical metrics in vhea
         advances = []  # width in hhea, height in vhea
         firstSideBearings = []  # left in hhea, top in vhea
