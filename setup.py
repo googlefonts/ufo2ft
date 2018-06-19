@@ -166,7 +166,7 @@ setup(
         'pytest>=2.8',
     ],
     install_requires=[
-        "fonttools>=3.27.1",
+        "fonttools>=3.28.0",
         "ufoLib>=2.1.0",
         "defcon>=0.4.0",
         "cu2qu>=1.5.0",
