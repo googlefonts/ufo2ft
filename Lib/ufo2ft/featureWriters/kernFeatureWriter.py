@@ -4,7 +4,8 @@ from __future__ import (
     absolute_import,
     unicode_literals,
 )
-from fontTools.misc.py23 import unichr, round, basestring, SimpleNamespace
+from fontTools.misc.py23 import unichr, basestring, SimpleNamespace
+from fontTools.misc.fixedTools import otRound
 
 from fontTools import unicodedata
 
@@ -361,7 +362,7 @@ class KernFeatureWriter(BaseFeatureWriter):
     @staticmethod
     def _makePairPosRule(pair, rtl=False):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
-        value = round(pair.value)
+        value = otRound(pair.value)
         if rtl and "N" in pair.bidiTypes:
             # numbers are always shaped LTR even in RTL scripts
             rtl = False

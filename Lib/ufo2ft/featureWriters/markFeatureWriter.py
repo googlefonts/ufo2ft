@@ -8,7 +8,8 @@ import re
 from collections import OrderedDict
 from functools import partial
 import itertools
-from fontTools.misc.py23 import round, tostr, tounicode
+from fontTools.misc.py23 import tostr, tounicode
+from fontTools.misc.fixedTools import otRound
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import unicodeInScripts, classifyGlyphs
 
@@ -33,7 +34,7 @@ class AbstractMarkPos(object):
     def _marksAsAST(self):
         return [
             (
-                ast.Anchor(x=round(anchor.x), y=round(anchor.y)),
+                ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)),
                 anchor.markClass,
             )
             for anchor in sorted(self.marks, key=lambda a: a.name)
@@ -75,7 +76,7 @@ class MarkToLigaPos(AbstractMarkPos):
         return [
             [
                 (
-                    ast.Anchor(x=round(anchor.x), y=round(anchor.y)),
+                    ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)),
                     anchor.markClass,
                 )
                 for anchor in sorted(component, key=lambda a: a.name)
@@ -347,7 +348,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return newDefs
 
     def _defineMarkClass(self, glyphName, x, y, className, markClasses):
-        anchor = ast.Anchor(x=round(x), y=round(y))
+        anchor = ast.Anchor(x=otRound(x), y=otRound(y))
         markClass = markClasses.get(className)
         if markClass is None:
             markClass = ast.MarkClass(className)

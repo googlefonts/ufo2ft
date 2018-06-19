@@ -17,6 +17,7 @@ from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables._g_l_y_f import Glyph, USE_MY_METRICS
 from fontTools.misc.arrayTools import unionRect
+from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.fontInfoData import (
     getAttrWithFallback, dateStringToTimeValue, dateStringForNow,
@@ -48,7 +49,7 @@ def _getVerticalOrigin(font, glyph):
         verticalOrigin = glyph.verticalOrigin
     else:
         verticalOrigin = font_ascender
-    return round(verticalOrigin)
+    return otRound(verticalOrigin)
 
 
 class BaseOutlineCompiler(object):
@@ -117,7 +118,7 @@ class BaseOutlineCompiler(object):
         The bounding box of empty glyphs (without contours or components) is
         set to None.
 
-        Float values are rounded to integers using the built-in round().
+        Float values are rounded to integers using fontTools otRound().
 
         **This should not be called externally.** Subclasses
         may override this method to handle the bounds creation
@@ -136,7 +137,7 @@ class BaseOutlineCompiler(object):
             if glyph or glyph.components:
                 bounds = getControlPointBounds(glyph)
                 if bounds:
-                    bounds = BoundingBox(*(round(v) for v in bounds))
+                    bounds = BoundingBox(*(otRound(v) for v in bounds))
             glyphBoxes[glyphName] = bounds
         return glyphBoxes
 
@@ -184,10 +185,10 @@ class BaseOutlineCompiler(object):
         if ".notdef" in glyphSet:
             return
 
-        unitsPerEm = round(getAttrWithFallback(font.info, "unitsPerEm"))
-        ascender = round(getAttrWithFallback(font.info, "ascender"))
-        descender = round(getAttrWithFallback(font.info, "descender"))
-        defaultWidth = round(unitsPerEm * 0.5)
+        unitsPerEm = otRound(getAttrWithFallback(font.info, "unitsPerEm"))
+        ascender = otRound(getAttrWithFallback(font.info, "ascender"))
+        descender = otRound(getAttrWithFallback(font.info, "descender"))
+        defaultWidth = otRound(unitsPerEm * 0.5)
         glyphSet[".notdef"] = StubGlyph(name=".notdef",
                                         width=defaultWidth,
                                         unitsPerEm=unitsPerEm,
@@ -247,7 +248,7 @@ class BaseOutlineCompiler(object):
                 fullFontRevision, head.fontRevision)
 
         # upm
-        head.unitsPerEm = round(getAttrWithFallback(font.info, "unitsPerEm"))
+        head.unitsPerEm = otRound(getAttrWithFallback(font.info, "unitsPerEm"))
 
         # times
         head.created = dateStringToTimeValue(getAttrWithFallback(font.info, "openTypeHeadCreated")) - mac_epoch_diff
@@ -255,10 +256,10 @@ class BaseOutlineCompiler(object):
 
         # bounding box
         xMin, yMin, xMax, yMax = self.fontBoundingBox
-        head.xMin = round(xMin)
-        head.yMin = round(yMin)
-        head.xMax = round(xMax)
-        head.yMax = round(yMax)
+        head.xMin = otRound(xMin)
+        head.yMin = otRound(yMin)
+        head.xMax = otRound(xMax)
+        head.yMax = otRound(yMax)
 
         # style mapping
         styleMapStyleName = getAttrWithFallback(font.info, "styleMapStyleName")
@@ -273,7 +274,7 @@ class BaseOutlineCompiler(object):
 
         # misc
         head.flags = intListToNum(getAttrWithFallback(font.info, "openTypeHeadFlags"), 0, 16)
-        head.lowestRecPPEM = round(getAttrWithFallback(font.info, "openTypeHeadLowestRecPPEM"))
+        head.lowestRecPPEM = otRound(getAttrWithFallback(font.info, "openTypeHeadLowestRecPPEM"))
         head.fontDirectionHint = 2
         head.indexToLocFormat = 0
         head.glyphDataFormat = 0
@@ -433,7 +434,7 @@ class BaseOutlineCompiler(object):
         # average glyph width
         widths = [width for width, _ in hmtx.metrics.values() if width > 0]
         if widths:
-            os2.xAvgCharWidth = round(sum(widths) / len(widths))
+            os2.xAvgCharWidth = otRound(sum(widths) / len(widths))
         else:
             os2.xAvgCharWidth = 0
         # weight and width classes
@@ -454,45 +455,45 @@ class BaseOutlineCompiler(object):
         v = getAttrWithFallback(font.info, "openTypeOS2SubscriptXSize")
         if v is None:
             v = unitsPerEm * 0.65
-        os2.ySubscriptXSize = round(v)
+        os2.ySubscriptXSize = otRound(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SubscriptYSize")
         if v is None:
             v = unitsPerEm * 0.6
-        os2.ySubscriptYSize = round(v)
+        os2.ySubscriptYSize = otRound(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SubscriptYOffset")
         if v is None:
             v = unitsPerEm * 0.075
-        os2.ySubscriptYOffset = round(v)
+        os2.ySubscriptYOffset = otRound(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SubscriptXOffset")
         if v is None:
             v = adjustOffset(-os2.ySubscriptYOffset, italicAngle)
-        os2.ySubscriptXOffset = round(v)
+        os2.ySubscriptXOffset = otRound(v)
 
         v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptXSize")
         if v is None:
             v = os2.ySubscriptXSize
-        os2.ySuperscriptXSize = round(v)
+        os2.ySuperscriptXSize = otRound(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptYSize")
         if v is None:
             v = os2.ySubscriptYSize
-        os2.ySuperscriptYSize = round(v)
+        os2.ySuperscriptYSize = otRound(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptYOffset")
         if v is None:
             v = unitsPerEm * 0.35
-        os2.ySuperscriptYOffset = round(v)
+        os2.ySuperscriptYOffset = otRound(v)
         v = getAttrWithFallback(font.info, "openTypeOS2SuperscriptXOffset")
         if v is None:
             v = adjustOffset(os2.ySuperscriptYOffset, italicAngle)
-        os2.ySuperscriptXOffset = round(v)
+        os2.ySuperscriptXOffset = otRound(v)
 
         v = getAttrWithFallback(font.info, "openTypeOS2StrikeoutSize")
         if v is None:
             v = getAttrWithFallback(font.info, "postscriptUnderlineThickness")
-        os2.yStrikeoutSize = round(v)
+        os2.yStrikeoutSize = otRound(v)
         v = getAttrWithFallback(font.info, "openTypeOS2StrikeoutPosition")
         if v is None:
             v = xHeight * 0.6 if xHeight else unitsPerEm * 0.22
-        os2.yStrikeoutPosition = round(v)
+        os2.yStrikeoutPosition = otRound(v)
 
         # family class
         ibmFontClass, ibmFontSubclass = getAttrWithFallback(
@@ -535,13 +536,13 @@ class BaseOutlineCompiler(object):
             getAttrWithFallback(font.info, "openTypeOS2VendorID"),
             encoding="ascii", errors="ignore")
         # vertical metrics
-        os2.sxHeight = round(getAttrWithFallback(font.info, "xHeight"))
-        os2.sCapHeight = round(getAttrWithFallback(font.info, "capHeight"))
-        os2.sTypoAscender = round(getAttrWithFallback(font.info, "openTypeOS2TypoAscender"))
-        os2.sTypoDescender = round(getAttrWithFallback(font.info, "openTypeOS2TypoDescender"))
-        os2.sTypoLineGap = round(getAttrWithFallback(font.info, "openTypeOS2TypoLineGap"))
-        os2.usWinAscent = round(getAttrWithFallback(font.info, "openTypeOS2WinAscent"))
-        os2.usWinDescent = round(getAttrWithFallback(font.info, "openTypeOS2WinDescent"))
+        os2.sxHeight = otRound(getAttrWithFallback(font.info, "xHeight"))
+        os2.sCapHeight = otRound(getAttrWithFallback(font.info, "capHeight"))
+        os2.sTypoAscender = otRound(getAttrWithFallback(font.info, "openTypeOS2TypoAscender"))
+        os2.sTypoDescender = otRound(getAttrWithFallback(font.info, "openTypeOS2TypoDescender"))
+        os2.sTypoLineGap = otRound(getAttrWithFallback(font.info, "openTypeOS2TypoLineGap"))
+        os2.usWinAscent = otRound(getAttrWithFallback(font.info, "openTypeOS2WinAscent"))
+        os2.usWinDescent = otRound(getAttrWithFallback(font.info, "openTypeOS2WinDescent"))
         # style mapping
         selection = list(getAttrWithFallback(font.info, "openTypeOS2Selection"))
         styleMapStyleName = getAttrWithFallback(font.info, "styleMapStyleName")
@@ -588,7 +589,7 @@ class BaseOutlineCompiler(object):
         self.otf["hmtx"] = hmtx = newTable("hmtx")
         hmtx.metrics = {}
         for glyphName, glyph in self.allGlyphs.items():
-            width = round(glyph.width)
+            width = otRound(glyph.width)
             if width < 0:
                 raise ValueError(
                     "The width should not be negative: '%s'" % (glyphName))
@@ -634,7 +635,7 @@ class BaseOutlineCompiler(object):
         }
         for otfName, ufoName in metricsDict.items():
             setattr(table, otfName,
-                    round(getAttrWithFallback(font.info, ufoName)))
+                    otRound(getAttrWithFallback(font.info, ufoName)))
         # Horizontal metrics in hhea, vertical metrics in vhea
         advances = []  # width in hhea, height in vhea
         firstSideBearings = []  # left in hhea, top in vhea
@@ -708,7 +709,7 @@ class BaseOutlineCompiler(object):
         self.otf["vmtx"] = vmtx = newTable("vmtx")
         vmtx.metrics = {}
         for glyphName, glyph in self.allGlyphs.items():
-            height = round(glyph.height)
+            height = otRound(glyph.height)
             if height < 0:
                 raise ValueError(
                     "The height should not be negative: '%s'" % (glyphName))
@@ -766,9 +767,9 @@ class BaseOutlineCompiler(object):
         post.italicAngle = italicAngle
         # underline
         underlinePosition = getAttrWithFallback(font.info, "postscriptUnderlinePosition")
-        post.underlinePosition = round(underlinePosition)
+        post.underlinePosition = otRound(underlinePosition)
         underlineThickness = getAttrWithFallback(font.info, "postscriptUnderlineThickness")
-        post.underlineThickness = round(underlineThickness)
+        post.underlineThickness = otRound(underlineThickness)
         post.isFixedPitch = getAttrWithFallback(font.info, "postscriptIsFixedPitch")
         # misc
         post.minMemType42 = 0
@@ -849,7 +850,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             return pen.bounds
 
         def toInt(value, else_callback):
-            rounded = round(value)
+            rounded = otRound(value)
             if tolerance >= 0.5 or abs(rounded - value) <= tolerance:
                 return rounded
             else:
@@ -890,7 +891,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             # subtract the nominal width
             width -= nominalWidth
         if width is not None:
-            width = round(width)
+            width = otRound(width)
         pen = T2CharStringPen(width, self.allGlyphs,
                               roundTolerance=self.roundTolerance)
         glyph.draw(pen)
@@ -968,11 +969,11 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         topDict.isFixedPitch = getAttrWithFallback(info, "postscriptIsFixedPitch")
         topDict.ItalicAngle = getAttrWithFallback(info, "italicAngle")
         underlinePosition = getAttrWithFallback(info, "postscriptUnderlinePosition")
-        topDict.UnderlinePosition = round(underlinePosition)
+        topDict.UnderlinePosition = otRound(underlinePosition)
         underlineThickness = getAttrWithFallback(info, "postscriptUnderlineThickness")
-        topDict.UnderlineThickness = round(underlineThickness)
+        topDict.UnderlineThickness = otRound(underlineThickness)
         # populate font matrix
-        unitsPerEm = round(getAttrWithFallback(info, "unitsPerEm"))
+        unitsPerEm = otRound(getAttrWithFallback(info, "unitsPerEm"))
         topDict.FontMatrix = [1.0 / unitsPerEm, 0, 0, 1.0 / unitsPerEm, 0, 0]
         # populate the width values
         if not any(hasattr(info, attr) and getattr(info, attr) is not None
@@ -984,35 +985,35 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             widths = [m[0] for m in hmtx.metrics.values()]
             defaultWidthX, nominalWidthX = optimizeWidths(widths)
         else:
-            defaultWidthX = round(getAttrWithFallback(info, "postscriptDefaultWidthX"))
-            nominalWidthX = round(getAttrWithFallback(info, "postscriptNominalWidthX"))
+            defaultWidthX = otRound(getAttrWithFallback(info, "postscriptDefaultWidthX"))
+            nominalWidthX = otRound(getAttrWithFallback(info, "postscriptNominalWidthX"))
         if defaultWidthX:
             private.rawDict["defaultWidthX"] = defaultWidthX
         if nominalWidthX:
             private.rawDict["nominalWidthX"] = nominalWidthX
         # populate hint data
-        blueFuzz = round(getAttrWithFallback(info, "postscriptBlueFuzz"))
-        blueShift = round(getAttrWithFallback(info, "postscriptBlueShift"))
+        blueFuzz = otRound(getAttrWithFallback(info, "postscriptBlueFuzz"))
+        blueShift = otRound(getAttrWithFallback(info, "postscriptBlueShift"))
         blueScale = getAttrWithFallback(info, "postscriptBlueScale")
         forceBold = getAttrWithFallback(info, "postscriptForceBold")
         blueValues = getAttrWithFallback(info, "postscriptBlueValues")
         if isinstance(blueValues, list):
-            blueValues = [round(i) for i in blueValues]
+            blueValues = [otRound(i) for i in blueValues]
         otherBlues = getAttrWithFallback(info, "postscriptOtherBlues")
         if isinstance(otherBlues, list):
-            otherBlues = [round(i) for i in otherBlues]
+            otherBlues = [otRound(i) for i in otherBlues]
         familyBlues = getAttrWithFallback(info, "postscriptFamilyBlues")
         if isinstance(familyBlues, list):
-            familyBlues = [round(i) for i in familyBlues]
+            familyBlues = [otRound(i) for i in familyBlues]
         familyOtherBlues = getAttrWithFallback(info, "postscriptFamilyOtherBlues")
         if isinstance(familyOtherBlues, list):
-            familyOtherBlues = [round(i) for i in familyOtherBlues]
+            familyOtherBlues = [otRound(i) for i in familyOtherBlues]
         stemSnapH = getAttrWithFallback(info, "postscriptStemSnapH")
         if isinstance(stemSnapH, list):
-            stemSnapH = [round(i) for i in stemSnapH]
+            stemSnapH = [otRound(i) for i in stemSnapH]
         stemSnapV = getAttrWithFallback(info, "postscriptStemSnapV")
         if isinstance(stemSnapV, list):
-            stemSnapV = [round(i) for i in stemSnapV]
+            stemSnapV = [otRound(i) for i in stemSnapV]
         # only write the blues data if some blues are defined.
         if any((blueValues, otherBlues, familyBlues, familyOtherBlues)):
             private.rawDict["BlueFuzz"] = blueFuzz
@@ -1185,8 +1186,8 @@ class StubGlyph(object):
         pass
 
     def _drawDefaultNotdef(self, pen):
-        width = round(self.unitsPerEm * 0.5)
-        stroke = round(self.unitsPerEm * 0.05)
+        width = otRound(self.unitsPerEm * 0.5)
+        stroke = otRound(self.unitsPerEm * 0.05)
         ascender = self.ascender
         descender = self.descender
         xMin = stroke
