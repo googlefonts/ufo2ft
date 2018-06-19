@@ -19,7 +19,7 @@ from ufo2ft.postProcessor import PostProcessor
 import logging
 
 
-__version__ = "2.0.2"
+__version__ = "2.0.3.dev0"
 
 logger = logging.getLogger(__name__)
 
