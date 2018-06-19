@@ -388,7 +388,7 @@ class OutlineOTFCompilerTest(object):
         # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
         compiler = OutlineOTFCompiler(testufo)
         # with default roundTolerance, all coordinates and hence the bounding
-        # box values are rounded with round()
+        # box values are rounded with otRound()
         assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
 
     def test_makeGlyphsBoundingBoxes_floats(self, testufo):

@@ -8,6 +8,7 @@ import logging
 from ufo2ft.filters import BaseFilter
 
 from fontTools.misc.py23 import round
+from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Transform, Identity
 from fontTools.pens.recordingPen import RecordingPen
 from fontTools.pens.transformPen import TransformPen as _TransformPen
@@ -79,11 +80,11 @@ class TransformationsFilter(BaseFilter):
         elif origin is self.Origin.CAP_HEIGHT:
             return font.info.capHeight
         elif origin is self.Origin.HALF_CAP_HEIGHT:
-            return round(font.info.capHeight/2)
+            return otRound(font.info.capHeight/2)
         elif origin is self.Origin.X_HEIGHT:
             return font.info.xHeight
         elif origin is self.Origin.HALF_X_HEIGHT:
-            return round(font.info.xHeight/2)
+            return otRound(font.info.xHeight/2)
         else:
             raise AssertionError(origin)
 
