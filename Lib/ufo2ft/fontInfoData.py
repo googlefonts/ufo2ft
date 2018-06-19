@@ -21,7 +21,8 @@ import time
 import unicodedata
 import os
 
-from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr, round
+from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr
+from fontTools.misc.fixedTools import otRound
 from fontTools.misc.textTools import binary2num
 import ufoLib
 
@@ -88,7 +89,7 @@ def openTypeHheaCaretSlopeRiseFallback(info):
         if (hasattr(info, "openTypeHheaCaretSlopeRun") and
                 info.openTypeHheaCaretSlopeRun is not None):
             slopeRun = info.openTypeHheaCaretSlopeRun
-            return round(slopeRun / math.tan(math.radians(-italicAngle)))
+            return otRound(slopeRun / math.tan(math.radians(-italicAngle)))
         else:
             return 1000  # just an arbitrary non-zero reference point
     return 1
@@ -102,7 +103,7 @@ def openTypeHheaCaretSlopeRunFallback(info):
     italicAngle = getAttrWithFallback(info, "italicAngle")
     if italicAngle != 0:
         slopeRise = getAttrWithFallback(info, "openTypeHheaCaretSlopeRise")
-        return round(math.tan(math.radians(-italicAngle)) * slopeRise)
+        return otRound(math.tan(math.radians(-italicAngle)) * slopeRise)
     return 0
 
 # name
