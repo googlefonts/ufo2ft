@@ -174,6 +174,11 @@ setup(
         "booleanOperations>=0.8.0",
         "enum34>=1.1.6 ; python_version < '3.4'",
     ],
+    extras_require={
+        "pathops": [
+            "skia-pathops>=0.2.0",
+        ],
+    },
     cmdclass={
         "release": release,
         "bump_version": bump_version,
