@@ -96,7 +96,7 @@ class IntegrationTest(object):
 
     def test_removeOverlaps_CFF_pathops(self, testufo):
         otf = compileOTF(
-            testufo, removeOverlaps=True, removeOverlapsBackend="pathops"
+            testufo, removeOverlaps=True, overlapsBackend="pathops"
         )
         expectTTX(otf, "TestFont-NoOverlaps-CFF-pathops.ttx")
 
@@ -106,7 +106,7 @@ class IntegrationTest(object):
 
     def test_removeOverlaps_pathops(self, testufo):
         ttf = compileTTF(
-            testufo, removeOverlaps=True, removeOverlapsBackend="pathops"
+            testufo, removeOverlaps=True, overlapsBackend="pathops"
         )
         expectTTX(ttf, "TestFont-NoOverlaps-TTF-pathops.ttx")
 

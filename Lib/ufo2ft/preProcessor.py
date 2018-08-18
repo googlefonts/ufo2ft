@@ -58,20 +58,20 @@ class OTFPreProcessor(BasePreProcessor):
     all the glyphs' contours.
 
     By default, booleanOperations is used to remove overlaps. You can choose
-    skia-pathops by setting ``removeOverlapsBackend`` to the enum value
+    skia-pathops by setting ``overlapsBackend`` to the enum value
     ``RemoveOverlapsFilter.SKIA_PATHOPS``, or the string "pathops".
     """
 
     def initDefaultFilters(
-        self, removeOverlaps=False, removeOverlapsBackend=None
+        self, removeOverlaps=False, overlapsBackend=None
     ):
         filters = [DecomposeComponentsFilter()]
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
 
-            if removeOverlapsBackend is not None:
+            if overlapsBackend is not None:
                 filters.append(
-                    RemoveOverlapsFilter(backend=removeOverlapsBackend)
+                    RemoveOverlapsFilter(backend=overlapsBackend)
                 )
             else:
                 filters.append(RemoveOverlapsFilter())
@@ -89,7 +89,7 @@ class TTFPreProcessor(OTFPreProcessor):
     all the glyphs' contours.
 
     By default, booleanOperations is used to remove overlaps. You can choose
-    skia-pathops by setting ``removeOverlapsBackend`` to the enum value
+    skia-pathops by setting ``overlapsBackend`` to the enum value
     ``RemoveOverlapsFilter.SKIA_PATHOPS``, or the string "pathops".
 
     By default, it also converts all the PostScript cubic Bezier curves to
@@ -116,7 +116,7 @@ class TTFPreProcessor(OTFPreProcessor):
     def initDefaultFilters(
         self,
         removeOverlaps=False,
-        removeOverlapsBackend=None,
+        overlapsBackend=None,
         convertCubics=True,
         conversionError=None,
         reverseDirection=True,
@@ -129,9 +129,9 @@ class TTFPreProcessor(OTFPreProcessor):
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
 
-            if removeOverlapsBackend is not None:
+            if overlapsBackend is not None:
                 filters.append(
-                    RemoveOverlapsFilter(backend=removeOverlapsBackend)
+                    RemoveOverlapsFilter(backend=overlapsBackend)
                 )
             else:
                 filters.append(RemoveOverlapsFilter())
