@@ -94,9 +94,21 @@ class IntegrationTest(object):
         otf = compileOTF(testufo, removeOverlaps=True)
         expectTTX(otf, "TestFont-NoOverlaps-CFF.ttx")
 
+    def test_removeOverlaps_CFF_pathops(self, testufo):
+        otf = compileOTF(
+            testufo, removeOverlaps=True, removeOverlapsBackend="pathops"
+        )
+        expectTTX(otf, "TestFont-NoOverlaps-CFF-pathops.ttx")
+
     def test_removeOverlaps(self, testufo):
         ttf = compileTTF(testufo, removeOverlaps=True)
         expectTTX(ttf, "TestFont-NoOverlaps-TTF.ttx")
+
+    def test_removeOverlaps_pathops(self, testufo):
+        ttf = compileTTF(
+            testufo, removeOverlaps=True, removeOverlapsBackend="pathops"
+        )
+        expectTTX(ttf, "TestFont-NoOverlaps-TTF-pathops.ttx")
 
     def test_interpolatableTTFs_lazy(self, FontClass):
         # two same UFOs **must** be interpolatable
