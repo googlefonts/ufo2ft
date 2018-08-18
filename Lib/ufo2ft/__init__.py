@@ -35,6 +35,7 @@ def compileOTF(
     optimizeCFF=True,
     roundTolerance=None,
     removeOverlaps=False,
+    removeOverlapsBackend=None,
     inplace=False,
 ):
     """Create FontTools CFF font from a UFO.
@@ -68,7 +69,10 @@ def compileOTF(
     """
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
-        ufo, inplace=inplace, removeOverlaps=removeOverlaps
+        ufo,
+        inplace=inplace,
+        removeOverlaps=removeOverlaps,
+        removeOverlapsBackend=removeOverlapsBackend,
     )
     glyphSet = preProcessor.process()
 
@@ -108,6 +112,7 @@ def compileTTF(
     reverseDirection=True,
     rememberCurveType=True,
     removeOverlaps=False,
+    removeOverlapsBackend=None,
     inplace=False,
 ):
     """Create FontTools TrueType font from a UFO.
@@ -122,6 +127,7 @@ def compileTTF(
         ufo,
         inplace=inplace,
         removeOverlaps=removeOverlaps,
+        removeOverlapsBackend=removeOverlapsBackend,
         convertCubics=convertCubics,
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection,
