@@ -12,12 +12,7 @@ from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Transform, Identity
 from fontTools.pens.recordingPen import RecordingPen
 from fontTools.pens.transformPen import TransformPen as _TransformPen
-
-
-# make do without the real Enum type, python3 only... :(
-def IntEnum(typename, field_names):
-    return namedtuple(typename, field_names)._make(
-        range(len(field_names)))
+from enum import IntEnum
 
 
 log = logging.getLogger(__name__)
@@ -49,16 +44,12 @@ class TransformPen(_TransformPen):
 
 class TransformationsFilter(BaseFilter):
 
-    Origin = IntEnum(
-        'Origin',
-        (
-            'CAP_HEIGHT',
-            'HALF_CAP_HEIGHT',
-            'X_HEIGHT',
-            'HALF_X_HEIGHT',
-            'BASELINE',
-        )
-    )
+    class Origin(IntEnum):
+        CAP_HEIGHT = 0
+        HALF_CAP_HEIGHT = 1
+        X_HEIGHT = 2
+        HALF_X_HEIGHT = 3
+        BASELINE = 4
 
     _kwargs = {
         'OffsetX': 0,
@@ -70,9 +61,7 @@ class TransformationsFilter(BaseFilter):
     }
 
     def start(self):
-        if self.options.Origin not in self.Origin:
-            raise ValueError("%r is not a valid Origin value"
-                             % self.options.Origin)
+        self.options.Origin = self.Origin(self.options.Origin)
 
     def get_origin_height(self, font, origin):
         if origin is self.Origin.BASELINE:

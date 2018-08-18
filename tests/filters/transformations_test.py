@@ -72,7 +72,7 @@ def font(request, FontClass):
 
 @pytest.fixture(
     params=TransformationsFilter.Origin,
-    ids=TransformationsFilter.Origin._fields,
+    ids=[e.name for e in TransformationsFilter.Origin],
 )
 def origin(request):
     return request.param
