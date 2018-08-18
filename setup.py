@@ -172,6 +172,7 @@ setup(
         "cu2qu>=1.5.0",
         "compreffor>=0.4.5",
         "booleanOperations>=0.8.0",
+        "enum34>=1.1.6 ; python_version < '3.4'",
     ],
     cmdclass={
         "release": release,
