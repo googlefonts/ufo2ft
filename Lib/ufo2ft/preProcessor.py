@@ -1,6 +1,7 @@
 from __future__ import (
     print_function, division, absolute_import, unicode_literals)
 
+from fontTools.misc.py23 import basestring
 from ufo2ft.filters import loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
 from ufo2ft.util import copyGlyphSet
@@ -55,13 +56,26 @@ class OTFPreProcessor(BasePreProcessor):
 
     If ``removeOverlaps`` is True, it performs a union boolean operation on
     all the glyphs' contours.
+
+    By default, booleanOperations is used to remove overlaps. You can choose
+    skia-pathops by setting ``removeOverlapsBackend`` to the enum value
+    ``RemoveOverlapsFilter.SKIA_PATHOPS``, or the string "pathops".
     """
 
-    def initDefaultFilters(self, removeOverlaps=False):
+    def initDefaultFilters(
+        self, removeOverlaps=False, removeOverlapsBackend=None
+    ):
         filters = [DecomposeComponentsFilter()]
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
-            filters.append(RemoveOverlapsFilter())
+
+            if removeOverlapsBackend is not None:
+                filters.append(
+                    RemoveOverlapsFilter(backend=removeOverlapsBackend)
+                )
+            else:
+                filters.append(RemoveOverlapsFilter())
+
         return filters
 
 
@@ -73,6 +87,10 @@ class TTFPreProcessor(OTFPreProcessor):
 
     If ``removeOverlaps`` is True, it performs a union boolean operation on
     all the glyphs' contours.
+
+    By default, booleanOperations is used to remove overlaps. You can choose
+    skia-pathops by setting ``removeOverlapsBackend`` to the enum value
+    ``RemoveOverlapsFilter.SKIA_PATHOPS``, or the string "pathops".
 
     By default, it also converts all the PostScript cubic Bezier curves to
     TrueType quadratic splines. If the outlines are already quadratic, you
@@ -95,16 +113,28 @@ class TTFPreProcessor(OTFPreProcessor):
     already set to "quadratic".
     """
 
-    def initDefaultFilters(self, removeOverlaps=False, convertCubics=True,
-                           conversionError=None, reverseDirection=True,
-                           rememberCurveType=True):
+    def initDefaultFilters(
+        self,
+        removeOverlaps=False,
+        removeOverlapsBackend=None,
+        convertCubics=True,
+        conversionError=None,
+        reverseDirection=True,
+        rememberCurveType=True
+    ):
         # len(g) is the number of contours, so we include the all glyphs
         # that have both components and at least one contour
         filters = [DecomposeComponentsFilter(include=lambda g: len(g))]
 
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
-            filters.append(RemoveOverlapsFilter())
+
+            if removeOverlapsBackend is not None:
+                filters.append(
+                    RemoveOverlapsFilter(backend=removeOverlapsBackend)
+                )
+            else:
+                filters.append(RemoveOverlapsFilter())
 
         if convertCubics:
             from ufo2ft.filters.cubicToQuadratic import CubicToQuadraticFilter
