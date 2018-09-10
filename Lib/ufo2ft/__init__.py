@@ -19,7 +19,7 @@ from ufo2ft.postProcessor import PostProcessor
 import logging
 
 
-__version__ = "2.2.1"
+__version__ = "2.2.1.dev0"
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +149,7 @@ def compileTTF(
         featureCompilerClass=featureCompilerClass,
     )
 
-    postProcessor = PostProcessor(otf, ufo)
+    postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
     otf = postProcessor.process(useProductionNames)
 
     return otf
@@ -200,7 +200,7 @@ def compileInterpolatableTTFs(
             featureCompilerClass=featureCompilerClass,
         )
 
-        postProcessor = PostProcessor(ttf, ufo)
+        postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
         ttf = postProcessor.process(useProductionNames)
 
         yield ttf
