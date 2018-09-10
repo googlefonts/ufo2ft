@@ -8,6 +8,7 @@ from ufo2ft.constants import (
     GLYPHS_DONT_USE_PRODUCTION_NAMES
 )
 import logging
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,12 @@ class PostProcessor(object):
     info from the source UFO where necessary.
     """
 
-    def __init__(self, otf, ufo):
+    GLYPH_NAME_INVALID_CHARS = re.compile("[^0-9a-zA-Z_.]")
+    MAX_GLYPH_NAME_LENGTH = 63
+
+    def __init__(self, otf, ufo, glyphSet=None):
         self.ufo = ufo
+        self.glyphSet = glyphSet if glyphSet is not None else ufo
         stream = BytesIO()
         otf.save(stream)
         stream.seek(0)
@@ -59,15 +64,10 @@ class PostProcessor(object):
 
     def _rename_glyphs_from_ufo(self):
         """Rename glyphs using ufo.lib.public.postscriptNames in UFO."""
-
-        rename_map = {
-            g.name: self._build_production_name(g) for g in self.ufo}
-        # .notdef may not be present in the original font
-        rename_map[".notdef"] = ".notdef"
-        rename = lambda names: [rename_map[n] for n in names]
+        rename_map = self._build_production_names()
 
         otf = self.otf
-        otf.setGlyphOrder(rename(otf.getGlyphOrder()))
+        otf.setGlyphOrder([rename_map.get(n, n) for n in otf.getGlyphOrder()])
 
         # we need to compile format 2 'post' table so that the 'extraNames'
         # attribute is updated with the list of the names outside the
@@ -82,7 +82,43 @@ class PostProcessor(object):
             char_strings = cff.CharStrings.charStrings
             cff.CharStrings.charStrings = {
                 rename_map.get(n, n): v for n, v in char_strings.items()}
-            cff.charset = rename(cff.charset)
+            cff.charset = [rename_map.get(n, n) for n in cff.charset]
+
+    def _build_production_names(self):
+        seen = {}
+        rename_map = {}
+        for name in self.otf.getGlyphOrder():
+            prod_name = self._build_production_name(self.glyphSet[name])
+
+            # strip invalid characters not allowed in postscript glyph names
+            if name != prod_name:
+                valid_name = self.GLYPH_NAME_INVALID_CHARS.sub("", prod_name)
+                if len(valid_name) > self.MAX_GLYPH_NAME_LENGTH:
+                    # if the length of the generated production name is too
+                    # long, try to fall back to the original name
+                    valid_name = self.GLYPH_NAME_INVALID_CHARS.sub("", name)
+            else:
+                valid_name = self.GLYPH_NAME_INVALID_CHARS.sub("", name)
+
+            if len(valid_name) > self.MAX_GLYPH_NAME_LENGTH:
+                logger.warning(
+                    "glyph name length exceeds 63 characters: '%s'", valid_name
+                )
+            # add a suffix to make the production names unique
+            rename_map[name] = self._unique_name(valid_name, seen)
+        return rename_map
+
+    @staticmethod
+    def _unique_name(name, seen):
+        """Append incremental '.N' suffix if glyph is a duplicate."""
+        if name in seen:
+            n = seen[name]
+            while (name + ".%d" % n) in seen:
+                n += 1
+            seen[name] = n + 1
+            name += ".%d" % n
+        seen[name] = 1
+        return name
 
     def _build_production_name(self, glyph):
         """Build a production name for a single glyph."""
@@ -100,9 +136,9 @@ class PostProcessor(object):
 
         # use production name + last (non-script) suffix if possible
         parts = glyph.name.rsplit('.', 1)
-        if len(parts) == 2 and parts[0] in self.ufo:
+        if len(parts) == 2 and parts[0] in self.glyphSet:
             return '%s.%s' % (
-                self._build_production_name(self.ufo[parts[0]]), parts[1])
+                self._build_production_name(self.glyphSet[parts[0]]), parts[1])
 
         # use ligature name, making sure to look up components with suffixes
         parts = glyph.name.split('.', 1)
@@ -110,11 +146,11 @@ class PostProcessor(object):
             liga_parts = ['%s.%s' % (n, parts[1]) for n in parts[0].split('_')]
         else:
             liga_parts = glyph.name.split('_')
-        if len(liga_parts) > 1 and all(n in self.ufo for n in liga_parts):
-            unicode_vals = [self.ufo[n].unicode for n in liga_parts]
+        if len(liga_parts) > 1 and all(n in self.glyphSet for n in liga_parts):
+            unicode_vals = [self.glyphSet[n].unicode for n in liga_parts]
             if all(v and v <= 0xffff for v in unicode_vals):
                 return 'uni' + ''.join('%04X' % v for v in unicode_vals)
             return '_'.join(
-                self._build_production_name(self.ufo[n]) for n in liga_parts)
+                self._build_production_name(self.glyphSet[n]) for n in liga_parts)
 
         return glyph.name

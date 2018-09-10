@@ -93,7 +93,7 @@ def compileOTF(
         featureCompilerClass=featureCompilerClass,
     )
 
-    postProcessor = PostProcessor(otf, ufo)
+    postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
     otf = postProcessor.process(useProductionNames, optimizeCFF)
 
     return otf
