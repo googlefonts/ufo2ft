@@ -16,6 +16,7 @@ from ufo2ft.constants import (
 )
 from ufo2ft import compileTTF
 import os
+import logging
 import pytest
 
 
@@ -642,7 +643,7 @@ class NamesTest(object):
         self, testufo
     ):
         custom_names = dict(self.CUSTOM_POSTSCRIPT_NAMES)
-        custom_names[".notdef"] = "defnot"
+        del custom_names[".notdef"]
         testufo.lib["public.postscriptNames"] = custom_names
         result = compileTTF(testufo, useProductionNames=True)
         assert result.getGlyphOrder() == [
@@ -661,6 +662,42 @@ class NamesTest(object):
             "kkk",
             "lll",
         ]
+
+    def test_warn_name_exceeds_max_length(self, testufo, caplog):
+        long_name = 64 * "a"
+        testufo.newGlyph(long_name)
+
+        with caplog.at_level(logging.WARNING, logger="ufo2ft.postProcessor"):
+            result = compileTTF(testufo, useProductionNames=True)
+
+        assert "length exceeds 63 characters" in caplog.text
+        assert long_name in result.getGlyphOrder()
+
+    def test_duplicate_glyph_names(self, testufo):
+        order = ["ab", "ab.1", "a-b", "a/b", "ba"]
+        testufo.lib["public.glyphOrder"] = order
+        testufo.lib["public.postscriptNames"] = {"ba": "ab"}
+        for name in order:
+            if name not in testufo:
+                testufo.newGlyph(name)
+
+        result = compileTTF(testufo, useProductionNames=True).getGlyphOrder()
+
+        assert result[1] == "ab"
+        assert result[2] == "ab.1"
+        assert result[3] == "ab.2"
+        assert result[4] == "ab.3"
+        assert result[5] == "ab.4"
+
+    def test_too_long_production_name(self, testufo):
+        name = "_".join(("a",) * 16)
+        testufo.newGlyph(name)
+
+        result = compileTTF(testufo, useProductionNames=True).getGlyphOrder()
+
+        # the production name uniXXXX would exceed the max length so the
+        # original name is used
+        assert name in result
 
 
 ASCII = [unichr(c) for c in range(0x20, 0x7E)]
