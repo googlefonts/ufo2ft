@@ -13,6 +13,7 @@ from ufo2ft.featureWriters.markFeatureWriter import (
     parseAnchorName,
 )
 from ufo2ft.featureCompiler import parseLayoutFeatures
+from ufo2ft.errors import InvalidFontData
 
 import pytest
 from . import FeatureWriterTest
@@ -578,6 +579,14 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             } mkmk;
             """
         )
+
+    def test_error_on_bad_glyph_name(self, testufo):
+        # Add a glyph with an invalid name to the test UFO: "f_i,"
+        testufo.newGlyph("a,").appendAnchor({"name": "top", "x": 100, "y": 200})
+        writer = MarkFeatureWriter()
+        feaFile = ast.FeatureFile()
+        with pytest.raises(InvalidFontData):
+            writer.write(testufo, feaFile)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ import logging
 
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
+from ufo2ft.errors import InvalidFontData
 
 import pytest
 from . import FeatureWriterTest
@@ -721,6 +722,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern;
             """
         )
+
+    def test_error_on_bad_glyph_name(self, FontClass):
+        # One glyph has an invalid glyph name (in fea syntax): "V,"
+        glyphs = {"A": ord('A'), "V,": ord("V")}
+        kerning = {("A", "V,"): -40}
+        features = "languagesystem latn dflt;"
+        ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
+        with pytest.raises(InvalidFontData):
+            generated = self.writeFeatures(ufo)
 
 
 if __name__ == "__main__":
