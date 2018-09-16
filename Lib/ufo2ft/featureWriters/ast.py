@@ -193,3 +193,33 @@ def addLookupReference(
         languages=languages,
         exclude_dflt=exclude_dflt,
     )
+
+
+_GDEFGlyphClasses = collections.namedtuple(
+    "_GDEFGlyphClasses", "base ligature mark component"
+)
+
+
+def getGDEFGlyphClasses(feaLib):
+    """Return GDEF GlyphClassDef base/mark/ligature/component glyphs, or
+    None if no GDEF table is defined in the feature file.
+    """
+    for st in feaLib.statements:
+        if isinstance(st, ast.TableBlock) and st.name == "GDEF":
+            for st in st.statements:
+                if isinstance(st, ast.GlyphClassDefStatement):
+                    return _GDEFGlyphClasses(
+                        frozenset(st.baseGlyphs.glyphSet())
+                        if st.baseGlyphs is not None
+                        else frozenset(),
+                        frozenset(st.ligatureGlyphs.glyphSet())
+                        if st.ligatureGlyphs is not None
+                        else frozenset(),
+                        frozenset(st.markGlyphs.glyphSet())
+                        if st.markGlyphs is not None
+                        else frozenset(),
+                        frozenset(st.componentGlyphs.glyphSet())
+                        if st.componentGlyphs is not None
+                        else frozenset(),
+                    )
+    return _GDEFGlyphClasses(None, None, None, None)
