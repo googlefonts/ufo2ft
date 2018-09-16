@@ -579,6 +579,78 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_mark_mkmk_features_with_GDEF(self, testufo):
+        D = testufo.newGlyph("D")
+        D.anchors = [
+            {"name": "top", "x": 300, "y": 700},
+            {"name": "center", "x": 320, "y": 360},
+        ]
+        # these glyphs have compatible anchors but since they not lised in
+        # the GDEF groups, they won't be included in the mark/mkmk feature
+        testufo.newGlyph("Alpha").appendAnchor({"name": "topleft", "x": -10, "y": 400})
+        testufo.newGlyph("psili").appendAnchor({"name": "_topleft", "x": 0, "y": 50})
+        dotaccentcomb = testufo.newGlyph("dotaccentcomb")
+        # this mark glyph has more than one mark anchor, but only one will be
+        # used to define its markClass. Following Glyphs.app, the anchors
+        # '_bottom' and '_top' get priority over others.
+        dotaccentcomb.anchors = [
+            {"name": "_center", "x": 0, "y": 0},
+            {"name": "_top", "x": 0, "y": 0},
+            {"name": "top", "x": 0, "y": 300},
+        ]
+        testufo.features.text = dedent(
+            """\
+            @Bases = [a D];
+            @Marks = [acutecomb tildecomb dotaccentcomb];
+            table GDEF {
+                GlyphClassDef @Bases, [f_i], @Marks, ;
+            } GDEF;
+            """
+        )
+        testufo.glyphOrder = [
+            "Alpha",
+            "D",
+            "a",
+            "acutecomb",
+            "dotaccentcomb",
+            "f_i",
+            "psili",
+            "tildecomb",
+        ]
+
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass dotaccentcomb <anchor 0 0> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base D <anchor 300 700> mark @MC_top;
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i <anchor 100 500> mark @MC_top
+                        ligComponent <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb dotaccentcomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark dotaccentcomb <anchor 0 300> mark @MC_top;
+                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
 
 if __name__ == "__main__":
     import sys
