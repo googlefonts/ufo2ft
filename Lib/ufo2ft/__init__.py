@@ -18,8 +18,11 @@ from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 import logging
 
+try:
+    from ._version import version as __version__
+except ImportError:
+    __version__ = "0.0.0+unknown"
 
-__version__ = "2.3.0.dev0"
 
 logger = logging.getLogger(__name__)
 
