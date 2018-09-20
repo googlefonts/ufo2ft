@@ -615,6 +615,21 @@ class NamesTest(object):
         result = compileTTF(testufo)
         assert result.getGlyphOrder() == expected
 
+    def test_postprocess_production_names_no_notdef(self, testufo):
+        import ufo2ft
+
+        del testufo[".notdef"]
+        assert ".notdef" not in testufo
+        result = compileTTF(testufo, useProductionNames=False)
+        assert ".notdef" in result.getGlyphOrder()
+
+        pp = ufo2ft.postProcessor.PostProcessor(result, testufo, glyphSet=None)
+        try:
+            f = pp.process(useProductionNames=True)
+        except Exception as e:
+            pytest.xfail("Unexpected exception: " + str(e))
+        assert ".notdef" in f.getGlyphOrder()
+
     CUSTOM_POSTSCRIPT_NAMES = {
         ".notdef": ".notdef",
         "space": "foo",
