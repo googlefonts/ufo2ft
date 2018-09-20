@@ -1166,21 +1166,9 @@ class StubGlyph(object):
             return 1
         return 0
 
-    def _get_leftMargin(self):
-        if self.bounds is None:
-            return 0
-        return self.bounds[0]
-
-    leftMargin = property(_get_leftMargin)
-
-    def _get_rightMargin(self):
-        bounds = self.bounds
-        if bounds is None:
-            return 0
-        xMin, yMin, xMax, yMax = bounds
-        return self.width - bounds[2]
-
-    rightMargin = property(_get_rightMargin)
+    @property
+    def height(self):
+        return self.ascender - self.descender
 
     def draw(self, pen):
         pass
