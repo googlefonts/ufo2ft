@@ -88,6 +88,10 @@ class PostProcessor(object):
         seen = {}
         rename_map = {}
         for name in self.otf.getGlyphOrder():
+            # Ignore glyphs that aren't in the source, as they are usually generated 
+            # and we lack information about them.
+            if name not in self.glyphSet:
+                continue
             prod_name = self._build_production_name(self.glyphSet[name])
 
             # strip invalid characters not allowed in postscript glyph names
