@@ -753,6 +753,7 @@ ASCII = [unichr(c) for c in range(0x20, 0x7E)]
         [ASCII + ["┤", "√", "é"], {52}],  # MS-DOS Canadian French
         [ASCII + ["┤", "√", "õ"], {55}],  # MS-DOS Portuguese
         [ASCII + ["‰", "∑"], {29}],  # Macintosh Character Set (US Roman)
+        [[" ", "0", "1", "2", "අ"], {0}],  # always fallback to Latin 1
     ],
 )
 def test_calcCodePageRanges(emptyufo, unicodes, expected):
