@@ -263,7 +263,7 @@ def calcCodePageRanges(unicodes):
         codepageRanges.add(29)              # Macintosh Character Set (US Roman)
 
     # when no codepage ranges can be enabled, fall back to enabling bit 0
-    #(Latin 1) so that the font works in MS Word:
+    # (Latin 1) so that the font works in MS Word:
     # https://github.com/googlei18n/fontmake/issues/468
     if not codepageRanges:
         codepageRanges.add(0)
