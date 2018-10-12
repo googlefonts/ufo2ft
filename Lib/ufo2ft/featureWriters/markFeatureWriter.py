@@ -220,7 +220,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     tableTag = "GPOS"
     features = frozenset(["mark", "mkmk", "abvm", "blwm"])
-    _SUPPORTED_MODES = frozenset(["skip"])
 
     # subclasses may override this to use different anchor naming schemes
     NamedAnchor = NamedAnchor
