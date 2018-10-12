@@ -188,8 +188,14 @@ class NamedAnchor(object):
 class MarkFeatureWriter(BaseFeatureWriter):
     """Generates a mark, mkmk, abvm and blwm features based on glyph anchors.
 
-    Only supported mode is 'skip': i.e. if any of the supported features is
+    The default mode is 'skip': i.e. if any of the supported features is
     already present in the feature file, it is not generated again.
+
+    The optional 'append' mode will add extra lookups to already existing
+    features, if any. New markClass definitions with unique names are
+    generated when the mark anchors from UFO glyphs are different from those
+    already defined in the feature file, otherwise the existing markClass
+    definitions are reused in the newly appended lookups.
 
     Anchors prefixed with "_" are considered mark anchors; any glyph
     containing those is as such considered a mark glyph, thus added to
