@@ -231,6 +231,47 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_append_feature(self, testufo):
+        testufo.features.text = dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            feature mark {
+                lookup mark1 {
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark1;
+            } mark;
+            """
+        )
+
+        generated = self.writeFeatures(testufo, mode="append")
+
+        assert str(generated) == dedent(
+            """\
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i <anchor 100 500> mark @MC_top
+                        ligComponent <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
     def test_mark_mkmk_features(self, testufo):
         writer = MarkFeatureWriter()  # by default both mark + mkmk are built
         feaFile = ast.FeatureFile()
