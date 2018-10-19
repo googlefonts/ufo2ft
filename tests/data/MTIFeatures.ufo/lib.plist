@@ -10,5 +10,16 @@
 			<string>b</string>
 			<string>c</string>
 		</array>
+		<key>public.postscriptNames</key>
+		<dict>
+			<key>a</key>
+			<string>uni0061</string>
+			<key>b</key>
+			<string>uni0062</string>
+			<key>c</key>
+			<string>uni0063</string>
+			<key>space</key>
+			<string>uni0020</string>
+		</dict>
 	</dict>
 </plist>

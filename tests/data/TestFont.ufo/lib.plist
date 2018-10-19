@@ -21,5 +21,34 @@
 			<string>k</string>
 			<string>l</string>
 		</array>
+		<key>public.postscriptNames</key>
+		<dict>
+			<key>a</key>
+			<string>uni0061</string>
+			<key>b</key>
+			<string>uni0062</string>
+			<key>c</key>
+			<string>uni0063</string>
+			<key>d</key>
+			<string>uni0064</string>
+			<key>e</key>
+			<string>uni0065</string>
+			<key>f</key>
+			<string>uni0066</string>
+			<key>g</key>
+			<string>uni0067</string>
+			<key>h</key>
+			<string>uni0068</string>
+			<key>i</key>
+			<string>uni0069</string>
+			<key>j</key>
+			<string>uni006A</string>
+			<key>k</key>
+			<string>uni006B</string>
+			<key>l</key>
+			<string>uni006C</string>
+			<key>space</key>
+			<string>uni0020</string>
+		</dict>
 	</dict>
 </plist>
