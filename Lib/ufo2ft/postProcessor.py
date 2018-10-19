@@ -34,8 +34,8 @@ class PostProcessor(object):
     def process(self, useProductionNames=None, optimizeCFF=True):
         """
         useProductionNames:
-          By default, when value is None, this will rename glyphs using using
-          the 'public.postscriptNames' in then UFO lib. If the mapping is not
+          By default, when value is None, this will rename glyphs using the
+          'public.postscriptNames' in then UFO lib. If the mapping is not
           present, no glyph names are renamed.
           If the value is False, no glyphs are renamed whether or not the
           'public.postscriptNames' mapping is present.
