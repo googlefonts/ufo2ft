@@ -34,15 +34,21 @@ class PostProcessor(object):
     def process(self, useProductionNames=None, optimizeCFF=True):
         """
         useProductionNames:
-          Rename glyphs using using 'public.postscriptNames' in UFO lib,
-          if present. Else, generate uniXXXX names from the glyphs' unicode.
+          By default, when value is None, this will rename glyphs using using
+          the 'public.postscriptNames' in then UFO lib. If the mapping is not
+          present, no glyph names are renamed.
+          If the value is False, no glyphs are renamed whether or not the
+          'public.postscriptNames' mapping is present.
+          If the value is True, but no 'public.postscriptNames' are present,
+          then uniXXXX names are generated from the glyphs' unicode.
 
-          If 'com.github.googlei18n.ufo2ft.useProductionNames' key in the UFO
-          lib is present and is set to False, do not modify the glyph names.
+          The 'com.github.googlei18n.ufo2ft.useProductionNames' key can be set
+          in the UFO lib to control this parameter (plist boolean value).
 
-          Alternatively, if "com.schriftgestaltung.Don't use Production Names"
-          key is present if the UFO lib, and is set to True, do not modify
-          the glyph names.
+          For legacy reasons, an alias key (with an inverted meaning) is also
+          supported: "com.schriftgestaltung.Don't use Production Names";
+          when this is present if the UFO lib and is set to True, this is
+          equivalent to 'useProductionNames' set to False.
 
         optimizeCFF:
           Run compreffor to subroubtinize CFF table, if present.
@@ -50,7 +56,9 @@ class PostProcessor(object):
         if useProductionNames is None:
             useProductionNames = self.ufo.lib.get(
                 USE_PRODUCTION_NAMES,
-                not self.ufo.lib.get(GLYPHS_DONT_USE_PRODUCTION_NAMES))
+                not self.ufo.lib.get(GLYPHS_DONT_USE_PRODUCTION_NAMES)
+                and self._postscriptNames is not None
+            )
         if useProductionNames:
             self._rename_glyphs_from_ufo()
         if optimizeCFF and 'CFF ' in self.otf:
