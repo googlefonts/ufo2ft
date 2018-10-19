@@ -194,14 +194,13 @@ class KernFeatureWriter(BaseFeatureWriter):
     in an UFO's kerning data.
 
     There are currently two possible writing modes:
-    1) "append" (default) will add additional lookups to an existing feature,
-       if present, or it will add a new one at the end of all features.
-    2) "skip" will not write anything if the features are already present;
+    2) "skip" (default) will not write anything if the features are already present;
+    1) "append" will add additional lookups to an existing feature, if present,
+       or it will add a new one at the end of all features.
     """
 
     tableTag = "GPOS"
     features = frozenset(["kern", "dist"])
-    mode = "append"
     options = dict(ignoreMarks=True)
 
     def setContext(self, font, feaFile, compiler=None):
