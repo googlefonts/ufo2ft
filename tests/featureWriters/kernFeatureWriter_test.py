@@ -152,7 +152,14 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo.features.text = existing
         ufo.kerning.update({("seven", "six"): 25.0})
 
-        writer = KernFeatureWriter()  # default mode="append"
+        writer = KernFeatureWriter()  # default mode="skip"
+        feaFile = parseLayoutFeatures(ufo)
+        assert not writer.write(ufo, feaFile)
+
+        assert str(feaFile) == existing
+
+        # pass optional "append" mode
+        writer = KernFeatureWriter(mode="append")
         feaFile = parseLayoutFeatures(ufo)
         assert writer.write(ufo, feaFile)
 
@@ -169,17 +176,9 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern;
             """
         )
-
         assert str(feaFile) == expected
 
-        # pass "append" mode explicitly
-        writer = KernFeatureWriter(mode="append")
-        feaFile = parseLayoutFeatures(ufo)
-        assert writer.write(ufo, feaFile)
-
-        assert str(feaFile) == expected
-
-        # pass optional "skip" mode
+        # pass "skip" mode explicitly
         writer = KernFeatureWriter(mode="skip")
         feaFile = parseLayoutFeatures(ufo)
         assert not writer.write(ufo, feaFile)
