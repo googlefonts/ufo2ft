@@ -1,19 +1,11 @@
 # -*- coding: utf-8 -*-
-from __future__ import (
-    print_function,
-    absolute_import,
-    division,
-    unicode_literals,
-)
+from __future__ import print_function, absolute_import, division, unicode_literals
 from fontTools.ttLib import TTFont
 from fontTools.misc.py23 import basestring, unichr, byteord
 from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
 from ufo2ft.fontInfoData import intListToNum
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
-from ufo2ft.constants import (
-    USE_PRODUCTION_NAMES,
-    GLYPHS_DONT_USE_PRODUCTION_NAMES,
-)
+from ufo2ft.constants import USE_PRODUCTION_NAMES, GLYPHS_DONT_USE_PRODUCTION_NAMES
 from ufo2ft import compileTTF
 import os
 import logging
@@ -27,7 +19,9 @@ def getpath(filename):
 
 @pytest.fixture
 def testufo(FontClass):
-    return FontClass(getpath("TestFont.ufo"))
+    font = FontClass(getpath("TestFont.ufo"))
+    del font.lib["public.postscriptNames"]
+    return font
 
 
 @pytest.fixture
@@ -49,7 +43,6 @@ def emptyufo(FontClass):
 
 
 class OutlineTTFCompilerTest(object):
-
     def test_setupTable_gasp(self, testufo):
         compiler = OutlineTTFCompiler(testufo)
         compiler.otf = TTFont()
@@ -175,7 +168,6 @@ class OutlineTTFCompilerTest(object):
 
 
 class OutlineOTFCompilerTest(object):
-
     def test_setupTable_CFF_all_blues_defined(self, testufo):
         testufo.info.postscriptBlueFuzz = 2
         testufo.info.postscriptBlueShift = 8
@@ -458,14 +450,10 @@ class OutlineOTFCompilerTest(object):
             assert charStrings.getItemAndSelector(g)[0].program == ["endchar"]
         # 'space' has width 250, so the width encoded in its charstring is:
         # 250 - nominalWidthX
-        assert charStrings.getItemAndSelector("space")[0].program == [
-            -53,
-            "endchar",
-        ]
+        assert charStrings.getItemAndSelector("space")[0].program == [-53, "endchar"]
 
 
 class GlyphOrderTest(object):
-
     def test_compile_original_glyph_order(self, testufo):
         DEFAULT_ORDER = [
             ".notdef",
@@ -537,20 +525,14 @@ class GlyphOrderTest(object):
 
 
 class NamesTest(object):
-
     @pytest.mark.parametrize(
         "prod_names_key, prod_names_value",
-        [
-            (USE_PRODUCTION_NAMES, False),
-            (GLYPHS_DONT_USE_PRODUCTION_NAMES, True),
-        ],
-        ids=[
-            "useProductionNames",
-            "Don't use Production Names",
-        ]
+        [(USE_PRODUCTION_NAMES, False), (GLYPHS_DONT_USE_PRODUCTION_NAMES, True)],
+        ids=["useProductionNames", "Don't use Production Names"],
     )
-    def test_compile_without_production_names(self, testufo, prod_names_key,
-                                              prod_names_value):
+    def test_compile_without_production_names(
+        self, testufo, prod_names_key, prod_names_value
+    ):
         expected = [
             ".notdef",
             "space",
@@ -575,20 +557,24 @@ class NamesTest(object):
         result = compileTTF(testufo)
         assert result.getGlyphOrder() == expected
 
-    @pytest.mark.parametrize(
-        "prod_names_key, prod_names_value",
-        [
-            (USE_PRODUCTION_NAMES, True),
-            (GLYPHS_DONT_USE_PRODUCTION_NAMES, False),
-        ],
-        ids=[
-            "useProductionNames",
-            "Don't use Production Names",
+    def test_compile_with_production_names(self, testufo):
+        original = [
+            ".notdef",
+            "space",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
         ]
-    )
-    def test_compile_with_production_names(self, testufo, prod_names_key,
-                                           prod_names_value):
-        expected = [
+        modified = [
             ".notdef",
             "uni0020",
             "uni0061",
@@ -606,14 +592,14 @@ class NamesTest(object):
         ]
 
         result = compileTTF(testufo)
-        assert result.getGlyphOrder() == expected
+        assert result.getGlyphOrder() == original
 
         result = compileTTF(testufo, useProductionNames=True)
-        assert result.getGlyphOrder() == expected
+        assert result.getGlyphOrder() == modified
 
-        testufo.lib[prod_names_key] = prod_names_value
+        testufo.lib[USE_PRODUCTION_NAMES] = True
         result = compileTTF(testufo)
-        assert result.getGlyphOrder() == expected
+        assert result.getGlyphOrder() == modified
 
     def test_postprocess_production_names_no_notdef(self, testufo):
         import ufo2ft
@@ -647,20 +633,22 @@ class NamesTest(object):
         "l": "lll",
     }
 
-    def test_compile_with_custom_postscript_names(self, testufo):
+    @pytest.mark.parametrize("use_production_names", [None, True])
+    def test_compile_with_custom_postscript_names(self, testufo, use_production_names):
         testufo.lib["public.postscriptNames"] = self.CUSTOM_POSTSCRIPT_NAMES
-        result = compileTTF(testufo, useProductionNames=True)
+        result = compileTTF(testufo, useProductionNames=use_production_names)
         assert sorted(result.getGlyphOrder()) == sorted(
             self.CUSTOM_POSTSCRIPT_NAMES.values()
         )
 
+    @pytest.mark.parametrize("use_production_names", [None, True])
     def test_compile_with_custom_postscript_names_notdef_preserved(
-        self, testufo
+        self, testufo, use_production_names
     ):
         custom_names = dict(self.CUSTOM_POSTSCRIPT_NAMES)
         del custom_names[".notdef"]
         testufo.lib["public.postscriptNames"] = custom_names
-        result = compileTTF(testufo, useProductionNames=True)
+        result = compileTTF(testufo, useProductionNames=use_production_names)
         assert result.getGlyphOrder() == [
             ".notdef",
             "foo",
