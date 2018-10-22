@@ -19,11 +19,150 @@ which work exactly the same way:
     otf = compileOTF(ufo)
     otf.save('MyFont-Regular.otf')
 
-In most cases, the behavior of ufo2ft should match that of ufo2fdk,
-whose documentation is retained below (and hopefully is still accurate).
+In most cases, the behavior of ufo2ft should match that of ufo2fdk, whose
+documentation is retained further below (and hopefully is still accurate).
+
+Modifying the behavior of ufo2ft
+--------------------------------
+
+ufo2ft by default tries to do little more than what the UFO specification
+demands. Popular font design applications that came after the specification was
+made and specific workflows however may demand more. ufo2ft obeys certain keys
+in a UFO's "lib", i.e. key-value pairs in the UFO's ``lib.plist`` file.
+
+Filters (lib key: ``com.github.googlei18n.ufo2ft.filters``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Filters can modify glyphs before ("pre" = True) or after ("pre" = False)
+decomposition of composite glyphs. The default is running filters after
+decomposition ("pre" = False).
+
+Example
+^^^^^^^
+
+You would insert the following into a UFO's ``lib.plist``:
+
+.. code:: xml
+
+    <key>com.github.googlei18n.ufo2ft.filters</key>
+    <array>
+        <dict>
+            <key>name</key>
+            <string>propagateAnchors</key>
+            <key>pre</key>
+            <true />
+            <!-- Optionally, specify a list of glyphs to in- or exclude for
+                 this filter (the default is to include all glyphs). "include"
+                 and "exclude" are mutually exclusive. -->
+            <key>include</key>
+            <array>
+                <string>a</string>
+                <string>b</string>
+            </array>
+        </dict>
+    </array>
+
+Or in code:
+
+.. code:: python
+
+    from defcon import Font
+    from ufo2ft import compileOTF
+
+    ufo = Font("MyFont-Regular.ufo")
+    ufo.lib["com.github.googlei18n.ufo2ft.filters"] = [
+        {"name": "propagateAnchors", "pre": True, "include": ["a", "b"]}
+    ]
+    otf = compileOTF(ufo)
+    otf.save("MyFont-Regular.otf")
+
+Using code allows you to define an inclusion function (not available for exclusion), like so:
+
+.. code:: python
+
+    from defcon import Font
+    from ufo2ft import compileOTF
+
+    def my_filter_function(glyph):
+        if glyph.unicode:
+            return 0x7F < glyph.unicode < 0xFF
+        return False
+
+    ufo = Font("MyFont-Regular.ufo")
+    ufo.lib["com.github.googlei18n.ufo2ft.filters"] = [
+        {"name": "propagateAnchors", "pre": True, "include": my_filter_function}
+    ]
+    otf = compileOTF(ufo)
+    otf.save("MyFont-Regular.otf")
+
+``cubicToQuadratic``
+^^^^^^^^^^^^^^^^^^^^
+
+What it does...
+
+Example...
+
+When to use...
+
+When not to use...
+
+``decomposeComponents``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+What it does...
+
+Example...
+
+When to use...
+
+When not to use...
+
+``flattenComponents``
+^^^^^^^^^^^^^^^^^^^^^
+
+What it does...
+
+Example...
+
+When to use...
+
+When not to use...
+
+``propagateAnchors``
+^^^^^^^^^^^^^^^^^^^^
+
+What it does...
+
+Example...
+
+When to use...
+
+When not to use...
+
+``removeOverlaps``
+^^^^^^^^^^^^^^^^^^
+
+What it does...
+
+Example...
+
+When to use...
+
+When not to use...
+
+``transformations``
+^^^^^^^^^^^^^^^^^^^
+
+What it does...
+
+Example...
+
+When to use...
+
+When not to use...
 
 Naming Data
-~~~~~~~~~~~
+-----------
 
 As with any OpenType compiler, you have to set the font naming data to a
 particular standard for your naming to be set correctly. In ufo2fdk, you
@@ -83,7 +222,7 @@ be honored.
 
 
 Feature generation
-~~~~~~~~~~~~~~~~~~
+------------------
 
 If your font's features do not contain kerning/mark/mkmk features,
 ufo2ft will create them based on your font's kerning/anchor data.
@@ -97,7 +236,7 @@ For example, a GPOS table in this format would be stored within the UFO at
 
 
 Fallbacks
-~~~~~~~~~
+---------
 
 Most of the fallbacks have static values. To see what is set for these,
 look at ``fontInfoData.py`` in the source code.
@@ -106,7 +245,7 @@ In some cases, the fallback values are dynamically generated from other
 data in the info object. These are handled internally with functions.
 
 Merging TTX
-~~~~~~~~~~~
+-----------
 
 If the UFO data directory has a ``com.github.fonttools.ttx`` folder with TTX
 files ending with ``.ttx``, these will be merged in the generated font.
