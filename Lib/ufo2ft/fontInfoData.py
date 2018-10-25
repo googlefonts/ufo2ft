@@ -24,7 +24,7 @@ import os
 from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr
 from fontTools.misc.fixedTools import otRound
 from fontTools.misc.textTools import binary2num
-import ufoLib
+from fontTools import ufoLib
 
 logger = logging.getLogger(__name__)
 
