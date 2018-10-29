@@ -117,6 +117,18 @@ class IntegrationTest(object):
         expectTTX(ttfs[0], "TestFont.ttx")
         expectTTX(ttfs[1], "TestFont.ttx")
 
+    def test_optimizeCFF_none(self, testufo):
+        otf = compileOTF(testufo, optimizeCFF=0)
+        expectTTX(otf, "TestFont-NoOptimize-CFF.ttx")
+
+    def test_optimizeCFF_specialize(self, testufo):
+        otf = compileOTF(testufo, optimizeCFF=1)
+        expectTTX(otf, "TestFont-Specialized-CFF.ttx")
+
+    def test_optimizeCFF_subroutinize(self, testufo):
+        otf = compileOTF(testufo, optimizeCFF=2)
+        expectTTX(otf, "TestFont-CFF.ttx")
+
 
 if __name__ == "__main__":
     sys.exit(pytest.main(sys.argv))
