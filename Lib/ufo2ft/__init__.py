@@ -1,6 +1,7 @@
 from __future__ import print_function, division, absolute_import
 
 import os
+from enum import IntEnum
 
 from fontTools.misc.py23 import *
 
@@ -27,6 +28,12 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+class CFFOptimization(IntEnum):
+    NONE = 0
+    SPECIALIZE = 1
+    SUBROUTINIZE = 2
+
+
 def compileOTF(
     ufo,
     preProcessorClass=OTFPreProcessor,
@@ -35,7 +42,7 @@ def compileOTF(
     featureWriters=None,
     glyphOrder=None,
     useProductionNames=None,
-    optimizeCFF=True,
+    optimizeCFF=CFFOptimization.SUBROUTINIZE,
     roundTolerance=None,
     removeOverlaps=False,
     overlapsBackend=None,
@@ -45,8 +52,10 @@ def compileOTF(
 
     *removeOverlaps* performs a union operation on all the glyphs' contours.
 
-    *optimizeCFF* sets whether the CFF charstrings should be specialized
-      and subroutinized.
+    *optimizeCFF* (int) defines whether the CFF charstrings should be
+      specialized and subroutinized. By default both optimization are enabled.
+      A value of 0 disables both; 1 only enables the specialization; 2 (default)
+      does both specialization and subroutinization.
 
     *roundTolerance* (float) controls the rounding of point coordinates.
       It is defined as the maximum absolute difference between the original
@@ -81,12 +90,13 @@ def compileOTF(
     glyphSet = preProcessor.process()
 
     logger.info("Building OpenType tables")
+    optimizeCFF = CFFOptimization(optimizeCFF)
     outlineCompiler = outlineCompilerClass(
         ufo,
         glyphSet=glyphSet,
         glyphOrder=glyphOrder,
         roundTolerance=roundTolerance,
-        optimizeCFF=optimizeCFF,
+        optimizeCFF=optimizeCFF >= CFFOptimization.SPECIALIZE,
     )
     otf = outlineCompiler.compile()
 
@@ -99,7 +109,10 @@ def compileOTF(
     )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
-    otf = postProcessor.process(useProductionNames, optimizeCFF)
+    otf = postProcessor.process(
+        useProductionNames,
+        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+    )
 
     return otf
 
