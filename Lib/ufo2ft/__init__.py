@@ -45,7 +45,8 @@ def compileOTF(
 
     *removeOverlaps* performs a union operation on all the glyphs' contours.
 
-    *optimizeCFF* sets whether the CFF table should be subroutinized.
+    *optimizeCFF* sets whether the CFF charstrings should be specialized
+      and subroutinized.
 
     *roundTolerance* (float) controls the rounding of point coordinates.
       It is defined as the maximum absolute difference between the original
