@@ -85,6 +85,7 @@ def compileOTF(
         glyphSet=glyphSet,
         glyphOrder=glyphOrder,
         roundTolerance=roundTolerance,
+        optimizeCFF=optimizeCFF,
     )
     otf = outlineCompiler.compile()
 
