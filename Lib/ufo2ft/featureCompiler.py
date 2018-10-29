@@ -278,7 +278,10 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
         # defcon (as of 0.5.3) lists UFO data filenames using platform-specific
         # path separators, whereas the new fontTools.ufoLib uses `fs` module
         # internally which always requires UNIX forward slashes on all platforms
-        sep = "/" if hasattr(ufo, "fs") else os.path.sep
+        if hasattr(ufo, "reader") and hasattr(ufo.reader, "fs"):
+            sep = "/"
+        else:
+            sep = os.path.sep
         self._mti_features_prefix = MTI_FEATURES_PREFIX + sep
 
     def setupFeatures(self):
