@@ -263,9 +263,7 @@ class FeatureCompiler(BaseFeatureCompiler):
             raise
 
 
-# defcon lists UFO data filenames using platform-specific path separators.
-# TODO change it to always return UNIX forward slashes
-MTI_FEATURES_PREFIX = "com.github.googlei18n.ufo2ft.mtiFeatures" + os.path.sep
+MTI_FEATURES_PREFIX = "com.github.googlei18n.ufo2ft.mtiFeatures"
 
 
 class MtiFeatureCompiler(BaseFeatureCompiler):
@@ -273,12 +271,22 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
     fontTools.mtiLib.
     """
 
+    def __init__(self, ufo, ttFont=None, glyphSet=None, **kwargs):
+        super(MtiFeatureCompiler, self).__init__(
+            ufo, ttFont=ttFont, glyphSet=glyphSet, **kwargs
+        )
+        # defcon (as of 0.5.3) lists UFO data filenames using platform-specific
+        # path separators, whereas the new fontTools.ufoLib uses `fs` module
+        # internally which always requires UNIX forward slashes on all platforms
+        sep = "/" if hasattr(ufo, "fs") else os.path.sep
+        self._mti_features_prefix = MTI_FEATURES_PREFIX + sep
+
     def setupFeatures(self):
         ufo = self.ufo
         features = {}
-        prefixLength = len(MTI_FEATURES_PREFIX)
+        prefixLength = len(self._mti_features_prefix)
         for fn in ufo.data.fileNames:
-            if fn.startswith(MTI_FEATURES_PREFIX) and fn.endswith(".mti"):
+            if fn.startswith(self._mti_features_prefix) and fn.endswith(".mti"):
                 content = tounicode(ufo.data[fn], encoding="utf-8")
                 features[fn[prefixLength:-4]] = content
         self.mtiFeatures = features
