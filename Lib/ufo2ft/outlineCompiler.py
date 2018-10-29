@@ -821,8 +821,14 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
     sfntVersion = "OTTO"
 
-    def __init__(self, font, glyphSet=None, glyphOrder=None,
-                 roundTolerance=None):
+    def __init__(
+        self,
+        font,
+        glyphSet=None,
+        glyphOrder=None,
+        roundTolerance=None,
+        optimizeCFF=True,
+    ):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
         else:
@@ -830,6 +836,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             self.roundTolerance = 0.5
         super(OutlineOTFCompiler, self).__init__(
             font, glyphSet=glyphSet, glyphOrder=glyphOrder)
+        self.optimizeCFF = optimizeCFF
 
     def makeGlyphsBoundingBoxes(self):
         """
@@ -895,7 +902,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         pen = T2CharStringPen(width, self.allGlyphs,
                               roundTolerance=self.roundTolerance)
         glyph.draw(pen)
-        charString = pen.getCharString(private, globalSubrs)
+        charString = pen.getCharString(
+            private, globalSubrs, optimize=self.optimizeCFF
+        )
         return charString
 
     def setupTable_maxp(self):

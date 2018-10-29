@@ -377,6 +377,52 @@ class OutlineOTFCompilerTest(object):
             ],
         )
 
+    def test_setupTable_CFF_optimize(self, testufo):
+        compiler = OutlineOTFCompiler(testufo, optimizeCFF=True)
+        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_CFF()
+        program = self.get_charstring_program(otf, "a")
+
+        self.assertProgramEqual(
+            program,
+            [
+                -12,
+                66,
+                'hmoveto',
+                256,
+                'hlineto',
+                -128,
+                510,
+                'rlineto',
+                'endchar'
+            ]
+        )
+
+    def test_setupTable_CFF_no_optimize(self, testufo):
+        compiler = OutlineOTFCompiler(testufo, optimizeCFF=False)
+        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_CFF()
+        program = self.get_charstring_program(otf, "a")
+
+        self.assertProgramEqual(
+            program,
+            [
+                -12,
+                66,
+                0,
+                'rmoveto',
+                256,
+                0,
+                'rlineto',
+                -128,
+                510,
+                'rlineto',
+                'endchar'
+            ],
+        )
+
     def test_makeGlyphsBoundingBoxes(self, testufo):
         # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
         compiler = OutlineOTFCompiler(testufo)
