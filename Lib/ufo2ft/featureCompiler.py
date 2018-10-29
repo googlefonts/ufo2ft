@@ -265,7 +265,7 @@ class FeatureCompiler(BaseFeatureCompiler):
 
 # defcon lists UFO data filenames using platform-specific path separators.
 # TODO change it to always return UNIX forward slashes
-MTI_FEATURES_PREFIX = "com.github.googlei18n.ufo2ft.mtiFeatures" + os.path.sep
+MTI_FEATURES_PREFIX = "com.github.googlei18n.ufo2ft.mtiFeatures/"
 
 
 class MtiFeatureCompiler(BaseFeatureCompiler):
