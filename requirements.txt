@@ -1,8 +1,8 @@
-fonttools[ufo]==3.31.0
-defcon==0.5.3
-cu2qu==1.5.0
+fonttools[ufo,lxml]==3.32.0
+defcon==0.6.0
+cu2qu==1.6.4
 compreffor==0.4.6.post1
 booleanOperations==0.8.0
 
 # alternative UFO implementation (still experimental)
-ufoLib2==0.2.0
+ufoLib2==0.2.1
