@@ -84,8 +84,9 @@ Using code allows you to define an inclusion function (not available for exclusi
     from ufo2ft import compileOTF
 
     def my_filter_function(glyph):
+        """Include all glyphs with a Unicode value between U+007F and U+00FF."""
         if glyph.unicode:
-            return 0x7F < glyph.unicode < 0xFF
+            return 0x007F < glyph.unicode < 0x00FF
         return False
 
     ufo = Font("MyFont-Regular.ufo")
