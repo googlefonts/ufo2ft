@@ -99,13 +99,34 @@ Using code allows you to define an inclusion function (not available for exclusi
 ``cubicToQuadratic``
 ^^^^^^^^^^^^^^^^^^^^
 
-What it does...
+Converts outlines from cubic (PostScript flavor) to quadratic (TrueType flavor).
+It is run by default when producing TrueType-flavored OpenType fonts. Honors the
+UFO's ``com.github.googlei18n.cu2qu.curve_type`` lib key.
 
-Example...
+.. code:: xml
 
-When to use...
+    <key>com.github.googlei18n.ufo2ft.filters</key>
+    <array>
+        <dict>
+            <key>name</key>
+            <string>cubicToQuadratic</key>
+            <!-- Optionally, the filter can save the result of the conversion
+                 to the UFO's lib key "com.github.googlei18n.cu2qu.curve_type",
+                 which can be either "cubic" or "quadratic". This avoids
+                 running the filter on it again. You can also manually set the
+                 lib key to "quadratic" if your font is made using quadratic
+                 curves, which saves you explicit configuration here or with
+                 fontmake. -->
+            <key>rememberCurveType</key>
+            <true /> <!-- The default. -->
+        </dict>
+    </array>
 
-When not to use...
+When to use: Your font is drawn using cubic curves and you want to produce a
+TrueType-flavored OpenType font.
+
+When not to use: Your font is drawn using quadratic curves and you want to
+produce a TrueType-flavored OpenType font.
 
 ``decomposeComponents``
 ^^^^^^^^^^^^^^^^^^^^^^^
