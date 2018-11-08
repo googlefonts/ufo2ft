@@ -112,21 +112,33 @@ UFO's ``com.github.googlei18n.cu2qu.curve_type`` lib key.
             <string>cubicToQuadratic</key>
             <!-- Optionally, the filter can save the result of the conversion
                  to the UFO's lib key "com.github.googlei18n.cu2qu.curve_type",
-                 which can be either "cubic" or "quadratic". This avoids
-                 running the filter on it again. You can also manually set the
-                 lib key to "quadratic" if your font is made using quadratic
-                 curves, which saves you explicit configuration here or with
-                 fontmake. -->
+                 which can be either "cubic" or "quadratic". Turn this off if
+                 you want to run the filter multiple times. You can also
+                 manually set the lib key to "quadratic" if your font is made
+                 using quadratic curves, which saves you further explicit
+                 configuration. -->
             <key>rememberCurveType</key>
+            <true /> <!-- The default. -->
+            <!-- The conversion process is necessarily an approximation. Set
+                 the acceptable error here, expressed in the maximum distance
+                 between the original and converted curve, and it's relative
+                 to the UPM of the font (default: 1/1000 or 0.001) -->
+            <key>conversionError</key>
+            <real>0.001</real> <!-- The default. -->
+            <!-- Cubic (PostScript flavored) curves are typically oriented
+                 counter-clockwise, quadratic (TrueType flavored) curves are
+                 typically oriented clockwise. Reversing the direction is
+                 recommended. -->
+            <key>reverseDirection</key>
             <true /> <!-- The default. -->
         </dict>
     </array>
 
-When to use: Your font is drawn using cubic curves and you want to produce a
-TrueType-flavored OpenType font.
+When to modify the filter settings: 
 
-When not to use: Your font is drawn using quadratic curves and you want to
-produce a TrueType-flavored OpenType font.
+* You want fine-grained control over the conversion error.
+* Your font is or some glyphs are drawn using quadratic curves and you want to
+  prevent contour direction reversal.
 
 ``decomposeComponents``
 ^^^^^^^^^^^^^^^^^^^^^^^
