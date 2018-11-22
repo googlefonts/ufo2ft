@@ -6,7 +6,7 @@ from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
 from ufo2ft.fontInfoData import intListToNum
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 from ufo2ft.constants import USE_PRODUCTION_NAMES, GLYPHS_DONT_USE_PRODUCTION_NAMES
-from ufo2ft import compileTTF
+from ufo2ft import compileTTF, compileOTF, compileInterpolatableTTFs
 import os
 import logging
 import pytest
@@ -21,6 +21,18 @@ def getpath(filename):
 def testufo(FontClass):
     font = FontClass(getpath("TestFont.ufo"))
     del font.lib["public.postscriptNames"]
+    return font
+
+
+@pytest.fixture
+def layertestrgufo(FontClass):
+    font = FontClass(getpath("LayerFont-Regular.ufo"))
+    return font
+
+
+@pytest.fixture
+def layertestbdufo(FontClass):
+    font = FontClass(getpath("LayerFont-Bold.ufo"))
     return font
 
 
@@ -804,6 +816,44 @@ def test_calcCodePageRanges(emptyufo, unicodes, expected):
     assert compiler.otf["OS/2"].ulCodePageRange2 == intListToNum(
         expected, start=32, length=32
     )
+
+
+def test_custom_layer_compilation(layertestrgufo):
+    ufo = layertestrgufo
+
+    font_otf = compileOTF(ufo, layerName="Medium")
+    assert font_otf.getGlyphOrder() == [".notdef", "e"]
+    font_ttf = compileTTF(ufo, layerName="Medium")
+    assert font_ttf.getGlyphOrder() == [".notdef", "e"]
+
+
+def test_custom_layer_compilation_interpolatable(layertestrgufo, layertestbdufo):
+    ufo1 = layertestrgufo
+    ufo2 = layertestbdufo
+
+    master_ttfs = list(
+        compileInterpolatableTTFs(
+            [ufo1, ufo1, ufo2],
+            layerNames=["public.default", "Medium", "public.default"],
+        )
+    )
+    assert master_ttfs[0].getGlyphOrder() == [
+        ".notdef",
+        "a",
+        "e",
+        "s",
+        "dotabovecomb",
+        "edotabove",
+    ]
+    assert master_ttfs[1].getGlyphOrder() == [".notdef", "e"]
+    assert master_ttfs[2].getGlyphOrder() == [
+        ".notdef",
+        "a",
+        "e",
+        "s",
+        "dotabovecomb",
+        "edotabove",
+    ]
 
 
 if __name__ == "__main__":

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="edotabove" format="2">
+  <advance width="600"/>
+  <unicode hex="0117"/>
+  <outline>
+    <component base="e"/>
+    <component base="dotabovecomb" xOffset="307.4387811634349" yOffset="187.1620498614958"/>
+  </outline>
+</glyph>
