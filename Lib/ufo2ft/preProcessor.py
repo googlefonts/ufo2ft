@@ -28,13 +28,13 @@ class BasePreProcessor(object):
     "com.github.googlei18n.ufo2ft.filters".
     """
 
-    def __init__(self, ufo, inplace=False, **kwargs):
+    def __init__(self, ufo, inplace=False, layerName="public.default", **kwargs):
         self.ufo = ufo
         self.inplace = inplace
         if inplace:
-            self.glyphSet = {g.name: g for g in ufo}
+            self.glyphSet = {g.name: g for g in ufo.layers[layerName]}
         else:
-            self.glyphSet = copyGlyphSet(ufo)
+            self.glyphSet = copyGlyphSet(ufo, layerName=layerName)
         self.defaultFilters = self.initDefaultFilters(**kwargs)
         self.preFilters, self.postFilters = loadFilters(ufo)
 
@@ -165,15 +165,26 @@ class TTFInterpolatablePreProcessor(object):
     """
 
     def __init__(self, ufos, inplace=False, conversionError=None,
-                 reverseDirection=True, rememberCurveType=True):
+                 reverseDirection=True, rememberCurveType=True,
+                 layerNames=None):
         from cu2qu.ufo import DEFAULT_MAX_ERR
+
+        if layerNames is None:
+            layerNames = ["public.default"] * len(ufos)
+        assert len(ufos) == len(layerNames)
 
         self.ufos = ufos
         self.inplace = inplace
         if inplace:
-            self.glyphSets = [{g.name: g for g in ufo} for ufo in ufos]
+            self.glyphSets = [
+                {g.name: g for g in ufo.layers[layerName]}
+                for ufo, layerName in zip(ufos, layerNames)
+            ]
         else:
-            self.glyphSets = [copyGlyphSet(ufo) for ufo in ufos]
+            self.glyphSets = [
+                copyGlyphSet(ufo, layerName=layerName)
+                for ufo, layerName in zip(ufos, layerNames)
+            ]
         self._conversionErrors = [
             (conversionError or DEFAULT_MAX_ERR) * ufo.info.unitsPerEm
             for ufo in ufos]

@@ -47,6 +47,7 @@ def compileOTF(
     removeOverlaps=False,
     overlapsBackend=None,
     inplace=False,
+    layerName="public.default",
 ):
     """Create FontTools CFF font from a UFO.
 
@@ -79,6 +80,10 @@ def compileOTF(
 
     **inplace** (bool) specifies whether the filters should modify the input
       UFO's glyphs, a copy should be made first.
+    
+    *layerName* specifies which layer should be compiled. Useful for generating
+      sparse masters. When compiling something other than the default layer,
+      feature compilation is skipped.
     """
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
@@ -86,6 +91,7 @@ def compileOTF(
         inplace=inplace,
         removeOverlaps=removeOverlaps,
         overlapsBackend=overlapsBackend,
+        layerName=layerName,
     )
     glyphSet = preProcessor.process()
 
@@ -100,13 +106,15 @@ def compileOTF(
     )
     otf = outlineCompiler.compile()
 
-    compileFeatures(
-        ufo,
-        otf,
-        glyphSet=glyphSet,
-        featureWriters=featureWriters,
-        featureCompilerClass=featureCompilerClass,
-    )
+    # Only the default layer is likely to have all glyphs used in feature code.
+    if layerName == "public.default":
+        compileFeatures(
+            ufo,
+            otf,
+            glyphSet=glyphSet,
+            featureWriters=featureWriters,
+            featureCompilerClass=featureCompilerClass,
+        )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
     otf = postProcessor.process(
@@ -132,6 +140,7 @@ def compileTTF(
     removeOverlaps=False,
     overlapsBackend=None,
     inplace=False,
+    layerName="public.default",
 ):
     """Create FontTools TrueType font from a UFO.
 
@@ -139,6 +148,10 @@ def compileTTF(
 
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
     to quadratic curves should be handled.
+
+    *layerName* specifies which layer should be compiled. Useful for generating
+    sparse masters. When compiling something other than the default layer,
+    feature compilation is skipped.
     """
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
@@ -150,6 +163,7 @@ def compileTTF(
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection,
         rememberCurveType=rememberCurveType,
+        layerName=layerName,
     )
     glyphSet = preProcessor.process()
 
@@ -159,13 +173,15 @@ def compileTTF(
     )
     otf = outlineCompiler.compile()
 
-    compileFeatures(
-        ufo,
-        otf,
-        glyphSet=glyphSet,
-        featureWriters=featureWriters,
-        featureCompilerClass=featureCompilerClass,
-    )
+    # Only the default layer is likely to have all glyphs used in feature code.
+    if layerName == "public.default":
+        compileFeatures(
+            ufo,
+            otf,
+            glyphSet=glyphSet,
+            featureWriters=featureWriters,
+            featureCompilerClass=featureCompilerClass,
+        )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
     otf = postProcessor.process(useProductionNames)
@@ -184,14 +200,23 @@ def compileInterpolatableTTFs(
     cubicConversionError=None,
     reverseDirection=True,
     inplace=False,
+    layerNames=None,
 ):
     """Create FontTools TrueType fonts from a list of UFOs with interpolatable
     outlines. Cubic curves are converted compatibly to quadratic curves using
     the Cu2Qu conversion algorithm.
 
     Return an iterator object that yields a TTFont instance for each UFO.
+
+    *layerNames* refers to the layer names to use glyphs from in the order of
+    the UFOs in *ufos*. By default, this is a list of "public.default" times the
+    number of UFOs.
     """
     from ufo2ft.util import _LazyFontName
+
+    if layerNames is None:
+        layerNames = ["public.default"] * len(ufos)
+    assert len(ufos) == len(layerNames)
 
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
@@ -199,10 +224,11 @@ def compileInterpolatableTTFs(
         inplace=inplace,
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection,
+        layerNames=layerNames
     )
     glyphSets = preProcessor.process()
 
-    for ufo, glyphSet in zip(ufos, glyphSets):
+    for ufo, glyphSet, layerName in zip(ufos, glyphSets, layerNames):
         logger.info("Building OpenType tables for %s", _LazyFontName(ufo))
 
         outlineCompiler = outlineCompilerClass(
@@ -210,13 +236,16 @@ def compileInterpolatableTTFs(
         )
         ttf = outlineCompiler.compile()
 
-        compileFeatures(
-            ufo,
-            ttf,
-            glyphSet=glyphSet,
-            featureWriters=featureWriters,
-            featureCompilerClass=featureCompilerClass,
-        )
+        # Only the default layer is likely to have all glyphs used in feature
+        # code.
+        if layerName == "public.default":
+            compileFeatures(
+                ufo,
+                ttf,
+                glyphSet=glyphSet,
+                featureWriters=featureWriters,
+                featureCompilerClass=featureCompilerClass,
+            )
 
         postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
         ttf = postProcessor.process(useProductionNames)
