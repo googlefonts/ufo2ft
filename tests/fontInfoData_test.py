@@ -27,23 +27,85 @@ def info(InfoClass):
 
 class GetAttrWithFallbackTest(object):
 
-    def test_family_and_style_names(self, info):
-        assert getAttrWithFallback(info, "familyName") == "Family Name"
-        assert getAttrWithFallback(info, "styleName") == "Style Name"
-
-        assert (getAttrWithFallback(info, "styleMapFamilyName")
-                == "Family Name Style Name")
-
-        info.styleMapFamilyName = "Style Map Family Name"
-        assert (getAttrWithFallback(info, "styleMapFamilyName")
-                == "Style Map Family Name")
-
-        assert (getAttrWithFallback(info, "openTypeNamePreferredFamilyName")
-                == "Family Name")
-        assert (getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName")
-                == "Style Name")
-        assert (getAttrWithFallback(info, "openTypeNameCompatibleFullName")
-                == "Style Map Family Name")
+    @pytest.mark.parametrize("infoDict,expected", [
+        # no styleMapFamilyName, no styleMapStyleName
+        ({},
+         {
+             "familyName": "Family Name",
+             "styleName": "Style Name",
+             "styleMapFamilyName": "Family Name Style Name",
+             "styleMapStyleName": "regular",
+             "openTypeNamePreferredFamilyName": "Family Name",
+             "openTypeNamePreferredSubfamilyName": "Style Name",
+             "openTypeNameCompatibleFullName": "Family Name Style Name",
+         }),
+        # no styleMapStyleName
+        ({
+             "styleMapFamilyName": "Style Map Family Name",
+         },
+         {
+             "styleMapFamilyName": "Style Map Family Name",
+             "styleMapStyleName": "regular",
+             "openTypeNamePreferredFamilyName": "Family Name",
+             "openTypeNamePreferredSubfamilyName": "Style Name",
+             "openTypeNameCompatibleFullName": "Style Map Family Name",
+         }),
+        # no styleMapFamilyName, no styleMapStyleName but styleName="Regular"
+        ({
+             "styleName": "Regular",
+         },
+         {
+             "familyName": "Family Name",
+             "styleName": "Regular",
+             "styleMapFamilyName": "Family Name",
+             "styleMapStyleName": "regular",
+             "openTypeNamePreferredFamilyName": "Family Name",
+             "openTypeNamePreferredSubfamilyName": "Regular",
+             "openTypeNameCompatibleFullName": "Family Name",
+         }),
+        # no styleMapFamilyName but styleName="Regular"
+        ({
+             "styleName": "Regular",
+             "styleMapStyleName": "regular",
+         },
+         {
+             "styleMapFamilyName": "Family Name",
+             "styleMapStyleName": "regular",
+             "openTypeNamePreferredFamilyName": "Family Name",
+             "openTypeNamePreferredSubfamilyName": "Regular",
+             "openTypeNameCompatibleFullName": "Family Name",
+         }),
+        # no styleMapStyleName but styleName="Regular"
+        ({
+             "styleName": "Regular",
+             "styleMapFamilyName": "Style Map Family Name",
+         },
+         {
+             "styleMapFamilyName": "Style Map Family Name",
+             "styleMapStyleName": "regular",
+             "openTypeNamePreferredFamilyName": "Family Name",
+             "openTypeNamePreferredSubfamilyName": "Regular",
+             "openTypeNameCompatibleFullName": "Style Map Family Name",
+         }),
+        # no styleMapFamilyName, no styleMapStyleName but styleName="Bold"
+        ({
+             "styleName": "Bold",
+         },
+         {
+             "familyName": "Family Name",
+             "styleName": "Bold",
+             "styleMapFamilyName": "Family Name",
+             "styleMapStyleName": "bold",
+             "openTypeNamePreferredFamilyName": "Family Name",
+             "openTypeNamePreferredSubfamilyName": "Bold",
+             "openTypeNameCompatibleFullName": "Family Name Bold",
+         }),
+    ])
+    def test_family_and_style_names(self, info, infoDict, expected):
+        for key, value in infoDict.items():
+            setattr(info, key, value)
+        for key, value in expected.items():
+            assert getAttrWithFallback(info, key) == value
 
     def test_redundant_metadata(self, info):
         assert (getAttrWithFallback(info, "openTypeNameVersion")
