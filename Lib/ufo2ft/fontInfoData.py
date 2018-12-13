@@ -34,16 +34,40 @@ logger = logging.getLogger(__name__)
 # -----------------
 
 # generic
+_styleMapStyleNames = ["regular", "bold", "italic", "bold italic"]
 
 def styleMapFamilyNameFallback(info):
     """
-    Fallback to *openTypeNamePreferredFamilyName openTypeNamePreferredSubfamilyName*.
+    Fallback to *openTypeNamePreferredFamilyName* if
+    *styleMapStyleName* or, if *styleMapStyleName* isn’t defined,
+    *openTypeNamePreferredSubfamilyName* is
+    *regular*, *bold*, *italic* or *bold italic*, otherwise
+    fallback to *openTypeNamePreferredFamilyName openTypeNamePreferredFamilyName*.
     """
     familyName = getAttrWithFallback(info, "openTypeNamePreferredFamilyName")
-    styleName = getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName")
+    styleName = info.styleMapStyleName
+    if not styleName:
+        styleName = getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName")
     if styleName is None:
         styleName = ""
+    elif styleName.lower() in _styleMapStyleNames:
+        styleName = ""
     return (familyName + " " + styleName).strip()
+
+def styleMapStyleNameFallback(info):
+    """
+    Fallback to *openTypeNamePreferredSubfamilyName* if
+    it is one of *regular*, *bold*, *italic*, *bold italic*, otherwise
+    fallback to *regular*.
+    """
+    styleName = getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName")
+    if styleName is None:
+        styleName = "regular"
+    elif styleName.strip().lower() not in _styleMapStyleNames:
+        styleName = "regular"
+    else:
+        styleName = styleName.strip().lower()
+    return styleName
 
 # head
 
@@ -273,7 +297,6 @@ def postscriptBlueScaleFallback(info):
 # --------------
 
 staticFallbackData = dict(
-    styleMapStyleName="regular",
     versionMajor=0,
     versionMinor=0,
     copyright=None,
@@ -359,6 +382,7 @@ staticFallbackData = dict(
 
 specialFallbacks = dict(
     styleMapFamilyName=styleMapFamilyNameFallback,
+    styleMapStyleName=styleMapStyleNameFallback,
     openTypeHeadCreated=openTypeHeadCreatedFallback,
     openTypeHheaAscender=openTypeHheaAscenderFallback,
     openTypeHheaDescender=openTypeHheaDescenderFallback,
