@@ -5,6 +5,7 @@ from enum import IntEnum
 
 from fontTools.misc.py23 import *
 
+from ufo2ft.constants import DEFAULT_LAYER_NAME
 from ufo2ft.preProcessor import (
     OTFPreProcessor,
     TTFPreProcessor,
@@ -47,7 +48,7 @@ def compileOTF(
     removeOverlaps=False,
     overlapsBackend=None,
     inplace=False,
-    layerName="public.default",
+    layerName=DEFAULT_LAYER_NAME,
 ):
     """Create FontTools CFF font from a UFO.
 
@@ -80,7 +81,7 @@ def compileOTF(
 
     **inplace** (bool) specifies whether the filters should modify the input
       UFO's glyphs, a copy should be made first.
-    
+
     *layerName* specifies which layer should be compiled. Useful for generating
       sparse masters. When compiling something other than the default layer,
       feature compilation is skipped.
@@ -107,7 +108,7 @@ def compileOTF(
     otf = outlineCompiler.compile()
 
     # Only the default layer is likely to have all glyphs used in feature code.
-    if layerName == "public.default":
+    if layerName == DEFAULT_LAYER_NAME:
         compileFeatures(
             ufo,
             otf,
@@ -140,7 +141,7 @@ def compileTTF(
     removeOverlaps=False,
     overlapsBackend=None,
     inplace=False,
-    layerName="public.default",
+    layerName=DEFAULT_LAYER_NAME,
 ):
     """Create FontTools TrueType font from a UFO.
 
@@ -174,7 +175,7 @@ def compileTTF(
     otf = outlineCompiler.compile()
 
     # Only the default layer is likely to have all glyphs used in feature code.
-    if layerName == "public.default":
+    if layerName == DEFAULT_LAYER_NAME:
         compileFeatures(
             ufo,
             otf,
@@ -215,7 +216,7 @@ def compileInterpolatableTTFs(
     from ufo2ft.util import _LazyFontName
 
     if layerNames is None:
-        layerNames = ["public.default"] * len(ufos)
+        layerNames = [DEFAULT_LAYER_NAME] * len(ufos)
     assert len(ufos) == len(layerNames)
 
     logger.info("Pre-processing glyphs")
@@ -238,7 +239,7 @@ def compileInterpolatableTTFs(
 
         # Only the default layer is likely to have all glyphs used in feature
         # code.
-        if layerName == "public.default":
+        if layerName == DEFAULT_LAYER_NAME:
             compileFeatures(
                 ufo,
                 ttf,
