@@ -5,6 +5,7 @@ import importlib
 import logging
 from fontTools.misc.py23 import SimpleNamespace
 from fontTools.misc.loggingTools import Timer
+from ufo2ft.constants import DEFAULT_LAYER_NAME
 from ufo2ft.util import _LazyFontName
 
 
@@ -179,7 +180,7 @@ class BaseFilter(object):
     def name(self):
         return self.__class__.__name__
 
-    def __call__(self, font, glyphSet=None):
+    def __call__(self, font, glyphSet=None, layerName=DEFAULT_LAYER_NAME):
         """ Run this filter on all the included glyphs.
         Return the set of glyph names that were modified, if any.
 
@@ -187,11 +188,14 @@ class BaseFilter(object):
         the glyphs contained therein (which may be copies).
         Otherwise, run the filter in-place on the font's default
         glyph set.
+
+        `layerName` is the name of the layer whose glyphs are being
+        filtered (default: "public.default").
         """
         logger.info("Running %s on %s", self.name, _LazyFontName(font))
 
         if glyphSet is None:
-            glyphSet = font
+            glyphSet = font.layers[layerName]
 
         context = self.set_context(font, glyphSet)
 
