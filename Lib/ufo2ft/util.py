@@ -15,6 +15,7 @@ from fontTools import ttLib
 from fontTools import subset
 from fontTools import unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
+from ufo2ft.constants import DEFAULT_LAYER_NAME
 import logging
 
 
@@ -46,17 +47,27 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
     return order
 
 
-def copyGlyphSet(font, layerName=None):
-    if layerName is not None:
+class _GlyphSet(dict):
+
+    @classmethod
+    def from_layer(cls, font, layerName=DEFAULT_LAYER_NAME, copy=False):
         layer = font.layers[layerName]
-    else:
-        layer = font.layers.defaultLayer
+        if copy:
+            self = _copyLayer(layer, obj_type=cls)
+            self.lib = deepcopy(layer.lib)
+        else:
+            self = cls((g.name, g) for g in layer)
+            self.lib = layer.lib
+        return self
 
-    if not len(layer):
-        return {}
 
+def _copyLayer(layer, obj_type=dict):
     # defcon.Glyph doesn't take a name argument, ufoLib2 requires one...
-    g = next(iter(layer))
+    try:
+        g = next(iter(layer))
+    except StopIteration:  # layer is empty
+        return obj_type()
+
     cls = g.__class__
     if "name" in getargspec(cls.__init__).args:
 
@@ -71,7 +82,7 @@ def copyGlyphSet(font, layerName=None):
             return g
 
     # copy everything except unused attributes: 'guidelines', 'note', 'image'
-    glyphSet = {}
+    glyphSet = obj_type()
     for glyph in layer:
         copy = newGlyph(glyph.name)
         copy.width = glyph.width
