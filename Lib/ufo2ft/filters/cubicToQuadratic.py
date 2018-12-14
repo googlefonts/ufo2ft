@@ -1,6 +1,7 @@
 from __future__ import (
     print_function, division, absolute_import, unicode_literals)
 
+from ufo2ft.constants import DEFAULT_LAYER_NAME
 from ufo2ft.filters import BaseFilter
 from cu2qu.ufo import DEFAULT_MAX_ERR, CURVE_TYPE_LIB_KEY
 from cu2qu.pens import Cu2QuPointPen
@@ -29,27 +30,32 @@ class CubicToQuadraticFilter(BaseFilter):
 
         return ctx
 
-    def __call__(self, font, glyphSet=None):
+    def __call__(self, font, glyphSet=None, layerName=DEFAULT_LAYER_NAME):
         if self.options.rememberCurveType:
-            curve_type = font.lib.get(CURVE_TYPE_LIB_KEY, "cubic")
-            if curve_type == "quadratic":
-                logger.info("Curves already converted to quadratic")
-                return set()
-            elif curve_type == "cubic":
-                pass  # keep converting
-            else:
-                raise NotImplementedError(curve_type)
+            # check first in the global font lib, then in layer lib
+            for lib in (font.lib, font.layers[layerName].lib):
+                curve_type = lib.get(CURVE_TYPE_LIB_KEY, "cubic")
+                if curve_type == "quadratic":
+                    logger.info("Curves already converted to quadratic")
+                    return set()
+                elif curve_type == "cubic":
+                    pass  # keep converting
+                else:
+                    raise NotImplementedError(curve_type)
 
-        modified = super(CubicToQuadraticFilter, self).__call__(font, glyphSet)
+        modified = super(CubicToQuadraticFilter, self).__call__(
+            font, glyphSet, layerName
+        )
         if modified:
             stats = self.context.stats
             logger.info('New spline lengths: %s' % (', '.join(
                 '%s: %d' % (l, stats[l]) for l in sorted(stats.keys()))))
 
         if self.options.rememberCurveType:
-            curve_type = font.lib.get(CURVE_TYPE_LIB_KEY, "cubic")
+            # 'lib' here is the layer's lib, as defined in for loop variable
+            curve_type = lib.get(CURVE_TYPE_LIB_KEY, "cubic")
             if curve_type != "quadratic":
-                font.lib[CURVE_TYPE_LIB_KEY] = "quadratic"
+                lib[CURVE_TYPE_LIB_KEY] = "quadratic"
 
         return modified
 
