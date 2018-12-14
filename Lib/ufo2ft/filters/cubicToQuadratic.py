@@ -1,7 +1,6 @@
 from __future__ import (
     print_function, division, absolute_import, unicode_literals)
 
-from ufo2ft.constants import DEFAULT_LAYER_NAME
 from ufo2ft.filters import BaseFilter
 from cu2qu.ufo import DEFAULT_MAX_ERR, CURVE_TYPE_LIB_KEY
 from cu2qu.pens import Cu2QuPointPen
@@ -30,10 +29,10 @@ class CubicToQuadraticFilter(BaseFilter):
 
         return ctx
 
-    def __call__(self, font, glyphSet=None, layerName=DEFAULT_LAYER_NAME):
+    def __call__(self, font, glyphSet=None):
         if self.options.rememberCurveType:
             # check first in the global font lib, then in layer lib
-            for lib in (font.lib, font.layers[layerName].lib):
+            for lib in (font.lib, getattr(glyphSet, "lib", {})):
                 curve_type = lib.get(CURVE_TYPE_LIB_KEY, "cubic")
                 if curve_type == "quadratic":
                     logger.info("Curves already converted to quadratic")
@@ -43,9 +42,7 @@ class CubicToQuadraticFilter(BaseFilter):
                 else:
                     raise NotImplementedError(curve_type)
 
-        modified = super(CubicToQuadraticFilter, self).__call__(
-            font, glyphSet, layerName
-        )
+        modified = super(CubicToQuadraticFilter, self).__call__(font, glyphSet)
         if modified:
             stats = self.context.stats
             logger.info('New spline lengths: %s' % (', '.join(
