@@ -4,7 +4,7 @@ from __future__ import (
 from fontTools.misc.py23 import basestring
 from ufo2ft.filters import loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
-from ufo2ft.util import copyGlyphSet
+from ufo2ft.util import _GlyphSet
 
 
 class BasePreProcessor(object):
@@ -31,10 +31,8 @@ class BasePreProcessor(object):
     def __init__(self, ufo, inplace=False, layerName="public.default", **kwargs):
         self.ufo = ufo
         self.inplace = inplace
-        if inplace:
-            self.glyphSet = {g.name: g for g in ufo.layers[layerName]}
-        else:
-            self.glyphSet = copyGlyphSet(ufo, layerName=layerName)
+        self.layerName = layerName
+        self.glyphSet = _GlyphSet.from_layer(ufo, layerName, copy=not inplace)
         self.defaultFilters = self.initDefaultFilters(**kwargs)
         self.preFilters, self.postFilters = loadFilters(ufo)
 
@@ -44,8 +42,9 @@ class BasePreProcessor(object):
     def process(self):
         ufo = self.ufo
         glyphSet = self.glyphSet
+        layerName = self.layerName
         for func in self.preFilters + self.defaultFilters + self.postFilters:
-            func(ufo, glyphSet)
+            func(ufo, glyphSet, layerName)
         return glyphSet
 
 
@@ -169,22 +168,18 @@ class TTFInterpolatablePreProcessor(object):
                  layerNames=None):
         from cu2qu.ufo import DEFAULT_MAX_ERR
 
+        self.ufos = ufos
+        self.inplace = inplace
+
         if layerNames is None:
             layerNames = ["public.default"] * len(ufos)
         assert len(ufos) == len(layerNames)
+        self.layerNames = layerNames
 
-        self.ufos = ufos
-        self.inplace = inplace
-        if inplace:
-            self.glyphSets = [
-                {g.name: g for g in ufo.layers[layerName]}
-                for ufo, layerName in zip(ufos, layerNames)
-            ]
-        else:
-            self.glyphSets = [
-                copyGlyphSet(ufo, layerName=layerName)
-                for ufo, layerName in zip(ufos, layerNames)
-            ]
+        self.glyphSets = [
+            _GlyphSet.from_layer(ufo, layerName, copy=not inplace)
+            for ufo, layerName in zip(ufos, layerNames)
+        ]
         self._conversionErrors = [
             (conversionError or DEFAULT_MAX_ERR) * ufo.info.unitsPerEm
             for ufo in ufos]
@@ -195,7 +190,7 @@ class TTFInterpolatablePreProcessor(object):
         from cu2qu.ufo import fonts_to_quadratic
 
         fonts_to_quadratic(
-            self.ufos if self.inplace else self.glyphSets,
+            self.glyphSets,
             max_err=self._conversionErrors,
             reverse_direction=self._reverseDirection,
             dump_stats=True,
