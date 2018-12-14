@@ -5,7 +5,6 @@ from enum import IntEnum
 
 from fontTools.misc.py23 import *
 
-from ufo2ft.constants import DEFAULT_LAYER_NAME
 from ufo2ft.preProcessor import (
     OTFPreProcessor,
     TTFPreProcessor,
@@ -48,7 +47,7 @@ def compileOTF(
     removeOverlaps=False,
     overlapsBackend=None,
     inplace=False,
-    layerName=DEFAULT_LAYER_NAME,
+    layerName=None,
 ):
     """Create FontTools CFF font from a UFO.
 
@@ -108,7 +107,7 @@ def compileOTF(
     otf = outlineCompiler.compile()
 
     # Only the default layer is likely to have all glyphs used in feature code.
-    if layerName == DEFAULT_LAYER_NAME:
+    if layerName is None:
         compileFeatures(
             ufo,
             otf,
@@ -141,7 +140,7 @@ def compileTTF(
     removeOverlaps=False,
     overlapsBackend=None,
     inplace=False,
-    layerName=DEFAULT_LAYER_NAME,
+    layerName=None,
 ):
     """Create FontTools TrueType font from a UFO.
 
@@ -175,7 +174,7 @@ def compileTTF(
     otf = outlineCompiler.compile()
 
     # Only the default layer is likely to have all glyphs used in feature code.
-    if layerName == DEFAULT_LAYER_NAME:
+    if layerName is None:
         compileFeatures(
             ufo,
             otf,
@@ -210,13 +209,13 @@ def compileInterpolatableTTFs(
     Return an iterator object that yields a TTFont instance for each UFO.
 
     *layerNames* refers to the layer names to use glyphs from in the order of
-    the UFOs in *ufos*. By default, this is a list of "public.default" times the
-    number of UFOs.
+    the UFOs in *ufos*. By default, this is a list of `[None]` times the number
+    of UFOs, i.e. using the default layer from all the UFOs.
     """
     from ufo2ft.util import _LazyFontName
 
     if layerNames is None:
-        layerNames = [DEFAULT_LAYER_NAME] * len(ufos)
+        layerNames = [None] * len(ufos)
     assert len(ufos) == len(layerNames)
 
     logger.info("Pre-processing glyphs")
@@ -239,7 +238,7 @@ def compileInterpolatableTTFs(
 
         # Only the default layer is likely to have all glyphs used in feature
         # code.
-        if layerName == DEFAULT_LAYER_NAME:
+        if layerName is None:
             compileFeatures(
                 ufo,
                 ttf,

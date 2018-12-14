@@ -6,5 +6,3 @@ GLYPHS_PREFIX = 'com.schriftgestaltung.'
 
 USE_PRODUCTION_NAMES = UFO2FT_PREFIX + "useProductionNames"
 GLYPHS_DONT_USE_PRODUCTION_NAMES = GLYPHS_PREFIX + "Don't use Production Names"
-
-DEFAULT_LAYER_NAME = "public.default"

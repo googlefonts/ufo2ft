@@ -5,9 +5,7 @@ from fontTools.misc.py23 import basestring, unichr, byteord
 from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
 from ufo2ft.fontInfoData import intListToNum
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
-from ufo2ft.constants import (
-    USE_PRODUCTION_NAMES, GLYPHS_DONT_USE_PRODUCTION_NAMES, DEFAULT_LAYER_NAME
-)
+from ufo2ft.constants import USE_PRODUCTION_NAMES, GLYPHS_DONT_USE_PRODUCTION_NAMES
 from ufo2ft import compileTTF, compileOTF, compileInterpolatableTTFs
 import os
 import logging
@@ -836,7 +834,7 @@ def test_custom_layer_compilation_interpolatable(layertestrgufo, layertestbdufo)
     master_ttfs = list(
         compileInterpolatableTTFs(
             [ufo1, ufo1, ufo2],
-            layerNames=[DEFAULT_LAYER_NAME, "Medium", DEFAULT_LAYER_NAME],
+            layerNames=[None, "Medium", None],
         )
     )
     assert master_ttfs[0].getGlyphOrder() == [

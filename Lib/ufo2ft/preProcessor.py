@@ -28,7 +28,7 @@ class BasePreProcessor(object):
     "com.github.googlei18n.ufo2ft.filters".
     """
 
-    def __init__(self, ufo, inplace=False, layerName="public.default", **kwargs):
+    def __init__(self, ufo, inplace=False, layerName=None, **kwargs):
         self.ufo = ufo
         self.inplace = inplace
         self.layerName = layerName
@@ -42,9 +42,8 @@ class BasePreProcessor(object):
     def process(self):
         ufo = self.ufo
         glyphSet = self.glyphSet
-        layerName = self.layerName
         for func in self.preFilters + self.defaultFilters + self.postFilters:
-            func(ufo, glyphSet, layerName)
+            func(ufo, glyphSet)
         return glyphSet
 
 
@@ -172,7 +171,7 @@ class TTFInterpolatablePreProcessor(object):
         self.inplace = inplace
 
         if layerNames is None:
-            layerNames = ["public.default"] * len(ufos)
+            layerNames = [None] * len(ufos)
         assert len(ufos) == len(layerNames)
         self.layerNames = layerNames
 

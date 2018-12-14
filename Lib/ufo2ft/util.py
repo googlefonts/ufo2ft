@@ -15,7 +15,6 @@ from fontTools import ttLib
 from fontTools import subset
 from fontTools import unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
-from ufo2ft.constants import DEFAULT_LAYER_NAME
 import logging
 
 
@@ -50,8 +49,11 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
 class _GlyphSet(dict):
 
     @classmethod
-    def from_layer(cls, font, layerName=DEFAULT_LAYER_NAME, copy=False):
-        layer = font.layers[layerName]
+    def from_layer(cls, font, layerName=None, copy=False):
+        if layerName is not None:
+            layer = font.layers[layerName]
+        else:
+            layer = font.layers.defaultLayer
         if copy:
             self = _copyLayer(layer, obj_type=cls)
             self.lib = deepcopy(layer.lib)
