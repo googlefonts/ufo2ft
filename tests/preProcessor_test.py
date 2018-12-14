@@ -35,7 +35,7 @@ class TTFPreProcessorTest(object):
 
         assert not glyph_has_qcurve(ufo, "c")
         assert glyph_has_qcurve(glyphSet, "c")
-        assert CURVE_TYPE_LIB_KEY not in ufo.lib
+        assert CURVE_TYPE_LIB_KEY not in ufo.layers.defaultLayer.lib
 
     def test_inplace_remember_curve_type(self, FontClass, caplog):
         caplog.set_level(logging.ERROR)
@@ -43,13 +43,15 @@ class TTFPreProcessorTest(object):
         ufo = FontClass(getpath("TestFont.ufo"))
 
         assert CURVE_TYPE_LIB_KEY not in ufo.lib
+        assert CURVE_TYPE_LIB_KEY not in ufo.layers.defaultLayer.lib
         assert not glyph_has_qcurve(ufo, "c")
 
         TTFPreProcessor(
             ufo, inplace=True, rememberCurveType=True
         ).process()
 
-        assert ufo.lib[CURVE_TYPE_LIB_KEY] == "quadratic"
+        assert CURVE_TYPE_LIB_KEY not in ufo.lib
+        assert ufo.layers.defaultLayer.lib[CURVE_TYPE_LIB_KEY] == "quadratic"
         assert glyph_has_qcurve(ufo, "c")
 
         logger = "ufo2ft.filters.cubicToQuadratic"
@@ -66,6 +68,7 @@ class TTFPreProcessorTest(object):
         ufo = FontClass(getpath("TestFont.ufo"))
 
         assert CURVE_TYPE_LIB_KEY not in ufo.lib
+        assert CURVE_TYPE_LIB_KEY not in ufo.layers.defaultLayer.lib
 
         for _ in range(2):
             TTFPreProcessor(
@@ -73,6 +76,7 @@ class TTFPreProcessorTest(object):
             ).process()
 
             assert CURVE_TYPE_LIB_KEY not in ufo.lib
+            assert CURVE_TYPE_LIB_KEY not in ufo.layers.defaultLayer.lib
             assert glyph_has_qcurve(ufo, "c")
 
 
@@ -84,6 +88,7 @@ class TTFInterpolatablePreProcessorTest(object):
         ufos = [ufo1, ufo2]
 
         assert CURVE_TYPE_LIB_KEY not in ufo1.lib
+        assert CURVE_TYPE_LIB_KEY not in ufo1.layers.defaultLayer.lib
         assert not glyph_has_qcurve(ufo1, "c")
 
         glyphSets = TTFInterpolatablePreProcessor(
@@ -93,7 +98,7 @@ class TTFInterpolatablePreProcessorTest(object):
         for i in range(2):
             assert glyph_has_qcurve(glyphSets[i], "c")
             assert CURVE_TYPE_LIB_KEY not in ufos[i].lib
-            assert CURVE_TYPE_LIB_KEY not in ufos[i].lib
+            assert CURVE_TYPE_LIB_KEY not in ufos[i].layers.defaultLayer.lib
 
     def test_inplace_remember_curve_type(self, FontClass):
         ufo1 = FontClass(getpath("TestFont.ufo"))
@@ -101,15 +106,16 @@ class TTFInterpolatablePreProcessorTest(object):
         ufos = [ufo1, ufo2]
 
         assert CURVE_TYPE_LIB_KEY not in ufo1.lib
+        assert CURVE_TYPE_LIB_KEY not in ufo1.layers.defaultLayer.lib
         assert not glyph_has_qcurve(ufo1, "c")
 
         TTFInterpolatablePreProcessor(
             ufos, inplace=True, rememberCurveType=True
         ).process()
 
-        assert ufo1.lib[CURVE_TYPE_LIB_KEY] == "quadratic"
+        assert ufo1.layers.defaultLayer.lib[CURVE_TYPE_LIB_KEY] == "quadratic"
         assert glyph_has_qcurve(ufo1, "c")
-        assert ufo2.lib[CURVE_TYPE_LIB_KEY] == "quadratic"
+        assert ufo2.layers.defaultLayer.lib[CURVE_TYPE_LIB_KEY] == "quadratic"
         assert glyph_has_qcurve(ufo2, "c")
 
     def test_inplace_no_remember_curve_type(self, FontClass):
@@ -122,7 +128,7 @@ class TTFInterpolatablePreProcessorTest(object):
                 ufos, inplace=True, rememberCurveType=False
             ).process()
 
-            assert CURVE_TYPE_LIB_KEY not in ufo1.lib
-            assert CURVE_TYPE_LIB_KEY not in ufo2.lib
+            assert CURVE_TYPE_LIB_KEY not in ufo1.layers.defaultLayer.lib
+            assert CURVE_TYPE_LIB_KEY not in ufo2.layers.defaultLayer.lib
             assert glyph_has_qcurve(ufo1, "c")
             assert glyph_has_qcurve(ufo2, "c")
