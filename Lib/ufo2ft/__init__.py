@@ -253,6 +253,48 @@ def compileInterpolatableTTFs(
         yield ttf
 
 
+def compileInterpolatableTTFsFromDS(
+    designSpaceDoc,
+    preProcessorClass=TTFInterpolatablePreProcessor,
+    outlineCompilerClass=OutlineTTFCompiler,
+    featureCompilerClass=None,
+    featureWriters=None,
+    glyphOrder=None,
+    useProductionNames=None,
+    cubicConversionError=None,
+    reverseDirection=True,
+    inplace=False,
+):
+    ufos, layerNames = [], []
+    for source in designSpaceDoc.sources:
+        # TODO load from 'filename' or 'path' attrs using defcon or ufoLib2
+        # when the 'font' attribute is None?
+        assert source.font
+        ufos.append(source.font)
+        # 'layerName' is None for the default layer
+        layerNames.append(source.layerName)
+
+    ttfs = compileInterpolatableTTFs(
+        ufos,
+        preProcessorClass=preProcessorClass,
+        outlineCompilerClass=outlineCompilerClass,
+        featureCompilerClass=featureCompilerClass,
+        featureWriters=featureWriters,
+        glyphOrder=glyphOrder,
+        useProductionNames=useProductionNames,
+        cubicConversionError=cubicConversionError,
+        reverseDirection=reverseDirection,
+        inplace=inplace,
+        layerNames=layerNames,
+    )
+
+    # TODO try a more efficient copy method that doesn't involve (de)serializing
+    dsCopy = designSpaceDoc.__class__.fromstring(designSpaceDoc.tostring())
+    for source, ttf in zip(dsCopy.sources, ttfs):
+        source.font = ttf
+    return dsCopy
+
+
 def compileFeatures(
     ufo,
     ttFont=None,
