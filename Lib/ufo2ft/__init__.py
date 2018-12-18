@@ -47,6 +47,7 @@ def compileOTF(
     removeOverlaps=False,
     overlapsBackend=None,
     inplace=False,
+    layerName=None,
 ):
     """Create FontTools CFF font from a UFO.
 
@@ -79,6 +80,10 @@ def compileOTF(
 
     **inplace** (bool) specifies whether the filters should modify the input
       UFO's glyphs, a copy should be made first.
+
+    *layerName* specifies which layer should be compiled. Useful for generating
+      sparse masters. When compiling something other than the default layer,
+      feature compilation is skipped.
     """
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
@@ -86,6 +91,7 @@ def compileOTF(
         inplace=inplace,
         removeOverlaps=removeOverlaps,
         overlapsBackend=overlapsBackend,
+        layerName=layerName,
     )
     glyphSet = preProcessor.process()
 
@@ -100,13 +106,15 @@ def compileOTF(
     )
     otf = outlineCompiler.compile()
 
-    compileFeatures(
-        ufo,
-        otf,
-        glyphSet=glyphSet,
-        featureWriters=featureWriters,
-        featureCompilerClass=featureCompilerClass,
-    )
+    # Only the default layer is likely to have all glyphs used in feature code.
+    if layerName is None:
+        compileFeatures(
+            ufo,
+            otf,
+            glyphSet=glyphSet,
+            featureWriters=featureWriters,
+            featureCompilerClass=featureCompilerClass,
+        )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
     otf = postProcessor.process(
@@ -132,6 +140,7 @@ def compileTTF(
     removeOverlaps=False,
     overlapsBackend=None,
     inplace=False,
+    layerName=None,
 ):
     """Create FontTools TrueType font from a UFO.
 
@@ -139,6 +148,10 @@ def compileTTF(
 
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
     to quadratic curves should be handled.
+
+    *layerName* specifies which layer should be compiled. Useful for generating
+    sparse masters. When compiling something other than the default layer,
+    feature compilation is skipped.
     """
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
@@ -150,6 +163,7 @@ def compileTTF(
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection,
         rememberCurveType=rememberCurveType,
+        layerName=layerName,
     )
     glyphSet = preProcessor.process()
 
@@ -159,13 +173,15 @@ def compileTTF(
     )
     otf = outlineCompiler.compile()
 
-    compileFeatures(
-        ufo,
-        otf,
-        glyphSet=glyphSet,
-        featureWriters=featureWriters,
-        featureCompilerClass=featureCompilerClass,
-    )
+    # Only the default layer is likely to have all glyphs used in feature code.
+    if layerName is None:
+        compileFeatures(
+            ufo,
+            otf,
+            glyphSet=glyphSet,
+            featureWriters=featureWriters,
+            featureCompilerClass=featureCompilerClass,
+        )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
     otf = postProcessor.process(useProductionNames)
@@ -184,14 +200,23 @@ def compileInterpolatableTTFs(
     cubicConversionError=None,
     reverseDirection=True,
     inplace=False,
+    layerNames=None,
 ):
     """Create FontTools TrueType fonts from a list of UFOs with interpolatable
     outlines. Cubic curves are converted compatibly to quadratic curves using
     the Cu2Qu conversion algorithm.
 
     Return an iterator object that yields a TTFont instance for each UFO.
+
+    *layerNames* refers to the layer names to use glyphs from in the order of
+    the UFOs in *ufos*. By default, this is a list of `[None]` times the number
+    of UFOs, i.e. using the default layer from all the UFOs.
     """
     from ufo2ft.util import _LazyFontName
+
+    if layerNames is None:
+        layerNames = [None] * len(ufos)
+    assert len(ufos) == len(layerNames)
 
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
@@ -199,10 +224,11 @@ def compileInterpolatableTTFs(
         inplace=inplace,
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection,
+        layerNames=layerNames,
     )
     glyphSets = preProcessor.process()
 
-    for ufo, glyphSet in zip(ufos, glyphSets):
+    for ufo, glyphSet, layerName in zip(ufos, glyphSets, layerNames):
         logger.info("Building OpenType tables for %s", _LazyFontName(ufo))
 
         outlineCompiler = outlineCompilerClass(
@@ -210,18 +236,81 @@ def compileInterpolatableTTFs(
         )
         ttf = outlineCompiler.compile()
 
-        compileFeatures(
-            ufo,
-            ttf,
-            glyphSet=glyphSet,
-            featureWriters=featureWriters,
-            featureCompilerClass=featureCompilerClass,
-        )
+        # Only the default layer is likely to have all glyphs used in feature
+        # code.
+        if layerName is None:
+            compileFeatures(
+                ufo,
+                ttf,
+                glyphSet=glyphSet,
+                featureWriters=featureWriters,
+                featureCompilerClass=featureCompilerClass,
+            )
 
         postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
         ttf = postProcessor.process(useProductionNames)
 
         yield ttf
+
+
+def compileInterpolatableTTFsFromDS(
+    designSpaceDoc,
+    preProcessorClass=TTFInterpolatablePreProcessor,
+    outlineCompilerClass=OutlineTTFCompiler,
+    featureCompilerClass=None,
+    featureWriters=None,
+    glyphOrder=None,
+    useProductionNames=None,
+    cubicConversionError=None,
+    reverseDirection=True,
+    inplace=False,
+):
+    """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
+    with interpolatable outlines. Cubic curves are converted compatibly to
+    quadratic curves using the Cu2Qu conversion algorithm.
+
+    The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
+    attribute set to an already loaded defcon.Font object (or compatible UFO
+    Font class). If 'font' attribute is unset or None, an AttributeError exception
+    is thrown.
+
+    Return a copy of the DesignSpaceDocument object (or the same one if
+    inplace=True) with the source's 'font' attribute set to the corresponding
+    TTFont instance.
+    """
+    ufos, layerNames = [], []
+    for source in designSpaceDoc.sources:
+        if source.font is None:
+            raise AttributeError(
+                "designspace source '%s' is missing required 'font' attribute"
+                % getattr(source, "name", "<Unknown>")
+            )
+        ufos.append(source.font)
+        # 'layerName' is None for the default layer
+        layerNames.append(source.layerName)
+
+    ttfs = compileInterpolatableTTFs(
+        ufos,
+        preProcessorClass=preProcessorClass,
+        outlineCompilerClass=outlineCompilerClass,
+        featureCompilerClass=featureCompilerClass,
+        featureWriters=featureWriters,
+        glyphOrder=glyphOrder,
+        useProductionNames=useProductionNames,
+        cubicConversionError=cubicConversionError,
+        reverseDirection=reverseDirection,
+        inplace=inplace,
+        layerNames=layerNames,
+    )
+
+    if inplace:
+        result = designSpaceDoc
+    else:
+        # TODO try a more efficient copy method that doesn't involve (de)serializing
+        result = designSpaceDoc.__class__.fromstring(designSpaceDoc.tostring())
+    for source, ttf in zip(result.sources, ttfs):
+        source.font = ttf
+    return result
 
 
 def compileFeatures(

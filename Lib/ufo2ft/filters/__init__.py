@@ -5,7 +5,7 @@ import importlib
 import logging
 from fontTools.misc.py23 import SimpleNamespace
 from fontTools.misc.loggingTools import Timer
-from ufo2ft.util import _LazyFontName
+from ufo2ft.util import _LazyFontName, _GlyphSet
 
 
 UFO2FT_FILTERS_KEY = "com.github.googlei18n.ufo2ft.filters"
@@ -191,7 +191,7 @@ class BaseFilter(object):
         logger.info("Running %s on %s", self.name, _LazyFontName(font))
 
         if glyphSet is None:
-            glyphSet = font
+            glyphSet = _GlyphSet.from_layer(font)
 
         context = self.set_context(font, glyphSet)
 
