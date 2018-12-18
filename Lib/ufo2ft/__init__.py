@@ -269,15 +269,22 @@ def compileInterpolatableTTFsFromDS(
     with interpolatable outlines. Cubic curves are converted compatibly to
     quadratic curves using the Cu2Qu conversion algorithm.
 
+    The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
+    attribute set to an already loaded defcon.Font object (or compatible UFO
+    Font class). If 'font' attribute is unset or None, an AttributeError exception
+    is thrown.
+
     Return a copy of the DesignSpaceDocument object (or the same one if
     inplace=True) with the source's 'font' attribute set to the corresponding
     TTFont instance.
     """
     ufos, layerNames = [], []
     for source in designSpaceDoc.sources:
-        # TODO load from 'filename' or 'path' attrs using defcon or ufoLib2
-        # when the 'font' attribute is None?
-        assert source.font
+        if source.font is None:
+            raise AttributeError(
+                "designspace source '%s' is missing required 'font' attribute"
+                % getattr(source, "name", "<Unknown>")
+            )
         ufos.append(source.font)
         # 'layerName' is None for the default layer
         layerNames.append(source.layerName)

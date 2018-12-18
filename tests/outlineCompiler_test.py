@@ -930,6 +930,12 @@ def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
     ]
 
 
+def test_compilation_from_ds_missing_source_font(designspace):
+    designspace.sources[0].font = None
+    with pytest.raises(AttributeError, match="missing required 'font'"):
+        compileInterpolatableTTFsFromDS(designspace)
+
+
 if __name__ == "__main__":
     import sys
 
