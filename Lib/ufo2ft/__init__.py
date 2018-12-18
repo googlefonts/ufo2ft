@@ -224,7 +224,7 @@ def compileInterpolatableTTFs(
         inplace=inplace,
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection,
-        layerNames=layerNames
+        layerNames=layerNames,
     )
     glyphSets = preProcessor.process()
 
@@ -265,6 +265,14 @@ def compileInterpolatableTTFsFromDS(
     reverseDirection=True,
     inplace=False,
 ):
+    """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
+    with interpolatable outlines. Cubic curves are converted compatibly to
+    quadratic curves using the Cu2Qu conversion algorithm.
+
+    Return a copy of the DesignSpaceDocument object (or the same one if
+    inplace=True) with the source's 'font' attribute set to the corresponding
+    TTFont instance.
+    """
     ufos, layerNames = [], []
     for source in designSpaceDoc.sources:
         # TODO load from 'filename' or 'path' attrs using defcon or ufoLib2
@@ -288,11 +296,14 @@ def compileInterpolatableTTFsFromDS(
         layerNames=layerNames,
     )
 
-    # TODO try a more efficient copy method that doesn't involve (de)serializing
-    dsCopy = designSpaceDoc.__class__.fromstring(designSpaceDoc.tostring())
-    for source, ttf in zip(dsCopy.sources, ttfs):
+    if inplace:
+        result = designSpaceDoc
+    else:
+        # TODO try a more efficient copy method that doesn't involve (de)serializing
+        result = designSpaceDoc.__class__.fromstring(designSpaceDoc.tostring())
+    for source, ttf in zip(result.sources, ttfs):
         source.font = ttf
-    return dsCopy
+    return result
 
 
 def compileFeatures(
