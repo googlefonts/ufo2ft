@@ -31,14 +31,16 @@ class CubicToQuadraticFilter(BaseFilter):
 
     def __call__(self, font, glyphSet=None):
         if self.options.rememberCurveType:
-            curve_type = font.lib.get(CURVE_TYPE_LIB_KEY, "cubic")
-            if curve_type == "quadratic":
-                logger.info("Curves already converted to quadratic")
-                return set()
-            elif curve_type == "cubic":
-                pass  # keep converting
-            else:
-                raise NotImplementedError(curve_type)
+            # check first in the global font lib, then in layer lib
+            for lib in (font.lib, getattr(glyphSet, "lib", {})):
+                curve_type = lib.get(CURVE_TYPE_LIB_KEY, "cubic")
+                if curve_type == "quadratic":
+                    logger.info("Curves already converted to quadratic")
+                    return set()
+                elif curve_type == "cubic":
+                    pass  # keep converting
+                else:
+                    raise NotImplementedError(curve_type)
 
         modified = super(CubicToQuadraticFilter, self).__call__(font, glyphSet)
         if modified:
@@ -47,9 +49,10 @@ class CubicToQuadraticFilter(BaseFilter):
                 '%s: %d' % (l, stats[l]) for l in sorted(stats.keys()))))
 
         if self.options.rememberCurveType:
-            curve_type = font.lib.get(CURVE_TYPE_LIB_KEY, "cubic")
+            # 'lib' here is the layer's lib, as defined in for loop variable
+            curve_type = lib.get(CURVE_TYPE_LIB_KEY, "cubic")
             if curve_type != "quadratic":
-                font.lib[CURVE_TYPE_LIB_KEY] = "quadratic"
+                lib[CURVE_TYPE_LIB_KEY] = "quadratic"
 
         return modified
 

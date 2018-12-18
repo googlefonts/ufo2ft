@@ -4,7 +4,7 @@ from __future__ import (
 from fontTools.misc.py23 import basestring
 from ufo2ft.filters import loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
-from ufo2ft.util import copyGlyphSet
+from ufo2ft.util import _GlyphSet
 
 
 class BasePreProcessor(object):
@@ -28,13 +28,11 @@ class BasePreProcessor(object):
     "com.github.googlei18n.ufo2ft.filters".
     """
 
-    def __init__(self, ufo, inplace=False, **kwargs):
+    def __init__(self, ufo, inplace=False, layerName=None, **kwargs):
         self.ufo = ufo
         self.inplace = inplace
-        if inplace:
-            self.glyphSet = {g.name: g for g in ufo}
-        else:
-            self.glyphSet = copyGlyphSet(ufo)
+        self.layerName = layerName
+        self.glyphSet = _GlyphSet.from_layer(ufo, layerName, copy=not inplace)
         self.defaultFilters = self.initDefaultFilters(**kwargs)
         self.preFilters, self.postFilters = loadFilters(ufo)
 
@@ -165,15 +163,22 @@ class TTFInterpolatablePreProcessor(object):
     """
 
     def __init__(self, ufos, inplace=False, conversionError=None,
-                 reverseDirection=True, rememberCurveType=True):
+                 reverseDirection=True, rememberCurveType=True,
+                 layerNames=None):
         from cu2qu.ufo import DEFAULT_MAX_ERR
 
         self.ufos = ufos
         self.inplace = inplace
-        if inplace:
-            self.glyphSets = [{g.name: g for g in ufo} for ufo in ufos]
-        else:
-            self.glyphSets = [copyGlyphSet(ufo) for ufo in ufos]
+
+        if layerNames is None:
+            layerNames = [None] * len(ufos)
+        assert len(ufos) == len(layerNames)
+        self.layerNames = layerNames
+
+        self.glyphSets = [
+            _GlyphSet.from_layer(ufo, layerName, copy=not inplace)
+            for ufo, layerName in zip(ufos, layerNames)
+        ]
         self._conversionErrors = [
             (conversionError or DEFAULT_MAX_ERR) * ufo.info.unitsPerEm
             for ufo in ufos]
@@ -184,7 +189,7 @@ class TTFInterpolatablePreProcessor(object):
         from cu2qu.ufo import fonts_to_quadratic
 
         fonts_to_quadratic(
-            self.ufos if self.inplace else self.glyphSets,
+            self.glyphSets,
             max_err=self._conversionErrors,
             reverse_direction=self._reverseDirection,
             dump_stats=True,
