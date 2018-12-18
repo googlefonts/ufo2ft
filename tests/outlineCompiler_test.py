@@ -2,11 +2,17 @@
 from __future__ import print_function, absolute_import, division, unicode_literals
 from fontTools.ttLib import TTFont
 from fontTools.misc.py23 import basestring, unichr, byteord
+from fontTools import designspaceLib
 from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
 from ufo2ft.fontInfoData import intListToNum
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 from ufo2ft.constants import USE_PRODUCTION_NAMES, GLYPHS_DONT_USE_PRODUCTION_NAMES
-from ufo2ft import compileTTF, compileOTF, compileInterpolatableTTFs
+from ufo2ft import (
+    compileTTF,
+    compileOTF,
+    compileInterpolatableTTFs,
+    compileInterpolatableTTFsFromDS,
+)
 import os
 import logging
 import pytest
@@ -34,6 +40,48 @@ def layertestrgufo(FontClass):
 def layertestbdufo(FontClass):
     font = FontClass(getpath("LayerFont-Bold.ufo"))
     return font
+
+
+@pytest.fixture
+def designspace(layertestrgufo, layertestbdufo):
+    ds = designspaceLib.DesignSpaceDocument()
+
+    a1 = designspaceLib.AxisDescriptor()
+    a1.tag = "wght"
+    a1.name = "Weight"
+    a1.default = a1.minimum = 350
+    a1.maximum = 625
+    ds.addAxis(a1)
+
+    s1 = designspaceLib.SourceDescriptor()
+    s1.name = "Layer Font Regular"
+    s1.familyName = "Layer Font"
+    s1.styleName = "Regular"
+    s1.filename = "LayerFont-Regular.ufo"
+    s1.location = {"Weight": 350}
+    s1.font = layertestrgufo
+    ds.addSource(s1)
+
+    s2 = designspaceLib.SourceDescriptor()
+    s2.name = "Layer Font Medium"
+    s2.familyName = "Layer Font"
+    s2.styleName = "Medium"
+    s2.filename = "LayerFont-Regular.ufo"
+    s2.layerName = "Medium"
+    s2.location = {"Weight": 450}
+    s2.font = layertestrgufo
+    ds.addSource(s2)
+
+    s3 = designspaceLib.SourceDescriptor()
+    s3.name = "Layer Font Bold"
+    s3.familyName = "Layer Font"
+    s3.styleName = "Bold"
+    s3.filename = "LayerFont-Bold.ufo"
+    s3.location = {"Weight": 625}
+    s3.font = layertestbdufo
+    ds.addSource(s3)
+
+    return ds
 
 
 @pytest.fixture
@@ -837,6 +885,32 @@ def test_custom_layer_compilation_interpolatable(layertestrgufo, layertestbdufo)
             layerNames=[None, "Medium", None],
         )
     )
+    assert master_ttfs[0].getGlyphOrder() == [
+        ".notdef",
+        "a",
+        "e",
+        "s",
+        "dotabovecomb",
+        "edotabove",
+    ]
+    assert master_ttfs[1].getGlyphOrder() == [".notdef", "e"]
+    assert master_ttfs[2].getGlyphOrder() == [
+        ".notdef",
+        "a",
+        "e",
+        "s",
+        "dotabovecomb",
+        "edotabove",
+    ]
+
+
+@pytest.mark.parametrize("inplace", [False, True], ids=["not inplace", "inplace"])
+def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
+    result = compileInterpolatableTTFsFromDS(designspace, inplace=inplace)
+    assert (designspace is result) == inplace
+
+    master_ttfs = [s.font for s in result.sources]
+
     assert master_ttfs[0].getGlyphOrder() == [
         ".notdef",
         "a",
