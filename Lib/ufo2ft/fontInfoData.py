@@ -39,7 +39,7 @@ _styleMapStyleNames = ["regular", "bold", "italic", "bold italic"]
 def styleMapFamilyNameFallback(info):
     """
     Fallback to *openTypeNamePreferredFamilyName* if
-    *styleMapStyleName* or, if *styleMapStyleName* isn’t defined,
+    *styleMapStyleName* or, if *styleMapStyleName* isn't defined,
     *openTypeNamePreferredSubfamilyName* is
     *regular*, *bold*, *italic* or *bold italic*, otherwise
     fallback to *openTypeNamePreferredFamilyName openTypeNamePreferredFamilyName*.
