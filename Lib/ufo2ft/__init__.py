@@ -370,8 +370,6 @@ def compileInterpolatableOTFsFromDS(
         result = designSpaceDoc
     else:
         # TODO try a more efficient copy method that doesn't involve (de)serializing
-        # and None-ing source.font, so we can move this step up and write directly to 
-        # `result`.
         result = designSpaceDoc.__class__.fromstring(designSpaceDoc.tostring())
 
     for source, otf in zip(result.sources, otfs):
