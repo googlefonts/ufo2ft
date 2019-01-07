@@ -32,11 +32,11 @@ setup(
         'pytest>=2.8',
     ],
     install_requires=[
-        "fonttools[ufo]>=3.32.0",
+        "fonttools[ufo]>=3.35.0",
         "defcon>=0.6.0",
-        "cu2qu>=1.6.4",
+        "cu2qu>=1.6.5",
         "compreffor>=0.4.5",
-        "booleanOperations>=0.8.0",
+        "booleanOperations>=0.8.2",
         "enum34>=1.1.6 ; python_version < '3.4'",
     ],
     extras_require={
