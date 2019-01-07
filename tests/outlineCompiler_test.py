@@ -12,6 +12,7 @@ from ufo2ft import (
     compileOTF,
     compileInterpolatableTTFs,
     compileInterpolatableTTFsFromDS,
+    compileInterpolatableOTFsFromDS,
 )
 import os
 import logging
@@ -921,6 +922,32 @@ def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
     ]
     assert master_ttfs[1].getGlyphOrder() == [".notdef", "e"]
     assert master_ttfs[2].getGlyphOrder() == [
+        ".notdef",
+        "a",
+        "e",
+        "s",
+        "dotabovecomb",
+        "edotabove",
+    ]
+
+
+@pytest.mark.parametrize("inplace", [False, True], ids=["not inplace", "inplace"])
+def test_custom_layer_compilation_interpolatable_otf_from_ds(designspace, inplace):
+    result = compileInterpolatableOTFsFromDS(designspace, inplace=inplace)
+    assert (designspace is result) == inplace
+
+    master_otfs = [s.font for s in result.sources]
+
+    assert master_otfs[0].getGlyphOrder() == [
+        ".notdef",
+        "a",
+        "e",
+        "s",
+        "dotabovecomb",
+        "edotabove",
+    ]
+    assert master_otfs[1].getGlyphOrder() == [".notdef", "e"]
+    assert master_otfs[2].getGlyphOrder() == [
         ".notdef",
         "a",
         "e",

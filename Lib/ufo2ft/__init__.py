@@ -313,6 +313,73 @@ def compileInterpolatableTTFsFromDS(
     return result
 
 
+def compileInterpolatableOTFsFromDS(
+    designSpaceDoc,
+    preProcessorClass=OTFPreProcessor,
+    outlineCompilerClass=OutlineOTFCompiler,
+    featureCompilerClass=None,
+    featureWriters=None,
+    glyphOrder=None,
+    useProductionNames=None,
+    roundTolerance=None,
+    inplace=False,
+):
+    """Create FontTools CFF fonts from the DesignSpaceDocument UFO sources
+    with interpolatable outlines.
+
+    Interpolatable means without subroutinization and specializer optimizations
+    and no removal of overlaps.
+
+    The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
+    attribute set to an already loaded defcon.Font object (or compatible UFO
+    Font class). If 'font' attribute is unset or None, an AttributeError exception
+    is thrown.
+
+    Return a copy of the DesignSpaceDocument object (or the same one if
+    inplace=True) with the source's 'font' attribute set to the corresponding
+    TTFont instance.
+    """
+    for source in designSpaceDoc.sources:
+        if source.font is None:
+            raise AttributeError(
+                "designspace source '%s' is missing required 'font' attribute"
+                % getattr(source, "name", "<Unknown>")
+            )
+
+    otfs = []
+    for source in designSpaceDoc.sources:
+        otfs.append(
+            compileOTF(
+                ufo=source.font,
+                layerName=source.layerName,
+                preProcessorClass=preProcessorClass,
+                outlineCompilerClass=outlineCompilerClass,
+                featureCompilerClass=featureCompilerClass,
+                featureWriters=featureWriters,
+                glyphOrder=glyphOrder,
+                useProductionNames=useProductionNames,
+                optimizeCFF=CFFOptimization.NONE,
+                roundTolerance=roundTolerance,
+                removeOverlaps=False,
+                overlapsBackend=None,
+                inplace=inplace,
+            )
+        )
+
+    if inplace:
+        result = designSpaceDoc
+    else:
+        # TODO try a more efficient copy method that doesn't involve (de)serializing
+        # and None-ing source.font, so we can move this step up and write directly to 
+        # `result`.
+        result = designSpaceDoc.__class__.fromstring(designSpaceDoc.tostring())
+
+    for source, otf in zip(result.sources, otfs):
+        source.font = otf
+
+    return result
+
+
 def compileFeatures(
     ufo,
     ttFont=None,
