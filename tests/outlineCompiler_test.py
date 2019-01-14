@@ -941,6 +941,11 @@ def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
     sparse_tables = [tag for tag in master_ttfs[1].keys() if tag != "GlyphOrder"]
     assert SPARSE_TTF_MASTER_TABLES.issuperset(sparse_tables)
 
+    # sentinel value used by varLib to ignore the post table for this sparse
+    # master when building the MVAR table
+    assert master_ttfs[1]["post"].underlinePosition == -0x8000
+    assert master_ttfs[1]["post"].underlineThickness == -0x8000
+
 
 @pytest.mark.parametrize("inplace", [False, True], ids=["not inplace", "inplace"])
 def test_custom_layer_compilation_interpolatable_otf_from_ds(designspace, inplace):

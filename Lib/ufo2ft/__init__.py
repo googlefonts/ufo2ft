@@ -258,6 +258,17 @@ def compileInterpolatableTTFs(
         postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
         ttf = postProcessor.process(useProductionNames)
 
+        if layerName is not None:
+            # for sparse masters (i.e. containing only a subset of the glyphs), we
+            # need to include the post table in order to store glyph names, so that
+            # fontTools.varLib can interpolate glyphs with same name across masters.
+            # However we want to prevent the underlinePosition/underlineThickness
+            # fields in such sparse masters to be included when computing the deltas
+            # for the MVAR table. Thus, we set them to this unlikely, limit value
+            # (-36768) which is a signal varLib should ignore them when building MVAR.
+            ttf["post"].underlinePosition = -0x8000
+            ttf["post"].underlineThickness = -0x8000
+
         yield ttf
 
 
