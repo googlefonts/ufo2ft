@@ -43,11 +43,12 @@ def _isNonBMP(s):
 
 
 def _getVerticalOrigin(font, glyph):
-    font_ascender = font['hhea'].ascent
     if (hasattr(glyph, "verticalOrigin") and
             glyph.verticalOrigin is not None):
         verticalOrigin = glyph.verticalOrigin
     else:
+        hhea = font.get("hhea")
+        font_ascender = hhea.ascent if hhea is not None else 0
         verticalOrigin = font_ascender
     return otRound(verticalOrigin)
 
@@ -56,8 +57,22 @@ class BaseOutlineCompiler(object):
     """Create a feature-less outline binary."""
 
     sfntVersion = None
+    tables = frozenset(
+        [
+            "head",
+            "hmtx",
+            "hhea",
+            "name",
+            "maxp",
+            "cmap",
+            "OS/2",
+            "post",
+            "vmtx",
+            "vhea",
+        ]
+    )
 
-    def __init__(self, font, glyphSet=None, glyphOrder=None):
+    def __init__(self, font, glyphSet=None, glyphOrder=None, tables=None):
         self.ufo = font
         # use the previously filtered glyphSet, if any
         if glyphSet is None:
@@ -73,6 +88,8 @@ class BaseOutlineCompiler(object):
         self.fontBoundingBox = self.makeFontBoundingBox()
         # make a reusable character mapping
         self.unicodeToGlyphNameMapping = self.makeUnicodeToGlyphNameMapping()
+        if tables is not None:
+            self.tables = tables
 
     def compile(self):
         """
@@ -93,6 +110,9 @@ class BaseOutlineCompiler(object):
             getAttrWithFallback(self.ufo.info, metric) is not None
             for metric in vertical_metrics
         )
+
+        # write the glyph order
+        self.otf.setGlyphOrder(self.glyphOrder)
 
         # populate basic tables
         self.setupTable_head()
@@ -210,6 +230,9 @@ class BaseOutlineCompiler(object):
     # --------------
 
     def setupTable_gasp(self):
+        if "gasp" not in self.tables:
+            return
+
         self.otf["gasp"] = gasp = newTable("gasp")
         gasp_ranges = dict()
         for record in self.ufo.info.openTypeGaspRangeRecords:
@@ -227,6 +250,8 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+        if "head" not in self.tables:
+            return
 
         self.otf["head"] = head = newTable("head")
         font = self.ufo
@@ -287,6 +312,8 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+        if "name" not in self.tables:
+            return
 
         font = self.ufo
         self.otf["name"] = name = newTable("name")
@@ -376,6 +403,9 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+        if "cmap" not in self.tables:
+            return
+
         from fontTools.ttLib.tables._c_m_a_p import cmap_format_4
 
         nonBMP = dict((k,v) for k,v in self.unicodeToGlyphNameMapping.items() if k > 65535)
@@ -427,16 +457,19 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+        if "OS/2" not in self.tables:
+            return
+
         self.otf["OS/2"] = os2 = newTable("OS/2")
-        hmtx = self.otf["hmtx"]
         font = self.ufo
         os2.version = 0x0004
         # average glyph width
-        widths = [width for width, _ in hmtx.metrics.values() if width > 0]
-        if widths:
-            os2.xAvgCharWidth = otRound(sum(widths) / len(widths))
-        else:
-            os2.xAvgCharWidth = 0
+        os2.xAvgCharWidth = 0
+        hmtx = self.otf.get("hmtx")
+        if hmtx is not None:
+            widths = [width for width, _ in hmtx.metrics.values() if width > 0]
+            if widths:
+                os2.xAvgCharWidth = otRound(sum(widths) / len(widths))
         # weight and width classes
         os2.usWeightClass = getAttrWithFallback(font.info, "openTypeOS2WeightClass")
         os2.usWidthClass = getAttrWithFallback(font.info, "openTypeOS2WidthClass")
@@ -585,6 +618,8 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+        if "hmtx" not in self.tables:
+            return
 
         self.otf["hmtx"] = hmtx = newTable("hmtx")
         hmtx.metrics = {}
@@ -602,12 +637,15 @@ class BaseOutlineCompiler(object):
         Make the hhea table or the vhea table. This assume the hmtx or
         the vmtx were respectively made first.
         """
+        if tag not in self.tables:
+            return
+
         if tag == "hhea":
             isHhea = True
         else:
             isHhea = False
         self.otf[tag] = table = newTable(tag)
-        mtxTable = self.otf[tag[0] + "mtx"]
+        mtxTable = self.otf.get(tag[0] + "mtx")
         font = self.ufo
         if isHhea:
             table.tableVersion = 0x00010000
@@ -641,27 +679,28 @@ class BaseOutlineCompiler(object):
         firstSideBearings = []  # left in hhea, top in vhea
         secondSideBearings = []  # right in hhea, bottom in vhea
         extents = []
-        for glyphName in self.allGlyphs:
-            advance, firstSideBearing = mtxTable[glyphName]
-            advances.append(advance)
-            bounds = self.glyphBoundingBoxes[glyphName]
-            if bounds is None:
-                continue
-            if isHhea:
-                boundsAdvance = (bounds.xMax - bounds.xMin)
-                # equation from the hhea spec for calculating xMaxExtent:
-                #   Max(lsb + (xMax - xMin))
-                extent = firstSideBearing + boundsAdvance
-            else:
-                boundsAdvance = (bounds.yMax - bounds.yMin)
-                # equation from the vhea spec for calculating yMaxExtent:
-                #   Max(tsb + (yMax - yMin)).
-                extent = firstSideBearing + boundsAdvance
-            secondSideBearing = advance - firstSideBearing - boundsAdvance
+        if mtxTable is not None:
+            for glyphName in self.allGlyphs:
+                advance, firstSideBearing = mtxTable[glyphName]
+                advances.append(advance)
+                bounds = self.glyphBoundingBoxes[glyphName]
+                if bounds is None:
+                    continue
+                if isHhea:
+                    boundsAdvance = (bounds.xMax - bounds.xMin)
+                    # equation from the hhea spec for calculating xMaxExtent:
+                    #   Max(lsb + (xMax - xMin))
+                    extent = firstSideBearing + boundsAdvance
+                else:
+                    boundsAdvance = (bounds.yMax - bounds.yMin)
+                    # equation from the vhea spec for calculating yMaxExtent:
+                    #   Max(tsb + (yMax - yMin)).
+                    extent = firstSideBearing + boundsAdvance
+                secondSideBearing = advance - firstSideBearing - boundsAdvance
 
-            firstSideBearings.append(firstSideBearing)
-            secondSideBearings.append(secondSideBearing)
-            extents.append(extent)
+                firstSideBearings.append(firstSideBearing)
+                secondSideBearings.append(secondSideBearing)
+                extents.append(extent)
         setattr(table,
                 "advance%sMax" % ("Width" if isHhea else "Height"),
                 max(advances) if advances else 0)
@@ -705,6 +744,8 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+        if "vmtx" not in self.tables:
+            return
 
         self.otf["vmtx"] = vmtx = newTable("vmtx")
         vmtx.metrics = {}
@@ -726,6 +767,9 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+        if "VORG" not in self.tables:
+            return
+
         self.otf["VORG"] = vorg = newTable("VORG")
         vorg.majorVersion = 1
         vorg.minorVersion = 0
@@ -759,6 +803,9 @@ class BaseOutlineCompiler(object):
         may override or supplement this method to handle the
         table creation in a different way if desired.
         """
+        if "post" not in self.tables:
+            return
+
         self.otf["post"] = post = newTable("post")
         font = self.ufo
         post.formatType = 3.0
@@ -820,12 +867,14 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
     """Compile a .otf font with CFF outlines."""
 
     sfntVersion = "OTTO"
+    tables = BaseOutlineCompiler.tables | {"CFF", "VORG"}
 
     def __init__(
         self,
         font,
         glyphSet=None,
         glyphOrder=None,
+        tables=None,
         roundTolerance=None,
         optimizeCFF=True,
     ):
@@ -835,7 +884,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             # round all coordinates to integers by default
             self.roundTolerance = 0.5
         super(OutlineOTFCompiler, self).__init__(
-            font, glyphSet=glyphSet, glyphOrder=glyphOrder)
+            font, glyphSet=glyphSet, glyphOrder=glyphOrder, tables=tables)
         self.optimizeCFF = optimizeCFF
 
     def makeGlyphsBoundingBoxes(self):
@@ -909,9 +958,12 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
     def setupTable_maxp(self):
         """Make the maxp table."""
+        if "maxp" not in self.tables:
+            return
 
         self.otf["maxp"] = maxp = newTable("maxp")
         maxp.tableVersion = 0x00005000
+        maxp.numGlyphs = len(self.glyphOrder)
 
     def setupOtherTables(self):
         self.setupTable_CFF()
@@ -920,6 +972,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
     def setupTable_CFF(self):
         """Make the CFF table."""
+        if not {"CFF", "CFF "}.intersection(self.tables):
+            return
 
         self.otf["CFF "] = cff = newTable("CFF ")
         cff = cff.cff
@@ -985,9 +1039,10 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         unitsPerEm = otRound(getAttrWithFallback(info, "unitsPerEm"))
         topDict.FontMatrix = [1.0 / unitsPerEm, 0, 0, 1.0 / unitsPerEm, 0, 0]
         # populate the width values
-        if not any(hasattr(info, attr) and getattr(info, attr) is not None
-                   for attr in ("postscriptDefaultWidthX",
-                                "postscriptNominalWidthX")):
+        if (not any(hasattr(info, attr) and getattr(info, attr) is not None
+                    for attr in ("postscriptDefaultWidthX",
+                                 "postscriptNominalWidthX"))
+                and "hmtx" in self.otf):
             # no custom values set in fontinfo.plist; compute optimal ones
             from fontTools.cffLib.width import optimizeWidths
             hmtx = self.otf['hmtx']
@@ -1058,8 +1113,6 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
                 charStrings.charStrings[glyphName] = glyphID
                 topDict.charset.append(glyphName)
         topDict.FontBBox = self.fontBoundingBox
-        # write the glyph order
-        self.otf.setGlyphOrder(self.glyphOrder)
 
 
 class OutlineTTFCompiler(BaseOutlineCompiler):
@@ -1067,12 +1120,16 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
     """
 
     sfntVersion = "\000\001\000\000"
+    tables = BaseOutlineCompiler.tables | {"loca", "gasp", "glyf"}
 
     def setupTable_maxp(self):
         """Make the maxp table."""
+        if "maxp" not in self.tables:
+            return
 
         self.otf["maxp"] = maxp = newTable("maxp")
         maxp.tableVersion = 0x00010000
+        maxp.numGlyphs = len(self.glyphOrder)
         maxp.maxZones = 1
         maxp.maxTwilightPoints = 0
         maxp.maxStorage = 0
@@ -1086,6 +1143,9 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
         super(OutlineTTFCompiler, self).setupTable_post()
+        if "post" not in self.otf:
+            return
+
         post = self.otf["post"]
         post.formatType = 2.0
         post.extraNames = []
@@ -1099,13 +1159,15 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
     def setupTable_glyf(self):
         """Make the glyf table."""
+        if not {"glyf", "loca"}.issubset(self.tables):
+            return
 
         self.otf["loca"] = newTable("loca")
         self.otf["glyf"] = glyf = newTable("glyf")
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
-        hmtx = self.otf["hmtx"]
+        hmtx = self.otf.get("hmtx")
         allGlyphs = self.allGlyphs
         for name in self.glyphOrder:
             glyph = allGlyphs[name]
@@ -1117,7 +1179,11 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                 ttGlyph = Glyph()
             else:
                 ttGlyph = pen.glyph()
-                if ttGlyph.isComposite() and self.autoUseMyMetrics:
+                if (
+                    ttGlyph.isComposite()
+                    and hmtx is not None
+                    and self.autoUseMyMetrics
+                ):
                     self.autoUseMyMetrics(ttGlyph, name, hmtx)
             glyf[name] = ttGlyph
 
