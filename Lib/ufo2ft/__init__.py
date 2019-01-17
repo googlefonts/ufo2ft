@@ -17,6 +17,7 @@ from ufo2ft.featureCompiler import (
 )
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
+from ufo2ft.constants import SPARSE_TTF_MASTER_TABLES, SPARSE_OTF_MASTER_TABLES
 import logging
 
 try:
@@ -48,6 +49,7 @@ def compileOTF(
     overlapsBackend=None,
     inplace=False,
     layerName=None,
+    _tables=None,
 ):
     """Create FontTools CFF font from a UFO.
 
@@ -81,9 +83,8 @@ def compileOTF(
     **inplace** (bool) specifies whether the filters should modify the input
       UFO's glyphs, a copy should be made first.
 
-    *layerName* specifies which layer should be compiled. Useful for generating
-      sparse masters. When compiling something other than the default layer,
-      feature compilation is skipped.
+    *layerName* specifies which layer should be compiled. When compiling something
+    other than the default layer, feature compilation is skipped.
     """
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
@@ -103,6 +104,7 @@ def compileOTF(
         glyphOrder=glyphOrder,
         roundTolerance=roundTolerance,
         optimizeCFF=optimizeCFF >= CFFOptimization.SPECIALIZE,
+        tables=_tables,
     )
     otf = outlineCompiler.compile()
 
@@ -149,9 +151,8 @@ def compileTTF(
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
     to quadratic curves should be handled.
 
-    *layerName* specifies which layer should be compiled. Useful for generating
-    sparse masters. When compiling something other than the default layer,
-    feature compilation is skipped.
+    *layerName* specifies which layer should be compiled. When compiling something
+    other than the default layer, feature compilation is skipped.
     """
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
@@ -211,6 +212,10 @@ def compileInterpolatableTTFs(
     *layerNames* refers to the layer names to use glyphs from in the order of
     the UFOs in *ufos*. By default, this is a list of `[None]` times the number
     of UFOs, i.e. using the default layer from all the UFOs.
+
+    When the layerName is not None for a given UFO, the corresponding TTFont object
+    will contain only a minimum set of tables ("head", "hmtx", "glyf", "loca", "maxp",
+    "post" and "vmtx"), and no OpenType layout tables.
     """
     from ufo2ft.util import _LazyFontName
 
@@ -232,7 +237,10 @@ def compileInterpolatableTTFs(
         logger.info("Building OpenType tables for %s", _LazyFontName(ufo))
 
         outlineCompiler = outlineCompilerClass(
-            ufo, glyphSet=glyphSet, glyphOrder=glyphOrder
+            ufo,
+            glyphSet=glyphSet,
+            glyphOrder=glyphOrder,
+            tables=SPARSE_TTF_MASTER_TABLES if layerName else None,
         )
         ttf = outlineCompiler.compile()
 
@@ -249,6 +257,17 @@ def compileInterpolatableTTFs(
 
         postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
         ttf = postProcessor.process(useProductionNames)
+
+        if layerName is not None:
+            # for sparse masters (i.e. containing only a subset of the glyphs), we
+            # need to include the post table in order to store glyph names, so that
+            # fontTools.varLib can interpolate glyphs with same name across masters.
+            # However we want to prevent the underlinePosition/underlineThickness
+            # fields in such sparse masters to be included when computing the deltas
+            # for the MVAR table. Thus, we set them to this unlikely, limit value
+            # (-36768) which is a signal varLib should ignore them when building MVAR.
+            ttf["post"].underlinePosition = -0x8000
+            ttf["post"].underlineThickness = -0x8000
 
         yield ttf
 
@@ -277,6 +296,10 @@ def compileInterpolatableTTFsFromDS(
     Return a copy of the DesignSpaceDocument object (or the same one if
     inplace=True) with the source's 'font' attribute set to the corresponding
     TTFont instance.
+
+    For sources that have the 'layerName' attribute defined, the corresponding TTFont
+    object will contain only a minimum set of tables ("head", "hmtx", "glyf", "loca",
+    "maxp", "post" and "vmtx"), and no OpenType layout tables.
     """
     ufos, layerNames = [], []
     for source in designSpaceDoc.sources:
@@ -338,6 +361,10 @@ def compileInterpolatableOTFsFromDS(
     Return a copy of the DesignSpaceDocument object (or the same one if
     inplace=True) with the source's 'font' attribute set to the corresponding
     TTFont instance.
+
+    For sources that have the 'layerName' attribute defined, the corresponding TTFont
+    object will contain only a minimum set of tables ("head", "hmtx", "CFF ", "maxp",
+    "vmtx" and "VORG"), and no OpenType layout tables.
     """
     for source in designSpaceDoc.sources:
         if source.font is None:
@@ -363,6 +390,7 @@ def compileInterpolatableOTFsFromDS(
                 removeOverlaps=False,
                 overlapsBackend=None,
                 inplace=inplace,
+                _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
             )
         )
 
