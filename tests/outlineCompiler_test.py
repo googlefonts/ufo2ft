@@ -6,7 +6,12 @@ from fontTools import designspaceLib
 from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
 from ufo2ft.fontInfoData import intListToNum
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
-from ufo2ft.constants import USE_PRODUCTION_NAMES, GLYPHS_DONT_USE_PRODUCTION_NAMES
+from ufo2ft.constants import (
+    USE_PRODUCTION_NAMES,
+    GLYPHS_DONT_USE_PRODUCTION_NAMES,
+    SPARSE_TTF_MASTER_TABLES,
+    SPARSE_OTF_MASTER_TABLES,
+)
 from ufo2ft import (
     compileTTF,
     compileOTF,
@@ -904,6 +909,9 @@ def test_custom_layer_compilation_interpolatable(layertestrgufo, layertestbdufo)
         "edotabove",
     ]
 
+    sparse_tables = [tag for tag in master_ttfs[1].keys() if tag != "GlyphOrder"]
+    assert SPARSE_TTF_MASTER_TABLES.issuperset(sparse_tables)
+
 
 @pytest.mark.parametrize("inplace", [False, True], ids=["not inplace", "inplace"])
 def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
@@ -930,6 +938,14 @@ def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
         "edotabove",
     ]
 
+    sparse_tables = [tag for tag in master_ttfs[1].keys() if tag != "GlyphOrder"]
+    assert SPARSE_TTF_MASTER_TABLES.issuperset(sparse_tables)
+
+    # sentinel value used by varLib to ignore the post table for this sparse
+    # master when building the MVAR table
+    assert master_ttfs[1]["post"].underlinePosition == -0x8000
+    assert master_ttfs[1]["post"].underlineThickness == -0x8000
+
 
 @pytest.mark.parametrize("inplace", [False, True], ids=["not inplace", "inplace"])
 def test_custom_layer_compilation_interpolatable_otf_from_ds(designspace, inplace):
@@ -955,6 +971,9 @@ def test_custom_layer_compilation_interpolatable_otf_from_ds(designspace, inplac
         "dotabovecomb",
         "edotabove",
     ]
+
+    sparse_tables = [tag for tag in master_otfs[1].keys() if tag != "GlyphOrder"]
+    assert SPARSE_OTF_MASTER_TABLES.issuperset(sparse_tables)
 
 
 def test_compilation_from_ds_missing_source_font(designspace):
