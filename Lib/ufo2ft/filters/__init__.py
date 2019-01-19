@@ -188,7 +188,11 @@ class BaseFilter(object):
         Otherwise, run the filter in-place on the font's default
         glyph set.
         """
-        logger.info("Running %s on %s", self.name, _LazyFontName(font))
+        fontName = _LazyFontName(font)
+        if glyphSet is not None and getattr(glyphSet, "name", None):
+            logger.info("Running %s on %s-%s", self.name, fontName, glyphSet.name)
+        else:
+            logger.info("Running %s on %s", self.name, fontName)
 
         if glyphSet is None:
             glyphSet = _GlyphSet.from_layer(font)

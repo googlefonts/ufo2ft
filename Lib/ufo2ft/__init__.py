@@ -234,7 +234,11 @@ def compileInterpolatableTTFs(
     glyphSets = preProcessor.process()
 
     for ufo, glyphSet, layerName in zip(ufos, glyphSets, layerNames):
-        logger.info("Building OpenType tables for %s", _LazyFontName(ufo))
+        fontName = _LazyFontName(ufo)
+        if layerName is not None:
+            logger.info("Building OpenType tables for %s-%s", fontName, layerName)
+        else:
+            logger.info("Building OpenType tables for %s", fontName)
 
         outlineCompiler = outlineCompilerClass(
             ufo,
