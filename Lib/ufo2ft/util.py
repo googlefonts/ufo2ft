@@ -60,6 +60,7 @@ class _GlyphSet(dict):
         else:
             self = cls((g.name, g) for g in layer)
             self.lib = layer.lib
+        self.name = layer.name if layerName is not None else None
         return self
 
 
