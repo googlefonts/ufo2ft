@@ -77,6 +77,16 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
                 base_components.append(component)
                 anchor_names |= {a.name for a in glyph.anchors}
 
+    if mark_components and not base_components and _is_ligature_mark(composite):
+        # The composite is a mark that is composed of other marks (E.g.
+        # "circumflexcomb_tildecomb"). Promote the mark that is positioned closest
+        # to the origin to a base.
+        component = _component_closest_to_origin(mark_components)
+        mark_components.remove(component)
+        base_components.append(component)
+        glyph = glyphSet[component.baseGlyph]
+        anchor_names |= {a.name for a in glyph.anchors}
+
     for anchor_name in anchor_names:
         # don't add if composite glyph already contains this anchor OR any
         # associated ligature anchors (e.g. "top_1, top_2" for "top")
@@ -131,3 +141,23 @@ def _adjust_anchors(anchor_data, glyphSet, component):
         if (anchor.name in anchor_data and
                 any(a.name == '_' + anchor.name for a in glyph.anchors)):
             anchor_data[anchor.name] = t.transformPoint((anchor.x, anchor.y))
+
+
+def _component_closest_to_origin(components):
+    """Return the component whose (xmin, ymin) bounds are closest to origin.
+
+    This ensures that a component that is moved below another is
+    actually recognized as such. Looking only at the transformation
+    offset can be misleading.
+    """
+    return min(components, key=lambda comp: _distance((0, 0), comp.bounds[:2]))
+
+
+def _distance(pos1, pos2):
+    x1, y1 = pos1
+    x2, y2 = pos2
+    return (x1 - x2) ** 2 + (y1 - y2) ** 2
+
+
+def _is_ligature_mark(glyph):
+    return not glyph.name.startswith("_") and "_" in glyph.name

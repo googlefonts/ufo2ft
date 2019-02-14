@@ -242,8 +242,8 @@ def test_CantarellAnchorPropagation(datadir):
     anchors_combined = {
         (a.name, a.x, a.y) for a in ufo["circumflexcomb_tildecomb"].anchors
     }
-    assert ("top", 214, 730) in anchors_combined
-    assert ("_top", 213, 482) in anchors_combined
+    assert ("top", 214.0, 730.0) in anchors_combined
+    assert ("_top", 213.0, 482.0) in anchors_combined
 
     anchors_o = {(a.name, a.x, a.y) for a in ufo["ocircumflextilde"].anchors}
-    assert ("top", 284, 730) in anchors_o
+    assert ("top", 284.0, 730.0) in anchors_o
