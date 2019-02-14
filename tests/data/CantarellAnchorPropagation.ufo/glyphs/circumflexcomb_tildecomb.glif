@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="circumflexcomb_tildecomb" format="2">
+  <outline>
+    <component base="circumflexcomb.loclVIET" xOffset="22.0"/>
+    <component base="tildecomb.loclVIET" xOffset="-8.0" yOffset="98.0"/>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <real>432.0</real>
+    </dict>
+  </lib>
+</glyph>

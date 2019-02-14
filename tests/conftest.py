@@ -1,4 +1,5 @@
 import importlib
+import py
 import pytest
 
 
@@ -22,3 +23,8 @@ def FontClass(ufo_module):
 @pytest.fixture(scope="session")
 def InfoClass(ufo_module):
     return ufo_module.objects.info.Info
+
+
+@pytest.fixture
+def datadir():
+    return py.path.local(py.path.local(__file__).dirname).join("data")

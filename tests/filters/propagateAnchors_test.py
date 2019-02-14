@@ -228,3 +228,22 @@ class PropagateAnchorsFilterTest(object):
             philter = PropagateAnchorsFilter()
             philter(font)
         captor.assertRegex('Glyphs with propagated anchors: 6')
+
+
+def test_CantarellAnchorPropagation(datadir):
+    import defcon
+
+    ufo_path = datadir.join("CantarellAnchorPropagation.ufo")
+    ufo = defcon.Font(ufo_path)
+
+    philter = PropagateAnchorsFilter()
+    philter(ufo)
+
+    anchors_combined = {
+        (a.name, a.x, a.y) for a in ufo["circumflexcomb_tildecomb"].anchors
+    }
+    assert ("top", 214, 730) in anchors_combined
+    assert ("_top", 213, 482) in anchors_combined
+
+    anchors_o = {(a.name, a.x, a.y) for a in ufo["ocircumflextilde"].anchors}
+    assert ("top", 284, 730) in anchors_o
