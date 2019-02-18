@@ -86,8 +86,8 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
         # to the origin to a base.
         try:
             component = _component_closest_to_origin(mark_components, glyphSet)
-        except ValueError as e:
-            raise ValueError(
+        except Exception as e:
+            raise Exception(
                 "Error while determining which component of composite "
                 "'{}' is the lowest: {}".format(composite.name, str(e))
             )
