@@ -230,11 +230,9 @@ class PropagateAnchorsFilterTest(object):
         captor.assertRegex('Glyphs with propagated anchors: 6')
 
 
-def test_CantarellAnchorPropagation(datadir):
-    import defcon
-
+def test_CantarellAnchorPropagation(FontClass, datadir):
     ufo_path = datadir.join("CantarellAnchorPropagation.ufo")
-    ufo = defcon.Font(ufo_path)
+    ufo = FontClass(ufo_path)
 
     philter = PropagateAnchorsFilter()
     philter(ufo)
