@@ -138,6 +138,43 @@ class KernFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_mark_to_base_kern(self, FontClass):
+        font = FontClass()
+        for name in ("A", "B", "C"):
+            font.newGlyph(name)
+        font.newGlyph("acutecomb").unicode = 0x0301
+        font.kerning.update({("A", "acutecomb"): -55.0, ("B", "C"): -30.0})
+
+        font.features.text = dedent(
+            """\
+            @Bases = [A B C];
+            @Marks = [acutecomb];
+            table GDEF {
+                GlyphClassDef @Bases, [], @Marks, ;
+            } GDEF;
+            """
+        )
+
+        # default is ignoreMarks=True
+        feaFile = self.writeFeatures(font)
+        assert str(feaFile) == dedent(
+            """
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos B C -30;
+            } kern_ltr;
+            
+            lookup kern_ltr_marks {
+                pos A acutecomb -55;
+            } kern_ltr_marks;
+            
+            feature kern {
+                lookup kern_ltr;
+                lookup kern_ltr_marks;
+            } kern;
+            """
+        )
+
     def test_mode(self, FontClass):
         ufo = FontClass()
         for name in ("one", "four", "six", "seven"):
@@ -232,9 +269,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
         feaFile = parseLayoutFeatures(font)
-        scripts = ast.getScriptLanguageSystems(feaFile)
         scriptGroups = KernFeatureWriter._groupScriptsByTagAndDirection(
-            scripts
+            feaFile
         )
 
         assert "kern" in scriptGroups
@@ -249,6 +285,46 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert list(scriptGroups["dist"]["LTR"]) == [
             ("deva", ["dflt"]),
             ("dev2", ["dflt"]),
+        ]
+
+    def test__groupScriptsByTagAndDirectionDistAndKern(self, FontClass):
+        font = FontClass()
+        font.newGlyph('ka-sidd').unicode = 0x1158E
+        font.newGlyph('ga-sidd').unicode = 0x11590
+        font.features.text = dedent(
+            """
+            languagesystem DFLT dflt;
+            languagesystem sidd dflt;
+            
+            @kern1.ka = [ka-sidd];
+            @kern2.ga = [ga-sidd];
+
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                enum pos @kern1.ka @kern2.ga -40;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+                script sidd;
+            } kern;
+            
+            """
+        )
+
+        feaFile = parseLayoutFeatures(font)
+        scriptGroups = KernFeatureWriter._groupScriptsByTagAndDirection(
+            feaFile
+        )
+
+        assert "kern" in scriptGroups
+        assert list(scriptGroups["kern"]["LTR"]) == [
+            ("sidd", ["dflt"])
+        ]
+
+        assert "dist" in scriptGroups
+        assert list(scriptGroups["dist"]["LTR"]) == [
+            ("sidd", ["dflt"]),
         ]
 
     def test_getKerningClasses(self, FontClass):
@@ -446,6 +522,207 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_rtl;
                 language URD;
+            } kern;
+            """
+        )
+
+    def test_kern_LTR_and_RTL_with_marks(self, FontClass):
+        glyphs = {
+            ".notdef": None,
+            "four": 0x34,
+            "seven": 0x37,
+            "A": 0x41,
+            "V": 0x56,
+            "Aacute": 0xC1,
+            "acutecomb": 0x301,
+            "alef-ar": 0x627,
+            "reh-ar": 0x631,
+            "zain-ar": 0x632,
+            "lam-ar": 0x644,
+            "four-ar": 0x664,
+            "seven-ar": 0x667,
+            "fatha-ar": 0x64E,
+            # # we also add glyphs without unicode codepoint, but linked to
+            # # an encoded 'character' glyph by some GSUB rule
+            "alef-ar.isol": None,
+            "lam-ar.init": None,
+            "reh-ar.fina": None,
+        }
+        groups = {
+            "public.kern1.A": ["A", "Aacute"],
+            "public.kern1.reh": ["reh-ar", "zain-ar", "reh-ar.fina"],
+            "public.kern2.alef": ["alef-ar", "alef-ar.isol"],
+        }
+        kerning = {
+            ("public.kern1.A", "V"): -40,
+            ("seven", "four"): -25,
+            ("reh-ar.fina", "lam-ar.init"): -80,
+            ("public.kern1.reh", "public.kern2.alef"): -100,
+            ("four-ar", "seven-ar"): -30,
+            ("V", "acutecomb"): 70,
+            ("reh-ar", "fatha-ar"): 80,
+        }
+        features = dedent(
+            """\
+            languagesystem DFLT dflt;
+            languagesystem latn dflt;
+            languagesystem latn TRK;
+            languagesystem arab dflt;
+            languagesystem arab URD;
+
+            feature init {
+                script arab;
+                sub lam-ar by lam-ar.init;
+                language URD;
+            } init;
+
+            feature fina {
+                script arab;
+                sub reh-ar by reh-ar.fina;
+                language URD;
+            } fina;
+
+            @Bases = [A V Aacute alef-ar reh-ar zain-ar lam-ar alef-ar.isol lam-ar.init reh-ar.fina];
+            @Marks = [acutecomb fatha-ar];
+            table GDEF {
+                GlyphClassDef @Bases, [], @Marks, ;
+            } GDEF;
+            """
+        )
+
+
+        ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+
+        newFeatures = self.writeFeatures(ufo)
+
+        assert str(newFeatures) == dedent(
+            """\
+            @kern1.A = [A Aacute];
+            @kern1.reh = [reh-ar zain-ar reh-ar.fina];
+            @kern2.alef = [alef-ar alef-ar.isol];
+
+            lookup kern_dflt {
+                lookupflag IgnoreMarks;
+                pos seven four -25;
+            } kern_dflt;
+
+            lookup kern_dflt_marks {
+                pos V acutecomb 70;
+                pos reh-ar fatha-ar 80;
+                pos seven four -25;
+            } kern_dflt_marks;
+
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                enum pos @kern1.A V -40;
+            } kern_ltr;
+
+            lookup kern_ltr_marks {
+                pos V acutecomb 70;
+            } kern_ltr_marks;
+
+            lookup kern_rtl {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+                pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
+                pos @kern1.reh @kern2.alef <-100 0 -100 0>;
+            } kern_rtl;
+
+            lookup kern_rtl_marks {
+                pos reh-ar fatha-ar <80 0 80 0>;
+            } kern_rtl_marks;
+
+            feature kern {
+                lookup kern_dflt;
+                script latn;
+                language dflt;
+                lookup kern_ltr;
+                lookup kern_ltr_marks;
+                language TRK;
+                script arab;
+                language dflt;
+                lookup kern_rtl;
+                lookup kern_rtl_marks;
+                language URD;
+            } kern;
+            """
+        )
+
+    def test_kern_RTL_with_marks(self, FontClass):
+        glyphs = {
+            ".notdef": None,
+            "alef-ar": 0x627,
+            "reh-ar": 0x631,
+            "zain-ar": 0x632,
+            "lam-ar": 0x644,
+            "four-ar": 0x664,
+            "seven-ar": 0x667,
+            "fatha-ar": 0x64E,
+            # # we also add glyphs without unicode codepoint, but linked to
+            # # an encoded 'character' glyph by some GSUB rule
+            "alef-ar.isol": None,
+            "lam-ar.init": None,
+            "reh-ar.fina": None,
+        }
+        groups = {
+            "public.kern1.reh": ["reh-ar", "zain-ar", "reh-ar.fina"],
+            "public.kern2.alef": ["alef-ar", "alef-ar.isol"],
+        }
+        kerning = {
+            ("reh-ar.fina", "lam-ar.init"): -80,
+            ("public.kern1.reh", "public.kern2.alef"): -100,
+            ("reh-ar", "fatha-ar"): 80,
+        }
+        features = dedent(
+            """\
+            languagesystem arab dflt;
+            languagesystem arab ARA;
+
+            feature init {
+                script arab;
+                sub lam-ar by lam-ar.init;
+            } init;
+
+            feature fina {
+                script arab;
+                sub reh-ar by reh-ar.fina;
+            } fina;
+
+            @Bases = [alef-ar reh-ar zain-ar lam-ar alef-ar.isol lam-ar.init reh-ar.fina];
+            @Marks = [fatha-ar];
+            table GDEF {
+                GlyphClassDef @Bases, [], @Marks, ;
+            } GDEF;
+            """
+        )
+
+
+        ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+
+        newFeatures = self.writeFeatures(ufo)
+
+        assert str(newFeatures) == dedent(
+            """\
+            @kern1.reh = [reh-ar zain-ar reh-ar.fina];
+            @kern2.alef = [alef-ar alef-ar.isol];
+            
+            lookup kern_dflt_marks {
+                pos reh-ar fatha-ar 80;
+            } kern_dflt_marks;
+            
+            lookup kern_rtl {
+                lookupflag IgnoreMarks;
+                pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
+                pos @kern1.reh @kern2.alef <-100 0 -100 0>;
+            } kern_rtl;
+            
+            lookup kern_rtl_marks {
+                pos reh-ar fatha-ar <80 0 80 0>;
+            } kern_rtl_marks;
+            
+            feature kern {
+                lookup kern_rtl;
+                lookup kern_rtl_marks;
             } kern;
             """
         )
