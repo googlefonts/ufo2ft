@@ -6,11 +6,13 @@ from __future__ import (
 )
 import os
 import logging
+import ufo2ft
 from ufo2ft.preProcessor import (
     TTFPreProcessor,
     TTFInterpolatablePreProcessor,
 )
 from cu2qu.ufo import CURVE_TYPE_LIB_KEY
+from fontTools import designspaceLib
 
 
 def getpath(filename):
@@ -132,3 +134,80 @@ class TTFInterpolatablePreProcessorTest(object):
             assert CURVE_TYPE_LIB_KEY not in ufo2.layers.defaultLayer.lib
             assert glyph_has_qcurve(ufo1, "c")
             assert glyph_has_qcurve(ufo2, "c")
+
+
+class SkipExportGlyphsTest(object):
+    def test_skip_export_glyphs_filter(self, FontClass):
+        from ufo2ft.util import _GlyphSet
+
+        ufo = FontClass(getpath("IncompatibleMasters/NewFont-Regular.ufo"))
+        skipExportGlyphs = ["b", "d"]
+        glyphSet = _GlyphSet.from_layer(ufo, skipExportGlyphs=skipExportGlyphs)
+
+        assert set(glyphSet.keys()) == set(["a", "c", "e", "f"])
+        assert len(glyphSet["a"]) == 1
+        assert not glyphSet["a"].components
+        assert len(glyphSet["c"]) == 5  # 4 "d" components decomposed plus 1 outline
+        assert list(c.baseGlyph for c in glyphSet["c"].components) == ["a"]
+        assert len(glyphSet["e"]) == 1
+        assert list(c.baseGlyph for c in glyphSet["e"].components) == ["c", "c"]
+        assert not glyphSet["f"]
+        assert list(c.baseGlyph for c in glyphSet["f"].components) == ["a", "a"]
+
+    def test_skip_export_glyphs_designspace(self, FontClass):
+        # Designspace has a public.skipExportGlyphs lib key excluding "b" and "d".
+        designspace = designspaceLib.DesignSpaceDocument.fromfile(
+            getpath("IncompatibleMasters/IncompatibleMasters.designspace")
+        )
+        for source in designspace.sources:
+            source.font = FontClass(
+                getpath(os.path.join("IncompatibleMasters", source.filename))
+            )
+        ufo2ft.compileInterpolatableTTFsFromDS(designspace, inplace=True)
+
+        for source in designspace.sources:
+            assert source.font.getGlyphOrder() == [".notdef", "a", "c", "e", "f"]
+            glyphs = source.font["glyf"].glyphs
+            for g in glyphs.values():
+                g.expand(source.font["glyf"])
+            assert glyphs["a"].numberOfContours == 1
+            assert not hasattr(glyphs["a"], "components")
+            assert glyphs["c"].numberOfContours == 6
+            assert not hasattr(glyphs["c"], "components")
+            assert glyphs["e"].numberOfContours == 13
+            assert not hasattr(glyphs["e"], "components")
+            assert glyphs["f"].isComposite()
+
+    def test_skip_export_glyphs_multi_ufo(self, FontClass):
+        # Bold has a public.skipExportGlyphs lib key excluding "b", "d" and "f".
+        ufo1 = FontClass(getpath("IncompatibleMasters/NewFont-Regular.ufo"))
+        ufo2 = FontClass(getpath("IncompatibleMasters/NewFont-Bold.ufo"))
+        fonts = ufo2ft.compileInterpolatableTTFs([ufo1, ufo2], inplace=True)
+
+        for font in fonts:
+            assert set(font.getGlyphOrder()) == {".notdef", "a", "c", "e"}
+            glyphs = font["glyf"].glyphs
+            for g in glyphs.values():
+                g.expand(font["glyf"])
+            assert glyphs["a"].numberOfContours == 1
+            assert not hasattr(glyphs["a"], "components")
+            assert glyphs["c"].numberOfContours == 6
+            assert not hasattr(glyphs["c"], "components")
+            assert glyphs["e"].numberOfContours == 13
+            assert not hasattr(glyphs["e"], "components")
+
+    def test_skip_export_glyphs_single_ufo(self, FontClass):
+        # UFO has a public.skipExportGlyphs lib key excluding "b", "d" and "f".
+        ufo = FontClass(getpath("IncompatibleMasters/NewFont-Bold.ufo"))
+        font = ufo2ft.compileTTF(ufo, inplace=True)
+
+        assert set(font.getGlyphOrder()) == {".notdef", "a", "c", "e"}
+        glyphs = font["glyf"].glyphs
+        for g in glyphs.values():
+            g.expand(font["glyf"])
+        assert glyphs["a"].numberOfContours == 1
+        assert not hasattr(glyphs["a"], "components")
+        assert glyphs["c"].numberOfContours == 6
+        assert not hasattr(glyphs["c"], "components")
+        assert glyphs["e"].numberOfContours == 13
+        assert not hasattr(glyphs["e"], "components")
