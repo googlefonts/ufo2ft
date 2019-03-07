@@ -150,6 +150,7 @@ def deepCopyContours(
                 parent,
                 nestedBaseGlyph,
                 transformation.transform(nestedComponent.transformation),
+                specificComponents,
             )
 
     if composite != parent:
