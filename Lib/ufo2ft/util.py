@@ -50,19 +50,44 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
 
 
 class _GlyphSet(dict):
-
     @classmethod
-    def from_layer(cls, font, layerName=None, copy=False):
+    def from_layer(cls, font, layerName=None, copy=False, skipExportGlyphs=None):
+        """Return a mapping of glyph names to glyph objects from `font`."""
         if layerName is not None:
             layer = font.layers[layerName]
         else:
             layer = font.layers.defaultLayer
+
         if copy:
             self = _copyLayer(layer, obj_type=cls)
             self.lib = deepcopy(layer.lib)
         else:
             self = cls((g.name, g) for g in layer)
             self.lib = layer.lib
+
+        # If any glyphs in the skipExportGlyphs list are used as components, decompose
+        # them in the containing glyphs...
+        if skipExportGlyphs:
+            for glyph in self.values():
+                if any(c.baseGlyph in skipExportGlyphs for c in glyph.components):
+                    deepCopyContours(self, glyph, glyph, Transform(), skipExportGlyphs)
+                    try:  # defcon: `glyph.components` returns a new list.
+                        glyph._components = [
+                            c
+                            for c in glyph.components
+                            if c.baseGlyph not in skipExportGlyphs
+                        ]
+                    except AttributeError:  # ufoLib2
+                        glyph.components[:] = [
+                            c
+                            for c in glyph.components
+                            if c.baseGlyph not in skipExportGlyphs
+                        ]
+            # ... and then remove them from the glyph set, if even present.
+            for glyph_name in skipExportGlyphs:
+                if glyph_name in self:
+                    del self[glyph_name]
+
         self.name = layer.name if layerName is not None else None
         return self
 
