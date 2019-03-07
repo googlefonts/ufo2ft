@@ -71,13 +71,14 @@ class _GlyphSet(dict):
             for glyph in self.values():
                 if any(c.baseGlyph in skipExportGlyphs for c in glyph.components):
                     deepCopyContours(self, glyph, glyph, Transform(), skipExportGlyphs)
-                    try:  # defcon: `glyph.components` returns a new list.
-                        glyph._components = [
-                            c
-                            for c in glyph.components
-                            if c.baseGlyph not in skipExportGlyphs
-                        ]
-                    except AttributeError:  # ufoLib2
+                    if hasattr(glyph, "removeComponent"):  # defcon
+                        for c in [
+                            component
+                            for component in glyph.components
+                            if component.baseGlyph in skipExportGlyphs
+                        ]:
+                            glyph.removeComponent(c)
+                    else:  # ufoLib2
                         glyph.components[:] = [
                             c
                             for c in glyph.components
