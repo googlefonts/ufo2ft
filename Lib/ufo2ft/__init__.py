@@ -91,7 +91,8 @@ def compileOTF(
     final font. If these glyphs are used as components in any other glyph, those
     components get decomposed. If the parameter is not passed in, the UFO's
     "public.skipExportGlyphs" lib key will be consulted. If it doesn't exist,
-    all glyphs are exported.
+    all glyphs are exported. UFO groups and kerning will be pruned of skipped
+    glyphs **in-place**.
     """
     logger.info("Pre-processing glyphs")
 
@@ -128,6 +129,7 @@ def compileOTF(
             glyphSet=glyphSet,
             featureWriters=featureWriters,
             featureCompilerClass=featureCompilerClass,
+            skipExportGlyphs=skipExportGlyphs,
         )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
@@ -171,7 +173,8 @@ def compileTTF(
     final font. If these glyphs are used as components in any other glyph, those
     components get decomposed. If the parameter is not passed in, the UFO's
     "public.skipExportGlyphs" lib key will be consulted. If it doesn't exist,
-    all glyphs are exported.
+    all glyphs are exported. UFO groups and kerning will be pruned of skipped
+    glyphs **in-place**.
     """
     logger.info("Pre-processing glyphs")
 
@@ -206,6 +209,7 @@ def compileTTF(
             glyphSet=glyphSet,
             featureWriters=featureWriters,
             featureCompilerClass=featureCompilerClass,
+            skipExportGlyphs=skipExportGlyphs
         )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
@@ -246,7 +250,8 @@ def compileInterpolatableTTFs(
     final font. If these glyphs are used as components in any other glyph, those
     components get decomposed. If the parameter is not passed in, the union of
     all UFO's "public.skipExportGlyphs" lib keys will be used. If they don't
-    exist, all glyphs are exported.
+    exist, all glyphs are exported. UFO groups and kerning will be pruned of
+    skipped glyphs **in-place**.
     """
     from ufo2ft.util import _LazyFontName
 
@@ -294,6 +299,7 @@ def compileInterpolatableTTFs(
                 glyphSet=glyphSet,
                 featureWriters=featureWriters,
                 featureCompilerClass=featureCompilerClass,
+                skipExportGlyphs=skipExportGlyphs
             )
 
         postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
@@ -333,7 +339,8 @@ def compileInterpolatableTTFsFromDS(
     glyphs will not be exported to the final font. If these glyphs are used as
     components in any other glyph, those components get decomposed. If the lib
     key doesn't exist in the Designspace, all glyphs are exported (keys in
-    individual UFOs are ignored).
+    individual UFOs are ignored). UFO groups and kerning will be pruned of
+    skipped glyphs **in-place**.
 
     The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
     attribute set to an already loaded defcon.Font object (or compatible UFO
@@ -407,7 +414,8 @@ def compileInterpolatableOTFsFromDS(
     glyphs will not be exported to the final font. If these glyphs are used as
     components in any other glyph, those components get decomposed. If the lib
     key doesn't exist in the Designspace, all glyphs are exported (keys in
-    individual UFOs are ignored).
+    individual UFOs are ignored). UFO groups and kerning will be pruned of
+    skipped glyphs **in-place**.
 
     The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
     attribute set to an already loaded defcon.Font object (or compatible UFO
@@ -471,6 +479,7 @@ def compileFeatures(
     glyphSet=None,
     featureWriters=None,
     featureCompilerClass=None,
+    skipExportGlyphs=None,
 ):
     """ Compile OpenType Layout features from `ufo` into FontTools OTL tables.
     If `ttFont` is None, a new TTFont object is created containing the new
@@ -480,7 +489,28 @@ def compileFeatures(
     depend on whether the ufo contains any MTI feature files in its 'data'
     directory (thus the `MTIFeatureCompiler` is used) or not (then the
     default FeatureCompiler for Adobe FDK features is used).
+
+    If skipExportGlyphs is provided (see description in the ``compile*``
+    functions), groups and kerning of the UFO are pruned of skipped glyphs
+    **in-place**, possibly leaving behind empty groups.
     """
+    if skipExportGlyphs:
+        # Filter out skipped glyphs from groups and kerning in-place.
+        filtered_groups = {
+            key: [g for g in value if g not in skipExportGlyphs]
+            for key, value in ufo.groups.items()
+        }
+        filtered_kerning = {
+            key: value
+            for key, value in ufo.kerning.items()
+            if not any(side in skipExportGlyphs for side in key)
+        }
+
+        ufo.groups.clear()
+        ufo.groups.update(filtered_groups)
+        ufo.kerning.clear()
+        ufo.kerning.update(filtered_kerning)
+
     if featureCompilerClass is None:
         if any(
             fn.startswith(MTI_FEATURES_PREFIX) and fn.endswith(".mti")

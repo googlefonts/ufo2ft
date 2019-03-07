@@ -167,6 +167,12 @@ class SkipExportGlyphsTest(object):
 
         for source in designspace.sources:
             assert source.font.getGlyphOrder() == [".notdef", "a", "c", "e", "f"]
+            gpos_table = source.font["GPOS"].table
+            assert gpos_table.LookupList.Lookup[0].SubTable[0].Coverage.glyphs == [
+                "a",
+                "e",
+                "f",
+            ]
             glyphs = source.font["glyf"].glyphs
             for g in glyphs.values():
                 g.expand(source.font["glyf"])
@@ -186,6 +192,8 @@ class SkipExportGlyphsTest(object):
 
         for font in fonts:
             assert set(font.getGlyphOrder()) == {".notdef", "a", "c", "e"}
+            gpos_table = font["GPOS"].table
+            assert gpos_table.LookupList.Lookup[0].SubTable[0].Coverage.glyphs == ["a"]
             glyphs = font["glyf"].glyphs
             for g in glyphs.values():
                 g.expand(font["glyf"])
@@ -202,6 +210,8 @@ class SkipExportGlyphsTest(object):
         font = ufo2ft.compileTTF(ufo, inplace=True)
 
         assert set(font.getGlyphOrder()) == {".notdef", "a", "c", "e"}
+        gpos_table = font["GPOS"].table
+        assert gpos_table.LookupList.Lookup[0].SubTable[0].Coverage.glyphs == ["a"]
         glyphs = font["glyf"].glyphs
         for g in glyphs.values():
             g.expand(font["glyf"])
