@@ -15,6 +15,9 @@ from fontTools import ttLib
 from fontTools import subset
 from fontTools import unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
+from fontTools.misc.transform import Identity, Transform
+from fontTools.pens.reverseContourPen import ReverseContourPen
+from fontTools.pens.transformPen import TransformPen
 import logging
 
 
@@ -97,6 +100,45 @@ def _copyLayer(layer, obj_type=dict):
         glyph.drawPoints(pointPen)
         glyphSet[glyph.name] = copy
     return glyphSet
+
+
+def deepCopyContours(
+    glyphSet, parent, composite, transformation, specificComponents=None
+):
+    """Copy contours from component to parent, including nested components."""
+
+    for nestedComponent in composite.components:
+        if specificComponents and nestedComponent.baseGlyph not in specificComponents:
+            continue
+
+        try:
+            nestedBaseGlyph = glyphSet[nestedComponent.baseGlyph]
+        except KeyError:
+            logger.warning(
+                "dropping non-existent component '%s' in glyph '%s'",
+                nestedComponent.baseGlyph,
+                parent.name,
+            )
+        else:
+            deepCopyContours(
+                glyphSet,
+                parent,
+                nestedBaseGlyph,
+                transformation.transform(nestedComponent.transformation),
+            )
+
+    if composite != parent:
+        if transformation == Identity:
+            pen = parent.getPen()
+        else:
+            pen = TransformPen(parent.getPen(), transformation)
+            # if the transformation has a negative determinant, it will
+            # reverse the contour direction of the component
+            xx, xy, yx, yy = transformation[:4]
+            if xx * yy - xy * yx < 0:
+                pen = ReverseContourPen(pen)
+
+        composite.draw(pen)
 
 
 def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
