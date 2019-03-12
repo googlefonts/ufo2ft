@@ -494,23 +494,6 @@ def compileFeatures(
     functions), the feature compiler will prune groups (removing them if empty)
     and kerning of the UFO of these glyphs. The feature file is left untouched.
     """
-    if skipExportGlyphs:
-        # Filter out skipped glyphs from groups and kerning in-place.
-        filtered_groups = {
-            key: [g for g in value if g not in skipExportGlyphs]
-            for key, value in ufo.groups.items()
-        }
-        filtered_kerning = {
-            key: value
-            for key, value in ufo.kerning.items()
-            if not any(side in skipExportGlyphs for side in key)
-        }
-
-        ufo.groups.clear()
-        ufo.groups.update(filtered_groups)
-        ufo.kerning.clear()
-        ufo.kerning.update(filtered_kerning)
-
     if featureCompilerClass is None:
         if any(
             fn.startswith(MTI_FEATURES_PREFIX) and fn.endswith(".mti")
