@@ -209,7 +209,7 @@ def compileTTF(
             glyphSet=glyphSet,
             featureWriters=featureWriters,
             featureCompilerClass=featureCompilerClass,
-            skipExportGlyphs=skipExportGlyphs
+            skipExportGlyphs=skipExportGlyphs,
         )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
@@ -299,7 +299,7 @@ def compileInterpolatableTTFs(
                 glyphSet=glyphSet,
                 featureWriters=featureWriters,
                 featureCompilerClass=featureCompilerClass,
-                skipExportGlyphs=skipExportGlyphs
+                skipExportGlyphs=skipExportGlyphs,
             )
 
         postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
