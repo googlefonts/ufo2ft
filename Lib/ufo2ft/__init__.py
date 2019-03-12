@@ -491,8 +491,8 @@ def compileFeatures(
     default FeatureCompiler for Adobe FDK features is used).
 
     If skipExportGlyphs is provided (see description in the ``compile*``
-    functions), groups and kerning of the UFO are pruned of skipped glyphs
-    **in-place**, possibly leaving behind empty groups.
+    functions), the feature compiler will prune groups (removing them if empty)
+    and kerning of the UFO of these glyphs. The feature file is left untouched.
     """
     if skipExportGlyphs:
         # Filter out skipped glyphs from groups and kerning in-place.
