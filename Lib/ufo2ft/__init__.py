@@ -129,7 +129,6 @@ def compileOTF(
             glyphSet=glyphSet,
             featureWriters=featureWriters,
             featureCompilerClass=featureCompilerClass,
-            skipExportGlyphs=skipExportGlyphs,
         )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
@@ -209,7 +208,6 @@ def compileTTF(
             glyphSet=glyphSet,
             featureWriters=featureWriters,
             featureCompilerClass=featureCompilerClass,
-            skipExportGlyphs=skipExportGlyphs,
         )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
@@ -299,7 +297,6 @@ def compileInterpolatableTTFs(
                 glyphSet=glyphSet,
                 featureWriters=featureWriters,
                 featureCompilerClass=featureCompilerClass,
-                skipExportGlyphs=skipExportGlyphs,
             )
 
         postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
@@ -479,7 +476,6 @@ def compileFeatures(
     glyphSet=None,
     featureWriters=None,
     featureCompilerClass=None,
-    skipExportGlyphs=None,
 ):
     """ Compile OpenType Layout features from `ufo` into FontTools OTL tables.
     If `ttFont` is None, a new TTFont object is created containing the new
