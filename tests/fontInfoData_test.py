@@ -194,7 +194,7 @@ class NormalizeStringForPostscriptTest(object):
 class DateStringToTimeValueTest(object):
 
     def test_roundtrip_random_timestamp(self):
-        timestamp = random.randint(0, 10**10)
+        timestamp = random.randint(0, 10 ** 9)
         ds = time.strftime("%Y/%m/%d %H:%M:%S", time.gmtime(timestamp))
         assert dateStringToTimeValue(ds) == timestamp
 
