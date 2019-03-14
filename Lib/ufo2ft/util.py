@@ -15,6 +15,9 @@ from fontTools import ttLib
 from fontTools import subset
 from fontTools import unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
+from fontTools.misc.transform import Identity, Transform
+from fontTools.pens.reverseContourPen import ReverseContourPen
+from fontTools.pens.transformPen import TransformPen
 import logging
 
 
@@ -47,19 +50,45 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
 
 
 class _GlyphSet(dict):
-
     @classmethod
-    def from_layer(cls, font, layerName=None, copy=False):
+    def from_layer(cls, font, layerName=None, copy=False, skipExportGlyphs=None):
+        """Return a mapping of glyph names to glyph objects from `font`."""
         if layerName is not None:
             layer = font.layers[layerName]
         else:
             layer = font.layers.defaultLayer
+
         if copy:
             self = _copyLayer(layer, obj_type=cls)
             self.lib = deepcopy(layer.lib)
         else:
             self = cls((g.name, g) for g in layer)
             self.lib = layer.lib
+
+        # If any glyphs in the skipExportGlyphs list are used as components, decompose
+        # them in the containing glyphs...
+        if skipExportGlyphs:
+            for glyph in self.values():
+                if any(c.baseGlyph in skipExportGlyphs for c in glyph.components):
+                    deepCopyContours(self, glyph, glyph, Transform(), skipExportGlyphs)
+                    if hasattr(glyph, "removeComponent"):  # defcon
+                        for c in [
+                            component
+                            for component in glyph.components
+                            if component.baseGlyph in skipExportGlyphs
+                        ]:
+                            glyph.removeComponent(c)
+                    else:  # ufoLib2
+                        glyph.components[:] = [
+                            c
+                            for c in glyph.components
+                            if c.baseGlyph not in skipExportGlyphs
+                        ]
+            # ... and then remove them from the glyph set, if even present.
+            for glyph_name in skipExportGlyphs:
+                if glyph_name in self:
+                    del self[glyph_name]
+
         self.name = layer.name if layerName is not None else None
         return self
 
@@ -97,6 +126,46 @@ def _copyLayer(layer, obj_type=dict):
         glyph.drawPoints(pointPen)
         glyphSet[glyph.name] = copy
     return glyphSet
+
+
+def deepCopyContours(
+    glyphSet, parent, composite, transformation, specificComponents=None
+):
+    """Copy contours from component to parent, including nested components."""
+
+    for nestedComponent in composite.components:
+        if specificComponents and nestedComponent.baseGlyph not in specificComponents:
+            continue
+
+        try:
+            nestedBaseGlyph = glyphSet[nestedComponent.baseGlyph]
+        except KeyError:
+            logger.warning(
+                "dropping non-existent component '%s' in glyph '%s'",
+                nestedComponent.baseGlyph,
+                parent.name,
+            )
+        else:
+            deepCopyContours(
+                glyphSet,
+                parent,
+                nestedBaseGlyph,
+                transformation.transform(nestedComponent.transformation),
+                specificComponents,
+            )
+
+    if composite != parent:
+        if transformation == Identity:
+            pen = parent.getPen()
+        else:
+            pen = TransformPen(parent.getPen(), transformation)
+            # if the transformation has a negative determinant, it will
+            # reverse the contour direction of the component
+            xx, xy, yx, yy = transformation[:4]
+            if xx * yy - xy * yx < 0:
+                pen = ReverseContourPen(pen)
+
+        composite.draw(pen)
 
 
 def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):

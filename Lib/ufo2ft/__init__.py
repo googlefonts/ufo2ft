@@ -49,6 +49,7 @@ def compileOTF(
     overlapsBackend=None,
     inplace=False,
     layerName=None,
+    skipExportGlyphs=None,
     _tables=None,
 ):
     """Create FontTools CFF font from a UFO.
@@ -85,14 +86,26 @@ def compileOTF(
 
     *layerName* specifies which layer should be compiled. When compiling something
     other than the default layer, feature compilation is skipped.
+
+    *skipExportGlyphs* is a list or set of glyph names to not be exported to the
+    final font. If these glyphs are used as components in any other glyph, those
+    components get decomposed. If the parameter is not passed in, the UFO's
+    "public.skipExportGlyphs" lib key will be consulted. If it doesn't exist,
+    all glyphs are exported. UFO groups and kerning will be pruned of skipped
+    glyphs.
     """
     logger.info("Pre-processing glyphs")
+
+    if skipExportGlyphs is None:
+        skipExportGlyphs = ufo.lib.get("public.skipExportGlyphs", [])
+
     preProcessor = preProcessorClass(
         ufo,
         inplace=inplace,
         removeOverlaps=removeOverlaps,
         overlapsBackend=overlapsBackend,
         layerName=layerName,
+        skipExportGlyphs=skipExportGlyphs,
     )
     glyphSet = preProcessor.process()
 
@@ -143,6 +156,7 @@ def compileTTF(
     overlapsBackend=None,
     inplace=False,
     layerName=None,
+    skipExportGlyphs=None,
 ):
     """Create FontTools TrueType font from a UFO.
 
@@ -153,8 +167,19 @@ def compileTTF(
 
     *layerName* specifies which layer should be compiled. When compiling something
     other than the default layer, feature compilation is skipped.
+
+    *skipExportGlyphs* is a list or set of glyph names to not be exported to the
+    final font. If these glyphs are used as components in any other glyph, those
+    components get decomposed. If the parameter is not passed in, the UFO's
+    "public.skipExportGlyphs" lib key will be consulted. If it doesn't exist,
+    all glyphs are exported. UFO groups and kerning will be pruned of skipped
+    glyphs.
     """
     logger.info("Pre-processing glyphs")
+
+    if skipExportGlyphs is None:
+        skipExportGlyphs = ufo.lib.get("public.skipExportGlyphs", [])
+
     preProcessor = preProcessorClass(
         ufo,
         inplace=inplace,
@@ -165,6 +190,7 @@ def compileTTF(
         reverseDirection=reverseDirection,
         rememberCurveType=rememberCurveType,
         layerName=layerName,
+        skipExportGlyphs=skipExportGlyphs,
     )
     glyphSet = preProcessor.process()
 
@@ -202,6 +228,7 @@ def compileInterpolatableTTFs(
     reverseDirection=True,
     inplace=False,
     layerNames=None,
+    skipExportGlyphs=None,
 ):
     """Create FontTools TrueType fonts from a list of UFOs with interpolatable
     outlines. Cubic curves are converted compatibly to quadratic curves using
@@ -216,12 +243,24 @@ def compileInterpolatableTTFs(
     When the layerName is not None for a given UFO, the corresponding TTFont object
     will contain only a minimum set of tables ("head", "hmtx", "glyf", "loca", "maxp",
     "post" and "vmtx"), and no OpenType layout tables.
+
+    *skipExportGlyphs* is a list or set of glyph names to not be exported to the
+    final font. If these glyphs are used as components in any other glyph, those
+    components get decomposed. If the parameter is not passed in, the union of
+    all UFO's "public.skipExportGlyphs" lib keys will be used. If they don't
+    exist, all glyphs are exported. UFO groups and kerning will be pruned of
+    skipped glyphs.
     """
     from ufo2ft.util import _LazyFontName
 
     if layerNames is None:
         layerNames = [None] * len(ufos)
     assert len(ufos) == len(layerNames)
+
+    if skipExportGlyphs is None:
+        skipExportGlyphs = set()
+        for ufo in ufos:
+            skipExportGlyphs.update(ufo.lib.get("public.skipExportGlyphs", []))
 
     logger.info("Pre-processing glyphs")
     preProcessor = preProcessorClass(
@@ -230,6 +269,7 @@ def compileInterpolatableTTFs(
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection,
         layerNames=layerNames,
+        skipExportGlyphs=skipExportGlyphs,
     )
     glyphSets = preProcessor.process()
 
@@ -292,6 +332,13 @@ def compileInterpolatableTTFsFromDS(
     with interpolatable outlines. Cubic curves are converted compatibly to
     quadratic curves using the Cu2Qu conversion algorithm.
 
+    If the Designspace contains a "public.skipExportGlyphs" lib key, these
+    glyphs will not be exported to the final font. If these glyphs are used as
+    components in any other glyph, those components get decomposed. If the lib
+    key doesn't exist in the Designspace, all glyphs are exported (keys in
+    individual UFOs are ignored). UFO groups and kerning will be pruned of
+    skipped glyphs.
+
     The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
     attribute set to an already loaded defcon.Font object (or compatible UFO
     Font class). If 'font' attribute is unset or None, an AttributeError exception
@@ -316,6 +363,8 @@ def compileInterpolatableTTFsFromDS(
         # 'layerName' is None for the default layer
         layerNames.append(source.layerName)
 
+    skipExportGlyphs = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
+
     ttfs = compileInterpolatableTTFs(
         ufos,
         preProcessorClass=preProcessorClass,
@@ -328,6 +377,7 @@ def compileInterpolatableTTFsFromDS(
         reverseDirection=reverseDirection,
         inplace=inplace,
         layerNames=layerNames,
+        skipExportGlyphs=skipExportGlyphs,
     )
 
     if inplace:
@@ -357,6 +407,13 @@ def compileInterpolatableOTFsFromDS(
     Interpolatable means without subroutinization and specializer optimizations
     and no removal of overlaps.
 
+    If the Designspace contains a "public.skipExportGlyphs" lib key, these
+    glyphs will not be exported to the final font. If these glyphs are used as
+    components in any other glyph, those components get decomposed. If the lib
+    key doesn't exist in the Designspace, all glyphs are exported (keys in
+    individual UFOs are ignored). UFO groups and kerning will be pruned of
+    skipped glyphs.
+
     The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
     attribute set to an already loaded defcon.Font object (or compatible UFO
     Font class). If 'font' attribute is unset or None, an AttributeError exception
@@ -377,6 +434,8 @@ def compileInterpolatableOTFsFromDS(
                 % getattr(source, "name", "<Unknown>")
             )
 
+    skipExportGlyphs = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
+
     otfs = []
     for source in designSpaceDoc.sources:
         otfs.append(
@@ -394,6 +453,7 @@ def compileInterpolatableOTFsFromDS(
                 removeOverlaps=False,
                 overlapsBackend=None,
                 inplace=inplace,
+                skipExportGlyphs=skipExportGlyphs,
                 _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
             )
         )
@@ -425,6 +485,10 @@ def compileFeatures(
     depend on whether the ufo contains any MTI feature files in its 'data'
     directory (thus the `MTIFeatureCompiler` is used) or not (then the
     default FeatureCompiler for Adobe FDK features is used).
+
+    If skipExportGlyphs is provided (see description in the ``compile*``
+    functions), the feature compiler will prune groups (removing them if empty)
+    and kerning of the UFO of these glyphs. The feature file is left untouched.
     """
     if featureCompilerClass is None:
         if any(

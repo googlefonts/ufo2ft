@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="c" format="2">
+  <advance width="600.0"/>
+  <unicode hex="0063"/>
+  <outline>
+    <contour>
+      <point x="189.0" y="21.0" type="line"/>
+      <point x="189.0" y="0.0" type="line"/>
+      <point x="364.0" y="0.0" type="line"/>
+      <point x="364.0" y="21.0" type="line"/>
+    </contour>
+    <component base="d" yOffset="-117.0"/>
+    <component base="d" xOffset="174.0" yOffset="-126.0"/>
+    <component base="d" yOffset="-45.0"/>
+    <component base="d" xOffset="168.0"/>
+    <component base="a" xOffset="-280.3" yOffset="-195.96842105263158"/>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2019/03/06 17:23:09</string>
+      <key>com.schriftgestaltung.componentsAlignment</key>
+      <array>
+        <integer>-1</integer>
+        <integer>-1</integer>
+        <integer>0</integer>
+        <integer>-1</integer>
+      </array>
+    </dict>
+  </lib>
+</glyph>
