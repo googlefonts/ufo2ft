@@ -92,7 +92,7 @@ def compileOTF(
     components get decomposed. If the parameter is not passed in, the UFO's
     "public.skipExportGlyphs" lib key will be consulted. If it doesn't exist,
     all glyphs are exported. UFO groups and kerning will be pruned of skipped
-    glyphs **in-place**.
+    glyphs.
     """
     logger.info("Pre-processing glyphs")
 
@@ -173,7 +173,7 @@ def compileTTF(
     components get decomposed. If the parameter is not passed in, the UFO's
     "public.skipExportGlyphs" lib key will be consulted. If it doesn't exist,
     all glyphs are exported. UFO groups and kerning will be pruned of skipped
-    glyphs **in-place**.
+    glyphs.
     """
     logger.info("Pre-processing glyphs")
 
@@ -249,7 +249,7 @@ def compileInterpolatableTTFs(
     components get decomposed. If the parameter is not passed in, the union of
     all UFO's "public.skipExportGlyphs" lib keys will be used. If they don't
     exist, all glyphs are exported. UFO groups and kerning will be pruned of
-    skipped glyphs **in-place**.
+    skipped glyphs.
     """
     from ufo2ft.util import _LazyFontName
 
@@ -337,7 +337,7 @@ def compileInterpolatableTTFsFromDS(
     components in any other glyph, those components get decomposed. If the lib
     key doesn't exist in the Designspace, all glyphs are exported (keys in
     individual UFOs are ignored). UFO groups and kerning will be pruned of
-    skipped glyphs **in-place**.
+    skipped glyphs.
 
     The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
     attribute set to an already loaded defcon.Font object (or compatible UFO
@@ -412,7 +412,7 @@ def compileInterpolatableOTFsFromDS(
     components in any other glyph, those components get decomposed. If the lib
     key doesn't exist in the Designspace, all glyphs are exported (keys in
     individual UFOs are ignored). UFO groups and kerning will be pruned of
-    skipped glyphs **in-place**.
+    skipped glyphs.
 
     The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
     attribute set to an already loaded defcon.Font object (or compatible UFO
