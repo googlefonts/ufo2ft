@@ -28,11 +28,15 @@ class BasePreProcessor(object):
     "com.github.googlei18n.ufo2ft.filters".
     """
 
-    def __init__(self, ufo, inplace=False, layerName=None, **kwargs):
+    def __init__(
+        self, ufo, inplace=False, layerName=None, skipExportGlyphs=None, **kwargs
+    ):
         self.ufo = ufo
         self.inplace = inplace
         self.layerName = layerName
-        self.glyphSet = _GlyphSet.from_layer(ufo, layerName, copy=not inplace)
+        self.glyphSet = _GlyphSet.from_layer(
+            ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
+        )
         self.defaultFilters = self.initDefaultFilters(**kwargs)
         self.preFilters, self.postFilters = loadFilters(ufo)
 
@@ -162,9 +166,16 @@ class TTFInterpolatablePreProcessor(object):
     arguments work in the same way as in the ``TTFPreProcessor``.
     """
 
-    def __init__(self, ufos, inplace=False, conversionError=None,
-                 reverseDirection=True, rememberCurveType=True,
-                 layerNames=None):
+    def __init__(
+        self,
+        ufos,
+        inplace=False,
+        conversionError=None,
+        reverseDirection=True,
+        rememberCurveType=True,
+        layerNames=None,
+        skipExportGlyphs=None,
+    ):
         from cu2qu.ufo import DEFAULT_MAX_ERR
 
         self.ufos = ufos
@@ -176,7 +187,9 @@ class TTFInterpolatablePreProcessor(object):
         self.layerNames = layerNames
 
         self.glyphSets = [
-            _GlyphSet.from_layer(ufo, layerName, copy=not inplace)
+            _GlyphSet.from_layer(
+                ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
+            )
             for ufo, layerName in zip(ufos, layerNames)
         ]
         self._conversionErrors = [

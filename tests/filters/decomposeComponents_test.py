@@ -4,10 +4,8 @@ from __future__ import (
     absolute_import,
     unicode_literals,
 )
-from ufo2ft.filters.decomposeComponents import (
-    DecomposeComponentsFilter,
-    logger,
-)
+from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
+from ufo2ft.util import logger
 import logging
 
 

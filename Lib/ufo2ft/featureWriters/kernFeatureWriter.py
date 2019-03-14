@@ -212,7 +212,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             font, feaFile, compiler=compiler
         )
         ctx.gdefClasses = ast.getGDEFGlyphClasses(feaFile)
-        ctx.kerning = self.getKerningData(font, feaFile)
+        ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
         ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaFile)
 
         return ctx
@@ -268,20 +268,25 @@ class KernFeatureWriter(BaseFeatureWriter):
         return True
 
     @classmethod
-    def getKerningData(cls, font, feaFile=None):
-        side1Classes, side2Classes = cls.getKerningClasses(font, feaFile)
-        pairs = cls.getKerningPairs(font, side1Classes, side2Classes)
+    def getKerningData(cls, font, feaFile=None, glyphSet=None):
+        side1Classes, side2Classes = cls.getKerningClasses(
+            font, feaFile, glyphSet
+        )
+        pairs = cls.getKerningPairs(font, side1Classes, side2Classes, glyphSet)
         return SimpleNamespace(
             side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
         )
 
     @staticmethod
-    def getKerningGroups(font):
-        allGlyphs = set(font.keys())
+    def getKerningGroups(font, glyphSet=None):
+        if glyphSet:
+            allGlyphs = set(glyphSet.keys())
+        else:
+            allGlyphs = set(font.keys())
         side1Groups = {}
         side2Groups = {}
         for name, members in font.groups.items():
-            # prune non-existent glyphs
+            # prune non-existent or skipped glyphs
             members = [g for g in members if g in allGlyphs]
             if not members:
                 # skip empty groups
@@ -294,8 +299,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         return side1Groups, side2Groups
 
     @classmethod
-    def getKerningClasses(cls, font, feaFile=None):
-        side1Groups, side2Groups = cls.getKerningGroups(font)
+    def getKerningClasses(cls, font, feaFile=None, glyphSet=None):
+        side1Groups, side2Groups = cls.getKerningGroups(font, glyphSet)
         side1Classes = ast.makeGlyphClassDefinitions(
             side1Groups, feaFile, stripPrefix="public."
         )
@@ -305,8 +310,11 @@ class KernFeatureWriter(BaseFeatureWriter):
         return side1Classes, side2Classes
 
     @staticmethod
-    def getKerningPairs(font, side1Classes, side2Classes):
-        allGlyphs = set(font.keys())
+    def getKerningPairs(font, side1Classes, side2Classes, glyphSet=None):
+        if glyphSet:
+            allGlyphs = set(glyphSet.keys())
+        else:
+            allGlyphs = set(font.keys())
         kerning = font.kerning
 
         pairsByFlags = {}
