@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>com.github.googlei18n.ufo2ft.filters</key>
+    <array>
+      <dict>
+        <key>include</key>
+        <array>
+          <string>o</string>
+          <string>ocircumflextilde</string>
+          <string>circumflexcomb.loclVIET</string>
+          <string>tildecomb.loclVIET</string>
+          <string>circumflexcomb_tildecomb</string>
+        </array>
+        <key>name</key>
+        <string>propagateAnchors</string>
+        <key>pre</key>
+        <true/>
+      </dict>
+    </array>
+    <key>public.glyphOrder</key>
+    <array>
+      <string>o</string>
+      <string>ocircumflextilde</string>
+      <string>circumflexcomb.loclVIET</string>
+      <string>tildecomb.loclVIET</string>
+      <string>circumflexcomb_tildecomb</string>
+    </array>
+  </dict>
+</plist>

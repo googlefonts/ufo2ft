@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="circumflexcomb.loclVIET" format="2">
+  <anchor x="191.0" y="482.0" name="_top"/>
+  <anchor x="192.0" y="580.0" name="top"/>
+  <anchor x="321.0" y="563.0" name="top_viet"/>
+  <outline>
+    <contour>
+      <point x="45.0" y="564.0" type="line"/>
+      <point x="80.0" y="536.0" type="line"/>
+      <point x="190.0" y="610.0" type="line"/>
+      <point x="299.0" y="536.0" type="line"/>
+      <point x="343.0" y="578.0" type="line"/>
+      <point x="216.0" y="680.0" type="line"/>
+      <point x="173.0" y="680.0" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>RMXScaler</key>
+      <dict>
+        <key>height</key>
+        <integer>80</integer>
+      </dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <real>386.0</real>
+    </dict>
+  </lib>
+</glyph>

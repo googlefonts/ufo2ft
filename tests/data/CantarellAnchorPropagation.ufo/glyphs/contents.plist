@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>circumflexcomb.loclVIET</key>
+    <string>circumflexcomb.loclV_I_E_T_.glif</string>
+    <key>circumflexcomb_tildecomb</key>
+    <string>circumflexcomb_tildecomb.glif</string>
+    <key>o</key>
+    <string>o.glif</string>
+    <key>ocircumflextilde</key>
+    <string>ocircumflextilde.glif</string>
+    <key>tildecomb.loclVIET</key>
+    <string>tildecomb.loclV_I_E_T_.glif</string>
+  </dict>
+</plist>

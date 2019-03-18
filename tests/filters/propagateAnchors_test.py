@@ -1,4 +1,6 @@
 from __future__ import print_function, division, absolute_import
+
+import ufo2ft.filters
 from ufo2ft.filters.propagateAnchors import PropagateAnchorsFilter, logger
 from fontTools.misc.loggingTools import CapturingLogHandler
 import pytest
@@ -228,3 +230,40 @@ class PropagateAnchorsFilterTest(object):
             philter = PropagateAnchorsFilter()
             philter(font)
         captor.assertRegex('Glyphs with propagated anchors: 6')
+
+
+def test_CantarellAnchorPropagation(FontClass, datadir):
+    ufo_path = datadir.join("CantarellAnchorPropagation.ufo")
+    ufo = FontClass(ufo_path)
+    pre_filters, _ = ufo2ft.filters.loadFilters(ufo)
+
+    philter = pre_filters[0]
+    philter(ufo)
+
+    anchors_combined = {
+        (a.name, a.x, a.y) for a in ufo["circumflexcomb_tildecomb"].anchors
+    }
+    assert ("top", 214.0, 730.0) in anchors_combined
+    assert ("_top", 213.0, 482.0) in anchors_combined
+
+    anchors_o = {(a.name, a.x, a.y) for a in ufo["ocircumflextilde"].anchors}
+    assert ("top", 284.0, 730.0) in anchors_o
+
+
+def test_CantarellAnchorPropagation_reduced_filter(FontClass, datadir):
+    ufo_path = datadir.join("CantarellAnchorPropagation.ufo")
+    ufo = FontClass(ufo_path)
+    ufo.lib["com.github.googlei18n.ufo2ft.filters"][0]["include"] = ["ocircumflextilde"]
+    pre_filters, _ = ufo2ft.filters.loadFilters(ufo)
+
+    philter = pre_filters[0]
+    philter(ufo)
+
+    anchors_combined = {
+        (a.name, a.x, a.y) for a in ufo["circumflexcomb_tildecomb"].anchors
+    }
+    assert ("top", 214.0, 730.0) in anchors_combined
+    assert ("_top", 213.0, 482.0) in anchors_combined
+
+    anchors_o = {(a.name, a.x, a.y) for a in ufo["ocircumflextilde"].anchors}
+    assert ("top", 284.0, 730.0) in anchors_o
