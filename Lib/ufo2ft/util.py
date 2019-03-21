@@ -154,7 +154,8 @@ def deepCopyContours(
                 specificComponents,
             )
 
-    if composite != parent:
+    # Check if there are any contours to copy before instantiating pens.
+    if composite != parent and len(composite):
         if transformation == Identity:
             pen = parent.getPen()
         else:
@@ -165,7 +166,8 @@ def deepCopyContours(
             if xx * yy - xy * yx < 0:
                 pen = ReverseContourPen(pen)
 
-        composite.draw(pen)
+        for contour in composite:
+            contour.draw(pen)
 
 
 def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
