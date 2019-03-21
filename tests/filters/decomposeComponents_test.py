@@ -38,3 +38,35 @@ def test_missing_component_is_dropped(FontClass, caplog):
 
     assert len(caplog.records) == 1
     assert "dropping non-existent component" in caplog.text
+
+
+def test_nested_components(FontClass):
+    ufo = FontClass()
+    a = ufo.newGlyph("six.lf")
+    a.width = 100
+    pen = a.getPen()
+    pen.moveTo((0, 0))
+    pen.lineTo((300, 0))
+    pen.lineTo((300, 300))
+    pen.lineTo((0, 300))
+    pen.closePath()
+
+    b = ufo.newGlyph("nine.lf")
+    b.width = 100
+    pen = b.getPen()
+    pen.addComponent("six.lf", (-1, 0, 0, -1, 0, 0))
+
+    c = ufo.newGlyph("nine")
+    c.width = 100
+    pen = c.getPen()
+    pen.addComponent("nine.lf", (1, 0, 0, 1, 0, 0))
+
+    filter_ = DecomposeComponentsFilter()
+
+    assert filter_(ufo)
+    assert len(ufo["six.lf"]) == 1
+    assert not ufo["six.lf"].components
+    assert len(ufo["nine.lf"]) == 1
+    assert not ufo["nine.lf"].components
+    assert len(ufo["nine"]) == 1
+    assert not ufo["nine"].components
