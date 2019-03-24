@@ -5,4 +5,4 @@ compreffor==0.4.6.post1
 booleanOperations==0.8.2
 
 # alternative UFO implementation (still experimental)
-ufoLib2==0.2.1
+ufoLib2==0.3.2.post2; python_version >= '3.6'

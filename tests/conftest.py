@@ -5,7 +5,7 @@ import pytest
 
 @pytest.fixture(scope="session", params=["defcon", "ufoLib2"])
 def ufo_module(request):
-    return importlib.import_module(request.param)
+    return pytest.importorskip(request.param)
 
 
 @pytest.fixture(scope="session")
