@@ -141,6 +141,11 @@ def deepCopyContours(
     """Copy contours from component to parent, including nested components."""
 
     for nestedComponent in composite.components:
+        # If we have a list of specificComponents to decompose, only look at those.
+        # Attention: this only works correctly with flat components, as this
+        # function does not track whether it is inside a specificComponent where
+        # _everything_ must be decomposed. Completely decompose specificComponents
+        # beforehand.
         if specificComponents and nestedComponent.baseGlyph not in specificComponents:
             continue
 
