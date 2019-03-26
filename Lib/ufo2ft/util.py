@@ -68,6 +68,13 @@ class _GlyphSet(dict):
         # If any glyphs in the skipExportGlyphs list are used as components, decompose
         # them in the containing glyphs...
         if skipExportGlyphs:
+            # ...by first flattening (by decomposing entirely) possibly nested glyphs
+            # that should be skipped...
+            for skipped_glyph_name in skipExportGlyphs:
+                if skipped_glyph_name in self:
+                    glyph = self[skipped_glyph_name]
+                    deepCopyContours(self, glyph, glyph, Transform())
+            # ...and then decomposing them where they are used...
             for glyph in self.values():
                 if any(c.baseGlyph in skipExportGlyphs for c in glyph.components):
                     deepCopyContours(self, glyph, glyph, Transform(), skipExportGlyphs)
@@ -84,7 +91,7 @@ class _GlyphSet(dict):
                             for c in glyph.components
                             if c.baseGlyph not in skipExportGlyphs
                         ]
-            # ... and then remove them from the glyph set, if even present.
+            # ... and finally removing them from the glyph set, if even present.
             for glyph_name in skipExportGlyphs:
                 if glyph_name in self:
                     del self[glyph_name]
