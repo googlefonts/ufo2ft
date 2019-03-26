@@ -74,6 +74,7 @@ class _GlyphSet(dict):
                 if skipped_glyph_name in self:
                     glyph = self[skipped_glyph_name]
                     deepCopyContours(self, glyph, glyph, Transform())
+                    glyph.clearComponents()
             # ...and then decomposing them where they are used...
             for glyph in self.values():
                 if any(c.baseGlyph in skipExportGlyphs for c in glyph.components):
