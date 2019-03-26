@@ -154,6 +154,50 @@ class SkipExportGlyphsTest(object):
         assert not glyphSet["f"]
         assert list(c.baseGlyph for c in glyphSet["f"].components) == ["a", "a"]
 
+    def test_skip_export_glyphs_filter_nested(self, FontClass):
+        from ufo2ft.util import _GlyphSet
+
+        ufo = FontClass()
+        glyph_N = ufo.newGlyph("N")
+        glyph_N.width = 100
+        pen = glyph_N.getPen()
+        pen.moveTo((0, 0))
+        pen.lineTo((300, 0))
+        pen.lineTo((300, 400))
+        pen.lineTo((0, 400))
+        pen.closePath()
+
+        glyph_o = ufo.newGlyph("o")
+        glyph_o.width = 100
+        pen = glyph_o.getPen()
+        pen.moveTo((0, 0))
+        pen.lineTo((300, 0))
+        pen.lineTo((300, 300))
+        pen.lineTo((0, 300))
+        pen.closePath()
+
+        glyph_onumero = ufo.newGlyph("_o.numero")
+        glyph_onumero.width = 100
+        pen = glyph_onumero.getPen()
+        pen.addComponent("o", (-1, 0, 0, -1, 0, 100))
+        pen.moveTo((0, 0))
+        pen.lineTo((300, 0))
+        pen.lineTo((300, 50))
+        pen.lineTo((0, 50))
+        pen.closePath()
+
+        glyph_numero = ufo.newGlyph("numero")
+        glyph_numero.width = 200
+        pen = glyph_numero.getPen()
+        pen.addComponent("N", (1, 0, 0, 1, 0, 0))
+        pen.addComponent("_o.numero", (1, 0, 0, 1, 400, 0))
+
+        skipExportGlyphs = ["_o.numero"]
+        glyphSet = _GlyphSet.from_layer(ufo, skipExportGlyphs=skipExportGlyphs)
+
+        assert len(glyphSet["numero"].components) == 1
+        assert len(glyphSet["numero"]) == 2
+
     def test_skip_export_glyphs_designspace(self, FontClass):
         # Designspace has a public.skipExportGlyphs lib key excluding "b" and "d".
         designspace = designspaceLib.DesignSpaceDocument.fromfile(
