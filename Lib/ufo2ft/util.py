@@ -68,14 +68,6 @@ class _GlyphSet(dict):
         # If any glyphs in the skipExportGlyphs list are used as components, decompose
         # them in the containing glyphs...
         if skipExportGlyphs:
-            # ...by first flattening (by decomposing entirely) possibly nested glyphs
-            # that should be skipped...
-            for skipped_glyph_name in skipExportGlyphs:
-                if skipped_glyph_name in self:
-                    glyph = self[skipped_glyph_name]
-                    deepCopyContours(self, glyph, glyph, Transform())
-                    glyph.clearComponents()
-            # ...and then decomposing them where they are used...
             for glyph in self.values():
                 if any(c.baseGlyph in skipExportGlyphs for c in glyph.components):
                     deepCopyContours(self, glyph, glyph, Transform(), skipExportGlyphs)
@@ -92,7 +84,7 @@ class _GlyphSet(dict):
                             for c in glyph.components
                             if c.baseGlyph not in skipExportGlyphs
                         ]
-            # ... and finally removing them from the glyph set, if even present.
+            # ... and then remove them from the glyph set, if even present.
             for glyph_name in skipExportGlyphs:
                 if glyph_name in self:
                     del self[glyph_name]
@@ -139,16 +131,24 @@ def _copyLayer(layer, obj_type=dict):
 def deepCopyContours(
     glyphSet, parent, composite, transformation, specificComponents=None
 ):
-    """Copy contours from component to parent, including nested components."""
+    """Copy contours from component to parent, including nested components.
+
+    specificComponent: an optional list of glyph name strings. If not passed or
+    None, decompose all components of a glyph unconditionally and completely. If
+    passed, only completely decompose components whose baseGlyph is in the list.
+    """
 
     for nestedComponent in composite.components:
-        # If we have a list of specificComponents to decompose, only look at those.
-        # Attention: this only works correctly with flat components, as this
-        # function does not track whether it is inside a specificComponent where
-        # _everything_ must be decomposed. Completely decompose specificComponents
-        # beforehand.
-        if specificComponents and nestedComponent.baseGlyph not in specificComponents:
-            continue
+        # Because this function works recursively, test at each turn if we are going to
+        # recurse into a specificComponent. If so, set the specificComponents argument
+        # to None so we unconditionally decompose the possibly nested component
+        # completely.
+        specificComponentsEffective = specificComponents
+        if specificComponentsEffective:
+            if nestedComponent.baseGlyph not in specificComponentsEffective:
+                continue
+            else:
+                specificComponentsEffective = None
 
         try:
             nestedBaseGlyph = glyphSet[nestedComponent.baseGlyph]
@@ -164,7 +164,7 @@ def deepCopyContours(
                 parent,
                 nestedBaseGlyph,
                 transformation.transform(nestedComponent.transformation),
-                specificComponents,
+                specificComponents=specificComponentsEffective,
             )
 
     # Check if there are any contours to copy before instantiating pens.
