@@ -131,11 +131,24 @@ def _copyLayer(layer, obj_type=dict):
 def deepCopyContours(
     glyphSet, parent, composite, transformation, specificComponents=None
 ):
-    """Copy contours from component to parent, including nested components."""
+    """Copy contours from component to parent, including nested components.
+
+    specificComponent: an optional list of glyph name strings. If not passed or
+    None, decompose all components of a glyph unconditionally and completely. If
+    passed, only completely decompose components whose baseGlyph is in the list.
+    """
 
     for nestedComponent in composite.components:
-        if specificComponents and nestedComponent.baseGlyph not in specificComponents:
-            continue
+        # Because this function works recursively, test at each turn if we are going to
+        # recurse into a specificComponent. If so, set the specificComponents argument
+        # to None so we unconditionally decompose the possibly nested component
+        # completely.
+        specificComponentsEffective = specificComponents
+        if specificComponentsEffective:
+            if nestedComponent.baseGlyph not in specificComponentsEffective:
+                continue
+            else:
+                specificComponentsEffective = None
 
         try:
             nestedBaseGlyph = glyphSet[nestedComponent.baseGlyph]
@@ -151,7 +164,7 @@ def deepCopyContours(
                 parent,
                 nestedBaseGlyph,
                 transformation.transform(nestedComponent.transformation),
-                specificComponents,
+                specificComponents=specificComponentsEffective,
             )
 
     # Check if there are any contours to copy before instantiating pens.
