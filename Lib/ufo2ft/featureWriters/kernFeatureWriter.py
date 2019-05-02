@@ -213,7 +213,9 @@ class KernFeatureWriter(BaseFeatureWriter):
         )
         ctx.gdefClasses = ast.getGDEFGlyphClasses(feaFile)
         ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
-        ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaFile)
+
+        feaScripts = ast.getScriptLanguageSystems(feaFile)
+        ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaScripts)
 
         return ctx
 
@@ -259,8 +261,8 @@ class KernFeatureWriter(BaseFeatureWriter):
             statements.append(ast.Comment(""))
 
         # finally add the lookup and feature blocks
-        for _, lookup in sorted(lookups.items()):
-            statements.append(lookup)
+        for _, lookupGroup in sorted(lookups.items()):
+            statements.extend(lookupGroup)
         if "kern" in features:
             statements.append(features["kern"])
         if "dist" in features:
@@ -352,24 +354,20 @@ class KernFeatureWriter(BaseFeatureWriter):
         return allKeys
 
     @staticmethod
-    def _groupScriptsByTagAndDirection(feaFile):
+    def _groupScriptsByTagAndDirection(feaScripts):
         # Read scripts/languages defined in feaFile's 'languagesystem'
         # statements and group them by the feature tag (kern or dist)
         # they are associated with, and the global script's horizontal
         # direction (DFLT is excluded)
-        feaScripts = ast.getScriptLanguageSystems(feaFile)
         scriptGroups = {}
-        tags = ['kern']
         for scriptCode, scriptLangSys in feaScripts.items():
             direction = unicodedata.script_horizontal_direction(scriptCode)
             if scriptCode in DIST_ENABLED_SCRIPTS:
-                if 'feature kern' in feaFile.asFea():
-                    tags.append('dist')
-                else:
-                    tags = ['dist']
-            for tag in tags:
-                scriptGroups.setdefault(tag, {}).setdefault(direction, []).extend(
-                    scriptLangSys
+                tag = "dist"
+            else:
+                tag = "kern"
+            scriptGroups.setdefault(tag, {}).setdefault(direction, []).extend(
+                scriptLangSys
             )
         return scriptGroups
 
@@ -394,7 +392,9 @@ class KernFeatureWriter(BaseFeatureWriter):
             enumerated=enumerated,
         )
 
-    def _makeKerningLookup(self, name, pairs, exclude=None, rtl=False, ignoreMarks=True):
+    def _makeKerningLookup(
+        self, name, pairs, exclude=None, rtl=False, ignoreMarks=True
+    ):
         assert pairs
         rules = []
         for pair in pairs:
@@ -429,24 +429,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         else:
             shouldSplit = False
 
-        # If there are pairs with a mix of mark/base then the IgnoreMarks
-        # flag is unnecessary and should not be set
-        base_to_base = []
-        base_to_mark = []
-        for pair in self.context.kerning.pairs:
-            hasMarks = False
-            for glyph in pair.side1.glyphSet() + pair.side2.glyphSet():
-                if isinstance(glyph, ast.GlyphName):
-                    glyph = glyph.glyphSet()[0]
-                if self.context.gdefClasses.mark is not None:
-                    if glyph in self.context.gdefClasses.mark:
-                        hasMarks = True
-                        break
-            if hasMarks:
-                base_to_mark.append(pair)
-            else:
-                base_to_base.append(pair)
-
+        marks = self.context.gdefClasses.mark
         lookups = {}
         if shouldSplit:
             # make one DFLT lookup with script-agnostic characters, and two
@@ -463,99 +446,88 @@ class KernFeatureWriter(BaseFeatureWriter):
             if not pairs:
                 return lookups
 
-            dfltKern = self._makeKerningLookup(
-                "kern_dflt",
-                pairs,
-                exclude=(
-                    lambda pair: bool({"LTR", "RTL"}.intersection(pair.directions))
-                                 or pair in base_to_mark
-                ),
-                rtl=False,
-            )
-            if dfltKern:
-                lookups["DFLT"] = dfltKern
-
-            ltrKern = self._makeKerningLookup(
-                "kern_ltr",
-                pairs,
-                exclude=(
-                    lambda pair: (not pair.directions
-                    or "RTL" in pair.directions)
-                                 or pair in base_to_mark
-                ),
-                rtl=False,
-            )
-            if ltrKern:
-                lookups["LTR"] = ltrKern
-
-            rtlKern = self._makeKerningLookup(
-                "kern_rtl",
-                pairs,
-                exclude=(
-                    lambda pair: (not pair.directions
-                    or "LTR" in pair.directions)
-                                 or pair in base_to_mark
-                ),
-                rtl=True,
-            )
-            if rtlKern:
-                lookups["RTL"] = rtlKern
-
-            if base_to_mark:
-                dfltKernHasMarks = self._makeKerningLookup(
-                    "kern_dflt_marks",
-                    pairs,
-                    exclude=(
-                        lambda pair: bool({"LTR", "RTL"}.intersection(pair.directions))
-                                     and pair not in base_to_mark
-                    ),
-                    rtl=False,
-                    ignoreMarks=False,
-                )
-                if dfltKernHasMarks:
-                    lookups["DFLTHasMarks"] = dfltKernHasMarks
-
-                ltrKernHasMarks = self._makeKerningLookup(
-                    "kern_ltr_marks",
-                    pairs,
-                    exclude=(
-                        lambda pair: pair not in base_to_mark or (not pair.directions
-                        or "RTL" in pair.directions)
-                    ),
-                    rtl=False,
-                    ignoreMarks=False,
-                )
-                if ltrKernHasMarks:
-                    lookups["LTRHasMarks"] = ltrKernHasMarks
-
-                rtlKernHasMarks = self._makeKerningLookup(
-                    "kern_rtl_marks",
-                    pairs,
-                    exclude=(
-                        lambda pair: pair not in base_to_mark or (not pair.directions
-                        or "LTR" in pair.directions)
-                    ),
-                    rtl=True,
-                    ignoreMarks=False,
-                )
-                if rtlKernHasMarks:
-                    lookups["RTLHasMarks"] = rtlKernHasMarks
+            if self.options.ignoreMarks:
+                # If there are pairs with a mix of mark/base then the IgnoreMarks
+                # flag is unnecessary and should not be set
+                basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
+                self._makeSplitDirectionKernLookups(lookups, basePairs)
+                if markPairs:
+                    self._makeSplitDirectionKernLookups(
+                        lookups, markPairs, ignoreMarks=False, suffix="_marks"
+                    )
+            else:
+                self._makeSplitDirectionKernLookups(lookups, pairs)
         else:
             # only make a single (implicitly LTR) lookup including all base/base pairs
-            # and a single lookup including all base/mark pairs if necessary
-            lookups["LTR"] = self._makeKerningLookup(
-                "kern_ltr",
-                self.context.kerning.pairs,
-                exclude=(lambda pair: pair in base_to_mark),
-            )
-            if base_to_mark:
-                lookups["LTRHasMarks"] = self._makeKerningLookup(
-                    "kern_ltr_marks",
-                    self.context.kerning.pairs,
-                    exclude=(lambda pair: pair in base_to_base),
-                    ignoreMarks=False,
-                )
+            # and a single lookup including all base/mark pairs (if any)
+            pairs = self.context.kerning.pairs
+            if self.options.ignoreMarks:
+                basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
+                lookups["LTR"] = [self._makeKerningLookup("kern_ltr", basePairs)]
+                if markPairs:
+                    lookups["LTR"].append(
+                        self._makeKerningLookup(
+                            "kern_ltr_marks",
+                            markPairs,
+                            ignoreMarks=False,
+                        )
+                    )
+            else:
+                lookups["LTR"] = [self._makeKerningLookup("kern_ltr", pairs)]
         return lookups
+
+    def _splitBaseAndMarkPairs(self, pairs, marks):
+        basePairs, markPairs = [], []
+        if marks:
+            for pair in pairs:
+                if any(glyph in marks for glyph in pair.glyphs):
+                    markPairs.append(pair)
+                else:
+                    basePairs.append(pair)
+        else:
+            basePairs[:] = pairs
+        return basePairs, markPairs
+
+    def _makeSplitDirectionKernLookups(
+        self, lookups, pairs, ignoreMarks=True, suffix=""
+    ):
+        dfltKern = self._makeKerningLookup(
+            "kern_dflt" + suffix,
+            pairs,
+            exclude=(
+                lambda pair: {"LTR", "RTL"}.intersection(pair.directions)
+            ),
+            rtl=False,
+            ignoreMarks=ignoreMarks,
+        )
+        if dfltKern:
+            lookups.setdefault("DFLT", []).append(dfltKern)
+
+        ltrKern = self._makeKerningLookup(
+            "kern_ltr" + suffix,
+            pairs,
+            exclude=(
+                lambda pair: not pair.directions
+                or "RTL" in pair.directions
+            ),
+            rtl=False,
+            ignoreMarks=ignoreMarks,
+        )
+        if ltrKern:
+            lookups.setdefault("LTR", []).append(ltrKern)
+
+        rtlKern = self._makeKerningLookup(
+            "kern_rtl" + suffix,
+            pairs,
+            exclude=(
+                lambda pair: not pair.directions
+                or "LTR" in pair.directions
+            ),
+            rtl=True,
+            ignoreMarks=ignoreMarks,
+        )
+        if rtlKern:
+            lookups.setdefault("RTL", []).append(rtlKern)
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
@@ -573,40 +545,33 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def _registerKernLookups(self, feature, lookups):
         if "DFLT" in lookups:
-            ast.addLookupReference(feature, lookups["DFLT"])
+            ast.addLookupReferences(feature, lookups["DFLT"])
+
         scriptGroups = self.context.scriptGroups
         if "dist" in self.context.todo:
-            distScripts = scriptGroups.get("dist")
+            distScripts = scriptGroups["dist"]
         else:
             distScripts = {}
         kernScripts = scriptGroups.get("kern", {})
         ltrScripts = kernScripts.get("LTR", [])
         rtlScripts = kernScripts.get("RTL", [])
-        ltrLkp = lookups.get("LTR")
-        rtlLkp = lookups.get("RTL")
-        dfltLkpHasMarks = lookups.get("DFLTHasMarks")
-        ltrLkpHasMarks = lookups.get("LTRHasMarks")
-        rtlLkpHasMarks = lookups.get("RTLHasMarks")
-        ltr_lookups = [ltrLkp]
-        rtl_lookups = [rtlLkp]
-        if ltrLkpHasMarks is not None:
-            ltr_lookups.append(ltrLkpHasMarks)
-        if rtlLkpHasMarks is not None:
-            rtl_lookups.append(rtlLkpHasMarks)
-        if ltrLkp and rtlLkp:
+
+        ltrLookups = lookups.get("LTR")
+        rtlLookups = lookups.get("RTL")
+        if ltrLookups and rtlLookups:
             if ltrScripts and rtlScripts:
                 for script, langs in ltrScripts:
-                    ast.addLookupReferences(feature, ltr_lookups, script, langs)
+                    ast.addLookupReferences(feature, ltrLookups, script, langs)
                 for script, langs in rtlScripts:
-                    ast.addLookupReferences(feature, rtl_lookups, script, langs)
+                    ast.addLookupReferences(feature, rtlLookups, script, langs)
             elif ltrScripts:
-                ast.addLookupReference(feature, rtlLkp, script="DFLT")
+                ast.addLookupReferences(feature, rtlLookups, script="DFLT")
                 for script, langs in ltrScripts:
-                    ast.addLookupReferences(feature, ltr_lookups, script, langs)
+                    ast.addLookupReferences(feature, ltrLookups, script, langs)
             elif rtlScripts:
-                ast.addLookupReference(feature, ltrLkp, script="DFLT")
+                ast.addLookupReferences(feature, ltrLookups, script="DFLT")
                 for script, langs in rtlScripts:
-                    ast.addLookupReferences(feature, rtl_lookups, script, langs)
+                    ast.addLookupReferences(feature, rtlLookups, script, langs)
             else:
                 if not (distScripts.get("LTR") and distScripts.get("RTL")):
                     raise ValueError(
@@ -614,38 +579,28 @@ class KernFeatureWriter(BaseFeatureWriter):
                         "lookups; add 'languagesystems' to features for at "
                         "least one LTR or RTL script using the kern feature"
                     )
-        elif ltrLkp:
+        elif ltrLookups:
             if not (rtlScripts or distScripts):
-                ast.addLookupReferences(feature, ltr_lookups)
+                ast.addLookupReferences(feature, ltrLookups)
             else:
-                ast.addLookupReferences(feature, ltr_lookups, script="DFLT")
+                ast.addLookupReferences(feature, ltrLookups, script="DFLT")
                 for script, langs in ltrScripts:
-                    ast.addLookupReferences(feature, ltr_lookups, script, langs)
-        elif rtlLkp:
+                    ast.addLookupReferences(feature, ltrLookups, script, langs)
+        elif rtlLookups:
             if not (ltrScripts or distScripts):
-                ast.addLookupReferences(feature, rtl_lookups)
+                ast.addLookupReferences(feature, rtlLookups)
             else:
-                ast.addLookupReferences(feature, rtl_lookups, script="DFLT")
+                ast.addLookupReferences(feature, rtlLookups, script="DFLT")
                 for script, langs in rtlScripts:
-                    ast.addLookupReferences(feature, rtl_lookups, script, langs)
+                    ast.addLookupReferences(feature, rtlLookups, script, langs)
 
     def _registerDistLookups(self, feature, lookups):
-        scripts = self.context.scriptGroups.get("dist")
-        ltrLkp = lookups.get("LTR")
-        if ltrLkp:
+        scripts = self.context.scriptGroups["dist"]
+        ltrLookups = lookups.get("LTR")
+        if ltrLookups:
             for script, langs in scripts.get("LTR", []):
-                ast.addLookupReference(feature, ltrLkp, script, langs)
-
-        ltrLkpHasMarks = lookups.get("LTRHasMarks")
-        if ltrLkpHasMarks:
-            for script, langs in scripts.get("LTRHasMarks", []):
-                ast.addLookupReference(feature, ltrLkpHasMarks, script, langs)
-        rtlLkp = lookups.get("RTL")
-        if rtlLkp:
+                ast.addLookupReferences(feature, ltrLookups, script, langs)
+        rtlLookups = lookups.get("RTL")
+        if rtlLookups:
             for script, langs in scripts.get("RTL", []):
-                ast.addLookupReference(feature, rtlLkp, script, langs)
-
-        rtlLkpHasMarks = lookups.get("RTLHasMarks")
-        if rtlLkpHasMarks:
-            for script, langs in scripts.get("RTLHasMarks", []):
-                ast.addLookupReference(feature, rtlLkpHasMarks, script, langs)
+                ast.addLookupReferences(feature, rtlLookups, script, langs)
