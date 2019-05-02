@@ -3,7 +3,7 @@ language: python
 env:
   global:
     - TWINE_USERNAME="anthrotype"
-    - secure: MVvXcRn1E83gNSt1jTK5vigmbBtjS8MKQtU6SdU7NwlkR85Bdc1AaT60Nikxw55tdbLiDnHcqzfNAauIRBYux+n4XTu58B6r4rSBFTP7qBMAL6PxcMwF1CHRB3n8ZYsddiJUqwo3shJ5WkZVjqAG/kRfd84kWEG7FXYEZEyF4VXNGIQ1o1NrgP+gyD6p7fgv3P7GTTe9/UTEwC3IZSVfdIdkof1NAEyuRr3bUyoMdm9psC9eobex7cA5L70Q6DgPSH8KlGPXJ45xz64B8+0ICdXeULmak/eDAqoz5APsGOpewaL3wEJxdhb3n0tJN3FGTPkwRRrGYGlY5VXld8jY1XmAW+l4mlODQvbPK8NyM4sS67WetH7yCj35YmRhKQAgKsTIqY5paPiyf3sdWcb8FGyoH1M+hfl/2jywUSXGCwzajjfxcs0WCRpsp+bFe6sJBu4gx3Pc5tFFr//jMTp1LjStnZYKLDq0zABmrKqa9TeZUX86ryqxstbdYIAdnok7PONZohx7jK5UwKoqAE9DZbp7Xc+cqrLdmBXCYZ7ssZuUoFO9kLlhUxUsfQsk6721SbLleI1cU+RV7Fxm5QCLxX+51ltqz1eS0pL5WJculCY/1GmFY6aMT8Q55iC8tbrjQGzMNBWEE16V5A9feOafbvaWuyz7LdGwL3PulfVg4d8=
+    - secure: XiJ7iEFtyPHc5nA3c64ou/ddDI+6+aeXpeExISQVxBwwXzAqc9sF7VFsWeInGWA2lQpuSau6tqn76HESX7OFjFNmhaF6gZ8psU/TszUMGa+IJAr8rE6cJRP121c6CB9/nrgil89IVIaIAiBhbm/4FzaTANpN6BMo/YtlCBYdvq4EWccHjKf5WeTtzOJTJJCz2C/r4VVTSj+iGWyuHS/lYYXkWBfJBlXead0rD5ZwbYW5KDevBJGr4TDu3eqa2P1BQ3xmlzhheHk8TXi1XheN6Kp2158oc+GfPATcQsjaqSvuLDw5E3A6uhIeBxXfJ5Jm4YejeqUv/LqO27Iz7NGkfMZxjsuObtlLhXv09piUjxjFVXqgmqKx16G+/bS43DjZIOglMfcemuIF3jogPYTw27yFVeTQaUQuSN89rJsdUsNLuOa6VesFzl8w6+/7KE+bx7G9OHIhN/wudPTza703pfwpqvOJ9zfm7HA//zfwNY+uyfKcai98eKPSn/AnakZ9Sgfa9UK6y0+xMOyP9DeW2HfFCuuBHahT/wS6nSCPLJs+C2WSnk+LsevEXwsTOmhi7XRwG8ZJOlHoMV3EjWfwh4GFGAIarvdAuzz/bEBmLlD/RFWYijECnw168cb0/jqmeOuidnaDFm/aK6GzThNdXR6zGYRxn4917j05a1jJ2s4=
 
 matrix:
   include:
@@ -24,19 +24,9 @@ script: tox
 after_success:
   - tox -e codecov
   - |
-    if [ -n "$TRAVIS_TAG" ] && [ "$TRAVIS_REPO_SLUG" == "googlei18n/ufo2ft" ] && [ "$TRAVIS_PYTHON_VERSION" == "3.6" ]; then
+    if [ -n "$TRAVIS_TAG" ] && [ "$TRAVIS_REPO_SLUG" == "googlefonts/ufo2ft" ] && [ "$TRAVIS_PYTHON_VERSION" == "3.6" ]; then
       pip install --upgrade twine pip setuptools wheel
       python setup.py sdist
       pip wheel --no-deps --wheel-dir dist .
       twine upload dist/*.whl dist/*.zip
     fi
-
-deploy:
-  - provider: releases
-    api_key:
-      secure: zXtgsom/sEEoj/pg0qq0qGFI93QkNEHe4gjX1AOID7oDORz1AP6nBst5zxoMJy/4DH4tNiWTQZdk+OVDmkysn5kJearDZ1uM4g02nhSYxXZ/a50p6ewciaYE1KwBt8IxiqhvvRdY2Fab1eW1aTlRjpCYoFvsovck7sWJ96dhfUMGIRzk9cbo3/JJ052kLz34lgM3PLlToN57WHu3y4TO0tXTjTdo4V8uB0l9O8j9P0ez1Q82ZPcxFicr4HUIqZn4gBu7cRXZr3PXu6Rx54eg/QFD8hVMoH9JOafmRfKmsayE6g0qDbFUMOnoMFg0on8lh2OR5EZlAznrccFccwAGNykY+CxP/dC/Io2XktrA/HIPrWy2rGojSNAYQe3LS5oW/SEbZSTGSG45VdaX7oBzgp/4eKXN/V+n3W68JGjKKN2foIFU3vAL0dm8fA+A2N/fBSR3bCyuwZ/u+Bt+ads0M6dmlBln+s8y1PPdhY4RRaU4I+7m8KOBfMUPzYeAq5DoWWDe8omtqmPHs0DMjr4gtBXOD0qeNE40ogc/LeXJ3l8e1MN8zq0OYfngJJop/HMWfyg7kaVurWCigbsJMNkMpAam8hq7BsLWncRJMQax5NHXAcAqWOVemANOW+H3gcKFPtjzOPblxZNoDK/Y6R2wiY5pfDXl1aMct2BF0mXZPNA=
-    on:
-      repo: googlei18n/ufo2ft
-      tags: true
-      all_branches: true
-      python: 3.6
