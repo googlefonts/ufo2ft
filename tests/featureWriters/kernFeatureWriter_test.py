@@ -163,14 +163,28 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 lookupflag IgnoreMarks;
                 pos B C -30;
             } kern_ltr;
-            
+
             lookup kern_ltr_marks {
                 pos A acutecomb -55;
             } kern_ltr_marks;
-            
+
             feature kern {
                 lookup kern_ltr;
                 lookup kern_ltr_marks;
+            } kern;
+            """
+        )
+
+        feaFile = self.writeFeatures(font, ignoreMarks=False)
+        assert str(feaFile) == dedent(
+            """
+            lookup kern_ltr {
+                pos A acutecomb -55;
+                pos B C -30;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
             } kern;
             """
         )
@@ -269,8 +283,9 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
         feaFile = parseLayoutFeatures(font)
+        scripts = ast.getScriptLanguageSystems(feaFile)
         scriptGroups = KernFeatureWriter._groupScriptsByTagAndDirection(
-            feaFile
+            scripts
         )
 
         assert "kern" in scriptGroups
@@ -285,46 +300,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert list(scriptGroups["dist"]["LTR"]) == [
             ("deva", ["dflt"]),
             ("dev2", ["dflt"]),
-        ]
-
-    def test__groupScriptsByTagAndDirectionDistAndKern(self, FontClass):
-        font = FontClass()
-        font.newGlyph('ka-sidd').unicode = 0x1158E
-        font.newGlyph('ga-sidd').unicode = 0x11590
-        font.features.text = dedent(
-            """
-            languagesystem DFLT dflt;
-            languagesystem sidd dflt;
-            
-            @kern1.ka = [ka-sidd];
-            @kern2.ga = [ga-sidd];
-
-            lookup kern_ltr {
-                lookupflag IgnoreMarks;
-                enum pos @kern1.ka @kern2.ga -40;
-            } kern_ltr;
-
-            feature kern {
-                lookup kern_ltr;
-                script sidd;
-            } kern;
-            
-            """
-        )
-
-        feaFile = parseLayoutFeatures(font)
-        scriptGroups = KernFeatureWriter._groupScriptsByTagAndDirection(
-            feaFile
-        )
-
-        assert "kern" in scriptGroups
-        assert list(scriptGroups["kern"]["LTR"]) == [
-            ("sidd", ["dflt"])
-        ]
-
-        assert "dist" in scriptGroups
-        assert list(scriptGroups["dist"]["LTR"]) == [
-            ("sidd", ["dflt"]),
         ]
 
     def test_getKerningClasses(self, FontClass):
@@ -487,7 +462,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
 
-        newFeatures = self.writeFeatures(ufo)
+        newFeatures = self.writeFeatures(ufo, ignoreMarks=False)
 
         assert str(newFeatures) == dedent(
             """\
@@ -496,17 +471,14 @@ class KernFeatureWriterTest(FeatureWriterTest):
             @kern2.alef = [alef-ar alef-ar.isol];
 
             lookup kern_dflt {
-                lookupflag IgnoreMarks;
                 pos seven four -25;
             } kern_dflt;
 
             lookup kern_ltr {
-                lookupflag IgnoreMarks;
                 enum pos @kern1.A V -40;
             } kern_ltr;
 
             lookup kern_rtl {
-                lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
                 pos @kern1.reh @kern2.alef <-100 0 -100 0>;
@@ -606,12 +578,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 pos seven four -25;
             } kern_dflt;
 
-            lookup kern_dflt_marks {
-                pos V acutecomb 70;
-                pos reh-ar fatha-ar 80;
-                pos seven four -25;
-            } kern_dflt_marks;
-
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 enum pos @kern1.A V -40;
@@ -705,21 +671,17 @@ class KernFeatureWriterTest(FeatureWriterTest):
             """\
             @kern1.reh = [reh-ar zain-ar reh-ar.fina];
             @kern2.alef = [alef-ar alef-ar.isol];
-            
-            lookup kern_dflt_marks {
-                pos reh-ar fatha-ar 80;
-            } kern_dflt_marks;
-            
+
             lookup kern_rtl {
                 lookupflag IgnoreMarks;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
                 pos @kern1.reh @kern2.alef <-100 0 -100 0>;
             } kern_rtl;
-            
+
             lookup kern_rtl_marks {
                 pos reh-ar fatha-ar <80 0 80 0>;
             } kern_rtl_marks;
-            
+
             feature kern {
                 lookup kern_rtl;
                 lookup kern_rtl_marks;
