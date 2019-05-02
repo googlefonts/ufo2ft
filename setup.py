@@ -22,7 +22,7 @@ setup(
     maintainer_email="cosimo@anthrotype.com",
     description="A bridge between UFOs and FontTools.",
     long_description=long_description,
-    url="https://github.com/googlei18n/ufo2ft",
+    url="https://github.com/googlefonts/ufo2ft",
     package_dir={"": "Lib"},
     packages=find_packages("Lib"),
     include_package_data=True,
