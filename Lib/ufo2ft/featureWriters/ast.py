@@ -181,20 +181,6 @@ def addLookupReferences(
             )
 
 
-def addLookupReference(
-    feature, lookup, script=None, languages=None, exclude_dflt=False
-):
-    """Shortcut for addLookupReferences, but for a single lookup.
-    """
-    return addLookupReferences(
-        feature,
-        (lookup,),
-        script=script,
-        languages=languages,
-        exclude_dflt=exclude_dflt,
-    )
-
-
 _GDEFGlyphClasses = collections.namedtuple(
     "_GDEFGlyphClasses", "base ligature mark component"
 )
