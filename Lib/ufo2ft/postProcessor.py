@@ -2,7 +2,6 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
-from fontTools.otlLib.maxContextCalc import maxCtxFont
 from ufo2ft.constants import (
     USE_PRODUCTION_NAMES,
     GLYPHS_DONT_USE_PRODUCTION_NAMES
@@ -66,8 +65,6 @@ class PostProcessor(object):
 
             logger.info("Subroutinizing CFF table")
             compress(self.otf)
-        if 'OS/2' in self.otf:
-            self.otf['OS/2'].usMaxContext = maxCtxFont(self.otf)
         return self.otf
 
     def _rename_glyphs_from_ufo(self):
