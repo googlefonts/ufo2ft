@@ -2,7 +2,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
-from ufo2ft.maxContextCalc import maxCtxFont
+from fontTools.otlLib.maxContextCalc import maxCtxFont
 from ufo2ft.constants import (
     USE_PRODUCTION_NAMES,
     GLYPHS_DONT_USE_PRODUCTION_NAMES
