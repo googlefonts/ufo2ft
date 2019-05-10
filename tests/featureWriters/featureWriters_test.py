@@ -1,9 +1,4 @@
-from __future__ import (
-    print_function,
-    absolute_import,
-    division,
-    unicode_literals,
-)
+from __future__ import print_function, absolute_import, division, unicode_literals
 
 from ufo2ft.featureWriters import (
     BaseFeatureWriter,
@@ -14,8 +9,11 @@ from ufo2ft.featureWriters import (
 
 try:
     from plistlib import loads, FMT_XML
+
     def readPlistFromString(s):
         return loads(s, fmt=FMT_XML)
+
+
 except ImportError:
     from plistlib import readPlistFromString
 
@@ -23,7 +21,8 @@ import pytest
 from ..testSupport import _TempModule
 
 
-TEST_LIB_PLIST = readPlistFromString("""
+TEST_LIB_PLIST = readPlistFromString(
+    """
 <dict>
     <key>com.github.googlei18n.ufo2ft.featureWriters</key>
     <array>
@@ -38,7 +37,11 @@ TEST_LIB_PLIST = readPlistFromString("""
         </dict>
     </array>
 </dict>
-""".encode("utf-8"))
+""".encode(
+        "utf-8"
+    )
+)
+
 
 class FooBarWriter(BaseFeatureWriter):
 
@@ -67,13 +70,7 @@ VALID_SPEC_LISTS = [
         {"class": "KernFeatureWriter", "options": {"ignoreMarks": False}},
         {"class": "MarkFeatureWriter", "options": {"features": ["mark"]}},
     ],
-    [
-        {
-            "class": "FooBarWriter",
-            "module": "myFeatureWriters",
-            "options": {"a": 1},
-        }
-    ],
+    [{"class": "FooBarWriter", "module": "myFeatureWriters", "options": {"a": 1}}],
     TEST_LIB_PLIST[FEATURE_WRITERS_KEY],
 ]
 

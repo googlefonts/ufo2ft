@@ -1,9 +1,4 @@
-from __future__ import (
-    print_function,
-    division,
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import print_function, division, absolute_import, unicode_literals
 import re
 from collections import OrderedDict
 from functools import partial
@@ -33,10 +28,7 @@ class AbstractMarkPos(object):
 
     def _marksAsAST(self):
         return [
-            (
-                ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)),
-                anchor.markClass,
-            )
+            (ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)), anchor.markClass)
             for anchor in sorted(self.marks, key=lambda a: a.name)
         ]
 
@@ -75,10 +67,7 @@ class MarkToLigaPos(AbstractMarkPos):
     def _marksAsAST(self):
         return [
             [
-                (
-                    ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)),
-                    anchor.markClass,
-                )
+                (ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)), anchor.markClass)
                 for anchor in sorted(component, key=lambda a: a.name)
             ]
             for component in self.marks
@@ -164,9 +153,7 @@ class NamedAnchor(object):
         )
         if number is not None:
             if number < 1:
-                raise ValueError(
-                    "ligature component indexes must start from 1"
-                )
+                raise ValueError("ligature component indexes must start from 1")
         else:
             assert key, name
         self.isMark = isMark
@@ -179,9 +166,7 @@ class NamedAnchor(object):
         return self.markPrefix + self.key
 
     def __repr__(self):
-        items = (
-            "%s=%r" % (tostr(k), getattr(self, k)) for k in ("name", "x", "y")
-        )
+        items = ("%s=%r" % (tostr(k), getattr(self, k)) for k in ("name", "x", "y"))
         return tostr("%s(%s)") % (type(self).__name__, ", ".join(items))
 
 
@@ -236,14 +221,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
     # The anchor names and list of scripts for which 'abvm' and 'blwm'
     # features are generated is the same as the one Glyphs.app uses, see:
     # https://github.com/googlei18n/ufo2ft/issues/179
-    abvmAnchorNames = {
-        "top",
-        "topleft",
-        "topright",
-        "candra",
-        "bindu",
-        "candrabindu",
-    }
+    abvmAnchorNames = {"top", "topleft", "topright", "candra", "bindu", "candrabindu"}
     blwmAnchorNames = {"bottom", "bottomleft", "bottomright", "nukta"}
     indicScripts = {
         "Beng",  # Bengali
@@ -262,10 +240,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
     # the list and then picks the first to use in the mark feature.
     # https://github.com/googlei18n/noto-source/issues/122
     # #issuecomment-403952188
-    anchorSortKey = {
-        "_bottom": -2,
-        "_top": -1,
-    }
+    anchorSortKey = {"_bottom": -2, "_top": -1}
 
     def setContext(self, font, feaFile, compiler=None):
         ctx = super(MarkFeatureWriter, self).setContext(
@@ -285,9 +260,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         gdefClasses = self.context.gdefClasses
         if gdefClasses.base is not None:
             # only include the glyphs listed in the GDEF.GlyphClassDef groups
-            include = (
-                gdefClasses.base | gdefClasses.ligature | gdefClasses.mark
-            )
+            include = gdefClasses.base | gdefClasses.ligature | gdefClasses.mark
         else:
             # no GDEF table defined in feature file, include all glyphs
             include = None
@@ -305,9 +278,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     continue
                 if anchorName in anchorDict:
                     self.log.warning(
-                        "duplicate anchor '%s' in glyph '%s'",
-                        anchorName,
-                        glyphName,
+                        "duplicate anchor '%s' in glyph '%s'", anchorName, glyphName
                     )
                 a = self.NamedAnchor(name=anchorName, x=anchor.x, y=anchor.y)
                 anchorDict[anchorName] = a
@@ -341,7 +312,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 del self.context.anchorLists[glyphName]
 
     def _groupMarkGlyphsByAnchor(self):
-
         def sort_key(a):
             return self.anchorSortKey.get(a.name, 0)
 
@@ -420,13 +390,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         # TODO add __eq__ to feaLib AST objects?
         return all(
             getattr(a1, attr) == getattr(a2, attr)
-            for attr in (
-                "x",
-                "y",
-                "contourpoint",
-                "xDeviceTable",
-                "yDeviceTable",
-            )
+            for attr in ("x", "y", "contourpoint", "xDeviceTable", "yDeviceTable")
         )
 
     def _setBaseAnchorMarkClasses(self):
@@ -476,8 +440,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     continue
                 if anchor.number is not None:
                     self.log.warning(
-                        "invalid ligature anchor '%s' in mark glyph '%s'; "
-                        "skipped",
+                        "invalid ligature anchor '%s' in mark glyph '%s'; " "skipped",
                         anchor.name,
                         glyphName,
                     )
@@ -533,9 +496,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     continue
             yield pos
 
-    def _makeMarkLookup(
-        self, lookupName, attachments, include, marksFilter=None
-    ):
+    def _makeMarkLookup(self, lookupName, attachments, include, marksFilter=None):
         statements = [
             pos.asAST()
             for pos in self._iterAttachments(attachments, include, marksFilter)
@@ -545,12 +506,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
             lkp.statements.extend(statements)
             return lkp
 
-    def _makeMarkFilteringSetClass(
-        self, lookupName, attachments, markClass, include
-    ):
-        markGlyphs = (
-            glyphName for glyphName in markClass.glyphs if include(glyphName)
-        )
+    def _makeMarkFilteringSetClass(self, lookupName, attachments, markClass, include):
+        markGlyphs = (glyphName for glyphName in markClass.glyphs if include(glyphName))
         baseGlyphs = (
             pos.name for pos in attachments if pos.name not in markClass.glyphs
         )
@@ -561,16 +518,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
         )[className]
 
     def _makeMarkToMarkLookup(
-        self,
-        anchorName,
-        attachments,
-        include,
-        marksFilter=None,
-        featureTag=None,
+        self, anchorName, attachments, include, marksFilter=None, featureTag=None
     ):
-        attachments = list(
-            self._iterAttachments(attachments, include, marksFilter)
-        )
+        attachments = list(self._iterAttachments(attachments, include, marksFilter))
         if not attachments:
             return
         prefix = (featureTag + "_") if featureTag is not None else ""
@@ -583,9 +533,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         )
         lkp = ast.LookupBlock(lookupName)
         lkp.statements.append(filteringClass)
-        lkp.statements.append(
-            ast.makeLookupFlag(markFilteringSet=filteringClass)
-        )
+        lkp.statements.append(ast.makeLookupFlag(markFilteringSet=filteringClass))
         lkp.statements.extend(pos.asAST() for pos in attachments)
         return lkp
 

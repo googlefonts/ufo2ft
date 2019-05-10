@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class PropagateAnchorsFilter(BaseFilter):
-
     def set_context(self, font, glyphSet):
         ctx = super(PropagateAnchorsFilter, self).set_context(font, glyphSet)
         ctx.processed = set()
@@ -35,16 +34,14 @@ class PropagateAnchorsFilter(BaseFilter):
         if super(PropagateAnchorsFilter, self).__call__(font, glyphSet):
             modified = self.context.modified
             if modified:
-                logger.info('Glyphs with propagated anchors: %i' %
-                            len(modified))
+                logger.info("Glyphs with propagated anchors: %i" % len(modified))
             return modified
 
     def filter(self, glyph):
         if not glyph.components:
             return False
         before = len(glyph.anchors)
-        _propagate_glyph_anchors(self.context.glyphSet, glyph,
-                                 self.context.processed)
+        _propagate_glyph_anchors(self.context.glyphSet, glyph, self.context.processed)
         return len(glyph.anchors) > before
 
 
@@ -70,11 +67,12 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
             glyph = glyphSet[component.baseGlyph]
         except KeyError:
             logger.warning(
-                'Anchors not propagated for inexistent component {} '
-                'in glyph {}'.format(component.baseGlyph, composite.name))
+                "Anchors not propagated for inexistent component {} "
+                "in glyph {}".format(component.baseGlyph, composite.name)
+            )
         else:
             _propagate_glyph_anchors(glyphSet, glyph, processed)
-            if any(a.name.startswith('_') for a in glyph.anchors):
+            if any(a.name.startswith("_") for a in glyph.anchors):
                 mark_components.append(component)
             else:
                 base_components.append(component)
@@ -107,7 +105,7 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
 
     # we sort propagated anchors to append in a deterministic order
     for name, (x, y) in sorted(to_add.items()):
-        anchor_dict = {'name': name, 'x': x, 'y': y}
+        anchor_dict = {"name": name, "x": x, "y": y}
         try:
             composite.appendAnchor(anchor_dict)
         except TypeError:  # pragma: no cover
@@ -127,7 +125,7 @@ def _get_anchor_data(anchor_data, glyphSet, components, anchor_name):
     if len(anchors) > 1:
         for i, (anchor, component) in enumerate(anchors):
             t = Transform(*component.transformation)
-            name = '%s_%d' % (anchor.name, i + 1)
+            name = "%s_%d" % (anchor.name, i + 1)
             anchor_data[name] = t.transformPoint((anchor.x, anchor.y))
     elif anchors:
         anchor, component = anchors[0]
@@ -147,8 +145,9 @@ def _adjust_anchors(anchor_data, glyphSet, component):
     for anchor in glyph.anchors:
         # only adjust if this anchor has data and the component also contains
         # the associated mark anchor (e.g. "_top" for "top")
-        if (anchor.name in anchor_data and
-                any(a.name == '_' + anchor.name for a in glyph.anchors)):
+        if anchor.name in anchor_data and any(
+            a.name == "_" + anchor.name for a in glyph.anchors
+        ):
             anchor_data[anchor.name] = t.transformPoint((anchor.x, anchor.y))
 
 

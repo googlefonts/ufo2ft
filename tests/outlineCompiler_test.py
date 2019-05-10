@@ -452,17 +452,7 @@ class OutlineOTFCompilerTest(object):
 
         self.assertProgramEqual(
             program,
-            [
-                -12,
-                66,
-                'hmoveto',
-                256,
-                'hlineto',
-                -128,
-                510,
-                'rlineto',
-                'endchar'
-            ]
+            [-12, 66, "hmoveto", 256, "hlineto", -128, 510, "rlineto", "endchar"],
         )
 
     def test_setupTable_CFF_no_optimize(self, testufo):
@@ -474,19 +464,7 @@ class OutlineOTFCompilerTest(object):
 
         self.assertProgramEqual(
             program,
-            [
-                -12,
-                66,
-                0,
-                'rmoveto',
-                256,
-                0,
-                'rlineto',
-                -128,
-                510,
-                'rlineto',
-                'endchar'
-            ],
+            [-12, 66, 0, "rmoveto", 256, 0, "rlineto", -128, 510, "rlineto", "endchar"],
         )
 
     def test_makeGlyphsBoundingBoxes(self, testufo):
@@ -886,10 +864,7 @@ def test_custom_layer_compilation_interpolatable(layertestrgufo, layertestbdufo)
     ufo2 = layertestbdufo
 
     master_ttfs = list(
-        compileInterpolatableTTFs(
-            [ufo1, ufo1, ufo2],
-            layerNames=[None, "Medium", None],
-        )
+        compileInterpolatableTTFs([ufo1, ufo1, ufo2], layerNames=[None, "Medium", None])
     )
     assert master_ttfs[0].getGlyphOrder() == [
         ".notdef",

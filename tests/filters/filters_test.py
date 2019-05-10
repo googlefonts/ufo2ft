@@ -1,7 +1,12 @@
 from __future__ import print_function, division, absolute_import
 
 from ufo2ft.filters import (
-    getFilterClass, BaseFilter, loadFilters, UFO2FT_FILTERS_KEY, logger)
+    getFilterClass,
+    BaseFilter,
+    loadFilters,
+    UFO2FT_FILTERS_KEY,
+    logger,
+)
 
 from fontTools.misc.py23 import SimpleNamespace
 from fontTools.misc.loggingTools import CapturingLogHandler
@@ -37,15 +42,14 @@ def test_getFilterClass():
     with pytest.raises(ImportError):
         getFilterClass("Baz")
 
-    with _TempModule("myfilters"), \
-            _TempModule("myfilters.fooBar") as temp_module:
+    with _TempModule("myfilters"), _TempModule("myfilters.fooBar") as temp_module:
 
         with pytest.raises(AttributeError):
             # this fails because `myfilters.fooBar` module does not
             # have a `FooBarFilter` class
             getFilterClass("Foo Bar", pkg="myfilters")
 
-        temp_module.module.__dict__['FooBarFilter'] = FooBarFilter
+        temp_module.module.__dict__["FooBarFilter"] = FooBarFilter
 
         # this will attempt to import the `FooBarFilter` class from the
         # `myfilters.fooBar` module
@@ -69,10 +73,7 @@ def test_loadFilters_empty():
 @pytest.fixture
 def ufo():
     ufo = MockFont(lib={})
-    ufo.lib[UFO2FT_FILTERS_KEY] = [{
-        "name": "Foo Bar",
-        "args": ["foo", "bar"],
-    }]
+    ufo.lib[UFO2FT_FILTERS_KEY] = [{"name": "Foo Bar", "args": ["foo", "bar"]}]
     return ufo
 
 
@@ -94,8 +95,9 @@ def test_loadFilters_custom_namespace(ufo):
             # shutil.rmtree(os.path.expanduser("~"))
             return True
 
-    with _TempModule("my_dangerous_filters"), \
-            _TempModule("my_dangerous_filters.selfDestruct") as temp:
+    with _TempModule("my_dangerous_filters"), _TempModule(
+        "my_dangerous_filters.selfDestruct"
+    ) as temp:
         temp.module.__dict__["SelfDestructFilter"] = SelfDestructFilter
 
         _, [filter_obj] = loadFilters(ufo)
@@ -118,7 +120,7 @@ def test_loadFilters_args_unsupported(ufo):
     with pytest.raises(TypeError) as exc_info:
         loadFilters(ufo)
 
-    assert exc_info.match('unsupported')
+    assert exc_info.match("unsupported")
 
 
 def test_loadFilters_include_all(ufo):
@@ -184,18 +186,22 @@ def test_BaseFilter_repr():
 
     assert repr(NoArgFilter()) == "NoArgFilter()"
 
-    assert repr(FooBarFilter("a", "b", c=1)) == (
-        "FooBarFilter('a', 'b', c=1)")
+    assert repr(FooBarFilter("a", "b", c=1)) == ("FooBarFilter('a', 'b', c=1)")
 
-    assert repr(FooBarFilter("c", "d", include=["x", "y"])) == \
-        "FooBarFilter('c', 'd', c=0, include=['x', 'y'])"
+    assert (
+        repr(FooBarFilter("c", "d", include=["x", "y"]))
+        == "FooBarFilter('c', 'd', c=0, include=['x', 'y'])"
+    )
 
-    assert repr(FooBarFilter("e", "f", c=2.0, exclude=("z",))) == \
-        "FooBarFilter('e', 'f', c=2.0, exclude=('z',))"
+    assert (
+        repr(FooBarFilter("e", "f", c=2.0, exclude=("z",)))
+        == "FooBarFilter('e', 'f', c=2.0, exclude=('z',))"
+    )
 
     f = lambda g: False
-    assert repr(FooBarFilter("g", "h", include=f)) == \
-        "FooBarFilter('g', 'h', c=0, include={})".format(repr(f))
+    assert repr(
+        FooBarFilter("g", "h", include=f)
+    ) == "FooBarFilter('g', 'h', c=0, include={})".format(repr(f))
 
 
 if __name__ == "__main__":

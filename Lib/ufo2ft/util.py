@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
-from __future__ import (
-    print_function,
-    division,
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import print_function, division, absolute_import, unicode_literals
+
 try:
     from inspect import getfullargspec as getargspec  # PY3
 except ImportError:
@@ -289,76 +285,76 @@ def calcCodePageRanges(unicodes):
 
     for char in chars:
         if char == "Þ" and hasAscii:
-            codepageRanges.add(0)           # Latin 1
+            codepageRanges.add(0)  # Latin 1
         elif char == "Ľ" and hasAscii:
-            codepageRanges.add(1)           # Latin 2: Eastern Europe
+            codepageRanges.add(1)  # Latin 2: Eastern Europe
             if hasLineart:
-                codepageRanges.add(58)      # Latin 2
+                codepageRanges.add(58)  # Latin 2
         elif char == "Б":
-            codepageRanges.add(2)           # Cyrillic
+            codepageRanges.add(2)  # Cyrillic
             if "Ѕ" in chars and hasLineart:
-                codepageRanges.add(57)      # IBM Cyrillic
+                codepageRanges.add(57)  # IBM Cyrillic
             if "╜" in chars and hasLineart:
-                codepageRanges.add(49)      # MS-DOS Russian
+                codepageRanges.add(49)  # MS-DOS Russian
         elif char == "Ά":
-            codepageRanges.add(3)           # Greek
+            codepageRanges.add(3)  # Greek
             if hasLineart and "½" in chars:
-                codepageRanges.add(48)      # IBM Greek
+                codepageRanges.add(48)  # IBM Greek
             if hasLineart and "√" in chars:
-                codepageRanges.add(60)      # Greek, former 437 G
+                codepageRanges.add(60)  # Greek, former 437 G
         elif char == "İ" and hasAscii:
-            codepageRanges.add(4)           # Turkish
+            codepageRanges.add(4)  # Turkish
             if hasLineart:
-                codepageRanges.add(56)      # IBM turkish
+                codepageRanges.add(56)  # IBM turkish
         elif char == "א":
-            codepageRanges.add(5)           # Hebrew
+            codepageRanges.add(5)  # Hebrew
             if hasLineart and "√" in chars:
-                codepageRanges.add(53)      # Hebrew
+                codepageRanges.add(53)  # Hebrew
         elif char == "ر":
-            codepageRanges.add(6)           # Arabic
+            codepageRanges.add(6)  # Arabic
             if "√" in chars:
-                codepageRanges.add(51)      # Arabic
+                codepageRanges.add(51)  # Arabic
             if hasLineart:
-                codepageRanges.add(61)      # Arabic; ASMO 708
+                codepageRanges.add(61)  # Arabic; ASMO 708
         elif char == "ŗ" and hasAscii:
-            codepageRanges.add(7)           # Windows Baltic
+            codepageRanges.add(7)  # Windows Baltic
             if hasLineart:
-                codepageRanges.add(59)      # MS-DOS Baltic
+                codepageRanges.add(59)  # MS-DOS Baltic
         elif char == "₫" and hasAscii:
-            codepageRanges.add(8)           # Vietnamese
+            codepageRanges.add(8)  # Vietnamese
         elif char == "ๅ":
-            codepageRanges.add(16)          # Thai
+            codepageRanges.add(16)  # Thai
         elif char == "エ":
-            codepageRanges.add(17)          # JIS/Japan
+            codepageRanges.add(17)  # JIS/Japan
         elif char == "ㄅ":
-            codepageRanges.add(18)          # Chinese: Simplified chars
+            codepageRanges.add(18)  # Chinese: Simplified chars
         elif char == "ㄱ":
-            codepageRanges.add(19)          # Korean wansung
+            codepageRanges.add(19)  # Korean wansung
         elif char == "央":
-            codepageRanges.add(20)          # Chinese: Traditional chars
+            codepageRanges.add(20)  # Chinese: Traditional chars
         elif char == "곴":
-            codepageRanges.add(21)          # Korean Johab
+            codepageRanges.add(21)  # Korean Johab
         elif char == "♥" and hasAscii:
-            codepageRanges.add(30)          # OEM Character Set
+            codepageRanges.add(30)  # OEM Character Set
         # TODO: Symbol bit has a special meaning (check the spec), we need
         # to confirm if this is wanted by default.
         # elif unichr(0xF000) <= char <= unichr(0xF0FF):
         #    codepageRanges.add(31)          # Symbol Character Set
         elif char == "þ" and hasAscii and hasLineart:
-            codepageRanges.add(54)          # MS-DOS Icelandic
+            codepageRanges.add(54)  # MS-DOS Icelandic
         elif char == "╚" and hasAscii:
-            codepageRanges.add(62)          # WE/Latin 1
-            codepageRanges.add(63)          # US
+            codepageRanges.add(62)  # WE/Latin 1
+            codepageRanges.add(63)  # US
         elif hasAscii and hasLineart and "√" in chars:
             if char == "Å":
-                codepageRanges.add(50)      # MS-DOS Nordic
+                codepageRanges.add(50)  # MS-DOS Nordic
             elif char == "é":
-                codepageRanges.add(52)      # MS-DOS Canadian French
+                codepageRanges.add(52)  # MS-DOS Canadian French
             elif char == "õ":
-                codepageRanges.add(55)      # MS-DOS Portuguese
+                codepageRanges.add(55)  # MS-DOS Portuguese
 
     if hasAscii and "‰" in chars and "∑" in chars:
-        codepageRanges.add(29)              # Macintosh Character Set (US Roman)
+        codepageRanges.add(29)  # Macintosh Character Set (US Roman)
 
     # when no codepage ranges can be enabled, fall back to enabling bit 0
     # (Latin 1) so that the font works in MS Word:
@@ -370,7 +366,6 @@ def calcCodePageRanges(unicodes):
 
 
 class _LazyFontName(object):
-
     def __init__(self, font):
         self.font = font
 

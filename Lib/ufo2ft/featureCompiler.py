@@ -1,9 +1,4 @@
-from __future__ import (
-    print_function,
-    division,
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import print_function, division, absolute_import, unicode_literals
 import logging
 import os
 from inspect import isclass
@@ -150,9 +145,7 @@ class FeatureCompiler(BaseFeatureCompiler):
 
     defaultFeatureWriters = [KernFeatureWriter, MarkFeatureWriter]
 
-    def __init__(
-        self, ufo, ttFont=None, glyphSet=None, featureWriters=None, **kwargs
-    ):
+    def __init__(self, ufo, ttFont=None, glyphSet=None, featureWriters=None, **kwargs):
         """
         Args:
           featureWriters: a list of BaseFeatureWriter subclasses or
@@ -248,18 +241,14 @@ class FeatureCompiler(BaseFeatureCompiler):
         # resolved, and we work from a string which does't exist on disk
         path = self.ufo.path if not self.featureWriters else None
         try:
-            addOpenTypeFeaturesFromString(
-                self.ttFont, self.features, filename=path
-            )
+            addOpenTypeFeaturesFromString(self.ttFont, self.features, filename=path)
         except FeatureLibError:
             if path is None:
                 # if compilation fails, create temporary file for inspection
                 data = tobytes(self.features, encoding="utf-8")
                 with NamedTemporaryFile(delete=False) as tmp:
                     tmp.write(data)
-                logger.error(
-                    "Compilation failed! Inspect temporary file: %r", tmp.name
-                )
+                logger.error("Compilation failed! Inspect temporary file: %r", tmp.name)
             raise
 
 

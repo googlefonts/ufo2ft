@@ -1,9 +1,4 @@
-from __future__ import (
-    print_function,
-    absolute_import,
-    division,
-    unicode_literals,
-)
+from __future__ import print_function, absolute_import, division, unicode_literals
 from .baseFeatureWriter import BaseFeatureWriter
 from .kernFeatureWriter import KernFeatureWriter
 from .markFeatureWriter import MarkFeatureWriter
@@ -50,10 +45,7 @@ def isValidFeatureWriter(klass):
     if not hasattr(klass, "write"):
         logger.error("%r does not have a required 'write' method", klass)
         return False
-    if (
-        getargspec(klass.write).args
-        != getargspec(BaseFeatureWriter.write).args
-    ):
+    if getargspec(klass.write).args != getargspec(BaseFeatureWriter.write).args:
         logger.error("%r 'write' method has incorrect signature", klass)
         return False
     return True
@@ -112,8 +104,7 @@ def loadFeatureWriters(ufo, ignoreErrors=True):
 
 def _kwargsEval(s):
     return eval(
-        "dict(%s)" % s,
-        {"__builtins__": {"True": True, "False": False, "dict": dict}},
+        "dict(%s)" % s, {"__builtins__": {"True": True, "False": False, "dict": dict}}
     )
 
 

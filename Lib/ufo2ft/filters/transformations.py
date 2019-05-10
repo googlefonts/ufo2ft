@@ -1,5 +1,4 @@
-from __future__ import (
-    print_function, division, absolute_import, unicode_literals)
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 import math
 from collections import namedtuple
@@ -19,7 +18,6 @@ log = logging.getLogger(__name__)
 
 
 class TransformPen(_TransformPen):
-
     def __init__(self, outPen, transformation, modified=None):
         super(TransformPen, self).__init__(outPen, transformation)
         self.modified = modified if modified is not None else set()
@@ -43,7 +41,6 @@ class TransformPen(_TransformPen):
 
 
 class TransformationsFilter(BaseFilter):
-
     class Origin(IntEnum):
         CAP_HEIGHT = 0
         HALF_CAP_HEIGHT = 1
@@ -52,12 +49,12 @@ class TransformationsFilter(BaseFilter):
         BASELINE = 4
 
     _kwargs = {
-        'OffsetX': 0,
-        'OffsetY': 0,
-        'ScaleX': 100,
-        'ScaleY': 100,
-        'Slant': 0,
-        'Origin': 4,  # BASELINE
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ScaleX": 100,
+        "ScaleY": 100,
+        "Slant": 0,
+        "Origin": 4,  # BASELINE
     }
 
     def start(self):
@@ -69,11 +66,11 @@ class TransformationsFilter(BaseFilter):
         elif origin is self.Origin.CAP_HEIGHT:
             return font.info.capHeight
         elif origin is self.Origin.HALF_CAP_HEIGHT:
-            return otRound(font.info.capHeight/2)
+            return otRound(font.info.capHeight / 2)
         elif origin is self.Origin.X_HEIGHT:
             return font.info.xHeight
         elif origin is self.Origin.HALF_X_HEIGHT:
-            return otRound(font.info.xHeight/2)
+            return otRound(font.info.xHeight / 2)
         else:
             raise AssertionError(origin)
 
@@ -97,7 +94,7 @@ class TransformationsFilter(BaseFilter):
             if origin_height != 0:
                 m = m.translate(0, origin_height)
             if sx != 100 or sy != 100:
-                m = m.scale(sx/100, sy/100)
+                m = m.scale(sx / 100, sy / 100)
             if angle != 0:
                 m = m.skew(math.radians(angle))
             if origin_height != 0:
@@ -109,8 +106,7 @@ class TransformationsFilter(BaseFilter):
 
     def filter(self, glyph):
         matrix = self.context.matrix
-        if (matrix == Identity or
-                not (glyph or glyph.components or glyph.anchors)):
+        if matrix == Identity or not (glyph or glyph.components or glyph.anchors):
             return False  # nothing to do
 
         modified = self.context.modified
@@ -132,9 +128,7 @@ class TransformationsFilter(BaseFilter):
         glyph.clearComponents()
 
         outpen = glyph.getPen()
-        filterpen = TransformPen(outpen,
-                                 matrix,
-                                 modified)
+        filterpen = TransformPen(outpen, matrix, modified)
         rec.replay(filterpen)
 
         # anchors are not drawn through the pen API,

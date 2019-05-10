@@ -1,9 +1,4 @@
-from __future__ import (
-    print_function,
-    division,
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import print_function, division, absolute_import, unicode_literals
 from textwrap import dedent
 import logging
 from ufo2ft.featureWriters import ast
@@ -25,9 +20,7 @@ def testufo(FontClass):
     liga = ufo.newGlyph("f_i")
     liga.appendAnchor({"name": "top_1", "x": 100, "y": 500})
     liga.appendAnchor({"name": "top_2", "x": 600, "y": 500})
-    ufo.newGlyph("acutecomb").appendAnchor(
-        {"name": "_top", "x": 100, "y": 200}
-    )
+    ufo.newGlyph("acutecomb").appendAnchor({"name": "_top", "x": 100, "y": 200})
     accent = ufo.newGlyph("tildecomb")
     accent.appendAnchor({"name": "_top", "x": 100, "y": 200})
     accent.appendAnchor({"name": "top", "x": 100, "y": 300})
@@ -80,12 +73,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         ufo = FontClass()
         ufo.newGlyph("a").appendAnchor({"name": "top", "x": 250, "y": 500})
         ufo.newGlyph("c").appendAnchor({"name": "bottom", "x": 250, "y": -100})
-        ufo.newGlyph("grave").appendAnchor(
-            {"name": "_top", "x": 100, "y": 200}
-        )
-        ufo.newGlyph("cedilla").appendAnchor(
-            {"name": "_bottom", "x": 100, "y": 0}
-        )
+        ufo.newGlyph("grave").appendAnchor({"name": "_top", "x": 100, "y": 200})
+        ufo.newGlyph("cedilla").appendAnchor({"name": "_bottom", "x": 100, "y": 0})
         writer = MarkFeatureWriter()
         feaFile = ast.FeatureFile()
         writer.setContext(ufo, feaFile)
@@ -101,12 +90,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         ufo = FontClass()
         ufo.newGlyph("a").appendAnchor({"name": "top", "x": 250, "y": 500})
         ufo.newGlyph("c").appendAnchor({"name": "bottom", "x": 250, "y": -100})
-        ufo.newGlyph("grave").appendAnchor(
-            {"name": "_top", "x": 100, "y": 200}
-        )
-        ufo.newGlyph("cedilla").appendAnchor(
-            {"name": "_bottom", "x": 100, "y": 0}
-        )
+        ufo.newGlyph("grave").appendAnchor({"name": "_top", "x": 100, "y": 200})
+        ufo.newGlyph("cedilla").appendAnchor({"name": "_bottom", "x": 100, "y": 0})
         ufo.features.text = dedent(
             """\
             markClass cedilla <anchor 200 0> @MC_bottom;
@@ -132,9 +117,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert not self.writeFeatures(ufo)
 
         ufo.newGlyph("a").appendAnchor({"name": "top", "x": 100, "y": 200})
-        ufo.newGlyph("acutecomb").appendAnchor(
-            {"name": "_top", "x": 100, "y": 200}
-        )
+        ufo.newGlyph("acutecomb").appendAnchor({"name": "_top", "x": 100, "y": 200})
 
         fea = str(self.writeFeatures(ufo))
 
@@ -330,7 +313,6 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         """
 
         class RobotoMarkFeatureWriter(MarkFeatureWriter):
-
             class NamedAnchor(NamedAnchor):
                 markPrefix = "_mark"
                 ignoreRE = "(^mkmk|_acc$)"
@@ -355,9 +337,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         ufo.newGlyph("cedillacomb").appendAnchor(
             {"name": "_markbottom", "x": 200, "y": 0}
         )
-        ufo.newGlyph("ogonekcomb").appendAnchor(
-            {"name": "_bottom", "x": 180, "y": -10}
-        )
+        ufo.newGlyph("ogonekcomb").appendAnchor({"name": "_bottom", "x": 180, "y": -10})
 
         writer = RobotoMarkFeatureWriter()
         feaFile = ast.FeatureFile()
@@ -522,9 +502,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         bar_foo = ufo.newGlyph("bar_foo")
         bar_foo.unicode = 0x0B89
         # sequence doesn't start from 1, the first is implied NULL anchor
-        bar_foo.anchors = [
-            {"name": "top_2", "x": 600, "y": 501},
-        ]
+        bar_foo.anchors = [{"name": "top_2", "x": 600, "y": 501}]
 
         testufo.glyphOrder = [
             "a",

@@ -2,10 +2,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
-from ufo2ft.constants import (
-    USE_PRODUCTION_NAMES,
-    GLYPHS_DONT_USE_PRODUCTION_NAMES
-)
+from ufo2ft.constants import USE_PRODUCTION_NAMES, GLYPHS_DONT_USE_PRODUCTION_NAMES
 import logging
 import re
 
@@ -28,7 +25,7 @@ class PostProcessor(object):
         otf.save(stream)
         stream.seek(0)
         self.otf = TTFont(stream)
-        self._postscriptNames = ufo.lib.get('public.postscriptNames')
+        self._postscriptNames = ufo.lib.get("public.postscriptNames")
 
     def process(self, useProductionNames=None, optimizeCFF=True):
         """
@@ -56,11 +53,11 @@ class PostProcessor(object):
             useProductionNames = self.ufo.lib.get(
                 USE_PRODUCTION_NAMES,
                 not self.ufo.lib.get(GLYPHS_DONT_USE_PRODUCTION_NAMES)
-                and self._postscriptNames is not None
+                and self._postscriptNames is not None,
             )
         if useProductionNames:
             self._rename_glyphs_from_ufo()
-        if optimizeCFF and 'CFF ' in self.otf:
+        if optimizeCFF and "CFF " in self.otf:
             from compreffor import compress
 
             logger.info("Subroutinizing CFF table")
@@ -79,21 +76,22 @@ class PostProcessor(object):
         # standard Macintosh glyph order; otherwise, if one dumps the font
         # to TTX directly before compiling first, the post table will not
         # contain the extraNames.
-        if 'post' in otf and otf['post'].formatType == 2.0:
-            otf['post'].compile(self.otf)
+        if "post" in otf and otf["post"].formatType == 2.0:
+            otf["post"].compile(self.otf)
 
-        if 'CFF ' in otf:
-            cff = otf['CFF '].cff.topDictIndex[0]
+        if "CFF " in otf:
+            cff = otf["CFF "].cff.topDictIndex[0]
             char_strings = cff.CharStrings.charStrings
             cff.CharStrings.charStrings = {
-                rename_map.get(n, n): v for n, v in char_strings.items()}
+                rename_map.get(n, n): v for n, v in char_strings.items()
+            }
             cff.charset = [rename_map.get(n, n) for n in cff.charset]
 
     def _build_production_names(self):
         seen = {}
         rename_map = {}
         for name in self.otf.getGlyphOrder():
-            # Ignore glyphs that aren't in the source, as they are usually generated 
+            # Ignore glyphs that aren't in the source, as they are usually generated
             # and we lack information about them.
             if name not in self.glyphSet:
                 continue
@@ -140,26 +138,28 @@ class PostProcessor(object):
         # use name derived from unicode value
         unicode_val = glyph.unicode
         if glyph.unicode is not None:
-            return '%s%04X' % (
-                'u' if unicode_val > 0xffff else 'uni', unicode_val)
+            return "%s%04X" % ("u" if unicode_val > 0xFFFF else "uni", unicode_val)
 
         # use production name + last (non-script) suffix if possible
-        parts = glyph.name.rsplit('.', 1)
+        parts = glyph.name.rsplit(".", 1)
         if len(parts) == 2 and parts[0] in self.glyphSet:
-            return '%s.%s' % (
-                self._build_production_name(self.glyphSet[parts[0]]), parts[1])
+            return "%s.%s" % (
+                self._build_production_name(self.glyphSet[parts[0]]),
+                parts[1],
+            )
 
         # use ligature name, making sure to look up components with suffixes
-        parts = glyph.name.split('.', 1)
+        parts = glyph.name.split(".", 1)
         if len(parts) == 2:
-            liga_parts = ['%s.%s' % (n, parts[1]) for n in parts[0].split('_')]
+            liga_parts = ["%s.%s" % (n, parts[1]) for n in parts[0].split("_")]
         else:
-            liga_parts = glyph.name.split('_')
+            liga_parts = glyph.name.split("_")
         if len(liga_parts) > 1 and all(n in self.glyphSet for n in liga_parts):
             unicode_vals = [self.glyphSet[n].unicode for n in liga_parts]
-            if all(v and v <= 0xffff for v in unicode_vals):
-                return 'uni' + ''.join('%04X' % v for v in unicode_vals)
-            return '_'.join(
-                self._build_production_name(self.glyphSet[n]) for n in liga_parts)
+            if all(v and v <= 0xFFFF for v in unicode_vals):
+                return "uni" + "".join("%04X" % v for v in unicode_vals)
+            return "_".join(
+                self._build_production_name(self.glyphSet[n]) for n in liga_parts
+            )
 
         return glyph.name

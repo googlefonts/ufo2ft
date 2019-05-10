@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 # generic
 _styleMapStyleNames = ["regular", "bold", "italic", "bold italic"]
 
+
 def styleMapFamilyNameFallback(info):
     """
     Fallback to *openTypeNamePreferredFamilyName* if
@@ -54,6 +55,7 @@ def styleMapFamilyNameFallback(info):
         styleName = ""
     return (familyName + " " + styleName).strip()
 
+
 def styleMapStyleNameFallback(info):
     """
     Fallback to *openTypeNamePreferredSubfamilyName* if
@@ -69,12 +71,15 @@ def styleMapStyleNameFallback(info):
         styleName = styleName.strip().lower()
     return styleName
 
+
 # head
 
 _date_format = "%Y/%m/%d %H:%M:%S"
 
+
 def dateStringForNow():
     return time.strftime(_date_format, time.gmtime())
+
 
 def openTypeHeadCreatedFallback(info):
     """
@@ -87,7 +92,9 @@ def openTypeHeadCreatedFallback(info):
     else:
         return dateStringForNow()
 
+
 # hhea
+
 
 def openTypeHheaAscenderFallback(info):
     """
@@ -95,11 +102,13 @@ def openTypeHheaAscenderFallback(info):
     """
     return info.ascender + getAttrWithFallback(info, "openTypeOS2TypoLineGap")
 
+
 def openTypeHheaDescenderFallback(info):
     """
     Fallback to *descender*.
     """
     return info.descender
+
 
 def openTypeHheaCaretSlopeRiseFallback(info):
     """
@@ -110,13 +119,16 @@ def openTypeHheaCaretSlopeRiseFallback(info):
     """
     italicAngle = getAttrWithFallback(info, "italicAngle")
     if italicAngle != 0:
-        if (hasattr(info, "openTypeHheaCaretSlopeRun") and
-                info.openTypeHheaCaretSlopeRun is not None):
+        if (
+            hasattr(info, "openTypeHheaCaretSlopeRun")
+            and info.openTypeHheaCaretSlopeRun is not None
+        ):
             slopeRun = info.openTypeHheaCaretSlopeRun
             return otRound(slopeRun / math.tan(math.radians(-italicAngle)))
         else:
             return 1000  # just an arbitrary non-zero reference point
     return 1
+
 
 def openTypeHheaCaretSlopeRunFallback(info):
     """
@@ -130,7 +142,9 @@ def openTypeHheaCaretSlopeRunFallback(info):
         return otRound(math.tan(math.radians(-italicAngle)) * slopeRise)
     return 0
 
+
 # name
+
 
 def openTypeNameVersionFallback(info):
     """
@@ -139,6 +153,7 @@ def openTypeNameVersionFallback(info):
     versionMajor = getAttrWithFallback(info, "versionMajor")
     versionMinor = getAttrWithFallback(info, "versionMinor")
     return "Version %d.%s" % (versionMajor, str(versionMinor).zfill(3))
+
 
 def openTypeNameUniqueIDFallback(info):
     """
@@ -149,17 +164,20 @@ def openTypeNameUniqueIDFallback(info):
     fontName = getAttrWithFallback(info, "postscriptFontName")
     return "%s;%s;%s" % (version, vendor, fontName)
 
+
 def openTypeNamePreferredFamilyNameFallback(info):
     """
     Fallback to *familyName*.
     """
     return info.familyName
 
+
 def openTypeNamePreferredSubfamilyNameFallback(info):
     """
     Fallback to *styleName*.
     """
     return info.styleName
+
 
 def openTypeNameCompatibleFullNameFallback(info):
     """
@@ -173,15 +191,19 @@ def openTypeNameCompatibleFullNameFallback(info):
         familyName += " " + styleMapStyleName.title()
     return familyName
 
+
 def openTypeNameWWSFamilyNameFallback(info):
     # not yet supported
     return None
+
 
 def openTypeNameWWSSubfamilyNameFallback(info):
     # not yet supported
     return None
 
+
 # OS/2
+
 
 def openTypeOS2TypoAscenderFallback(info):
     """
@@ -189,11 +211,13 @@ def openTypeOS2TypoAscenderFallback(info):
     """
     return info.ascender
 
+
 def openTypeOS2TypoDescenderFallback(info):
     """
     Fallback to *descender*.
     """
     return info.descender
+
 
 def openTypeOS2TypoLineGapFallback(info):
     """
@@ -201,11 +225,13 @@ def openTypeOS2TypoLineGapFallback(info):
     """
     return max(int(info.unitsPerEm * 1.2) - info.ascender + info.descender, 0)
 
+
 def openTypeOS2WinAscentFallback(info):
     """
     Fallback to *ascender + typoLineGap*.
     """
     return info.ascender + getAttrWithFallback(info, "openTypeOS2TypoLineGap")
+
 
 def openTypeOS2WinDescentFallback(info):
     """
@@ -213,10 +239,12 @@ def openTypeOS2WinDescentFallback(info):
     """
     return abs(info.descender)
 
+
 # postscript
 
 _postscriptFontNameExceptions = set("[](){}<>/%")
 _postscriptFontNameAllowed = set([unichr(i) for i in range(33, 127)])
+
 
 def normalizeStringForPostscript(s, allowSpaces=True):
     s = tounicode(s)
@@ -234,8 +262,10 @@ def normalizeStringForPostscript(s, allowSpaces=True):
         normalized.append(tostr(c))
     return "".join(normalized)
 
+
 def normalizeNameForPostscript(name):
     return normalizeStringForPostscript(name, allowSpaces=False)
+
 
 def postscriptFontNameFallback(info):
     """
@@ -243,14 +273,22 @@ def postscriptFontNameFallback(info):
     as defined in the specification. This will draw from
     *openTypeNamePreferredFamilyName* and *openTypeNamePreferredSubfamilyName*.
     """
-    name = "%s-%s" % (getAttrWithFallback(info, "openTypeNamePreferredFamilyName"), getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"))
+    name = "%s-%s" % (
+        getAttrWithFallback(info, "openTypeNamePreferredFamilyName"),
+        getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"),
+    )
     return normalizeNameForPostscript(name)
+
 
 def postscriptFullNameFallback(info):
     """
     Fallback to *openTypeNamePreferredFamilyName openTypeNamePreferredSubfamilyName*.
     """
-    return "%s %s" % (getAttrWithFallback(info, "openTypeNamePreferredFamilyName"), getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"))
+    return "%s %s" % (
+        getAttrWithFallback(info, "openTypeNamePreferredFamilyName"),
+        getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"),
+    )
+
 
 def postscriptSlantAngleFallback(info):
     """
@@ -258,17 +296,18 @@ def postscriptSlantAngleFallback(info):
     """
     return getAttrWithFallback(info, "italicAngle")
 
+
 def postscriptUnderlineThicknessFallback(info):
     """Return UPM * 0.05 (50 for 1000 UPM) and warn."""
-    logger.warning(
-        'Underline thickness not set in UFO, defaulting to UPM * 0.05')
+    logger.warning("Underline thickness not set in UFO, defaulting to UPM * 0.05")
     return info.unitsPerEm * 0.05
+
 
 def postscriptUnderlinePositionFallback(info):
     """Return UPM * -0.075 (-75 for 1000 UPM) and warn."""
-    logger.warning(
-        'Underline position not set in UFO, defaulting to UPM * -0.075')
+    logger.warning("Underline position not set in UFO, defaulting to UPM * -0.075")
     return info.unitsPerEm * -0.075
+
 
 def postscriptBlueScaleFallback(info):
     """
@@ -283,14 +322,15 @@ def postscriptBlueScaleFallback(info):
     if blues:
         assert len(blues) % 2 == 0
         for x, y in zip(blues[:-1:2], blues[1::2]):
-            maxZoneHeight = max(maxZoneHeight, abs(y-x))
+            maxZoneHeight = max(maxZoneHeight, abs(y - x))
     if otherBlues:
         assert len(otherBlues) % 2 == 0
         for x, y in zip(otherBlues[:-1:2], otherBlues[1::2]):
-            maxZoneHeight = max(maxZoneHeight, abs(y-x))
+            maxZoneHeight = max(maxZoneHeight, abs(y - x))
     if maxZoneHeight != 0:
-        blueScale = 3/(4*maxZoneHeight)
+        blueScale = 3 / (4 * maxZoneHeight)
     return blueScale
+
 
 # --------------
 # Attribute Maps
@@ -305,13 +345,10 @@ staticFallbackData = dict(
     # not needed
     year=None,
     note=None,
-
     openTypeHeadLowestRecPPEM=6,
     openTypeHeadFlags=[0, 1],
-
     openTypeHheaLineGap=0,
     openTypeHheaCaretOffset=0,
-
     openTypeNameDesigner=None,
     openTypeNameDesignerURL=None,
     openTypeNameManufacturer=None,
@@ -321,7 +358,6 @@ staticFallbackData = dict(
     openTypeNameDescription=None,
     openTypeNameSampleText=None,
     openTypeNameRecords=[],
-
     openTypeOS2WidthClass=5,
     openTypeOS2WeightClass=400,
     openTypeOS2Selection=[],
@@ -331,7 +367,6 @@ staticFallbackData = dict(
     openTypeOS2UnicodeRanges=None,
     openTypeOS2CodePageRanges=None,
     openTypeOS2Type=[2],
-
     openTypeOS2SubscriptXSize=None,
     openTypeOS2SubscriptYSize=None,
     openTypeOS2SubscriptXOffset=None,
@@ -342,7 +377,6 @@ staticFallbackData = dict(
     openTypeOS2SuperscriptYOffset=None,
     openTypeOS2StrikeoutSize=None,
     openTypeOS2StrikeoutPosition=None,
-
     # fallback to None on these
     # as the user should be in
     # complete control
@@ -355,7 +389,6 @@ staticFallbackData = dict(
     openTypeVheaCaretSlopeRise=0,
     openTypeVheaCaretSlopeRun=1,
     openTypeVheaCaretOffset=0,
-
     postscriptUniqueID=None,
     postscriptWeightName=None,
     postscriptIsFixedPitch=False,
@@ -370,14 +403,12 @@ staticFallbackData = dict(
     postscriptForceBold=0,
     postscriptDefaultWidthX=200,
     postscriptNominalWidthX=0,
-
     # not used in OTF
     postscriptDefaultCharacter=None,
     postscriptWindowsCharacterSet=None,
-
     # not used in OTF
     macintoshFONDFamilyID=None,
-    macintoshFONDName=None
+    macintoshFONDName=None,
 )
 
 specialFallbacks = dict(
@@ -405,46 +436,51 @@ specialFallbacks = dict(
     postscriptSlantAngle=postscriptSlantAngleFallback,
     postscriptUnderlineThickness=postscriptUnderlineThicknessFallback,
     postscriptUnderlinePosition=postscriptUnderlinePositionFallback,
-    postscriptBlueScale=postscriptBlueScaleFallback
+    postscriptBlueScale=postscriptBlueScaleFallback,
 )
 
-requiredAttributes = set(ufoLib.fontInfoAttributesVersion2) - (set(staticFallbackData.keys()) | set(specialFallbacks.keys()))
+requiredAttributes = set(ufoLib.fontInfoAttributesVersion2) - (
+    set(staticFallbackData.keys()) | set(specialFallbacks.keys())
+)
 
-recommendedAttributes = set([
-    "styleMapFamilyName",
-    "versionMajor",
-    "versionMinor",
-    "copyright",
-    "trademark",
-    "openTypeHeadCreated",
-    "openTypeNameDesigner",
-    "openTypeNameDesignerURL",
-    "openTypeNameManufacturer",
-    "openTypeNameManufacturerURL",
-    "openTypeNameLicense",
-    "openTypeNameLicenseURL",
-    "openTypeNameDescription",
-    "openTypeNameSampleText",
-    "openTypeOS2WidthClass",
-    "openTypeOS2WeightClass",
-    "openTypeOS2VendorID",
-    "openTypeOS2Panose",
-    "openTypeOS2FamilyClass",
-    "openTypeOS2UnicodeRanges",
-    "openTypeOS2CodePageRanges",
-    "openTypeOS2TypoLineGap",
-    "openTypeOS2Type",
-    "postscriptBlueValues",
-    "postscriptOtherBlues",
-    "postscriptFamilyBlues",
-    "postscriptFamilyOtherBlues",
-    "postscriptStemSnapH",
-    "postscriptStemSnapV"
-])
+recommendedAttributes = set(
+    [
+        "styleMapFamilyName",
+        "versionMajor",
+        "versionMinor",
+        "copyright",
+        "trademark",
+        "openTypeHeadCreated",
+        "openTypeNameDesigner",
+        "openTypeNameDesignerURL",
+        "openTypeNameManufacturer",
+        "openTypeNameManufacturerURL",
+        "openTypeNameLicense",
+        "openTypeNameLicenseURL",
+        "openTypeNameDescription",
+        "openTypeNameSampleText",
+        "openTypeOS2WidthClass",
+        "openTypeOS2WeightClass",
+        "openTypeOS2VendorID",
+        "openTypeOS2Panose",
+        "openTypeOS2FamilyClass",
+        "openTypeOS2UnicodeRanges",
+        "openTypeOS2CodePageRanges",
+        "openTypeOS2TypoLineGap",
+        "openTypeOS2Type",
+        "postscriptBlueValues",
+        "postscriptOtherBlues",
+        "postscriptFamilyBlues",
+        "postscriptFamilyOtherBlues",
+        "postscriptStemSnapH",
+        "postscriptStemSnapV",
+    ]
+)
 
 # ------------
 # Main Methods
 # ------------
+
 
 def getAttrWithFallback(info, attr):
     """
@@ -462,6 +498,7 @@ def getAttrWithFallback(info, attr):
         else:
             value = staticFallbackData[attr]
     return value
+
 
 def preflightInfo(info):
     """
@@ -483,16 +520,18 @@ def preflightInfo(info):
             missingRecommended.add(attr)
     return dict(missingRequired=missingRequired, missingRecommended=missingRecommended)
 
+
 # -----------------
 # Low Level Support
 # -----------------
 
 # these should not be used outside of this package
 
+
 def intListToNum(intList, start, length):
     all = []
     bin = ""
-    for i in range(start, start+length):
+    for i in range(start, start + length):
         if i in intList:
             b = "1"
         else:
@@ -506,6 +545,7 @@ def intListToNum(intList, start, length):
     all.reverse()
     all = " ".join(all)
     return binary2num(all)
+
 
 def dateStringToTimeValue(date):
     try:

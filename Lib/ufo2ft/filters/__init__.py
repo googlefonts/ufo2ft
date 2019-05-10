@@ -1,5 +1,4 @@
-from __future__ import (
-    print_function, division, absolute_import, unicode_literals)
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 import importlib
 import logging
@@ -40,12 +39,15 @@ def loadFilters(ufo):
             filterClass = getFilterClass(filterDict["name"], namespace)
         except (ImportError, AttributeError):
             from pprint import pformat
+
             logger.exception("Failed to load filter: %s", pformat(filterDict))
             continue
-        filterObj = filterClass(include=filterDict.get("include"),
-                                exclude=filterDict.get("exclude"),
-                                *filterDict.get("args", []),
-                                **filterDict.get("kwargs", {}))
+        filterObj = filterClass(
+            include=filterDict.get("include"),
+            exclude=filterDict.get("exclude"),
+            *filterDict.get("args", []),
+            **filterDict.get("kwargs", {})
+        )
         if filterDict.get("pre"):
             preFilters.append(filterObj)
         else:
@@ -74,17 +76,17 @@ class BaseFilter(object):
             num_missing = len(missing)
             raise TypeError(
                 "missing {0} required positional argument{1}: {2}".format(
-                    num_missing,
-                    "s" if num_missing > 1 else "",
-                    ", ".join(missing)))
+                    num_missing, "s" if num_missing > 1 else "", ", ".join(missing)
+                )
+            )
         elif num_args > num_required:
             extra = [repr(a) for a in args[num_required:]]
             num_extra = len(extra)
             raise TypeError(
                 "got {0} unsupported positional argument{1}: {2}".format(
-                    num_extra,
-                    "s" if num_extra > 1 else "",
-                    ", ".join(extra)))
+                    num_extra, "s" if num_extra > 1 else "", ", ".join(extra)
+                )
+            )
         for key, value in zip(self._args, args):
             setattr(options, key, value)
 
@@ -93,11 +95,10 @@ class BaseFilter(object):
             setattr(options, key, kwargs.pop(key, default))
 
         # process special include/exclude arguments
-        include = kwargs.pop('include', None)
-        exclude = kwargs.pop('exclude', None)
+        include = kwargs.pop("include", None)
+        exclude = kwargs.pop("exclude", None)
         if include is not None and exclude is not None:
-            raise ValueError(
-                "'include' and 'exclude' arguments are mutually exclusive")
+            raise ValueError("'include' and 'exclude' arguments are mutually exclusive")
         if callable(include):
             # 'include' can be a function (e.g. lambda) that takes a
             # glyph object and returns True/False based on some test
@@ -124,7 +125,9 @@ class BaseFilter(object):
                 "got {0}unsupported keyword argument{1}: {2}".format(
                     "an " if num_left == 1 else "",
                     "s" if len(kwargs) > 1 else "",
-                    ", ".join("'{}'".format(k) for k in kwargs)))
+                    ", ".join("'{}'".format(k) for k in kwargs),
+                )
+            )
 
         # run the filter's custom initialization code
         self.start()
@@ -132,12 +135,16 @@ class BaseFilter(object):
     def __repr__(self):
         items = []
         if self._args:
-            items.append(", ".join(
-                repr(getattr(self.options, arg)) for arg in self._args))
+            items.append(
+                ", ".join(repr(getattr(self.options, arg)) for arg in self._args)
+            )
         if self._kwargs:
-            items.append(", ".join(
-                "{0}={1!r}".format(k, getattr(self.options, k))
-                for k in sorted(self._kwargs)))
+            items.append(
+                ", ".join(
+                    "{0}={1!r}".format(k, getattr(self.options, k))
+                    for k in sorted(self._kwargs)
+                )
+            )
         if hasattr(self, "_include_repr"):
             items.append("include={}".format(self._include_repr()))
         elif hasattr(self, "_exclude_repr"):
@@ -214,7 +221,11 @@ class BaseFilter(object):
 
         num = len(modified)
         if num > 0:
-            logger.debug("Took %.3fs to run %s on %d glyph%s",
-                         t, self.name, len(modified),
-                         "" if num == 1 else "s")
+            logger.debug(
+                "Took %.3fs to run %s on %d glyph%s",
+                t,
+                self.name,
+                len(modified),
+                "" if num == 1 else "s",
+            )
         return modified
