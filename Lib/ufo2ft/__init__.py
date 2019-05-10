@@ -1,9 +1,9 @@
 from __future__ import print_function, division, absolute_import
 
-import os
 from enum import IntEnum
 
 from fontTools.misc.py23 import *
+from fontTools import varLib
 
 from ufo2ft.preProcessor import (
     OTFPreProcessor,
@@ -18,6 +18,7 @@ from ufo2ft.featureCompiler import (
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 from ufo2ft.constants import SPARSE_TTF_MASTER_TABLES, SPARSE_OTF_MASTER_TABLES
+from ufo2ft.util import getDefaultMasterFont
 import logging
 
 try:
@@ -497,3 +498,103 @@ def compileFeatures(
         ufo, ttFont, glyphSet=glyphSet, featureWriters=featureWriters
     )
     return featureCompiler.compile()
+
+
+def compileVariableTTF(
+    designSpaceDoc,
+    preProcessorClass=TTFInterpolatablePreProcessor,
+    outlineCompilerClass=OutlineTTFCompiler,
+    featureCompilerClass=None,
+    featureWriters=None,
+    glyphOrder=None,
+    useProductionNames=None,
+    cubicConversionError=None,
+    reverseDirection=True,
+    excludeVariationTables=(),
+    optimizeGvar=True,
+    inplace=False,
+):
+    """Create FontTools TrueType variable font from the DesignSpaceDocument UFO sources
+    with interpolatable outlines, using fontTools.varLib.build.
+
+    *optimizeGvar*, if set to False, will not perform IUP optimization on the
+      generated 'gvar' table.
+
+    *excludeVariationTables* is a list of sfnt table tags (str) that is passed on
+      to fontTools.varLib.build, to skip building some variation tables.
+
+    The rest of the arguments works the same as in the other compile functions.
+
+    Returns a new variable TTFont object.
+    """
+    baseUfo = getDefaultMasterFont(designSpaceDoc)
+
+    ttfDesignSpace = compileInterpolatableTTFsFromDS(
+        designSpaceDoc,
+        preProcessorClass=preProcessorClass,
+        outlineCompilerClass=outlineCompilerClass,
+        featureCompilerClass=featureCompilerClass,
+        featureWriters=featureWriters,
+        glyphOrder=glyphOrder,
+        useProductionNames=False,  # will rename glyphs after varfont is built
+        cubicConversionError=cubicConversionError,
+        reverseDirection=reverseDirection,
+        inplace=inplace,
+    )
+
+    logger.info("Building variable TTF font")
+
+    varfont = varLib.build(
+        ttfDesignSpace, exclude=excludeVariationTables, optimize=optimizeGvar
+    )[0]
+
+    postProcessor = PostProcessor(varfont, baseUfo)
+    varfont = postProcessor.process(useProductionNames)
+
+    return varfont
+
+
+def compileVariableCFF2(
+    designSpaceDoc,
+    preProcessorClass=OTFPreProcessor,
+    outlineCompilerClass=OutlineOTFCompiler,
+    featureCompilerClass=None,
+    featureWriters=None,
+    glyphOrder=None,
+    useProductionNames=None,
+    roundTolerance=None,
+    excludeVariationTables=(),
+    inplace=False,
+):
+    """Create FontTools CFF2 variable font from the DesignSpaceDocument UFO sources
+    with interpolatable outlines, using fontTools.varLib.build.
+
+    *excludeVariationTables* is a list of sfnt table tags (str) that is passed on
+      to fontTools.varLib.build, to skip building some variation tables.
+
+    The rest of the arguments works the same as in the other compile functions.
+
+    Returns a new variable TTFont object.
+    """
+    baseUfo = getDefaultMasterFont(designSpaceDoc)
+
+    otfDesignSpace = compileInterpolatableOTFsFromDS(
+        designSpaceDoc,
+        preProcessorClass=preProcessorClass,
+        outlineCompilerClass=outlineCompilerClass,
+        featureCompilerClass=featureCompilerClass,
+        featureWriters=featureWriters,
+        glyphOrder=glyphOrder,
+        useProductionNames=False,  # will rename glyphs after varfont is built
+        roundTolerance=roundTolerance,
+        inplace=inplace,
+    )
+
+    logger.info("Building variable CFF2 font")
+
+    varfont = varLib.build(otfDesignSpace, exclude=excludeVariationTables)[0]
+
+    postProcessor = PostProcessor(varfont, baseUfo)
+    varfont = postProcessor.process(useProductionNames)
+
+    return varfont
