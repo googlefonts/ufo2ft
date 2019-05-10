@@ -1,9 +1,4 @@
-from __future__ import (
-    print_function,
-    division,
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import SimpleNamespace
 from collections import OrderedDict
 import logging

@@ -1,11 +1,6 @@
 """Helpers to build or extract data from feaLib AST objects."""
 
-from __future__ import (
-    print_function,
-    division,
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import print_function, division, absolute_import, unicode_literals
 from fontTools.feaLib import ast
 from fontTools import unicodedata
 
@@ -29,9 +24,7 @@ def getScriptLanguageSystems(feaFile):
     """
     languagesByScript = collections.OrderedDict()
     for ls in [
-        st
-        for st in feaFile.statements
-        if isinstance(st, ast.LanguageSystemStatement)
+        st for st in feaFile.statements if isinstance(st, ast.LanguageSystemStatement)
     ]:
         if ls.script == "DFLT":
             continue
@@ -168,9 +161,7 @@ def addLookupReferences(
             for lookup in lookups:
                 feature.statements.append(ast.LookupReferenceStatement(lookup))
     else:
-        feature.statements.append(
-            ast.LanguageStatement("dflt", include_default=True)
-        )
+        feature.statements.append(ast.LanguageStatement("dflt", include_default=True))
         for lookup in lookups:
             feature.statements.append(ast.LookupReferenceStatement(lookup))
         for language in languages or ():

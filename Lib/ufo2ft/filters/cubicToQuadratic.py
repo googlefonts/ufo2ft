@@ -1,5 +1,4 @@
-from __future__ import (
-    print_function, division, absolute_import, unicode_literals)
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 from ufo2ft.filters import BaseFilter
 from cu2qu.ufo import DEFAULT_MAX_ERR, CURVE_TYPE_LIB_KEY
@@ -14,9 +13,9 @@ logger = logging.getLogger(__name__)
 class CubicToQuadraticFilter(BaseFilter):
 
     _kwargs = {
-        'conversionError': None,
-        'reverseDirection': True,
-        'rememberCurveType': False,
+        "conversionError": None,
+        "reverseDirection": True,
+        "rememberCurveType": False,
     }
 
     def set_context(self, font, glyphSet):
@@ -45,8 +44,10 @@ class CubicToQuadraticFilter(BaseFilter):
         modified = super(CubicToQuadraticFilter, self).__call__(font, glyphSet)
         if modified:
             stats = self.context.stats
-            logger.info('New spline lengths: %s' % (', '.join(
-                '%s: %d' % (l, stats[l]) for l in sorted(stats.keys()))))
+            logger.info(
+                "New spline lengths: %s"
+                % (", ".join("%s: %d" % (l, stats[l]) for l in sorted(stats.keys())))
+            )
 
         if self.options.rememberCurveType:
             # 'lib' here is the layer's lib, as defined in for loop variable
@@ -64,7 +65,8 @@ class CubicToQuadraticFilter(BaseFilter):
             glyph.getPointPen(),
             self.context.absoluteError,
             reverse_direction=self.options.reverseDirection,
-            stats=self.context.stats)
+            stats=self.context.stats,
+        )
         contours = list(glyph)
         glyph.clearContours()
         for contour in contours:

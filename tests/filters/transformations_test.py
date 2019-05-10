@@ -5,67 +5,61 @@ from fontTools.misc.py23 import isclose
 import pytest
 
 
-@pytest.fixture(params=[
-    {
-        'capHeight': 700,
-        'xHeight': 500,
-        'glyphs': [
-            {
-                'name': 'space',
-                'width': 500,
-            },
-            {
-                'name': 'a',
-                'width': 350,
-                'outline': [
-                    ('moveTo', ((0, 0),)),
-                    ('lineTo', ((300, 0),)),
-                    ('lineTo', ((300, 300),)),
-                    ('lineTo', ((0, 300),)),
-                    ('closePath', ()),
-                ],
-                'anchors': [
-                    (100, 200, 'top'),
-                    (100, -200, 'bottom'),
-                ],
-            },
-            {
-                'name': 'b',
-                'width': 450,
-                'outline': [
-                    ('addComponent', ('a', (1, 0, 0, 1, 0, 0))),
-                    ('addComponent', ('c', (1, 0, 0, 1, 0, 0))),
-                ]
-            },
-            {
-                'name': 'c',
-                'outline': [
-                    ('moveTo', ((0, 0),)),
-                    ('lineTo', ((300, 0),)),
-                    ('lineTo', ((150, 300),)),
-                    ('closePath', ()),
-                ]
-            },
-            {
-                'name': 'd',
-                'outline': [
-                    ('addComponent', ('b', (1, 0, 0, -1, 0, 0)))
-                ],
-            },
-        ],
-    }
-])
+@pytest.fixture(
+    params=[
+        {
+            "capHeight": 700,
+            "xHeight": 500,
+            "glyphs": [
+                {"name": "space", "width": 500},
+                {
+                    "name": "a",
+                    "width": 350,
+                    "outline": [
+                        ("moveTo", ((0, 0),)),
+                        ("lineTo", ((300, 0),)),
+                        ("lineTo", ((300, 300),)),
+                        ("lineTo", ((0, 300),)),
+                        ("closePath", ()),
+                    ],
+                    "anchors": [(100, 200, "top"), (100, -200, "bottom")],
+                },
+                {
+                    "name": "b",
+                    "width": 450,
+                    "outline": [
+                        ("addComponent", ("a", (1, 0, 0, 1, 0, 0))),
+                        ("addComponent", ("c", (1, 0, 0, 1, 0, 0))),
+                    ],
+                },
+                {
+                    "name": "c",
+                    "outline": [
+                        ("moveTo", ((0, 0),)),
+                        ("lineTo", ((300, 0),)),
+                        ("lineTo", ((150, 300),)),
+                        ("closePath", ()),
+                    ],
+                },
+                {
+                    "name": "d",
+                    "outline": [("addComponent", ("b", (1, 0, 0, -1, 0, 0)))],
+                },
+            ],
+        }
+    ]
+)
 def font(request, FontClass):
     font = FontClass()
-    font.info.capHeight = request.param['capHeight']
-    font.info.xHeight = request.param['xHeight']
-    for param in request.param['glyphs']:
-        glyph = font.newGlyph(param['name'])
-        glyph.width = param.get('width', 0)
+    font.info.capHeight = request.param["capHeight"]
+    font.info.xHeight = request.param["xHeight"]
+    for param in request.param["glyphs"]:
+        glyph = font.newGlyph(param["name"])
+        glyph.width = param.get("width", 0)
         pen = glyph.getPen()
-        for operator, operands in param.get('outline', []):
+        for operator, operands in param.get("outline", []):
             getattr(pen, operator)(*operands)
-        for x, y, name in param.get('anchors', []):
+        for x, y, name in param.get("anchors", []):
             glyph.appendAnchor(dict(x=x, y=y, name=name))
     return font
 
@@ -79,14 +73,13 @@ def origin(request):
 
 
 class TransformationsFilterTest(object):
-
     def test_invalid_origin_value(self):
         with pytest.raises(ValueError) as excinfo:
             TransformationsFilter(Origin=5)
         excinfo.match("is not a valid Origin")
 
     def test_empty_glyph(self, font):
-        filter_ = TransformationsFilter(OffsetY=51, include={'space'})
+        filter_ = TransformationsFilter(OffsetY=51, include={"space"})
         assert not filter_(font)
 
     def test_Identity(self, font):
@@ -138,7 +131,7 @@ class TransformationsFilterTest(object):
         filter_ = TransformationsFilter(ScaleY=percent, Origin=origin)
         assert filter_(font)
 
-        factor = percent/100
+        factor = percent / 100
         origin_height = filter_.get_origin_height(font, origin)
         bottom = origin_height * factor
         top = bottom + 300 * factor
@@ -150,11 +143,10 @@ class TransformationsFilterTest(object):
 
     def test_ScaleXY(self, font, origin):
         percent = 50
-        filter_ = TransformationsFilter(
-            ScaleX=percent, ScaleY=percent, Origin=origin)
+        filter_ = TransformationsFilter(ScaleX=percent, ScaleY=percent, Origin=origin)
         assert filter_(font)
 
-        factor = percent/100
+        factor = percent / 100
         origin_height = filter_.get_origin_height(font, origin)
         bottom = origin_height * factor
         top = bottom + 300 * factor
@@ -176,7 +168,8 @@ class TransformationsFilterTest(object):
 
     def test_composite_glyphs(self, font):
         filter_ = TransformationsFilter(
-            OffsetX=-10, OffsetY=51, ScaleX=50, ScaleY=50, exclude={'c'})
+            OffsetX=-10, OffsetY=51, ScaleX=50, ScaleY=50, exclude={"c"}
+        )
         assert filter_(font)
 
         b = font["b"]
@@ -184,7 +177,7 @@ class TransformationsFilterTest(object):
         # or skew and the base glyph was already included
         assert b.components[0].transformation == (1, 0, 0, 1, 0, 0)
         # component 'c' was transformed, because base glyph was not included
-        assert b.components[1].transformation == (.5, 0, 0, .5, -10, 51)
+        assert b.components[1].transformation == (0.5, 0, 0, 0.5, -10, 51)
 
         d = font["d"]
         # component 'b' was transformed as well as its base glyph, because

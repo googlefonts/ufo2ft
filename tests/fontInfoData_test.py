@@ -1,5 +1,4 @@
-from __future__ import (
-    print_function, division, absolute_import, unicode_literals)
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
 import random
@@ -7,7 +6,8 @@ import time
 from ufo2ft.fontInfoData import (
     getAttrWithFallback,
     normalizeStringForPostscript,
-    dateStringToTimeValue)
+    dateStringToTimeValue,
+)
 import pytest
 
 
@@ -26,81 +26,83 @@ def info(InfoClass):
 
 
 class GetAttrWithFallbackTest(object):
-
-    @pytest.mark.parametrize("infoDict,expected", [
-        # no styleMapFamilyName, no styleMapStyleName
-        ({},
-         {
-             "familyName": "Family Name",
-             "styleName": "Style Name",
-             "styleMapFamilyName": "Family Name Style Name",
-             "styleMapStyleName": "regular",
-             "openTypeNamePreferredFamilyName": "Family Name",
-             "openTypeNamePreferredSubfamilyName": "Style Name",
-             "openTypeNameCompatibleFullName": "Family Name Style Name",
-         }),
-        # no styleMapStyleName
-        ({
-             "styleMapFamilyName": "Style Map Family Name",
-         },
-         {
-             "styleMapFamilyName": "Style Map Family Name",
-             "styleMapStyleName": "regular",
-             "openTypeNamePreferredFamilyName": "Family Name",
-             "openTypeNamePreferredSubfamilyName": "Style Name",
-             "openTypeNameCompatibleFullName": "Style Map Family Name",
-         }),
-        # no styleMapFamilyName, no styleMapStyleName but styleName="Regular"
-        ({
-             "styleName": "Regular",
-         },
-         {
-             "familyName": "Family Name",
-             "styleName": "Regular",
-             "styleMapFamilyName": "Family Name",
-             "styleMapStyleName": "regular",
-             "openTypeNamePreferredFamilyName": "Family Name",
-             "openTypeNamePreferredSubfamilyName": "Regular",
-             "openTypeNameCompatibleFullName": "Family Name",
-         }),
-        # no styleMapFamilyName but styleName="Regular"
-        ({
-             "styleName": "Regular",
-             "styleMapStyleName": "regular",
-         },
-         {
-             "styleMapFamilyName": "Family Name",
-             "styleMapStyleName": "regular",
-             "openTypeNamePreferredFamilyName": "Family Name",
-             "openTypeNamePreferredSubfamilyName": "Regular",
-             "openTypeNameCompatibleFullName": "Family Name",
-         }),
-        # no styleMapStyleName but styleName="Regular"
-        ({
-             "styleName": "Regular",
-             "styleMapFamilyName": "Style Map Family Name",
-         },
-         {
-             "styleMapFamilyName": "Style Map Family Name",
-             "styleMapStyleName": "regular",
-             "openTypeNamePreferredFamilyName": "Family Name",
-             "openTypeNamePreferredSubfamilyName": "Regular",
-             "openTypeNameCompatibleFullName": "Style Map Family Name",
-         }),
-        # no styleMapFamilyName, no styleMapStyleName but styleName="Bold"
-        ({
-             "styleName": "Bold",
-         },
-         {
-             "familyName": "Family Name",
-             "styleName": "Bold",
-             "styleMapFamilyName": "Family Name",
-             "styleMapStyleName": "bold",
-             "openTypeNamePreferredFamilyName": "Family Name",
-             "openTypeNamePreferredSubfamilyName": "Bold",
-             "openTypeNameCompatibleFullName": "Family Name Bold",
-         }),
-    ])
+    @pytest.mark.parametrize(
+        "infoDict,expected",
+        [
+            # no styleMapFamilyName, no styleMapStyleName
+            (
+                {},
+                {
+                    "familyName": "Family Name",
+                    "styleName": "Style Name",
+                    "styleMapFamilyName": "Family Name Style Name",
+                    "styleMapStyleName": "regular",
+                    "openTypeNamePreferredFamilyName": "Family Name",
+                    "openTypeNamePreferredSubfamilyName": "Style Name",
+                    "openTypeNameCompatibleFullName": "Family Name Style Name",
+                },
+            ),
+            # no styleMapStyleName
+            (
+                {"styleMapFamilyName": "Style Map Family Name"},
+                {
+                    "styleMapFamilyName": "Style Map Family Name",
+                    "styleMapStyleName": "regular",
+                    "openTypeNamePreferredFamilyName": "Family Name",
+                    "openTypeNamePreferredSubfamilyName": "Style Name",
+                    "openTypeNameCompatibleFullName": "Style Map Family Name",
+                },
+            ),
+            # no styleMapFamilyName, no styleMapStyleName but styleName="Regular"
+            (
+                {"styleName": "Regular"},
+                {
+                    "familyName": "Family Name",
+                    "styleName": "Regular",
+                    "styleMapFamilyName": "Family Name",
+                    "styleMapStyleName": "regular",
+                    "openTypeNamePreferredFamilyName": "Family Name",
+                    "openTypeNamePreferredSubfamilyName": "Regular",
+                    "openTypeNameCompatibleFullName": "Family Name",
+                },
+            ),
+            # no styleMapFamilyName but styleName="Regular"
+            (
+                {"styleName": "Regular", "styleMapStyleName": "regular"},
+                {
+                    "styleMapFamilyName": "Family Name",
+                    "styleMapStyleName": "regular",
+                    "openTypeNamePreferredFamilyName": "Family Name",
+                    "openTypeNamePreferredSubfamilyName": "Regular",
+                    "openTypeNameCompatibleFullName": "Family Name",
+                },
+            ),
+            # no styleMapStyleName but styleName="Regular"
+            (
+                {"styleName": "Regular", "styleMapFamilyName": "Style Map Family Name"},
+                {
+                    "styleMapFamilyName": "Style Map Family Name",
+                    "styleMapStyleName": "regular",
+                    "openTypeNamePreferredFamilyName": "Family Name",
+                    "openTypeNamePreferredSubfamilyName": "Regular",
+                    "openTypeNameCompatibleFullName": "Style Map Family Name",
+                },
+            ),
+            # no styleMapFamilyName, no styleMapStyleName but styleName="Bold"
+            (
+                {"styleName": "Bold"},
+                {
+                    "familyName": "Family Name",
+                    "styleName": "Bold",
+                    "styleMapFamilyName": "Family Name",
+                    "styleMapStyleName": "bold",
+                    "openTypeNamePreferredFamilyName": "Family Name",
+                    "openTypeNamePreferredSubfamilyName": "Bold",
+                    "openTypeNameCompatibleFullName": "Family Name Bold",
+                },
+            ),
+        ],
+    )
     def test_family_and_style_names(self, info, infoDict, expected):
         for key, value in infoDict.items():
             setattr(info, key, value)
@@ -108,16 +110,16 @@ class GetAttrWithFallbackTest(object):
             assert getAttrWithFallback(info, key) == value
 
     def test_redundant_metadata(self, info):
-        assert (getAttrWithFallback(info, "openTypeNameVersion")
-                == "Version 0.000")
+        assert getAttrWithFallback(info, "openTypeNameVersion") == "Version 0.000"
 
         info.versionMinor = 1
         info.versionMajor = 1
-        assert (getAttrWithFallback(info, "openTypeNameVersion")
-                == "Version 1.001")
+        assert getAttrWithFallback(info, "openTypeNameVersion") == "Version 1.001"
 
-        assert (getAttrWithFallback(info, "openTypeNameUniqueID")
-                == "1.001;NONE;FamilyName-StyleName")
+        assert (
+            getAttrWithFallback(info, "openTypeNameUniqueID")
+            == "1.001;NONE;FamilyName-StyleName"
+        )
 
         assert getAttrWithFallback(info, "postscriptSlantAngle") == 0
 
@@ -160,39 +162,53 @@ class GetAttrWithFallbackTest(object):
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == 200
 
     def test_head_created(self, info):
-        os.environ["SOURCE_DATE_EPOCH"] = '1514485183'
+        os.environ["SOURCE_DATE_EPOCH"] = "1514485183"
         try:
-            assert (getAttrWithFallback(info, "openTypeHeadCreated")
-                    == '2017/12/28 18:19:43')
+            assert (
+                getAttrWithFallback(info, "openTypeHeadCreated")
+                == "2017/12/28 18:19:43"
+            )
         finally:
             del os.environ["SOURCE_DATE_EPOCH"]
-        assert (getAttrWithFallback(info, "openTypeHeadCreated") !=
-                '2017/12/28 18:19:43')
+        assert getAttrWithFallback(info, "openTypeHeadCreated") != "2017/12/28 18:19:43"
 
 
 class PostscriptBlueScaleFallbackTest(object):
-
     def test_without_blue_zones(self, info):
         postscriptBlueScale = getAttrWithFallback(info, "postscriptBlueScale")
         assert postscriptBlueScale == 0.039625
 
     def test_with_blue_zones(self, info):
-        info.postscriptBlueValues = [-13, 0, 470, 483, 534, 547, 556, 569,
-                                     654, 667, 677, 690, 738, 758]
+        info.postscriptBlueValues = [
+            -13,
+            0,
+            470,
+            483,
+            534,
+            547,
+            556,
+            569,
+            654,
+            667,
+            677,
+            690,
+            738,
+            758,
+        ]
         info.postscriptOtherBlues = [-255, -245]
         postscriptBlueScale = getAttrWithFallback(info, "postscriptBlueScale")
         assert postscriptBlueScale == 0.0375
 
 
 class NormalizeStringForPostscriptTest(object):
-
     def test_no_change(self):
-        assert (normalizeStringForPostscript('Sample copyright notice.')
-                == "Sample copyright notice.")
+        assert (
+            normalizeStringForPostscript("Sample copyright notice.")
+            == "Sample copyright notice."
+        )
 
 
 class DateStringToTimeValueTest(object):
-
     def test_roundtrip_random_timestamp(self):
         timestamp = random.randint(0, 10 ** 9)
         ds = time.strftime("%Y/%m/%d %H:%M:%S", time.gmtime(timestamp))
@@ -201,4 +217,5 @@ class DateStringToTimeValueTest(object):
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(pytest.main(sys.argv))

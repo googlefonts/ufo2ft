@@ -8,13 +8,11 @@ logger = logging.getLogger(__name__)
 
 
 class FlattenComponentsFilter(BaseFilter):
-
     def __call__(self, font, glyphSet=None):
         if super(FlattenComponentsFilter, self).__call__(font, glyphSet):
             modified = self.context.modified
             if modified:
-                logger.info('Flattened composite glyphs: %i' %
-                            len(modified))
+                logger.info("Flattened composite glyphs: %i" % len(modified))
             return modified
 
     def filter(self, glyph):

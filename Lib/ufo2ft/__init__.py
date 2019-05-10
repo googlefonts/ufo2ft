@@ -133,8 +133,7 @@ def compileOTF(
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
     otf = postProcessor.process(
-        useProductionNames,
-        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+        useProductionNames, optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE
     )
 
     return otf
@@ -471,11 +470,7 @@ def compileInterpolatableOTFsFromDS(
 
 
 def compileFeatures(
-    ufo,
-    ttFont=None,
-    glyphSet=None,
-    featureWriters=None,
-    featureCompilerClass=None,
+    ufo, ttFont=None, glyphSet=None, featureWriters=None, featureCompilerClass=None
 ):
     """ Compile OpenType Layout features from `ufo` into FontTools OTL tables.
     If `ttFont` is None, a new TTFont object is created containing the new

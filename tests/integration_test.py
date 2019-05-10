@@ -1,5 +1,4 @@
-from __future__ import \
-    print_function, division, absolute_import, unicode_literals
+from __future__ import print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import *
 from ufo2ft import compileOTF, compileTTF, compileInterpolatableTTFs
 import warnings
@@ -11,7 +10,7 @@ import pytest
 
 def getpath(filename):
     dirname = os.path.dirname(__file__)
-    return os.path.join(dirname, 'data', filename)
+    return os.path.join(dirname, "data", filename)
 
 
 @pytest.fixture
@@ -36,14 +35,15 @@ def expectTTX(font, expectedTTX, tables=None):
     with open(getpath(expectedTTX), "r", encoding="utf-8") as f:
         expected = readLines(f)
     font.recalcTimestamp = False
-    font['head'].created, font['head'].modified = 3570196637, 3601822698
-    font['head'].checkSumAdjustment = 0x12345678
+    font["head"].created, font["head"].modified = 3570196637, 3601822698
+    font["head"].checkSumAdjustment = 0x12345678
     f = UnicodeIO()
     font.saveXML(f, tables=tables)
     actual = readLines(f)
     if actual != expected:
         for line in difflib.unified_diff(
-                expected, actual, fromfile=expectedTTX, tofile="<generated>"):
+            expected, actual, fromfile=expectedTTX, tofile="<generated>"
+        ):
             sys.stderr.write(line)
         pytest.fail("TTX output is different from expected")
 
@@ -95,9 +95,7 @@ class IntegrationTest(object):
         expectTTX(otf, "TestFont-NoOverlaps-CFF.ttx")
 
     def test_removeOverlaps_CFF_pathops(self, testufo):
-        otf = compileOTF(
-            testufo, removeOverlaps=True, overlapsBackend="pathops"
-        )
+        otf = compileOTF(testufo, removeOverlaps=True, overlapsBackend="pathops")
         expectTTX(otf, "TestFont-NoOverlaps-CFF-pathops.ttx")
 
     def test_removeOverlaps(self, testufo):
@@ -105,9 +103,7 @@ class IntegrationTest(object):
         expectTTX(ttf, "TestFont-NoOverlaps-TTF.ttx")
 
     def test_removeOverlaps_pathops(self, testufo):
-        ttf = compileTTF(
-            testufo, removeOverlaps=True, overlapsBackend="pathops"
-        )
+        ttf = compileTTF(testufo, removeOverlaps=True, overlapsBackend="pathops")
         expectTTX(ttf, "TestFont-NoOverlaps-TTF-pathops.ttx")
 
     def test_interpolatableTTFs_lazy(self, FontClass):

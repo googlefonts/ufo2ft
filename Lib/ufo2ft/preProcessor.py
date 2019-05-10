@@ -1,5 +1,4 @@
-from __future__ import (
-    print_function, division, absolute_import, unicode_literals)
+from __future__ import print_function, division, absolute_import, unicode_literals
 
 from fontTools.misc.py23 import basestring
 from ufo2ft.filters import loadFilters
@@ -64,17 +63,13 @@ class OTFPreProcessor(BasePreProcessor):
     ``RemoveOverlapsFilter.SKIA_PATHOPS``, or the string "pathops".
     """
 
-    def initDefaultFilters(
-        self, removeOverlaps=False, overlapsBackend=None
-    ):
+    def initDefaultFilters(self, removeOverlaps=False, overlapsBackend=None):
         filters = [DecomposeComponentsFilter()]
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
 
             if overlapsBackend is not None:
-                filters.append(
-                    RemoveOverlapsFilter(backend=overlapsBackend)
-                )
+                filters.append(RemoveOverlapsFilter(backend=overlapsBackend))
             else:
                 filters.append(RemoveOverlapsFilter())
 
@@ -122,7 +117,7 @@ class TTFPreProcessor(OTFPreProcessor):
         convertCubics=True,
         conversionError=None,
         reverseDirection=True,
-        rememberCurveType=True
+        rememberCurveType=True,
     ):
         # len(g) is the number of contours, so we include the all glyphs
         # that have both components and at least one contour
@@ -132,9 +127,7 @@ class TTFPreProcessor(OTFPreProcessor):
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
 
             if overlapsBackend is not None:
-                filters.append(
-                    RemoveOverlapsFilter(backend=overlapsBackend)
-                )
+                filters.append(RemoveOverlapsFilter(backend=overlapsBackend))
             else:
                 filters.append(RemoveOverlapsFilter())
 
@@ -193,8 +186,8 @@ class TTFInterpolatablePreProcessor(object):
             for ufo, layerName in zip(ufos, layerNames)
         ]
         self._conversionErrors = [
-            (conversionError or DEFAULT_MAX_ERR) * ufo.info.unitsPerEm
-            for ufo in ufos]
+            (conversionError or DEFAULT_MAX_ERR) * ufo.info.unitsPerEm for ufo in ufos
+        ]
         self._reverseDirection = reverseDirection
         self._rememberCurveType = rememberCurveType
 

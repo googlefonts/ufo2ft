@@ -1,9 +1,4 @@
-from __future__ import (
-    print_function,
-    division,
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import unichr, basestring, SimpleNamespace
 from fontTools.misc.fixedTools import otRound
 
@@ -226,10 +221,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             self.log.debug("No kerning data; skipped")
             return False
 
-        if (
-            "dist" in self.context.todo
-            and "dist" not in self.context.scriptGroups
-        ):
+        if "dist" in self.context.todo and "dist" not in self.context.scriptGroups:
             self.log.debug(
                 "No dist-enabled scripts defined in languagesystem "
                 "statements; dist feature will not be generated"
@@ -273,9 +265,7 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     @classmethod
     def getKerningData(cls, font, feaFile=None, glyphSet=None):
-        side1Classes, side2Classes = cls.getKerningClasses(
-            font, feaFile, glyphSet
-        )
+        side1Classes, side2Classes = cls.getKerningClasses(font, feaFile, glyphSet)
         pairs = cls.getKerningPairs(font, side1Classes, side2Classes, glyphSet)
         return SimpleNamespace(
             side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
@@ -401,9 +391,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         rules = []
         for pair in pairs:
             if exclude is not None and exclude(pair):
-                self.log.debug(
-                    "pair excluded from '%s' lookup: %r", name, pair
-                )
+                self.log.debug("pair excluded from '%s' lookup: %r", name, pair)
                 continue
             rules.append(self._makePairPosRule(pair, rtl=rtl))
         if rules:
@@ -469,9 +457,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 if markPairs:
                     lookups["LTR"].append(
                         self._makeKerningLookup(
-                            "kern_ltr_marks",
-                            markPairs,
-                            ignoreMarks=False,
+                            "kern_ltr_marks", markPairs, ignoreMarks=False
                         )
                     )
             else:
@@ -496,9 +482,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         dfltKern = self._makeKerningLookup(
             "kern_dflt" + suffix,
             pairs,
-            exclude=(
-                lambda pair: {"LTR", "RTL"}.intersection(pair.directions)
-            ),
+            exclude=(lambda pair: {"LTR", "RTL"}.intersection(pair.directions)),
             rtl=False,
             ignoreMarks=ignoreMarks,
         )
@@ -508,10 +492,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         ltrKern = self._makeKerningLookup(
             "kern_ltr" + suffix,
             pairs,
-            exclude=(
-                lambda pair: not pair.directions
-                or "RTL" in pair.directions
-            ),
+            exclude=(lambda pair: not pair.directions or "RTL" in pair.directions),
             rtl=False,
             ignoreMarks=ignoreMarks,
         )
@@ -521,10 +502,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         rtlKern = self._makeKerningLookup(
             "kern_rtl" + suffix,
             pairs,
-            exclude=(
-                lambda pair: not pair.directions
-                or "LTR" in pair.directions
-            ),
+            exclude=(lambda pair: not pair.directions or "LTR" in pair.directions),
             rtl=True,
             ignoreMarks=ignoreMarks,
         )

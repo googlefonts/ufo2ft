@@ -1,9 +1,4 @@
-from __future__ import (
-    print_function,
-    division,
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import print_function, division, absolute_import, unicode_literals
 from textwrap import dedent
 import logging
 import re
@@ -22,7 +17,6 @@ from .testSupport import pushd
 
 
 class ParseLayoutFeaturesTest(object):
-
     def test_include(self, FontClass, tmpdir):
         tmpdir.join("test.fea").write_text(
             dedent(
@@ -83,7 +77,6 @@ class ParseLayoutFeaturesTest(object):
 
 
 class FeatureCompilerTest(object):
-
     def test_ttFont(self, FontClass):
         ufo = FontClass()
         ufo.newGlyph("f")
@@ -138,7 +131,6 @@ class FeatureCompilerTest(object):
             compiler.setupFile_featureTables()
 
         class UserCompiler(FeatureCompiler):
-
             def setupFile_features(self):
                 self.features = "# hello world"
 
@@ -181,7 +173,6 @@ class FeatureCompilerTest(object):
         assert "GPOS" in ttFont
 
     def test_GSUB_writers_run_first(self, FontClass):
-
         class FooFeatureWriter(BaseFeatureWriter):
 
             tableTag = "GSUB"
