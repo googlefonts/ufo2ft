@@ -373,3 +373,21 @@ class _LazyFontName(object):
         from ufo2ft.fontInfoData import getAttrWithFallback
 
         return getAttrWithFallback(self.font.info, "postscriptFontName")
+
+
+def getDefaultMasterFont(designSpaceDoc):
+    defaultSource = designSpaceDoc.findDefault()
+    if not defaultSource:
+        from ufo2ft.errors import InvalidDesignSpaceData
+
+        raise InvalidDesignSpaceData(
+            "Can't find base (neutral) master in DesignSpace document"
+        )
+    if not defaultSource.font:
+        from ufo2ft.errors import InvalidDesignSpaceData
+
+        raise InvalidDesignSpaceData(
+            "DesignSpace source '%s' is missing required 'font' attribute"
+            % getattr(defaultSource, "name", "<Unknown>")
+        )
+    return defaultSource.font
