@@ -56,6 +56,7 @@ class PostProcessor(object):
                 and self._postscriptNames is not None,
             )
         if useProductionNames:
+            logger.info("Renaming glyphs to final production names")
             self._rename_glyphs_from_ufo()
         if optimizeCFF and "CFF " in self.otf:
             from compreffor import compress
