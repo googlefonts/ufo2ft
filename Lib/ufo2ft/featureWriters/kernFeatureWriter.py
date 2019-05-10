@@ -103,6 +103,8 @@ DIST_ENABLED_SCRIPTS = {
     "Dogr",  # Dogra
     "Gong",  # Gunjala Gondi
     "Maka",  # Makasar
+    # Unicode-12.0 additions
+    "Nand", # Nandinagari
 }
 
 
