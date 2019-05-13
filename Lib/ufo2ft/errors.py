@@ -8,3 +8,9 @@ class InvalidFontData(Error):
     """Raised when input font contains invalid data."""
 
     pass
+
+
+class InvalidDesignSpaceData(Error):
+    """Raised when input DesignSpace document contains invalid data."""
+
+    pass
