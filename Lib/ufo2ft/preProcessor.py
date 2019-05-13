@@ -151,9 +151,16 @@ class TTFInterpolatablePreProcessor(object):
     The constructor takes a list of UFO fonts, and the ``process`` method
     returns the modified glyphsets (list of dicts) in the same order.
 
-    Currently, only the conversion from cubic to quadratic, and the
-    decomposition of mixed contour/component glyphs is performed,
-    and no additional custom filter is applied.
+    The pre-processor performs the conversion from cubic to quadratic on
+    all the UFOs at once, then decomposes mixed contour/component glyphs.
+
+    Additional pre/post custom filter are also applied to each single UFOs,
+    respectively before or after the default filters, if they are specified
+    in the UFO's lib.plist under the private key
+    "com.github.googlei18n.ufo2ft.filters".
+    NOTE: If you use any custom filters, the resulting glyphsets may no longer
+    be interpolation compatible, depending on the particular filter used or
+    whether they are applied to only some vs all of the UFOs.
 
     The ``conversionError``, ``reverseDirection`` and ``rememberCurveType``
     arguments work in the same way as in the ``TTFPreProcessor``.
@@ -191,8 +198,19 @@ class TTFInterpolatablePreProcessor(object):
         self._reverseDirection = reverseDirection
         self._rememberCurveType = rememberCurveType
 
+        self.preFilters, self.postFilters = [], []
+        for ufo in ufos:
+            pre, post = loadFilters(ufo)
+            self.preFilters.append(pre)
+            self.postFilters.append(post)
+
     def process(self):
         from cu2qu.ufo import fonts_to_quadratic
+
+        # first apply all custom pre-filters
+        for funcs, ufo, glyphSet in zip(self.preFilters, self.ufos, self.glyphSets):
+            for func in funcs:
+                func(ufo, glyphSet)
 
         fonts_to_quadratic(
             self.glyphSets,
@@ -205,5 +223,10 @@ class TTFInterpolatablePreProcessor(object):
         decompose = DecomposeComponentsFilter(include=lambda g: len(g))
         for ufo, glyphSet in zip(self.ufos, self.glyphSets):
             decompose(ufo, glyphSet)
+
+        # finally apply all custom post-filters
+        for funcs, ufo, glyphSet in zip(self.postFilters, self.ufos, self.glyphSets):
+            for func in funcs:
+                func(ufo, glyphSet)
 
         return self.glyphSets
