@@ -3,6 +3,7 @@ import os
 import logging
 import ufo2ft
 from ufo2ft.preProcessor import TTFPreProcessor, TTFInterpolatablePreProcessor
+from ufo2ft.filters import UFO2FT_FILTERS_KEY
 from cu2qu.ufo import CURVE_TYPE_LIB_KEY
 from fontTools import designspaceLib
 
@@ -114,6 +115,22 @@ class TTFInterpolatablePreProcessorTest(object):
             assert CURVE_TYPE_LIB_KEY not in ufo2.layers.defaultLayer.lib
             assert glyph_has_qcurve(ufo1, "c")
             assert glyph_has_qcurve(ufo2, "c")
+
+    def test_custom_filters(self, FontClass):
+        ufo1 = FontClass(getpath("TestFont.ufo"))
+        ufo1.lib[UFO2FT_FILTERS_KEY] = [
+            {"name": "transformations", "kwargs": {"OffsetX": -40}, "pre": True}
+        ]
+        ufo2 = FontClass(getpath("TestFont.ufo"))
+        ufo2.lib[UFO2FT_FILTERS_KEY] = [
+            {"name": "transformations", "kwargs": {"OffsetY": 10}}
+        ]
+        ufos = [ufo1, ufo2]
+
+        glyphSets = TTFInterpolatablePreProcessor(ufos).process()
+
+        assert (glyphSets[0]["a"][0][0].x - glyphSets[1]["a"][0][0].x) == -40
+        assert (glyphSets[1]["a"][0][0].y - glyphSets[0]["a"][0][0].y) == 10
 
 
 class SkipExportGlyphsTest(object):
