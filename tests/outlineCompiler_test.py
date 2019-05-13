@@ -37,60 +37,6 @@ def testufo(FontClass):
 
 
 @pytest.fixture
-def layertestrgufo(FontClass):
-    font = FontClass(getpath("LayerFont-Regular.ufo"))
-    return font
-
-
-@pytest.fixture
-def layertestbdufo(FontClass):
-    font = FontClass(getpath("LayerFont-Bold.ufo"))
-    return font
-
-
-@pytest.fixture
-def designspace(layertestrgufo, layertestbdufo):
-    ds = designspaceLib.DesignSpaceDocument()
-
-    a1 = designspaceLib.AxisDescriptor()
-    a1.tag = "wght"
-    a1.name = "Weight"
-    a1.default = a1.minimum = 350
-    a1.maximum = 625
-    ds.addAxis(a1)
-
-    s1 = designspaceLib.SourceDescriptor()
-    s1.name = "Layer Font Regular"
-    s1.familyName = "Layer Font"
-    s1.styleName = "Regular"
-    s1.filename = "LayerFont-Regular.ufo"
-    s1.location = {"Weight": 350}
-    s1.font = layertestrgufo
-    ds.addSource(s1)
-
-    s2 = designspaceLib.SourceDescriptor()
-    s2.name = "Layer Font Medium"
-    s2.familyName = "Layer Font"
-    s2.styleName = "Medium"
-    s2.filename = "LayerFont-Regular.ufo"
-    s2.layerName = "Medium"
-    s2.location = {"Weight": 450}
-    s2.font = layertestrgufo
-    ds.addSource(s2)
-
-    s3 = designspaceLib.SourceDescriptor()
-    s3.name = "Layer Font Bold"
-    s3.familyName = "Layer Font"
-    s3.styleName = "Bold"
-    s3.filename = "LayerFont-Bold.ufo"
-    s3.location = {"Weight": 625}
-    s3.font = layertestbdufo
-    ds.addSource(s3)
-
-    return ds
-
-
-@pytest.fixture
 def use_my_metrics_ufo(FontClass):
     return FontClass(getpath("UseMyMetrics.ufo"))
 

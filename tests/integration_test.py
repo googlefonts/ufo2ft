@@ -1,6 +1,12 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 from fontTools.misc.py23 import *
-from ufo2ft import compileOTF, compileTTF, compileInterpolatableTTFs
+from ufo2ft import (
+    compileOTF,
+    compileTTF,
+    compileInterpolatableTTFs,
+    compileVariableTTF,
+    compileVariableCFF2,
+)
 import warnings
 import difflib
 import os
@@ -39,6 +45,7 @@ def expectTTX(font, expectedTTX, tables=None):
     font["head"].checkSumAdjustment = 0x12345678
     f = UnicodeIO()
     font.saveXML(f, tables=tables)
+
     actual = readLines(f)
     if actual != expected:
         for line in difflib.unified_diff(
@@ -46,6 +53,11 @@ def expectTTX(font, expectedTTX, tables=None):
         ):
             sys.stderr.write(line)
         pytest.fail("TTX output is different from expected")
+
+
+@pytest.fixture(params=[None, True, False])
+def useProductionNames(request):
+    return request.param
 
 
 class IntegrationTest(object):
@@ -124,6 +136,26 @@ class IntegrationTest(object):
     def test_optimizeCFF_subroutinize(self, testufo):
         otf = compileOTF(testufo, optimizeCFF=2)
         expectTTX(otf, "TestFont-CFF.ttx")
+
+    def test_compileVariableTTF(self, designspace, useProductionNames):
+        varfont = compileVariableTTF(designspace, useProductionNames=useProductionNames)
+        expectTTX(
+            varfont,
+            "TestVariableFont-TTF{}.ttx".format(
+                "-useProductionNames" if useProductionNames else ""
+            ),
+        )
+
+    def test_compileVariableCFF2(self, designspace, useProductionNames):
+        varfont = compileVariableCFF2(
+            designspace, useProductionNames=useProductionNames
+        )
+        expectTTX(
+            varfont,
+            "TestVariableFont-CFF2{}.ttx".format(
+                "-useProductionNames" if useProductionNames else ""
+            ),
+        )
 
 
 if __name__ == "__main__":
