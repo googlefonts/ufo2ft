@@ -126,13 +126,11 @@ class PostProcessor(object):
         return rename_map
 
     def _compile_truetype_hinting(self):
-        # Pass the UFO to the hinting parser.
-        # Check if any hinting data is present in the UFO.
-
         try:
             import MyHintPreProcessor
+            from htic import toFontTools
         except ImportError:
-            # Hinting preprocessor is not available
+            # TrueType hint processing modules are not available.
             return
 
         # Transform high-level hinting code to HumbleTypeInstruction language
@@ -145,7 +143,6 @@ class PostProcessor(object):
 
         # Send the generated HTI language code to the compiler.
         logger.info("Compiling TrueType hinting")
-        from htic import toFontTools
         toFontTools(hti_code, self.otf)
 
     @staticmethod
