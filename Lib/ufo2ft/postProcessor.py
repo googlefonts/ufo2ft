@@ -48,6 +48,13 @@ class PostProcessor(object):
 
         optimizeCFF:
           Run compreffor to subroubtinize CFF table, if present.
+
+        compileTrueTypeHinting:
+          Compile TrueType hinting from the UFO, if present. You must make sure
+          that the outlines from the UFO have not been altered before this
+          step. The point indices change e.g. when removing overlaps or
+          changing the path directions. This will most certainly make any
+          hinting data in the source UFO invalid.
         """
         if compileTrueTypeHinting and "glyf" in self.otf:
             self._compile_truetype_hinting()
