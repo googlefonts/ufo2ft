@@ -27,7 +27,7 @@ class PostProcessor(object):
         self.otf = TTFont(stream)
         self._postscriptNames = ufo.lib.get("public.postscriptNames")
 
-    def process(self, useProductionNames=None, optimizeCFF=True):
+    def process(self, useProductionNames=None, optimizeCFF=True, compileTrueTypeHinting=True):
         """
         useProductionNames:
           By default, when value is None, this will rename glyphs using the
@@ -49,6 +49,8 @@ class PostProcessor(object):
         optimizeCFF:
           Run compreffor to subroubtinize CFF table, if present.
         """
+        if compileTrueTypeHinting and "glyf" in self.otf:
+            self._compile_truetype_hinting()
         if useProductionNames is None:
             useProductionNames = self.ufo.lib.get(
                 USE_PRODUCTION_NAMES,
@@ -115,6 +117,29 @@ class PostProcessor(object):
             # add a suffix to make the production names unique
             rename_map[name] = self._unique_name(valid_name, seen)
         return rename_map
+
+    def _compile_truetype_hinting(self):
+        # Pass the UFO to the hinting parser.
+        # Check if any hinting data is present in the UFO.
+
+        try:
+            import MyHintPreProcessor
+        except ImportError:
+            # Hinting preprocessor is not available
+            return
+
+        # Transform high-level hinting code to HumbleTypeInstruction language
+        hti_code = MyHintPreProcessor.from_ufo(self.ufo)
+
+        if not hti_code:
+            # The hinting preprocessor could not find any high-level hinting
+            # code it understands
+            return
+
+        # Send the generated HTI language code to the compiler.
+        logger.info("Compiling TrueType hinting")
+        from htic import toFontTools
+        toFontTools(hti_code, self.otf)
 
     @staticmethod
     def _unique_name(name, seen):
