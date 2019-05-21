@@ -132,8 +132,8 @@ class PostProcessor(object):
         hti_code = MyHintPreProcessor.from_ufo(self.ufo)
 
         if not hti_code:
-            # The hinting preprocessor could not find any high-level hinting
-            # code it understands
+            # The hinting preprocessor could not find
+            # any high-level hinting code it understands
             return
 
         # Send the generated HTI language code to the compiler.
