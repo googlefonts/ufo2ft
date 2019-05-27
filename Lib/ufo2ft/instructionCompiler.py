@@ -159,9 +159,9 @@ class InstructionCompiler(object):
             for name in (
                 "maxStorage",
                 "maxFunctionDefs",
-                "maxInstructionDefs",
+                # "maxInstructionDefs",  # Not supported by htic
                 "maxStackElements",
-                # "maxSizeOfInstructions",  # recalculated by compiler
+                # "maxSizeOfInstructions",  # Not supported by htic; recalculated by compiler
                 "maxZones",
                 "maxTwilightPoints",
             ):
