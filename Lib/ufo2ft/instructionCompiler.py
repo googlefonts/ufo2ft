@@ -111,11 +111,24 @@ class InstructionCompiler(object):
             return ""
 
     def compile_glyf(self):
-        glyf = ""
-        if glyf:
-            return "glyf {\n%s}\n" % glyf
-        else:
-            return ""
+        glyf = []
+        glyph_names = [name for name in self.ufo.lib.get("public.glyphOrder", [])]
+        for name in glyph_names:
+            ttdata = self.ufo[name].lib.get(ufoLibKey, None)
+            if ttdata is None:
+                glyf.append("%s {\n}\n" % name)
+            else:
+                pgm = ttdata.get("assembly", None)
+                formatVersion = ttdata.get("formatVersion", None)
+                if formatVersion != "1":
+                    logger.error("Unknown formatVersion %i in glyph '%s', it will have no instructions in font." % (formatVersion, name))
+                id = ttdata.get("id", None)
+                # TODO: Check formatVersion and glyph hash
+                # if id != hash_glyph(self.ufo[name]):
+                #   logger.error("Glyph hash mismatch, glyph '%s' will have no instructions in font." % name)
+                if pgm is not None:
+                    glyf.append("%s {\n  %s\n}\n" % (name, pgm.strip()))
+        return "\n".join(glyf)
 
     def compile_head(self):
         head = ""
