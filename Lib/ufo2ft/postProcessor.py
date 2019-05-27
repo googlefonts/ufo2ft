@@ -145,6 +145,7 @@ class PostProcessor(object):
         # htic only reads from a file, so we make a temporary file.
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as f:
             f.write(hti)
+            f.seek(0)
             toFontTools(f.name, self.otf)
 
     @staticmethod
