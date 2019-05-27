@@ -70,6 +70,18 @@ class InstructionCompiler(object):
         self.ufo = ufo
         self.font = ttf
 
+    def _compile_program(self, key, block_name):
+        hti = ""
+        ttdata = self.ufo.lib.get(ufoLibKey, None)
+        if ttdata:
+            value = ttdata.get(key, None)
+            if value is not None:
+                hti += value
+        if hti:
+            return "%s {\n%s}\n" % (block_name, hti)
+        else:
+            return ""
+
     def compile_cvt(self):
         cvt = ""
         if cvt:
@@ -81,11 +93,7 @@ class InstructionCompiler(object):
         return hti_flags
 
     def compile_fpgm(self):
-        fpgm = ""
-        if fpgm:
-            return "fpgm {\n%s}\n" % fpgm
-        else:
-            return ""
+        return self._compile_program("fontProgram", "fpgm")
 
     def compile_gasp(self):
         gasp = ""
@@ -166,11 +174,7 @@ class InstructionCompiler(object):
             return ""
 
     def compile_prep(self):
-        prep = ""
-        if prep:
-            return "prep {\n%s}\n" % prep
-        else:
-            return ""
+        return self._compile_program("controlValueProgram", "prep")
 
     def compile(self):
         return "\n".join([
