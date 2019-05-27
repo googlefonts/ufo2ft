@@ -139,7 +139,6 @@ class PostProcessor(object):
         import tempfile
         ic = InstructionCompiler(self.ufo, self.otf)
         hti = ic.compile()
-        print(hti)
 
         # Send the generated HTI language code to the compiler.
         # htic only reads from a file, so we make a temporary file.
