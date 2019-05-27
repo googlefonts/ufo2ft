@@ -83,11 +83,7 @@ class InstructionCompiler(object):
             return ""
 
     def compile_cvt(self):
-        cvt = ""
-        if cvt:
-            return "cvt {\n%s}\n" % cvt
-        else:
-            return ""
+        return self._compile_program("controlValue", "cvt")
 
     def compile_flags(self):
         return hti_flags
