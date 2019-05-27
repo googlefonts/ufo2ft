@@ -57,6 +57,7 @@ class PostProcessor(object):
           hinting data in the source UFO invalid.
         """
         if compileTrueTypeHinting and "glyf" in self.otf:
+            # Must be done before glyph names are altered
             self._compile_truetype_hinting()
         if useProductionNames is None:
             useProductionNames = self.ufo.lib.get(
@@ -127,23 +128,24 @@ class PostProcessor(object):
 
     def _compile_truetype_hinting(self):
         try:
-            import MyHintPreProcessor
             from htic import toFontTools
         except ImportError:
             # TrueType hint processing modules are not available.
+            logger.info("TrueType hint processing modules are not available.")
             return
 
-        # Transform high-level hinting code to HumbleTypeInstruction language
-        hti_code = MyHintPreProcessor.from_ufo(self.ufo)
-
-        if not hti_code:
-            # The hinting preprocessor could not find
-            # any high-level hinting code it understands
-            return
+        logger.info("Compiling TrueType hinting")
+        from ufo2ft.instructionCompiler import InstructionCompiler
+        import tempfile
+        ic = InstructionCompiler(self.ufo, self.otf)
+        hti = ic.compile()
+        print(hti)
 
         # Send the generated HTI language code to the compiler.
-        logger.info("Compiling TrueType hinting")
-        toFontTools(hti_code, self.otf)
+        # htic only reads from a file, so we make a temporary file.
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as f:
+            f.write(hti)
+            toFontTools(f.name, self.otf)
 
     @staticmethod
     def _unique_name(name, seen):
