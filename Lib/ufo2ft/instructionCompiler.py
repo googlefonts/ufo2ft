@@ -71,13 +71,21 @@ class InstructionCompiler(object):
         self.font = ttf
 
     def compile_cvt(self):
-        pass
+        cvt = ""
+        if cvt:
+            return "cvt {\n%s}\n" % cvt
+        else:
+            return ""
 
     def compile_flags(self):
         return hti_flags
 
     def compile_fpgm(self):
-        pass
+        fpgm = ""
+        if fpgm:
+            return "fpgm {\n%s}\n" % fpgm
+        else:
+            return ""
 
     def compile_gasp(self):
         gasp = ""
@@ -99,7 +107,11 @@ class InstructionCompiler(object):
             return ""
 
     def compile_glyf(self):
-        pass
+        glyf = ""
+        if glyf:
+            return "glyf {\n%s}\n" % glyf
+        else:
+            return ""
 
     def compile_head(self):
         head = ""
@@ -154,17 +166,20 @@ class InstructionCompiler(object):
             return ""
 
     def compile_prep(self):
-        pass
+        prep = ""
+        if prep:
+            return "prep {\n%s}\n" % prep
+        else:
+            return ""
 
     def compile(self):
-        flags = self.compile_flags()
-        gasp = self.compile_gasp()
-        head = self.compile_head()
-        maxp = self.compile_maxp()
-        hti = "\n".join([
-            flags,
-            gasp,
-            head,
-            maxp,
+        return "\n".join([
+            self.compile_flags(),
+            self.compile_gasp(),
+            self.compile_head(),
+            self.compile_maxp(),
+            self.compile_cvt(),
+            self.compile_fpgm(),
+            self.compile_prep(),
+            self.compile_glyf()
         ]) + "\n"
-        return hti
