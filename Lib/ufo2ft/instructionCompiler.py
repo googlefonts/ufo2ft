@@ -62,6 +62,8 @@ hti_flags = """flags {
 }
 """
 
+ufoLibKey = "public.truetype.instructions"
+
 
 class InstructionCompiler(object):
     def __init__(self, ufo, ttf):
@@ -130,6 +132,27 @@ class InstructionCompiler(object):
         else:
             return ""
 
+    def compile_maxp(self):
+        maxp = ""
+        ttdata = self.ufo.lib.get(ufoLibKey, None)
+        if ttdata:
+            for name in (
+                "maxStorage",
+                "maxFunctionDefs",
+                "maxInstructionDefs",
+                "maxStackElements",
+                # "maxSizeOfInstructions",  # recalculated by compiler
+                "maxZones",
+                "maxTwilightPoints",
+            ):
+                value = ttdata.get(name, None)
+                if value is not None:
+                    maxp += "%6i %s\n" % (value, name)
+        if maxp:
+            return "maxp {\n%s}\n" % maxp
+        else:
+            return ""
+
     def compile_prep(self):
         pass
 
@@ -137,9 +160,11 @@ class InstructionCompiler(object):
         flags = self.compile_flags()
         gasp = self.compile_gasp()
         head = self.compile_head()
+        maxp = self.compile_maxp()
         hti = "\n".join([
             flags,
             gasp,
             head,
+            maxp,
         ]) + "\n"
         return hti
