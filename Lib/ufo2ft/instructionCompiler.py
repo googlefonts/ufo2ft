@@ -100,7 +100,35 @@ class InstructionCompiler(object):
         pass
 
     def compile_head(self):
-        pass
+        head = ""
+
+        # Head flags
+        if hasattr(self.ufo.info, "openTypeHeadFlags"):
+            flags = self.ufo.info.openTypeHeadFlags
+            if flags is not None:
+                head += "# %4i flags_instructionsMayDependOnPointSize\n" % (
+                    1 if 2 in flags else 0
+                )
+                head += "# %4i flags_forceIntegerPPEM\n" % (
+                    1 if 3 in flags else 0
+                )
+                head += "# %4i flags_instructionsMayAlterAdvanceWidth\n" % (
+                    1 if 4 in flags else 0
+                )
+                head += "# %4i flags_optimizedForClearType\n" % (
+                    1 if 13 in flags else 0
+                )
+
+        # Lowest rec PPEM
+        if hasattr(self.ufo.info, "openTypeHeadLowestRecPPEM"):
+            lowestRecPPEM = self.ufo.info.openTypeHeadLowestRecPPEM
+            if lowestRecPPEM is not None:
+                head += "# %4i lowestRecPPEM\n" % lowestRecPPEM
+
+        if head:
+            return "# head {\n%s# }\n" % head
+        else:
+            return ""
 
     def compile_prep(self):
         pass
@@ -108,8 +136,10 @@ class InstructionCompiler(object):
     def compile(self):
         flags = self.compile_flags()
         gasp = self.compile_gasp()
+        head = self.compile_head()
         hti = "\n".join([
             flags,
             gasp,
+            head,
         ]) + "\n"
         return hti
