@@ -28,37 +28,37 @@ hti_flags = """flags {
       m 0     # Do not set rp0
       1 1     # Use rp1
       2 0     # Use rp2
-      > 1     # Obey minimum distance
-      < 0     # Do not obey minimum distance
+      D 1     # Obey minimum distance VTT: >
+      d 0     # Do not obey minimum distance VTT: <
      Gr 00    # Gray
      Bl 01    # Black
      Wh 10    # White
 
   # Combined flags
-  m<rGr 00000
-  m<rBl 00001
-  m<rWh 00010
-  m<RGr 00100
-  m<RBl 00101
-  m<RWh 00110
-  m>rGr 01000
-  m>rBl 01001
-  m>rWh 01010
-  m>RGr 01100
-  m>RBl 01101
-  m>RWh 01110
-  M<rGr 10000
-  M<rBl 10001
-  M<rWh 10010
-  M<RGr 10100
-  M<RBl 10101
-  M<RWh 10110
-  M>rGr 11000
-  M>rBl 11001
-  M>rWh 11010
-  M>RGr 11100
-  M>RBl 11101
-  M>RWh 11110
+  mdrGr 00000
+  mdrBl 00001
+  mdrWh 00010
+  mdRGr 00100
+  mdRBl 00101
+  mdRWh 00110
+  mDrGr 01000
+  mDrBl 01001
+  mDrWh 01010
+  mDRGr 01100
+  mDRBl 01101
+  mDRWh 01110
+  MdrGr 10000
+  MdrBl 10001
+  MdrWh 10010
+  MdRGr 10100
+  MdRBl 10101
+  MdRWh 10110
+  MDrGr 11000
+  MDrBl 11001
+  MDrWh 11010
+  MDRGr 11100
+  MDRBl 11101
+  MDRWh 11110
 }
 """
 
