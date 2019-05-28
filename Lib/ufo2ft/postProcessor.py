@@ -130,8 +130,9 @@ class PostProcessor(object):
         try:
             from htic import toFontTools
         except ImportError:
-            # TrueType hint processing modules are not available.
-            logger.info("TrueType hint processing modules are not available.")
+            logger.warning(
+                "TrueType instruction compiler 'htic' is not available."
+            )
             return
 
         logger.info("Compiling TrueType hinting")
