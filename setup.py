@@ -37,7 +37,11 @@ setup(
         "booleanOperations>=0.8.2",
         "enum34>=1.1.6 ; python_version < '3.4'",
     ],
-    extras_require={"pathops": ["skia-pathops>=0.2.0"]},
+    extras_require={
+        "pathops": ["skia-pathops>=0.2.0"],
+        # For compiling TrueType instructions:
+        "htic": ["htic>=3.0.1"],
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
