@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+from fontTools.pens.pointPen import AbstractPointPen
 from fontTools.ttLib.tables._g_a_s_p import \
     GASP_SYMMETRIC_GRIDFIT, GASP_SYMMETRIC_SMOOTHING, GASP_DOGRAY, GASP_GRIDFIT
 from math import log2
 
+import hashlib
 import logging
 
 
@@ -112,20 +114,27 @@ class InstructionCompiler(object):
 
     def compile_glyf(self):
         glyf = []
-        glyph_names = [name for name in self.ufo.lib.get("public.glyphOrder", [])]
-        for name in glyph_names:
-            ttdata = self.ufo[name].lib.get(ufoLibKey, None)
+        for name in sorted(self.ufo.keys()):
+            glyph = self.ufo[name]
+            ttdata = glyph.lib.get(ufoLibKey, None)
             if ttdata is None:
                 glyf.append("%s {\n}\n" % name)
             else:
-                pgm = ttdata.get("assembly", None)
                 formatVersion = ttdata.get("formatVersion", None)
                 if formatVersion != "1":
                     logger.error("Unknown formatVersion %i in glyph '%s', it will have no instructions in font." % (formatVersion, name))
-                id = ttdata.get("id", None)
-                # TODO: Check formatVersion and glyph hash
-                # if id != hash_glyph(self.ufo[name]):
-                #   logger.error("Glyph hash mismatch, glyph '%s' will have no instructions in font." % name)
+                    continue
+
+                # Check if glyph hash matches the current outlines
+                hash_pen = HashPointPen(glyph, self.ufo)
+                glyph.drawPoints(hash_pen)
+                glyph_id = ttdata.get("id", None)
+                if glyph_id is None or glyph_id != hash_pen.getHash():
+                    logger.error("Glyph hash mismatch, glyph '%s' will have no instructions in font." % name)
+                    continue
+
+                # Write hti code
+                pgm = ttdata.get("assembly", None)
                 if pgm is not None:
                     glyf.append("%s {\n  %s\n}\n" % (name, pgm.strip()))
         return "\n".join(glyf)
@@ -196,3 +205,46 @@ class InstructionCompiler(object):
             self.compile_prep(),
             self.compile_glyf()
         ]) + "\n"
+
+
+# Modified from https://github.com/adobe-type-tools/psautohint/blob/08b346865710ed3c172f1eb581d6ef243b203f99/python/psautohint/ufoFont.py#L800-L838
+
+class HashPointPen(AbstractPointPen):
+    DEFAULT_TRANSFORM = (1, 0, 0, 1, 0, 0)
+
+    def __init__(self, glyph, glyphSet=None):
+        self.glyphset = glyphSet
+        self.width = round(getattr(glyph, "width", 1000), 9)
+        self.data = ["w%s" % self.width]
+
+    def getHash(self):
+        data = "".join(self.data)
+        if len(data) >= 128:
+            data = hashlib.sha512(data.encode("ascii")).hexdigest()
+        return data
+
+    def beginPath(self, identifier=None, **kwargs):
+        pass
+
+    def endPath(self):
+        pass
+
+    def addPoint(self, pt, segmentType=None, smooth=False, name=None,
+                 identifier=None, **kwargs):
+        if segmentType is None:
+            pt_type = ""
+        else:
+            pt_type = segmentType[0]
+        self.data.append("%s%s%s" % (pt_type, repr(pt[0]), repr(pt[1])))
+
+    def addComponent(self, baseGlyphName, transformation, identifier=None,
+                     **kwargs):
+        self.data.append("base:%s" % baseGlyphName)
+
+        for i, v in enumerate(transformation):
+            if transformation[i] != self.DEFAULT_TRANSFORM[i]:
+                self.data.append(str(round(v, 9)))
+
+        self.data.append("w%s" % self.width)
+        glyph = self.glyphset[baseGlyphName]
+        glyph.drawPoints(self)
