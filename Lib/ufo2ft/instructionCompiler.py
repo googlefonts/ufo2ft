@@ -82,7 +82,7 @@ class InstructionCompiler(object):
         if hti:
             return "%s {\n%s}\n" % (block_name, hti)
         else:
-            return ""
+            return "\n"
 
     def compile_cvt(self):
         return self._compile_program("controlValue", "cvt")
@@ -110,7 +110,7 @@ class InstructionCompiler(object):
         if gasp:
             return "gasp {\n%s}\n" % gasp
         else:
-            return ""
+            return "\n"
 
     def compile_glyf(self):
         glyf = []
@@ -137,7 +137,10 @@ class InstructionCompiler(object):
                 pgm = ttdata.get("assembly", None)
                 if pgm is not None:
                     glyf.append("%s {\n  %s\n}\n" % (name, pgm.strip()))
-        return "\n".join(glyf)
+        if glyf:
+            return "\n".join(glyf)
+        else:
+            return "\n"
 
     def compile_head(self):
         head = ""
@@ -168,7 +171,7 @@ class InstructionCompiler(object):
         if head:
             return "# head {\n%s# }\n" % head
         else:
-            return ""
+            return "\n"
 
     def compile_maxp(self):
         maxp = ""
@@ -189,7 +192,7 @@ class InstructionCompiler(object):
         if maxp:
             return "maxp {\n%s}\n" % maxp
         else:
-            return ""
+            return "\n"
 
     def compile_prep(self):
         return self._compile_program("controlValueProgram", "prep")
