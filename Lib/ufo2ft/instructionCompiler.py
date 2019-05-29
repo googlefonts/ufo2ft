@@ -68,9 +68,10 @@ ufoLibKey = "public.truetype.instructions"
 
 
 class InstructionCompiler(object):
-    def __init__(self, ufo, ttf):
+    def __init__(self, ufo, ttf, rename_map={}):
         self.ufo = ufo
         self.font = ttf
+        self.rename_map = rename_map
 
     def _compile_program(self, key, block_name):
         hti = ""
@@ -115,10 +116,11 @@ class InstructionCompiler(object):
     def compile_glyf(self):
         glyf = []
         for name in sorted(self.ufo.keys()):
+            production_name = self.rename_map.get(name, name)
             glyph = self.ufo[name]
             ttdata = glyph.lib.get(ufoLibKey, None)
             if ttdata is None:
-                glyf.append("%s {\n}\n" % name)
+                glyf.append("%s {\n}\n" % production_name)
             else:
                 formatVersion = ttdata.get("formatVersion", None)
                 if formatVersion != "1":
@@ -136,7 +138,7 @@ class InstructionCompiler(object):
                 # Write hti code
                 pgm = ttdata.get("assembly", None)
                 if pgm is not None:
-                    glyf.append("%s {\n  %s\n}\n" % (name, pgm.strip()))
+                    glyf.append("%s {\n  %s\n}\n" % (production_name, pgm.strip()))
         if glyf:
             return "\n".join(glyf)
         else:
