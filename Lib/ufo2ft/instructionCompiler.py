@@ -195,7 +195,7 @@ class InstructionCompiler(object):
         return self._compile_program("controlValueProgram", "prep")
 
     def compile(self):
-        return "\n".join([
+        htic = "\n".join([
             self.compile_flags(),
             self.compile_gasp(),
             self.compile_head(),
@@ -205,6 +205,7 @@ class InstructionCompiler(object):
             self.compile_prep(),
             self.compile_glyf()
         ]) + "\n"
+        return htic
 
 
 # Modified from https://github.com/adobe-type-tools/psautohint/blob/08b346865710ed3c172f1eb581d6ef243b203f99/python/psautohint/ufoFont.py#L800-L838
