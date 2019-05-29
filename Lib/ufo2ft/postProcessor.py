@@ -56,18 +56,18 @@ class PostProcessor(object):
           changing the path directions. This will most certainly make any
           hinting data in the source UFO invalid.
         """
-        if compileTrueTypeHinting and "glyf" in self.otf:
-            # Must be done before glyph names are altered
-            self._compile_truetype_hinting()
         if useProductionNames is None:
             useProductionNames = self.ufo.lib.get(
                 USE_PRODUCTION_NAMES,
                 not self.ufo.lib.get(GLYPHS_DONT_USE_PRODUCTION_NAMES)
                 and self._postscriptNames is not None,
             )
+        rename_map = {}
         if useProductionNames:
             logger.info("Renaming glyphs to final production names")
-            self._rename_glyphs_from_ufo()
+            rename_map = self._rename_glyphs_from_ufo()
+        if compileTrueTypeHinting and "glyf" in self.otf:
+            self._compile_truetype_hinting(rename_map)
         if optimizeCFF and "CFF " in self.otf:
             from compreffor import compress
 
@@ -97,6 +97,7 @@ class PostProcessor(object):
                 rename_map.get(n, n): v for n, v in char_strings.items()
             }
             cff.charset = [rename_map.get(n, n) for n in cff.charset]
+        return rename_map
 
     def _build_production_names(self):
         seen = {}
@@ -126,7 +127,7 @@ class PostProcessor(object):
             rename_map[name] = self._unique_name(valid_name, seen)
         return rename_map
 
-    def _compile_truetype_hinting(self):
+    def _compile_truetype_hinting(self, rename_map):
         try:
             from htic import toFontTools
         except ImportError:
@@ -138,7 +139,7 @@ class PostProcessor(object):
         logger.info("Compiling TrueType hinting")
         from ufo2ft.instructionCompiler import InstructionCompiler
         import tempfile
-        ic = InstructionCompiler(self.ufo, self.otf)
+        ic = InstructionCompiler(ufo=self.ufo, ttf=self.otf, rename_map=rename_map)
         hti = ic.compile()
 
         # Send the generated HTI language code to the compiler.
