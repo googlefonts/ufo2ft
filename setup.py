@@ -40,7 +40,7 @@ setup(
     extras_require={
         "pathops": ["skia-pathops>=0.2.0"],
         # For compiling TrueType instructions:
-        "htic": ["htic>=3.0.1"],
+        "htic": ["htic>3.3.0"],
     },
     classifiers=[
         "Development Status :: 4 - Beta",
