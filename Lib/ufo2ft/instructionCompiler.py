@@ -151,16 +151,16 @@ class InstructionCompiler(object):
         if hasattr(self.ufo.info, "openTypeHeadFlags"):
             flags = self.ufo.info.openTypeHeadFlags
             if flags is not None:
-                head += "# %4i flags_instructionsMayDependOnPointSize\n" % (
+                head += "%4i flags.instructionsMayDependOnPointSize\n" % (
                     1 if 2 in flags else 0
                 )
-                head += "# %4i flags_forceIntegerPPEM\n" % (
+                head += "%4i flags.forcePpemToIntegerValues\n" % (
                     1 if 3 in flags else 0
                 )
-                head += "# %4i flags_instructionsMayAlterAdvanceWidth\n" % (
+                head += "%4i flags.instructionsMayAlterAdvanceWidth\n" % (
                     1 if 4 in flags else 0
                 )
-                head += "# %4i flags_optimizedForClearType\n" % (
+                head += "%4i flags.fontOptimizedForClearType\n" % (
                     1 if 13 in flags else 0
                 )
 
@@ -168,10 +168,10 @@ class InstructionCompiler(object):
         if hasattr(self.ufo.info, "openTypeHeadLowestRecPPEM"):
             lowestRecPPEM = self.ufo.info.openTypeHeadLowestRecPPEM
             if lowestRecPPEM is not None:
-                head += "# %4i lowestRecPPEM\n" % lowestRecPPEM
+                head += "%4i lowestRecPPEM\n" % lowestRecPPEM
 
         if head:
-            return "# head {\n%s# }\n" % head
+            return "head {\n%s}\n" % head
         else:
             return "\n"
 
