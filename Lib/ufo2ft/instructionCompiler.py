@@ -20,47 +20,47 @@ symSmoothing = log2(GASP_SYMMETRIC_SMOOTHING)
 
 
 hti_flags = """flags {
-      X 1     # X axis
-      Y 0     # Y axis
-      O 1     # Use original outline
-      N 0     # Use gridfitted outline
-      R 1     # Round distance; or perpendicular to line
-      r 0     # Do not round distance; or parallel to line
-      M 1     # Set rp0 to point number on the stack
-      m 0     # Do not set rp0
+      1 X     # X axis
+      0 Y     # Y axis
+      1 O     # Use original outline
+      0 N     # Use gridfitted outline
+      1 R     # Round distance; or perpendicular to line
+      0 r     # Do not round distance; or parallel to line
+      1 M     # Set rp0 to point number on the stack
+      0 m     # Do not set rp0
       1 1     # Use rp1
-      2 0     # Use rp2
-      D 1     # Obey minimum distance VTT: >
-      d 0     # Do not obey minimum distance VTT: <
-     Gr 00    # Gray
-     Bl 01    # Black
-     Wh 10    # White
+      0 2     # Use rp2
+      1 D     # Obey minimum distance VTT: >
+      0 d     # Do not obey minimum distance VTT: <
+     00 Gr    # Gray
+     01 Bl    # Black
+     10 Wh    # White
 
   # Combined flags
-  mdrGr 00000
-  mdrBl 00001
-  mdrWh 00010
-  mdRGr 00100
-  mdRBl 00101
-  mdRWh 00110
-  mDrGr 01000
-  mDrBl 01001
-  mDrWh 01010
-  mDRGr 01100
-  mDRBl 01101
-  mDRWh 01110
-  MdrGr 10000
-  MdrBl 10001
-  MdrWh 10010
-  MdRGr 10100
-  MdRBl 10101
-  MdRWh 10110
-  MDrGr 11000
-  MDrBl 11001
-  MDrWh 11010
-  MDRGr 11100
-  MDRBl 11101
-  MDRWh 11110
+  00000 mdrGr
+  00001 mdrBl
+  00010 mdrWh
+  00100 mdRGr
+  00101 mdRBl
+  00110 mdRWh
+  01000 mDrGr
+  01001 mDrBl
+  01010 mDrWh
+  01100 mDRGr
+  01101 mDRBl
+  01110 mDRWh
+  10000 MdrGr
+  10001 MdrBl
+  10010 MdrWh
+  10100 MdRGr
+  10101 MdRBl
+  10110 MdRWh
+  11000 MDrGr
+  11001 MDrBl
+  11010 MDrWh
+  11100 MDRGr
+  11101 MDRBl
+  11110 MDRWh
 }
 """
 
