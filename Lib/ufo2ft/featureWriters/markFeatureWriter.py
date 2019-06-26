@@ -313,8 +313,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     def _groupMarkGlyphsByAnchor(self):
         def sort_key(a):
-            # sort preferred anchors first, then alphabetically
-            return (self.anchorSortKey.get(a.name, 0), a.name)
+            return self.anchorSortKey.get(a.name, 0)
 
         gdefMarks = self.context.gdefClasses.mark
         markAnchorNames = set(self.context.anchorPairs.values())
