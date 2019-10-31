@@ -490,7 +490,7 @@
 
   <vmtx>
     <mtx name=".notdef" height="1000" tsb="0"/>
-    <mtx name="uni0020" height="250" tsb="750"/>
+    <mtx name="uni0020" height="250" tsb="0"/>
     <mtx name="uni0061" height="750" tsb="240"/>
     <mtx name="uni0062" height="750" tsb="245"/>
     <mtx name="uni0063" height="750" tsb="250"/>

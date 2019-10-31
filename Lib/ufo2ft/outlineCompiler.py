@@ -794,8 +794,11 @@ class BaseOutlineCompiler(object):
                 )
             verticalOrigin = _getVerticalOrigin(self.otf, glyph)
             bounds = self.glyphBoundingBoxes[glyphName]
-            top = bounds.yMax if bounds else 0
-            vmtx[glyphName] = (height, verticalOrigin - top)
+            if bounds:
+                top = verticalOrigin - bounds.yMax
+            else:
+                top = 0
+            vmtx[glyphName] = (height, top)
 
     def setupTable_VORG(self):
         """
