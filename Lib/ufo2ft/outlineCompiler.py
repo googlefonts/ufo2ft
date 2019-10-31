@@ -95,14 +95,11 @@ class BaseOutlineCompiler(object):
         """
         self.otf = TTFont(sfntVersion=self.sfntVersion)
 
-        # only compile vertical metrics tables if vhea metrics a defined
+        # only compile vertical metrics tables if vhea metrics are defined
         vertical_metrics = [
             "openTypeVheaVertTypoAscender",
             "openTypeVheaVertTypoDescender",
             "openTypeVheaVertTypoLineGap",
-            "openTypeVheaCaretSlopeRise",
-            "openTypeVheaCaretSlopeRun",
-            "openTypeVheaCaretOffset",
         ]
         self.vertical = all(
             getAttrWithFallback(self.ufo.info, metric) is not None
