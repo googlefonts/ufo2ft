@@ -56,9 +56,9 @@ def _getVerticalOrigin(font, glyph):
     if hasattr(glyph, "verticalOrigin") and glyph.verticalOrigin is not None:
         verticalOrigin = glyph.verticalOrigin
     else:
-        hhea = font.get("hhea")
-        font_ascender = hhea.ascent if hhea is not None else 0
-        verticalOrigin = font_ascender
+        os2 = font.get("OS/2")
+        typo_ascender = os2.sTypoAscender if os2 is not None else 0
+        verticalOrigin = typo_ascender
     return otRound(verticalOrigin)
 
 
