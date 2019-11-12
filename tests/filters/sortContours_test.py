@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 import pytest
-import ufoLib2
 
 import ufo2ft
 import ufo2ft.filters.sortContours
@@ -15,42 +14,44 @@ def font(request, datadir, FontClass):
     return font
 
 
-def test_sort_contour_order(font):
+def test_sort_contour_order(font, FontClass):
+    test_ufo = FontClass()
     font_compiled = ufo2ft.compileTTF(font, inplace=True)
     font_glyf = font_compiled["glyf"]
 
     glyph_uniFFFC = font_glyf["uniFFFC"]
-    glyph_test1 = ufoLib2.objects.Glyph("test1")
+    glyph_test1 = test_ufo.newGlyph("test1")
     glyph_uniFFFC.draw(glyph_test1.getPen(), font_glyf)
     assert [
-        [(p.x, p.y, p.type, p.smooth) for p in c] for c in glyph_test1
+        [(p.x, p.y, p.segmentType, p.smooth) for p in c] for c in glyph_test1
     ] == EXPECTED_glyph_uniFFFC
 
     glyph_graphemejoinercomb = font_glyf["graphemejoinercomb"]
-    glyph_test2 = ufoLib2.objects.Glyph("test2")
+    glyph_test2 = test_ufo.newGlyph("test2")
     glyph_graphemejoinercomb.draw(glyph_test2.getPen(), font_glyf)
     assert [
-        [(p.x, p.y, p.type, p.smooth) for p in c] for c in glyph_test2
+        [(p.x, p.y, p.segmentType, p.smooth) for p in c] for c in glyph_test2
     ] == EXPECTED_glyph_graphemejoinercomb
 
 
-def test_no_sort_contour_order(font):
+def test_no_sort_contour_order(font, FontClass):
+    test_ufo = FontClass()
     del font.lib["com.github.googlei18n.ufo2ft.filters"]
     font_compiled = ufo2ft.compileTTF(font, inplace=True)
     font_glyf = font_compiled["glyf"]
 
     glyph_uniFFFC = font_glyf["uniFFFC"]
-    glyph_test1 = ufoLib2.objects.Glyph("test1")
+    glyph_test1 = test_ufo.newGlyph("test1")
     glyph_uniFFFC.draw(glyph_test1.getPen(), font_glyf)
     assert [
-        [(p.x, p.y, p.type, p.smooth) for p in c] for c in glyph_test1
+        [(p.x, p.y, p.segmentType, p.smooth) for p in c] for c in glyph_test1
     ] != EXPECTED_glyph_uniFFFC
 
     glyph_graphemejoinercomb = font_glyf["graphemejoinercomb"]
-    glyph_test2 = ufoLib2.objects.Glyph("test2")
+    glyph_test2 = test_ufo.newGlyph("test2")
     glyph_graphemejoinercomb.draw(glyph_test2.getPen(), font_glyf)
     assert [
-        [(p.x, p.y, p.type, p.smooth) for p in c] for c in glyph_test2
+        [(p.x, p.y, p.segmentType, p.smooth) for p in c] for c in glyph_test2
     ] != EXPECTED_glyph_graphemejoinercomb
 
 
