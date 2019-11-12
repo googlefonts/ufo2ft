@@ -14,5 +14,11 @@
         <string>sortContours</string>
       </dict>
     </array>
+    <key>public.glyphOrder</key>
+    <array>
+      <string>graphemejoinercomb</string>
+      <string>uniFFFC</string>
+      <string>xxx</string>
+    </array>
   </dict>
 </plist>

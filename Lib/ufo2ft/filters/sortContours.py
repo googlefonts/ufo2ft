@@ -1,7 +1,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import logging
+
 import fontTools.pens.boundsPen
+
 from ufo2ft.filters import BaseFilter
+
+logger = logging.getLogger(__name__)
 
 
 class SortContoursFilter(BaseFilter):
@@ -15,8 +20,16 @@ class SortContoursFilter(BaseFilter):
     """
 
     def filter(self, glyph):
-        if not glyph:  # No contours.
+        if len(glyph) == 0:  # As in, no contours.
             return False
+
+        if glyph.components:
+            logger.warning(
+                "Applying the SortContours filter on Glyph '%s' may not work as "
+                "expected, as it contains components which will not be sorted. It "
+                "should be applied after decomposition.",
+                glyph.name,
+            )
 
         contours = sorted(
             (c for c in glyph), key=lambda contour: _control_bounding_box(contour)
@@ -32,6 +45,11 @@ class SortContoursFilter(BaseFilter):
 
 
 def _control_bounding_box(contour):
+    """Determine control point bounds for a contour.
+
+    We assume to be running after decomposition, so we explicitly do not look
+    at composites, which cannot be sensibly dealt with anyway.
+    """
     pen = fontTools.pens.boundsPen.ControlBoundsPen(None)
     p2s_pen = fontTools.pens.pointPen.PointToSegmentPen(pen)
     contour.drawPoints(p2s_pen)
