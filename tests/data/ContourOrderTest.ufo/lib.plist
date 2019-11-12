@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>com.github.googlei18n.ufo2ft.filters</key>
+    <array>
+      <dict>
+        <key>include</key>
+        <array>
+          <string>uniFFFC</string>
+          <string>graphemejoinercomb</string>
+        </array>
+        <key>name</key>
+        <string>sortContours</string>
+      </dict>
+    </array>
+    <key>public.glyphOrder</key>
+    <array>
+      <string>graphemejoinercomb</string>
+      <string>uniFFFC</string>
+      <string>xxx</string>
+    </array>
+  </dict>
+</plist>
