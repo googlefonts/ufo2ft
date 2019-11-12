@@ -54,7 +54,7 @@ def test_no_sort_contour_order(font):
     ] != EXPECTED_glyph_graphemejoinercomb
 
 
-def test_warn_components(font, caplog):
+def test_warn_pre_filter(font, caplog):
     font.lib["com.github.googlei18n.ufo2ft.filters"][0]["pre"] = True
     font.lib["com.github.googlei18n.ufo2ft.filters"][0]["include"].append("xxx")
 
@@ -65,6 +65,17 @@ def test_warn_components(font, caplog):
 
     assert len(caplog.records) == 1
     assert "contains components which will not be sorted" in caplog.text
+
+
+def test_no_warn_post_filter(font, caplog):
+    font.lib["com.github.googlei18n.ufo2ft.filters"][0]["include"].append("xxx")
+
+    with caplog.at_level(
+        logging.WARNING, logger=ufo2ft.filters.sortContours.logger.name
+    ):
+        font_compiled = ufo2ft.compileTTF(font, inplace=True)
+
+    assert len(caplog.records) == 0
 
 
 EXPECTED_glyph_uniFFFC = [

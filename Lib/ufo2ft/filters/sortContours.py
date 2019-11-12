@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 class SortContoursFilter(BaseFilter):
     """Sort contours by their bounding box.
 
+    ATTENTION: This filter should be run after decomposition! Mixed contours and
+    components cannot meaningfully be sorted.
+
     This is to work around the undefined contour order in pyclipper, see
     https://sourceforge.net/p/polyclipping/bugs/195/. It only strikes on glyphs
     that contain a lot of contours on the same height (think word marks or glyphs
@@ -25,10 +28,7 @@ class SortContoursFilter(BaseFilter):
 
         if glyph.components:
             logger.warning(
-                "Applying the SortContours filter on Glyph '%s' may not work as "
-                "expected, as it contains components which will not be sorted. It "
-                "should be applied after decomposition.",
-                glyph.name,
+                "Glyph '%s' contains components which will not be sorted.", glyph.name,
             )
 
         contours = sorted(
@@ -45,11 +45,6 @@ class SortContoursFilter(BaseFilter):
 
 
 def _control_bounding_box(contour):
-    """Determine control point bounds for a contour.
-
-    We assume to be running after decomposition, so we explicitly do not look
-    at composites, which cannot be sensibly dealt with anyway.
-    """
     pen = fontTools.pens.boundsPen.ControlBoundsPen(None)
     p2s_pen = fontTools.pens.pointPen.PointToSegmentPen(pen)
     contour.drawPoints(p2s_pen)
