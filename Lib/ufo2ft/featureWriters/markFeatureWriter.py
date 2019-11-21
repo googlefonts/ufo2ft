@@ -894,16 +894,25 @@ class MarkFeatureWriter(BaseFeatureWriter):
             # Write the class definitions at the first feature insertion point,
             # no matter what it is.
             feature_tag, feature_index = next(iter(insertion_tag2index.items()))
-            feaFile.statements[feature_index : feature_index] = newClassDefs
+            feaFile.statements[feature_index:feature_index] = newClassDefs
             feaFile.statements.insert(
                 feature_index + len(newClassDefs), ast.Comment("")
             )
             for feature_tag, feature_index in insertion_tag2index.items():
                 insertion_tag2index[feature_tag] = feature_index + len(newClassDefs) + 1
 
+            assert all(
+                feaFile.statements[i].text[11:15] == t
+                for t, i in insertion_tag2index.items()
+            ), "Inserting new class definitions desynced insertion_tag2index."
+
+            # Features for which there are insertion markers get inserted at their
+            # marked position, the rest are appended as usual.
             for feature_tag, feature in sorted(features.items()):
                 if feature_tag in insertion_tag2index:
-                    feaFile.statements.insert(insertion_tag2index[feature_tag], feature)
+                    index = insertion_tag2index[feature_tag]
+                    del feaFile.statements[index]
+                    feaFile.statements.insert(index, feature)
                 else:
                     feaFile.statements.append(feature)
         else:
