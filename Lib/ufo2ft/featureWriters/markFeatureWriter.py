@@ -8,6 +8,7 @@ from fontTools.misc.fixedTools import otRound
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import classifyGlyphs, unicodeInScripts
+from ufo2ft.errors import InvalidFeaturesData
 
 
 class AbstractMarkPos:
@@ -883,7 +884,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
             ):
                 tag = statement.text[11:15]
                 if tag in insertion_tag2index:
-                    raise ValueError(
+                    raise InvalidFeaturesData(
                         "There must be just one INSERT per feature tag, found "
                         "duplicate for:",
                         tag,
