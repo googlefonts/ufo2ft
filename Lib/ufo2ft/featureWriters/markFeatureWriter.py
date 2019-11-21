@@ -875,9 +875,42 @@ class MarkFeatureWriter(BaseFeatureWriter):
             return False
 
         feaFile = self.context.feaFile
-        feaFile.statements.extend(newClassDefs)
-        # add empty line to separate classes from following statements
-        feaFile.statements.append(ast.Comment(""))
-        for _, feature in sorted(features.items()):
-            feaFile.statements.append(feature)
+
+        insertion_tag2index = {}
+        for index, statement in enumerate(feaFile.statements):
+            if isinstance(statement, ast.Comment) and statement.text.startswith(
+                "### INSERT"
+            ):
+                tag = statement.text[11:15]
+                if tag in insertion_tag2index:
+                    raise ValueError(
+                        "There must be just one INSERT per feature tag, found "
+                        "duplicate for:",
+                        tag,
+                    )
+                insertion_tag2index[tag] = index
+
+        if insertion_tag2index:
+            # Write the class definitions at the first feature insertion point,
+            # no matter what it is.
+            feature_tag, feature_index = next(iter(insertion_tag2index.items()))
+            feaFile.statements[feature_index : feature_index] = newClassDefs
+            feaFile.statements.insert(
+                feature_index + len(newClassDefs), ast.Comment("")
+            )
+            for feature_tag, feature_index in insertion_tag2index.items():
+                insertion_tag2index[feature_tag] = feature_index + len(newClassDefs) + 1
+
+            for feature_tag, feature in sorted(features.items()):
+                if feature_tag in insertion_tag2index:
+                    feaFile.statements.insert(insertion_tag2index[feature_tag], feature)
+                else:
+                    feaFile.statements.append(feature)
+        else:
+            feaFile.statements.extend(newClassDefs)
+            # add empty line to separate classes from following statements
+            feaFile.statements.append(ast.Comment(""))
+            for _, feature in sorted(features.items()):
+                feaFile.statements.append(feature)
+
         return True
