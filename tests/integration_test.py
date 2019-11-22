@@ -1,4 +1,5 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
+import io
 from fontTools.misc.py23 import *
 from ufo2ft import (
     compileOTF,
@@ -156,6 +157,14 @@ class IntegrationTest(object):
                 "-useProductionNames" if useProductionNames else ""
             ),
         )
+
+    def test_debugFeatureFile(self, designspace):
+        tmp = io.StringIO()
+
+        varfont = compileVariableTTF(designspace, debugFeatureFile=tmp)
+
+        assert "### LayerFont-Regular ###" in tmp.getvalue()
+        assert "### LayerFont-Bold ###" in tmp.getvalue()
 
 
 if __name__ == "__main__":
