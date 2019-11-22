@@ -223,6 +223,10 @@ class FeatureCompiler(BaseFeatureCompiler):
             # no featureWriters, simply read existing features' text
             self.features = tounicode(self.ufo.features.text or "", "utf-8")
 
+    def writeFeatures(self, outfile):
+        if hasattr(self, "features"):
+            outfile.write(self.features)
+
     def buildTables(self):
         """
         Compile OpenType feature tables from the source.
