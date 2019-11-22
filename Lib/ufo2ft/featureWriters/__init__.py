@@ -159,3 +159,23 @@ def loadFeatureWriterFromString(spec):
     except SyntaxError:
         raise ValueError("options have incorrect format: %r" % kwargs)
     return klass(**options)
+
+
+def findFeatureInsertionMarkers(feaFile):
+    # type: (ast.FeatureFile) -> Dict[str, int]
+    """Return a mapping of insertion markers of features to their index
+    position in the FeatureFile statements AST."""
+    insertion_tag2index = {}
+    for index, statement in enumerate(feaFile.statements):
+        if isinstance(statement, ast.Comment) and statement.text.startswith(
+            "### INSERT"
+        ):
+            tag = statement.text[11:15]
+            if tag in insertion_tag2index:
+                raise InvalidFeaturesData(
+                    "There must be just one INSERT per feature tag, found "
+                    "duplicate for:",
+                    tag,
+                )
+            insertion_tag2index[tag] = index
+    return insertion_tag2index

@@ -5,7 +5,7 @@ from functools import partial
 
 from fontTools.misc.fixedTools import otRound
 
-from ufo2ft.featureWriters import BaseFeatureWriter, ast
+from ufo2ft.featureWriters import BaseFeatureWriter, ast, findFeatureInsertionMarkers
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import classifyGlyphs, unicodeInScripts
 from ufo2ft.errors import InvalidFeaturesData
@@ -877,19 +877,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
         feaFile = self.context.feaFile
 
-        insertion_tag2index = {}
-        for index, statement in enumerate(feaFile.statements):
-            if isinstance(statement, ast.Comment) and statement.text.startswith(
-                "### INSERT"
-            ):
-                tag = statement.text[11:15]
-                if tag in insertion_tag2index:
-                    raise InvalidFeaturesData(
-                        "There must be just one INSERT per feature tag, found "
-                        "duplicate for:",
-                        tag,
-                    )
-                insertion_tag2index[tag] = index
+        insertion_tag2index = findFeatureInsertionMarkers(feaFile)
 
         if insertion_tag2index:
             # Write the class definitions at the first feature insertion point,
