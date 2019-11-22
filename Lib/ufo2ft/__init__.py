@@ -51,6 +51,7 @@ def compileOTF(
     inplace=False,
     layerName=None,
     skipExportGlyphs=None,
+    debugFeatureFile=None,
     _tables=None,
 ):
     """Create FontTools CFF font from a UFO.
@@ -130,6 +131,7 @@ def compileOTF(
             glyphSet=glyphSet,
             featureWriters=featureWriters,
             featureCompilerClass=featureCompilerClass,
+            debugFeatureFile=debugFeatureFile,
         )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
@@ -157,6 +159,7 @@ def compileTTF(
     inplace=False,
     layerName=None,
     skipExportGlyphs=None,
+    debugFeatureFile=None,
 ):
     """Create FontTools TrueType font from a UFO.
 
@@ -208,6 +211,7 @@ def compileTTF(
             glyphSet=glyphSet,
             featureWriters=featureWriters,
             featureCompilerClass=featureCompilerClass,
+            debugFeatureFile=debugFeatureFile,
         )
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
@@ -229,6 +233,7 @@ def compileInterpolatableTTFs(
     inplace=False,
     layerNames=None,
     skipExportGlyphs=None,
+    debugFeatureFile=None,
 ):
     """Create FontTools TrueType fonts from a list of UFOs with interpolatable
     outlines. Cubic curves are converted compatibly to quadratic curves using
@@ -291,12 +296,15 @@ def compileInterpolatableTTFs(
         # Only the default layer is likely to have all glyphs used in feature
         # code.
         if layerName is None:
+            if debugFeatureFile:
+                debugFeatureFile.write("\n### %s ###\n" % fontName)
             compileFeatures(
                 ufo,
                 ttf,
                 glyphSet=glyphSet,
                 featureWriters=featureWriters,
                 featureCompilerClass=featureCompilerClass,
+                debugFeatureFile=debugFeatureFile,
             )
 
         postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
@@ -327,6 +335,7 @@ def compileInterpolatableTTFsFromDS(
     cubicConversionError=None,
     reverseDirection=True,
     inplace=False,
+    debugFeatureFile=None,
 ):
     """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines. Cubic curves are converted compatibly to
@@ -378,6 +387,7 @@ def compileInterpolatableTTFsFromDS(
         inplace=inplace,
         layerNames=layerNames,
         skipExportGlyphs=skipExportGlyphs,
+        debugFeatureFile=debugFeatureFile,
     )
 
     if inplace:
@@ -400,6 +410,7 @@ def compileInterpolatableOTFsFromDS(
     useProductionNames=None,
     roundTolerance=None,
     inplace=False,
+    debugFeatureFile=None,
 ):
     """Create FontTools CFF fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines.
@@ -454,6 +465,7 @@ def compileInterpolatableOTFsFromDS(
                 overlapsBackend=None,
                 inplace=inplace,
                 skipExportGlyphs=skipExportGlyphs,
+                debugFeatureFile=debugFeatureFile,
                 _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
             )
         )
@@ -471,7 +483,12 @@ def compileInterpolatableOTFsFromDS(
 
 
 def compileFeatures(
-    ufo, ttFont=None, glyphSet=None, featureWriters=None, featureCompilerClass=None
+    ufo,
+    ttFont=None,
+    glyphSet=None,
+    featureWriters=None,
+    featureCompilerClass=None,
+    debugFeatureFile=None,
 ):
     """ Compile OpenType Layout features from `ufo` into FontTools OTL tables.
     If `ttFont` is None, a new TTFont object is created containing the new
@@ -485,6 +502,10 @@ def compileFeatures(
     If skipExportGlyphs is provided (see description in the ``compile*``
     functions), the feature compiler will prune groups (removing them if empty)
     and kerning of the UFO of these glyphs. The feature file is left untouched.
+
+    `debugFeatureFile` can be a file or file-like object opened in text mode,
+    in which to dump the text content of the feature file, useful for debugging
+    auto-generated OpenType features like kern, mark, mkmk etc.
     """
     if featureCompilerClass is None:
         if any(
@@ -497,7 +518,13 @@ def compileFeatures(
     featureCompiler = featureCompilerClass(
         ufo, ttFont, glyphSet=glyphSet, featureWriters=featureWriters
     )
-    return featureCompiler.compile()
+    otFont = featureCompiler.compile()
+
+    if debugFeatureFile:
+        if hasattr(featureCompiler, "writeFeatures"):
+            featureCompiler.writeFeatures(debugFeatureFile)
+
+    return otFont
 
 
 def compileVariableTTF(
@@ -513,6 +540,7 @@ def compileVariableTTF(
     excludeVariationTables=(),
     optimizeGvar=True,
     inplace=False,
+    debugFeatureFile=None,
 ):
     """Create FontTools TrueType variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
@@ -540,6 +568,7 @@ def compileVariableTTF(
         cubicConversionError=cubicConversionError,
         reverseDirection=reverseDirection,
         inplace=inplace,
+        debugFeatureFile=debugFeatureFile,
     )
 
     logger.info("Building variable TTF font")
@@ -565,6 +594,7 @@ def compileVariableCFF2(
     roundTolerance=None,
     excludeVariationTables=(),
     inplace=False,
+    debugFeatureFile=None,
 ):
     """Create FontTools CFF2 variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
@@ -588,6 +618,7 @@ def compileVariableCFF2(
         useProductionNames=False,  # will rename glyphs after varfont is built
         roundTolerance=roundTolerance,
         inplace=inplace,
+        debugFeatureFile=debugFeatureFile,
     )
 
     logger.info("Building variable CFF2 font")
