@@ -1,10 +1,12 @@
 import importlib
 import re
 from inspect import isclass
+from collections import OrderedDict
 
 from .baseFeatureWriter import BaseFeatureWriter
 from .kernFeatureWriter import KernFeatureWriter
 from .markFeatureWriter import MarkFeatureWriter
+from ufo2ft.errors import InvalidFeaturesData
 
 try:
     from inspect import getfullargspec as getargspec  # PY3
@@ -165,7 +167,7 @@ def findFeatureInsertionMarkers(feaFile):
     # type: (ast.FeatureFile) -> Dict[str, int]
     """Return a mapping of insertion markers of features to their index
     position in the FeatureFile statements AST."""
-    insertion_tag2index = {}
+    insertion_tag2index = OrderedDict()
     for index, statement in enumerate(feaFile.statements):
         if isinstance(statement, ast.Comment) and statement.text.startswith(
             "### INSERT"
