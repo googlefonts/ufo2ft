@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import, division, unicode_literals
+from cu2qu.ufo import font_to_quadratic
 from fontTools.ttLib import TTFont
 from fontTools.misc.py23 import basestring, unichr, byteord
 from fontTools import designspaceLib
@@ -33,6 +34,13 @@ def getpath(filename):
 def testufo(FontClass):
     font = FontClass(getpath("TestFont.ufo"))
     del font.lib["public.postscriptNames"]
+    return font
+
+
+@pytest.fixture
+def quadufo(FontClass):
+    font = FontClass(getpath("TestFont.ufo"))
+    font_to_quadratic(font)
     return font
 
 
@@ -81,9 +89,8 @@ class OutlineTTFCompilerTest(object):
         compiler.compile()
         assert "gasp" not in compiler.otf
 
-    def test_makeGlyphsBoundingBoxes(self, testufo):
-        # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
-        compiler = OutlineTTFCompiler(testufo)
+    def test_makeGlyphsBoundingBoxes(self, quadufo):
+        compiler = OutlineTTFCompiler(quadufo)
         assert compiler.glyphBoundingBoxes[".notdef"] == (50, 0, 450, 750)
         # no outline data
         assert compiler.glyphBoundingBoxes["space"] is None
@@ -414,7 +421,6 @@ class OutlineOTFCompilerTest(object):
         )
 
     def test_makeGlyphsBoundingBoxes(self, testufo):
-        # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
         compiler = OutlineOTFCompiler(testufo)
         # with default roundTolerance, all coordinates and hence the bounding
         # box values are rounded with otRound()
