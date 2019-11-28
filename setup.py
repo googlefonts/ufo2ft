@@ -34,9 +34,9 @@ setup(
         "cu2qu>=1.6.5",
         "compreffor>=0.4.6",
         "booleanOperations>=0.8.2",
-        "enum34>=1.1.6 ; python_version < '3.4'",
     ],
     extras_require={"pathops": ["skia-pathops>=0.2.0"]},
+    python_requires=">=3.6",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
