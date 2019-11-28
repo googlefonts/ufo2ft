@@ -1,8 +1,8 @@
-fonttools[lxml,ufo]==3.44.0
+fonttools[lxml,ufo]==4.2.0
 defcon==0.6.0
-cu2qu==1.6.5
+cu2qu==1.6.6
 compreffor==0.4.6.post1
-booleanOperations==0.8.2
+booleanOperations==0.9.0
 
-# alternative UFO implementation (still experimental)
-ufoLib2==0.3.2.post2; python_version >= '3.6'
+# alternative UFO implementation
+ufoLib2==0.5.1
