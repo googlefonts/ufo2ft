@@ -949,7 +949,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             info = self.ufo.info
             # populate the width values
             if not any(
-                hasattr(info, attr) and getattr(info, attr) is not None
+                getattr(info, attr, None) is not None
                 for attr in ("postscriptDefaultWidthX", "postscriptNominalWidthX")
             ):
                 # no custom values set in fontinfo.plist; compute optimal ones
