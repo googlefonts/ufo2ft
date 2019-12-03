@@ -5,6 +5,7 @@ from fontTools.misc.py23 import byteord, tounicode, round, unichr, BytesIO
 import logging
 import math
 from collections import Counter, namedtuple
+from types import SimpleNamespace
 
 from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import (
@@ -43,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 BoundingBox = namedtuple("BoundingBox", ["xMin", "yMin", "xMax", "yMax"])
+EMPTY_BOUNDING_BOX = BoundingBox(0, 0, 0, 0)
 
 
 def _isNonBMP(s):
@@ -81,13 +83,14 @@ class BaseOutlineCompiler(object):
         if glyphOrder is None:
             glyphOrder = font.glyphOrder
         self.glyphOrder = self.makeOfficialGlyphOrder(glyphOrder)
-        # make reusable glyphs/font bounding boxes
-        self.glyphBoundingBoxes = self.makeGlyphsBoundingBoxes()
-        self.fontBoundingBox = self.makeFontBoundingBox()
         # make a reusable character mapping
         self.unicodeToGlyphNameMapping = self.makeUnicodeToGlyphNameMapping()
         if tables is not None:
             self.tables = tables
+        # cached values defined later on
+        self._glyphBoundingBoxes = None
+        self._fontBoundingBox = None
+        self._compiledGlyphs = None
 
     def compile(self):
         """
@@ -126,35 +129,38 @@ class BaseOutlineCompiler(object):
 
         return self.otf
 
+    def compileGlyphs(self):
+        """Compile glyphs and return dict keyed by glyph name.
+
+        **This should not be called externally.**
+        Subclasses must override this method to handle compilation of glyphs.
+        """
+        raise NotImplementedError
+
+    def getCompiledGlyphs(self):
+        if self._compiledGlyphs is None:
+            self._compiledGlyphs = self.compileGlyphs()
+        return self._compiledGlyphs
+
     def makeGlyphsBoundingBoxes(self):
         """
         Make bounding boxes for all the glyphs, and return a dictionary of
         BoundingBox(xMin, xMax, yMin, yMax) namedtuples keyed by glyph names.
         The bounding box of empty glyphs (without contours or components) is
         set to None.
+        The bbox values are integers.
 
-        Float values are rounded to integers using fontTools otRound().
-
-        **This should not be called externally.** Subclasses
-        may override this method to handle the bounds creation
-        in a different way if desired.
+        **This should not be called externally.**
+        Subclasses must override this method to handle the bounds creation for
+        their specific glyph type.
         """
+        raise NotImplementedError
 
-        def getControlPointBounds(glyph):
-            pen.init()
-            glyph.draw(pen)
-            return pen.bounds
-
-        glyphBoxes = {}
-        pen = ControlBoundsPen(self.allGlyphs)
-        for glyphName, glyph in self.allGlyphs.items():
-            bounds = None
-            if glyph or glyph.components:
-                bounds = getControlPointBounds(glyph)
-                if bounds:
-                    bounds = BoundingBox(*(otRound(v) for v in bounds))
-            glyphBoxes[glyphName] = bounds
-        return glyphBoxes
+    @property
+    def glyphBoundingBoxes(self):
+        if self._glyphBoundingBoxes is None:
+            self._glyphBoundingBoxes = self.makeGlyphsBoundingBoxes()
+        return self._glyphBoundingBoxes
 
     def makeFontBoundingBox(self):
         """
@@ -164,8 +170,6 @@ class BaseOutlineCompiler(object):
         may override this method to handle the bounds creation
         in a different way if desired.
         """
-        if not hasattr(self, "glyphBoundingBoxes"):
-            self.glyphBoundingBoxes = self.makeGlyphsBoundingBoxes()
         fontBox = None
         for glyphName, glyphBox in self.glyphBoundingBoxes.items():
             if glyphBox is None:
@@ -175,8 +179,14 @@ class BaseOutlineCompiler(object):
             else:
                 fontBox = unionRect(fontBox, glyphBox)
         if fontBox is None:  # unlikely
-            fontBox = BoundingBox(0, 0, 0, 0)
+            fontBox = EMPTY_BOUNDING_BOX
         return fontBox
+
+    @property
+    def fontBoundingBox(self):
+        if self._fontBoundingBox is None:
+            self._fontBoundingBox = self.makeFontBoundingBox()
+        return self._fontBoundingBox
 
     def makeUnicodeToGlyphNameMapping(self):
         """
@@ -927,6 +937,47 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             font, glyphSet=glyphSet, glyphOrder=glyphOrder, tables=tables
         )
         self.optimizeCFF = optimizeCFF
+        self._defaultAndNominalWidths = None
+
+    def getDefaultAndNominalWidths(self):
+        """Return (defaultWidthX, nominalWidthX).
+
+        If fontinfo.plist doesn't define these explicitly, compute optimal values
+        from the glyphs' advance widths.
+        """
+        if self._defaultAndNominalWidths is None:
+            info = self.ufo.info
+            # populate the width values
+            if not any(
+                getattr(info, attr, None) is not None
+                for attr in ("postscriptDefaultWidthX", "postscriptNominalWidthX")
+            ):
+                # no custom values set in fontinfo.plist; compute optimal ones
+                from fontTools.cffLib.width import optimizeWidths
+
+                widths = [otRound(glyph.width) for glyph in self.allGlyphs.values()]
+                defaultWidthX, nominalWidthX = optimizeWidths(widths)
+            else:
+                defaultWidthX = otRound(info.postscriptDefaultWidthX)
+                nominalWidthX = otRound(info.postscriptNominalWidthX)
+            self._defaultAndNominalWidths = (defaultWidthX, nominalWidthX)
+        return self._defaultAndNominalWidths
+
+    def compileGlyphs(self):
+        """Compile and return the CFF T2CharStrings for this font."""
+        defaultWidth, nominalWidth = self.getDefaultAndNominalWidths()
+        # The real PrivateDict will be created later on in setupTable_CFF.
+        # For convenience here we use a namespace object to pass the default/nominal
+        # widths that we need to draw the charstrings when computing their bounds.
+        private = SimpleNamespace(
+            defaultWidthX=defaultWidth, nominalWidthX=nominalWidth
+        )
+        compiledGlyphs = {}
+        for glyphName in self.glyphOrder:
+            glyph = self.allGlyphs[glyphName]
+            cs = self.getCharStringForGlyph(glyph, private)
+            compiledGlyphs[glyphName] = cs
+        return compiledGlyphs
 
     def makeGlyphsBoundingBoxes(self):
         """
@@ -941,11 +992,6 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         values.
         """
 
-        def getControlPointBounds(glyph):
-            pen.init()
-            glyph.draw(pen)
-            return pen.bounds
-
         def toInt(value, else_callback):
             rounded = otRound(value)
             if tolerance >= 0.5 or abs(rounded - value) <= tolerance:
@@ -955,22 +1001,22 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
         tolerance = self.roundTolerance
         glyphBoxes = {}
-        pen = ControlBoundsPen(self.allGlyphs)
-        for glyphName, glyph in self.allGlyphs.items():
-            bounds = None
-            if glyph or glyph.components:
-                bounds = getControlPointBounds(glyph)
-                if bounds:
-                    rounded = []
-                    for value in bounds[:2]:
-                        rounded.append(toInt(value, math.floor))
-                    for value in bounds[2:]:
-                        rounded.append(toInt(value, math.ceil))
-                    bounds = BoundingBox(*rounded)
-            glyphBoxes[glyphName] = bounds
+        charStrings = self.getCompiledGlyphs()
+        for name, cs in charStrings.items():
+            bounds = cs.calcBounds(charStrings)
+            if bounds is not None:
+                rounded = []
+                for value in bounds[:2]:
+                    rounded.append(toInt(value, math.floor))
+                for value in bounds[2:]:
+                    rounded.append(toInt(value, math.ceil))
+                bounds = BoundingBox(*rounded)
+            if bounds == EMPTY_BOUNDING_BOX:
+                bounds = None
+            glyphBoxes[name] = bounds
         return glyphBoxes
 
-    def getCharStringForGlyph(self, glyph, private, globalSubrs):
+    def getCharStringForGlyph(self, glyph, private, globalSubrs=None):
         """
         Get a Type2CharString for the *glyph*
 
@@ -1100,26 +1146,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         unitsPerEm = otRound(getAttrWithFallback(info, "unitsPerEm"))
         topDict.FontMatrix = [1.0 / unitsPerEm, 0, 0, 1.0 / unitsPerEm, 0, 0]
         # populate the width values
-        if (
-            not any(
-                hasattr(info, attr) and getattr(info, attr) is not None
-                for attr in ("postscriptDefaultWidthX", "postscriptNominalWidthX")
-            )
-            and "hmtx" in self.otf
-        ):
-            # no custom values set in fontinfo.plist; compute optimal ones
-            from fontTools.cffLib.width import optimizeWidths
-
-            hmtx = self.otf["hmtx"]
-            widths = [m[0] for m in hmtx.metrics.values()]
-            defaultWidthX, nominalWidthX = optimizeWidths(widths)
-        else:
-            defaultWidthX = otRound(
-                getAttrWithFallback(info, "postscriptDefaultWidthX")
-            )
-            nominalWidthX = otRound(
-                getAttrWithFallback(info, "postscriptNominalWidthX")
-            )
+        defaultWidthX, nominalWidthX = self.getDefaultAndNominalWidths()
         if defaultWidthX:
             private.rawDict["defaultWidthX"] = defaultWidthX
         if nominalWidthX:
@@ -1168,9 +1195,11 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             private.rawDict["StemSnapV"] = stemSnapV
             private.rawDict["StdVW"] = stemSnapV[0]
         # populate glyphs
+        cffGlyphs = self.getCompiledGlyphs()
         for glyphName in self.glyphOrder:
-            glyph = self.allGlyphs[glyphName]
-            charString = self.getCharStringForGlyph(glyph, private, globalSubrs)
+            charString = cffGlyphs[glyphName]
+            charString.private = private
+            charString.globalSubrs = globalSubrs
             # add to the font
             if glyphName in charStrings:
                 # XXX a glyph already has this name. should we choke?
@@ -1190,6 +1219,41 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
     sfntVersion = "\000\001\000\000"
     tables = BaseOutlineCompiler.tables | {"loca", "gasp", "glyf"}
+
+    def compileGlyphs(self):
+        """Compile and return the TrueType glyphs for this font."""
+        allGlyphs = self.allGlyphs
+        ttGlyphs = {}
+        for name in self.glyphOrder:
+            glyph = allGlyphs[name]
+            pen = TTGlyphPen(allGlyphs)
+            try:
+                glyph.draw(pen)
+            except NotImplementedError:
+                logger.error("%r has invalid curve format; skipped", name)
+                ttGlyph = Glyph()
+            else:
+                ttGlyph = pen.glyph()
+            ttGlyphs[name] = ttGlyph
+        return ttGlyphs
+
+    def makeGlyphsBoundingBoxes(self):
+        """Make bounding boxes for all the glyphs.
+
+        Return a dictionary of BoundingBox(xMin, xMax, yMin, yMax) namedtuples
+        keyed by glyph names.
+        The bounding box of empty glyphs (without contours or components) is
+        set to None.
+        """
+        glyphBoxes = {}
+        ttGlyphs = self.getCompiledGlyphs()
+        for glyphName, glyph in ttGlyphs.items():
+            glyph.recalcBounds(ttGlyphs)
+            bounds = BoundingBox(glyph.xMin, glyph.yMin, glyph.xMax, glyph.yMax)
+            if bounds == EMPTY_BOUNDING_BOX:
+                bounds = None
+            glyphBoxes[glyphName] = bounds
+        return glyphBoxes
 
     def setupTable_maxp(self):
         """Make the maxp table."""
@@ -1238,19 +1302,11 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         glyf.glyphOrder = self.glyphOrder
 
         hmtx = self.otf.get("hmtx")
-        allGlyphs = self.allGlyphs
+        ttGlyphs = self.getCompiledGlyphs()
         for name in self.glyphOrder:
-            glyph = allGlyphs[name]
-            pen = TTGlyphPen(allGlyphs)
-            try:
-                glyph.draw(pen)
-            except NotImplementedError:
-                logger.error("%r has invalid curve format; skipped", name)
-                ttGlyph = Glyph()
-            else:
-                ttGlyph = pen.glyph()
-                if ttGlyph.isComposite() and hmtx is not None and self.autoUseMyMetrics:
-                    self.autoUseMyMetrics(ttGlyph, name, hmtx)
+            ttGlyph = ttGlyphs[name]
+            if ttGlyph.isComposite() and hmtx is not None and self.autoUseMyMetrics:
+                self.autoUseMyMetrics(ttGlyph, name, hmtx)
             glyf[name] = ttGlyph
 
     @staticmethod
