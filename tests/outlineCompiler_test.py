@@ -494,6 +494,31 @@ class OutlineOTFCompilerTest(object):
         # 250 - nominalWidthX
         assert charStrings.getItemAndSelector("space")[0].program == [-53, "endchar"]
 
+    def test_optimized_default_but_no_nominal_widths(self, FontClass):
+        ufo = FontClass()
+        ufo.info.familyName = "Test"
+        ufo.info.styleName = "R"
+        ufo.info.ascender = 1
+        ufo.info.descender = 1
+        ufo.info.capHeight = 1
+        ufo.info.xHeight = 1
+        ufo.info.unitsPerEm = 1000
+        ufo.info.postscriptDefaultWidthX = 500
+        for glyphName, width in (
+            (".notdef", 500),
+            ("space", 500),
+            ("a", 500),
+        ):
+            glyph = ufo.newGlyph(glyphName)
+            glyph.width = width
+
+        font = compileOTF(ufo)
+        cff = font["CFF "].cff
+        private = cff[list(cff.keys())[0]].Private
+
+        assert private.defaultWidthX == 500
+        assert private.nominalWidthX == 0
+
 
 class GlyphOrderTest(object):
     def test_compile_original_glyph_order(self, testufo):

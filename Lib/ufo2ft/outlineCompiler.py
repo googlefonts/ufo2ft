@@ -959,7 +959,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
                 defaultWidthX, nominalWidthX = optimizeWidths(widths)
             else:
                 defaultWidthX = otRound(info.postscriptDefaultWidthX)
-                nominalWidthX = otRound(info.postscriptNominalWidthX)
+                nominalWidthX = otRound(
+                    otRound(getAttrWithFallback(info, "postscriptNominalWidthX"))
+                )
             self._defaultAndNominalWidths = (defaultWidthX, nominalWidthX)
         return self._defaultAndNominalWidths
 
