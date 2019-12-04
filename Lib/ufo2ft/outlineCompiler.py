@@ -948,8 +948,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         if self._defaultAndNominalWidths is None:
             info = self.ufo.info
             # populate the width values
-            if not any(
-                getattr(info, attr, None) is not None
+            if all(
+                getattr(info, attr, None) is None
                 for attr in ("postscriptDefaultWidthX", "postscriptNominalWidthX")
             ):
                 # no custom values set in fontinfo.plist; compute optimal ones
@@ -958,8 +958,12 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
                 widths = [otRound(glyph.width) for glyph in self.allGlyphs.values()]
                 defaultWidthX, nominalWidthX = optimizeWidths(widths)
             else:
-                defaultWidthX = otRound(info.postscriptDefaultWidthX)
-                nominalWidthX = otRound(info.postscriptNominalWidthX)
+                defaultWidthX = otRound(
+                    getAttrWithFallback(info, "postscriptDefaultWidthX")
+                )
+                nominalWidthX = otRound(
+                    getAttrWithFallback(info, "postscriptNominalWidthX")
+                )
             self._defaultAndNominalWidths = (defaultWidthX, nominalWidthX)
         return self._defaultAndNominalWidths
 
