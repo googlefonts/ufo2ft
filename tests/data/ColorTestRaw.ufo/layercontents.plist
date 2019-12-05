@@ -6,17 +6,5 @@
       <string>foreground</string>
       <string>glyphs</string>
     </array>
-    <array>
-      <string>background</string>
-      <string>glyphs.background</string>
-    </array>
-    <array>
-      <string>color1</string>
-      <string>glyphs.color1</string>
-    </array>
-    <array>
-      <string>color2</string>
-      <string>glyphs.color2</string>
-    </array>
   </array>
 </plist>
