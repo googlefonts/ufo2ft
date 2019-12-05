@@ -46,6 +46,8 @@ logger = logging.getLogger(__name__)
 BoundingBox = namedtuple("BoundingBox", ["xMin", "yMin", "xMax", "yMax"])
 EMPTY_BOUNDING_BOX = BoundingBox(0, 0, 0, 0)
 
+COLOR_LAYERS_KEY = "com.github.googlei18n.ufo2ft.colorLayers"
+COLOR_PALETTES_KEY = "com.github.googlei18n.ufo2ft.colorPalettes"
 
 def _isNonBMP(s):
     for c in s:
@@ -108,6 +110,8 @@ class BaseOutlineCompiler(object):
             getAttrWithFallback(self.ufo.info, metric) is not None
             for metric in vertical_metrics
         )
+        self.colorLayers = COLOR_LAYERS_KEY in self.ufo.lib and \
+                           COLOR_PALETTES_KEY in self.ufo.lib
 
         # write the glyph order
         self.otf.setGlyphOrder(self.glyphOrder)
@@ -124,6 +128,9 @@ class BaseOutlineCompiler(object):
         if self.vertical:
             self.setupTable_vmtx()
             self.setupTable_vhea()
+        if self.colorLayers:
+            self.setupTable_COLR()
+            self.setupTable_CPAL()
         self.setupOtherTables()
         self.importTTX()
 
@@ -872,6 +879,28 @@ class BaseOutlineCompiler(object):
         post.maxMemType42 = 0
         post.minMemType1 = 0
         post.maxMemType1 = 0
+
+    def setupTable_COLR(self):
+        from fontTools.ttLib.tables.C_O_L_R_ import LayerRecord
+        layerInfo = self.ufo.lib[COLOR_LAYERS_KEY]
+        colorLayerLists = {}
+        for baseGlyphName, layers in layerInfo.items():
+            colorLayerLists[baseGlyphName] = [
+                    LayerRecord(layerGlyphName, colorID)
+                        for layerGlyphName, colorID in layers]
+        self.otf["COLR"] = colr = newTable("COLR")
+        colr.version = 0
+        colr.ColorLayers = colorLayerLists
+
+    def setupTable_CPAL(self):
+        from fontTools.ttLib.tables.C_P_A_L_ import Color
+        palettes = self.ufo.lib[COLOR_PALETTES_KEY]
+        assert len({len(p) for p in palettes}) == 1, "color palettes have different lengths"
+        self.otf["CPAL"] = cpal = newTable("CPAL")
+        cpal.version = 0
+        cpal.numPaletteEntries = len(palettes[0])
+        cpal.palettes = [[Color(*(round(v*255) for v in (blue, green, red, alpha)))
+                for red, green, blue, alpha in palette] for palette in palettes]
 
     def setupOtherTables(self):
         """
