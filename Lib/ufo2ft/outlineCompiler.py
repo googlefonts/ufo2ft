@@ -71,7 +71,8 @@ class BaseOutlineCompiler(object):
 
     sfntVersion = None
     tables = frozenset(
-        ["head", "hmtx", "hhea", "name", "maxp", "cmap", "OS/2", "post", "vmtx", "vhea"]
+        ["head", "hmtx", "hhea", "name", "maxp", "cmap", "OS/2", "post", "vmtx", "vhea",
+         "COLR", "CPAL"]
     )
 
     def __init__(self, font, glyphSet=None, glyphOrder=None, tables=None):
@@ -881,6 +882,14 @@ class BaseOutlineCompiler(object):
         post.maxMemType1 = 0
 
     def setupTable_COLR(self):
+        """
+        Compile the COLR table.
+
+        **This should not be called externally.**
+        """
+        if "COLR" not in self.tables:
+            return
+
         from fontTools.ttLib.tables.C_O_L_R_ import LayerRecord
         layerInfo = self.ufo.lib[COLOR_LAYERS_KEY]
         colorLayerLists = {}
@@ -893,6 +902,14 @@ class BaseOutlineCompiler(object):
         colr.ColorLayers = colorLayerLists
 
     def setupTable_CPAL(self):
+        """
+        Compile the CPAL table.
+
+        **This should not be called externally.**
+        """
+        if "CPAL" not in self.tables:
+            return
+
         from fontTools.ttLib.tables.C_P_A_L_ import Color
         palettes = self.ufo.lib[COLOR_PALETTES_KEY]
         assert len({len(p) for p in palettes}) == 1, "color palettes have different lengths"
