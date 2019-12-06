@@ -38,6 +38,8 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
             return
         layers = []
         for layerName, colorID in colorLayerMapping:
+            # TODO: this does not do the right thing when
+            # the layer glyph uses components.
             layerGlyphSet = self._getLayer(font, layerName)
             layerGlyph = layerGlyphSet[glyph.name]
             if layerGlyph:
