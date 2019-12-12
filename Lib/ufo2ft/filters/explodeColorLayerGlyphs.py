@@ -1,9 +1,6 @@
 from ufo2ft.filters import BaseFilter
 from ufo2ft.util import _GlyphSet
-
-
-COLOR_LAYER_MAPPING_KEY = "com.github.googlei18n.ufo2ft.colorLayerMapping"
-COLOR_LAYERS_KEY = "com.github.googlei18n.ufo2ft.colorLayers"
+from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_LAYER_MAPPING_KEY
 
 
 class ExplodeColorLayerGlyphsFilter(BaseFilter):
