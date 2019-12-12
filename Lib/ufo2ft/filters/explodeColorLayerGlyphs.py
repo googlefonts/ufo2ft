@@ -8,7 +8,7 @@ COLOR_LAYERS_KEY = "com.github.googlei18n.ufo2ft.colorLayers"
 
 class ExplodeColorLayerGlyphsFilter(BaseFilter):
 
-    """ This folter doesn't really filter glyphs, but copies glyphs
+    """ This filter doesn't really filter glyphs, but copies glyphs
     from UFO layers to alternate glyphs in the default layer, for use
     in the COLR table.
     """
