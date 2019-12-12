@@ -38,6 +38,7 @@ from ufo2ft.util import (
     makeUnicodeToGlyphNameMapping,
     calcCodePageRanges,
 )
+from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_PALETTES_KEY
 
 
 logger = logging.getLogger(__name__)
@@ -46,8 +47,6 @@ logger = logging.getLogger(__name__)
 BoundingBox = namedtuple("BoundingBox", ["xMin", "yMin", "xMax", "yMax"])
 EMPTY_BOUNDING_BOX = BoundingBox(0, 0, 0, 0)
 
-COLOR_LAYERS_KEY = "com.github.googlei18n.ufo2ft.colorLayers"
-COLOR_PALETTES_KEY = "com.github.googlei18n.ufo2ft.colorPalettes"
 
 def _isNonBMP(s):
     for c in s:
