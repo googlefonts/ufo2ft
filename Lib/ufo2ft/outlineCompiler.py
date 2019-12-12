@@ -912,7 +912,9 @@ class BaseOutlineCompiler(object):
 
         from fontTools.ttLib.tables.C_P_A_L_ import Color
         palettes = self.ufo.lib[COLOR_PALETTES_KEY]
-        assert len({len(p) for p in palettes}) == 1, "color palettes have different lengths"
+        if len({len(p) for p in palettes}) != 1:
+            from ufo2ft.errors import InvalidFontData
+            raise InvalidFontData("color palettes have different lengths")
         self.otf["CPAL"] = cpal = newTable("CPAL")
         cpal.version = 0
         cpal.numPaletteEntries = len(palettes[0])
