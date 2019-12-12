@@ -33,7 +33,7 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         layerGlyphName = f"{glyphName}.{layerName}"
         if layerGlyphName in glyphSet:
             if layerGlyphName in self.context.colorLayerGlyphNames:
-                # We've added this glyph previously
+                # We've added this glyph already, so we're done
                 return layerGlyphName
             from ufo2ft.errors import InvalidFontData
             raise InvalidFontData(
