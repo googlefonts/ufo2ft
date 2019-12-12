@@ -12,15 +12,17 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         self._layerGlyphSets = {}
 
     def set_context(self, font, glyphSet):
-        self.globalColorLayerMapping = font.lib.get(COLOR_LAYER_MAPPING_KEY)
+        context = super().set_context(font, glyphSet)
+        context.globalColorLayerMapping = font.lib.get(COLOR_LAYER_MAPPING_KEY)
+        context.layerGlyphSets = {}
         font.lib[COLOR_LAYERS_KEY] = {}
-        return super().set_context(font, glyphSet)
+        return context
         
     def _getLayer(self, font, layerName):
-        layer = self._layerGlyphSets.get(layerName)
+        layer = self.context.layerGlyphSets.get(layerName)
         if layer is None:
             layer = _GlyphSet.from_layer(font, layerName)
-            self._layerGlyphSets[layerName] = layer
+            self.context.layerGlyphSets[layerName] = layer
         return layer
 
     def filter(self, glyph):
@@ -32,17 +34,15 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         colorLayers = font.lib[COLOR_LAYERS_KEY]
         colorLayerMapping = glyph.lib.get(COLOR_LAYER_MAPPING_KEY)
         if colorLayerMapping is None:
-            colorLayerMapping = self.globalColorLayerMapping
+            colorLayerMapping = self.context.globalColorLayerMapping
         if colorLayerMapping is None:
             # No color layer info for this glyph
             return
         layers = []
         for layerName, colorID in colorLayerMapping:
-            # TODO: this does not do the right thing when
-            # the layer glyph uses components.
             layerGlyphSet = self._getLayer(font, layerName)
-            layerGlyph = layerGlyphSet[glyph.name]
-            if layerGlyph:
+            if glyph.name in layerGlyphSet:
+                layerGlyph = layerGlyphSet[glyph.name]
                 layerGlyphName = f"{glyph.name}.{layerName}"
                 assert layerGlyphName not in glyphSet
                 glyphSet[layerGlyphName] = layerGlyph
