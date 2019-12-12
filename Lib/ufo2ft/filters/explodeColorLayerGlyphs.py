@@ -43,7 +43,12 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
             if glyph.name in layerGlyphSet:
                 layerGlyph = layerGlyphSet[glyph.name]
                 layerGlyphName = f"{glyph.name}.{layerName}"
-                assert layerGlyphName not in glyphSet
+                if layerGlyphName in glyphSet:
+                    from ufo2ft.errors import InvalidFontData
+                    raise InvalidFontData(
+                        f"a glyph named {layerGlyphName} already exists, "
+                        "conflicting with a requested color layer glyph."
+                    )
                 glyphSet[layerGlyphName] = layerGlyph
                 layers.append((layerGlyphName, colorID))
         if layers:
