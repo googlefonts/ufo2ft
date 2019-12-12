@@ -8,9 +8,6 @@ COLOR_LAYERS_KEY = "com.github.googlei18n.ufo2ft.colorLayers"
 
 class ExplodeColorLayerGlyphsFilter(BaseFilter):
 
-    def start(self):
-        self._layerGlyphSets = {}
-
     def set_context(self, font, glyphSet):
         context = super().set_context(font, glyphSet)
         context.globalColorLayerMapping = font.lib.get(COLOR_LAYER_MAPPING_KEY)
