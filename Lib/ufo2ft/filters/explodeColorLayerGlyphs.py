@@ -8,6 +8,11 @@ COLOR_LAYERS_KEY = "com.github.googlei18n.ufo2ft.colorLayers"
 
 class ExplodeColorLayerGlyphsFilter(BaseFilter):
 
+    """ This folter doesn't really filter glyphs, but copies glyphs
+    from UFO layers to alternate glyphs in the default layer, for use
+    in the COLR table.
+    """
+
     def set_context(self, font, glyphSet):
         context = super().set_context(font, glyphSet)
         context.globalColorLayerMapping = font.lib.get(COLOR_LAYER_MAPPING_KEY)
@@ -23,9 +28,6 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         return layer
 
     def filter(self, glyph):
-        """ This doesn't really filter glyphs, but copies glyphs from UFO layers
-        to alternate glyphs, for use in the COLR table.
-        """
         font = self.context.font
         glyphSet = self.context.glyphSet
         colorLayers = font.lib[COLOR_LAYERS_KEY]
