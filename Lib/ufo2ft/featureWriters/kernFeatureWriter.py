@@ -99,7 +99,7 @@ DIST_ENABLED_SCRIPTS = {
     "Gong",  # Gunjala Gondi
     "Maka",  # Makasar
     # Unicode-12.0 additions
-    "Nand", # Nandinagari
+    "Nand",  # Nandinagari
 }
 
 
@@ -424,10 +424,16 @@ class KernFeatureWriter(BaseFeatureWriter):
         if shouldSplit:
             # make one DFLT lookup with script-agnostic characters, and two
             # LTR/RTL lookups excluding pairs from the opposite group.
-            # We drop kerning pairs with ambiguous direction.
+            # We drop kerning pairs with ambiguous direction: i.e. those containing
+            # glyphs from scripts with different overall horizontal direction, or
+            # glyphs with incompatible bidirectional type (e.g. arabic letters vs
+            # arabic numerals).
             pairs = []
             for pair in self.context.kerning.pairs:
-                if "RTL" in pair.directions and "LTR" in pair.directions:
+                if ("RTL" in pair.directions and "LTR" in pair.directions) or (
+                    "R" in pair.bidiTypes
+                    and ("N" in pair.bidiTypes or "L" in pair.bidiTypes)
+                ):
                     self.log.warning(
                         "skipped kern pair with ambiguous direction: %r", pair
                     )
