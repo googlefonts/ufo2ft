@@ -78,6 +78,7 @@ class PostProcessor(object):
         # to TTX directly before compiling first, the post table will not
         # contain the extraNames.
         if "post" in otf and otf["post"].formatType == 2.0:
+            otf["post"].extraNames = []
             otf["post"].compile(self.otf)
 
         if "CFF " in otf:
