@@ -99,7 +99,7 @@ DIST_ENABLED_SCRIPTS = {
     "Gong",  # Gunjala Gondi
     "Maka",  # Makasar
     # Unicode-12.0 additions
-    "Nand", # Nandinagari
+    "Nand",  # Nandinagari
 }
 
 
@@ -115,21 +115,20 @@ def unicodeScriptDirection(uv):
     return unicodedata.script_horizontal_direction(sc)
 
 
-STRONG_LTR_BIDI_TYPE = "L"
-STRONG_RTL_BIDI_TYPES = {"R", "AL"}
-LTR_NUMBER_BIDI_TYPES = {"AN", "EN"}
+RTL_BIDI_TYPES = {"R", "AL"}
+LTR_BIDI_TYPES = {"L", "AN", "EN"}
 
 
 def unicodeBidiType(uv):
-    # return "R", "L", "N" (for numbers), or None for everything else
+    """Return "R" for characters with RTL direction, or "L" for LTR (whether
+    'strong' or 'weak'), or None for neutral direction.
+    """
     char = unichr(uv)
     bidiType = unicodedata.bidirectional(char)
-    if bidiType in STRONG_RTL_BIDI_TYPES:
+    if bidiType in RTL_BIDI_TYPES:
         return "R"
-    elif bidiType == STRONG_LTR_BIDI_TYPE:
+    elif bidiType in LTR_BIDI_TYPES:
         return "L"
-    elif bidiType in LTR_NUMBER_BIDI_TYPES:
-        return "N"
     else:
         return None
 
@@ -367,7 +366,7 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makePairPosRule(pair, rtl=False):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
         value = otRound(pair.value)
-        if rtl and "N" in pair.bidiTypes:
+        if rtl and "L" in pair.bidiTypes:
             # numbers are always shaped LTR even in RTL scripts
             rtl = False
         valuerecord = ast.ValueRecord(
@@ -424,10 +423,15 @@ class KernFeatureWriter(BaseFeatureWriter):
         if shouldSplit:
             # make one DFLT lookup with script-agnostic characters, and two
             # LTR/RTL lookups excluding pairs from the opposite group.
-            # We drop kerning pairs with ambiguous direction.
+            # We drop kerning pairs with ambiguous direction: i.e. those containing
+            # glyphs from scripts with different overall horizontal direction, or
+            # glyphs with incompatible bidirectional type (e.g. arabic letters vs
+            # arabic numerals).
             pairs = []
             for pair in self.context.kerning.pairs:
-                if "RTL" in pair.directions and "LTR" in pair.directions:
+                if ("RTL" in pair.directions and "LTR" in pair.directions) or (
+                    "R" in pair.bidiTypes and "L" in pair.bidiTypes
+                ):
                     self.log.warning(
                         "skipped kern pair with ambiguous direction: %r", pair
                     )

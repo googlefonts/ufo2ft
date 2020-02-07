@@ -874,9 +874,20 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         ufo = FontClass()
         ufo.newGlyph("A").unicode = 0x41
+        ufo.newGlyph("one").unicode = 0x31
+        ufo.newGlyph("yod-hb").unicode = 0x5D9
         ufo.newGlyph("reh-ar").unicode = 0x631
+        ufo.newGlyph("one-ar").unicode = 0x661
         ufo.newGlyph("bar").unicodes = [0x73, 0x627]
-        ufo.kerning.update({("bar", "bar"): 1, ("bar", "A"): 2, ("reh-ar", "A"): 3})
+        ufo.kerning.update(
+            {
+                ("bar", "bar"): 1,
+                ("bar", "A"): 2,
+                ("reh-ar", "A"): 3,
+                ("reh-ar", "one-ar"): 4,
+                ("yod-hb", "one"): 5,
+            }
+        )
         ufo.features.text = dedent(
             """\
             languagesystem DFLT dflt;
@@ -890,7 +901,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
             generated = self.writeFeatures(ufo)
 
         assert not generated
-        assert len(caplog.records) == 3
+        assert len(caplog.records) == 5
         assert "skipped kern pair with ambiguous direction" in caplog.text
 
     def test_kern_RTL_and_DFLT_numbers(self, FontClass):
