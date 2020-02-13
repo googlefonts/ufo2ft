@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import, division, unicode_literals
+from cu2qu.ufo import font_to_quadratic
 from fontTools.ttLib import TTFont
 from fontTools.misc.py23 import basestring, unichr, byteord
 from fontTools import designspaceLib
@@ -33,6 +34,13 @@ def getpath(filename):
 def testufo(FontClass):
     font = FontClass(getpath("TestFont.ufo"))
     del font.lib["public.postscriptNames"]
+    return font
+
+
+@pytest.fixture
+def quadufo(FontClass):
+    font = FontClass(getpath("TestFont.ufo"))
+    font_to_quadratic(font)
     return font
 
 
@@ -81,9 +89,8 @@ class OutlineTTFCompilerTest(object):
         compiler.compile()
         assert "gasp" not in compiler.otf
 
-    def test_makeGlyphsBoundingBoxes(self, testufo):
-        # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
-        compiler = OutlineTTFCompiler(testufo)
+    def test_makeGlyphsBoundingBoxes(self, quadufo):
+        compiler = OutlineTTFCompiler(quadufo)
         assert compiler.glyphBoundingBoxes[".notdef"] == (50, 0, 450, 750)
         # no outline data
         assert compiler.glyphBoundingBoxes["space"] is None
@@ -414,7 +421,6 @@ class OutlineOTFCompilerTest(object):
         )
 
     def test_makeGlyphsBoundingBoxes(self, testufo):
-        # the call to 'makeGlyphsBoundingBoxes' happen in the __init__ method
         compiler = OutlineOTFCompiler(testufo)
         # with default roundTolerance, all coordinates and hence the bounding
         # box values are rounded with otRound()
@@ -487,6 +493,31 @@ class OutlineOTFCompilerTest(object):
         # 'space' has width 250, so the width encoded in its charstring is:
         # 250 - nominalWidthX
         assert charStrings.getItemAndSelector("space")[0].program == [-53, "endchar"]
+
+    def test_optimized_default_but_no_nominal_widths(self, FontClass):
+        ufo = FontClass()
+        ufo.info.familyName = "Test"
+        ufo.info.styleName = "R"
+        ufo.info.ascender = 1
+        ufo.info.descender = 1
+        ufo.info.capHeight = 1
+        ufo.info.xHeight = 1
+        ufo.info.unitsPerEm = 1000
+        ufo.info.postscriptDefaultWidthX = 500
+        for glyphName, width in (
+            (".notdef", 500),
+            ("space", 500),
+            ("a", 500),
+        ):
+            glyph = ufo.newGlyph(glyphName)
+            glyph.width = width
+
+        font = compileOTF(ufo)
+        cff = font["CFF "].cff
+        private = cff[list(cff.keys())[0]].Private
+
+        assert private.defaultWidthX == 500
+        assert private.nominalWidthX == 0
 
 
 class GlyphOrderTest(object):
