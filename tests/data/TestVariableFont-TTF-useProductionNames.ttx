@@ -76,7 +76,7 @@
          will be recalculated by the compiler -->
     <version value="4"/>
     <xAvgCharWidth value="580"/>
-    <usWeightClass value="400"/>
+    <usWeightClass value="350"/>
     <usWidthClass value="5"/>
     <fsType value="00000000 00000100"/>
     <ySubscriptXSize value="650"/>
@@ -304,8 +304,6 @@
     </psNames>
     <extraNames>
       <!-- following are the name that are not taken from the standard Mac glyph order -->
-      <psName name="dotabovecomb"/>
-      <psName name="edotabove"/>
       <psName name="uni0061"/>
       <psName name="uni0065"/>
       <psName name="uni0073"/>
