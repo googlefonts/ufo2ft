@@ -64,8 +64,9 @@ def test_warn_pre_filter(font, caplog):
     ):
         font_compiled = ufo2ft.compileTTF(font, inplace=True)
 
-    assert len(caplog.records) == 1
+    assert len(caplog.records) == 2
     assert "contains components which will not be sorted" in caplog.text
+    assert "TrueType instruction compiler 'htic' is not available" in caplog.text
 
 
 def test_no_warn_post_filter(font, caplog):
@@ -76,7 +77,8 @@ def test_no_warn_post_filter(font, caplog):
     ):
         font_compiled = ufo2ft.compileTTF(font, inplace=True)
 
-    assert len(caplog.records) == 0
+    assert len(caplog.records) == 1
+    assert "TrueType instruction compiler 'htic' is not available" in caplog.text
 
 
 EXPECTED_glyph_uniFFFC = [
