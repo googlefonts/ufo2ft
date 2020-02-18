@@ -213,6 +213,7 @@ class FeatureCompilerTest(object):
         ufo = FontClass()
         ufo.newGlyph("f")
         ufo.newGlyph("f.alt01")
+        ufo.newGlyph("f_f")
         features = dedent(
             """\
             feature BUGS {
