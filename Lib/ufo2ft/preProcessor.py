@@ -1,6 +1,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 from fontTools.misc.py23 import basestring
+from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.filters import loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
 from ufo2ft.util import _GlyphSet
@@ -193,7 +194,9 @@ class TTFInterpolatablePreProcessor(object):
             for ufo, layerName in zip(ufos, layerNames)
         ]
         self._conversionErrors = [
-            (conversionError or DEFAULT_MAX_ERR) * ufo.info.unitsPerEm for ufo in ufos
+            (conversionError or DEFAULT_MAX_ERR)
+            * getAttrWithFallback(ufo.info, "unitsPerEm")
+            for ufo in ufos
         ]
         self._reverseDirection = reverseDirection
         self._rememberCurveType = rememberCurveType
