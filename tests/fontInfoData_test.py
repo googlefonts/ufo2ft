@@ -172,6 +172,25 @@ class GetAttrWithFallbackTest(object):
             del os.environ["SOURCE_DATE_EPOCH"]
         assert getAttrWithFallback(info, "openTypeHeadCreated") != "2017/12/28 18:19:43"
 
+    def test_empty_info(self, InfoClass):
+        info = InfoClass()
+        assert getAttrWithFallback(info, "familyName") == "New Font"
+        assert getAttrWithFallback(info, "styleName") == "Regular"
+        assert getAttrWithFallback(info, "unitsPerEm") == 1000
+        assert getAttrWithFallback(info, "ascender") == 800
+        assert getAttrWithFallback(info, "capHeight") == 700
+        assert getAttrWithFallback(info, "xHeight") == 500
+        assert getAttrWithFallback(info, "descender") == -200
+
+    def test_empty_info_2048(self, InfoClass):
+        info = InfoClass()
+        info.unitsPerEm = 2048
+        assert getAttrWithFallback(info, "unitsPerEm") == 2048
+        assert getAttrWithFallback(info, "ascender") == 1638
+        assert getAttrWithFallback(info, "capHeight") == 1434
+        assert getAttrWithFallback(info, "xHeight") == 1024
+        assert getAttrWithFallback(info, "descender") == -410
+
 
 class PostscriptBlueScaleFallbackTest(object):
     def test_without_blue_zones(self, info):
