@@ -961,6 +961,19 @@ def test_compilation_from_ds_missing_source_font(designspace):
         compileInterpolatableTTFsFromDS(designspace)
 
 
+def test_compile_empty_ufo(FontClass):
+    ufo = FontClass()
+    font = compileTTF(ufo)
+    assert font["name"].getName(1, 3, 1).toUnicode() == "New Font"
+    assert font["name"].getName(2, 3, 1).toUnicode() == "Regular"
+    assert font["name"].getName(4, 3, 1).toUnicode() == "New Font Regular"
+    assert font["head"].unitsPerEm == 1000
+    assert font["OS/2"].sTypoAscender == 800
+    assert font["OS/2"].sCapHeight == 700
+    assert font["OS/2"].sxHeight == 500
+    assert font["OS/2"].sTypoDescender == -200
+
+
 if __name__ == "__main__":
     import sys
 

@@ -7,6 +7,7 @@ from fontTools.misc.py23 import tostr, tounicode
 from fontTools.misc.fixedTools import otRound
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import unicodeInScripts, classifyGlyphs
+from ufo2ft.fontInfoData import getAttrWithFallback
 
 
 class AbstractMarkPos(object):
@@ -570,7 +571,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         # anchors with unknown names whose Y coordinate is greater or equal to
         # the line that cuts the UPEM square in half will be treated as "above
         # base" marks, those that fall below the threshold as "below base".
-        return self.context.font.info.unitsPerEm // 2
+        return getAttrWithFallback(self.context.font.info, "unitsPerEm") // 2
 
     def _isAboveMark(self, anchor):
         if anchor.name in self.abvmAnchorNames:
