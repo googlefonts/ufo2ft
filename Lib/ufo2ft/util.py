@@ -105,9 +105,11 @@ def _copyLayer(layer, obj_type=dict):
     else:
 
         def newGlyph(name):
-            g = cls()
-            g.name = name
-            return g
+            # use instantiateGlyphObject() to keep any custom sub-element classes
+            # https://github.com/googlefonts/ufo2ft/issues/363
+            g2 = g.layer.instantiateGlyphObject()
+            g2.name = name
+            return g2
 
     # copy everything except unused attributes: 'guidelines', 'note', 'image'
     glyphSet = obj_type()
