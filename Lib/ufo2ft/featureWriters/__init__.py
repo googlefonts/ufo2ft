@@ -13,6 +13,8 @@ except ImportError:
     from inspect import getargspec  # PY2
 import logging
 
+from ufo2ft.constants import FEATURE_WRITERS_KEY
+
 
 __all__ = [
     "BaseFeatureWriter",
@@ -22,8 +24,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
-FEATURE_WRITERS_KEY = "com.github.googlei18n.ufo2ft.featureWriters"
 
 
 def isValidFeatureWriter(klass):
