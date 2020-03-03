@@ -8,9 +8,15 @@ SPARSE_OTF_MASTER_TABLES = frozenset(["CFF ", "VORG", "head", "hmtx", "maxp", "v
 UFO2FT_PREFIX = "com.github.googlei18n.ufo2ft."
 GLYPHS_PREFIX = "com.schriftgestaltung."
 
+FILTERS_KEY = UFO2FT_PREFIX + "filters"
+
+MTI_FEATURES_PREFIX = UFO2FT_PREFIX + "mtiFeatures"
+
+FEATURE_WRITERS_KEY = UFO2FT_PREFIX + "featureWriters"
+
 USE_PRODUCTION_NAMES = UFO2FT_PREFIX + "useProductionNames"
 GLYPHS_DONT_USE_PRODUCTION_NAMES = GLYPHS_PREFIX + "Don't use Production Names"
 
-COLOR_LAYERS_KEY = "com.github.googlei18n.ufo2ft.colorLayers"
-COLOR_PALETTES_KEY = "com.github.googlei18n.ufo2ft.colorPalettes"
-COLOR_LAYER_MAPPING_KEY = "com.github.googlei18n.ufo2ft.colorLayerMapping"
+COLOR_LAYERS_KEY = UFO2FT_PREFIX + "colorLayers"
+COLOR_PALETTES_KEY = UFO2FT_PREFIX + "colorPalettes"
+COLOR_LAYER_MAPPING_KEY = UFO2FT_PREFIX + "colorLayerMapping"

@@ -26,6 +26,7 @@ from fontTools.ttLib.tables._g_l_y_f import Glyph, USE_MY_METRICS
 from fontTools.misc.arrayTools import unionRect
 from fontTools.misc.fixedTools import otRound
 
+from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import (
     getAttrWithFallback,
     dateStringToTimeValue,
@@ -889,16 +890,10 @@ class BaseOutlineCompiler(object):
         if "COLR" not in self.tables:
             return
 
-        from fontTools.ttLib.tables.C_O_L_R_ import LayerRecord
+        from fontTools.colorLib.builder import buildCOLR
+
         layerInfo = self.ufo.lib[COLOR_LAYERS_KEY]
-        colorLayerLists = {}
-        for baseGlyphName, layers in layerInfo.items():
-            colorLayerLists[baseGlyphName] = [
-                    LayerRecord(layerGlyphName, colorID)
-                        for layerGlyphName, colorID in layers]
-        self.otf["COLR"] = colr = newTable("COLR")
-        colr.version = 0
-        colr.ColorLayers = colorLayerLists
+        self.otf["COLR"] = buildCOLR(layerInfo)
 
     def setupTable_CPAL(self):
         """
@@ -909,16 +904,18 @@ class BaseOutlineCompiler(object):
         if "CPAL" not in self.tables:
             return
 
-        from fontTools.ttLib.tables.C_P_A_L_ import Color
-        palettes = self.ufo.lib[COLOR_PALETTES_KEY]
-        if len({len(p) for p in palettes}) != 1:
-            from ufo2ft.errors import InvalidFontData
-            raise InvalidFontData("color palettes have different lengths")
-        self.otf["CPAL"] = cpal = newTable("CPAL")
-        cpal.version = 0
-        cpal.numPaletteEntries = len(palettes[0])
-        cpal.palettes = [[Color(*(round(v*255) for v in (blue, green, red, alpha)))
-                for red, green, blue, alpha in palette] for palette in palettes]
+        from fontTools.colorLib.builder import buildCPAL
+        from fontTools.colorLib.errors import ColorLibError
+
+        # colorLib wants colors as tuples, plistlib gives us lists
+        palettes = [
+            [tuple(color) for color in palette]
+            for palette in self.ufo.lib[COLOR_PALETTES_KEY]
+        ]
+        try:
+            self.otf["CPAL"] = buildCPAL(palettes)
+        except ColorLibError as e:
+            raise InvalidFontData("Failed to build CPAL table") from e
 
     def setupOtherTables(self):
         """

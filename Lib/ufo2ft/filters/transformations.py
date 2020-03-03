@@ -4,6 +4,7 @@ import math
 from collections import namedtuple
 import logging
 
+from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.filters import BaseFilter
 
 from fontTools.misc.py23 import round
@@ -64,13 +65,13 @@ class TransformationsFilter(BaseFilter):
         if origin is self.Origin.BASELINE:
             return 0
         elif origin is self.Origin.CAP_HEIGHT:
-            return font.info.capHeight
+            return getAttrWithFallback(font.info, "capHeight")
         elif origin is self.Origin.HALF_CAP_HEIGHT:
-            return otRound(font.info.capHeight / 2)
+            return otRound(getAttrWithFallback(font.info, "capHeight") / 2)
         elif origin is self.Origin.X_HEIGHT:
-            return font.info.xHeight
+            return getAttrWithFallback(font.info, "xHeight")
         elif origin is self.Origin.HALF_X_HEIGHT:
-            return otRound(font.info.xHeight / 2)
+            return otRound(getAttrWithFallback(font.info, "xHeight") / 2)
         else:
             raise AssertionError(origin)
 
