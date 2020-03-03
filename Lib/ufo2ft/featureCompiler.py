@@ -11,6 +11,7 @@ from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools.feaLib.error import IncludedFeaNotFound, FeatureLibError
 from fontTools import mtiLib
 
+from ufo2ft.constants import MTI_FEATURES_PREFIX
 from ufo2ft.featureWriters import (
     KernFeatureWriter,
     MarkFeatureWriter,
@@ -255,8 +256,6 @@ class FeatureCompiler(BaseFeatureCompiler):
                 logger.error("Compilation failed! Inspect temporary file: %r", tmp.name)
             raise
 
-
-MTI_FEATURES_PREFIX = "com.github.googlei18n.ufo2ft.mtiFeatures"
 
 
 class MtiFeatureCompiler(BaseFeatureCompiler):

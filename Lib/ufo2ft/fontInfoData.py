@@ -37,6 +37,26 @@ logger = logging.getLogger(__name__)
 _styleMapStyleNames = ["regular", "bold", "italic", "bold italic"]
 
 
+def ascenderFallback(info):
+    upm = getAttrWithFallback(info, "unitsPerEm")
+    return otRound(upm * 0.8)
+
+
+def descenderFallback(info):
+    upm = getAttrWithFallback(info, "unitsPerEm")
+    return -otRound(upm * 0.2)
+
+
+def capHeightFallback(info):
+    upm = getAttrWithFallback(info, "unitsPerEm")
+    return otRound(upm * 0.7)
+
+
+def xHeightFallback(info):
+    upm = getAttrWithFallback(info, "unitsPerEm")
+    return otRound(upm * 0.5)
+
+
 def styleMapFamilyNameFallback(info):
     """
     Fallback to *openTypeNamePreferredFamilyName* if
@@ -100,14 +120,16 @@ def openTypeHheaAscenderFallback(info):
     """
     Fallback to *ascender + typoLineGap*.
     """
-    return info.ascender + getAttrWithFallback(info, "openTypeOS2TypoLineGap")
+    return getAttrWithFallback(info, "ascender") + getAttrWithFallback(
+        info, "openTypeOS2TypoLineGap"
+    )
 
 
 def openTypeHheaDescenderFallback(info):
     """
     Fallback to *descender*.
     """
-    return info.descender
+    return getAttrWithFallback(info, "descender")
 
 
 def openTypeHheaCaretSlopeRiseFallback(info):
@@ -169,14 +191,14 @@ def openTypeNamePreferredFamilyNameFallback(info):
     """
     Fallback to *familyName*.
     """
-    return info.familyName
+    return getAttrWithFallback(info, "familyName")
 
 
 def openTypeNamePreferredSubfamilyNameFallback(info):
     """
     Fallback to *styleName*.
     """
-    return info.styleName
+    return getAttrWithFallback(info, "styleName")
 
 
 def openTypeNameCompatibleFullNameFallback(info):
@@ -209,35 +231,42 @@ def openTypeOS2TypoAscenderFallback(info):
     """
     Fallback to *ascender*.
     """
-    return info.ascender
+    return getAttrWithFallback(info, "ascender")
 
 
 def openTypeOS2TypoDescenderFallback(info):
     """
     Fallback to *descender*.
     """
-    return info.descender
+    return getAttrWithFallback(info, "descender")
 
 
 def openTypeOS2TypoLineGapFallback(info):
     """
     Fallback to *UPM * 1.2 - ascender + descender*, or zero if that's negative.
     """
-    return max(int(info.unitsPerEm * 1.2) - info.ascender + info.descender, 0)
+    return max(
+        int(getAttrWithFallback(info, "unitsPerEm") * 1.2)
+        - getAttrWithFallback(info, "ascender")
+        + getAttrWithFallback(info, "descender"),
+        0,
+    )
 
 
 def openTypeOS2WinAscentFallback(info):
     """
     Fallback to *ascender + typoLineGap*.
     """
-    return info.ascender + getAttrWithFallback(info, "openTypeOS2TypoLineGap")
+    return getAttrWithFallback(info, "ascender") + getAttrWithFallback(
+        info, "openTypeOS2TypoLineGap"
+    )
 
 
 def openTypeOS2WinDescentFallback(info):
     """
     Fallback to *descender*.
     """
-    return abs(info.descender)
+    return abs(getAttrWithFallback(info, "descender"))
 
 
 # postscript
@@ -299,14 +328,14 @@ def postscriptSlantAngleFallback(info):
 
 def postscriptUnderlineThicknessFallback(info):
     """Return UPM * 0.05 (50 for 1000 UPM) and warn."""
-    logger.warning("Underline thickness not set in UFO, defaulting to UPM * 0.05")
-    return info.unitsPerEm * 0.05
+    logger.debug("Underline thickness not set in UFO, defaulting to UPM * 0.05")
+    return getAttrWithFallback(info, "unitsPerEm") * 0.05
 
 
 def postscriptUnderlinePositionFallback(info):
     """Return UPM * -0.075 (-75 for 1000 UPM) and warn."""
-    logger.warning("Underline position not set in UFO, defaulting to UPM * -0.075")
-    return info.unitsPerEm * -0.075
+    logger.debug("Underline position not set in UFO, defaulting to UPM * -0.075")
+    return getAttrWithFallback(info, "unitsPerEm") * -0.075
 
 
 def postscriptBlueScaleFallback(info):
@@ -341,6 +370,9 @@ staticFallbackData = dict(
     versionMinor=0,
     copyright=None,
     trademark=None,
+    familyName="New Font",
+    styleName="Regular",
+    unitsPerEm=1000,
     italicAngle=0,
     # not needed
     year=None,
@@ -412,6 +444,10 @@ staticFallbackData = dict(
 )
 
 specialFallbacks = dict(
+    ascender=ascenderFallback,
+    descender=descenderFallback,
+    capHeight=capHeightFallback,
+    xHeight=xHeightFallback,
     styleMapFamilyName=styleMapFamilyNameFallback,
     styleMapStyleName=styleMapStyleNameFallback,
     openTypeHeadCreated=openTypeHeadCreatedFallback,
