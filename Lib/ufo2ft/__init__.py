@@ -415,6 +415,20 @@ def compileInterpolatableTTFsFromDS(
                 "designspace source '%s' is missing required 'font' attribute"
                 % getattr(source, "name", "<Unknown>")
             )
+        if source.familyName and source.font.info.familyName != source.familyName:
+            logger.info(
+                "Use designspace source familyName '%s' instead of '%s'",
+                source.familyName,
+                source.font.info.familyName
+            )
+            source.font.info.familyName = source.familyName
+        if source.styleName and source.font.info.styleName != source.styleName:
+            logger.info(
+                "Use designspace source styleName '%s' instead of '%s'",
+                source.styleName,
+                source.font.info.styleName
+            )
+            source.font.info.styleName = source.styleName
         ufos.append(source.font)
         # 'layerName' is None for the default layer
         layerNames.append(source.layerName)
