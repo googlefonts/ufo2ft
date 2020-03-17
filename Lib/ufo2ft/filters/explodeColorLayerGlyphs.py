@@ -17,7 +17,7 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         context.colorLayerGlyphNames = set()  # glyph names that we added
         font.lib[COLOR_LAYERS_KEY] = {}
         return context
-        
+
     def _getLayer(self, font, layerName):
         layer = self.context.layerGlyphSets.get(layerName)
         if layer is None:
@@ -33,13 +33,15 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
                 # We've added this glyph already, so we're done
                 return layerGlyphName
             from ufo2ft.errors import InvalidFontData
+
             raise InvalidFontData(
                 f"a glyph named {layerGlyphName} already exists, "
                 "conflicting with a requested color layer glyph."
             )
         for component in layerGlyph.components:
             baseLayerGlyphName = self._copyGlyph(
-                layerGlyphSet, glyphSet, component.baseGlyph, layerName)
+                layerGlyphSet, glyphSet, component.baseGlyph, layerName
+            )
             component.baseGlyph = baseLayerGlyphName
         glyphSet[layerGlyphName] = layerGlyph
         self.context.colorLayerGlyphNames.add(layerGlyphName)
@@ -60,7 +62,8 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
             layerGlyphSet = self._getLayer(font, layerName)
             if glyph.name in layerGlyphSet:
                 layerGlyphName = self._copyGlyph(
-                    layerGlyphSet, glyphSet, glyph.name, layerName)
+                    layerGlyphSet, glyphSet, glyph.name, layerName
+                )
                 layers.append((layerGlyphName, colorID))
         if layers:
             colorLayers[glyph.name] = layers
