@@ -1,6 +1,11 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 from fontTools.misc.py23 import basestring
+from ufo2ft.constants import (
+    COLOR_LAYERS_KEY,
+    COLOR_LAYER_MAPPING_KEY,
+    COLOR_PALETTES_KEY,
+)
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.filters import loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
@@ -51,6 +56,25 @@ class BasePreProcessor(object):
         return glyphSet
 
 
+def _init_explode_color_layer_glyphs_filter(ufo, filters):
+    # Initialize ExplodeColorLayerGlyphsFilter, which copies color glyph layers
+    # as standalone glyphs to the default glyph set (for building COLR table), if the
+    # UFO contains the required 'colorPalettes' key, as well as 'colorLayerMapping' lib
+    # keys (in either the font's or glyph's lib).
+    # Skip doing that if an explicit 'colorLayers' key is already present.
+    if (
+        COLOR_PALETTES_KEY in ufo.lib
+        and COLOR_LAYERS_KEY not in ufo.lib
+        and (
+            COLOR_LAYER_MAPPING_KEY in ufo.lib
+            or any(COLOR_LAYER_MAPPING_KEY in g.lib for g in ufo)
+        )
+    ):
+        from ufo2ft.filters.explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
+
+        filters.append(ExplodeColorLayerGlyphsFilter())
+
+
 class OTFPreProcessor(BasePreProcessor):
     """Preprocessor for building CFF-flavored OpenType fonts.
 
@@ -65,7 +89,12 @@ class OTFPreProcessor(BasePreProcessor):
     """
 
     def initDefaultFilters(self, removeOverlaps=False, overlapsBackend=None):
-        filters = [DecomposeComponentsFilter()]
+        filters = []
+
+        _init_explode_color_layer_glyphs_filter(self.ufo, filters)
+
+        filters.append(DecomposeComponentsFilter())
+
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
 
@@ -120,9 +149,13 @@ class TTFPreProcessor(OTFPreProcessor):
         reverseDirection=True,
         rememberCurveType=True,
     ):
+        filters = []
+
+        _init_explode_color_layer_glyphs_filter(self.ufo, filters)
+
         # len(g) is the number of contours, so we include the all glyphs
         # that have both components and at least one contour
-        filters = [DecomposeComponentsFilter(include=lambda g: len(g))]
+        filters.append(DecomposeComponentsFilter(include=lambda g: len(g)))
 
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter

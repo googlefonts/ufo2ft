@@ -15,9 +15,14 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         context.globalColorLayerMapping = font.lib.get(COLOR_LAYER_MAPPING_KEY)
         context.layerGlyphSets = {}
         context.colorLayerGlyphNames = set()  # glyph names that we added
-        font.lib[COLOR_LAYERS_KEY] = {}
+        if COLOR_LAYERS_KEY not in font.lib:
+            font.lib[COLOR_LAYERS_KEY] = {}
+        else:
+            # if the font already contains an explicit COLOR_LAYERS_KEY, we
+            # assume the color layers have already been 'exploded' once.
+            context.skipCurrentFont = True
         return context
-        
+
     def _getLayer(self, font, layerName):
         layer = self.context.layerGlyphSets.get(layerName)
         if layer is None:
@@ -33,19 +38,24 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
                 # We've added this glyph already, so we're done
                 return layerGlyphName
             from ufo2ft.errors import InvalidFontData
+
             raise InvalidFontData(
                 f"a glyph named {layerGlyphName} already exists, "
                 "conflicting with a requested color layer glyph."
             )
         for component in layerGlyph.components:
             baseLayerGlyphName = self._copyGlyph(
-                layerGlyphSet, glyphSet, component.baseGlyph, layerName)
+                layerGlyphSet, glyphSet, component.baseGlyph, layerName
+            )
             component.baseGlyph = baseLayerGlyphName
         glyphSet[layerGlyphName] = layerGlyph
         self.context.colorLayerGlyphNames.add(layerGlyphName)
         return layerGlyphName
 
     def filter(self, glyph):
+        if getattr(self.context, "skipCurrentFont", False):
+            return False
+
         font = self.context.font
         glyphSet = self.context.glyphSet
         colorLayers = font.lib[COLOR_LAYERS_KEY]
@@ -54,13 +64,15 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
             colorLayerMapping = self.context.globalColorLayerMapping
         if colorLayerMapping is None:
             # No color layer info for this glyph
-            return
+            return False
         layers = []
         for layerName, colorID in colorLayerMapping:
             layerGlyphSet = self._getLayer(font, layerName)
             if glyph.name in layerGlyphSet:
                 layerGlyphName = self._copyGlyph(
-                    layerGlyphSet, glyphSet, glyph.name, layerName)
+                    layerGlyphSet, glyphSet, glyph.name, layerName
+                )
                 layers.append((layerGlyphName, colorID))
         if layers:
             colorLayers[glyph.name] = layers
+        return True

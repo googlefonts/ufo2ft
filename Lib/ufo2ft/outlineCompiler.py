@@ -893,7 +893,8 @@ class BaseOutlineCompiler(object):
         from fontTools.colorLib.builder import buildCOLR
 
         layerInfo = self.ufo.lib[COLOR_LAYERS_KEY]
-        self.otf["COLR"] = buildCOLR(layerInfo)
+        if layerInfo:
+            self.otf["COLR"] = buildCOLR(layerInfo)
 
     def setupTable_CPAL(self):
         """
