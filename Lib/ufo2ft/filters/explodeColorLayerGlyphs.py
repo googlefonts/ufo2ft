@@ -75,4 +75,6 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
                 layers.append((layerGlyphName, colorID))
         if layers:
             colorLayers[glyph.name] = layers
-        return True
+            return True
+        else:
+            return False
