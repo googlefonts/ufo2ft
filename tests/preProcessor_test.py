@@ -2,10 +2,21 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 import os
 import logging
 import ufo2ft
-from ufo2ft.preProcessor import TTFPreProcessor, TTFInterpolatablePreProcessor
+from ufo2ft.preProcessor import (
+    TTFPreProcessor,
+    TTFInterpolatablePreProcessor,
+    _init_explode_color_layer_glyphs_filter,
+)
 from ufo2ft.filters import UFO2FT_FILTERS_KEY
+from ufo2ft.filters.explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
 from cu2qu.ufo import CURVE_TYPE_LIB_KEY
 from fontTools import designspaceLib
+from ufo2ft.constants import (
+    COLOR_LAYERS_KEY,
+    COLOR_LAYER_MAPPING_KEY,
+    COLOR_PALETTES_KEY,
+)
+import pytest
 
 
 def getpath(filename):
@@ -262,3 +273,41 @@ class SkipExportGlyphsTest(object):
         assert not hasattr(glyphs["c"], "components")
         assert glyphs["e"].numberOfContours == 13
         assert not hasattr(glyphs["e"], "components")
+
+
+@pytest.fixture
+def color_ufo(FontClass):
+    ufo = FontClass()
+    ufo.lib[COLOR_PALETTES_KEY] = [[(1, 0.3, 0.1, 1), (0, 0.4, 0.8, 1)]]
+    return ufo
+
+
+class InitExplodeColorLayerGlyphsFilterTest(object):
+    def test_no_color_palettes(self, FontClass):
+        ufo = FontClass()
+        filters = []
+        _init_explode_color_layer_glyphs_filter(ufo, filters)
+        assert not filters
+
+    def test_no_color_layer_mapping(self, color_ufo):
+        filters = []
+        _init_explode_color_layer_glyphs_filter(color_ufo, filters)
+        assert not filters
+
+    def test_explicit_color_layers(self, color_ufo):
+        color_ufo.lib[COLOR_LAYERS_KEY] = {"a": [("a.z_0", 1), ("a.z_1", 0)]}
+        filters = []
+        _init_explode_color_layer_glyphs_filter(color_ufo, filters)
+        assert not filters
+
+    def test_font_color_layer_mapping(self, color_ufo):
+        color_ufo.lib[COLOR_LAYER_MAPPING_KEY] = [("z_0", 1), ("z_1", 0)]
+        filters = []
+        _init_explode_color_layer_glyphs_filter(color_ufo, filters)
+        assert isinstance(filters[0], ExplodeColorLayerGlyphsFilter)
+
+    def test_glyph_color_layer_mapping(self, color_ufo):
+        color_ufo.newGlyph("a").lib[COLOR_LAYER_MAPPING_KEY] = [("z_0", 0), ("z_1", 1)]
+        filters = []
+        _init_explode_color_layer_glyphs_filter(color_ufo, filters)
+        assert isinstance(filters[0], ExplodeColorLayerGlyphsFilter)
