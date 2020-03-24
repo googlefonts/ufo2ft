@@ -386,6 +386,10 @@ class BaseOutlineCompiler(object):
             14: getAttrWithFallback(font.info, "openTypeNameLicenseURL"),
             16: preferredFamilyName,
             17: preferredSubfamilyName,
+            18: getAttrWithFallback(font.info, "openTypeNameCompatibleFullName"),
+            19: getAttrWithFallback(font.info, "openTypeNameSampleText"),
+            21: getAttrWithFallback(font.info, "openTypeNameWWSFamilyName"),
+            22: getAttrWithFallback(font.info, "openTypeNameWWSSubfamilyName"),
         }
 
         # don't add typographic names if they are the same as the legacy ones
