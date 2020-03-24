@@ -201,19 +201,6 @@ def openTypeNamePreferredSubfamilyNameFallback(info):
     return getAttrWithFallback(info, "styleName")
 
 
-def openTypeNameCompatibleFullNameFallback(info):
-    """
-    Fallback to *styleMapFamilyName styleMapStyleName*.
-    If *styleMapStyleName* is *regular* this will not add
-    the style name.
-    """
-    familyName = getAttrWithFallback(info, "styleMapFamilyName")
-    styleMapStyleName = getAttrWithFallback(info, "styleMapStyleName")
-    if styleMapStyleName != "regular":
-        familyName += " " + styleMapStyleName.title()
-    return familyName
-
-
 def openTypeNameWWSFamilyNameFallback(info):
     # not yet supported
     return None
@@ -388,6 +375,7 @@ staticFallbackData = dict(
     openTypeNameLicense=None,
     openTypeNameLicenseURL=None,
     openTypeNameDescription=None,
+    openTypeNameCompatibleFullName=None,
     openTypeNameSampleText=None,
     openTypeNameRecords=[],
     openTypeOS2WidthClass=5,
@@ -459,7 +447,6 @@ specialFallbacks = dict(
     openTypeNameUniqueID=openTypeNameUniqueIDFallback,
     openTypeNamePreferredFamilyName=openTypeNamePreferredFamilyNameFallback,
     openTypeNamePreferredSubfamilyName=openTypeNamePreferredSubfamilyNameFallback,
-    openTypeNameCompatibleFullName=openTypeNameCompatibleFullNameFallback,
     openTypeNameWWSFamilyName=openTypeNameWWSFamilyNameFallback,
     openTypeNameWWSSubfamilyName=openTypeNameWWSSubfamilyNameFallback,
     openTypeOS2TypoAscender=openTypeOS2TypoAscenderFallback,

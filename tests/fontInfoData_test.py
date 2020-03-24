@@ -39,7 +39,6 @@ class GetAttrWithFallbackTest(object):
                     "styleMapStyleName": "regular",
                     "openTypeNamePreferredFamilyName": "Family Name",
                     "openTypeNamePreferredSubfamilyName": "Style Name",
-                    "openTypeNameCompatibleFullName": "Family Name Style Name",
                 },
             ),
             # no styleMapStyleName
@@ -50,7 +49,6 @@ class GetAttrWithFallbackTest(object):
                     "styleMapStyleName": "regular",
                     "openTypeNamePreferredFamilyName": "Family Name",
                     "openTypeNamePreferredSubfamilyName": "Style Name",
-                    "openTypeNameCompatibleFullName": "Style Map Family Name",
                 },
             ),
             # no styleMapFamilyName, no styleMapStyleName but styleName="Regular"
@@ -63,7 +61,6 @@ class GetAttrWithFallbackTest(object):
                     "styleMapStyleName": "regular",
                     "openTypeNamePreferredFamilyName": "Family Name",
                     "openTypeNamePreferredSubfamilyName": "Regular",
-                    "openTypeNameCompatibleFullName": "Family Name",
                 },
             ),
             # no styleMapFamilyName but styleName="Regular"
@@ -74,7 +71,6 @@ class GetAttrWithFallbackTest(object):
                     "styleMapStyleName": "regular",
                     "openTypeNamePreferredFamilyName": "Family Name",
                     "openTypeNamePreferredSubfamilyName": "Regular",
-                    "openTypeNameCompatibleFullName": "Family Name",
                 },
             ),
             # no styleMapStyleName but styleName="Regular"
@@ -85,7 +81,6 @@ class GetAttrWithFallbackTest(object):
                     "styleMapStyleName": "regular",
                     "openTypeNamePreferredFamilyName": "Family Name",
                     "openTypeNamePreferredSubfamilyName": "Regular",
-                    "openTypeNameCompatibleFullName": "Style Map Family Name",
                 },
             ),
             # no styleMapFamilyName, no styleMapStyleName but styleName="Bold"
@@ -98,7 +93,6 @@ class GetAttrWithFallbackTest(object):
                     "styleMapStyleName": "bold",
                     "openTypeNamePreferredFamilyName": "Family Name",
                     "openTypeNamePreferredSubfamilyName": "Bold",
-                    "openTypeNameCompatibleFullName": "Family Name Bold",
                 },
             ),
         ],

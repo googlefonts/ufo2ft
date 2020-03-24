@@ -173,6 +173,18 @@
     <namerecord nameID="17" platformID="3" platEncID="1" langID="0x409">
       Regular (Preferred Subfamily Name)
     </namerecord>
+    <namerecord nameID="18" platformID="3" platEncID="1" langID="0x409">
+      Some Font Regular (Compatible Full Name)
+    </namerecord>
+    <namerecord nameID="19" platformID="3" platEncID="1" langID="0x409">
+      Sample Text for Some Font.
+    </namerecord>
+    <namerecord nameID="21" platformID="3" platEncID="1" langID="0x409">
+      Some Font (WWS Family Name)
+    </namerecord>
+    <namerecord nameID="22" platformID="3" platEncID="1" langID="0x409">
+      Regular (WWS Subfamily Name)
+    </namerecord>
   </name>
 
   <cmap>
