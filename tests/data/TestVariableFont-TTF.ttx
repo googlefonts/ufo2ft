@@ -163,15 +163,15 @@
     <TTGlyph name=".notdef" xMin="50" yMin="-250" xMax="450" yMax="750">
       <contour>
         <pt x="50" y="-250" on="1"/>
-        <pt x="450" y="-250" on="1"/>
-        <pt x="450" y="750" on="1"/>
         <pt x="50" y="750" on="1"/>
+        <pt x="450" y="750" on="1"/>
+        <pt x="450" y="-250" on="1"/>
       </contour>
       <contour>
         <pt x="100" y="-200" on="1"/>
-        <pt x="100" y="700" on="1"/>
-        <pt x="400" y="700" on="1"/>
         <pt x="400" y="-200" on="1"/>
+        <pt x="400" y="700" on="1"/>
+        <pt x="100" y="700" on="1"/>
       </contour>
       <instructions/>
     </TTGlyph>
