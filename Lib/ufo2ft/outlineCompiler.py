@@ -17,6 +17,7 @@ from fontTools.cffLib import (
     PrivateDict,
     IndexedStrings,
 )
+from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.boundsPen import ControlBoundsPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -80,7 +81,7 @@ class BaseOutlineCompiler(object):
         # use the previously filtered glyphSet, if any
         if glyphSet is None:
             glyphSet = {g.name: g for g in font}
-        self.makeMissingRequiredGlyphs(font, glyphSet)
+        self.makeMissingRequiredGlyphs(font, glyphSet, self.sfntVersion)
         self.allGlyphs = glyphSet
         # store the glyph order
         if glyphOrder is None:
@@ -207,7 +208,7 @@ class BaseOutlineCompiler(object):
         return makeUnicodeToGlyphNameMapping(self.allGlyphs, self.glyphOrder)
 
     @staticmethod
-    def makeMissingRequiredGlyphs(font, glyphSet):
+    def makeMissingRequiredGlyphs(font, glyphSet, sfntVersion):
         """
         Add .notdef to the glyph set if it is not present.
 
@@ -228,6 +229,7 @@ class BaseOutlineCompiler(object):
             unitsPerEm=unitsPerEm,
             ascender=ascender,
             descender=descender,
+            reverseContour=(sfntVersion == "\000\001\000\000")
         )
 
     def makeOfficialGlyphOrder(self, glyphOrder):
@@ -1394,7 +1396,16 @@ class StubGlyph(object):
     (specifically .notdef) in the provided UFO.
     """
 
-    def __init__(self, name, width, unitsPerEm, ascender, descender, unicodes=[]):
+    def __init__(
+        self,
+        name,
+        width,
+        unitsPerEm,
+        ascender,
+        descender,
+        unicodes=[],
+        reverseContour=False,
+    ):
         self.name = name
         self.width = width
         self.unitsPerEm = unitsPerEm
@@ -1409,6 +1420,7 @@ class StubGlyph(object):
             self.unicode = None
         if name == ".notdef":
             self.draw = self._drawDefaultNotdef
+        self.reverseContour = reverseContour
 
     def __len__(self):
         if self.name == ".notdef":
@@ -1423,6 +1435,10 @@ class StubGlyph(object):
         pass
 
     def _drawDefaultNotdef(self, pen):
+        # Draw contour in PostScript direction (counter-clockwise) by default. Reverse
+        # for TrueType.
+        if self.reverseContour:
+            pen = ReverseContourPen(pen)
         width = otRound(self.unitsPerEm * 0.5)
         stroke = otRound(self.unitsPerEm * 0.05)
         ascender = self.ascender
