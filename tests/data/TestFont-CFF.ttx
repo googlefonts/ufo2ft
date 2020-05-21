@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ttFont sfntVersion="OTTO">
+<ttFont sfntVersion="OTTO" ttLibVersion="4.10">
 
   <GlyphOrder>
     <!-- The 'id' attribute is only for humans; it is ignored when parsed. -->
@@ -417,7 +417,7 @@
       <!-- LookupCount=1 -->
       <Lookup index="0">
         <LookupType value="2"/>
-        <LookupFlag value="8"/>
+        <LookupFlag value="8"/><!-- ignoreMarks -->
         <!-- SubTableCount=1 -->
         <PairPos index="0" Format="1">
           <Coverage Format="1">
