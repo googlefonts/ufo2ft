@@ -30,6 +30,7 @@ import pytest
                     "outline": [
                         ("addComponent", ("a", (1, 0, 0, 1, 0, 0))),
                         ("addComponent", ("c", (1, 0, 0, 1, 0, 0))),
+                        ("addComponent", ("a", (1, 0, 0, 1, 10, -10))),
                     ],
                 },
                 {
@@ -173,11 +174,16 @@ class TransformationsFilterTest(object):
         assert filter_(font)
 
         b = font["b"]
-        # component 'a' was not transformed, because it doesn't have a scale
-        # or skew and the base glyph was already included
+        # component 'a' #1 was not transformed, because the base glyph was already
+        # transformed, and the component's own transformation is identity
         assert b.components[0].transformation == (1, 0, 0, 1, 0, 0)
         # component 'c' was transformed, because base glyph was not included
         assert b.components[1].transformation == (0.5, 0, 0, 0.5, -10, 51)
+        # component 'a' #2 was partly transformed: the base glyph was transformed, but
+        # the component's original transformation was not identity; thus
+        # it was modified to compensate for the transformation already applied to
+        # the base glyph (scale stays same, offsets are scaled)
+        assert b.components[2].transformation == (1, 0, 0, 1, 5, -5)
 
         d = font["d"]
         # component 'b' was transformed as well as its base glyph, because
