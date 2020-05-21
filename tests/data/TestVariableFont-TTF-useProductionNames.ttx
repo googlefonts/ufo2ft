@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ttFont sfntVersion="\x00\x01\x00\x00" ttLibVersion="3.41">
+<ttFont sfntVersion="\x00\x01\x00\x00" ttLibVersion="4.10">
 
   <GlyphOrder>
     <!-- The 'id' attribute is only for humans; it is ignored when parsed. -->
@@ -659,6 +659,12 @@
         <delta pt="15" x="0" y="0"/>
       </tuple>
     </glyphVariations>
+    <glyphVariations glyph="uni0117">
+      <tuple>
+        <coord axis="wght" value="1.0"/>
+        <delta pt="1" x="-6" y="91"/>
+      </tuple>
+    </glyphVariations>
     <glyphVariations glyph="uni0307">
       <tuple>
         <coord axis="wght" value="1.0"/>
@@ -670,12 +676,6 @@
         <delta pt="5" x="0" y="0"/>
         <delta pt="6" x="0" y="0"/>
         <delta pt="7" x="0" y="0"/>
-      </tuple>
-    </glyphVariations>
-    <glyphVariations glyph="uni0117">
-      <tuple>
-        <coord axis="wght" value="1.0"/>
-        <delta pt="1" x="-6" y="91"/>
       </tuple>
     </glyphVariations>
   </gvar>
