@@ -1,7 +1,6 @@
-from __future__ import print_function, division, absolute_import
 from ufo2ft.filters.transformations import TransformationsFilter, log
 from fontTools.misc.loggingTools import CapturingLogHandler
-from fontTools.misc.py23 import isclose
+from math import isclose
 import pytest
 
 

@@ -1,5 +1,3 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-
 import math
 from collections import namedtuple
 import logging
@@ -7,7 +5,6 @@ import logging
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.filters import BaseFilter
 
-from fontTools.misc.py23 import round
 from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Transform, Identity
 from fontTools.pens.recordingPen import RecordingPointPen
