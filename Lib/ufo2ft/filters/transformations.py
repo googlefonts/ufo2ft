@@ -26,13 +26,6 @@ class TransformPen(_TransformPen):
 
     def addComponent(self, baseGlyph, transformation):
         if baseGlyph in self.modified:
-
-            if transformation[:4] == (1, 0, 0, 1):
-                # if the component's transform only has a simple offset, then
-                # we don't need to transform the component again
-                self._outPen.addComponent(baseGlyph, transformation)
-                return
-
             # multiply the component's transformation matrix with the inverse
             # of the filter's transformation matrix to compensate for the
             # transformation already applied to the base glyph
