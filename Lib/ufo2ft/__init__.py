@@ -52,6 +52,8 @@ def compileOTF(
     layerName=None,
     skipExportGlyphs=None,
     debugFeatureFile=None,
+    cffVersion=1,
+    subroutinizer=None,
     _tables=None,
 ):
     """Create FontTools CFF font from a UFO.
@@ -136,7 +138,10 @@ def compileOTF(
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
     otf = postProcessor.process(
-        useProductionNames, optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE
+        useProductionNames,
+        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+        subroutinizer=subroutinizer,
+        cffVersion=cffVersion,
     )
 
     return otf
@@ -595,6 +600,7 @@ def compileVariableCFF2(
     excludeVariationTables=(),
     inplace=False,
     debugFeatureFile=None,
+    optimizeCFF=CFFOptimization.NONE,
 ):
     """Create FontTools CFF2 variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
@@ -625,7 +631,11 @@ def compileVariableCFF2(
 
     varfont = varLib.build(otfDesignSpace, exclude=excludeVariationTables)[0]
 
+    optimizeCFF = CFFOptimization(optimizeCFF)
     postProcessor = PostProcessor(varfont, baseUfo)
-    varfont = postProcessor.process(useProductionNames)
+    varfont = postProcessor.process(
+        useProductionNames,
+        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+    )
 
     return varfont
