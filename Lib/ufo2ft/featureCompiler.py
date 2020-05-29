@@ -31,16 +31,20 @@ def parseLayoutFeatures(font):
     if not featxt:
         return ast.FeatureFile()
     buf = UnicodeIO(featxt)
-    # the path is used by the lexer to resolve 'include' statements
-    # and print filename in error messages. For the UFO spec, this
-    # should be the path of the UFO, not the inner features.fea:
-    # https://github.com/unified-font-object/ufo-spec/issues/55
     ufoPath = font.path
+    includeDir = None
     if ufoPath is not None:
-        buf.name = ufoPath
+        # The UFO v3 specification says "Any include() statements must be relative to
+        # the UFO path, not to the features.fea file itself". We set the `name`
+        # attribute on the buffer to the actual feature file path, which feaLib will
+        # pick up and use to attribute errors to the correct file, and explicitly set
+        # the include directory to the parent of the UFO.
+        ufoPath = os.path.normpath(ufoPath)
+        buf.name = os.path.join(ufoPath, "features.fea")
+        includeDir = os.path.dirname(ufoPath)
     glyphNames = set(font.keys())
     try:
-        parser = Parser(buf, glyphNames)
+        parser = Parser(buf, glyphNames, includeDir=includeDir)
         doc = parser.parse()
     except IncludedFeaNotFound as e:
         if ufoPath and os.path.exists(os.path.join(ufoPath, e.args[0])):
