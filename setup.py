@@ -35,7 +35,10 @@ setup(
         "compreffor>=0.4.6",
         "booleanOperations>=0.9.0",
     ],
-    extras_require={"pathops": ["skia-pathops>=0.2.0"]},
+    extras_require={
+        "pathops": ["skia-pathops>=0.2.0"],
+        "cffsubr": ["cffsubr>=0.2.1"],
+    },
     python_requires=">=3.6",
     classifiers=[
         "Development Status :: 4 - Beta",

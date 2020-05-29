@@ -2,12 +2,22 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 from fontTools.misc.py23 import BytesIO
 from fontTools.ttLib import TTFont
-from ufo2ft.constants import USE_PRODUCTION_NAMES, GLYPHS_DONT_USE_PRODUCTION_NAMES
+from ufo2ft.constants import (
+    USE_PRODUCTION_NAMES,
+    GLYPHS_DONT_USE_PRODUCTION_NAMES,
+    KEEP_GLYPH_NAMES,
+)
+import enum
 import logging
 import re
 
 
 logger = logging.getLogger(__name__)
+
+
+class CFFVersion(enum.IntEnum):
+    CFF = 1
+    CFF2 = 2
 
 
 class PostProcessor(object):
@@ -18,6 +28,17 @@ class PostProcessor(object):
     GLYPH_NAME_INVALID_CHARS = re.compile("[^0-9a-zA-Z_.]")
     MAX_GLYPH_NAME_LENGTH = 63
 
+    class SubroutinizerBackend(enum.Enum):
+        COMPREFFOR = "compreffor"
+        CFFSUBR = "cffsubr"
+
+    # keep defaulting to compreffor for CFF 1.0, use cffsubr for CFF2;
+    # can override by passing explicit subroutinizer parameter to process method
+    DEFAULT_SUBROUTINIZER_FOR_CFF_VERSION = {
+        1: SubroutinizerBackend.COMPREFFOR,
+        2: SubroutinizerBackend.CFFSUBR,
+    }
+
     def __init__(self, otf, ufo, glyphSet=None):
         self.ufo = ufo
         self.glyphSet = glyphSet if glyphSet is not None else ufo
@@ -27,7 +48,13 @@ class PostProcessor(object):
         self.otf = TTFont(stream)
         self._postscriptNames = ufo.lib.get("public.postscriptNames")
 
-    def process(self, useProductionNames=None, optimizeCFF=True):
+    def process(
+        self,
+        useProductionNames=None,
+        optimizeCFF=True,
+        cffVersion=None,
+        subroutinizer=None,
+    ):
         """
         useProductionNames:
           By default, when value is None, this will rename glyphs using the
@@ -47,23 +74,73 @@ class PostProcessor(object):
           equivalent to 'useProductionNames' set to False.
 
         optimizeCFF:
-          Run compreffor to subroubtinize CFF table, if present.
+          Subroubtinize CFF table, if present.
         """
+        if self._get_cff_version(self.otf):
+            self.process_cff(
+                optimizeCFF=optimizeCFF,
+                cffVersion=cffVersion,
+                subroutinizer=subroutinizer,
+            )
+
+        self.process_glyph_names(useProductionNames)
+
+        return self.otf
+
+    def process_cff(self, *, optimizeCFF=True, cffVersion=None, subroutinizer=None):
+        cffInputVersion = self._get_cff_version(self.otf)
+        if not cffInputVersion:
+            raise ValueError("Missing required 'CFF ' or 'CFF2' table")
+
+        if cffVersion is None:
+            cffOutputVersion = cffInputVersion
+        else:
+            cffOutputVersion = CFFVersion(cffVersion)
+
+        if optimizeCFF:
+            if subroutinizer is None:
+                backend = self.DEFAULT_SUBROUTINIZER_FOR_CFF_VERSION[cffOutputVersion]
+            else:
+                backend = self.SubroutinizerBackend(subroutinizer)
+            self._subroutinize(backend, self.otf, cffOutputVersion)
+
+        elif cffInputVersion != cffOutputVersion:
+            if (
+                cffInputVersion == CFFVersion.CFF
+                and cffOutputVersion == CFFVersion.CFF2
+            ):
+                self._convert_cff_to_cff2(self.otf)
+            else:
+                raise NotImplementedError(
+                    "Unsupported CFF conversion {cffInputVersion} => {cffOutputVersion}"
+                )
+
+    def process_glyph_names(self, useProductionNames=None):
         if useProductionNames is None:
+            keepGlyphNames = self.ufo.lib.get(KEEP_GLYPH_NAMES, True)
             useProductionNames = self.ufo.lib.get(
                 USE_PRODUCTION_NAMES,
                 not self.ufo.lib.get(GLYPHS_DONT_USE_PRODUCTION_NAMES)
                 and self._postscriptNames is not None,
             )
-        if useProductionNames:
-            logger.info("Renaming glyphs to final production names")
-            self._rename_glyphs_from_ufo()
-        if optimizeCFF and "CFF " in self.otf:
-            from compreffor import compress
+        else:
+            keepGlyphNames = True
 
-            logger.info("Subroutinizing CFF table")
-            compress(self.otf)
-        return self.otf
+        if keepGlyphNames:
+            if "CFF " not in self.otf:
+                self.set_post_table_format(self.otf, 2.0)
+
+            if useProductionNames:
+                logger.info("Renaming glyphs to final production names")
+                self._rename_glyphs_from_ufo()
+
+        else:
+            if "CFF " in self.otf:
+                logging.warning(
+                    "Dropping glyph names from CFF 1.0 is currently unsupported"
+                )
+            else:
+                self.set_post_table_format(self.otf, 3.0)
 
     def _rename_glyphs_from_ufo(self):
         """Rename glyphs using ufo.lib.public.postscriptNames in UFO."""
@@ -79,7 +156,7 @@ class PostProcessor(object):
         # contain the extraNames.
         if "post" in otf and otf["post"].formatType == 2.0:
             otf["post"].extraNames = []
-            otf["post"].compile(self.otf)
+            otf["post"].compile(otf)
 
         if "CFF " in otf:
             cff = otf["CFF "].cff.topDictIndex[0]
@@ -165,3 +242,72 @@ class PostProcessor(object):
             )
 
         return glyph.name
+
+    @staticmethod
+    def set_post_table_format(otf, formatType):
+        if formatType not in (2.0, 3.0):
+            raise NotImplementedError(formatType)
+
+        post = otf.get("post")
+        if post and post.formatType != formatType:
+            logger.info("Setting post.formatType = %s", formatType)
+            post.formatType = formatType
+            if formatType == 2.0:
+                post.extraNames = []
+                post.mapping = {}
+            else:
+                for attr in ("extraNames", "mapping"):
+                    if hasattr(post, attr):
+                        delattr(post, attr)
+                post.glyphOrder = None
+
+    @staticmethod
+    def _get_cff_version(otf):
+        if "CFF " in otf:
+            return CFFVersion.CFF
+        elif "CFF2" in otf:
+            return CFFVersion.CFF2
+        else:
+            return None
+
+    @staticmethod
+    def _convert_cff_to_cff2(otf):
+        from fontTools.varLib.cff import convertCFFtoCFF2
+
+        logger.info("Converting CFF table to CFF2")
+        convertCFFtoCFF2(otf)
+
+    @classmethod
+    def _subroutinize(cls, backend, otf, cffVersion):
+        subroutinize = getattr(cls, f"_subroutinize_with_{backend.value}")
+        subroutinize(otf, cffVersion)
+
+    @classmethod
+    def _subroutinize_with_compreffor(cls, otf, cffVersion):
+        from compreffor import compress
+
+        if cls._get_cff_version(otf) != CFFVersion.CFF:
+            raise NotImplementedError(
+                "Only 'CFF ' 1.0 input is supported by compreffor; try using cffsubr"
+            )
+
+        logger.info("Subroutinizing CFF table with compreffor")
+
+        compress(otf)
+
+        if cffVersion == CFFVersion.CFF2:
+            cls._convert_cff_to_cff2(otf)
+
+    @classmethod
+    def _subroutinize_with_cffsubr(cls, otf, cffVersion):
+        import cffsubr
+
+        cffInputVersion = cls._get_cff_version(otf)
+        assert cffInputVersion is not None, "Missing required 'CFF ' or 'CFF2' table"
+
+        msg = f"Subroutinizing {cffInputVersion.name} table with cffsubr"
+        if cffInputVersion != cffVersion:
+            msg += f" (output format: {cffVersion.name})"
+        logger.info(msg)
+
+        return cffsubr.subroutinize(otf, cff_version=cffVersion, keep_glyph_names=False)
