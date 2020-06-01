@@ -600,7 +600,7 @@ def compileVariableCFF2(
     excludeVariationTables=(),
     inplace=False,
     debugFeatureFile=None,
-    optimizeCFF=CFFOptimization.NONE,
+    optimizeCFF=CFFOptimization.SPECIALIZE,
 ):
     """Create FontTools CFF2 variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
@@ -629,9 +629,16 @@ def compileVariableCFF2(
 
     logger.info("Building variable CFF2 font")
 
-    varfont = varLib.build(otfDesignSpace, exclude=excludeVariationTables)[0]
-
     optimizeCFF = CFFOptimization(optimizeCFF)
+
+    varfont = varLib.build(
+        otfDesignSpace,
+        exclude=excludeVariationTables,
+        # NOTE optimize=False won't change anything until this PR is merged
+        # https://github.com/fonttools/fonttools/pull/1979
+        optimize=optimizeCFF >= CFFOptimization.SPECIALIZE,
+    )[0]
+
     postProcessor = PostProcessor(varfont, baseUfo)
     varfont = postProcessor.process(
         useProductionNames,
