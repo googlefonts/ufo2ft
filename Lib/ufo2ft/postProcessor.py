@@ -275,6 +275,14 @@ class PostProcessor(object):
         from fontTools.varLib.cff import convertCFFtoCFF2
 
         logger.info("Converting CFF table to CFF2")
+
+        # convertCFFtoCFF2 expects a fully decompiled CFF table
+        otf["CFF "].cff[0].decompileAllCharStrings()
+
+        # need to decompile glyphOrder, otherwise I get AttribtueError('charset') when
+        # running convertCFFtoCFF2(). TODO: Fix it upstream and remove this
+        _ = otf.getGlyphOrder()
+
         convertCFFtoCFF2(otf)
 
     @classmethod
