@@ -56,11 +56,21 @@ class PostProcessor(object):
         subroutinizer=None,
     ):
         """
-        useProductionNames:
+        useProductionNames (Optional[bool]):
           By default, when value is None, this will rename glyphs using the
           'public.postscriptNames' in then UFO lib. If the mapping is not
           present, no glyph names are renamed.
-          If the value is False, no glyphs are renamed whether or not the
+
+          When useProductionNames is None and the UFO lib contains the plist bool key
+          "com.github.googlei18n.ufo2ft.keepGlyphNames" set to False, then the 'post'
+          table is set to format 3.0 and glyph names are dropped altogether from the
+          font, saving a few KBs. Note that this only works for TTF and CFF2 flavored
+          fonts. We currently do not support dropping glyph names from CFF 1.0 fonts.
+          When the keepGlyphNames lib key is missing or set to True, the glyph names
+          will be stored in 'post' table format 2.0 for TTF and CFF2 fonts, or in the
+          CFF charset.
+
+          If useProductionNames is False, no glyphs are renamed whether or not the
           'public.postscriptNames' mapping is present.
           If the value is True, but no 'public.postscriptNames' are present,
           then uniXXXX names are generated from the glyphs' unicode.
@@ -73,8 +83,18 @@ class PostProcessor(object):
           when this is present if the UFO lib and is set to True, this is
           equivalent to 'useProductionNames' set to False.
 
-        optimizeCFF:
-          Subroubtinize CFF table, if present.
+        optimizeCFF (bool):
+          Subroubtinize CFF or CFF2 table, if present.
+
+        cffVersion (Optiona[int]):
+          The output CFF format, choose between 1 or 2. By default, it's the same as
+          as the input OTF's CFF or CFF2 table, if any. Ignored for TTFs.
+
+        subroutinizer (Optional[str]):
+          The name of the library to use for compressing CFF charstrings, if optimizeCFF
+          is True and CFF or CFF2 table is present. Choose between "compreffor" or
+          "cffsubr". By default "compreffor" is used for CFF 1, and "cffsubr" for CFF 2.
+          NOTE: compreffor currently doesn't support input fonts with CFF2 table.
         """
         if self._get_cff_version(self.otf):
             self.process_cff(
