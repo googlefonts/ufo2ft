@@ -126,17 +126,50 @@ class IntegrationTest(object):
         expectTTX(ttfs[0], "TestFont.ttx")
         expectTTX(ttfs[1], "TestFont.ttx")
 
-    def test_optimizeCFF_none(self, testufo):
-        otf = compileOTF(testufo, optimizeCFF=0)
-        expectTTX(otf, "TestFont-NoOptimize-CFF.ttx")
+    @pytest.mark.parametrize(
+        "cff_version, expected_ttx",
+        [(1, "TestFont-NoOptimize-CFF.ttx"), (2, "TestFont-NoOptimize-CFF2.ttx")],
+        ids=["cff1", "cff2"],
+    )
+    def test_optimizeCFF_none(self, testufo, cff_version, expected_ttx):
+        otf = compileOTF(testufo, optimizeCFF=0, cffVersion=cff_version)
+        expectTTX(otf, expected_ttx)
 
-    def test_optimizeCFF_specialize(self, testufo):
-        otf = compileOTF(testufo, optimizeCFF=1)
-        expectTTX(otf, "TestFont-Specialized-CFF.ttx")
+    @pytest.mark.parametrize(
+        "cff_version, expected_ttx",
+        [(1, "TestFont-Specialized-CFF.ttx"), (2, "TestFont-Specialized-CFF2.ttx")],
+        ids=["cff1", "cff2"],
+    )
+    def test_optimizeCFF_specialize(self, testufo, cff_version, expected_ttx):
+        otf = compileOTF(testufo, optimizeCFF=1, cffVersion=cff_version)
+        expectTTX(otf, expected_ttx)
 
-    def test_optimizeCFF_subroutinize(self, testufo):
-        otf = compileOTF(testufo, optimizeCFF=2)
-        expectTTX(otf, "TestFont-CFF.ttx")
+    @pytest.mark.parametrize(
+        "subroutinizer, cff_version, expected_ttx",
+        [
+            (None, 1, "TestFont-CFF.ttx"),
+            ("compreffor", 1, "TestFont-CFF.ttx"),
+            ("cffsubr", 1, "TestFont-CFF-cffsubr.ttx"),
+            (None, 2, "TestFont-CFF2-cffsubr.ttx"),
+            ("compreffor", 2, "TestFont-CFF2-compreffor.ttx"),
+            ("cffsubr", 2, "TestFont-CFF2-cffsubr.ttx"),
+        ],
+        ids=[
+            "default-cff1",
+            "compreffor-cff1",
+            "cffsubr-cff1",
+            "default-cff2",
+            "compreffor-cff2",
+            "cffsubr-cff2",
+        ],
+    )
+    def test_optimizeCFF_subroutinize(
+        self, testufo, cff_version, subroutinizer, expected_ttx
+    ):
+        otf = compileOTF(
+            testufo, optimizeCFF=2, cffVersion=cff_version, subroutinizer=subroutinizer
+        )
+        expectTTX(otf, expected_ttx)
 
     def test_compileVariableTTF(self, designspace, useProductionNames):
         varfont = compileVariableTTF(designspace, useProductionNames=useProductionNames)
@@ -158,6 +191,10 @@ class IntegrationTest(object):
             ),
         )
 
+    def test_compileVariableCFF2_subroutinized(self, designspace):
+        varfont = compileVariableCFF2(designspace, optimizeCFF=2)
+        expectTTX(varfont, "TestVariableFont-CFF2-cffsubr.ttx")
+
     def test_debugFeatureFile(self, designspace):
         tmp = io.StringIO()
 
@@ -165,6 +202,21 @@ class IntegrationTest(object):
 
         assert "### LayerFont-Regular ###" in tmp.getvalue()
         assert "### LayerFont-Bold ###" in tmp.getvalue()
+
+    @pytest.mark.parametrize(
+        "output_format, options, expected_ttx",
+        [
+            ("TTF", {}, "TestFont-TTF-post3.ttx"),
+            ("OTF", {"cffVersion": 2}, "TestFont-CFF2-post3.ttx"),
+        ],
+    )
+    def test_drop_glyph_names(self, testufo, output_format, options, expected_ttx):
+        from ufo2ft.constants import KEEP_GLYPH_NAMES
+
+        testufo.lib[KEEP_GLYPH_NAMES] = False
+        compile_func = globals()[f"compile{output_format}"]
+        ttf = compile_func(testufo, **options)
+        expectTTX(ttf, expected_ttx)
 
 
 if __name__ == "__main__":
