@@ -136,7 +136,7 @@ class PostProcessor(object):
 
         else:
             if "CFF " in self.otf:
-                logging.warning(
+                logger.warning(
                     "Dropping glyph names from CFF 1.0 is currently unsupported"
                 )
             else:
