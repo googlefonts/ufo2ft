@@ -97,6 +97,13 @@ def compileOTF(
     "public.skipExportGlyphs" lib key will be consulted. If it doesn't exist,
     all glyphs are exported. UFO groups and kerning will be pruned of skipped
     glyphs.
+
+    *cffVersion* (int) is the CFF format, choose between 1 (default) and 2.
+
+    *subroutinizer* (Optional[str]) is the name of the library to use for
+      compressing CFF charstrings, if subroutinization is enabled by optimizeCFF
+      parameter. Choose between "compreffor" or "cffsubr".
+      By default "compreffor" is used for CFF 1, and "cffsubr" for CFF 2.
     """
     logger.info("Pre-processing glyphs")
 
@@ -607,6 +614,14 @@ def compileVariableCFF2(
 
     *excludeVariationTables* is a list of sfnt table tags (str) that is passed on
       to fontTools.varLib.build, to skip building some variation tables.
+
+    *optimizeCFF* (int) defines whether the CFF charstrings should be
+      specialized and subroutinized. 1 (default) only enables the specialization;
+      2 (default) does both specialization and subroutinization. The value 0 is supposed
+      to disable both optimizations, however it's currently unused, because fontTools
+      has some issues generating a VF with non-specialized CFF2 charstrings:
+      fonttools/fonttools#1979.
+      NOTE: Subroutinization of variable CFF2 requires the "cffsubr" extra requirement.
 
     The rest of the arguments works the same as in the other compile functions.
 
