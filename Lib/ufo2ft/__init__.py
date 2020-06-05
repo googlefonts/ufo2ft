@@ -104,6 +104,8 @@ def compileOTF(
       compressing CFF charstrings, if subroutinization is enabled by optimizeCFF
       parameter. Choose between "compreffor" or "cffsubr".
       By default "compreffor" is used for CFF 1, and "cffsubr" for CFF 2.
+      NOTE: cffsubr is required for subroutinizing CFF2 tables, as compreffor
+      currently doesn't support it.
     """
     logger.info("Pre-processing glyphs")
 

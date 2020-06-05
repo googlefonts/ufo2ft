@@ -299,7 +299,7 @@
       </FDArray>
       <CharStrings>
         <CharString name=".notdef">
-          100 450 0 rmoveto
+          450 0 rmoveto
           0 750 rlineto
           -400 0 rlineto
           0 -750 rlineto
@@ -309,33 +309,33 @@
           300 0 rlineto
         </CharString>
         <CharString name="uni0020">
-          -150</CharString>
+        </CharString>
         <CharString name="uni0061">
-          -12 66 0 rmoveto
+          66 0 rmoveto
           256 0 rlineto
           -128 510 rlineto
         </CharString>
         <CharString name="uni0062">
-          10 100 505 rmoveto
+          100 505 rmoveto
           0 -510 rlineto
           210 0 rlineto
           0 510 rlineto
         </CharString>
         <CharString name="uni0063">
-          -26 300 -10 rmoveto
+          300 -10 rmoveto
           0 510 rlineto
           -150 0 -50 -50 0 -205 rrcurveto
           0 -205 50 -50 150 0 rrcurveto
         </CharString>
         <CharString name="uni0064">
-          -26 151 197 rmoveto
+          151 197 rmoveto
           -34 0 -27 -27 0 -33 rrcurveto
           0 -33 27 -27 34 0 rrcurveto
           33 0 27 27 0 33 rrcurveto
           0 33 -27 27 -33 0 rrcurveto
         </CharString>
         <CharString name="uni0065">
-          -12 66 510 rmoveto
+          66 510 rmoveto
           128 -435 rlineto
           128 435 rlineto
           -377 -487 rmoveto
@@ -344,7 +344,7 @@
           -204 0 -50 -50 0 -150 rrcurveto
         </CharString>
         <CharString name="uni0066">
-          10 66 510 rmoveto
+          66 510 rmoveto
           256 0 rlineto
           -128 -435 rlineto
           -249 -52 rmoveto
@@ -353,12 +353,12 @@
           -204 0 -50 -50 0 -150 rrcurveto
         </CharString>
         <CharString name="uni0067">
-          -12 66 0 rmoveto
+          66 0 rmoveto
           256 0 rlineto
           -128 510 rlineto
         </CharString>
         <CharString name="uni0068">
-          10 211 657 rmoveto
+          211 657 rmoveto
           -34 0 -27 -27 0 -33 rrcurveto
           0 -33 27 -27 34 0 rrcurveto
           33 0 27 27 0 33 rrcurveto
@@ -369,7 +369,7 @@
           0 510 rlineto
         </CharString>
         <CharString name="uni0069">
-          200 -55 -80 rmoveto
+          -55 -80 rmoveto
           509 0 rlineto
           0 149 -50 50 -205 0 rrcurveto
           -204 0 -50 -50 0 -149 rrcurveto
@@ -378,7 +378,7 @@
           -128 510 rlineto
         </CharString>
         <CharString name="uni006A">
-          200 -55 -80 rmoveto
+          -55 -80 rmoveto
           509 0 rlineto
           0 149 -50 50 -205 0 rrcurveto
           -204 0 -50 -50 0 -149 rrcurveto
@@ -387,7 +387,7 @@
           128 510 rlineto
         </CharString>
         <CharString name="uni006B">
-          200 66 0 rmoveto
+          66 0 rmoveto
           256 0 rlineto
           -128 510 rlineto
           -28 -510 rmoveto
@@ -395,7 +395,7 @@
           -128 510 rlineto
         </CharString>
         <CharString name="uni006C">
-          200 334 0 rmoveto
+          334 0 rmoveto
           -128 510 rlineto
           -128 -510 rlineto
           88 0 rmoveto
