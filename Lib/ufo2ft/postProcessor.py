@@ -296,12 +296,13 @@ class PostProcessor(object):
 
         logger.info("Converting CFF table to CFF2")
 
-        # convertCFFtoCFF2 expects a fully decompiled CFF table
-        otf["CFF "].cff[0].decompileAllCharStrings()
-
-        # need to decompile glyphOrder, otherwise I get AttribtueError('charset') when
-        # running convertCFFtoCFF2(). TODO: Fix it upstream and remove this
-        _ = otf.getGlyphOrder()
+        # convertCFFtoCFF2 doesn't strip T2CharStrings' widths, so we do it ourselves
+        # https://github.com/fonttools/fonttools/issues/1835
+        charstrings = otf["CFF "].cff[0].CharStrings
+        for glyph_name in otf.getGlyphOrder():
+            cs = charstrings[glyph_name]
+            cs.decompile()
+            cs.program = _stripCharStringWidth(cs.program)
 
         convertCFFtoCFF2(otf)
 
@@ -314,17 +315,14 @@ class PostProcessor(object):
     def _subroutinize_with_compreffor(cls, otf, cffVersion):
         from compreffor import compress
 
-        if cls._get_cff_version(otf) != CFFVersion.CFF:
+        if cls._get_cff_version(otf) != CFFVersion.CFF or cffVersion != CFFVersion.CFF:
             raise NotImplementedError(
-                "Only 'CFF ' 1.0 input is supported by compreffor; try using cffsubr"
+                "Only 'CFF ' 1.0 is supported by compreffor; try using cffsubr"
             )
 
         logger.info("Subroutinizing CFF table with compreffor")
 
         compress(otf)
-
-        if cffVersion == CFFVersion.CFF2:
-            cls._convert_cff_to_cff2(otf)
 
     @classmethod
     def _subroutinize_with_cffsubr(cls, otf, cffVersion):
@@ -339,3 +337,43 @@ class PostProcessor(object):
         logger.info(msg)
 
         return cffsubr.subroutinize(otf, cff_version=cffVersion, keep_glyph_names=False)
+
+
+# Adapted from fontTools.cff.specializer.programToCommands
+# https://github.com/fonttools/fonttools/blob/babca16/Lib/fontTools/cffLib/specializer.py#L40-L122
+# When converting from CFF to CFF2 we need to drop the charstrings' widths.
+# This function returns a new charstring program without the initial width value.
+# TODO: Move to fontTools?
+def _stripCharStringWidth(program):
+    seenWidthOp = False
+    result = []
+    stack = []
+    for token in program:
+        if not isinstance(token, str):
+            stack.append(token)
+            continue
+
+        if (not seenWidthOp) and token in {
+            "hstem",
+            "hstemhm",
+            "vstem",
+            "vstemhm",
+            "cntrmask",
+            "hintmask",
+            "hmoveto",
+            "vmoveto",
+            "rmoveto",
+            "endchar",
+        }:
+            seenWidthOp = True
+            parity = token in {"hmoveto", "vmoveto"}
+            numArgs = len(stack)
+            if numArgs and (numArgs % 2) ^ parity:
+                stack.pop(0)  # pop width
+
+        result.extend(stack)
+        result.append(token)
+        stack = []
+    if stack:
+        result.extend(stack)
+    return result
