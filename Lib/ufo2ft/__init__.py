@@ -18,7 +18,7 @@ from ufo2ft.featureCompiler import (
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 from ufo2ft.constants import SPARSE_TTF_MASTER_TABLES, SPARSE_OTF_MASTER_TABLES
-from ufo2ft.util import getDefaultMasterFont
+from ufo2ft.util import getDefaultMasterFont, _getDefaultNotdefGlyph
 import logging
 
 try:
@@ -54,6 +54,7 @@ def compileOTF(
     debugFeatureFile=None,
     cffVersion=1,
     subroutinizer=None,
+    notdefGlyph=None,
     _tables=None,
 ):
     """Create FontTools CFF font from a UFO.
@@ -128,6 +129,7 @@ def compileOTF(
         ufo,
         glyphSet=glyphSet,
         glyphOrder=glyphOrder,
+        notdefGlyph=notdefGlyph,
         roundTolerance=roundTolerance,
         optimizeCFF=optimizeCFF >= CFFOptimization.SPECIALIZE,
         tables=_tables,
@@ -174,6 +176,7 @@ def compileTTF(
     layerName=None,
     skipExportGlyphs=None,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools TrueType font from a UFO.
 
@@ -213,7 +216,7 @@ def compileTTF(
 
     logger.info("Building OpenType tables")
     outlineCompiler = outlineCompilerClass(
-        ufo, glyphSet=glyphSet, glyphOrder=glyphOrder
+        ufo, glyphSet=glyphSet, glyphOrder=glyphOrder, notdefGlyph=notdefGlyph
     )
     otf = outlineCompiler.compile()
 
@@ -248,6 +251,7 @@ def compileInterpolatableTTFs(
     layerNames=None,
     skipExportGlyphs=None,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools TrueType fonts from a list of UFOs with interpolatable
     outlines. Cubic curves are converted compatibly to quadratic curves using
@@ -303,6 +307,7 @@ def compileInterpolatableTTFs(
             ufo,
             glyphSet=glyphSet,
             glyphOrder=glyphOrder,
+            notdefGlyph=notdefGlyph,
             tables=SPARSE_TTF_MASTER_TABLES if layerName else None,
         )
         ttf = outlineCompiler.compile()
@@ -350,6 +355,7 @@ def compileInterpolatableTTFsFromDS(
     reverseDirection=True,
     inplace=False,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines. Cubic curves are converted compatibly to
@@ -388,6 +394,9 @@ def compileInterpolatableTTFsFromDS(
 
     skipExportGlyphs = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
 
+    if notdefGlyph is None:
+        notdefGlyph = _getDefaultNotdefGlyph(designSpaceDoc)
+
     ttfs = compileInterpolatableTTFs(
         ufos,
         preProcessorClass=preProcessorClass,
@@ -402,6 +411,7 @@ def compileInterpolatableTTFsFromDS(
         layerNames=layerNames,
         skipExportGlyphs=skipExportGlyphs,
         debugFeatureFile=debugFeatureFile,
+        notdefGlyph=notdefGlyph,
     )
 
     if inplace:
@@ -425,6 +435,7 @@ def compileInterpolatableOTFsFromDS(
     roundTolerance=None,
     inplace=False,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools CFF fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines.
@@ -461,6 +472,9 @@ def compileInterpolatableOTFsFromDS(
 
     skipExportGlyphs = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
 
+    if notdefGlyph is None:
+        notdefGlyph = _getDefaultNotdefGlyph(designSpaceDoc)
+
     otfs = []
     for source in designSpaceDoc.sources:
         otfs.append(
@@ -480,6 +494,7 @@ def compileInterpolatableOTFsFromDS(
                 inplace=inplace,
                 skipExportGlyphs=skipExportGlyphs,
                 debugFeatureFile=debugFeatureFile,
+                notdefGlyph=notdefGlyph,
                 _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
             )
         )
@@ -555,6 +570,7 @@ def compileVariableTTF(
     optimizeGvar=True,
     inplace=False,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools TrueType variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
@@ -583,6 +599,7 @@ def compileVariableTTF(
         reverseDirection=reverseDirection,
         inplace=inplace,
         debugFeatureFile=debugFeatureFile,
+        notdefGlyph=notdefGlyph,
     )
 
     logger.info("Building variable TTF font")
@@ -610,6 +627,7 @@ def compileVariableCFF2(
     inplace=False,
     debugFeatureFile=None,
     optimizeCFF=CFFOptimization.SPECIALIZE,
+    notdefGlyph=None,
 ):
     """Create FontTools CFF2 variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
@@ -642,6 +660,7 @@ def compileVariableCFF2(
         roundTolerance=roundTolerance,
         inplace=inplace,
         debugFeatureFile=debugFeatureFile,
+        notdefGlyph=notdefGlyph,
     )
 
     logger.info("Building variable CFF2 font")
