@@ -151,7 +151,7 @@ class IntegrationTest(object):
             ("compreffor", 1, "TestFont-CFF.ttx"),
             ("cffsubr", 1, "TestFont-CFF-cffsubr.ttx"),
             (None, 2, "TestFont-CFF2-cffsubr.ttx"),
-            ("compreffor", 2, "TestFont-CFF2-compreffor.ttx"),
+            # ("compreffor", 2, "TestFont-CFF2-compreffor.ttx"),
             ("cffsubr", 2, "TestFont-CFF2-cffsubr.ttx"),
         ],
         ids=[
@@ -159,7 +159,7 @@ class IntegrationTest(object):
             "compreffor-cff1",
             "cffsubr-cff1",
             "default-cff2",
-            "compreffor-cff2",
+            # "compreffor-cff2",
             "cffsubr-cff2",
         ],
     )
