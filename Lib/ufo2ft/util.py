@@ -122,18 +122,26 @@ def _getNewGlyphFactory(glyph):
     return newGlyph
 
 
-def _copyGlyph(glyph, glyphFactory=None):
+def _copyGlyph(glyph, glyphFactory=None, reverseContour=False):
     # copy everything except unused attributes: 'guidelines', 'note', 'image'
     if glyphFactory is None:
         glyphFactory = _getNewGlyphFactory(glyph)
+
     copy = glyphFactory(glyph.name)
     copy.width = glyph.width
     copy.height = glyph.height
     copy.unicodes = list(glyph.unicodes)
     copy.anchors = [dict(a) for a in glyph.anchors]
     copy.lib = deepcopy(glyph.lib)
+
     pointPen = copy.getPointPen()
+    if reverseContour:
+        from fontTools.pens.pointPen import ReverseContourPointPen
+
+        pointPen = ReverseContourPointPen(pointPen)
+
     glyph.drawPoints(pointPen)
+
     return copy
 
 
