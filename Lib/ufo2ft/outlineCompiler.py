@@ -227,21 +227,24 @@ class BaseOutlineCompiler(object):
         if ".notdef" in glyphSet:
             return
 
+        reverseContour = sfntVersion == "\000\001\000\000"
         if notdefGlyph:
-            glyphSet[".notdef"] = _copyGlyph(notdefGlyph)
+            notdefGlyph = _copyGlyph(notdefGlyph, reverseContour=reverseContour)
         else:
             unitsPerEm = otRound(getAttrWithFallback(font.info, "unitsPerEm"))
             ascender = otRound(getAttrWithFallback(font.info, "ascender"))
             descender = otRound(getAttrWithFallback(font.info, "descender"))
             defaultWidth = otRound(unitsPerEm * 0.5)
-            glyphSet[".notdef"] = StubGlyph(
+            notdefGlyph = StubGlyph(
                 name=".notdef",
                 width=defaultWidth,
                 unitsPerEm=unitsPerEm,
                 ascender=ascender,
                 descender=descender,
-                reverseContour=(sfntVersion == "\000\001\000\000")
+                reverseContour=reverseContour,
             )
+
+        glyphSet[".notdef"] = notdefGlyph
 
     def makeOfficialGlyphOrder(self, glyphOrder):
         """
