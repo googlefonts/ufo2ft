@@ -207,9 +207,9 @@
       <CharStrings>
         <CharString name=".notdef">
           50 -250 rmoveto
-          400 1000 -400 -1000 hlineto
-          50 50 rmoveto
-          900 300 -900 -300 vlineto
+          400 1000 -400 hlineto
+          50 -950 rmoveto
+          900 300 -900 vlineto
         </CharString>
         <CharString name="a">
           468 -1 rmoveto

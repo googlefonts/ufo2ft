@@ -90,13 +90,21 @@ class _GlyphSet(dict):
 
 
 def _copyLayer(layer, obj_type=dict):
-    # defcon.Glyph doesn't take a name argument, ufoLib2 requires one...
     try:
         g = next(iter(layer))
     except StopIteration:  # layer is empty
         return obj_type()
 
-    cls = g.__class__
+    newGlyph = _getNewGlyphFactory(g)
+    glyphSet = obj_type()
+    for glyph in layer:
+        glyphSet[glyph.name] = _copyGlyph(glyph, glyphFactory=newGlyph)
+    return glyphSet
+
+
+def _getNewGlyphFactory(glyph):
+    # defcon.Glyph doesn't take a name argument, ufoLib2 requires one...
+    cls = glyph.__class__
     if "name" in getargspec(cls.__init__).args:
 
         def newGlyph(name):
@@ -107,23 +115,34 @@ def _copyLayer(layer, obj_type=dict):
         def newGlyph(name):
             # use instantiateGlyphObject() to keep any custom sub-element classes
             # https://github.com/googlefonts/ufo2ft/issues/363
-            g2 = g.layer.instantiateGlyphObject()
+            g2 = glyph.layer.instantiateGlyphObject()
             g2.name = name
             return g2
 
+    return newGlyph
+
+
+def _copyGlyph(glyph, glyphFactory=None, reverseContour=False):
     # copy everything except unused attributes: 'guidelines', 'note', 'image'
-    glyphSet = obj_type()
-    for glyph in layer:
-        copy = newGlyph(glyph.name)
-        copy.width = glyph.width
-        copy.height = glyph.height
-        copy.unicodes = list(glyph.unicodes)
-        copy.anchors = [dict(a) for a in glyph.anchors]
-        copy.lib = deepcopy(glyph.lib)
-        pointPen = copy.getPointPen()
-        glyph.drawPoints(pointPen)
-        glyphSet[glyph.name] = copy
-    return glyphSet
+    if glyphFactory is None:
+        glyphFactory = _getNewGlyphFactory(glyph)
+
+    copy = glyphFactory(glyph.name)
+    copy.width = glyph.width
+    copy.height = glyph.height
+    copy.unicodes = list(glyph.unicodes)
+    copy.anchors = [dict(a) for a in glyph.anchors]
+    copy.lib = deepcopy(glyph.lib)
+
+    pointPen = copy.getPointPen()
+    if reverseContour:
+        from fontTools.pens.pointPen import ReverseContourPointPen
+
+        pointPen = ReverseContourPointPen(pointPen)
+
+    glyph.drawPoints(pointPen)
+
+    return copy
 
 
 def deepCopyContours(
@@ -393,3 +412,19 @@ def getDefaultMasterFont(designSpaceDoc):
             % getattr(defaultSource, "name", "<Unknown>")
         )
     return defaultSource.font
+
+
+def _getDefaultNotdefGlyph(designSpaceDoc):
+    from ufo2ft.errors import InvalidDesignSpaceData
+
+    try:
+        baseUfo = getDefaultMasterFont(designSpaceDoc)
+    except InvalidDesignSpaceData:
+        notdefGlyph = None
+    else:
+        # unlike ufoLib2, defcon has no Font.get() method
+        try:
+            notdefGlyph = baseUfo[".notdef"]
+        except KeyError:
+            notdefGlyph = None
+    return notdefGlyph
