@@ -80,7 +80,14 @@ class InstructionCompiler(object):
         if ttdata:
             value = ttdata.get(key, None)
             if value is not None:
-                hti += value
+                if isinstance(value, str):
+                    hti += value
+                else:
+                    # CVT is a list
+                    cvts = []
+                    for cvt in value:
+                        cvts.append("%6s %s" % (cvt["value"], cvt["id"]))
+                    hti = "\n".join(cvts) + "\n"
         if hti:
             return "%s {\n%s}\n" % (block_name, hti)
         else:
