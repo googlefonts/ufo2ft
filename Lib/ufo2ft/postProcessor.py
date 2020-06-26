@@ -111,10 +111,10 @@ class PostProcessor(object):
                 subroutinizer=subroutinizer,
             )
 
-        rename_map = self.process_glyph_names(useProductionNames)
-
         if compileTrueTypeHinting and "glyf" in self.otf:
-            self._compile_truetype_hinting(rename_map)
+            self._compile_truetype_hinting()
+
+        self.process_glyph_names(useProductionNames)
 
         return self.otf
 
@@ -157,14 +157,13 @@ class PostProcessor(object):
         else:
             keepGlyphNames = True
 
-        rename_map = {}
         if keepGlyphNames:
             if "CFF " not in self.otf:
                 self.set_post_table_format(self.otf, 2.0)
 
             if useProductionNames:
                 logger.info("Renaming glyphs to final production names")
-                rename_map = self._rename_glyphs_from_ufo()
+                self._rename_glyphs_from_ufo()
 
         else:
             if "CFF " in self.otf:
@@ -173,7 +172,6 @@ class PostProcessor(object):
                 )
             else:
                 self.set_post_table_format(self.otf, 3.0)
-        return rename_map
 
     def _rename_glyphs_from_ufo(self):
         """Rename glyphs using ufo.lib.public.postscriptNames in UFO."""
@@ -228,7 +226,7 @@ class PostProcessor(object):
             rename_map[name] = self._unique_name(valid_name, seen)
         return rename_map
 
-    def _compile_truetype_hinting(self, rename_map):
+    def _compile_truetype_hinting(self, rename_map={}):
         try:
             from htic import toFontTools
         except ImportError:
