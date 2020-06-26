@@ -1,5 +1,3 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-
 import math
 from collections import namedtuple
 import logging
@@ -7,38 +5,30 @@ import logging
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.filters import BaseFilter
 
-from fontTools.misc.py23 import round
 from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Transform, Identity
-from fontTools.pens.recordingPen import RecordingPen
-from fontTools.pens.transformPen import TransformPen as _TransformPen
+from fontTools.pens.recordingPen import RecordingPointPen
+from fontTools.pens.transformPen import TransformPointPen as _TransformPointPen
 from enum import IntEnum
 
 
 log = logging.getLogger(__name__)
 
 
-class TransformPen(_TransformPen):
-    def __init__(self, outPen, transformation, modified=None):
-        super(TransformPen, self).__init__(outPen, transformation)
+class TransformPointPen(_TransformPointPen):
+    def __init__(self, outPointPen, transformation, modified=None):
+        super().__init__(outPointPen, transformation)
         self.modified = modified if modified is not None else set()
         self._inverted = self._transformation.inverse()
 
-    def addComponent(self, baseGlyph, transformation):
+    def addComponent(self, baseGlyph, transformation, identifier=None, **kwargs):
         if baseGlyph in self.modified:
-
-            if transformation[:4] == (1, 0, 0, 1):
-                # if the component's transform only has a simple offset, then
-                # we don't need to transform the component again
-                self._outPen.addComponent(baseGlyph, transformation)
-                return
-
             # multiply the component's transformation matrix with the inverse
             # of the filter's transformation matrix to compensate for the
             # transformation already applied to the base glyph
             transformation = Transform(*transformation).transform(self._inverted)
 
-        super(TransformPen, self).addComponent(baseGlyph, transformation)
+        super().addComponent(baseGlyph, transformation, identifier=identifier, **kwargs)
 
 
 class TransformationsFilter(BaseFilter):
@@ -123,13 +113,13 @@ class TransformationsFilter(BaseFilter):
                 # transformed, or there are no more components
                 modified.add(base_name)
 
-        rec = RecordingPen()
-        glyph.draw(rec)
+        rec = RecordingPointPen()
+        glyph.drawPoints(rec)
         glyph.clearContours()
         glyph.clearComponents()
 
-        outpen = glyph.getPen()
-        filterpen = TransformPen(outpen, matrix, modified)
+        outpen = glyph.getPointPen()
+        filterpen = TransformPointPen(outpen, matrix, modified)
         rec.replay(filterpen)
 
         # anchors are not drawn through the pen API,

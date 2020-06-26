@@ -17,6 +17,7 @@ from fontTools.cffLib import (
     PrivateDict,
     IndexedStrings,
 )
+from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.boundsPen import ControlBoundsPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -38,6 +39,7 @@ from ufo2ft.util import (
     makeOfficialGlyphOrder,
     makeUnicodeToGlyphNameMapping,
     calcCodePageRanges,
+    _copyGlyph,
 )
 from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_PALETTES_KEY
 
@@ -75,12 +77,19 @@ class BaseOutlineCompiler(object):
          "COLR", "CPAL"]
     )
 
-    def __init__(self, font, glyphSet=None, glyphOrder=None, tables=None):
+    def __init__(
+        self,
+        font,
+        glyphSet=None,
+        glyphOrder=None,
+        tables=None,
+        notdefGlyph=None,
+    ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
         if glyphSet is None:
             glyphSet = {g.name: g for g in font}
-        self.makeMissingRequiredGlyphs(font, glyphSet)
+        self.makeMissingRequiredGlyphs(font, glyphSet, self.sfntVersion, notdefGlyph)
         self.allGlyphs = glyphSet
         # store the glyph order
         if glyphOrder is None:
@@ -207,7 +216,7 @@ class BaseOutlineCompiler(object):
         return makeUnicodeToGlyphNameMapping(self.allGlyphs, self.glyphOrder)
 
     @staticmethod
-    def makeMissingRequiredGlyphs(font, glyphSet):
+    def makeMissingRequiredGlyphs(font, glyphSet, sfntVersion, notdefGlyph=None):
         """
         Add .notdef to the glyph set if it is not present.
 
@@ -218,17 +227,24 @@ class BaseOutlineCompiler(object):
         if ".notdef" in glyphSet:
             return
 
-        unitsPerEm = otRound(getAttrWithFallback(font.info, "unitsPerEm"))
-        ascender = otRound(getAttrWithFallback(font.info, "ascender"))
-        descender = otRound(getAttrWithFallback(font.info, "descender"))
-        defaultWidth = otRound(unitsPerEm * 0.5)
-        glyphSet[".notdef"] = StubGlyph(
-            name=".notdef",
-            width=defaultWidth,
-            unitsPerEm=unitsPerEm,
-            ascender=ascender,
-            descender=descender,
-        )
+        reverseContour = sfntVersion == "\000\001\000\000"
+        if notdefGlyph:
+            notdefGlyph = _copyGlyph(notdefGlyph, reverseContour=reverseContour)
+        else:
+            unitsPerEm = otRound(getAttrWithFallback(font.info, "unitsPerEm"))
+            ascender = otRound(getAttrWithFallback(font.info, "ascender"))
+            descender = otRound(getAttrWithFallback(font.info, "descender"))
+            defaultWidth = otRound(unitsPerEm * 0.5)
+            notdefGlyph = StubGlyph(
+                name=".notdef",
+                width=defaultWidth,
+                unitsPerEm=unitsPerEm,
+                ascender=ascender,
+                descender=descender,
+                reverseContour=reverseContour,
+            )
+
+        glyphSet[".notdef"] = notdefGlyph
 
     def makeOfficialGlyphOrder(self, glyphOrder):
         """
@@ -386,6 +402,10 @@ class BaseOutlineCompiler(object):
             14: getAttrWithFallback(font.info, "openTypeNameLicenseURL"),
             16: preferredFamilyName,
             17: preferredSubfamilyName,
+            18: getAttrWithFallback(font.info, "openTypeNameCompatibleFullName"),
+            19: getAttrWithFallback(font.info, "openTypeNameSampleText"),
+            21: getAttrWithFallback(font.info, "openTypeNameWWSFamilyName"),
+            22: getAttrWithFallback(font.info, "openTypeNameWWSSubfamilyName"),
         }
 
         # don't add typographic names if they are the same as the legacy ones
@@ -893,7 +913,8 @@ class BaseOutlineCompiler(object):
         from fontTools.colorLib.builder import buildCOLR
 
         layerInfo = self.ufo.lib[COLOR_LAYERS_KEY]
-        self.otf["COLR"] = buildCOLR(layerInfo)
+        if layerInfo:
+            self.otf["COLR"] = buildCOLR(layerInfo)
 
     def setupTable_CPAL(self):
         """
@@ -969,6 +990,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         glyphSet=None,
         glyphOrder=None,
         tables=None,
+        notdefGlyph=None,
         roundTolerance=None,
         optimizeCFF=True,
     ):
@@ -978,7 +1000,11 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             # round all coordinates to integers by default
             self.roundTolerance = 0.5
         super(OutlineOTFCompiler, self).__init__(
-            font, glyphSet=glyphSet, glyphOrder=glyphOrder, tables=tables
+            font,
+            glyphSet=glyphSet,
+            glyphOrder=glyphOrder,
+            tables=tables,
+            notdefGlyph=notdefGlyph,
         )
         self.optimizeCFF = optimizeCFF
         self._defaultAndNominalWidths = None
@@ -1389,7 +1415,16 @@ class StubGlyph(object):
     (specifically .notdef) in the provided UFO.
     """
 
-    def __init__(self, name, width, unitsPerEm, ascender, descender, unicodes=[]):
+    def __init__(
+        self,
+        name,
+        width,
+        unitsPerEm,
+        ascender,
+        descender,
+        unicodes=[],
+        reverseContour=False,
+    ):
         self.name = name
         self.width = width
         self.unitsPerEm = unitsPerEm
@@ -1404,6 +1439,7 @@ class StubGlyph(object):
             self.unicode = None
         if name == ".notdef":
             self.draw = self._drawDefaultNotdef
+        self.reverseContour = reverseContour
 
     def __len__(self):
         if self.name == ".notdef":
@@ -1418,6 +1454,10 @@ class StubGlyph(object):
         pass
 
     def _drawDefaultNotdef(self, pen):
+        # Draw contour in PostScript direction (counter-clockwise) by default. Reverse
+        # for TrueType.
+        if self.reverseContour:
+            pen = ReverseContourPen(pen)
         width = otRound(self.unitsPerEm * 0.5)
         stroke = otRound(self.unitsPerEm * 0.05)
         ascender = self.ascender
