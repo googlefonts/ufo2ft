@@ -87,7 +87,6 @@ class InstructionCompiler(object):
                         cvts.append("%6s %s" % (cvt["value"], cvt["id"]))
                     hti = "\n".join(cvts) + "\n"
         if hti:
-            print("%s {\n%s}\n" % (block_name, hti))
             return "%s {\n%s}\n" % (block_name, hti)
         else:
             return "\n"
