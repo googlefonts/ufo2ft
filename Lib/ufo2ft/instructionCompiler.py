@@ -2,6 +2,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 from fontTools.pens.pointPen import AbstractPointPen
+from fontTools.pens.transformPen import TransformPointPen
 from fontTools.ttLib.tables._g_a_s_p import \
     GASP_SYMMETRIC_GRIDFIT, GASP_SYMMETRIC_SMOOTHING, GASP_DOGRAY, GASP_GRIDFIT
 from math import log2
@@ -235,22 +236,23 @@ class HashPointPen(AbstractPointPen):
     def endPath(self):
         pass
 
-    def addPoint(self, pt, segmentType=None, smooth=False, name=None,
-                 identifier=None, **kwargs):
+    def addPoint(
+        self,
+        pt,
+        segmentType=None,
+        smooth=False,
+        name=None,
+        identifier=None,
+        **kwargs
+    ):
         if segmentType is None:
             pt_type = ""
         else:
             pt_type = segmentType[0]
         self.data.append("%s%s%s" % (pt_type, repr(pt[0]), repr(pt[1])))
 
-    def addComponent(self, baseGlyphName, transformation, identifier=None,
-                     **kwargs):
-        self.data.append("base:%s" % baseGlyphName)
-
-        for i, v in enumerate(transformation):
-            if transformation[i] != self.DEFAULT_TRANSFORM[i]:
-                self.data.append(str(round(v, 9)))
-
-        self.data.append("w%s" % self.width)
-        glyph = self.glyphset[baseGlyphName]
-        glyph.drawPoints(self)
+    def addComponent(
+        self, baseGlyphName, transformation, identifier=None, **kwargs
+    ):
+        tpen = TransformPointPen(self, transformation)
+        self.glyphset[baseGlyphName].drawPoints(tpen)
