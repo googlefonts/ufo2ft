@@ -18,7 +18,7 @@ from ufo2ft.featureCompiler import (
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
 from ufo2ft.constants import SPARSE_TTF_MASTER_TABLES, SPARSE_OTF_MASTER_TABLES
-from ufo2ft.util import getDefaultMasterFont
+from ufo2ft.util import getDefaultMasterFont, _getDefaultNotdefGlyph
 import logging
 
 try:
@@ -52,6 +52,9 @@ def compileOTF(
     layerName=None,
     skipExportGlyphs=None,
     debugFeatureFile=None,
+    cffVersion=1,
+    subroutinizer=None,
+    notdefGlyph=None,
     _tables=None,
 ):
     """Create FontTools CFF font from a UFO.
@@ -95,6 +98,15 @@ def compileOTF(
     "public.skipExportGlyphs" lib key will be consulted. If it doesn't exist,
     all glyphs are exported. UFO groups and kerning will be pruned of skipped
     glyphs.
+
+    *cffVersion* (int) is the CFF format, choose between 1 (default) and 2.
+
+    *subroutinizer* (Optional[str]) is the name of the library to use for
+      compressing CFF charstrings, if subroutinization is enabled by optimizeCFF
+      parameter. Choose between "compreffor" or "cffsubr".
+      By default "compreffor" is used for CFF 1, and "cffsubr" for CFF 2.
+      NOTE: cffsubr is required for subroutinizing CFF2 tables, as compreffor
+      currently doesn't support it.
     """
     logger.info("Pre-processing glyphs")
 
@@ -117,6 +129,7 @@ def compileOTF(
         ufo,
         glyphSet=glyphSet,
         glyphOrder=glyphOrder,
+        notdefGlyph=notdefGlyph,
         roundTolerance=roundTolerance,
         optimizeCFF=optimizeCFF >= CFFOptimization.SPECIALIZE,
         tables=_tables,
@@ -136,7 +149,10 @@ def compileOTF(
 
     postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
     otf = postProcessor.process(
-        useProductionNames, optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE
+        useProductionNames,
+        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+        subroutinizer=subroutinizer,
+        cffVersion=cffVersion,
     )
 
     return otf
@@ -160,6 +176,7 @@ def compileTTF(
     layerName=None,
     skipExportGlyphs=None,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools TrueType font from a UFO.
 
@@ -199,7 +216,7 @@ def compileTTF(
 
     logger.info("Building OpenType tables")
     outlineCompiler = outlineCompilerClass(
-        ufo, glyphSet=glyphSet, glyphOrder=glyphOrder
+        ufo, glyphSet=glyphSet, glyphOrder=glyphOrder, notdefGlyph=notdefGlyph
     )
     otf = outlineCompiler.compile()
 
@@ -234,6 +251,7 @@ def compileInterpolatableTTFs(
     layerNames=None,
     skipExportGlyphs=None,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools TrueType fonts from a list of UFOs with interpolatable
     outlines. Cubic curves are converted compatibly to quadratic curves using
@@ -289,6 +307,7 @@ def compileInterpolatableTTFs(
             ufo,
             glyphSet=glyphSet,
             glyphOrder=glyphOrder,
+            notdefGlyph=notdefGlyph,
             tables=SPARSE_TTF_MASTER_TABLES if layerName else None,
         )
         ttf = outlineCompiler.compile()
@@ -336,6 +355,7 @@ def compileInterpolatableTTFsFromDS(
     reverseDirection=True,
     inplace=False,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines. Cubic curves are converted compatibly to
@@ -374,6 +394,9 @@ def compileInterpolatableTTFsFromDS(
 
     skipExportGlyphs = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
 
+    if notdefGlyph is None:
+        notdefGlyph = _getDefaultNotdefGlyph(designSpaceDoc)
+
     ttfs = compileInterpolatableTTFs(
         ufos,
         preProcessorClass=preProcessorClass,
@@ -388,6 +411,7 @@ def compileInterpolatableTTFsFromDS(
         layerNames=layerNames,
         skipExportGlyphs=skipExportGlyphs,
         debugFeatureFile=debugFeatureFile,
+        notdefGlyph=notdefGlyph,
     )
 
     if inplace:
@@ -411,6 +435,7 @@ def compileInterpolatableOTFsFromDS(
     roundTolerance=None,
     inplace=False,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools CFF fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines.
@@ -447,6 +472,9 @@ def compileInterpolatableOTFsFromDS(
 
     skipExportGlyphs = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
 
+    if notdefGlyph is None:
+        notdefGlyph = _getDefaultNotdefGlyph(designSpaceDoc)
+
     otfs = []
     for source in designSpaceDoc.sources:
         otfs.append(
@@ -466,6 +494,7 @@ def compileInterpolatableOTFsFromDS(
                 inplace=inplace,
                 skipExportGlyphs=skipExportGlyphs,
                 debugFeatureFile=debugFeatureFile,
+                notdefGlyph=notdefGlyph,
                 _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
             )
         )
@@ -541,6 +570,7 @@ def compileVariableTTF(
     optimizeGvar=True,
     inplace=False,
     debugFeatureFile=None,
+    notdefGlyph=None,
 ):
     """Create FontTools TrueType variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
@@ -569,6 +599,7 @@ def compileVariableTTF(
         reverseDirection=reverseDirection,
         inplace=inplace,
         debugFeatureFile=debugFeatureFile,
+        notdefGlyph=notdefGlyph,
     )
 
     logger.info("Building variable TTF font")
@@ -595,12 +626,22 @@ def compileVariableCFF2(
     excludeVariationTables=(),
     inplace=False,
     debugFeatureFile=None,
+    optimizeCFF=CFFOptimization.SPECIALIZE,
+    notdefGlyph=None,
 ):
     """Create FontTools CFF2 variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
 
     *excludeVariationTables* is a list of sfnt table tags (str) that is passed on
       to fontTools.varLib.build, to skip building some variation tables.
+
+    *optimizeCFF* (int) defines whether the CFF charstrings should be
+      specialized and subroutinized. 1 (default) only enables the specialization;
+      2 (default) does both specialization and subroutinization. The value 0 is supposed
+      to disable both optimizations, however it's currently unused, because fontTools
+      has some issues generating a VF with non-specialized CFF2 charstrings:
+      fonttools/fonttools#1979.
+      NOTE: Subroutinization of variable CFF2 requires the "cffsubr" extra requirement.
 
     The rest of the arguments works the same as in the other compile functions.
 
@@ -619,13 +660,25 @@ def compileVariableCFF2(
         roundTolerance=roundTolerance,
         inplace=inplace,
         debugFeatureFile=debugFeatureFile,
+        notdefGlyph=notdefGlyph,
     )
 
     logger.info("Building variable CFF2 font")
 
-    varfont = varLib.build(otfDesignSpace, exclude=excludeVariationTables)[0]
+    optimizeCFF = CFFOptimization(optimizeCFF)
+
+    varfont = varLib.build(
+        otfDesignSpace,
+        exclude=excludeVariationTables,
+        # NOTE optimize=False won't change anything until this PR is merged
+        # https://github.com/fonttools/fonttools/pull/1979
+        optimize=optimizeCFF >= CFFOptimization.SPECIALIZE,
+    )[0]
 
     postProcessor = PostProcessor(varfont, baseUfo)
-    varfont = postProcessor.process(useProductionNames)
+    varfont = postProcessor.process(
+        useProductionNames,
+        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+    )
 
     return varfont

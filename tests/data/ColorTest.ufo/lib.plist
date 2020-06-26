@@ -39,15 +39,6 @@
         </array>
       </array>
     </array>
-    <key>com.github.googlei18n.ufo2ft.filters</key>
-    <array>
-      <dict>
-        <key>name</key>
-        <string>Explode Color Layer Glyphs</string>
-        <key>pre</key>
-        <true/>
-      </dict>
-    </array>
     <key>public.glyphOrder</key>
     <array>
       <string>space</string>
