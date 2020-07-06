@@ -8,6 +8,8 @@ from fontTools.misc.fixedTools import otRound
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import unicodeInScripts, classifyGlyphs
 from ufo2ft.fontInfoData import getAttrWithFallback
+from fontTools.subset import Subsetter
+import unicodedata
 
 
 class AbstractMarkPos(object):
@@ -257,6 +259,21 @@ class MarkFeatureWriter(BaseFeatureWriter):
             return False
         return super(MarkFeatureWriter, self).shouldContinue()
 
+    def _getNonSpacingMarkGlyphs(self, ttfont):
+        encoded_mark_glyphs = set()
+        cmap = ttfont.getBestCmap()
+        for uni, glyph_name in cmap.items():
+            glyph_type = unicodedata.category(chr(uni))
+            if glyph_type == "Mn":
+                encoded_mark_glyphs.add(glyph_name)
+
+        # Get unencoded mark glyphs using fontTools.subset
+        subsetter = Subsetter()
+        subsetter.glyph_names_requested = encoded_mark_glyphs
+        subsetter.options.notdef_glyph = False
+        subsetter._closure_glyphs(ttfont)
+        return subsetter.glyphs_retained
+
     def _getAnchorLists(self):
         gdefClasses = self.context.gdefClasses
         if gdefClasses.base is not None:
@@ -265,6 +282,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         else:
             # no GDEF table defined in feature file, include all glyphs
             include = None
+        nonSpacingMarkGlyphs = self._getNonSpacingMarkGlyphs(self.context.compiler.ttFont)
         result = OrderedDict()
         for glyphName, glyph in self.getOrderedGlyphSet().items():
             if include is not None and glyphName not in include:
@@ -275,6 +293,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 if not anchorName:
                     self.log.warning(
                         "unnamed anchor discarded in glyph '%s'", glyphName
+                    )
+                    continue
+                if anchorName.startswith("_") and glyphName not in nonSpacingMarkGlyphs:
+                    self.log.warning(
+                        "mark anchor discarded from base glyph '%s'", glyphName
                     )
                     continue
                 if anchorName in anchorDict:
