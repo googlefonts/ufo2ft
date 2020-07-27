@@ -7,6 +7,7 @@ from ufo2ft.filters import (
     UFO2FT_FILTERS_KEY,
     BaseFilter,
     getFilterClass,
+    loadFilterFromString,
     loadFilters,
     logger,
 )
@@ -104,24 +105,6 @@ def test_loadFilters_custom_namespace(ufo):
     assert isinstance(filter_obj, SelfDestructFilter)
 
 
-def test_loadFilters_args_missing(ufo):
-    del ufo.lib[UFO2FT_FILTERS_KEY][0]["args"]
-
-    with pytest.raises(TypeError) as exc_info:
-        loadFilters(ufo)
-
-    assert exc_info.match("missing")
-
-
-def test_loadFilters_args_unsupported(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["args"].append("baz")
-
-    with pytest.raises(TypeError) as exc_info:
-        loadFilters(ufo)
-
-    assert exc_info.match("unsupported")
-
-
 def test_loadFilters_include_all(ufo):
     _, [filter_obj] = loadFilters(ufo)
 
@@ -177,6 +160,19 @@ def test_loadFilters_kwargs_unsupported(ufo):
         loadFilters(ufo)
 
     assert exc_info.match("got an unsupported keyword")
+
+
+VALID_SPEC_STRINGS = [
+    "RemoveOverlapsFilter",
+    "PropagateAnchorsFilter(include=['a', 'b', 'c'])",
+    "ufo2ft.filters.fooBar::FooBarFilter(args=['aa', 'bb'], c=1)",
+]
+
+
+@pytest.mark.parametrize("spec", VALID_SPEC_STRINGS)
+def test_loadFilterFromString(spec, ufo):
+    philter = loadFilterFromString(spec)
+    assert callable(philter)
 
 
 def test_BaseFilter_repr():
