@@ -169,7 +169,7 @@ def findFeatureInsertionMarkers(feaFile):
     position in the FeatureFile statements AST."""
     insertion_tag2index = OrderedDict()
     for index, statement in enumerate(feaFile.statements):
-        if isinstance(statement, ast.Comment) and statement.text.startswith(
+        if isinstance(statement, ast.Comment) and statement.text.lstrip().startswith(
             "### INSERT"
         ):
             tag = statement.text[11:15]
