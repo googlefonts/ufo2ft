@@ -189,13 +189,15 @@ class PostProcessor(object):
             otf["post"].extraNames = []
             otf["post"].compile(otf)
 
-        if "CFF " in otf:
-            cff = otf["CFF "].cff.topDictIndex[0]
+        cff_tag = "CFF " if "CFF " in otf else "CFF2" if "CFF2" in otf else None
+        if cff_tag == "CFF " or (cff_tag == "CFF2" and otf.isLoaded(cff_tag)):
+            cff = otf[cff_tag].cff.topDictIndex[0]
             char_strings = cff.CharStrings.charStrings
             cff.CharStrings.charStrings = {
                 rename_map.get(n, n): v for n, v in char_strings.items()
             }
-            cff.charset = [rename_map.get(n, n) for n in cff.charset]
+            if cff_tag == "CFF ":
+                cff.charset = [rename_map.get(n, n) for n in cff.charset]
         return rename_map
 
     def _build_production_names(self):
