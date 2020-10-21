@@ -174,25 +174,29 @@ class InstructionCompiler(object):
             return "\n"
 
     def compile_maxp(self):
-        maxp = ""
+        maxp = self.font["maxp"]
         ttdata = self.ufo.lib.get(ufoLibKey, None)
         if ttdata:
             for name in (
                 "maxStorage",
                 "maxFunctionDefs",
-                # "maxInstructionDefs",  # Not supported by htic
+                "maxInstructionDefs",
                 "maxStackElements",
-                # "maxSizeOfInstructions",  # Not supported by htic; recalculated by compiler
+                # "maxSizeOfInstructions",  # Is recalculated below
                 "maxZones",
                 "maxTwilightPoints",
             ):
                 value = ttdata.get(name, None)
                 if value is not None:
-                    maxp += "%6i %s\n" % (value, name)
-        if maxp:
-            return "maxp {\n%s}\n" % maxp
-        else:
-            return "\n"
+                    setattr(maxp, name, value)
+
+        # Recalculate maxp.maxSizeOfInstructions
+        sizes = [
+            len(glyph.program.getBytecode())
+            for glyph in self.font["glyf"].glyphs.values()
+            if hasattr(glyph, "program")
+        ] + [0]
+        maxp.maxSizeOfInstructions = max(sizes)
 
     def compile_prep(self):
         self._compile_program("controlValueProgram", "prep")
@@ -200,8 +204,9 @@ class InstructionCompiler(object):
     def compile(self):
         self.compile_gasp()
         self.compile_head()
-        self.compile_maxp()
         self.compile_cvt()
         self.compile_fpgm()
         self.compile_prep()
         self.compile_glyf()
+        # maxp depends on the other programs, to it needs to be last
+        self.compile_maxp()
