@@ -43,6 +43,14 @@ class InstructionCompiler(object):
         assert table_tag in ("prep", "fpgm")
         ttdata = self.ufo.lib.get(ufoLibKey, None)
         if ttdata:
+            formatVersion = ttdata.get("formatVersion", None)
+            if int(formatVersion) != 1:
+                logger.error(
+                    f"Unknown formatVersion {formatVersion} "
+                    f"in key '{key}', "
+                    f"table '{table_tag}' will be empty in font."
+                )
+                return
             asm = ttdata.get(key, None)
             if asm is not None:
                 self.font[table_tag] = table = ttLib.newTable(table_tag)
@@ -57,6 +65,14 @@ class InstructionCompiler(object):
         cvts = []
         ttdata = self.ufo.lib.get(ufoLibKey, None)
         if ttdata:
+            formatVersion = ttdata.get("formatVersion", None)
+            if int(formatVersion) != 1:
+                logger.error(
+                    f"Unknown formatVersion {formatVersion} "
+                    f"in key 'controlValue', "
+                    f"table 'cvt' will be empty in font."
+                )
+                return
             cvt_list = ttdata.get("controlValue", None)
             if cvt_list is not None:
                 # Convert string keys to int
