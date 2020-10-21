@@ -10,26 +10,12 @@ import array
 
 from fontTools.pens.hashPointPen import HashPointPen
 from fontTools import ttLib
-from fontTools.ttLib.tables._g_a_s_p import (
-    GASP_SYMMETRIC_GRIDFIT,
-    GASP_SYMMETRIC_SMOOTHING,
-    GASP_DOGRAY,
-    GASP_GRIDFIT,
-)
-from fontTools.ttLib.tables._g_l_y_f import ROUND_XY_TO_GRID, USE_MY_METRICS
-from math import log2
+from fontTools.ttLib.tables._g_l_y_f import ROUND_XY_TO_GRID
 
 import logging
 
 
 logger = logging.getLogger(__name__)
-
-# Calculate the bit numbers for gasp flags
-doGray = log2(GASP_DOGRAY)
-doGridfit = log2(GASP_GRIDFIT)
-symGridfit = log2(GASP_SYMMETRIC_GRIDFIT)
-symSmoothing = log2(GASP_SYMMETRIC_SMOOTHING)
-
 
 ufoLibKey = "public.truetype.instructions"
 
