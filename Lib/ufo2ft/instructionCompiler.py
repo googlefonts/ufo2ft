@@ -104,18 +104,18 @@ class InstructionCompiler(object):
             self.font["gasp"] = gasp
 
     def compile_glyf(self):
-        glyf = []
         for name in sorted(self.ufo.keys()):
             glyph = self.ufo[name]
             ttdata = glyph.lib.get(ufoLibKey, None)
             if ttdata is None:
-                glyf.append("%s {\n}\n" % name)
+                continue
             else:
                 formatVersion = ttdata.get("formatVersion", None)
-                if formatVersion != "1":
+                if int(formatVersion) != 1:
                     logger.error(
-                        "Unknown formatVersion %i in glyph '%s', it will have no instructions in font."
-                        % (formatVersion, name)
+                        f"Unknown formatVersion {formatVersion} "
+                        "in glyph '{name}', it will have "
+                        "no instructions in font."
                     )
                     continue
 
@@ -125,19 +125,22 @@ class InstructionCompiler(object):
                 glyph_id = ttdata.get("id", None)
                 if glyph_id is None or glyph_id != hash_pen.hash:
                     logger.error(
-                        "Glyph hash mismatch, glyph '%s' will have no instructions in font."
-                        % name
+                        f"Glyph hash mismatch, glyph '{name}' will have "
+                        "no instructions in font."
                     )
                     continue
 
                 # Write hti code
-                pgm = ttdata.get("assembly", None)
-                if pgm is not None:
-                    glyf.append("%s {\n  %s\n}\n" % (name, pgm.strip()))
-        if glyf:
-            return "\n".join(glyf)
-        else:
-            return "\n"
+                asm = ttdata.get("assembly", None)
+                if asm is not None:
+                    production_name = self.rename_map.get(name, name)
+                    glyf = self.font["glyf"][production_name]
+                    glyf.program = ttLib.tables.ttProgram.Program()
+                    glyf.program.fromAssembly(asm)
+                    # Roundtrip once, or if the font is dumped to XML before
+                    # having been saved, the assembly code if will look awful.
+                    glyf.program._assemble()
+                    glyf.program._disassemble(preserve=True)
 
     def compile_head(self):
         head = ""
