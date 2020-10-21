@@ -136,7 +136,7 @@ class InstructionCompiler(object):
                 hash_pen = HashPointPen(glyph, self.ufo)
                 glyph.drawPoints(hash_pen)
                 glyph_id = ttdata.get("id", None)
-                if glyph_id is None or glyph_id != hash_pen.getHash():
+                if glyph_id is None or glyph_id != hash_pen.hash:
                     logger.error("Glyph hash mismatch, glyph '%s' will have no instructions in font." % name)
                     continue
 
