@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (
+    print_function,
+    division,
+    absolute_import,
+    unicode_literals,
+)
 
 import array
 
 from fontTools.pens.hashPointPen import HashPointPen
 from fontTools import ttLib
-from fontTools.ttLib.tables._g_a_s_p import \
-    GASP_SYMMETRIC_GRIDFIT, GASP_SYMMETRIC_SMOOTHING, GASP_DOGRAY, GASP_GRIDFIT
+from fontTools.ttLib.tables._g_a_s_p import (
+    GASP_SYMMETRIC_GRIDFIT,
+    GASP_SYMMETRIC_SMOOTHING,
+    GASP_DOGRAY,
+    GASP_GRIDFIT,
+)
 from math import log2
 
 import logging
@@ -104,7 +113,10 @@ class InstructionCompiler(object):
             else:
                 formatVersion = ttdata.get("formatVersion", None)
                 if formatVersion != "1":
-                    logger.error("Unknown formatVersion %i in glyph '%s', it will have no instructions in font." % (formatVersion, name))
+                    logger.error(
+                        "Unknown formatVersion %i in glyph '%s', it will have no instructions in font."
+                        % (formatVersion, name)
+                    )
                     continue
 
                 # Check if glyph hash matches the current outlines
@@ -112,7 +124,10 @@ class InstructionCompiler(object):
                 glyph.drawPoints(hash_pen)
                 glyph_id = ttdata.get("id", None)
                 if glyph_id is None or glyph_id != hash_pen.hash:
-                    logger.error("Glyph hash mismatch, glyph '%s' will have no instructions in font." % name)
+                    logger.error(
+                        "Glyph hash mismatch, glyph '%s' will have no instructions in font."
+                        % name
+                    )
                     continue
 
                 # Write hti code
