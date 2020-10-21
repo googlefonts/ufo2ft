@@ -147,8 +147,7 @@ class InstructionCompiler(object):
                     # Reset all flags we will calculate ourselves
                     c.flags &= ~ROUND_XY_TO_GRID
 
-                    # Set ROUND_XY_TO_GRID if the component has an
-                    # offset
+                    # Set ROUND_XY_TO_GRID if the component has an offset
                     if c.x != 0 or c.y != 0:
                         c.flags |= ROUND_XY_TO_GRID
 
