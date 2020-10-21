@@ -2,6 +2,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 from fontTools.pens.hashPointPen import HashPointPen
+from fontTools import ttLib
 from fontTools.ttLib.tables._g_a_s_p import \
     GASP_SYMMETRIC_GRIDFIT, GASP_SYMMETRIC_SMOOTHING, GASP_DOGRAY, GASP_GRIDFIT
 from math import log2
@@ -17,51 +18,6 @@ doGridfit = log2(GASP_GRIDFIT)
 symGridfit = log2(GASP_SYMMETRIC_GRIDFIT)
 symSmoothing = log2(GASP_SYMMETRIC_SMOOTHING)
 
-
-hti_flags = """flags {
-      1 X     # X axis
-      0 Y     # Y axis
-      1 O     # Use original outline
-      0 N     # Use gridfitted outline
-      1 R     # Round distance; or perpendicular to line
-      0 r     # Do not round distance; or parallel to line
-      1 M     # Set rp0 to point number on the stack
-      0 m     # Do not set rp0
-      1 1     # Use rp1
-      0 2     # Use rp2
-      1 D     # Obey minimum distance VTT: >
-      0 d     # Do not obey minimum distance VTT: <
-     00 Gr    # Gray
-     01 Bl    # Black
-     10 Wh    # White
-
-  # Combined flags
-  00000 mdrGr
-  00001 mdrBl
-  00010 mdrWh
-  00100 mdRGr
-  00101 mdRBl
-  00110 mdRWh
-  01000 mDrGr
-  01001 mDrBl
-  01010 mDrWh
-  01100 mDRGr
-  01101 mDRBl
-  01110 mDRWh
-  10000 MdrGr
-  10001 MdrBl
-  10010 MdrWh
-  10100 MdRGr
-  10101 MdRBl
-  10110 MdRWh
-  11000 MDrGr
-  11001 MDrBl
-  11010 MDrWh
-  11100 MDRGr
-  11101 MDRBl
-  11110 MDRWh
-}
-"""
 
 ufoLibKey = "public.truetype.instructions"
 
@@ -94,30 +50,35 @@ class InstructionCompiler(object):
     def compile_cvt(self):
         return self._compile_program("controlValue", "cvt")
 
-    def compile_flags(self):
-        return hti_flags
-
     def compile_fpgm(self):
         return self._compile_program("fontProgram", "fpgm")
 
     def compile_gasp(self):
-        gasp = ""
+        gasp = ttLib.newTable("gasp")
+        gasp.gaspRange = {}
+        uses_symmetric = False
         if hasattr(self.ufo.info, "openTypeGaspRangeRecords"):
             ufo_gasp = self.ufo.info.openTypeGaspRangeRecords
             if ufo_gasp is not None:
                 for r in self.ufo.info.openTypeGaspRangeRecords:
                     bits = r["rangeGaspBehavior"]
-                    gasp += "%7i %9s %6s %10s %12s\n" % (
-                        r["rangeMaxPPEM"],
-                        "doGridfit" if doGridfit in bits else "",
-                        "doGray" if doGray in bits else "",
-                        "symGridfit" if symGridfit in bits else "",
-                        "symSmoothing" if symSmoothing in bits else "",
-                    )
-        if gasp:
-            return "gasp {\n%s}\n" % gasp
-        else:
-            return "\n"
+                    flags = 0
+                    if doGridfit in bits:
+                        flags |= GASP_GRIDFIT
+                    if doGray in bits:
+                        flags |= GASP_DOGRAY
+                    if symGridfit in bits:
+                        flags |= GASP_SYMMETRIC_GRIDFIT
+                        uses_symmetric = True
+                    if symSmoothing in bits:
+                        flags |= GASP_SYMMETRIC_SMOOTHING
+                        uses_symmetric = True
+                    gasp.gaspRange[r["rangeMaxPPEM"]] = flags
+
+        if gasp.gaspRange:
+            # Only write gasp to font if it contains any ranges
+            gasp.version = 1 if uses_symmetric else 0
+            self.font["gasp"] = gasp
 
     def compile_glyf(self):
         glyf = []
@@ -205,14 +166,10 @@ class InstructionCompiler(object):
         return self._compile_program("controlValueProgram", "prep")
 
     def compile(self):
-        htic = "\n".join([
-            self.compile_flags(),
-            self.compile_gasp(),
-            self.compile_head(),
-            self.compile_maxp(),
-            self.compile_cvt(),
-            self.compile_fpgm(),
-            self.compile_prep(),
-            self.compile_glyf()
-        ]) + "\n"
-        return htic
+        self.compile_gasp()
+        self.compile_head()
+        self.compile_maxp()
+        self.compile_cvt()
+        self.compile_fpgm()
+        self.compile_prep()
+        self.compile_glyf()
