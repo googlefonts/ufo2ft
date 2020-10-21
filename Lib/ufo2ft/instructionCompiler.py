@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import, unicode_literals
 
+import array
+
 from fontTools.pens.hashPointPen import HashPointPen
 from fontTools import ttLib
 from fontTools.ttLib.tables._g_a_s_p import \
@@ -34,21 +36,32 @@ class InstructionCompiler(object):
         if ttdata:
             value = ttdata.get(key, None)
             if value is not None:
-                if isinstance(value, str):
-                    hti += value
-                else:
-                    # CVT is a list
-                    cvts = []
-                    for cvt in value:
-                        cvts.append("%6s %s" % (cvt["value"], cvt["id"]))
-                    hti = "\n".join(cvts) + "\n"
+                hti += value
+
         if hti:
             return "%s {\n%s}\n" % (block_name, hti)
         else:
             return "\n"
 
     def compile_cvt(self):
-        return self._compile_program("controlValue", "cvt")
+        cvts = []
+        ttdata = self.ufo.lib.get(ufoLibKey, None)
+        if ttdata:
+            cvt_dict = ttdata.get("controlValue", None)
+            if cvt_dict is not None:
+                # Convert string keys to int
+                cvt_dict = [int(v) for v in cvt_dict.keys()]
+                # Find the maximum cvt index
+                # We can't just use the dict keys because the cvt must be filled
+                # consecutively.
+                max_cvt = max(cvt_dict.keys())
+                # Make value list, filling entries for missing keys with 0
+                cvts = [cvt_dict.get(i, 0) for i in range(max_cvt)]
+
+        if cvts:
+            # Only write cvt to font if it contains any values
+            self.font["cvt "] = cvt = ttLib.newTable("cvt ")
+            cvt.values = array.array("h", cvts)
 
     def compile_fpgm(self):
         return self._compile_program("fontProgram", "fpgm")
