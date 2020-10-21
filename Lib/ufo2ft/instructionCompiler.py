@@ -93,33 +93,6 @@ class InstructionCompiler(object):
     def compile_fpgm(self):
         self._compile_program("fontProgram", "fpgm")
 
-    def compile_gasp(self):
-        gasp = ttLib.newTable("gasp")
-        gasp.gaspRange = {}
-        uses_symmetric = False
-        if hasattr(self.ufo.info, "openTypeGaspRangeRecords"):
-            ufo_gasp = self.ufo.info.openTypeGaspRangeRecords
-            if ufo_gasp is not None:
-                for r in self.ufo.info.openTypeGaspRangeRecords:
-                    bits = r["rangeGaspBehavior"]
-                    flags = 0
-                    if doGridfit in bits:
-                        flags |= GASP_GRIDFIT
-                    if doGray in bits:
-                        flags |= GASP_DOGRAY
-                    if symGridfit in bits:
-                        flags |= GASP_SYMMETRIC_GRIDFIT
-                        uses_symmetric = True
-                    if symSmoothing in bits:
-                        flags |= GASP_SYMMETRIC_SMOOTHING
-                        uses_symmetric = True
-                    gasp.gaspRange[r["rangeMaxPPEM"]] = flags
-
-        if gasp.gaspRange:
-            # Only write gasp to font if it contains any ranges
-            gasp.version = 1 if uses_symmetric else 0
-            self.font["gasp"] = gasp
-
     def compile_glyf(self):
         for name in sorted(self.ufo.keys()):
             glyph = self.ufo[name]
@@ -230,7 +203,6 @@ class InstructionCompiler(object):
         self._compile_program("controlValueProgram", "prep")
 
     def compile(self):
-        self.compile_gasp()
         self.compile_cvt()
         self.compile_fpgm()
         self.compile_prep()
