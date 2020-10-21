@@ -229,26 +229,10 @@ class PostProcessor(object):
         return rename_map
 
     def _compile_truetype_hinting(self, rename_map={}):
-        try:
-            from htic import toFontTools
-        except ImportError:
-            logger.warning(
-                "TrueType instruction compiler 'htic' is not available."
-            )
-            return
-
         logger.info("Compiling TrueType hinting")
         from ufo2ft.instructionCompiler import InstructionCompiler
-        import tempfile
         ic = InstructionCompiler(ufo=self.ufo, ttf=self.otf, rename_map=rename_map)
-        hti = ic.compile()
-
-        # Send the generated HTI language code to the compiler.
-        # htic only reads from a file, so we make a temporary file.
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as f:
-            f.write(hti)
-            f.seek(0)
-            toFontTools(f.name, self.otf)
+        ic.compile()
 
     @staticmethod
     def _unique_name(name, seen):
