@@ -30,18 +30,19 @@ class InstructionCompiler(object):
         self.font = ttf
         self.rename_map = rename_map
 
-    def _compile_program(self, key, block_name):
-        hti = ""
+    def _compile_program(self, key, table_tag):
+        assert table_tag in ("prep", "fpgm")
         ttdata = self.ufo.lib.get(ufoLibKey, None)
         if ttdata:
-            value = ttdata.get(key, None)
-            if value is not None:
-                hti += value
-
-        if hti:
-            return "%s {\n%s}\n" % (block_name, hti)
-        else:
-            return "\n"
+            asm = ttdata.get(key, None)
+            if asm is not None:
+                self.font[table_tag] = table = ttLib.newTable(table_tag)
+                table.program = ttLib.tables.ttProgram.Program()
+                table.program.fromAssembly(asm)
+                # Roundtrip once, or if the font is dumped to XML before having
+                # been saved, the assembly code if will look awful.
+                table.program._assemble()
+                table.program._disassemble(preserve=True)
 
     def compile_cvt(self):
         cvts = []
@@ -64,7 +65,7 @@ class InstructionCompiler(object):
             cvt.values = array.array("h", cvts)
 
     def compile_fpgm(self):
-        return self._compile_program("fontProgram", "fpgm")
+        self._compile_program("fontProgram", "fpgm")
 
     def compile_gasp(self):
         gasp = ttLib.newTable("gasp")
@@ -176,7 +177,7 @@ class InstructionCompiler(object):
             return "\n"
 
     def compile_prep(self):
-        return self._compile_program("controlValueProgram", "prep")
+        self._compile_program("controlValueProgram", "prep")
 
     def compile(self):
         self.compile_gasp()
