@@ -202,35 +202,22 @@ class InstructionCompiler(object):
                                     found_metrics = True
 
     def compile_head(self):
-        head = ""
+        head = self.font["head"]
 
         # Head flags
         if hasattr(self.ufo.info, "openTypeHeadFlags"):
             flags = self.ufo.info.openTypeHeadFlags
             if flags is not None:
-                head += "%4i flags.instructionsMayDependOnPointSize\n" % (
-                    1 if 2 in flags else 0
-                )
-                head += "%4i flags.forcePpemToIntegerValues\n" % (
-                    1 if 3 in flags else 0
-                )
-                head += "%4i flags.instructionsMayAlterAdvanceWidth\n" % (
-                    1 if 4 in flags else 0
-                )
-                head += "%4i flags.fontOptimizedForClearType\n" % (
-                    1 if 13 in flags else 0
-                )
+                for bitIndex in range(16):
+                    bitValue = 1 if bitIndex in flags else 0
+                    head.flags &= ~(1 << bitIndex)
+                    head.flags |= (bitValue << bitIndex)
 
         # Lowest rec PPEM
         if hasattr(self.ufo.info, "openTypeHeadLowestRecPPEM"):
             lowestRecPPEM = self.ufo.info.openTypeHeadLowestRecPPEM
             if lowestRecPPEM is not None:
-                head += "%4i lowestRecPPEM\n" % lowestRecPPEM
-
-        if head:
-            return "head {\n%s}\n" % head
-        else:
-            return "\n"
+                head.lowestRecPPEM = lowestRecPPEM
 
     def compile_maxp(self):
         maxp = self.font["maxp"]
