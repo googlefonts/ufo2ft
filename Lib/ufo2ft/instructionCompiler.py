@@ -201,24 +201,6 @@ class InstructionCompiler(object):
                                     c.flags |= USE_MY_METRICS
                                     found_metrics = True
 
-    def compile_head(self):
-        head = self.font["head"]
-
-        # Head flags
-        if hasattr(self.ufo.info, "openTypeHeadFlags"):
-            flags = self.ufo.info.openTypeHeadFlags
-            if flags is not None:
-                for bitIndex in range(16):
-                    bitValue = 1 if bitIndex in flags else 0
-                    head.flags &= ~(1 << bitIndex)
-                    head.flags |= (bitValue << bitIndex)
-
-        # Lowest rec PPEM
-        if hasattr(self.ufo.info, "openTypeHeadLowestRecPPEM"):
-            lowestRecPPEM = self.ufo.info.openTypeHeadLowestRecPPEM
-            if lowestRecPPEM is not None:
-                head.lowestRecPPEM = lowestRecPPEM
-
     def compile_maxp(self):
         maxp = self.font["maxp"]
         ttdata = self.ufo.lib.get(ufoLibKey, None)
@@ -249,7 +231,6 @@ class InstructionCompiler(object):
 
     def compile(self):
         self.compile_gasp()
-        self.compile_head()
         self.compile_cvt()
         self.compile_fpgm()
         self.compile_prep()
