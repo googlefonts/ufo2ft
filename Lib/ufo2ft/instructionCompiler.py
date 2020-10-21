@@ -133,7 +133,7 @@ class InstructionCompiler(object):
                     continue
 
                 # Check if glyph hash matches the current outlines
-                hash_pen = HashPointPen(glyph, self.ufo)
+                hash_pen = HashPointPen(glyph.width, self.ufo)
                 glyph.drawPoints(hash_pen)
                 glyph_id = ttdata.get("id", None)
                 if glyph_id is None or glyph_id != hash_pen.hash:
