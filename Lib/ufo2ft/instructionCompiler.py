@@ -97,9 +97,9 @@ class InstructionCompiler(object):
         for name in sorted(self.ufo.keys()):
             glyph = self.ufo[name]
             ttdata = glyph.lib.get(ufoLibKey, None)
-            if ttdata is None:
-                continue
-            else:
+            production_name = self.rename_map.get(name, name)
+            glyf = self.font["glyf"][production_name]
+            if ttdata is not None:
                 formatVersion = ttdata.get("formatVersion", None)
                 if int(formatVersion) != 1:
                     logger.error(
@@ -123,8 +123,6 @@ class InstructionCompiler(object):
                 # Compile the glyph program
                 asm = ttdata.get("assembly", None)
                 if asm is not None:
-                    production_name = self.rename_map.get(name, name)
-                    glyf = self.font["glyf"][production_name]
                     glyf.program = ttLib.tables.ttProgram.Program()
                     glyf.program.fromAssembly(asm)
                     # Roundtrip once, or if the font is dumped to XML before
@@ -132,47 +130,47 @@ class InstructionCompiler(object):
                     glyf.program._assemble()
                     glyf.program._disassemble(preserve=True)
 
-                    # Handle composites
-                    if glyf.isComposite():
-                        # Remove empty glyph programs from composite glyphs
-                        if not glyf.program:
-                            delattr(glyf, "program")
+            # Handle composites
+            if glyf.isComposite():
+                # Remove empty glyph programs from composite glyphs
+                if hasattr(glyf, "program") and not glyf.program:
+                    delattr(glyf, "program")
 
-                        # Recalculate component flags
+                # Recalculate component flags
 
-                        # TODO: Take these values from the UFO. See
-                        # https://github.com/unified-font-object/ufo-spec/issues/93#issuecomment-650253676
-                        # https://github.com/unified-font-object/ufo-spec/issues/115
-                        found_metrics = False
-                        width, _lsb = self.font["hmtx"][name]
-                        for c in glyf.components:
-                            # Reset all flags we will calculate ourselves
-                            c.flags &= ~USE_MY_METRICS
-                            c.flags &= ~ROUND_XY_TO_GRID
+                # TODO: Take these values from the UFO. See
+                # https://github.com/unified-font-object/ufo-spec/issues/93#issuecomment-650253676
+                # https://github.com/unified-font-object/ufo-spec/issues/115
+                found_metrics = False
+                width, _lsb = self.font["hmtx"][name]
+                for c in glyf.components:
+                    # Reset all flags we will calculate ourselves
+                    c.flags &= ~USE_MY_METRICS
+                    c.flags &= ~ROUND_XY_TO_GRID
 
-                            # Set ROUND_XY_TO_GRID if the component has an
-                            # offset
-                            if c.x != 0 or c.y != 0:
-                                c.flags |= ROUND_XY_TO_GRID
+                    # Set ROUND_XY_TO_GRID if the component has an
+                    # offset
+                    if c.x != 0 or c.y != 0:
+                        c.flags |= ROUND_XY_TO_GRID
 
-                            try:
-                                _baseName, transform = c.getComponentInfo()
-                            except AttributeError:
-                                continue
-                            try:
-                                baseMetrics = self.font["hmtx"][c.glyphName]
-                            except KeyError:
-                                continue
-                            else:
-                                # Set USE_MY_METRICS on the first matching
-                                # component
-                                if (
-                                    not found_metrics
-                                    and baseMetrics[0] == width
-                                    and transform[:-1] == (1, 0, 0, 1, 0)
-                                ):
-                                    c.flags |= USE_MY_METRICS
-                                    found_metrics = True
+                    try:
+                        _baseName, transform = c.getComponentInfo()
+                    except AttributeError:
+                        continue
+                    try:
+                        baseMetrics = self.font["hmtx"][c.glyphName]
+                    except KeyError:
+                        continue
+                    else:
+                        # Set USE_MY_METRICS on the first matching
+                        # component
+                        if (
+                            not found_metrics
+                            and baseMetrics[0] == width
+                            and transform[:-1] == (1, 0, 0, 1, 0)
+                        ):
+                            c.flags |= USE_MY_METRICS
+                            found_metrics = True
 
     def compile_maxp(self):
         maxp = self.font["maxp"]
