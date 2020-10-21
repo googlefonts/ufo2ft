@@ -47,13 +47,13 @@ class InstructionCompiler(object):
         cvts = []
         ttdata = self.ufo.lib.get(ufoLibKey, None)
         if ttdata:
-            cvt_dict = ttdata.get("controlValue", None)
-            if cvt_dict is not None:
+            cvt_list = ttdata.get("controlValue", None)
+            if cvt_list is not None:
                 # Convert string keys to int
-                cvt_dict = [int(v) for v in cvt_dict.keys()]
-                # Find the maximum cvt index
-                # We can't just use the dict keys because the cvt must be filled
-                # consecutively.
+                cvt_dict = {int(v["id"]): v["value"] for v in cvt_list}
+                # Find the maximum cvt index.
+                # We can't just use the dict keys because the cvt must be
+                # filled consecutively.
                 max_cvt = max(cvt_dict.keys())
                 # Make value list, filling entries for missing keys with 0
                 cvts = [cvt_dict.get(i, 0) for i in range(max_cvt)]
