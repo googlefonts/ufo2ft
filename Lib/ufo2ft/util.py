@@ -33,10 +33,10 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
         glyphOrder = getattr(font, "glyphOrder", ())
 
     names = set(font.keys())
-    if "public.skipExportGlyphs" in font.lib.keys():
+    if hasattr(font, "lib") and "public.skipExportGlyphs" in font.lib.keys():
         non_exporting = font.lib["public.skipExportGlyphs"]
         names = [g for g in names if g not in non_exporting]
-        
+
     order = []
     if ".notdef" in names:
         names.remove(".notdef")
