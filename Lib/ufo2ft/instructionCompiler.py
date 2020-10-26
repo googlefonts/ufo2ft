@@ -10,7 +10,11 @@ import array
 
 from fontTools.pens.hashPointPen import HashPointPen
 from fontTools import ttLib
-from fontTools.ttLib.tables._g_l_y_f import ROUND_XY_TO_GRID
+from fontTools.ttLib.tables._g_l_y_f import (
+    OVERLAP_COMPOUND,
+    ROUND_XY_TO_GRID,
+    USE_MY_METRICS,
+)
 
 import logging
 
@@ -122,20 +126,56 @@ class InstructionCompiler(object):
                 if hasattr(glyf, "program") and not glyf.program:
                     delattr(glyf, "program")
 
-                # Recalculate component flags
+                # Set component flags
 
-                # TODO: Take these values from the UFO. See
-                # https://github.com/unified-font-object/ufo-spec/issues/93#issuecomment-650253676
-                # https://github.com/unified-font-object/ufo-spec/issues/115
-                # See also outlineCompiler.OutlineTTFCompiler.autoUseMyMetrics
-                width, _lsb = self.font["hmtx"][name]
-                for c in glyf.components:
-                    # Reset all flags we will calculate ourselves
-                    c.flags &= ~ROUND_XY_TO_GRID
+                # We need to decide when to set the flags automatically.
+                # Let's assume if any lib key is not there, or the component
+                # doesn't have an identifier, we should autoset all component
+                # flags.
+                for i, c in enumerate(glyf.components):
+                    if (
+                        glyph.components[i].identifier is None
+                        or "public.objectLibs" not in glyph.lib
+                        or "public.objectIdentifiers"
+                        not in glyph.lib["public.objectLibs"]
+                        or glyph.components[i].identifier
+                        not in glyph.lib["public.objectLibs"][
+                            "public.objectIdentifiers"
+                        ]
+                        or "public.truetype.instructions"
+                        not in glyph.lib["public.objectLibs"][
+                            "public.objectIdentifiers"
+                        ][glyph.components[i].identifier]
+                    ):
+                        # Auto set
 
-                    # Set ROUND_XY_TO_GRID if the component has an offset
-                    if c.x != 0 or c.y != 0:
-                        c.flags |= ROUND_XY_TO_GRID
+                        # We don't try to set the "OVERLAP_COMPOUND" flag
+
+                        # Set "ROUND_XY_TO_GRID" if the component has an offset
+                        if c.x != 0 or c.y != 0:
+                            c.flags &= ~ROUND_XY_TO_GRID
+                            c.flags |= ROUND_XY_TO_GRID
+
+                        # "USE_MY_METRICS" has been set already by
+                        # outlineCompiler.OutlineTTFCompiler.autoUseMyMetrics
+
+                    else:
+                        # Use values from lib
+
+                        flags = glyph.lib["public.objectLibs"][
+                            "public.objectIdentifiers"
+                        ][glyph.components[i].identifier][
+                            "public.truetype.instructions"
+                        ]
+
+                        for key, flag in (
+                            ("overlap", OVERLAP_COMPOUND),
+                            ("round", ROUND_XY_TO_GRID),
+                            ("useMyMetrics", USE_MY_METRICS),
+                        ):
+                            c.flags &= ~flag
+                            if flags.get(key, False):
+                                c.flags |= flag
 
     def compile_maxp(self):
         maxp = self.font["maxp"]
