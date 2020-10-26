@@ -69,7 +69,7 @@ class InstructionCompiler(object):
                 # filled consecutively.
                 max_cvt = max(cvt_dict.keys())
                 # Make value list, filling entries for missing keys with 0
-                cvts = [cvt_dict.get(i, 0) for i in range(max_cvt)]
+                cvts = [cvt_dict.get(i, 0) for i in range(max_cvt + 1)]
 
         if cvts:
             # Only write cvt to font if it contains any values
