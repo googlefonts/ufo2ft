@@ -133,19 +133,20 @@ class InstructionCompiler(object):
                 # doesn't have an identifier, we should autoset all component
                 # flags.
                 for i, c in enumerate(glyf.components):
+                    ufo_component = glyph.components[i]
                     if (
-                        glyph.components[i].identifier is None
+                        ufo_component.identifier is None
                         or "public.objectLibs" not in glyph.lib
                         or "public.objectIdentifiers"
                         not in glyph.lib["public.objectLibs"]
-                        or glyph.components[i].identifier
+                        or ufo_component.identifier
                         not in glyph.lib["public.objectLibs"][
                             "public.objectIdentifiers"
                         ]
                         or "public.truetype.instructions"
                         not in glyph.lib["public.objectLibs"][
                             "public.objectIdentifiers"
-                        ][glyph.components[i].identifier]
+                        ][ufo_component.identifier]
                     ):
                         # Auto set
 
