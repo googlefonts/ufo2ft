@@ -10,6 +10,7 @@ from ufo2ft.featureWriters.markFeatureWriter import (
 from ufo2ft.featureCompiler import parseLayoutFeatures
 
 import pytest
+import os
 from . import FeatureWriterTest
 
 
@@ -609,9 +610,9 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         testufo.newGlyph("Alpha").appendAnchor({"name": "topleft", "x": -10, "y": 400})
         testufo.newGlyph("psili").appendAnchor({"name": "_topleft", "x": 0, "y": 50})
         dotaccentcomb = testufo.newGlyph("dotaccentcomb")
-        # this mark glyph has more than one mark anchor, but only one will be
-        # used to define its markClass. Following Glyphs.app, the anchors
-        # '_bottom' and '_top' get priority over others.
+        # this mark glyph has more than one mark anchor, and both will be
+        # generated. Since the two mark anchors cannot cohabit in the same
+        # mark lookup, two lookups will be generated.
         dotaccentcomb.anchors = [
             {"name": "_center", "x": 0, "y": 0},
             {"name": "_top", "x": 0, "y": 0},
@@ -641,15 +642,20 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         assert str(generated) == dedent(
             """\
+            markClass dotaccentcomb <anchor 0 0> @MC_center;
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass dotaccentcomb <anchor 0 0> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mark {
                 lookup mark2base {
+                    pos base D <anchor 320 360> mark @MC_center;
+                } mark2base;
+
+                lookup mark2base_1 {
                     pos base D <anchor 300 700> mark @MC_top;
                     pos base a <anchor 100 200> mark @MC_top;
-                } mark2base;
+                } mark2base_1;
 
                 lookup mark2liga {
                     pos ligature f_i <anchor 100 500> mark @MC_top
@@ -667,6 +673,30 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
+            """
+        )
+
+    def test_multiple_anchor_classes(self, FontClass):
+        dirname = os.path.dirname(os.path.dirname(__file__))
+        fontPath = os.path.join(dirname, "data", "MultipleAnchorClasses.ufo")
+        testufo = FontClass(fontPath)
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor -175 589> @MC_topA;
+            markClass acutecomb <anchor -175 572> @MC_topE;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 515 581> mark @MC_topA;
+                } mark2base;
+
+                lookup mark2base_1 {
+                    pos base e <anchor -21 396> mark @MC_topE;
+                } mark2base_1;
+
+            } mark;
             """
         )
 
