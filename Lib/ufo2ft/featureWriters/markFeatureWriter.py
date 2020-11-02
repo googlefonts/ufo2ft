@@ -488,10 +488,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
             for markClass in markClasses
         }
         for markGlyph, markClasses in markGlyphToMarkClasses.items():
-            for markClass in markClasses:
-                for other in markClasses:
-                    if other != markClass:
-                        adjacency[markClass].add(other)
+            for markClass, other in itertools.combinations(markClasses, 2):
+                adjacency[markClass].add(other)
+                adjacency[other].add(markClass)
         colorGroups = colorGraph(adjacency)
         # Sort the groups for reproducibility
         colorGroups = sorted(colorGroups)
