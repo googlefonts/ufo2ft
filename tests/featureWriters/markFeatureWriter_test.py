@@ -676,7 +676,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
-    def test_multiple_anchor_classes(self, FontClass):
+    def test_multiple_anchor_classes_base(self, FontClass):
         dirname = os.path.dirname(os.path.dirname(__file__))
         fontPath = os.path.join(dirname, "data", "MultipleAnchorClasses.ufo")
         testufo = FontClass(fontPath)
@@ -695,6 +695,47 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2base_1 {
                     pos base e <anchor -21 396> mark @MC_topE;
                 } mark2base_1;
+
+            } mark;
+            """
+        )
+
+    def test_multiple_anchor_classes_liga(self, FontClass):
+        ufo = FontClass()
+        liga = ufo.newGlyph("f_i")
+        liga.appendAnchor({"name": "top_1", "x": 100, "y": 500})
+        liga.appendAnchor({"name": "top_2", "x": 600, "y": 500})
+        ligaOther = ufo.newGlyph("f_f")
+        ligaOther.appendAnchor({"name": "topOther_1", "x": 101, "y": 501})
+        ligaOther.appendAnchor({"name": "topOther_2", "x": 601, "y": 501})
+        ligaMix = ufo.newGlyph("f_l")
+        ligaMix.appendAnchor({"name": "top_1", "x": 102, "y": 502})
+        ligaMix.appendAnchor({"name": "topOther_2", "x": 602, "y": 502})
+        acutecomb = ufo.newGlyph("acutecomb")
+        acutecomb.appendAnchor({"name": "_top", "x": 100, "y": 200})
+        acutecomb.appendAnchor({"name": "_topOther", "x": 150, "y": 250})
+
+        generated = self.writeFeatures(ufo)
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass acutecomb <anchor 150 250> @MC_topOther;
+
+            feature mark {
+                lookup mark2liga {
+                    pos ligature f_i <anchor 100 500> mark @MC_top
+                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_l <anchor 102 502> mark @MC_top
+                        ligComponent <anchor NULL>;
+                } mark2liga;
+
+                lookup mark2liga_1 {
+                    pos ligature f_f <anchor 101 501> mark @MC_topOther
+                        ligComponent <anchor 601 501> mark @MC_topOther;
+                    pos ligature f_l <anchor NULL>
+                        ligComponent <anchor 602 502> mark @MC_topOther;
+                } mark2liga_1;
 
             } mark;
             """
