@@ -9,6 +9,14 @@ logger = logging.getLogger(__name__)
 
 class FlattenComponentsFilter(BaseFilter):
     def __call__(self, font, glyphSet=None):
+        """
+        Call the callable to callable.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            glyphSet: (todo): write your description
+        """
         if super(FlattenComponentsFilter, self).__call__(font, glyphSet):
             modified = self.context.modified
             if modified:
@@ -16,6 +24,13 @@ class FlattenComponentsFilter(BaseFilter):
             return modified
 
     def filter(self, glyph):
+        """
+        Filter the glyph from the glyph.
+
+        Args:
+            self: (todo): write your description
+            glyph: (todo): write your description
+        """
         flattened = False
         if not glyph.components:
             return flattened

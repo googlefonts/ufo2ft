@@ -11,6 +11,16 @@ from . import FeatureWriterTest
 
 
 def makeUFO(cls, glyphMap, groups=None, kerning=None, features=None):
+    """
+    Return a new : class with the given glyph.
+
+    Args:
+        cls: (todo): write your description
+        glyphMap: (dict): write your description
+        groups: (array): write your description
+        kerning: (todo): write your description
+        features: (todo): write your description
+    """
     ufo = cls()
     for name, uni in glyphMap.items():
         glyph = ufo.newGlyph(name)
@@ -26,18 +36,42 @@ def makeUFO(cls, glyphMap, groups=None, kerning=None, features=None):
 
 
 def getClassDefs(feaFile):
+    """
+    Returns all class names of a class name
+
+    Args:
+        feaFile: (str): write your description
+    """
     return [s for s in feaFile.statements if isinstance(s, ast.GlyphClassDefinition)]
 
 
 def getGlyphs(classDef):
+    """
+    Returns a list of all glyphs in the given class.
+
+    Args:
+        classDef: (todo): write your description
+    """
     return [str(g) for g in classDef.glyphs.glyphSet()]
 
 
 def getLookups(feaFile):
+    """
+    Return a list of all statements file
+
+    Args:
+        feaFile: (str): write your description
+    """
     return [s for s in feaFile.statements if isinstance(s, ast.LookupBlock)]
 
 
 def getPairPosRules(lookup):
+    """
+    Return a list of statements for the given lookup.
+
+    Args:
+        lookup: (todo): write your description
+    """
     return [s for s in lookup.statements if isinstance(s, ast.PairPosStatement)]
 
 
@@ -46,6 +80,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
     FeatureWriter = KernFeatureWriter
 
     def test_cleanup_missing_glyphs(self, FontClass):
+        """
+        Test for missing glyphs.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         groups = {
             "public.kern1.A": ["A", "Aacute", "Abreve", "Acircumflex"],
             "public.kern2.B": ["B", "D", "E", "F"],
@@ -87,6 +128,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert str(rules[0]) == "pos @kern1.A @kern2.B 10;"
 
     def test_ignoreMarks(self, FontClass):
+        """
+        Dump the kernames of the kernames.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         font = FontClass()
         for name in ("one", "four", "six"):
             font.newGlyph(name)
@@ -128,6 +176,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_mark_to_base_kern(self, FontClass):
+        """
+        Mark the kernames as kernames.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         font = FontClass()
         for name in ("A", "B", "C"):
             font.newGlyph(name)
@@ -179,6 +234,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_mode(self, FontClass):
+        """
+        Test if ufo mode.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass()
         for name in ("one", "four", "six", "seven"):
             ufo.newGlyph(name)
@@ -258,6 +320,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test__groupScriptsByTagAndDirection(self, FontClass):
+        """
+        * group all the script for the scripts *
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         font = FontClass()
         font.features.text = dedent(
             """
@@ -286,6 +355,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ]
 
     def test_getKerningClasses(self, FontClass):
+        """
+        Get kerning font instances.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         font = FontClass()
         for i in range(65, 65 + 6):  # A..F
             font.newGlyph(chr(i))
@@ -308,6 +384,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert getGlyphs(side2Classes["public.kern2.C"]) == ["C", "D"]
 
     def test_correct_invalid_class_names(self, FontClass):
+        """
+        Test for class names of class names.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         font = FontClass()
         for i in range(65, 65 + 12):  # A..L
             font.newGlyph(chr(i))
@@ -335,6 +418,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert side2Classes["public.kern2.bar&"].name == "kern2.bar"
 
     def test_getKerningPairs(self, FontClass):
+        """
+        Get pairs of kerning pairs.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         font = FontClass()
         for i in range(65, 65 + 8):  # A..H
             font.newGlyph(chr(i))
@@ -383,6 +473,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert pairs[4].glyphs == {"A", "B", "C", "D"}
 
     def test_kern_LTR_and_RTL(self, FontClass):
+        """
+        Test for kernames is a kernames.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         glyphs = {
             ".notdef": None,
             "four": 0x34,
@@ -475,6 +572,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_kern_LTR_and_RTL_with_marks(self, FontClass):
+        """
+        This function is a kerns.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         glyphs = {
             ".notdef": None,
             "four": 0x34,
@@ -590,6 +694,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_kern_RTL_with_marks(self, FontClass):
+        """
+        Test for kerns font.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         glyphs = {
             ".notdef": None,
             "alef-ar": 0x627,
@@ -664,6 +775,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_kern_LTR_and_RTL_one_uses_DFLT(self, FontClass):
+        """
+        Test if the kern_one is a kernames.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         glyphs = {"A": 0x41, "V": 0x56, "reh-ar": 0x631, "alef-ar": 0x627}
         kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
         features = "languagesystem latn dflt;"
@@ -721,6 +839,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_kern_LTR_and_RTL_cannot_use_DFLT(self, FontClass):
+        """
+        Test if the kern is the ligo. kernames.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         glyphs = {"A": 0x41, "V": 0x56, "reh-ar": 0x631, "alef-ar": 0x627}
         kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
         ufo = makeUFO(FontClass, glyphs, kerning=kerning)
@@ -728,6 +853,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
             self.writeFeatures(ufo)
 
     def test_dist_LTR(self, FontClass):
+        """
+        Test for distutils distutils is a distutils. distutils.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         glyphs = {"aaMatra_kannada": 0x0CBE, "ailength_kannada": 0xCD6}
         groups = {
             "public.kern1.KND_aaMatra_R": ["aaMatra_kannada"],
@@ -777,6 +909,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_dist_RTL(self, FontClass):
+        """
+        Create a dist_dist_dist_RT.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         glyphs = {"u10A06": 0x10A06, "u10A1E": 0x10A1E}
         kerning = {("u10A1E", "u10A06"): 117}
         features = dedent(
@@ -814,6 +953,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_dist_LTR_and_RTL(self, FontClass):
+        """
+        Create a ligo distutils. distutils.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         glyphs = {
             "aaMatra_kannada": 0x0CBE,
             "ailength_kannada": 0xCD6,
@@ -870,6 +1016,14 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_skip_ambiguous_direction_pair(self, FontClass, caplog):
+        """
+        Test whether the ufo annotation.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+            caplog: (todo): write your description
+        """
         caplog.set_level(logging.ERROR)
 
         ufo = FontClass()
@@ -905,6 +1059,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert "skipped kern pair with ambiguous direction" in caplog.text
 
     def test_kern_RTL_and_DFLT_numbers(self, FontClass):
+        """
+        Test the kerns kerns.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         glyphs = {"four": 0x34, "seven": 0x37, "bet-hb": 0x5D1, "yod-hb": 0x5D9}
         kerning = {("seven", "four"): -25, ("yod-hb", "bet-hb"): -100}
         features = dedent(

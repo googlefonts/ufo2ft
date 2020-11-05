@@ -10,11 +10,26 @@ import ufo2ft.filters.sortContours
 
 @pytest.fixture
 def font(request, datadir, FontClass):
+    """
+    Returns the font for the given font.
+
+    Args:
+        request: (todo): write your description
+        datadir: (str): write your description
+        FontClass: (todo): write your description
+    """
     font = FontClass(datadir.join("ContourOrderTest.ufo"))
     return font
 
 
 def test_sort_contour_order(font, FontClass):
+    """
+    Draw a glyph order of the ufo.
+
+    Args:
+        font: (todo): write your description
+        FontClass: (todo): write your description
+    """
     test_ufo = FontClass()
     font_compiled = ufo2ft.compileTTF(font, inplace=True)
     font_glyf = font_compiled["glyf"]
@@ -35,6 +50,13 @@ def test_sort_contour_order(font, FontClass):
 
 
 def test_no_sort_contour_order(font, FontClass):
+    """
+    Test if a glyph order is a contour.
+
+    Args:
+        font: (todo): write your description
+        FontClass: (todo): write your description
+    """
     test_ufo = FontClass()
     del font.lib["com.github.googlei18n.ufo2ft.filters"]
     font_compiled = ufo2ft.compileTTF(font, inplace=True)
@@ -56,6 +78,13 @@ def test_no_sort_contour_order(font, FontClass):
 
 
 def test_warn_pre_filter(font, caplog):
+    """
+    Test if the current font.
+
+    Args:
+        font: (todo): write your description
+        caplog: (todo): write your description
+    """
     font.lib["com.github.googlei18n.ufo2ft.filters"][0]["pre"] = True
     font.lib["com.github.googlei18n.ufo2ft.filters"][0]["include"].append("xxx")
 
@@ -69,6 +98,13 @@ def test_warn_pre_filter(font, caplog):
 
 
 def test_no_warn_post_filter(font, caplog):
+    """
+    Compute post - filtered by default.
+
+    Args:
+        font: (todo): write your description
+        caplog: (todo): write your description
+    """
     font.lib["com.github.googlei18n.ufo2ft.filters"][0]["include"].append("xxx")
 
     with caplog.at_level(

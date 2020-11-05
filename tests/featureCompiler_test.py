@@ -18,6 +18,14 @@ from .testSupport import pushd
 
 class ParseLayoutFeaturesTest(object):
     def test_include(self, FontClass, tmpdir):
+        """
+        Create a new ufo file.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+            tmpdir: (str): write your description
+        """
         tmpdir.join("test.fea").write_text(
             dedent(
                 """\
@@ -39,6 +47,14 @@ class ParseLayoutFeaturesTest(object):
         assert "# hello world" in str(fea)
 
     def test_include_no_ufo_path(self, FontClass, tmpdir):
+        """
+        Create a ufo path. ufo.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+            tmpdir: (str): write your description
+        """
         ufo = FontClass()
         ufo.features.text = dedent(
             """\
@@ -50,6 +66,15 @@ class ParseLayoutFeaturesTest(object):
                 parseLayoutFeatures(ufo)
 
     def test_include_not_found(self, FontClass, tmpdir, caplog):
+        """
+        Test if a test for a test exists.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+            tmpdir: (str): write your description
+            caplog: (todo): write your description
+        """
         caplog.set_level(logging.ERROR)
 
         tmpdir.join("test.fea").write_text(
@@ -78,6 +103,13 @@ class ParseLayoutFeaturesTest(object):
 
 class FeatureCompilerTest(object):
     def test_ttFont(self, FontClass):
+        """
+        Test if the ufo features.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass()
         ufo.newGlyph("f")
         ufo.newGlyph("f_f")
@@ -101,6 +133,13 @@ class FeatureCompilerTest(object):
         assert gsub.FeatureList.FeatureRecord[0].FeatureTag == "liga"
 
     def test_ttFont_None(self, FontClass):
+        """
+        Test if the ufo features.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass()
         ufo.newGlyph("f")
         ufo.newGlyph("f_f")
@@ -122,6 +161,13 @@ class FeatureCompilerTest(object):
         assert gsub.FeatureList.FeatureRecord[0].FeatureTag == "liga"
 
     def test_deprecated_methods(self, FontClass):
+        """
+        This is the deprecated deprecated.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         compiler = FeatureCompiler(FontClass())
         with pytest.warns(UserWarning, match="method is deprecated"):
             compiler.setupFile_features()
@@ -132,9 +178,21 @@ class FeatureCompilerTest(object):
 
         class UserCompiler(FeatureCompiler):
             def setupFile_features(self):
+                """
+                Set up the features
+
+                Args:
+                    self: (todo): write your description
+                """
                 self.features = "# hello world"
 
             def setupFile_featureTables(self):
+                """
+                Set up feature tables
+
+                Args:
+                    self: (todo): write your description
+                """
                 self.ttFont = ttLib.TTFont()
 
         compiler = UserCompiler(FontClass())
@@ -142,10 +200,24 @@ class FeatureCompilerTest(object):
             compiler.compile()
 
     def test_deprecated_mtiFeatures_argument(self, FontClass):
+        """
+        This is deprecated deprecated deprecated.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         with pytest.warns(UserWarning, match="argument is ignored"):
             FeatureCompiler(FontClass(), mtiFeatures="whatever")
 
     def test_featureWriters_empty(self, FontClass):
+        """
+        Create a new ufo features.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         kernWriter = KernFeatureWriter(ignoreMarks=False)
         ufo = FontClass()
         ufo.newGlyph("a")
@@ -160,6 +232,13 @@ class FeatureCompilerTest(object):
         assert "GPOS" not in ttFont2
 
     def test_loadFeatureWriters_from_UFO_lib(self, FontClass):
+        """
+        Test for features in - specific features.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass()
         ufo.newGlyph("a")
         ufo.newGlyph("v")
@@ -173,11 +252,27 @@ class FeatureCompilerTest(object):
         assert "GPOS" in ttFont
 
     def test_GSUB_writers_run_first(self, FontClass):
+        """
+        Test if a ufo features.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         class FooFeatureWriter(BaseFeatureWriter):
 
             tableTag = "GSUB"
 
             def write(self, font, feaFile, compiler=None):
+                """
+                Writes a list of the graph *
+
+                Args:
+                    self: (todo): write your description
+                    font: (todo): write your description
+                    feaFile: (str): write your description
+                    compiler: (str): write your description
+                """
                 foo = ast.FeatureBlock("FOO ")
                 foo.statements.append(
                     ast.SingleSubstStatement(
@@ -208,6 +303,14 @@ class FeatureCompilerTest(object):
         assert gsub.FeatureList.FeatureRecord[0].FeatureTag == "FOO "
 
     def test_buildTables_FeatureLibError(self, FontClass, caplog):
+        """
+        Create feature tables.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+            caplog: (todo): write your description
+        """
         caplog.set_level(logging.CRITICAL)
 
         ufo = FontClass()

@@ -8,6 +8,13 @@ from ufo2ft.filters import BaseFilter
 
 class DecomposeComponentsFilter(BaseFilter):
     def filter(self, glyph):
+        """
+        Filter this glyph from the glyph.
+
+        Args:
+            self: (todo): write your description
+            glyph: (todo): write your description
+        """
         if not glyph.components:
             return False
         ufo2ft.util.deepCopyContours(self.context.glyphSet, glyph, glyph, Transform())

@@ -118,6 +118,12 @@ class BaseFeatureCompiler(object):
         self.buildTables()
 
     def compile(self):
+        """
+        Compile the feature class.
+
+        Args:
+            self: (todo): write your description
+        """
         if "setupFile_features" in self.__class__.__dict__:
             _deprecateMethod("setupFile_features", "setupFeatures")
             self.setupFile_features()
@@ -134,6 +140,13 @@ class BaseFeatureCompiler(object):
 
 
 def _deprecateMethod(arg, repl):
+    """
+    Deprecated.
+
+    Args:
+        arg: (todo): write your description
+        repl: (int): write your description
+    """
     import warnings
 
     warnings.warn(
@@ -229,6 +242,13 @@ class FeatureCompiler(BaseFeatureCompiler):
             self.features = tounicode(self.ufo.features.text or "", "utf-8")
 
     def writeFeatures(self, outfile):
+        """
+        Write features to a file.
+
+        Args:
+            self: (todo): write your description
+            outfile: (todo): write your description
+        """
         if hasattr(self, "features"):
             outfile.write(self.features)
 
@@ -268,6 +288,12 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
     """
 
     def setupFeatures(self):
+        """
+        Set up features.
+
+        Args:
+            self: (todo): write your description
+        """
         ufo = self.ufo
         features = {}
         # includes the length of the "/" separator
@@ -279,6 +305,12 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
         self.mtiFeatures = features
 
     def buildTables(self):
+        """
+        Builds tables. tables.
+
+        Args:
+            self: (todo): write your description
+        """
         for tag, features in self.mtiFeatures.items():
             table = mtiLib.build(features.splitlines(), self.ttFont)
             assert table.tableTag == tag

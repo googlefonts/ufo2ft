@@ -39,6 +39,14 @@ class BaseFeatureWriter(object):
     _SUPPORTED_MODES = frozenset(["skip", "append"])
 
     def __init__(self, features=None, mode=None, **kwargs):
+        """
+        Initialize the module.
+
+        Args:
+            self: (todo): write your description
+            features: (todo): write your description
+            mode: (todo): write your description
+        """
         if features is not None:
             features = frozenset(features)
             assert features, "features cannot be empty"

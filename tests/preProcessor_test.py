@@ -20,11 +20,24 @@ import pytest
 
 
 def getpath(filename):
+    """
+    Return the path of the file.
+
+    Args:
+        filename: (str): write your description
+    """
     dirname = os.path.dirname(__file__)
     return os.path.join(dirname, "data", filename)
 
 
 def glyph_has_qcurve(ufo, glyph_name):
+    """
+    Check if a glyph has a glyph.
+
+    Args:
+        ufo: (todo): write your description
+        glyph_name: (str): write your description
+    """
     return any(
         s.segmentType == "qcurve" for contour in ufo[glyph_name] for s in contour
     )
@@ -32,6 +45,13 @@ def glyph_has_qcurve(ufo, glyph_name):
 
 class TTFPreProcessorTest(object):
     def test_no_inplace(self, FontClass):
+        """
+        Test if the ufo.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass(getpath("TestFont.ufo"))
 
         glyphSet = TTFPreProcessor(ufo, inplace=False).process()
@@ -41,6 +61,14 @@ class TTFPreProcessorTest(object):
         assert CURVE_TYPE_LIB_KEY not in ufo.layers.defaultLayer.lib
 
     def test_inplace_remember_curve_type(self, FontClass, caplog):
+        """
+        Test if the ufo type is a ufo.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+            caplog: (todo): write your description
+        """
         caplog.set_level(logging.ERROR)
 
         ufo = FontClass(getpath("TestFont.ufo"))
@@ -64,6 +92,13 @@ class TTFPreProcessorTest(object):
         assert glyph_has_qcurve(ufo, "c")
 
     def test_inplace_no_remember_curve_type(self, FontClass):
+        """
+        Test if the ufo exists in the current.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass(getpath("TestFont.ufo"))
 
         assert CURVE_TYPE_LIB_KEY not in ufo.lib
@@ -79,6 +114,13 @@ class TTFPreProcessorTest(object):
 
 class TTFInterpolatablePreProcessorTest(object):
     def test_no_inplace(self, FontClass):
+        """
+        Test whether the ufo.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo1 = FontClass(getpath("TestFont.ufo"))
         ufo2 = FontClass(getpath("TestFont.ufo"))
         ufos = [ufo1, ufo2]
@@ -95,6 +137,13 @@ class TTFInterpolatablePreProcessorTest(object):
             assert CURVE_TYPE_LIB_KEY not in ufos[i].layers.defaultLayer.lib
 
     def test_inplace_remember_curve_type(self, FontClass):
+        """
+        Test if a ufo type.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo1 = FontClass(getpath("TestFont.ufo"))
         ufo2 = FontClass(getpath("TestFont.ufo"))
         ufos = [ufo1, ufo2]
@@ -113,6 +162,13 @@ class TTFInterpolatablePreProcessorTest(object):
         assert glyph_has_qcurve(ufo2, "c")
 
     def test_inplace_no_remember_curve_type(self, FontClass):
+        """
+        Test if the ufo exists.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo1 = FontClass(getpath("TestFont.ufo"))
         ufo2 = FontClass(getpath("TestFont.ufo"))
         ufos = [ufo1, ufo2]
@@ -128,6 +184,13 @@ class TTFInterpolatablePreProcessorTest(object):
             assert glyph_has_qcurve(ufo2, "c")
 
     def test_custom_filters(self, FontClass):
+        """
+        Test for glyph filters.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo1 = FontClass(getpath("TestFont.ufo"))
         ufo1.lib[UFO2FT_FILTERS_KEY] = [
             {"name": "transformations", "kwargs": {"OffsetX": -40}, "pre": True}
@@ -146,6 +209,13 @@ class TTFInterpolatablePreProcessorTest(object):
 
 class SkipExportGlyphsTest(object):
     def test_skip_export_glyphs_filter(self, FontClass):
+        """
+        Test that all glyph glyphs have a glyph.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         from ufo2ft.util import _GlyphSet
 
         ufo = FontClass(getpath("IncompatibleMasters/NewFont-Regular.ufo"))
@@ -163,6 +233,13 @@ class SkipExportGlyphsTest(object):
         assert list(c.baseGlyph for c in glyphSet["f"].components) == ["a", "a"]
 
     def test_skip_export_glyphs_filter_nested(self, FontClass):
+        """
+        Test for glyph glyphs.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         from ufo2ft.util import _GlyphSet
 
         ufo = FontClass()
@@ -207,6 +284,13 @@ class SkipExportGlyphsTest(object):
         assert len(glyphSet["numero"]) == 2  # The two contours of "o" and "_o.numero"
 
     def test_skip_export_glyphs_designspace(self, FontClass):
+        """
+        Skip glyphspace glyphs.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         # Designspace has a public.skipExportGlyphs lib key excluding "b" and "d".
         designspace = designspaceLib.DesignSpaceDocument.fromfile(
             getpath("IncompatibleMasters/IncompatibleMasters.designspace")
@@ -237,6 +321,13 @@ class SkipExportGlyphsTest(object):
             assert glyphs["f"].isComposite()
 
     def test_skip_export_glyphs_multi_ufo(self, FontClass):
+        """
+        Test that all glyphs have the ufo.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         # Bold has a public.skipExportGlyphs lib key excluding "b", "d" and "f".
         ufo1 = FontClass(getpath("IncompatibleMasters/NewFont-Regular.ufo"))
         ufo2 = FontClass(getpath("IncompatibleMasters/NewFont-Bold.ufo"))
@@ -257,6 +348,13 @@ class SkipExportGlyphsTest(object):
             assert not hasattr(glyphs["e"], "components")
 
     def test_skip_export_glyphs_single_ufo(self, FontClass):
+        """
+        Test that all glyphs have a single glyph.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         # UFO has a public.skipExportGlyphs lib key excluding "b", "d" and "f".
         ufo = FontClass(getpath("IncompatibleMasters/NewFont-Bold.ufo"))
         font = ufo2ft.compileTTF(ufo, inplace=True)
@@ -277,6 +375,12 @@ class SkipExportGlyphsTest(object):
 
 @pytest.fixture
 def color_ufo(FontClass):
+    """
+    Return a ufo of a ufo.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     ufo = FontClass()
     ufo.lib[COLOR_PALETTES_KEY] = [[(1, 0.3, 0.1, 1), (0, 0.4, 0.8, 1)]]
     return ufo
@@ -284,29 +388,64 @@ def color_ufo(FontClass):
 
 class InitExplodeColorLayerGlyphsFilterTest(object):
     def test_no_color_palettes(self, FontClass):
+        """
+        Test if the color layer for a new layer.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass()
         filters = []
         _init_explode_color_layer_glyphs_filter(ufo, filters)
         assert not filters
 
     def test_no_color_layer_mapping(self, color_ufo):
+        """
+        Set the layer color_uf.
+
+        Args:
+            self: (todo): write your description
+            color_ufo: (str): write your description
+        """
         filters = []
         _init_explode_color_layer_glyphs_filter(color_ufo, filters)
         assert not filters
 
     def test_explicit_color_layers(self, color_ufo):
+        """
+        Return a list of all layers to be included.
+
+        Args:
+            self: (todo): write your description
+            color_ufo: (str): write your description
+        """
         color_ufo.lib[COLOR_LAYERS_KEY] = {"a": [("a.z_0", 1), ("a.z_1", 0)]}
         filters = []
         _init_explode_color_layer_glyphs_filter(color_ufo, filters)
         assert not filters
 
     def test_font_color_layer_mapping(self, color_ufo):
+        """
+        Test if the ufo layer.
+
+        Args:
+            self: (todo): write your description
+            color_ufo: (str): write your description
+        """
         color_ufo.lib[COLOR_LAYER_MAPPING_KEY] = [("z_0", 1), ("z_1", 0)]
         filters = []
         _init_explode_color_layer_glyphs_filter(color_ufo, filters)
         assert isinstance(filters[0], ExplodeColorLayerGlyphsFilter)
 
     def test_glyph_color_layer_mapping(self, color_ufo):
+        """
+        Test if the ufo color_layer.
+
+        Args:
+            self: (todo): write your description
+            color_ufo: (todo): write your description
+        """
         color_ufo.newGlyph("a").lib[COLOR_LAYER_MAPPING_KEY] = [("z_0", 0), ("z_1", 1)]
         filters = []
         _init_explode_color_layer_glyphs_filter(color_ufo, filters)

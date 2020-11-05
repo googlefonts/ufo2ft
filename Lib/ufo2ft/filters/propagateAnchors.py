@@ -26,11 +26,27 @@ logger = logging.getLogger(__name__)
 
 class PropagateAnchorsFilter(BaseFilter):
     def set_context(self, font, glyphSet):
+        """
+        Set the context for the given font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            glyphSet: (todo): write your description
+        """
         ctx = super(PropagateAnchorsFilter, self).set_context(font, glyphSet)
         ctx.processed = set()
         return ctx
 
     def __call__(self, font, glyphSet=None):
+        """
+        Return the callable on the given the call.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            glyphSet: (todo): write your description
+        """
         if super(PropagateAnchorsFilter, self).__call__(font, glyphSet):
             modified = self.context.modified
             if modified:
@@ -38,6 +54,13 @@ class PropagateAnchorsFilter(BaseFilter):
             return modified
 
     def filter(self, glyph):
+        """
+        Return a new glyph.
+
+        Args:
+            self: (todo): write your description
+            glyph: (callable): write your description
+        """
         if not glyph.components:
             return False
         before = len(glyph.anchors)
@@ -162,12 +185,25 @@ def _component_closest_to_origin(components, glyph_set):
 
 
 def _distance(pos1, pos2):
+    """
+    Returns the distance between two points.
+
+    Args:
+        pos1: (todo): write your description
+        pos2: (todo): write your description
+    """
     x1, y1 = pos1
     x2, y2 = pos2
     return (x1 - x2) ** 2 + (y1 - y2) ** 2
 
 
 def _is_ligature_mark(glyph):
+    """
+    Return true if the glyph is a glyph is a ligature.
+
+    Args:
+        glyph: (todo): write your description
+    """
     return not glyph.name.startswith("_") and "_" in glyph.name
 
 

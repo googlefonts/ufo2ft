@@ -11,6 +11,14 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
     """
 
     def set_context(self, font, glyphSet):
+        """
+        Set the context of the font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            glyphSet: (todo): write your description
+        """
         context = super().set_context(font, glyphSet)
         context.globalColorLayerMapping = font.lib.get(COLOR_LAYER_MAPPING_KEY)
         context.layerGlyphSets = {}
@@ -24,6 +32,14 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         return context
 
     def _getLayer(self, font, layerName):
+        """
+        Returns the layer with the given name.
+
+        Args:
+            self: (todo): write your description
+            font: (str): write your description
+            layerName: (str): write your description
+        """
         layer = self.context.layerGlyphSets.get(layerName)
         if layer is None:
             layer = _GlyphSet.from_layer(font, layerName)
@@ -31,6 +47,16 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         return layer
 
     def _copyGlyph(self, layerGlyphSet, glyphSet, glyphName, layerName):
+        """
+        Copies the given layer into the given layer.
+
+        Args:
+            self: (array): write your description
+            layerGlyphSet: (todo): write your description
+            glyphSet: (todo): write your description
+            glyphName: (str): write your description
+            layerName: (str): write your description
+        """
         layerGlyph = layerGlyphSet[glyphName]
         layerGlyphName = f"{glyphName}.{layerName}"
         if layerGlyphName in glyphSet:
@@ -53,6 +79,13 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         return layerGlyphName
 
     def filter(self, glyph):
+        """
+        Returns a boolean indicating whether the given glyph should be filtered by the given glyph.
+
+        Args:
+            self: (todo): write your description
+            glyph: (callable): write your description
+        """
         if getattr(self.context, "skipCurrentFont", False):
             return False
 

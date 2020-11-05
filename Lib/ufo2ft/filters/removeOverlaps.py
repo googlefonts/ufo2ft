@@ -18,6 +18,12 @@ class RemoveOverlapsFilter(BaseFilter):
     _kwargs = {"backend": Backend.BOOLEAN_OPERATIONS}
 
     def start(self):
+        """
+        Starts the backend.
+
+        Args:
+            self: (todo): write your description
+        """
         self.options.backend = self.Backend(self.options.backend)
 
         if self.options.backend is self.Backend.BOOLEAN_OPERATIONS:
@@ -40,6 +46,13 @@ class RemoveOverlapsFilter(BaseFilter):
             raise AssertionError(self.options.backend)
 
     def filter(self, glyph):
+        """
+        Returns true if the given a glyphed.
+
+        Args:
+            self: (todo): write your description
+            glyph: (todo): write your description
+        """
         if not len(glyph):
             return False
 

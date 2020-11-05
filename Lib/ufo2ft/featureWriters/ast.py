@@ -38,6 +38,13 @@ def getScriptLanguageSystems(feaFile):
 
 
 def iterFeatureBlocks(feaFile, tag=None):
+    """
+    Iterate over all feature objects in a feature file.
+
+    Args:
+        feaFile: (str): write your description
+        tag: (str): write your description
+    """
     for statement in feaFile.statements:
         if isinstance(statement, ast.FeatureBlock):
             if tag is not None and statement.name != tag:
@@ -46,10 +53,23 @@ def iterFeatureBlocks(feaFile, tag=None):
 
 
 def findFeatureTags(feaFile):
+    """
+    Returns a list of all feature files in a file.
+
+    Args:
+        feaFile: (str): write your description
+    """
     return {f.name for f in iterFeatureBlocks(feaFile)}
 
 
 def iterClassDefinitions(feaFile, featureTag=None):
+    """
+    Iterate over all gly - qualified feature class.
+
+    Args:
+        feaFile: (str): write your description
+        featureTag: (bool): write your description
+    """
     if featureTag is None:
         # start from top-level class definitions
         for s in feaFile.statements:
@@ -71,6 +91,14 @@ LOOKUP_FLAGS = {
 
 
 def makeLookupFlag(name=None, markAttachment=None, markFilteringSet=None):
+    """
+    Create an instance of a new : class.
+
+    Args:
+        name: (str): write your description
+        markAttachment: (str): write your description
+        markFilteringSet: (todo): write your description
+    """
     value = 0 if name is None else LOOKUP_FLAGS[name]
 
     if markAttachment is not None:
@@ -112,6 +140,13 @@ def makeGlyphClassDefinitions(groups, feaFile=None, stripPrefix=""):
 
 
 def makeGlyphClassDefinition(className, members):
+    """
+    Create a new class with the given classname.
+
+    Args:
+        className: (str): write your description
+        members: (todo): write your description
+    """
     glyphNames = [ast.GlyphName(g) for g in members]
     glyphClass = ast.GlyphClass(glyphNames)
     classDef = ast.GlyphClassDefinition(className, glyphClass)

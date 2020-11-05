@@ -112,6 +112,13 @@ import pytest
     ]
 )
 def font(request, FontClass):
+    """
+    Add font to font.
+
+    Args:
+        request: (todo): write your description
+        FontClass: (todo): write your description
+    """
     font = FontClass()
     for param in request.param["glyphs"]:
         glyph = font.newGlyph(param["name"])
@@ -126,14 +133,35 @@ def font(request, FontClass):
 
 class PropagateAnchorsFilterTest(object):
     def test_empty_glyph(self, font):
+        """
+        Test if a glyph is empty.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         philter = PropagateAnchorsFilter(include={"space"})
         assert not philter(font)
 
     def test_contour_glyph(self, font):
+        """
+        Make a glyph ising contour.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         philter = PropagateAnchorsFilter(include={"a"})
         assert not philter(font)
 
     def test_single_component_glyph(self, font):
+        """
+        Test if a component component.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         philter = PropagateAnchorsFilter(include={"a-cyr"})
         assert philter(font) == {"a-cyr"}
         assert [(a.name, a.x, a.y) for a in font["a-cyr"].anchors] == [
@@ -142,6 +170,13 @@ class PropagateAnchorsFilterTest(object):
         ]
 
     def test_two_component_glyph(self, font):
+        """
+        Test if a mutates two glyphs have the same name.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         name = "adieresis"
         philter = PropagateAnchorsFilter(include={name})
         assert philter(font) == {name}
@@ -151,6 +186,13 @@ class PropagateAnchorsFilterTest(object):
         ]
 
     def test_one_anchor_two_component_glyph(self, font):
+        """
+        Test if the anchors have the same. anchors.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         name = "amacron"
         philter = PropagateAnchorsFilter(include={name})
         assert philter(font) == {name}
@@ -160,6 +202,13 @@ class PropagateAnchorsFilterTest(object):
         ]
 
     def test_three_component_glyph(self, font):
+        """
+        Test if a component component is present.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         name = "adieresismacron"
         philter = PropagateAnchorsFilter(include={name})
         assert philter(font) == {name}
@@ -169,6 +218,13 @@ class PropagateAnchorsFilterTest(object):
         ]
 
     def test_nested_component_glyph(self, font):
+        """
+        Test if a glyphschors.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         name = "amacrondieresis"
         philter = PropagateAnchorsFilter(include={name})
         assert philter(font) == {name}
@@ -178,6 +234,13 @@ class PropagateAnchorsFilterTest(object):
         ]
 
     def test_ligature_glyph(self, font):
+        """
+        Test for glyph glyphs.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         name = "a_a"
         philter = PropagateAnchorsFilter(include={name})
         assert philter(font) == {name}
@@ -189,6 +252,13 @@ class PropagateAnchorsFilterTest(object):
         ]
 
     def test_whole_font(self, font):
+        """
+        Test if the font is in the whitelist font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         philter = PropagateAnchorsFilter()
         modified = philter(font)
         assert modified == set(
@@ -203,6 +273,13 @@ class PropagateAnchorsFilterTest(object):
         )
 
     def test_fail_during_anchor_propagation(self, font):
+        """
+        Test if the test filter.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         name = "emacron"
         with CapturingLogHandler(logger, level="WARNING") as captor:
             philter = PropagateAnchorsFilter(include={name})
@@ -212,6 +289,13 @@ class PropagateAnchorsFilterTest(object):
         )
 
     def test_logger(self, font):
+        """
+        Add a logger. logger.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         with CapturingLogHandler(logger, level="INFO") as captor:
             philter = PropagateAnchorsFilter()
             philter(font)
@@ -219,6 +303,13 @@ class PropagateAnchorsFilterTest(object):
 
 
 def test_CantarellAnchorPropagation(FontClass, datadir):
+    """
+    Test whether the ufo.
+
+    Args:
+        FontClass: (todo): write your description
+        datadir: (str): write your description
+    """
     ufo_path = datadir.join("CantarellAnchorPropagation.ufo")
     ufo = FontClass(ufo_path)
     pre_filters, _ = ufo2ft.filters.loadFilters(ufo)
@@ -237,6 +328,13 @@ def test_CantarellAnchorPropagation(FontClass, datadir):
 
 
 def test_CantarellAnchorPropagation_reduced_filter(FontClass, datadir):
+    """
+    Test whether the ufo.
+
+    Args:
+        FontClass: (todo): write your description
+        datadir: (str): write your description
+    """
     ufo_path = datadir.join("CantarellAnchorPropagation.ufo")
     ufo = FontClass(ufo_path)
     ufo.lib["com.github.googlei18n.ufo2ft.filters"][0]["include"] = ["ocircumflextilde"]

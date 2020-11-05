@@ -16,16 +16,34 @@ import pytest
 
 
 def getpath(filename):
+    """
+    Return the path of the file.
+
+    Args:
+        filename: (str): write your description
+    """
     dirname = os.path.dirname(__file__)
     return os.path.join(dirname, "data", filename)
 
 
 @pytest.fixture
 def testufo(FontClass):
+    """
+    Return a ufo class for the given class name.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     return FontClass(getpath("TestFont.ufo"))
 
 
 def readLines(f):
+    """
+    Read a list of the file.
+
+    Args:
+        f: (todo): write your description
+    """
     f.seek(0)
     lines = []
     for line in f.readlines():
@@ -39,6 +57,14 @@ def readLines(f):
 
 
 def expectTTX(font, expectedTTX, tables=None):
+    """
+    Expect expected expected expected expected expected tables.
+
+    Args:
+        font: (str): write your description
+        expectedTTX: (todo): write your description
+        tables: (list): write your description
+    """
     with open(getpath(expectedTTX), "r", encoding="utf-8") as f:
         expected = readLines(f)
     font.recalcTimestamp = False
@@ -58,6 +84,12 @@ def expectTTX(font, expectedTTX, tables=None):
 
 @pytest.fixture(params=[None, True, False])
 def useProductionNames(request):
+    """
+    Returns the names of the request.
+
+    Args:
+        request: (todo): write your description
+    """
     return request.param
 
 
@@ -70,10 +102,24 @@ class IntegrationTest(object):
     # No need to test both formats for every single test case.
 
     def test_TestFont_TTF(self, testufo):
+        """
+        Test if a test tTF.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         ttf = compileTTF(testufo)
         expectTTX(ttf, "TestFont.ttx")
 
     def test_TestFont_CFF(self, testufo):
+        """
+        Test if a test test test test.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         otf = compileOTF(testufo)
         expectTTX(otf, "TestFont-CFF.ttx")
 
@@ -104,22 +150,57 @@ class IntegrationTest(object):
         expectTTX(ttf, "MTIFeatures.ttx", tables=self._layoutTables)
 
     def test_removeOverlaps_CFF(self, testufo):
+        """
+        Removes the test sets.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         otf = compileOTF(testufo, removeOverlaps=True)
         expectTTX(otf, "TestFont-NoOverlaps-CFF.ttx")
 
     def test_removeOverlaps_CFF_pathops(self, testufo):
+        """
+        Removes the test sets from the test list.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         otf = compileOTF(testufo, removeOverlaps=True, overlapsBackend="pathops")
         expectTTX(otf, "TestFont-NoOverlaps-CFF-pathops.ttx")
 
     def test_removeOverlaps(self, testufo):
+        """
+        Removes all test test.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         ttf = compileTTF(testufo, removeOverlaps=True)
         expectTTX(ttf, "TestFont-NoOverlaps-TTF.ttx")
 
     def test_removeOverlaps_pathops(self, testufo):
+        """
+        Removes all test sets.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         ttf = compileTTF(testufo, removeOverlaps=True, overlapsBackend="pathops")
         expectTTX(ttf, "TestFont-NoOverlaps-TTF-pathops.ttx")
 
     def test_interpolatableTTFs_lazy(self, FontClass):
+        """
+        Interpolate all intersections of a ufo.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         # two same UFOs **must** be interpolatable
         ufos = [FontClass(getpath("TestFont.ufo")) for _ in range(2)]
         ttfs = list(compileInterpolatableTTFs(ufos))
@@ -132,6 +213,15 @@ class IntegrationTest(object):
         ids=["cff1", "cff2"],
     )
     def test_optimizeCFF_none(self, testufo, cff_version, expected_ttx):
+        """
+        Test if the test cff version of cffversion.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+            cff_version: (int): write your description
+            expected_ttx: (str): write your description
+        """
         otf = compileOTF(testufo, optimizeCFF=0, cffVersion=cff_version)
         expectTTX(otf, expected_ttx)
 
@@ -141,6 +231,15 @@ class IntegrationTest(object):
         ids=["cff1", "cff2"],
     )
     def test_optimizeCFF_specialize(self, testufo, cff_version, expected_ttx):
+        """
+        Test whether the cff cff_optim.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+            cff_version: (int): write your description
+            expected_ttx: (todo): write your description
+        """
         otf = compileOTF(testufo, optimizeCFF=1, cffVersion=cff_version)
         expectTTX(otf, expected_ttx)
 
@@ -166,12 +265,30 @@ class IntegrationTest(object):
     def test_optimizeCFF_subroutinize(
         self, testufo, cff_version, subroutinizer, expected_ttx
     ):
+        """
+        Generate cfffout cff and cff
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+            cff_version: (int): write your description
+            subroutinizer: (todo): write your description
+            expected_ttx: (todo): write your description
+        """
         otf = compileOTF(
             testufo, optimizeCFF=2, cffVersion=cff_version, subroutinizer=subroutinizer
         )
         expectTTX(otf, expected_ttx)
 
     def test_compileVariableTTF(self, designspace, useProductionNames):
+        """
+        Compile design document.
+
+        Args:
+            self: (todo): write your description
+            designspace: (str): write your description
+            useProductionNames: (str): write your description
+        """
         varfont = compileVariableTTF(designspace, useProductionNames=useProductionNames)
         expectTTX(
             varfont,
@@ -181,6 +298,14 @@ class IntegrationTest(object):
         )
 
     def test_compileVariableCFF2(self, designspace, useProductionNames):
+        """
+        Compile designspace variable.
+
+        Args:
+            self: (todo): write your description
+            designspace: (str): write your description
+            useProductionNames: (str): write your description
+        """
         varfont = compileVariableCFF2(
             designspace, useProductionNames=useProductionNames
         )
@@ -192,10 +317,24 @@ class IntegrationTest(object):
         )
 
     def test_compileVariableCFF2_subroutinized(self, designspace):
+        """
+        Compile a design variable.
+
+        Args:
+            self: (todo): write your description
+            designspace: (todo): write your description
+        """
         varfont = compileVariableCFF2(designspace, optimizeCFF=2)
         expectTTX(varfont, "TestVariableFont-CFF2-cffsubr.ttx")
 
     def test_debugFeatureFile(self, designspace):
+        """
+        Compiles the design variables for a designspace variable.
+
+        Args:
+            self: (todo): write your description
+            designspace: (str): write your description
+        """
         tmp = io.StringIO()
 
         varfont = compileVariableTTF(designspace, debugFeatureFile=tmp)
@@ -211,6 +350,16 @@ class IntegrationTest(object):
         ],
     )
     def test_drop_glyph_names(self, testufo, output_format, options, expected_ttx):
+        """
+        Test for glyphs in the ufo.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+            output_format: (str): write your description
+            options: (dict): write your description
+            expected_ttx: (str): write your description
+        """
         from ufo2ft.constants import KEEP_GLYPH_NAMES
 
         testufo.lib[KEEP_GLYPH_NAMES] = False

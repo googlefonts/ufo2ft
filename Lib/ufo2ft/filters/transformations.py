@@ -17,11 +17,29 @@ log = logging.getLogger(__name__)
 
 class TransformPointPen(_TransformPointPen):
     def __init__(self, outPointPen, transformation, modified=None):
+        """
+        Initialize the chat.
+
+        Args:
+            self: (todo): write your description
+            outPointPen: (todo): write your description
+            transformation: (todo): write your description
+            modified: (todo): write your description
+        """
         super().__init__(outPointPen, transformation)
         self.modified = modified if modified is not None else set()
         self._inverted = self._transformation.inverse()
 
     def addComponent(self, baseGlyph, transformation, identifier=None, **kwargs):
+        """
+        Adds a component to the glyph.
+
+        Args:
+            self: (todo): write your description
+            baseGlyph: (str): write your description
+            transformation: (str): write your description
+            identifier: (todo): write your description
+        """
         if baseGlyph in self.modified:
             # multiply the component's transformation matrix with the inverse
             # of the filter's transformation matrix to compensate for the
@@ -49,9 +67,23 @@ class TransformationsFilter(BaseFilter):
     }
 
     def start(self):
+        """
+        Starts the port
+
+        Args:
+            self: (todo): write your description
+        """
         self.options.Origin = self.Origin(self.options.Origin)
 
     def get_origin_height(self, font, origin):
+        """
+        Return the height of the font.
+
+        Args:
+            self: (todo): write your description
+            font: (str): write your description
+            origin: (str): write your description
+        """
         if origin is self.Origin.BASELINE:
             return 0
         elif origin is self.Origin.CAP_HEIGHT:
@@ -66,6 +98,14 @@ class TransformationsFilter(BaseFilter):
             raise AssertionError(origin)
 
     def set_context(self, font, glyphSet):
+        """
+        Set the context of the font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            glyphSet: (todo): write your description
+        """
         ctx = super(TransformationsFilter, self).set_context(font, glyphSet)
 
         origin_height = self.get_origin_height(font, self.options.Origin)
@@ -96,6 +136,13 @@ class TransformationsFilter(BaseFilter):
         return ctx
 
     def filter(self, glyph):
+        """
+        Filter this glyph by a glyph.
+
+        Args:
+            self: (todo): write your description
+            glyph: (todo): write your description
+        """
         matrix = self.context.matrix
         if matrix == Identity or not (glyph or glyph.components or glyph.anchors):
             return False  # nothing to do

@@ -7,14 +7,32 @@ from fontTools import designspaceLib
 
 @pytest.fixture(scope="session", params=["defcon", "ufoLib2"])
 def ufo_module(request):
+    """
+    Return a fully qualified module for a request.
+
+    Args:
+        request: (todo): write your description
+    """
     return pytest.importorskip(request.param)
 
 
 @pytest.fixture(scope="session")
 def FontClass(ufo_module):
+    """
+    Return the ufo class for a ufo.
+
+    Args:
+        ufo_module: (todo): write your description
+    """
     if hasattr(ufo_module.Font, "open"):
 
         def ctor(path=None):
+            """
+            Return the currently open window object.
+
+            Args:
+                path: (str): write your description
+            """
             if path is None:
                 return ufo_module.Font()
             else:
@@ -26,33 +44,69 @@ def FontClass(ufo_module):
 
 @pytest.fixture(scope="session")
 def InfoClass(ufo_module):
+    """
+    Return a wsdlmodule class for the given ufo.
+
+    Args:
+        ufo_module: (todo): write your description
+    """
     return ufo_module.objects.info.Info
 
 
 @pytest.fixture
 def datadir():
+    """
+    Return the path to the datadir.
+
+    Args:
+    """
     return py.path.local(py.path.local(__file__).dirname).join("data")
 
 
 def getpath(filename):
+    """
+    Return the path of the file.
+
+    Args:
+        filename: (str): write your description
+    """
     dirname = os.path.dirname(__file__)
     return os.path.join(dirname, "data", filename)
 
 
 @pytest.fixture
 def layertestrgufo(FontClass):
+    """
+    Return a font font.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     font = FontClass(getpath("LayerFont-Regular.ufo"))
     return font
 
 
 @pytest.fixture
 def layertestbdufo(FontClass):
+    """
+    Returns a font object.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     font = FontClass(getpath("LayerFont-Bold.ufo"))
     return font
 
 
 @pytest.fixture
 def designspace(layertestrgufo, layertestbdufo):
+    """
+    Create designspace document.
+
+    Args:
+        layertestrgufo: (todo): write your description
+        layertestbdufo: (todo): write your description
+    """
     ds = designspaceLib.DesignSpaceDocument()
 
     a1 = designspaceLib.AxisDescriptor()

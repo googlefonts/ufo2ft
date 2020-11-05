@@ -90,6 +90,14 @@ class _GlyphSet(dict):
 
 
 def _copyLayer(layer, obj_type=dict):
+    """
+    Make a copy of a layer. glyph.
+
+    Args:
+        layer: (todo): write your description
+        obj_type: (str): write your description
+        dict: (todo): write your description
+    """
     try:
         g = next(iter(layer))
     except StopIteration:  # layer is empty
@@ -103,16 +111,34 @@ def _copyLayer(layer, obj_type=dict):
 
 
 def _getNewGlyphFactory(glyph):
+    """
+    Create a new glyph class.
+
+    Args:
+        glyph: (str): write your description
+    """
     # defcon.Glyph doesn't take a name argument, ufoLib2 requires one...
     cls = glyph.__class__
     if "name" in getargspec(cls.__init__).args:
 
         def newGlyph(name):
+            """
+            Create a new : class with a : attribute.
+
+            Args:
+                name: (str): write your description
+            """
             return cls(name=name)
 
     else:
 
         def newGlyph(name):
+            """
+            Create a new glyph.
+
+            Args:
+                name: (str): write your description
+            """
             # use instantiateGlyphObject() to keep any custom sub-element classes
             # https://github.com/googlefonts/ufo2ft/issues/363
             g2 = glyph.layer.instantiateGlyphObject()
@@ -123,6 +149,14 @@ def _getNewGlyphFactory(glyph):
 
 
 def _copyGlyph(glyph, glyphFactory=None, reverseContour=False):
+    """
+    Copies a copy of the given glyph. glyph. glyph.
+
+    Args:
+        glyph: (todo): write your description
+        glyphFactory: (todo): write your description
+        reverseContour: (bool): write your description
+    """
     # copy everything except unused attributes: 'guidelines', 'note', 'image'
     if glyphFactory is None:
         glyphFactory = _getNewGlyphFactory(glyph)
@@ -388,15 +422,34 @@ def calcCodePageRanges(unicodes):
 
 class _LazyFontName(object):
     def __init__(self, font):
+        """
+        Initialize the font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         self.font = font
 
     def __str__(self):
+        """
+        Return the string : class
+
+        Args:
+            self: (todo): write your description
+        """
         from ufo2ft.fontInfoData import getAttrWithFallback
 
         return getAttrWithFallback(self.font.info, "postscriptFontName")
 
 
 def getDefaultMasterFont(designSpaceDoc):
+    """
+    Returns the default design font for the design document.
+
+    Args:
+        designSpaceDoc: (todo): write your description
+    """
     defaultSource = designSpaceDoc.findDefault()
     if not defaultSource:
         from ufo2ft.errors import InvalidDesignSpaceData
@@ -415,6 +468,12 @@ def getDefaultMasterFont(designSpaceDoc):
 
 
 def _getDefaultNotdefGlyph(designSpaceDoc):
+    """
+    Returns the default design font.
+
+    Args:
+        designSpaceDoc: (todo): write your description
+    """
     from ufo2ft.errors import InvalidDesignSpaceData
 
     try:

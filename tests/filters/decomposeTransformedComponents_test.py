@@ -5,6 +5,13 @@ import logging
 
 class DecomposeTransformedComponentsFilterTest(object):
     def test_transformed_components(self, FontClass):
+        """
+        Transformed components.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass()
         a = ufo.newGlyph("six.lf")
         a.width = 300

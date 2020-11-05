@@ -36,6 +36,16 @@ class BasePreProcessor(object):
     def __init__(
         self, ufo, inplace=False, layerName=None, skipExportGlyphs=None, **kwargs
     ):
+        """
+        Initialize a ufo.
+
+        Args:
+            self: (todo): write your description
+            ufo: (todo): write your description
+            inplace: (todo): write your description
+            layerName: (str): write your description
+            skipExportGlyphs: (todo): write your description
+        """
         self.ufo = ufo
         self.inplace = inplace
         self.layerName = layerName
@@ -46,9 +56,21 @@ class BasePreProcessor(object):
         self.preFilters, self.postFilters = loadFilters(ufo)
 
     def initDefaultFilters(self, **kwargs):
+        """
+        Initialize the default defaults.
+
+        Args:
+            self: (todo): write your description
+        """
         return []  # pragma: no cover
 
     def process(self):
+        """
+        Return a new glyph to the glyph.
+
+        Args:
+            self: (todo): write your description
+        """
         ufo = self.ufo
         glyphSet = self.glyphSet
         for func in self.preFilters + self.defaultFilters + self.postFilters:
@@ -57,6 +79,13 @@ class BasePreProcessor(object):
 
 
 def _init_explode_color_layer_glyphs_filter(ufo, filters):
+    """
+    Initialize a glyphs.
+
+    Args:
+        ufo: (todo): write your description
+        filters: (list): write your description
+    """
     # Initialize ExplodeColorLayerGlyphsFilter, which copies color glyph layers
     # as standalone glyphs to the default glyph set (for building COLR table), if the
     # UFO contains the required 'colorPalettes' key, as well as 'colorLayerMapping' lib
@@ -89,6 +118,14 @@ class OTFPreProcessor(BasePreProcessor):
     """
 
     def initDefaultFilters(self, removeOverlaps=False, overlapsBackend=None):
+        """
+        Initialize the default filter layers.
+
+        Args:
+            self: (todo): write your description
+            removeOverlaps: (bool): write your description
+            overlapsBackend: (str): write your description
+        """
         filters = []
 
         _init_explode_color_layer_glyphs_filter(self.ufo, filters)
@@ -149,6 +186,18 @@ class TTFPreProcessor(OTFPreProcessor):
         reverseDirection=True,
         rememberCurveType=True,
     ):
+        """
+        Return a list of the layers.
+
+        Args:
+            self: (todo): write your description
+            removeOverlaps: (bool): write your description
+            overlapsBackend: (str): write your description
+            convertCubics: (todo): write your description
+            conversionError: (str): write your description
+            reverseDirection: (str): write your description
+            rememberCurveType: (todo): write your description
+        """
         filters = []
 
         _init_explode_color_layer_glyphs_filter(self.ufo, filters)
@@ -210,6 +259,19 @@ class TTFInterpolatablePreProcessor(object):
         layerNames=None,
         skipExportGlyphs=None,
     ):
+        """
+        Initialize ufo.
+
+        Args:
+            self: (todo): write your description
+            ufos: (todo): write your description
+            inplace: (todo): write your description
+            conversionError: (str): write your description
+            reverseDirection: (todo): write your description
+            rememberCurveType: (todo): write your description
+            layerNames: (str): write your description
+            skipExportGlyphs: (todo): write your description
+        """
         from cu2qu.ufo import DEFAULT_MAX_ERR
 
         self.ufos = ufos
@@ -241,6 +303,12 @@ class TTFInterpolatablePreProcessor(object):
             self.postFilters.append(post)
 
     def process(self):
+        """
+        Process a glyphsets.
+
+        Args:
+            self: (todo): write your description
+        """
         from cu2qu.ufo import fonts_to_quadratic
 
         # first apply all custom pre-filters

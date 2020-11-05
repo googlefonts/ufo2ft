@@ -40,6 +40,15 @@ class PostProcessor(object):
     }
 
     def __init__(self, otf, ufo, glyphSet=None):
+        """
+        Make a new ufo.
+
+        Args:
+            self: (todo): write your description
+            otf: (todo): write your description
+            ufo: (todo): write your description
+            glyphSet: (todo): write your description
+        """
         self.ufo = ufo
         self.glyphSet = glyphSet if glyphSet is not None else ufo
         stream = BytesIO()
@@ -108,6 +117,15 @@ class PostProcessor(object):
         return self.otf
 
     def process_cff(self, *, optimizeCFF=True, cffVersion=None, subroutinizer=None):
+        """
+        Process cff file.
+
+        Args:
+            self: (todo): write your description
+            optimizeCFF: (bool): write your description
+            cffVersion: (int): write your description
+            subroutinizer: (todo): write your description
+        """
         cffInputVersion = self._get_cff_version(self.otf)
         if not cffInputVersion:
             raise ValueError("Missing required 'CFF ' or 'CFF2' table")
@@ -136,6 +154,13 @@ class PostProcessor(object):
                 )
 
     def process_glyph_names(self, useProductionNames=None):
+        """
+        Process glyph names.
+
+        Args:
+            self: (todo): write your description
+            useProductionNames: (str): write your description
+        """
         if useProductionNames is None:
             keepGlyphNames = self.ufo.lib.get(KEEP_GLYPH_NAMES, True)
             useProductionNames = self.ufo.lib.get(
@@ -189,6 +214,12 @@ class PostProcessor(object):
                 cff.charset = [rename_map.get(n, n) for n in cff.charset]
 
     def _build_production_names(self):
+        """
+        Build a dict of all glyph names of the glyphs.
+
+        Args:
+            self: (todo): write your description
+        """
         seen = {}
         rename_map = {}
         for name in self.otf.getGlyphOrder():
@@ -267,6 +298,13 @@ class PostProcessor(object):
 
     @staticmethod
     def set_post_table_format(otf, formatType):
+        """
+        Set post format for post - processing.
+
+        Args:
+            otf: (todo): write your description
+            formatType: (str): write your description
+        """
         if formatType not in (2.0, 3.0):
             raise NotImplementedError(formatType)
 
@@ -285,6 +323,12 @@ class PostProcessor(object):
 
     @staticmethod
     def _get_cff_version(otf):
+        """
+        Get the cfff version.
+
+        Args:
+            otf: (todo): write your description
+        """
         if "CFF " in otf:
             return CFFVersion.CFF
         elif "CFF2" in otf:
@@ -294,6 +338,12 @@ class PostProcessor(object):
 
     @staticmethod
     def _convert_cff_to_cff2(otf):
+        """
+        Convert a cff to cff2 format.
+
+        Args:
+            otf: (todo): write your description
+        """
         from fontTools.varLib.cff import convertCFFtoCFF2
 
         logger.info("Converting CFF table to CFF2")
@@ -310,11 +360,28 @@ class PostProcessor(object):
 
     @classmethod
     def _subroutinize(cls, backend, otf, cffVersion):
+        """
+        \
+
+        Args:
+            cls: (todo): write your description
+            backend: (str): write your description
+            otf: (todo): write your description
+            cffVersion: (str): write your description
+        """
         subroutinize = getattr(cls, f"_subroutinize_with_{backend.value}")
         subroutinize(otf, cffVersion)
 
     @classmethod
     def _subroutinize_with_compreffor(cls, otf, cffVersion):
+        """
+        Subrout cffor.
+
+        Args:
+            cls: (todo): write your description
+            otf: (todo): write your description
+            cffVersion: (str): write your description
+        """
         from compreffor import compress
 
         if cls._get_cff_version(otf) != CFFVersion.CFF or cffVersion != CFFVersion.CFF:
@@ -328,6 +395,14 @@ class PostProcessor(object):
 
     @classmethod
     def _subroutinize_with_cffsubr(cls, otf, cffVersion):
+        """
+        Retrieve cffsubrcffrout. cff.
+
+        Args:
+            cls: (todo): write your description
+            otf: (todo): write your description
+            cffVersion: (str): write your description
+        """
         import cffsubr
 
         cffInputVersion = cls._get_cff_version(otf)
@@ -347,6 +422,12 @@ class PostProcessor(object):
 # This function returns a new charstring program without the initial width value.
 # TODO: Move to fontTools?
 def _stripCharStringWidth(program):
+    """
+    Strip whitespace from a string.
+
+    Args:
+        program: (list): write your description
+    """
     seenWidthOp = False
     result = []
     stack = []

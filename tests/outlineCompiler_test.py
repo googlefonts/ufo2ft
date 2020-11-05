@@ -26,12 +26,24 @@ import pytest
 
 
 def getpath(filename):
+    """
+    Return the path of the file.
+
+    Args:
+        filename: (str): write your description
+    """
     dirname = os.path.dirname(__file__)
     return os.path.join(dirname, "data", filename)
 
 
 @pytest.fixture
 def testufo(FontClass):
+    """
+    Return a font name.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     font = FontClass(getpath("TestFont.ufo"))
     del font.lib["public.postscriptNames"]
     return font
@@ -39,6 +51,12 @@ def testufo(FontClass):
 
 @pytest.fixture
 def quadufo(FontClass):
+    """
+    Return a ~astropy.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     font = FontClass(getpath("TestFont.ufo"))
     font_to_quadratic(font)
     return font
@@ -46,11 +64,23 @@ def quadufo(FontClass):
 
 @pytest.fixture
 def use_my_metrics_ufo(FontClass):
+    """
+    Return the metrics class associated with the given name.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     return FontClass(getpath("UseMyMetrics.ufo"))
 
 
 @pytest.fixture
 def emptyufo(FontClass):
+    """
+    Empty the font.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     font = FontClass()
     font.info.unitsPerEm = 1000
     font.info.familyName = "Test Font"
@@ -64,6 +94,13 @@ def emptyufo(FontClass):
 
 class OutlineTTFCompilerTest(object):
     def test_setupTable_gasp(self, testufo):
+        """
+        Setup a gaspo table.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         compiler = OutlineTTFCompiler(testufo)
         compiler.otf = TTFont()
         compiler.setupTable_gasp()
@@ -71,18 +108,39 @@ class OutlineTTFCompilerTest(object):
         assert compiler.otf["gasp"].gaspRange == {7: 10, 65535: 15}
 
     def test_compile_with_gasp(self, testufo):
+        """
+        Compile a set of the gaspo
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
         assert "gasp" in compiler.otf
         assert compiler.otf["gasp"].gaspRange == {7: 10, 65535: 15}
 
     def test_compile_without_gasp(self, testufo):
+        """
+        Compile gaspi file exists.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         testufo.info.openTypeGaspRangeRecords = None
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
         assert "gasp" not in compiler.otf
 
     def test_compile_empty_gasp(self, testufo):
+        """
+        Compile gaspi file is empty.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         # ignore empty gasp
         testufo.info.openTypeGaspRangeRecords = []
         compiler = OutlineTTFCompiler(testufo)
@@ -90,6 +148,13 @@ class OutlineTTFCompilerTest(object):
         assert "gasp" not in compiler.otf
 
     def test_makeGlyphsBoundingBoxes(self, quadufo):
+        """
+        Create a bounding box for a quadratic.
+
+        Args:
+            self: (todo): write your description
+            quadufo: (todo): write your description
+        """
         compiler = OutlineTTFCompiler(quadufo)
         assert compiler.glyphBoundingBoxes[".notdef"] == (50, 0, 450, 750)
         # no outline data
@@ -98,6 +163,13 @@ class OutlineTTFCompilerTest(object):
         assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
 
     def test_autoUseMyMetrics(self, use_my_metrics_ufo):
+        """
+        Test for auto - auto - auto - auto - auto - auto - auto - auto - auto - auto - auto - auto - auto - auto -
+
+        Args:
+            self: (todo): write your description
+            use_my_metrics_ufo: (bool): write your description
+        """
         compiler = OutlineTTFCompiler(use_my_metrics_ufo)
         ttf = compiler.compile()
         # the first component in the 'Iacute' composite glyph ('acute')
@@ -113,6 +185,13 @@ class OutlineTTFCompilerTest(object):
             assert not (component.flags & USE_MY_METRICS)
 
     def test_autoUseMyMetrics_None(self, use_my_metrics_ufo):
+        """
+        Set auto - auto - auto - autoline metrics
+
+        Args:
+            self: (todo): write your description
+            use_my_metrics_ufo: (bool): write your description
+        """
         compiler = OutlineTTFCompiler(use_my_metrics_ufo)
         # setting 'autoUseMyMetrics' attribute to None disables the feature
         compiler.autoUseMyMetrics = None
@@ -120,6 +199,13 @@ class OutlineTTFCompilerTest(object):
         assert not (ttf["glyf"]["Iacute"].components[1].flags & USE_MY_METRICS)
 
     def test_importTTX(self, testufo):
+        """
+        Test if the dataset has a valid
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         compiler = OutlineTTFCompiler(testufo)
         otf = compiler.otf = TTFont()
         compiler.importTTX()
@@ -128,6 +214,13 @@ class OutlineTTFCompilerTest(object):
         assert otf.sfntVersion == "\x00\x01\x00\x00"
 
     def test_no_contour_glyphs(self, testufo):
+        """
+        Test if contour.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         for glyph in testufo:
             glyph.clearContours()
         compiler = OutlineTTFCompiler(testufo)
@@ -138,6 +231,13 @@ class OutlineTTFCompilerTest(object):
         assert compiler.otf["hhea"].xMaxExtent == 0
 
     def test_os2_no_widths(self, testufo):
+        """
+        Test if the widths of the ufo.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         for glyph in testufo:
             glyph.width = 0
         compiler = OutlineTTFCompiler(testufo)
@@ -145,6 +245,13 @@ class OutlineTTFCompilerTest(object):
         assert compiler.otf["OS/2"].xAvgCharWidth == 0
 
     def test_missing_component(self, emptyufo):
+        """
+        Test for missing component.
+
+        Args:
+            self: (todo): write your description
+            emptyufo: (todo): write your description
+        """
         ufo = emptyufo
         a = ufo.newGlyph("a")
         pen = a.getPen()
@@ -188,6 +295,13 @@ class OutlineTTFCompilerTest(object):
 
 class OutlineOTFCompilerTest(object):
     def test_setupTable_CFF_all_blues_defined(self, testufo):
+        """
+        Make sure the postscript postscript.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         testufo.info.postscriptBlueFuzz = 2
         testufo.info.postscriptBlueShift = 8
         testufo.info.postscriptBlueScale = 0.049736
@@ -215,6 +329,13 @@ class OutlineOTFCompilerTest(object):
         assert private.FamilyOtherBlues == [-217, -205]
 
     def test_setupTable_CFF_no_blues_defined(self, testufo):
+        """
+        Setup post - post - post - postscript - postscript.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         # no blue values defined
         testufo.info.postscriptBlueValues = []
         testufo.info.postscriptOtherBlues = []
@@ -246,6 +367,13 @@ class OutlineOTFCompilerTest(object):
         assert not hasattr(private, "FamilyOtherBlues")
 
     def test_setupTable_CFF_some_blues_defined(self, testufo):
+        """
+        Make sure the post - post - post - post - postscript.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         testufo.info.postscriptBlueFuzz = 2
         testufo.info.postscriptForceBold = True
         testufo.info.postscriptBlueValues = []
@@ -272,6 +400,13 @@ class OutlineOTFCompilerTest(object):
 
     @staticmethod
     def get_charstring_program(ttFont, glyphName):
+        """
+        Retrieve a cff string.
+
+        Args:
+            ttFont: (todo): write your description
+            glyphName: (str): write your description
+        """
         cff = ttFont["CFF "].cff
         charstrings = cff[list(cff.keys())[0]].CharStrings
         c, _ = charstrings.getItemAndSelector(glyphName)
@@ -279,6 +414,14 @@ class OutlineOTFCompilerTest(object):
         return c.program
 
     def assertProgramEqual(self, expected, actual):
+        """
+        Asserts that expected_token is true.
+
+        Args:
+            self: (todo): write your description
+            expected: (list): write your description
+            actual: (todo): write your description
+        """
         assert len(expected) == len(actual)
         for exp_token, act_token in zip(expected, actual):
             if isinstance(exp_token, basestring):
@@ -288,6 +431,13 @@ class OutlineOTFCompilerTest(object):
                 assert exp_token == pytest.approx(act_token)
 
     def test_setupTable_CFF_round_all(self, testufo):
+        """
+        Test for all cFF cFF and cFF.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         # by default all floats are rounded to integer
         compiler = OutlineOTFCompiler(testufo)
         otf = compiler.otf = TTFont(sfntVersion="OTTO")
@@ -325,6 +475,13 @@ class OutlineOTFCompilerTest(object):
         )
 
     def test_setupTable_CFF_round_none(self, testufo):
+        """
+        Name :
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         # roundTolerance=0 means 'don't round, keep all floats'
         compiler = OutlineOTFCompiler(testufo, roundTolerance=0)
         otf = compiler.otf = TTFont(sfntVersion="OTTO")
@@ -361,6 +518,13 @@ class OutlineOTFCompilerTest(object):
         )
 
     def test_setupTable_CFF_round_some(self, testufo):
+        """
+        Name :
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         # only floats 'close enough' are rounded to integer
         compiler = OutlineOTFCompiler(testufo, roundTolerance=0.34)
         otf = compiler.otf = TTFont(sfntVersion="OTTO")
@@ -397,6 +561,13 @@ class OutlineOTFCompilerTest(object):
         )
 
     def test_setupTable_CFF_optimize(self, testufo):
+        """
+        Name : set the cFF table.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         compiler = OutlineOTFCompiler(testufo, optimizeCFF=True)
         otf = compiler.otf = TTFont(sfntVersion="OTTO")
 
@@ -409,6 +580,13 @@ class OutlineOTFCompilerTest(object):
         )
 
     def test_setupTable_CFF_no_optimize(self, testufo):
+        """
+        Name :
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         compiler = OutlineOTFCompiler(testufo, optimizeCFF=False)
         otf = compiler.otf = TTFont(sfntVersion="OTTO")
 
@@ -421,12 +599,26 @@ class OutlineOTFCompilerTest(object):
         )
 
     def test_makeGlyphsBoundingBoxes(self, testufo):
+        """
+        Subclasses of glyphphphs.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         compiler = OutlineOTFCompiler(testufo)
         # with default roundTolerance, all coordinates and hence the bounding
         # box values are rounded with otRound()
         assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
 
     def test_makeGlyphsBoundingBoxes_floats(self, testufo):
+        """
+        Subclasses of the glyphs.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         # specifying a custom roundTolerance affects which coordinates are
         # rounded; in this case, the top-most Y coordinate stays a float
         # (197.32), hence the bbox.yMax (198) is rounded using math.ceiling()
@@ -434,6 +626,13 @@ class OutlineOTFCompilerTest(object):
         assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 198)
 
     def test_importTTX(self, testufo):
+        """
+        Test if the dataset hashed dataset
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         compiler = OutlineOTFCompiler(testufo)
         otf = compiler.otf = TTFont(sfntVersion="OTTO")
         compiler.importTTX()
@@ -442,6 +641,13 @@ class OutlineOTFCompilerTest(object):
         assert otf.sfntVersion == "OTTO"
 
     def test_no_contour_glyphs(self, testufo):
+        """
+        Determine the glyphs of the ufo.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         for glyph in testufo:
             glyph.clearContours()
         compiler = OutlineOTFCompiler(testufo)
@@ -452,6 +658,13 @@ class OutlineOTFCompilerTest(object):
         assert compiler.otf["hhea"].xMaxExtent == 0
 
     def test_optimized_default_and_nominal_widths(self, FontClass):
+        """
+        Default font widths.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass()
         ufo.info.unitsPerEm = 1000
         for glyphName, width in (
@@ -495,6 +708,13 @@ class OutlineOTFCompilerTest(object):
         assert charStrings.getItemAndSelector("space")[0].program == [-53, "endchar"]
 
     def test_optimized_default_but_no_nominal_widths(self, FontClass):
+        """
+        Make the default widths.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         ufo = FontClass()
         ufo.info.familyName = "Test"
         ufo.info.styleName = "R"
@@ -522,6 +742,13 @@ class OutlineOTFCompilerTest(object):
 
 class GlyphOrderTest(object):
     def test_compile_original_glyph_order(self, testufo):
+        """
+        Compile the original glyphs in a glyph.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         DEFAULT_ORDER = [
             ".notdef",
             "space",
@@ -543,6 +770,13 @@ class GlyphOrderTest(object):
         assert compiler.otf.getGlyphOrder() == DEFAULT_ORDER
 
     def test_compile_tweaked_glyph_order(self, testufo):
+        """
+        Compile the order of the glyphs.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         NEW_ORDER = [
             ".notdef",
             "space",
@@ -600,6 +834,15 @@ class NamesTest(object):
     def test_compile_without_production_names(
         self, testufo, prod_names_key, prod_names_value
     ):
+        """
+        Return true if the test names in testuf names.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+            prod_names_key: (str): write your description
+            prod_names_value: (str): write your description
+        """
         expected = [
             ".notdef",
             "space",
@@ -625,6 +868,13 @@ class NamesTest(object):
         assert result.getGlyphOrder() == expected
 
     def test_compile_with_production_names(self, testufo):
+        """
+        Return a list of the results of a given testuf
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         original = [
             ".notdef",
             "space",
@@ -669,6 +919,13 @@ class NamesTest(object):
         assert result.getGlyphOrder() == modified
 
     def test_postprocess_production_names_no_notdef(self, testufo):
+        """
+        Make a list of ufo names to go into a ufo.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         import ufo2ft
 
         del testufo[".notdef"]
@@ -702,6 +959,14 @@ class NamesTest(object):
 
     @pytest.mark.parametrize("use_production_names", [None, True])
     def test_compile_with_custom_postscript_names(self, testufo, use_production_names):
+        """
+        Compile postscript names.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+            use_production_names: (str): write your description
+        """
         testufo.lib["public.postscriptNames"] = self.CUSTOM_POSTSCRIPT_NAMES
         result = compileTTF(testufo, useProductionNames=use_production_names)
         assert sorted(result.getGlyphOrder()) == sorted(
@@ -712,6 +977,14 @@ class NamesTest(object):
     def test_compile_with_custom_postscript_names_notdef_preserved(
         self, testufo, use_production_names
     ):
+        """
+        Generate a custom script with custom script
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+            use_production_names: (str): write your description
+        """
         custom_names = dict(self.CUSTOM_POSTSCRIPT_NAMES)
         del custom_names[".notdef"]
         testufo.lib["public.postscriptNames"] = custom_names
@@ -734,6 +1007,14 @@ class NamesTest(object):
         ]
 
     def test_warn_name_exceeds_max_length(self, testufo, caplog):
+        """
+        Create a new max length with the same name.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+            caplog: (todo): write your description
+        """
         long_name = 64 * "a"
         testufo.newGlyph(long_name)
 
@@ -744,6 +1025,13 @@ class NamesTest(object):
         assert long_name in result.getGlyphOrder()
 
     def test_duplicate_glyph_names(self, testufo):
+        """
+        Return a list of glyph names.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         order = ["ab", "ab.1", "a-b", "a/b", "ba"]
         testufo.lib["public.glyphOrder"] = order
         testufo.lib["public.postscriptNames"] = {"ba": "ab"}
@@ -760,6 +1048,13 @@ class NamesTest(object):
         assert result[5] == "ab.4"
 
     def test_too_long_production_name(self, testufo):
+        """
+        Test if the long name is longitude.
+
+        Args:
+            self: (todo): write your description
+            testufo: (todo): write your description
+        """
         name = "_".join(("a",) * 16)
         testufo.newGlyph(name)
 
@@ -773,6 +1068,13 @@ class NamesTest(object):
 class ColrCpalTest:
 
     def test_colr_cpal(self, FontClass):
+        """
+        Test for all the current font.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         testufo = FontClass(getpath("ColorTest.ufo"))
         assert "com.github.googlei18n.ufo2ft.colorLayerMapping" in testufo.lib
         assert "com.github.googlei18n.ufo2ft.colorPalettes" in testufo.lib
@@ -786,6 +1088,13 @@ class ColrCpalTest:
                           'c': [('c.color2', 1), ('c.color1', 0)]}
 
     def test_colr_cpal_raw(self, FontClass):
+        """
+        Test if a raw raw colr4.
+
+        Args:
+            self: (todo): write your description
+            FontClass: (todo): write your description
+        """
         testufo = FontClass(getpath("ColorTestRaw.ufo"))
         assert "com.github.googlei18n.ufo2ft.colorLayers" in testufo.lib
         assert "com.github.googlei18n.ufo2ft.colorPalettes" in testufo.lib
@@ -839,6 +1148,14 @@ ASCII = [unichr(c) for c in range(0x20, 0x7E)]
     ],
 )
 def test_calcCodePageRanges(emptyufo, unicodes, expected):
+    """
+    Calculate page ranges.
+
+    Args:
+        emptyufo: (todo): write your description
+        unicodes: (str): write your description
+        expected: (todo): write your description
+    """
     font = emptyufo
     for i, c in enumerate(unicodes):
         font.newGlyph("glyph%d" % i).unicode = byteord(c)
@@ -855,6 +1172,12 @@ def test_calcCodePageRanges(emptyufo, unicodes, expected):
 
 
 def test_custom_layer_compilation(layertestrgufo):
+    """
+    Compute the custom layer has the same.
+
+    Args:
+        layertestrgufo: (todo): write your description
+    """
     ufo = layertestrgufo
 
     font_otf = compileOTF(ufo, layerName="Medium")
@@ -864,6 +1187,13 @@ def test_custom_layer_compilation(layertestrgufo):
 
 
 def test_custom_layer_compilation_interpolatable(layertestrgufo, layertestbdufo):
+    """
+    Compute the custom interpolation.
+
+    Args:
+        layertestrgufo: (todo): write your description
+        layertestbdufo: (todo): write your description
+    """
     ufo1 = layertestrgufo
     ufo2 = layertestbdufo
 
@@ -894,6 +1224,13 @@ def test_custom_layer_compilation_interpolatable(layertestrgufo, layertestbdufo)
 
 @pytest.mark.parametrize("inplace", [False, True], ids=["not inplace", "inplace"])
 def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
+    """
+    Compute the designspace for the designspace layer.
+
+    Args:
+        designspace: (todo): write your description
+        inplace: (bool): write your description
+    """
     result = compileInterpolatableTTFsFromDS(designspace, inplace=inplace)
     assert (designspace is result) == inplace
 
@@ -928,6 +1265,13 @@ def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
 
 @pytest.mark.parametrize("inplace", [False, True], ids=["not inplace", "inplace"])
 def test_custom_layer_compilation_interpolatable_otf_from_ds(designspace, inplace):
+    """
+    Interpolatable the designspace.
+
+    Args:
+        designspace: (list): write your description
+        inplace: (bool): write your description
+    """
     result = compileInterpolatableOTFsFromDS(designspace, inplace=inplace)
     assert (designspace is result) == inplace
 
@@ -956,12 +1300,24 @@ def test_custom_layer_compilation_interpolatable_otf_from_ds(designspace, inplac
 
 
 def test_compilation_from_ds_missing_source_font(designspace):
+    """
+    Convert design font from design fontspace.
+
+    Args:
+        designspace: (todo): write your description
+    """
     designspace.sources[0].font = None
     with pytest.raises(AttributeError, match="missing required 'font'"):
         compileInterpolatableTTFsFromDS(designspace)
 
 
 def test_compile_empty_ufo(FontClass):
+    """
+    Compile font font font.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     ufo = FontClass()
     font = compileTTF(ufo)
     assert font["name"].getName(1, 3, 1).toUnicode() == "New Font"

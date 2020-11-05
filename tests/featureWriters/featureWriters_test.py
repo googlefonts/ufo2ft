@@ -11,6 +11,12 @@ try:
     from plistlib import loads, FMT_XML
 
     def readPlistFromString(s):
+        """
+        Reads a string from a string.
+
+        Args:
+            s: (str): write your description
+        """
         return loads(s, fmt=FMT_XML)
 
 
@@ -48,9 +54,24 @@ class FooBarWriter(BaseFeatureWriter):
     tableTag = "GSUB"
 
     def __init__(self, **kwargs):
+        """
+        Initialize the class.
+
+        Args:
+            self: (todo): write your description
+        """
         pass
 
     def write(self, font, feaFile, compiler=None):
+        """
+        Write the data to disk to a file.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            feaFile: (str): write your description
+            compiler: (str): write your description
+        """
         return False
 
 
@@ -77,6 +98,13 @@ VALID_SPEC_LISTS = [
 
 @pytest.mark.parametrize("specList", VALID_SPEC_LISTS)
 def test_loadFeatureWriters_valid(specList, FontClass):
+    """
+    Test for bad features.
+
+    Args:
+        specList: (list): write your description
+        FontClass: (todo): write your description
+    """
     ufo = FontClass()
     ufo.lib[FEATURE_WRITERS_KEY] = specList
     for writer in loadFeatureWriters(ufo, ignoreErrors=False):
@@ -94,6 +122,13 @@ VALID_SPEC_STRINGS = [
 
 @pytest.mark.parametrize("spec", VALID_SPEC_STRINGS)
 def test_loadFeatureWriterFromString_valid(spec, FontClass):
+    """
+    Test that all feature_validation of a feature.
+
+    Args:
+        spec: (str): write your description
+        FontClass: (todo): write your description
+    """
     writer = loadFeatureWriterFromString(spec)
     assert writer.tableTag in {"GSUB", "GPOS"}
     assert callable(writer.write)

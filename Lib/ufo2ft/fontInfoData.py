@@ -38,21 +38,45 @@ _styleMapStyleNames = ["regular", "bold", "italic", "bold italic"]
 
 
 def ascenderFallback(info):
+    """
+    Return a : class : fallbackbackbackbackbackback instance.
+
+    Args:
+        info: (todo): write your description
+    """
     upm = getAttrWithFallback(info, "unitsPerEm")
     return otRound(upm * 0.8)
 
 
 def descenderFallback(info):
+    """
+    Return the backender instance of - backender
+
+    Args:
+        info: (todo): write your description
+    """
     upm = getAttrWithFallback(info, "unitsPerEm")
     return -otRound(upm * 0.2)
 
 
 def capHeightFallback(info):
+    """
+    Return the back - of the given backends
+
+    Args:
+        info: (todo): write your description
+    """
     upm = getAttrWithFallback(info, "unitsPerEm")
     return otRound(upm * 0.7)
 
 
 def xHeightFallback(info):
+    """
+    Return the xHeight of the xHeight
+
+    Args:
+        info: (array): write your description
+    """
     upm = getAttrWithFallback(info, "unitsPerEm")
     return otRound(upm * 0.5)
 
@@ -98,6 +122,11 @@ _date_format = "%Y/%m/%d %H:%M:%S"
 
 
 def dateStringForNow():
+    """
+    Returns the string representation of the date string.
+
+    Args:
+    """
     return time.strftime(_date_format, time.gmtime())
 
 
@@ -202,11 +231,23 @@ def openTypeNamePreferredSubfamilyNameFallback(info):
 
 
 def openTypeNameWWSFamilyNameFallback(info):
+    """
+    Returns a opentypetype of the opentype
+
+    Args:
+        info: (todo): write your description
+    """
     # not yet supported
     return None
 
 
 def openTypeNameWWSSubfamilyNameFallback(info):
+    """
+    Open a opentypetypetype of the given opentype
+
+    Args:
+        info: (todo): write your description
+    """
     # not yet supported
     return None
 
@@ -263,6 +304,13 @@ _postscriptFontNameAllowed = set([unichr(i) for i in range(33, 127)])
 
 
 def normalizeStringForPostscript(s, allowSpaces=True):
+    """
+    Normalizes the string.
+
+    Args:
+        s: (todo): write your description
+        allowSpaces: (bool): write your description
+    """
     s = tounicode(s)
     normalized = []
     for c in s:
@@ -280,6 +328,12 @@ def normalizeStringForPostscript(s, allowSpaces=True):
 
 
 def normalizeNameForPostscript(name):
+    """
+    Normalize a script.
+
+    Args:
+        name: (str): write your description
+    """
     return normalizeStringForPostscript(name, allowSpaces=False)
 
 
@@ -552,6 +606,14 @@ def preflightInfo(info):
 
 
 def intListToNum(intList, start, length):
+    """
+    Convert a list of integers into binary string.
+
+    Args:
+        intList: (list): write your description
+        start: (int): write your description
+        length: (int): write your description
+    """
     all = []
     bin = ""
     for i in range(start, start + length):
@@ -571,6 +633,12 @@ def intListToNum(intList, start, length):
 
 
 def dateStringToTimeValue(date):
+    """
+    Returns a datetime.
+
+    Args:
+        date: (todo): write your description
+    """
     try:
         t = time.strptime(date, "%Y/%m/%d %H:%M:%S")
         return calendar.timegm(t)

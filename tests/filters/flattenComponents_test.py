@@ -44,6 +44,13 @@ import pytest
     ]
 )
 def font(request, FontClass):
+    """
+    Return a font to font.
+
+    Args:
+        request: (todo): write your description
+        FontClass: (todo): write your description
+    """
     font = FontClass()
     for param in request.param["glyphs"]:
         glyph = font.newGlyph(param["name"])
@@ -56,18 +63,46 @@ def font(request, FontClass):
 
 class FlattenComponentsFilterTest(object):
     def test_empty_glyph(self, font):
+        """
+        Test if a glyph is empty.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         philter = FlattenComponentsFilter(include={"space"})
         assert not philter(font)
 
     def test_contour_glyph(self, font):
+        """
+        Test if a glyph is a glyph.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         philter = FlattenComponentsFilter(include={"a"})
         assert not philter(font)
 
     def test_component_glyph(self, font):
+        """
+        Test if a glyph is in the glyph.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         philter = FlattenComponentsFilter(include={"b"})
         assert not philter(font)
 
     def test_nested_components_glyph(self, font):
+        """
+        Test if the components of the components.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         philter = FlattenComponentsFilter(include={"c"})
         modified = philter(font)
         assert modified == set(["c"])
@@ -76,6 +111,13 @@ class FlattenComponentsFilterTest(object):
         ]
 
     def test_whole_font(self, font):
+        """
+        Test if the font for the font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         philter = FlattenComponentsFilter()
         modified = philter(font)
         assert modified == set(["c", "d"])
@@ -89,6 +131,13 @@ class FlattenComponentsFilterTest(object):
         ]
 
     def test_logger(self, font):
+        """
+        Test if the logger.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         with CapturingLogHandler(logger, level="INFO") as captor:
             philter = FlattenComponentsFilter()
             modified = philter(font)

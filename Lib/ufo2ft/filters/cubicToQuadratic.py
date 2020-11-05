@@ -20,6 +20,14 @@ class CubicToQuadraticFilter(BaseFilter):
     }
 
     def set_context(self, font, glyphSet):
+        """
+        Set the ctx.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            glyphSet: (todo): write your description
+        """
         ctx = super(CubicToQuadraticFilter, self).set_context(font, glyphSet)
 
         relativeError = self.options.conversionError or DEFAULT_MAX_ERR
@@ -30,6 +38,14 @@ class CubicToQuadraticFilter(BaseFilter):
         return ctx
 
     def __call__(self, font, glyphSet=None):
+        """
+        Make a call on the given glyph.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            glyphSet: (todo): write your description
+        """
         if self.options.rememberCurveType:
             # check first in the global font lib, then in layer lib
             for lib in (font.lib, getattr(glyphSet, "lib", {})):
@@ -59,6 +75,13 @@ class CubicToQuadraticFilter(BaseFilter):
         return modified
 
     def filter(self, glyph):
+        """
+        Filter the glyphs the glyphs the given glyph.
+
+        Args:
+            self: (todo): write your description
+            glyph: (todo): write your description
+        """
         if not len(glyph):
             return False
 

@@ -22,6 +22,13 @@ class FooBarFilter(BaseFilter):
     _kwargs = {"c": 0}
 
     def filter(self, glyph):
+        """
+        Filter the given glyph with the given glyph.
+
+        Args:
+            self: (todo): write your description
+            glyph: (callable): write your description
+        """
         return False
 
 
@@ -36,6 +43,11 @@ def fooBar():
 
 
 def test_getFilterClass():
+    """
+    Get filter filter
+
+    Args:
+    """
     assert getFilterClass("Foo Bar") == FooBarFilter
     assert getFilterClass("FooBar") == FooBarFilter
     assert getFilterClass("fooBar") == FooBarFilter
@@ -65,6 +77,11 @@ class MockGlyph(SimpleNamespace):
 
 
 def test_loadFilters_empty():
+    """
+    Load load load is empty loads.
+
+    Args:
+    """
     ufo = MockFont(lib={})
     assert UFO2FT_FILTERS_KEY not in ufo.lib
     assert loadFilters(ufo) == ([], [])
@@ -72,12 +89,23 @@ def test_loadFilters_empty():
 
 @pytest.fixture
 def ufo():
+    """
+    Return a ufo.
+
+    Args:
+    """
     ufo = MockFont(lib={})
     ufo.lib[UFO2FT_FILTERS_KEY] = [{"name": "Foo Bar", "args": ["foo", "bar"]}]
     return ufo
 
 
 def test_loadFilters_pre(ufo):
+    """
+    Test if uwnters uwnters.
+
+    Args:
+        ufo: (todo): write your description
+    """
     ufo.lib[UFO2FT_FILTERS_KEY][0]["pre"] = True
     pre, post = loadFilters(ufo)
     assert len(pre) == 1
@@ -86,11 +114,23 @@ def test_loadFilters_pre(ufo):
 
 
 def test_loadFilters_custom_namespace(ufo):
+    """
+    Return true if ufo filter.
+
+    Args:
+        ufo: (todo): write your description
+    """
     ufo.lib[UFO2FT_FILTERS_KEY][0]["name"] = "Self Destruct"
     ufo.lib[UFO2FT_FILTERS_KEY][0]["namespace"] = "my_dangerous_filters"
 
     class SelfDestructFilter(FooBarFilter):
         def filter(glyph):
+            """
+            Filter a glyph.
+
+            Args:
+                glyph: (callable): write your description
+            """
             # Don't try this at home!!! LOL :)
             # shutil.rmtree(os.path.expanduser("~"))
             return True
@@ -106,6 +146,12 @@ def test_loadFilters_custom_namespace(ufo):
 
 
 def test_loadFilters_args_missing(ufo):
+    """
+    Test if ufo exists.
+
+    Args:
+        ufo: (todo): write your description
+    """
     del ufo.lib[UFO2FT_FILTERS_KEY][0]["args"]
 
     with pytest.raises(TypeError) as exc_info:
@@ -115,6 +161,12 @@ def test_loadFilters_args_missing(ufo):
 
 
 def test_loadFilters_args_unsupported(ufo):
+    """
+    Test for uwnters.
+
+    Args:
+        ufo: (todo): write your description
+    """
     ufo.lib[UFO2FT_FILTERS_KEY][0]["args"].append("baz")
 
     with pytest.raises(TypeError) as exc_info:
@@ -124,6 +176,12 @@ def test_loadFilters_args_unsupported(ufo):
 
 
 def test_loadFilters_include_all(ufo):
+    """
+    List all ufo ufo agents in ufo.
+
+    Args:
+        ufo: (todo): write your description
+    """
     _, [filter_obj] = loadFilters(ufo)
 
     assert filter_obj.include(MockGlyph(name="hello"))
@@ -131,6 +189,12 @@ def test_loadFilters_include_all(ufo):
 
 
 def test_loadFilters_include_list(ufo):
+    """
+    Test if ufo list.
+
+    Args:
+        ufo: (todo): write your description
+    """
     ufo.lib[UFO2FT_FILTERS_KEY][0]["include"] = ["a", "b"]
 
     _, [filter_obj] = loadFilters(ufo)
@@ -141,6 +205,12 @@ def test_loadFilters_include_list(ufo):
 
 
 def test_loadFilters_exclude_list(ufo):
+    """
+    Exclude ufo ufo list.
+
+    Args:
+        ufo: (todo): write your description
+    """
     ufo.lib[UFO2FT_FILTERS_KEY][0]["exclude"] = ["a", "b"]
 
     _, [filter_obj] = loadFilters(ufo)
@@ -151,6 +221,12 @@ def test_loadFilters_exclude_list(ufo):
 
 
 def test_loadFilters_both_include_exclude(ufo):
+    """
+    Exclude ufo fields in ufo.
+
+    Args:
+        ufo: (todo): write your description
+    """
     ufo.lib[UFO2FT_FILTERS_KEY][0]["include"] = ["a", "b"]
     ufo.lib[UFO2FT_FILTERS_KEY][0]["exclude"] = ["c", "d"]
 
@@ -161,6 +237,12 @@ def test_loadFilters_both_include_exclude(ufo):
 
 
 def test_loadFilters_failed(ufo):
+    """
+    Test if the user has failed.
+
+    Args:
+        ufo: (todo): write your description
+    """
     ufo.lib[UFO2FT_FILTERS_KEY].append(dict(name="Non Existent"))
 
     with CapturingLogHandler(logger, level="ERROR") as captor:
@@ -170,6 +252,12 @@ def test_loadFilters_failed(ufo):
 
 
 def test_loadFilters_kwargs_unsupported(ufo):
+    """
+    Test for uwnters for uwnters.
+
+    Args:
+        ufo: (todo): write your description
+    """
     ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"] = {}
     ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"]["c"] = 1
     ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"]["d"] = 2  # unknown
@@ -181,6 +269,11 @@ def test_loadFilters_kwargs_unsupported(ufo):
 
 
 def test_BaseFilter_repr():
+    """
+    Add filter filter methods.
+
+    Args:
+    """
     class NoArgFilter(BaseFilter):
         pass
 

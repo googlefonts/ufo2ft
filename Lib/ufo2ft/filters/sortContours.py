@@ -23,6 +23,13 @@ class SortContoursFilter(BaseFilter):
     """
 
     def filter(self, glyph):
+        """
+        Filter out all glyphs by glyph.
+
+        Args:
+            self: (todo): write your description
+            glyph: (todo): write your description
+        """
         if len(glyph) == 0:  # As in, no contours.
             return False
 
@@ -45,6 +52,12 @@ class SortContoursFilter(BaseFilter):
 
 
 def _control_bounding_box(contour):
+    """
+    Return a bounding box for the given contour.
+
+    Args:
+        contour: (todo): write your description
+    """
     pen = fontTools.pens.boundsPen.ControlBoundsPen(None)
     p2s_pen = fontTools.pens.pointPen.PointToSegmentPen(pen)
     contour.drawPoints(p2s_pen)

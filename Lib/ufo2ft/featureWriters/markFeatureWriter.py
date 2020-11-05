@@ -21,26 +21,66 @@ class AbstractMarkPos(object):
     Statement = None
 
     def __init__(self, name, marks):
+        """
+        Initialize a new instance.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+            marks: (str): write your description
+        """
         self.name = name
         self.marks = marks
 
     def _filterMarks(self, include):
+        """
+        Return a list of filenames.
+
+        Args:
+            self: (todo): write your description
+            include: (list): write your description
+        """
         return [anchor for anchor in self.marks if include(anchor)]
 
     def _marksAsAST(self):
+        """
+        Return a list of class attributes in this class.
+
+        Args:
+            self: (todo): write your description
+        """
         return [
             (ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)), anchor.markClass)
             for anchor in sorted(self.marks, key=lambda a: a.name)
         ]
 
     def asAST(self):
+        """
+        Returns the ast as ast.
+
+        Args:
+            self: (todo): write your description
+        """
         marks = self._marksAsAST()
         return self.Statement(ast.GlyphName(self.name), marks)
 
     def __str__(self):
+        """
+        Return a string representation of the string.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.asAST().asFea()  # pragma: no cover
 
     def filter(self, include):
+        """
+        Return a filtered filter.
+
+        Args:
+            self: (todo): write your description
+            include: (list): write your description
+        """
         marks = self._filterMarks(include)
         return self.__class__(self.name, marks) if any(marks) else None
 
@@ -60,12 +100,25 @@ class MarkToLigaPos(AbstractMarkPos):
     Statement = ast.MarkLigPosStatement
 
     def _filterMarks(self, include):
+        """
+        Return a list of all anchor.
+
+        Args:
+            self: (todo): write your description
+            include: (list): write your description
+        """
         return [
             [anchor for anchor in component if include(anchor)]
             for component in self.marks
         ]
 
     def _marksAsAST(self):
+        """
+        A list of all component classes.
+
+        Args:
+            self: (todo): write your description
+        """
         return [
             [
                 (ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)), anchor.markClass)
@@ -142,6 +195,16 @@ class NamedAnchor(object):
     ligaNumRE = LIGA_NUM_RE
 
     def __init__(self, name, x, y, markClass=None):
+        """
+        Parse a single character.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+            x: (int): write your description
+            y: (int): write your description
+            markClass: (str): write your description
+        """
         self.name = tounicode(name)
         self.x = x
         self.y = y
@@ -164,9 +227,21 @@ class NamedAnchor(object):
 
     @property
     def markAnchorName(self):
+        """
+        Returns the marker name for this item.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.markPrefix + self.key
 
     def __repr__(self):
+        """
+        Return a human - readable representation.
+
+        Args:
+            self: (todo): write your description
+        """
         items = ("%s=%r" % (tostr(k), getattr(self, k)) for k in ("name", "x", "y"))
         return tostr("%s(%s)") % (type(self).__name__, ", ".join(items))
 
@@ -244,6 +319,15 @@ class MarkFeatureWriter(BaseFeatureWriter):
     anchorSortKey = {"_bottom": -2, "_top": -1}
 
     def setContext(self, font, feaFile, compiler=None):
+        """
+        Sets the c { pea }.
+
+        Args:
+            self: (todo): write your description
+            font: (str): write your description
+            feaFile: (str): write your description
+            compiler: (str): write your description
+        """
         ctx = super(MarkFeatureWriter, self).setContext(
             font, feaFile, compiler=compiler
         )
@@ -252,12 +336,24 @@ class MarkFeatureWriter(BaseFeatureWriter):
         ctx.anchorPairs = self._getAnchorPairs()
 
     def shouldContinue(self):
+        """
+        Returns true if this feature should be fetched.
+
+        Args:
+            self: (todo): write your description
+        """
         if not self.context.anchorPairs:
             self.log.debug("No mark-attaching anchors found; skipped")
             return False
         return super(MarkFeatureWriter, self).shouldContinue()
 
     def _getAnchorLists(self):
+        """
+        Return a dict of all the glyphs.
+
+        Args:
+            self: (todo): write your description
+        """
         gdefClasses = self.context.gdefClasses
         if gdefClasses.base is not None:
             # only include the glyphs listed in the GDEF.GlyphClassDef groups
@@ -288,6 +384,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return result
 
     def _getAnchorPairs(self):
+        """
+        Returns a list of anchor pairs.
+
+        Args:
+            self: (todo): write your description
+        """
         markAnchorNames = set()
         for anchors in self.context.anchorLists.values():
             markAnchorNames.update(a.name for a in anchors if a.isMark)
@@ -302,6 +404,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return anchorPairs
 
     def _pruneUnusedAnchors(self):
+        """
+        Removes anchors from the anchors.
+
+        Args:
+            self: (todo): write your description
+        """
         baseAnchorNames = set(self.context.anchorPairs.keys())
         markAnchorNames = set(self.context.anchorPairs.values())
         attachingAnchorNames = baseAnchorNames | markAnchorNames
@@ -313,7 +421,19 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 del self.context.anchorLists[glyphName]
 
     def _groupMarkGlyphsByAnchor(self):
+        """
+        Returns a group all glyphs.
+
+        Args:
+            self: (todo): write your description
+        """
         def sort_key(a):
+            """
+            Return a key of the given key.
+
+            Args:
+                a: (str): write your description
+            """
             return self.anchorSortKey.get(a.name, 0)
 
         gdefMarks = self.context.gdefClasses.mark
@@ -341,6 +461,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return groups
 
     def _makeMarkClassDefinitions(self):
+        """
+        Returns a list of all the class instances.
+
+        Args:
+            self: (todo): write your description
+        """
         markGlyphSets = self._groupMarkGlyphsByAnchor()
         currentClasses = self.context.feaFile.markClasses
         allMarkClasses = self.context.markClasses = {}
@@ -360,6 +486,17 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return newDefs
 
     def _defineMarkClass(self, glyphName, x, y, className, markClasses):
+        """
+        Create a new : class : ~subclasses.
+
+        Args:
+            self: (todo): write your description
+            glyphName: (str): write your description
+            x: (todo): write your description
+            y: (todo): write your description
+            className: (str): write your description
+            markClasses: (dict): write your description
+        """
         anchor = ast.Anchor(x=otRound(x), y=otRound(y))
         markClass = markClasses.get(className)
         if markClass is None:
@@ -388,6 +525,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     @staticmethod
     def _anchorsAreEqual(a1, a2):
+        """
+        Returns true if two anchor elements.
+
+        Args:
+            a1: (todo): write your description
+            a2: (todo): write your description
+        """
         # TODO add __eq__ to feaLib AST objects?
         return all(
             getattr(a1, attr) == getattr(a2, attr)
@@ -395,6 +539,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
         )
 
     def _setBaseAnchorMarkClasses(self):
+        """
+        Sets the anchor classes.
+
+        Args:
+            self: (todo): write your description
+        """
         markClasses = self.context.markClasses
         for anchors in self.context.anchorLists.values():
             for anchor in anchors:
@@ -403,6 +553,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 anchor.markClass = markClasses[anchor.key]
 
     def _makeMarkToBaseAttachments(self):
+        """
+        Return a list of anchors. glyph.
+
+        Args:
+            self: (todo): write your description
+        """
         markGlyphNames = self.context.markGlyphNames
         baseClass = self.context.gdefClasses.base
         result = []
@@ -427,6 +583,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return result
 
     def _makeMarkToMarkAttachments(self):
+        """
+        Return a list of anchors for each glyph.
+
+        Args:
+            self: (todo): write your description
+        """
         markGlyphNames = self.context.markGlyphNames
         # we make a dict of lists containing mkmk pos rules keyed by
         # anchor name, so we can create one mkmk lookup per markClass
@@ -451,6 +613,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return results
 
     def _makeMarkToLigaAttachments(self):
+        """
+        Return a list of ligalist instances from this glyph.
+
+        Args:
+            self: (todo): write your description
+        """
         markGlyphNames = self.context.markGlyphNames
         ligatureClass = self.context.gdefClasses.ligature
         result = []
@@ -488,6 +656,14 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     @staticmethod
     def _iterAttachments(attachments, include=None, marksFilter=None):
+        """
+        Iterate over the positions ).
+
+        Args:
+            attachments: (todo): write your description
+            include: (list): write your description
+            marksFilter: (str): write your description
+        """
         for pos in attachments:
             if include is not None and not include(pos.name):
                 continue
@@ -498,6 +674,16 @@ class MarkFeatureWriter(BaseFeatureWriter):
             yield pos
 
     def _makeMarkLookup(self, lookupName, attachments, include, marksFilter=None):
+        """
+        Return statements *
+
+        Args:
+            self: (todo): write your description
+            lookupName: (str): write your description
+            attachments: (todo): write your description
+            include: (list): write your description
+            marksFilter: (str): write your description
+        """
         statements = [
             pos.asAST()
             for pos in self._iterAttachments(attachments, include, marksFilter)
@@ -508,6 +694,16 @@ class MarkFeatureWriter(BaseFeatureWriter):
             return lkp
 
     def _makeMarkFilteringSetClass(self, lookupName, attachments, markClass, include):
+        """
+        Make a new glyph class for the given lookup.
+
+        Args:
+            self: (todo): write your description
+            lookupName: (str): write your description
+            attachments: (list): write your description
+            markClass: (todo): write your description
+            include: (list): write your description
+        """
         markGlyphs = (glyphName for glyphName in markClass.glyphs if include(glyphName))
         baseGlyphs = (
             pos.name for pos in attachments if pos.name not in markClass.glyphs
@@ -521,6 +717,17 @@ class MarkFeatureWriter(BaseFeatureWriter):
     def _makeMarkToMarkLookup(
         self, anchorName, attachments, include, marksFilter=None, featureTag=None
     ):
+        """
+        Make an iterable lookup the given featurename.
+
+        Args:
+            self: (todo): write your description
+            anchorName: (str): write your description
+            attachments: (todo): write your description
+            include: (list): write your description
+            marksFilter: (str): write your description
+            featureTag: (bool): write your description
+        """
         attachments = list(self._iterAttachments(attachments, include, marksFilter))
         if not attachments:
             return
@@ -539,6 +746,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return lkp
 
     def _makeMarkFeature(self, include):
+        """
+        Return a feature string.
+
+        Args:
+            self: (todo): write your description
+            include: (list): write your description
+        """
         baseLkp = self._makeMarkLookup(
             "mark2base", self.context.markToBaseAttachments, include
         )
@@ -556,6 +770,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return feature
 
     def _makeMkmkFeature(self, include):
+        """
+        Generate the mkm statements for a feature.
+
+        Args:
+            self: (todo): write your description
+            include: (list): write your description
+        """
         feature = ast.FeatureBlock("mkmk")
 
         for anchorName, attachments in sorted(
@@ -568,12 +789,25 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return feature if feature.statements else None
 
     def _getVerticalThreshold(self):
+        """
+        Return the current font
+
+        Args:
+            self: (todo): write your description
+        """
         # anchors with unknown names whose Y coordinate is greater or equal to
         # the line that cuts the UPEM square in half will be treated as "above
         # base" marks, those that fall below the threshold as "below base".
         return getAttrWithFallback(self.context.font.info, "unitsPerEm") // 2
 
     def _isAboveMark(self, anchor):
+        """
+        Return true if anchor is anchor
+
+        Args:
+            self: (todo): write your description
+            anchor: (str): write your description
+        """
         if anchor.name in self.abvmAnchorNames:
             return True
         if anchor.name in self.blwmAnchorNames:
@@ -583,9 +817,24 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return False
 
     def _isBelowMark(self, anchor):
+        """
+        Return true if anchor is anchor.
+
+        Args:
+            self: (todo): write your description
+            anchor: (str): write your description
+        """
         return not self._isAboveMark(anchor)
 
     def _makeAbvmOrBlwmFeature(self, tag, include):
+        """
+        Return a list of feature : parameter.
+
+        Args:
+            self: (todo): write your description
+            tag: (str): write your description
+            include: (list): write your description
+        """
         if tag == "abvm":
             marksFilter = self._isAboveMark
         elif tag == "blwm":
@@ -631,6 +880,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return feature
 
     def _makeFeatures(self):
+        """
+        Make a feature string.
+
+        Args:
+            self: (todo): write your description
+        """
         ctx = self.context
 
         ctx.markToBaseAttachments = self._makeMarkToBaseAttachments()
@@ -640,9 +895,21 @@ class MarkFeatureWriter(BaseFeatureWriter):
         indicGlyphs = self._getIndicGlyphs()
 
         def isIndic(glyphName):
+            """
+            Returns true if the glyphname is a glyph name.
+
+            Args:
+                glyphName: (str): write your description
+            """
             return glyphName in indicGlyphs
 
         def isNotIndic(glyphName):
+            """
+            Returns true if the given glyphname.
+
+            Args:
+                glyphName: (str): write your description
+            """
             return glyphName not in indicGlyphs
 
         features = {}
@@ -668,6 +935,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return features
 
     def _getIndicGlyphs(self):
+        """
+        Return a mapping of all the glyphs.
+
+        Args:
+            self: (todo): write your description
+        """
         cmap = self.makeUnicodeToGlyphNameMapping()
         unicodeIsIndic = partial(unicodeInScripts, scripts=self.indicScripts)
         if any(unicodeIsIndic for uv in cmap):
@@ -683,6 +956,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
             return set()
 
     def _write(self):
+        """
+        Writes out statement to the current class.
+
+        Args:
+            self: (todo): write your description
+        """
         self._pruneUnusedAnchors()
 
         newClassDefs = self._makeMarkClassDefinitions()

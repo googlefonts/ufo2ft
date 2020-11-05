@@ -109,6 +109,12 @@ DFLT_SCRIPTS = {"Zyyy", "Zinh"}
 
 
 def unicodeScriptDirection(uv):
+    """
+    Convert a unicode object.
+
+    Args:
+        uv: (todo): write your description
+    """
     sc = unicodedata.script(unichr(uv))
     if sc in DFLT_SCRIPTS:
         return None
@@ -138,6 +144,17 @@ class KerningPair(object):
     __slots__ = ("side1", "side2", "value", "directions", "bidiTypes")
 
     def __init__(self, side1, side2, value, directions=None, bidiTypes=None):
+        """
+        Initialize a glyphph element.
+
+        Args:
+            self: (todo): write your description
+            side1: (todo): write your description
+            side2: (todo): write your description
+            value: (todo): write your description
+            directions: (todo): write your description
+            bidiTypes: (todo): write your description
+        """
         if isinstance(side1, basestring):
             self.side1 = ast.GlyphName(side1)
         elif isinstance(side1, ast.GlyphClassDefinition):
@@ -158,14 +175,32 @@ class KerningPair(object):
 
     @property
     def firstIsClass(self):
+        """
+        Return true if this node is a child of this node.
+
+        Args:
+            self: (todo): write your description
+        """
         return isinstance(self.side1, ast.GlyphClassName)
 
     @property
     def secondIsClass(self):
+        """
+        Returns true if the class is a subclass is a class.
+
+        Args:
+            self: (todo): write your description
+        """
         return isinstance(self.side2, ast.GlyphClassName)
 
     @property
     def glyphs(self):
+        """
+        Determine if the glyphs1 and the current glyph2.
+
+        Args:
+            self: (todo): write your description
+        """
         if self.firstIsClass:
             classDef1 = self.side1.glyphclass
             glyphs1 = set(g.asFea() for g in classDef1.glyphSet())
@@ -179,6 +214,12 @@ class KerningPair(object):
         return glyphs1 | glyphs2
 
     def __repr__(self):
+        """
+        Return a representation of this object representation.
+
+        Args:
+            self: (todo): write your description
+        """
         return "<%s %s %s %s%s%s>" % (
             self.__class__.__name__,
             self.side1,
@@ -204,6 +245,15 @@ class KernFeatureWriter(BaseFeatureWriter):
     options = dict(ignoreMarks=True)
 
     def setContext(self, font, feaFile, compiler=None):
+        """
+        Sets the kerning context * font *.
+
+        Args:
+            self: (todo): write your description
+            font: (str): write your description
+            feaFile: (str): write your description
+            compiler: (str): write your description
+        """
         ctx = super(KernFeatureWriter, self).setContext(
             font, feaFile, compiler=compiler
         )
@@ -216,6 +266,12 @@ class KernFeatureWriter(BaseFeatureWriter):
         return ctx
 
     def shouldContinue(self):
+        """
+        Determine if the inference should be removed.
+
+        Args:
+            self: (todo): write your description
+        """
         if not self.context.kerning.pairs:
             self.log.debug("No kerning data; skipped")
             return False
@@ -230,6 +286,12 @@ class KernFeatureWriter(BaseFeatureWriter):
         return super(KernFeatureWriter, self).shouldContinue()
 
     def _write(self):
+        """
+        Writes the convexerning statements.
+
+        Args:
+            self: (todo): write your description
+        """
         lookups = self._makeKerningLookups()
         if not lookups:
             self.log.debug("kerning lookups empty; skipped")
@@ -264,6 +326,15 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     @classmethod
     def getKerningData(cls, font, feaFile=None, glyphSet=None):
+        """
+        Return a fontinfo object for a given font.
+
+        Args:
+            cls: (todo): write your description
+            font: (str): write your description
+            feaFile: (str): write your description
+            glyphSet: (todo): write your description
+        """
         side1Classes, side2Classes = cls.getKerningClasses(font, feaFile, glyphSet)
         pairs = cls.getKerningPairs(font, side1Classes, side2Classes, glyphSet)
         return SimpleNamespace(
@@ -272,6 +343,13 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     @staticmethod
     def getKerningGroups(font, glyphSet=None):
+        """
+        Get all the kerning groups in the given font.
+
+        Args:
+            font: (str): write your description
+            glyphSet: (str): write your description
+        """
         if glyphSet:
             allGlyphs = set(glyphSet.keys())
         else:
@@ -293,6 +371,15 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     @classmethod
     def getKerningClasses(cls, font, feaFile=None, glyphSet=None):
+        """
+        Returns a list of font1 font2 instances.
+
+        Args:
+            cls: (todo): write your description
+            font: (todo): write your description
+            feaFile: (str): write your description
+            glyphSet: (todo): write your description
+        """
         side1Groups, side2Groups = cls.getKerningGroups(font, glyphSet)
         side1Classes = ast.makeGlyphClassDefinitions(
             side1Groups, feaFile, stripPrefix="public."
@@ -304,6 +391,15 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     @staticmethod
     def getKerningPairs(font, side1Classes, side2Classes, glyphSet=None):
+        """
+        Get pairs of pairs.
+
+        Args:
+            font: (str): write your description
+            side1Classes: (todo): write your description
+            side2Classes: (str): write your description
+            glyphSet: (todo): write your description
+        """
         if glyphSet:
             allGlyphs = set(glyphSet.keys())
         else:
@@ -336,6 +432,14 @@ class KernFeatureWriter(BaseFeatureWriter):
         return result
 
     def _intersectPairs(self, attribute, glyphSets):
+        """
+        Return all pairs of pairs of the given glyphs.
+
+        Args:
+            self: (todo): write your description
+            attribute: (str): write your description
+            glyphSets: (dict): write your description
+        """
         allKeys = set()
         for pair in self.context.kerning.pairs:
             for key, glyphs in glyphSets.items():
@@ -346,6 +450,12 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     @staticmethod
     def _groupScriptsByTagAndDirection(feaScripts):
+        """
+        Given a script script into groups.
+
+        Args:
+            feaScripts: (dict): write your description
+        """
         # Read scripts/languages defined in feaFile's 'languagesystem'
         # statements and group them by the feature tag (kern or dist)
         # they are associated with, and the global script's horizontal
@@ -364,6 +474,13 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     @staticmethod
     def _makePairPosRule(pair, rtl=False):
+        """
+        Makes a pair for a pair.
+
+        Args:
+            pair: (str): write your description
+            rtl: (todo): write your description
+        """
         enumerated = pair.firstIsClass ^ pair.secondIsClass
         value = otRound(pair.value)
         if rtl and "L" in pair.bidiTypes:
@@ -386,6 +503,17 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makeKerningLookup(
         self, name, pairs, exclude=None, rtl=False, ignoreMarks=True
     ):
+        """
+        Make a list of the rules.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+            pairs: (todo): write your description
+            exclude: (list): write your description
+            rtl: (todo): write your description
+            ignoreMarks: (str): write your description
+        """
         assert pairs
         rules = []
         for pair in pairs:
@@ -401,6 +529,12 @@ class KernFeatureWriter(BaseFeatureWriter):
             return lookup
 
     def _makeKerningLookups(self):
+        """
+        Make kerning kerning instances.
+
+        Args:
+            self: (todo): write your description
+        """
         cmap = self.makeUnicodeToGlyphNameMapping()
         if any(unicodeScriptDirection(uv) == "RTL" for uv in cmap):
             # If there are any characters from globally RTL scripts in the
@@ -469,6 +603,14 @@ class KernFeatureWriter(BaseFeatureWriter):
         return lookups
 
     def _splitBaseAndMarkPairs(self, pairs, marks):
+        """
+        Split a list into a list of pairs.
+
+        Args:
+            self: (todo): write your description
+            pairs: (str): write your description
+            marks: (todo): write your description
+        """
         basePairs, markPairs = [], []
         if marks:
             for pair in pairs:
@@ -483,6 +625,16 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makeSplitDirectionKernLookups(
         self, lookups, pairs, ignoreMarks=True, suffix=""
     ):
+        """
+        Make pairwise pair of pairs.
+
+        Args:
+            self: (todo): write your description
+            lookups: (todo): write your description
+            pairs: (str): write your description
+            ignoreMarks: (bool): write your description
+            suffix: (str): write your description
+        """
         dfltKern = self._makeKerningLookup(
             "kern_dflt" + suffix,
             pairs,
@@ -514,6 +666,13 @@ class KernFeatureWriter(BaseFeatureWriter):
             lookups.setdefault("RTL", []).append(rtlKern)
 
     def _makeFeatureBlocks(self, lookups):
+        """
+        Make a dict from lookup.
+
+        Args:
+            self: (todo): write your description
+            lookups: (todo): write your description
+        """
         features = {}
         if "kern" in self.context.todo:
             kern = ast.FeatureBlock("kern")
@@ -528,6 +687,14 @@ class KernFeatureWriter(BaseFeatureWriter):
         return features
 
     def _registerKernLookups(self, feature, lookups):
+        """
+        Registers a script with the given feature.
+
+        Args:
+            self: (todo): write your description
+            feature: (todo): write your description
+            lookups: (dict): write your description
+        """
         if "DFLT" in lookups:
             ast.addLookupReferences(feature, lookups["DFLT"])
 
@@ -579,6 +746,14 @@ class KernFeatureWriter(BaseFeatureWriter):
                     ast.addLookupReferences(feature, rtlLookups, script, langs)
 
     def _registerDistLookups(self, feature, lookups):
+        """
+        Registers a feature.
+
+        Args:
+            self: (todo): write your description
+            feature: (str): write your description
+            lookups: (dict): write your description
+        """
         scripts = self.context.scriptGroups["dist"]
         ltrLookups = lookups.get("LTR")
         if ltrLookups:

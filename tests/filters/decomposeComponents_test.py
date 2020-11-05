@@ -5,6 +5,13 @@ import logging
 
 
 def test_missing_component_is_dropped(FontClass, caplog):
+    """
+    Return true if the component is missing.
+
+    Args:
+        FontClass: (todo): write your description
+        caplog: (todo): write your description
+    """
     ufo = FontClass()
     a = ufo.newGlyph("a")
     a.width = 100
@@ -36,6 +43,12 @@ def test_missing_component_is_dropped(FontClass, caplog):
 
 
 def test_nested_components(FontClass):
+    """
+    Test if the ufo components.
+
+    Args:
+        FontClass: (todo): write your description
+    """
     ufo = FontClass()
     a = ufo.newGlyph("six.lf")
     a.width = 100

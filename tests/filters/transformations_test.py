@@ -50,6 +50,13 @@ import pytest
     ]
 )
 def font(request, FontClass):
+    """
+    Add font to font.
+
+    Args:
+        request: (todo): write your description
+        FontClass: (todo): write your description
+    """
     font = FontClass()
     font.info.capHeight = request.param["capHeight"]
     font.info.xHeight = request.param["xHeight"]
@@ -69,24 +76,57 @@ def font(request, FontClass):
     ids=[e.name for e in TransformationsFilter.Origin],
 )
 def origin(request):
+    """
+    Return the origin of the request.
+
+    Args:
+        request: (todo): write your description
+    """
     return request.param
 
 
 class TransformationsFilterTest(object):
     def test_invalid_origin_value(self):
+        """
+        Validate filter : attrpc filter filter_value }.
+
+        Args:
+            self: (todo): write your description
+        """
         with pytest.raises(ValueError) as excinfo:
             TransformationsFilter(Origin=5)
         excinfo.match("is not a valid Origin")
 
     def test_empty_glyph(self, font):
+        """
+        Test if a glyph is empty.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         filter_ = TransformationsFilter(OffsetY=51, include={"space"})
         assert not filter_(font)
 
     def test_Identity(self, font):
+        """
+        Set the filter is_Id_Id field.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         filter_ = TransformationsFilter()
         assert not filter_(font)
 
     def test_OffsetX(self, font):
+        """
+        Test if the font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         filter_ = TransformationsFilter(OffsetX=-10)
         assert filter_(font)
 
@@ -98,6 +138,13 @@ class TransformationsFilterTest(object):
         assert font["b"].components[0].transformation[-2:] == (0, 0)
 
     def test_OffsetY(self, font):
+        """
+        Test whether the current font is on a font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         filter_ = TransformationsFilter(OffsetY=51)
         assert filter_(font)
 
@@ -108,6 +155,13 @@ class TransformationsFilterTest(object):
         assert font["b"].components[0].transformation[-2:] == (0, 0)
 
     def test_OffsetXY(self, font):
+        """
+        Test if the font isochrone.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         filter_ = TransformationsFilter(OffsetX=-10, OffsetY=51)
         assert filter_(font)
 
@@ -118,6 +172,14 @@ class TransformationsFilterTest(object):
         assert font["b"].components[0].transformation[-2:] == (0, 0)
 
     def test_ScaleX(self, font, origin):
+        """
+        Test if the given font is a given font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            origin: (todo): write your description
+        """
         # different Origin heights should not affect horizontal scale
         filter_ = TransformationsFilter(ScaleX=50, Origin=origin)
         assert filter_(font)
@@ -127,6 +189,14 @@ class TransformationsFilterTest(object):
         assert (a[0][2].x, a[0][2].y) == (150, 300)
 
     def test_ScaleY(self, font, origin):
+        """
+        Test if the given font is in - place.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            origin: (todo): write your description
+        """
         percent = 50
         filter_ = TransformationsFilter(ScaleY=percent, Origin=origin)
         assert filter_(font)
@@ -142,6 +212,14 @@ class TransformationsFilterTest(object):
         assert (a[0][2].x, a[0][2].y) == (300, top)
 
     def test_ScaleXY(self, font, origin):
+        """
+        Test if the image is in the image.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            origin: (todo): write your description
+        """
         percent = 50
         filter_ = TransformationsFilter(ScaleX=percent, ScaleY=percent, Origin=origin)
         assert filter_(font)
@@ -157,6 +235,14 @@ class TransformationsFilterTest(object):
         assert (a[0][2].x, a[0][2].y) == (150, top)
 
     def test_Slant(self, font, origin):
+        """
+        Convert a font is a given font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            origin: (todo): write your description
+        """
         filter_ = TransformationsFilter(Slant=45, Origin=origin)
         assert filter_(font)
 
@@ -167,6 +253,13 @@ class TransformationsFilterTest(object):
         assert a[0][0].y == 0
 
     def test_composite_glyphs(self, font):
+        """
+        Test if the glyph is a composite font.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+        """
         filter_ = TransformationsFilter(
             OffsetX=-10, OffsetY=51, ScaleX=50, ScaleY=50, exclude={"c"}
         )

@@ -103,6 +103,12 @@ def loadFeatureWriters(ufo, ignoreErrors=True):
 
 
 def _kwargsEval(s):
+    """
+    Evaluate a string.
+
+    Args:
+        s: (todo): write your description
+    """
     return eval(
         "dict(%s)" % s, {"__builtins__": {"True": True, "False": False, "dict": dict}}
     )

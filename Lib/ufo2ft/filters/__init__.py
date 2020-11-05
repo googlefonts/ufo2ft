@@ -65,6 +65,12 @@ class BaseFilter(object):
     _kwargs = {}
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the arguments.
+
+        Args:
+            self: (todo): write your description
+        """
         self.options = options = SimpleNamespace()
 
         # process positional arguments
@@ -132,6 +138,12 @@ class BaseFilter(object):
         self.start()
 
     def __repr__(self):
+        """
+        Return a human - readable representation of this object.
+
+        Args:
+            self: (todo): write your description
+        """
         items = []
         if self._args:
             items.append(
@@ -183,6 +195,12 @@ class BaseFilter(object):
 
     @property
     def name(self):
+        """
+        Return the name of the class.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.__class__.__name__
 
     def __call__(self, font, glyphSet=None):

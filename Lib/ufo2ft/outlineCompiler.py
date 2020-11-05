@@ -52,6 +52,12 @@ EMPTY_BOUNDING_BOX = BoundingBox(0, 0, 0, 0)
 
 
 def _isNonBMP(s):
+    """
+    Check if a string s is a binary.
+
+    Args:
+        s: (todo): write your description
+    """
     for c in s:
         if ord(c) > 65535:
             return True
@@ -59,6 +65,13 @@ def _isNonBMP(s):
 
 
 def _getVerticalOrigin(font, glyph):
+    """
+    Return a monRound instance for a given font.
+
+    Args:
+        font: (dict): write your description
+        glyph: (str): write your description
+    """
     if hasattr(glyph, "verticalOrigin") and glyph.verticalOrigin is not None:
         verticalOrigin = glyph.verticalOrigin
     else:
@@ -85,6 +98,17 @@ class BaseOutlineCompiler(object):
         tables=None,
         notdefGlyph=None,
     ):
+        """
+        Initialize a bounding box.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            glyphSet: (todo): write your description
+            glyphOrder: (todo): write your description
+            tables: (str): write your description
+            notdefGlyph: (todo): write your description
+        """
         self.ufo = font
         # use the previously filtered glyphSet, if any
         if glyphSet is None:
@@ -155,6 +179,12 @@ class BaseOutlineCompiler(object):
         raise NotImplementedError
 
     def getCompiledGlyphs(self):
+        """
+        Returns a new rdf string.
+
+        Args:
+            self: (todo): write your description
+        """
         if self._compiledGlyphs is None:
             self._compiledGlyphs = self.compileGlyphs()
         return self._compiledGlyphs
@@ -175,6 +205,12 @@ class BaseOutlineCompiler(object):
 
     @property
     def glyphBoundingBoxes(self):
+        """
+        Returns a bounding box for the bounding box.
+
+        Args:
+            self: (todo): write your description
+        """
         if self._glyphBoundingBoxes is None:
             self._glyphBoundingBoxes = self.makeGlyphsBoundingBoxes()
         return self._glyphBoundingBoxes
@@ -201,6 +237,12 @@ class BaseOutlineCompiler(object):
 
     @property
     def fontBoundingBox(self):
+        """
+        Returns the bounding box.
+
+        Args:
+            self: (todo): write your description
+        """
         if self._fontBoundingBox is None:
             self._fontBoundingBox = self.makeFontBoundingBox()
         return self._fontBoundingBox
@@ -261,6 +303,12 @@ class BaseOutlineCompiler(object):
     # --------------
 
     def setupTable_gasp(self):
+        """
+        Setup gaspy2 tables.
+
+        Args:
+            self: (todo): write your description
+        """
         if "gasp" not in self.tables:
             return
 
@@ -994,6 +1042,19 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         roundTolerance=None,
         optimizeCFF=True,
     ):
+        """
+        Initialize a glyph.
+
+        Args:
+            self: (todo): write your description
+            font: (todo): write your description
+            glyphSet: (todo): write your description
+            glyphOrder: (todo): write your description
+            tables: (str): write your description
+            notdefGlyph: (todo): write your description
+            roundTolerance: (float): write your description
+            optimizeCFF: (todo): write your description
+        """
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
         else:
@@ -1067,6 +1128,13 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         """
 
         def toInt(value, else_callback):
+            """
+            Convert value to an integer.
+
+            Args:
+                value: (str): write your description
+                else_callback: (bool): write your description
+            """
             rounded = otRound(value)
             if tolerance >= 0.5 or abs(rounded - value) <= tolerance:
                 return rounded
@@ -1124,6 +1192,12 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         maxp.numGlyphs = len(self.glyphOrder)
 
     def setupOtherTables(self):
+        """
+        Setup all tables
+
+        Args:
+            self: (todo): write your description
+        """
         self.setupTable_CFF()
         if self.vertical:
             self.setupTable_VORG()
@@ -1361,6 +1435,12 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         post.glyphOrder = self.glyphOrder
 
     def setupOtherTables(self):
+        """
+        Make the ufo tables.
+
+        Args:
+            self: (todo): write your description
+        """
         self.setupTable_glyf()
         if self.ufo.info.openTypeGaspRangeRecords:
             self.setupTable_gasp()
@@ -1425,6 +1505,19 @@ class StubGlyph(object):
         unicodes=[],
         reverseContour=False,
     ):
+        """
+        Initialize a new units.
+
+        Args:
+            self: (todo): write your description
+            name: (str): write your description
+            width: (int): write your description
+            unitsPerEm: (todo): write your description
+            ascender: (str): write your description
+            descender: (str): write your description
+            unicodes: (str): write your description
+            reverseContour: (todo): write your description
+        """
         self.name = name
         self.width = width
         self.unitsPerEm = unitsPerEm
@@ -1442,18 +1535,44 @@ class StubGlyph(object):
         self.reverseContour = reverseContour
 
     def __len__(self):
+        """
+        Returns the length of the field.
+
+        Args:
+            self: (todo): write your description
+        """
         if self.name == ".notdef":
             return 1
         return 0
 
     @property
     def height(self):
+        """
+        Return the height of this node.
+
+        Args:
+            self: (todo): write your description
+        """
         return self.ascender - self.descender
 
     def draw(self, pen):
+        """
+        Draws the graph
+
+        Args:
+            self: (todo): write your description
+            pen: (todo): write your description
+        """
         pass
 
     def _drawDefaultNotdef(self, pen):
+        """
+        Draws the default drawing drawing.
+
+        Args:
+            self: (todo): write your description
+            pen: (todo): write your description
+        """
         # Draw contour in PostScript direction (counter-clockwise) by default. Reverse
         # for TrueType.
         if self.reverseContour:
@@ -1484,6 +1603,12 @@ class StubGlyph(object):
         pen.closePath()
 
     def _get_controlPointBounds(self):
+        """
+        Returns the bounds of the bounding box.
+
+        Args:
+            self: (todo): write your description
+        """
         pen = ControlBoundsPen(None)
         self.draw(pen)
         return pen.bounds

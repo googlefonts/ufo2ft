@@ -6,6 +6,13 @@ from ufo2ft.filters import BaseFilter
 
 class DecomposeTransformedComponentsFilter(BaseFilter):
     def filter(self, glyph):
+        """
+        Filter the glyphs from the glyph.
+
+        Args:
+            self: (todo): write your description
+            glyph: (todo): write your description
+        """
         if not glyph.components:
             return False
         transformedComponents = []
