@@ -76,7 +76,7 @@ class TransformationsFilterTest(object):
     def test_invalid_origin_value(self):
         with pytest.raises(ValueError) as excinfo:
             TransformationsFilter(Origin=5)
-        excinfo.match("is not a valid Origin")
+        excinfo.match("is not a valid (TransformationsFilter\.)?Origin")
 
     def test_empty_glyph(self, font):
         filter_ = TransformationsFilter(OffsetY=51, include={"space"})
