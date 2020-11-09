@@ -957,12 +957,8 @@ class BaseOutlineCompiler(object):
         in a different way if desired.
         """
         import os
-        import re
 
         prefix = "com.github.fonttools.ttx"
-        sfntVersionRE = re.compile(
-            '(^<ttFont\s+)(sfntVersion=".*"\s+)(.*>$)', flags=re.MULTILINE
-        )
         if not hasattr(self.ufo, "data"):
             return
         if not self.ufo.data.fileNames:
@@ -971,11 +967,13 @@ class BaseOutlineCompiler(object):
             foldername, filename = os.path.split(path)
             if foldername == prefix and filename.endswith(".ttx"):
                 ttx = self.ufo.data[path].decode("utf-8")
-                # strip 'sfntVersion' attribute from ttFont element,
-                # if present, to avoid overwriting the current value
-                ttx = sfntVersionRE.sub(r"\1\3", ttx)
                 fp = BytesIO(ttx.encode("utf-8"))
-                self.otf.importXML(fp)
+                # Preserve the original SFNT version when loading a TTX dump.
+                sfntVersion = self.otf.sfntVersion
+                try:
+                    self.otf.importXML(fp)
+                finally:
+                    self.otf.sfntVersion = sfntVersion
 
 
 class OutlineOTFCompiler(BaseOutlineCompiler):
