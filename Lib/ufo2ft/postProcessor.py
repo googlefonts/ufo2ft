@@ -185,8 +185,7 @@ class PostProcessor(object):
             cff.CharStrings.charStrings = {
                 rename_map.get(n, n): v for n, v in char_strings.items()
             }
-            if cff_tag == "CFF ":
-                cff.charset = [rename_map.get(n, n) for n in cff.charset]
+            cff.charset = [rename_map.get(n, n) for n in cff.charset]
 
     def _build_production_names(self):
         seen = {}
