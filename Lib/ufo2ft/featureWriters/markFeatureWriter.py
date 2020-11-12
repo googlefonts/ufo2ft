@@ -205,6 +205,31 @@ def firstAvailable(colorSet):
             return count
         count += 1
 
+def _groupMarkClasses(markGlyphToMarkClasses):
+    # To compute the number of lookups that we need to build, we want
+    # the minimum number of lookups such that, whenever a mark glyph
+    # belongs to several mark classes, these classes are not in the same
+    # lookup. A trivial solution is to make 1 lookup per mark class
+    # but that's a bit wasteful, we might be able to do better by grouping
+    # mark classes that do not conflict.
+    # This is a graph coloring problem: the graph nodes are mark classes,
+    # edges are between classes that would conflict and the colors are
+    # the lookups in which they can go.
+    adjacency = {
+        # We'll get the same markClass several times in the dict
+        # comprehension below but it's ok, only one will be kept.
+        markClass: set()
+        for markClasses in markGlyphToMarkClasses.values()
+        for markClass in markClasses
+    }
+    for _markGlyph, markClasses in markGlyphToMarkClasses.items():
+        for markClass, other in itertools.combinations(markClasses, 2):
+            adjacency[markClass].add(other)
+            adjacency[other].add(markClass)
+    colorGroups = colorGraph(adjacency)
+    # Sort the groups for reproducibility
+    return sorted(colorGroups)
+
 
 class MarkFeatureWriter(BaseFeatureWriter):
     """Generates a mark, mkmk, abvm and blwm features based on glyph anchors.
@@ -458,7 +483,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return result
 
     def _makeGroupedMarkToBaseAttachments(self):
-        """Make markToBase attachements, then group them so that no group
+        """Make markToBase attachments, then group them so that no group
         contains conflicting anchor classes for the same glyph.
         """
         attachments = self._makeMarkToBaseAttachments()
@@ -471,31 +496,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
             for namedAnchor in attachment.marks:
                 for markGlyph in namedAnchor.markClass.glyphs:
                     markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
-        # To compute the number of lookups that we need to build, we want
-        # the minimum number of lookups such that, whenever a mark glyph
-        # belongs to several mark classes, these classes are not in the same
-        # lookup. A trivial solution is to make 1 lookup per mark class
-        # but that's a bit wasteful, we might be able to do better by grouping
-        # mark classes that do not conflict.
-        # This is a graph coloring problem: the graph nodes are mark classes,
-        # edges are between classes that would conflict and the colors are
-        # the lookups in which they can go.
-        adjacency = {
-            # We'll get the same markClass several times in the dict
-            # comprehension below but it's ok, only one will be kept.
-            markClass: set()
-            for markClasses in markGlyphToMarkClasses.values()
-            for markClass in markClasses
-        }
-        for markGlyph, markClasses in markGlyphToMarkClasses.items():
-            for markClass, other in itertools.combinations(markClasses, 2):
-                adjacency[markClass].add(other)
-                adjacency[other].add(markClass)
-        colorGroups = colorGraph(adjacency)
-        # Sort the groups for reproducibility
-        colorGroups = sorted(colorGroups)
+        groupedMarkClasses = _groupMarkClasses(markGlyphToMarkClasses)
         lookups = []
-        for markClasses in colorGroups:
+        for markClasses in groupedMarkClasses:
             lookup = []
             # Filter existing attachments
             for attachment in attachments:
@@ -572,6 +575,46 @@ class MarkFeatureWriter(BaseFeatureWriter):
             result.append(MarkToLigaPos(glyphName, ligatureMarks))
         return result
 
+    def _makeGroupedMarkToLigaAttachments(self):
+        """Make markToLiga attachments, then group them so that no group
+        contains conflicting anchor classes for the same glyph.
+        """
+        attachments = self._makeMarkToLigaAttachments()
+        # Idea: attachments is a list of mark to liga positioning.
+        # Each links together a base ligature with several marks, through
+        # numbered anchor names.
+        # We have to put them into one or more lookups with the constraint
+        # that the same mark glyph cannot appear twice in the same lookup while
+        # using different anchor names.
+        # To do so, if a single attachment refers to to the same mark twice
+        # through different anchor names, we may have to split the attachment
+        # into two attachments, using null anchors instead of one or the other
+        # mark class in each split attachment.
+        markGlyphToMarkClasses = defaultdict(set)
+        for attachment in attachments:
+            for component in attachment.marks:
+                for namedAnchor in component:
+                    for markGlyph in namedAnchor.markClass.glyphs:
+                        markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
+        groupedMarkClasses = _groupMarkClasses(markGlyphToMarkClasses)
+        lookups = []
+        for markClasses in groupedMarkClasses:
+            lookup = []
+            # Filter existing attachments
+            for attachment in attachments:
+                # One attachment has one base glyph and many marks, each of
+                # the class NamedAnchor. Each NamedAnchor has one markClass.
+                # We keep the NamedAnchor if the markClass is allowed in the
+                # current lookup.
+                def include(anchor):
+                    return anchor.markClass.name in markClasses
+
+                filteredAttachment = attachment.filter(include)
+                if filteredAttachment:
+                    lookup.append(filteredAttachment)
+            lookups.append(lookup)
+        return lookups
+
     @staticmethod
     def _iterAttachments(attachments, include=None, marksFilter=None):
         for pos in attachments:
@@ -632,17 +675,20 @@ class MarkFeatureWriter(BaseFeatureWriter):
             )
             if lookup:
                 baseLkps.append(lookup)
-        # TODO: do the same for ligaLkps?
-        ligaLkp = self._makeMarkLookup(
-            "mark2liga", self.context.markToLigaAttachments, include
+        ligaLkps=[]
+        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
+            lookup = self._makeMarkLookup(
+                f"mark2liga{'_' + str(i) if i > 0 else ''}", attachments, include
         )
-        if not baseLkps and ligaLkp is None:
+            if lookup:
+                ligaLkps.append(lookup)
+        if not baseLkps and not ligaLkps:
             return
 
         feature = ast.FeatureBlock("mark")
         for baseLkp in baseLkps:
             feature.statements.append(baseLkp)
-        if ligaLkp:
+        for ligaLkp in ligaLkps:
             feature.statements.append(ligaLkp)
         return feature
 
@@ -694,12 +740,16 @@ class MarkFeatureWriter(BaseFeatureWriter):
             )
             if lookup:
                 baseLkps.append(lookup)
-        ligaLkp = self._makeMarkLookup(
-            "%s_mark2liga" % tag,
-            self.context.markToLigaAttachments,
-            include=include,
-            marksFilter=marksFilter,
-        )
+        ligaLkps = []
+        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
+            lookup = self._makeMarkLookup(
+                f"{tag}_mark2liga{'_' + str(i) if i > 0 else ''}",
+                attachments,
+                include=include,
+                marksFilter=marksFilter,
+            )
+            if lookup:
+                ligaLkps.append(lookup)
         mkmkLookups = []
         for anchorName, attachments in sorted(
             self.context.markToMarkAttachments.items()
@@ -714,13 +764,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
             if lkp is not None:
                 mkmkLookups.append(lkp)
 
-        if not any([baseLkps, ligaLkp, mkmkLookups]):
+        if not any([baseLkps, ligaLkps, mkmkLookups]):
             return
 
         feature = ast.FeatureBlock(tag)
         for baseLkp in baseLkps:
             feature.statements.append(baseLkp)
-        if ligaLkp:
+        for ligaLkp in ligaLkps:
             feature.statements.append(ligaLkp)
         feature.statements.extend(mkmkLookups)
         return feature
@@ -729,7 +779,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         ctx = self.context
 
         ctx.groupedMarkToBaseAttachments = self._makeGroupedMarkToBaseAttachments()
-        ctx.markToLigaAttachments = self._makeMarkToLigaAttachments()
+        ctx.groupedMarkToLigaAttachments = self._makeGroupedMarkToLigaAttachments()
         ctx.markToMarkAttachments = self._makeMarkToMarkAttachments()
 
         indicGlyphs = self._getIndicGlyphs()
