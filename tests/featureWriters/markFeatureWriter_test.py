@@ -307,7 +307,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert "feature mkmk" not in fea
 
     def test_predefined_anchor_lists(self, FontClass):
-        """ Roboto uses some weird anchor naming scheme, see:
+        """Roboto uses some weird anchor naming scheme, see:
         https://github.com/google/roboto/blob/
             5700de83856781fa0c097a349e46dbaae5792cb0/
             scripts/lib/fontbuild/markFeature.py#L41-L47
@@ -605,7 +605,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             {"name": "top", "x": 300, "y": 700},
             {"name": "center", "x": 320, "y": 360},
         ]
-        # these glyphs have compatible anchors but since they not lised in
+        # these glyphs have compatible anchors but since they not listed in
         # the GDEF groups, they won't be included in the mark/mkmk feature
         testufo.newGlyph("Alpha").appendAnchor({"name": "topleft", "x": -10, "y": 400})
         testufo.newGlyph("psili").appendAnchor({"name": "_topleft", "x": 0, "y": 50})
@@ -736,6 +736,49 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                     pos ligature f_l <anchor NULL>
                         ligComponent <anchor 602 502> mark @MC_topOther;
                 } mark2liga_1;
+
+            } mark;
+            """
+        )
+
+    def test_multiple_anchor_classes_conflict_warning(self, FontClass, caplog):
+        """Check that when there is an ambiguity in the form of one base glyph
+        and one mark glyph being able to be linked through two different
+        anchor pairs, the mark feature writer emits a warning about the
+        situation but still outputs a valid feature declaraction. The last
+        lookup in that feature declaration will "win" and determine the outcome
+        of mark positioning. See this comment for more information:
+        https://github.com/googlefonts/ufo2ft/pull/416#issuecomment-721693266
+        """
+        ufo = FontClass()
+        liga = ufo.newGlyph("a")
+        liga.appendAnchor({"name": "top", "x": 100, "y": 500})
+        liga.appendAnchor({"name": "topOther", "x": 150, "y": 550})
+        acutecomb = ufo.newGlyph("acutecomb")
+        acutecomb.appendAnchor({"name": "_top", "x": 100, "y": 200})
+        acutecomb.appendAnchor({"name": "_topOther", "x": 150, "y": 250})
+
+        generated = self.writeFeatures(ufo)
+
+        assert (
+            "The base glyph a and mark glyph acutecomb are ambiguously "
+            "connected by several anchor classes: MC_top, MC_topOther. "
+            "Only one will prevail; which exactly is not guaranteed." in caplog.text
+        )
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass acutecomb <anchor 150 250> @MC_topOther;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 100 500> mark @MC_top;
+                } mark2base;
+
+                lookup mark2base_1 {
+                    pos base a <anchor 150 550> mark @MC_topOther;
+                } mark2base_1;
 
             } mark;
             """
