@@ -24,6 +24,25 @@ class AbstractMarkPos(object):
         self.name = name
         self.marks = marks
 
+    def warnIfAmbiguous(self, log):
+        """This anchor attachment is ambiguous if for the same mark glyph, more
+        than one mark class can be used to attach it to the base.
+        """
+        markGlyphToMarkClasses = defaultdict(set)
+        for namedAnchor in self.marks:
+            for markGlyph in namedAnchor.markClass.glyphs:
+                markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
+        for markGlyph, markClasses in markGlyphToMarkClasses.items():
+            if len(markClasses) > 1:
+                log.warning(
+                    "The base glyph %s and mark glyph %s are ambiguously "
+                    "connected by several anchor classes: %s. "
+                    "Only one will prevail; which exactly is not guaranteed.",
+                    self.name,
+                    markGlyph,
+                    ", ".join(sorted(markClasses)),
+                )
+
     def _filterMarks(self, include):
         return [anchor for anchor in self.marks if include(anchor)]
 
@@ -58,6 +77,26 @@ class MarkToMarkPos(AbstractMarkPos):
 class MarkToLigaPos(AbstractMarkPos):
 
     Statement = ast.MarkLigPosStatement
+
+    def warnIfAmbiguous(self, log):
+        """This anchor attachment is ambiguous if for the same mark glyph, more
+        than one mark class can be used to attach it to the base.
+        """
+        markGlyphToMarkClasses = defaultdict(set)
+        for component in self.marks:
+            for namedAnchor in component:
+                for markGlyph in namedAnchor.markClass.glyphs:
+                    markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
+        for markGlyph, markClasses in markGlyphToMarkClasses.items():
+            if len(markClasses) > 1:
+                log.warning(
+                    "The base ligature %s and mark glyph %s are ambiguously "
+                    "connected by several anchor classes: %s. "
+                    "Only one will prevail; which exactly is not guaranteed.",
+                    self.name,
+                    markGlyph,
+                    ", ".join(sorted(markClasses)),
+                )
 
     def _filterMarks(self, include):
         return [
@@ -205,6 +244,7 @@ def firstAvailable(colorSet):
             return count
         count += 1
 
+
 def _groupMarkClasses(markGlyphToMarkClasses):
     # To compute the number of lookups that we need to build, we want
     # the minimum number of lookups such that, whenever a mark glyph
@@ -299,8 +339,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     # Glyphs moves "_bottom" and "_top" (if present) to the top of
     # the list and then picks the first to use in the mark feature.
-    # https://github.com/googlei18n/noto-source/issues/122
-    # #issuecomment-403952188
+    # https://github.com/googlei18n/noto-source/issues/122#issuecomment-403952188
     anchorSortKey = {"_bottom": -2, "_top": -1}
 
     def setContext(self, font, feaFile, compiler=None):
@@ -479,7 +518,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 baseMarks.append(anchor)
             if not baseMarks:
                 continue
-            result.append(MarkToBasePos(glyphName, baseMarks))
+            pos = MarkToBasePos(glyphName, baseMarks)
+            pos.warnIfAmbiguous(self.log)
+            result.append(pos)
         return result
 
     def _makeGroupedMarkToBaseAttachments(self):
@@ -536,6 +577,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     )
                     continue
                 pos = MarkToMarkPos(glyphName, [anchor])
+                pos.warnIfAmbiguous(self.log)
                 results.setdefault(anchor.key, []).append(pos)
         return results
 
@@ -572,7 +614,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
             # anchor number means the component has <anchor NULL>
             for number in range(1, max(componentAnchors.keys()) + 1):
                 ligatureMarks.append(componentAnchors.get(number, []))
-            result.append(MarkToLigaPos(glyphName, ligatureMarks))
+            pos = MarkToLigaPos(glyphName, ligatureMarks)
+            pos.warnIfAmbiguous(self.log)
+            result.append(pos)
         return result
 
     def _makeGroupedMarkToLigaAttachments(self):
@@ -595,7 +639,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
             for component in attachment.marks:
                 for namedAnchor in component:
                     for markGlyph in namedAnchor.markClass.glyphs:
-                        markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
+                        markGlyphToMarkClasses[markGlyph].add(
+                            namedAnchor.markClass.name
+                        )
         groupedMarkClasses = _groupMarkClasses(markGlyphToMarkClasses)
         lookups = []
         for markClasses in groupedMarkClasses:
@@ -675,11 +721,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
             )
             if lookup:
                 baseLkps.append(lookup)
-        ligaLkps=[]
+        ligaLkps = []
         for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
             lookup = self._makeMarkLookup(
                 f"mark2liga{'_' + str(i) if i > 0 else ''}", attachments, include
-        )
+            )
             if lookup:
                 ligaLkps.append(lookup)
         if not baseLkps and not ligaLkps:
