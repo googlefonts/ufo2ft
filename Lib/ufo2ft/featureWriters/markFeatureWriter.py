@@ -682,6 +682,22 @@ class MarkFeatureWriter(BaseFeatureWriter):
             lkp.statements.extend(statements)
             return lkp
 
+    def _makeMarkLookupWithSubtables(
+        self, lookupName, attachments, include, marksFilter=None
+    ):
+        statements = []
+        for i, subtable in enumerate(attachments):
+            if i > 0:
+                statements.append(ast.ast.SubtableStatement())
+            statements.extend(
+                pos.asAST()
+                for pos in self._iterAttachments(subtable, include, marksFilter)
+            )
+        if statements:
+            lkp = ast.LookupBlock(lookupName)
+            lkp.statements.extend(statements)
+            return lkp
+
     def _makeMarkFilteringSetClass(self, lookupName, attachments, markClass, include):
         markGlyphs = (glyphName for glyphName in markClass.glyphs if include(glyphName))
         baseGlyphs = (
@@ -714,27 +730,19 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return lkp
 
     def _makeMarkFeature(self, include):
-        baseLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToBaseAttachments):
-            lookup = self._makeMarkLookup(
-                f"mark2base{'_' + str(i) if i > 0 else ''}", attachments, include
-            )
-            if lookup:
-                baseLkps.append(lookup)
-        ligaLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
-            lookup = self._makeMarkLookup(
-                f"mark2liga{'_' + str(i) if i > 0 else ''}", attachments, include
-            )
-            if lookup:
-                ligaLkps.append(lookup)
-        if not baseLkps and not ligaLkps:
+        baseLkp = self._makeMarkLookupWithSubtables(
+            "mark2base", self.context.groupedMarkToBaseAttachments, include
+        )
+        ligaLkp = self._makeMarkLookupWithSubtables(
+            "mark2liga", self.context.groupedMarkToLigaAttachments, include
+        )
+        if baseLkp is None and ligaLkp is None:
             return
 
         feature = ast.FeatureBlock("mark")
-        for baseLkp in baseLkps:
+        if baseLkp is not None:
             feature.statements.append(baseLkp)
-        for ligaLkp in ligaLkps:
+        if ligaLkp is not None:
             feature.statements.append(ligaLkp)
         return feature
 
@@ -776,26 +784,18 @@ class MarkFeatureWriter(BaseFeatureWriter):
         else:
             raise AssertionError(tag)
 
-        baseLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToBaseAttachments):
-            lookup = self._makeMarkLookup(
-                f"{tag}_mark2base{'_' + str(i) if i > 0 else ''}",
-                attachments,
-                include=include,
-                marksFilter=marksFilter,
-            )
-            if lookup:
-                baseLkps.append(lookup)
-        ligaLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
-            lookup = self._makeMarkLookup(
-                f"{tag}_mark2liga{'_' + str(i) if i > 0 else ''}",
-                attachments,
-                include=include,
-                marksFilter=marksFilter,
-            )
-            if lookup:
-                ligaLkps.append(lookup)
+        baseLkp = self._makeMarkLookupWithSubtables(
+            f"{tag}_mark2base",
+            self.context.groupedMarkToBaseAttachments,
+            include=include,
+            marksFilter=marksFilter,
+        )
+        ligaLkp = self._makeMarkLookupWithSubtables(
+            f"{tag}_mark2liga",
+            self.context.groupedMarkToLigaAttachments,
+            include=include,
+            marksFilter=marksFilter,
+        )
         mkmkLookups = []
         for anchorName, attachments in sorted(
             self.context.markToMarkAttachments.items()
@@ -810,13 +810,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
             if lkp is not None:
                 mkmkLookups.append(lkp)
 
-        if not any([baseLkps, ligaLkps, mkmkLookups]):
+        if not any([baseLkp, ligaLkp, mkmkLookups]):
             return
 
         feature = ast.FeatureBlock(tag)
-        for baseLkp in baseLkps:
+        if baseLkp is not None:
             feature.statements.append(baseLkp)
-        for ligaLkp in ligaLkps:
+        if ligaLkp is not None:
             feature.statements.append(ligaLkp)
         feature.statements.extend(mkmkLookups)
         return feature
