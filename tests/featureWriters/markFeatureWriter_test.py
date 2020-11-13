@@ -650,12 +650,10 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             feature mark {
                 lookup mark2base {
                     pos base D <anchor 320 360> mark @MC_center;
-                } mark2base;
-
-                lookup mark2base_1 {
+                    subtable;
                     pos base D <anchor 300 700> mark @MC_top;
                     pos base a <anchor 100 200> mark @MC_top;
-                } mark2base_1;
+                } mark2base;
 
                 lookup mark2liga {
                     pos ligature f_i <anchor 100 500> mark @MC_top
@@ -690,11 +688,9 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             feature mark {
                 lookup mark2base {
                     pos base a <anchor 515 581> mark @MC_topA;
-                } mark2base;
-
-                lookup mark2base_1 {
+                    subtable;
                     pos base e <anchor -21 396> mark @MC_topE;
-                } mark2base_1;
+                } mark2base;
 
             } mark;
             """
@@ -728,14 +724,12 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         ligComponent <anchor 600 500> mark @MC_top;
                     pos ligature f_l <anchor 102 502> mark @MC_top
                         ligComponent <anchor NULL>;
-                } mark2liga;
-
-                lookup mark2liga_1 {
+                    subtable;
                     pos ligature f_f <anchor 101 501> mark @MC_topOther
                         ligComponent <anchor 601 501> mark @MC_topOther;
                     pos ligature f_l <anchor NULL>
                         ligComponent <anchor 602 502> mark @MC_topOther;
-                } mark2liga_1;
+                } mark2liga;
 
             } mark;
             """
@@ -774,11 +768,9 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             feature mark {
                 lookup mark2base {
                     pos base a <anchor 100 500> mark @MC_top;
-                } mark2base;
-
-                lookup mark2base_1 {
+                    subtable;
                     pos base a <anchor 150 550> mark @MC_topOther;
-                } mark2base_1;
+                } mark2base;
 
             } mark;
             """
