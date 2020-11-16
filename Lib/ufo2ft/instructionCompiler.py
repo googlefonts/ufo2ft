@@ -172,9 +172,13 @@ class InstructionCompiler(object):
                         # We don't try to set the "OVERLAP_COMPOUND" flag
 
                         # Set "ROUND_XY_TO_GRID" if the component has an offset
-                        c.flags &= ~ROUND_XY_TO_GRID
-                        if c.x != 0 or c.y != 0:
-                            c.flags |= ROUND_XY_TO_GRID
+                        # c.flags &= ~ROUND_XY_TO_GRID
+                        # if c.x != 0 or c.y != 0:
+                        #     c.flags |= ROUND_XY_TO_GRID
+
+                        # Nope, don't change the flag:
+                        # https://github.com/googlefonts/ufo2ft/pull/425
+                        pass
 
                         # "USE_MY_METRICS" has been set already by
                         # outlineCompiler.OutlineTTFCompiler.autoUseMyMetrics
