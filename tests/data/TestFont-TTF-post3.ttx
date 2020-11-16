@@ -301,12 +301,12 @@
     </TTGlyph>
 
     <TTGlyph name="g" xMin="66" yMin="0" xMax="322" yMax="510">
-      <component glyphName="a" x="0" y="0" flags="0x204"/>
+      <component glyphName="a" x="0" y="0" flags="0x200"/>
     </TTGlyph>
 
     <TTGlyph name="h" xMin="100" yMin="-5" xMax="310" yMax="657">
-      <component glyphName="d" x="60" y="460" flags="0x4"/>
-      <component glyphName="b" x="0" y="0" flags="0x204"/>
+      <component glyphName="d" x="60" y="460" flags="0x0"/>
+      <component glyphName="b" x="0" y="0" flags="0x200"/>
     </TTGlyph>
 
     <TTGlyph name="i" xMin="-55" yMin="-80" xMax="454" yMax="510">
@@ -350,13 +350,13 @@
     </TTGlyph>
 
     <TTGlyph name="k" xMin="66" yMin="0" xMax="422" yMax="510">
-      <component glyphName="a" x="0" y="0" flags="0x4"/>
-      <component glyphName="a" x="100" y="0" flags="0x4"/>
+      <component glyphName="a" x="0" y="0" flags="0x0"/>
+      <component glyphName="a" x="100" y="0" flags="0x0"/>
     </TTGlyph>
 
     <TTGlyph name="l" xMin="78" yMin="0" xMax="422" yMax="510">
-      <component glyphName="a" x="400" y="0" scalex="-1.0" scaley="1.0" flags="0x4"/>
-      <component glyphName="a" x="100" y="0" flags="0x4"/>
+      <component glyphName="a" x="400" y="0" scalex="-1.0" scaley="1.0" flags="0x0"/>
+      <component glyphName="a" x="100" y="0" flags="0x0"/>
     </TTGlyph>
 
     <TTGlyph name="space"/><!-- contains no outline data -->
