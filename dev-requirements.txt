@@ -1,3 +1,2 @@
-pytest>=2.8
-virtualenv>=15.0
-tox>=2.3
+coverage
+pytest
