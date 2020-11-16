@@ -307,12 +307,12 @@
     </TTGlyph>
 
     <TTGlyph name="uni0067" xMin="66" yMin="0" xMax="322" yMax="510">
-      <component glyphName="uni0061" x="0" y="0" flags="0x200"/>
+      <component glyphName="uni0061" x="0" y="0" flags="0x204"/>
     </TTGlyph>
 
     <TTGlyph name="uni0068" xMin="100" yMin="-5" xMax="310" yMax="657">
-      <component glyphName="uni0064" x="60" y="460" flags="0x0"/>
-      <component glyphName="uni0062" x="0" y="0" flags="0x200"/>
+      <component glyphName="uni0064" x="60" y="460" flags="0x4"/>
+      <component glyphName="uni0062" x="0" y="0" flags="0x204"/>
     </TTGlyph>
 
     <TTGlyph name="uni0069" xMin="-55" yMin="-80" xMax="454" yMax="510">
@@ -354,13 +354,13 @@
     </TTGlyph>
 
     <TTGlyph name="uni006B" xMin="66" yMin="0" xMax="422" yMax="510">
-      <component glyphName="uni0061" x="0" y="0" flags="0x0"/>
-      <component glyphName="uni0061" x="100" y="0" flags="0x0"/>
+      <component glyphName="uni0061" x="0" y="0" flags="0x4"/>
+      <component glyphName="uni0061" x="100" y="0" flags="0x4"/>
     </TTGlyph>
 
     <TTGlyph name="uni006C" xMin="78" yMin="0" xMax="422" yMax="510">
-      <component glyphName="uni0061" x="400" y="0" scalex="-1.0" scaley="1.0" flags="0x0"/>
-      <component glyphName="uni0061" x="100" y="0" flags="0x0"/>
+      <component glyphName="uni0061" x="400" y="0" scalex="-1.0" scaley="1.0" flags="0x4"/>
+      <component glyphName="uni0061" x="100" y="0" flags="0x4"/>
     </TTGlyph>
 
   </glyf>
