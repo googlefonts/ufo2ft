@@ -1305,7 +1305,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                 logger.error("%r has invalid curve format; skipped", name)
                 ttGlyph = Glyph()
             else:
-                ttGlyph = pen.glyph(componentFlags=0x0)
+                ttGlyph = pen.glyph()
             ttGlyphs[name] = ttGlyph
         return ttGlyphs
 
