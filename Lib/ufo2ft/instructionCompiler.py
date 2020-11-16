@@ -88,6 +88,25 @@ class InstructionCompiler(object):
             glyph = self.ufo[name]
             ttdata = glyph.lib.get(ufoLibKey, None)
             production_name = self.rename_map.get(name, name)
+            if production_name not in self.font["glyf"]:
+                if production_name != name:
+                    logger.warning(
+                        "Production glyph name not found in font: "
+                        f"{production_name} (mapped from name {name}), "
+                        "skipping compilation of TrueType instructions "
+                        "for this glyph."
+                    )
+                else:
+                    logger.warning(
+                        "Glyph name not found in font: "
+                        f"{production_name}, "
+                        "skipping compilation of TrueType instructions"
+                        "for this glyph."
+                    )
+                logger.debug(f"UFO keys: {list(self.ufo.keys())}")
+                logger.debug(f"glyf keys: {list(self.font['glyf'].keys())}")
+                continue
+
             glyf = self.font["glyf"][production_name]
             if ttdata is not None:
                 formatVersion = ttdata.get("formatVersion", None)
