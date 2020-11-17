@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="u" format="2">
+  <advance width="673"/>
+  <unicode hex="0075"/>
+  <anchor x="336" y="500" name="top"/>
+  <anchor x="216" y="0" name="bottom"/>
+  <outline>
+    <contour>
+      <point x="109" y="488" type="qcurve"/>
+      <point x="114" y="510"/>
+      <point x="145" y="530"/>
+      <point x="160" y="530" type="qcurve" name="at01"/>
+      <point x="169" y="530"/>
+      <point x="188" y="523"/>
+      <point x="202" y="508"/>
+      <point x="209" y="482"/>
+      <point x="206" y="464" type="qcurve" name="mh01"/>
+      <point x="200" y="432"/>
+      <point x="186" y="370"/>
+      <point x="172" y="302"/>
+      <point x="159" y="228"/>
+      <point x="156" y="184" type="qcurve" name="sh01"/>
+      <point x="154" y="162"/>
+      <point x="159" y="121"/>
+      <point x="174" y="90"/>
+      <point x="200" y="72"/>
+      <point x="220" y="72" type="qcurve" name="sv01"/>
+      <point x="264" y="72"/>
+      <point x="340" y="130"/>
+      <point x="402" y="232" name="fh01"/>
+      <point x="446" y="372"/>
+      <point x="458" y="453" type="qcurve" name="ah02"/>
+      <point x="463" y="482"/>
+      <point x="493" y="503"/>
+      <point x="512" y="503" type="qcurve" name="at02"/>
+      <point x="535" y="503"/>
+      <point x="562" y="472"/>
+      <point x="560" y="443" type="qcurve" name="sh02"/>
+      <point x="558" y="414"/>
+      <point x="553" y="351"/>
+      <point x="550" y="287"/>
+      <point x="549" y="226"/>
+      <point x="549" y="199" type="qcurve"/>
+      <point x="549" y="154"/>
+      <point x="557" y="80"/>
+      <point x="563" y="52" type="qcurve" name="sv02"/>
+      <point x="600" y="58" type="line"/>
+      <point x="624" y="62"/>
+      <point x="649" y="43"/>
+      <point x="653" y="14"/>
+      <point x="637" y="-17"/>
+      <point x="620" y="-24" type="qcurve"/>
+      <point x="583" y="-40"/>
+      <point x="553" y="-40" type="qcurve" name="ab02"/>
+      <point x="497" y="-40"/>
+      <point x="454" y="72"/>
+      <point x="457" y="178" type="qcurve" name="ih01"/>
+      <point x="431" y="115"/>
+      <point x="370" y="37"/>
+      <point x="307" y="-8"/>
+      <point x="246" y="-24"/>
+      <point x="221" y="-24" type="qcurve" name="ab01"/>
+      <point x="181" y="-24"/>
+      <point x="118" y="6" name="fh02"/>
+      <point x="75" y="60" name="fh03"/>
+      <point x="54" y="135"/>
+      <point x="56" y="180" type="qcurve" name="ah01"/>
+      <point x="58" y="225"/>
+      <point x="68" y="305"/>
+      <point x="83" y="380"/>
+      <point x="100" y="451"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.fontlab.ttprogram</key>
+      <string>  &lt;ttProgram&gt;
+    &lt;ttc code="alignh" point="ah01" align="round"/&gt;
+    &lt;ttc code="alignh" point="ah02" align="round"/&gt;
+    &lt;ttc code="mdeltah" point="mh01" delta="-2" ppm1="10" ppm2="10"/&gt;
+    &lt;ttc code="mdeltah" point="mh01" delta="-5" ppm1="12" ppm2="15"/&gt;
+    &lt;ttc code="mdeltah" point="mh01" delta="-8" ppm1="11" ppm2="11"/&gt;
+    &lt;ttc code="mdeltah" point="ah01" delta="-8" ppm1="11" ppm2="11"/&gt;
+    &lt;ttc code="singleh" point1="ah01" point2="sh01" stem="X: 100"/&gt;
+    &lt;ttc code="mdeltah" point="ah02" delta="-8" ppm1="11" ppm2="11"/&gt;
+    &lt;ttc code="singleh" point1="ah02" point2="sh02" stem="X: 100"/&gt;
+    &lt;ttc code="interpolateh" point="ih01" point1="ah02" point2="sh02"/&gt;
+    &lt;ttc code="alignt" point="at01" zone="t: 0"/&gt;
+    &lt;ttc code="alignt" point="at02" zone="t: 0"/&gt;
+    &lt;ttc code="alignb" point="ab01" zone="b: 0"/&gt;
+    &lt;ttc code="alignb" point="ab02" zone="b: 0"/&gt;
+    &lt;ttc code="singlev" point1="ab01" point2="sv01" stem="Y: 100"/&gt;
+    &lt;ttc code="singlev" point1="ab02" point2="sv02" stem="Y: 100"/&gt;
+    &lt;ttc code="fdeltah" point="fh01" delta="2" ppm1="11" ppm2="11"/&gt;
+    &lt;ttc code="fdeltah" point="fh01" delta="4" ppm1="12" ppm2="12"/&gt;
+    &lt;ttc code="fdeltah" point="fh02" delta="3" ppm1="9" ppm2="10"/&gt;
+    &lt;ttc code="fdeltah" point="fh03" delta="3" ppm1="9" ppm2="11"/&gt;
+  &lt;/ttProgram&gt;
+</string>
+    </dict>
+  </lib>
+</glyph>

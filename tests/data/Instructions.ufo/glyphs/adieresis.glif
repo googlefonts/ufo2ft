@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="adieresis" format="2">
+  <advance width="604"/>
+  <unicode hex="00E4"/>
+  <outline>
+    <component base="uni0308" xOffset="443" yOffset="-8"/>
+    <component base="a.005"/>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.fontlab.ttprogram</key>
+      <string>  &lt;ttProgram&gt;
+    &lt;ttc code="alignt" point="" zone="t: 0"/&gt;
+    &lt;ttc code="singlev" point1="" point2="" round="true"/&gt;
+  &lt;/ttProgram&gt;
+</string>
+    </dict>
+  </lib>
+</glyph>

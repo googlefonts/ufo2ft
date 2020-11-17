@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="i" format="2">
+  <advance width="240"/>
+  <unicode hex="0069"/>
+  <anchor x="150" y="725" name="top"/>
+  <anchor x="102" y="0" name="bottom"/>
+  <outline>
+    <contour>
+      <point x="76" y="467" type="qcurve" name="ah01"/>
+      <point x="77" y="490"/>
+      <point x="103" y="520"/>
+      <point x="127" y="520" type="qcurve" name="at01"/>
+      <point x="151" y="520"/>
+      <point x="178" y="490"/>
+      <point x="178" y="464" type="qcurve" name="sh01"/>
+      <point x="177" y="410"/>
+      <point x="172" y="299"/>
+      <point x="165" y="190"/>
+      <point x="157" y="88"/>
+      <point x="153" y="45" type="qcurve" name="sh03"/>
+      <point x="150" y="16"/>
+      <point x="119" y="-11"/>
+      <point x="102" y="-11" type="qcurve" name="ab01"/>
+      <point x="83" y="-11"/>
+      <point x="52" y="19"/>
+      <point x="54" y="52" type="qcurve" name="sh02"/>
+      <point x="57" y="110"/>
+      <point x="63" y="212"/>
+      <point x="69" y="310"/>
+      <point x="74" y="411"/>
+    </contour>
+    <contour>
+      <point x="140" y="606" type="qcurve" name="sv01"/>
+      <point x="120" y="606"/>
+      <point x="92" y="619"/>
+      <point x="74" y="638"/>
+      <point x="65" y="661"/>
+      <point x="65" y="671" type="qcurve" name="ah02"/>
+      <point x="65" y="699"/>
+      <point x="107" y="747"/>
+      <point x="142" y="747" type="qcurve" name="sv02"/>
+      <point x="170" y="747"/>
+      <point x="207" y="709"/>
+      <point x="207" y="677" type="qcurve" name="sh04"/>
+      <point x="207" y="649"/>
+      <point x="171" y="606"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.fontlab.ttprogram</key>
+      <string>  &lt;ttProgram&gt;
+    &lt;ttc code="alignh" point="ah01" align="round"/&gt;
+    &lt;ttc code="alignh" point="ah02" align="round"/&gt;
+    &lt;ttc code="mdeltah" point="ah01" delta="-8" ppm1="9" ppm2="10"/&gt;
+    &lt;ttc code="singleh" point1="ah01" point2="sh01" stem="X: 100"/&gt;
+    &lt;ttc code="singleh" point1="ah01" point2="sh02" align="round"/&gt;
+    &lt;ttc code="singleh" point1="sh02" point2="sh03" stem="X: 100"/&gt;
+    &lt;ttc code="mdeltah" point="ah02" delta="-8" ppm1="9" ppm2="10"/&gt;
+    &lt;ttc code="singleh" point1="ah02" point2="sh04" round="true"/&gt;
+    &lt;ttc code="alignt" point="at01" zone="t: 0"/&gt;
+    &lt;ttc code="alignb" point="ab01" zone="b: 0"/&gt;
+    &lt;ttc code="singlev" point1="at01" point2="sv01" round="true"/&gt;
+    &lt;ttc code="singlev" point1="sv01" point2="sv02" round="true"/&gt;
+  &lt;/ttProgram&gt;
+</string>
+    </dict>
+  </lib>
+</glyph>
