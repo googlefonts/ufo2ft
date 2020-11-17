@@ -228,10 +228,10 @@ class PostProcessor(object):
             rename_map[name] = self._unique_name(valid_name, seen)
         return rename_map
 
-    def _compile_truetype_hinting(self):
+    def _compile_truetype_hinting(self, rename_map={}):
         logger.info("Compiling TrueType hinting")
         from ufo2ft.instructionCompiler import InstructionCompiler
-        ic = InstructionCompiler(ufo=self.ufo, ttf=self.otf)
+        ic = InstructionCompiler(ufo=self.ufo, ttf=self.otf, rename_map=rename_map)
         ic.compile()
 
     @staticmethod
