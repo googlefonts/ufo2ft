@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="O" format="2">
+  <advance width="730"/>
+  <unicode hex="004F"/>
+  <anchor x="371" y="700" name="top"/>
+  <anchor x="330" y="10" name="bottom"/>
+  <outline>
+    <contour>
+      <point x="349" y="715" type="qcurve" name="at01"/>
+      <point x="410" y="715"/>
+      <point x="509" y="671"/>
+      <point x="532" y="637" type="qcurve"/>
+      <point x="571" y="620"/>
+      <point x="635" y="558" name="fh01"/>
+      <point x="679" y="475"/>
+      <point x="699" y="381"/>
+      <point x="696" y="333" type="qcurve" name="sh01"/>
+      <point x="692" y="263"/>
+      <point x="635" y="138"/>
+      <point x="537" y="43"/>
+      <point x="414" y="-7"/>
+      <point x="347" y="-7" type="qcurve" name="ab01"/>
+      <point x="274" y="-7"/>
+      <point x="156" y="44" name="fh02"/>
+      <point x="73" y="141" name="fh03"/>
+      <point x="33" y="275"/>
+      <point x="35" y="356" type="qcurve" name="ah01"/>
+      <point x="37" y="431"/>
+      <point x="88" y="562" name="fh04"/>
+      <point x="173" y="659" name="fh05"/>
+      <point x="286" y="715"/>
+    </contour>
+    <contour>
+      <point x="587" y="339" type="qcurve" name="ah02"/>
+      <point x="590" y="384"/>
+      <point x="573" y="453"/>
+      <point x="553" y="486" type="qcurve"/>
+      <point x="547" y="496"/>
+      <point x="529" y="516"/>
+      <point x="491" y="555" name="fh06"/>
+      <point x="477" y="575"/>
+      <point x="476" y="584" type="qcurve"/>
+      <point x="466" y="586"/>
+      <point x="442" y="595"/>
+      <point x="431" y="601" type="qcurve"/>
+      <point x="415" y="611"/>
+      <point x="379" y="620"/>
+      <point x="361" y="620" type="qcurve" name="sv01"/>
+      <point x="315" y="620"/>
+      <point x="235" y="577"/>
+      <point x="176" y="500"/>
+      <point x="145" y="402"/>
+      <point x="145" y="350" type="qcurve" name="sh02"/>
+      <point x="146" y="224"/>
+      <point x="250" y="89"/>
+      <point x="341" y="89" type="qcurve" name="sv02"/>
+      <point x="392" y="89"/>
+      <point x="479" y="126" name="fh07"/>
+      <point x="544" y="193" name="fh08"/>
+      <point x="584" y="285"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.fontlab.ttprogram</key>
+      <string>  &lt;ttProgram&gt;
+    &lt;ttc code="alignh" point="ah01" align="round"/&gt;
+    &lt;ttc code="alignh" point="ah02" align="round"/&gt;
+    &lt;ttc code="mdeltah" point="ah02" delta="-8" ppm1="9" ppm2="10"/&gt;
+    &lt;ttc code="singleh" point1="ah02" point2="sh01" stem="X: 100"/&gt;
+    &lt;ttc code="singleh" point1="ah01" point2="sh02" stem="X: 100"/&gt;
+    &lt;ttc code="alignt" point="at01" zone="t: 1"/&gt;
+    &lt;ttc code="alignb" point="ab01" zone="b: 0"/&gt;
+    &lt;ttc code="singlev" point1="at01" point2="sv01" stem="Y: 100"/&gt;
+    &lt;ttc code="singlev" point1="ab01" point2="sv02" stem="Y: 100"/&gt;
+    &lt;ttc code="fdeltah" point="fh01" delta="-2" ppm1="13" ppm2="13"/&gt;
+    &lt;ttc code="fdeltah" point="fh02" delta="3" ppm1="10" ppm2="10"/&gt;
+    &lt;ttc code="fdeltah" point="fh03" delta="3" ppm1="10" ppm2="10"/&gt;
+    &lt;ttc code="fdeltah" point="fh04" delta="2" ppm1="13" ppm2="13"/&gt;
+    &lt;ttc code="fdeltah" point="fh05" delta="3" ppm1="10" ppm2="10"/&gt;
+    &lt;ttc code="fdeltah" point="fh06" delta="2" ppm1="9" ppm2="9"/&gt;
+    &lt;ttc code="fdeltah" point="fh07" delta="2" ppm1="9" ppm2="9"/&gt;
+    &lt;ttc code="fdeltah" point="fh07" delta="3" ppm1="13" ppm2="13"/&gt;
+    &lt;ttc code="fdeltah" point="fh08" delta="3" ppm1="13" ppm2="13"/&gt;
+  &lt;/ttProgram&gt;
+</string>
+    </dict>
+  </lib>
+</glyph>
