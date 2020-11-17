@@ -25,10 +25,9 @@ ufoLibKey = "public.truetype.instructions"
 
 
 class InstructionCompiler(object):
-    def __init__(self, ufo, ttf, rename_map={}):
+    def __init__(self, ufo, ttf):
         self.ufo = ufo
         self.font = ttf
-        self.rename_map = rename_map
 
     def _compile_program(self, key, table_tag):
         assert table_tag in ("prep", "fpgm")
@@ -87,27 +86,17 @@ class InstructionCompiler(object):
         for name in sorted(self.ufo.keys()):
             glyph = self.ufo[name]
             ttdata = glyph.lib.get(ufoLibKey, None)
-            production_name = self.rename_map.get(name, name)
-            if production_name not in self.font["glyf"]:
-                if production_name != name:
-                    logger.warning(
-                        "Production glyph name not found in font: "
-                        f"{production_name} (mapped from name {name}), "
-                        "skipping compilation of TrueType instructions "
-                        "for this glyph."
-                    )
-                else:
-                    logger.warning(
-                        "Glyph name not found in font: "
-                        f"{production_name}, "
-                        "skipping compilation of TrueType instructions"
-                        "for this glyph."
-                    )
+            if name not in self.font["glyf"]:
+                logger.warning(
+                    f"Glyph '{name}' not found in font, "
+                    "skipping compilation of TrueType instructions"
+                    "for this glyph."
+                )
                 logger.debug(f"UFO keys: {list(self.ufo.keys())}")
                 logger.debug(f"glyf keys: {list(self.font['glyf'].keys())}")
                 continue
 
-            glyf = self.font["glyf"][production_name]
+            glyf = self.font["glyf"][name]
             if ttdata is not None:
                 formatVersion = ttdata.get("formatVersion", None)
                 if int(formatVersion) != 1:
