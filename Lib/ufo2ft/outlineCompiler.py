@@ -854,7 +854,10 @@ class BaseOutlineCompiler(object):
         vorg.defaultVertOriginY = vorg_count.most_common(1)[0][0]
         if len(vorg_count) > 1:
             for glyphName, glyph in self.allGlyphs.items():
-                vorg.VOriginRecords[glyphName] = _getVerticalOrigin(self.otf, glyph)
+                vertOriginY = _getVerticalOrigin(self.otf, glyph)
+                if vertOriginY == vorg.defaultVertOriginY:
+                    continue
+                vorg.VOriginRecords[glyphName] = vertOriginY
         vorg.numVertOriginYMetrics = len(vorg.VOriginRecords)
 
     def setupTable_vhea(self):
