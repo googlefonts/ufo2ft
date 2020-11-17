@@ -18,10 +18,38 @@
     <integer>0</integer>
     <key>macintoshFONDFamilyID</key>
     <integer>128</integer>
+    <key>openTypeGaspRangeRecords</key>
+    <array>
+      <dict>
+        <key>rangeGaspBehavior</key>
+        <array>
+          <integer>1</integer>
+          <integer>3</integer>
+        </array>
+        <key>rangeMaxPPEM</key>
+        <integer>8</integer>
+      </dict>
+      <dict>
+        <key>rangeGaspBehavior</key>
+        <array>
+          <integer>0</integer>
+          <integer>1</integer>
+          <integer>2</integer>
+          <integer>3</integer>
+        </array>
+        <key>rangeMaxPPEM</key>
+        <integer>65535</integer>
+      </dict>
+    </array>
     <key>openTypeHeadCreated</key>
     <string>2020/11/17 12:26:43</string>
     <key>openTypeHeadFlags</key>
-    <array/>
+    <array>
+      <integer>3</integer>
+      <integer>13</integer>
+    </array>
+    <key>openTypeHeadLowestRecPPEM</key>
+    <integer>9</integer>
     <key>openTypeHheaAscender</key>
     <integer>820</integer>
     <key>openTypeHheaDescender</key>

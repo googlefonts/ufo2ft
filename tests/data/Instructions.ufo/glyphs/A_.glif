@@ -4,36 +4,6 @@
   <unicode hex="0041"/>
   <anchor x="365" y="725" name="top"/>
   <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
-  <anchor x="365" y="725" name="top"/>
-  <anchor x="321" y="0" name="bottom"/>
   <outline>
     <contour>
       <point x="58" y="-21" type="qcurve" name="ab01"/>
@@ -115,6 +85,154 @@
     &lt;ttc code="fdeltah" point="fh02" delta="-2" ppm1="12" ppm2="12"/&gt;
   &lt;/ttProgram&gt;
 </string>
+      <key>public.truetype.instructions</key>
+      <dict>
+        <key>assembly</key>
+        <string>
+PUSHB[ ]	/* 1 value pushed */
+3
+MDAP[1]	/* MoveDirectAbsPt */
+PUSHB[ ]	/* 1 value pushed */
+28
+MDAP[1]	/* MoveDirectAbsPt */
+PUSHB[ ]	/* 3 values pushed */
+57 5 1
+DELTAP1[ ]	/* DeltaExceptionP1 */
+NPUSHB[ ]	/* 9 values pushed */
+32 28 1 16 28 1 0 28 1
+DELTAP1[ ]	/* DeltaExceptionP1 */
+DELTAP1[ ]	/* DeltaExceptionP1 */
+DELTAP1[ ]	/* DeltaExceptionP1 */
+PUSHB[ ]	/* 2 values pushed */
+20 2
+MIRP[10100]	/* MoveIndirectRelPt */
+PUSHB[ ]	/* 1 value pushed */
+3
+SRP0[ ]	/* SetRefPoint0 */
+PUSHB[ ]	/* 2 values pushed */
+37 2
+MIRP[10100]	/* MoveIndirectRelPt */
+PUSHB[ ]	/* 3 values pushed */
+42 28 37
+SRP1[ ]	/* SetRefPoint1 */
+SRP2[ ]	/* SetRefPoint2 */
+IP[ ]	/* InterpolatePts */
+PUSHB[ ]	/* 3 values pushed */
+31 42 28
+SRP1[ ]	/* SetRefPoint1 */
+SRP2[ ]	/* SetRefPoint2 */
+IP[ ]	/* InterpolatePts */
+PUSHB[ ]	/* 3 values pushed */
+57 31 1
+DELTAP1[ ]	/* DeltaExceptionP1 */
+PUSHB[ ]	/* 3 values pushed */
+40 28 37
+SRP1[ ]	/* SetRefPoint1 */
+SRP2[ ]	/* SetRefPoint2 */
+IP[ ]	/* InterpolatePts */
+PUSHB[ ]	/* 3 values pushed */
+34 40 37
+SRP1[ ]	/* SetRefPoint1 */
+SRP2[ ]	/* SetRefPoint2 */
+IP[ ]	/* InterpolatePts */
+PUSHB[ ]	/* 3 values pushed */
+54 34 1
+DELTAP1[ ]	/* DeltaExceptionP1 */
+PUSHB[ ]	/* 3 values pushed */
+56 46 1
+DELTAP1[ ]	/* DeltaExceptionP1 */
+SVTCA[0]	/* SetFPVectorToAxis */
+PUSHB[ ]	/* 3 values pushed */
+9 9 0
+RCVT[ ]	/* ReadCVT */
+IF[ ]	/* If */
+  PUSHB[ ]	/* 1 value pushed */
+  1
+  ADD[ ]	/* Add */
+  RCVT[ ]	/* ReadCVT */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP0[ ]	/* SetRefPoint0 */
+  ROLL[ ]	/* RollTopThreeStack */
+  MSIRP[0]	/* MoveStackIndirRelPt */
+  MDAP[1]	/* MoveDirectAbsPt */
+ELSE[ ]	/* Else */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP2[ ]	/* SetRefPoint2 */
+  SWAP[ ]	/* SwapTopStack */
+  MIAP[0]	/* MoveIndirectAbsPt */
+EIF[ ]	/* EndIf */
+PUSHB[ ]	/* 3 values pushed */
+0 3 0
+RCVT[ ]	/* ReadCVT */
+IF[ ]	/* If */
+  PUSHB[ ]	/* 1 value pushed */
+  1
+  ADD[ ]	/* Add */
+  RCVT[ ]	/* ReadCVT */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP0[ ]	/* SetRefPoint0 */
+  ROLL[ ]	/* RollTopThreeStack */
+  MSIRP[0]	/* MoveStackIndirRelPt */
+  MDAP[1]	/* MoveDirectAbsPt */
+ELSE[ ]	/* Else */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP2[ ]	/* SetRefPoint2 */
+  SWAP[ ]	/* SwapTopStack */
+  MIAP[0]	/* MoveIndirectAbsPt */
+EIF[ ]	/* EndIf */
+PUSHB[ ]	/* 3 values pushed */
+25 3 0
+RCVT[ ]	/* ReadCVT */
+IF[ ]	/* If */
+  PUSHB[ ]	/* 1 value pushed */
+  1
+  ADD[ ]	/* Add */
+  RCVT[ ]	/* ReadCVT */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP0[ ]	/* SetRefPoint0 */
+  ROLL[ ]	/* RollTopThreeStack */
+  MSIRP[0]	/* MoveStackIndirRelPt */
+  MDAP[1]	/* MoveDirectAbsPt */
+ELSE[ ]	/* Else */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP2[ ]	/* SetRefPoint2 */
+  SWAP[ ]	/* SwapTopStack */
+  MIAP[0]	/* MoveIndirectAbsPt */
+EIF[ ]	/* EndIf */
+PUSHB[ ]	/* 4 values pushed */
+31 1 42 3
+CALL[ ]	/* CallFunction */
+PUSHB[ ]	/* 1 value pushed */
+9
+SRP0[ ]	/* SetRefPoint0 */
+PUSHB[ ]	/* 1 value pushed */
+46
+MDRP[10000]	/* MoveDirectRelPt */
+SVTCA[1]	/* SetFPVectorToAxis */
+PUSHB[ ]	/* 6 values pushed */
+37 17 1 21 17 1
+DELTAP1[ ]	/* DeltaExceptionP1 */
+DELTAP1[ ]	/* DeltaExceptionP1 */
+PUSHB[ ]	/* 3 values pushed */
+54 48 1
+DELTAP1[ ]	/* DeltaExceptionP1 */
+IUP[0]	/* InterpolateUntPts */
+IUP[1]	/* InterpolateUntPts */
+</string>
+        <key>formatVersion</key>
+        <string>1</string>
+        <key>id</key>
+        <string>d0b9efba65108827703ed3e672c5041983cee80e7be6144acc681627361b3929b32e06e6c52b2fee09175a182b8cce21bbf72f145c7969bceabf8e309cf3c2f8</string>
+      </dict>
     </dict>
   </lib>
 </glyph>

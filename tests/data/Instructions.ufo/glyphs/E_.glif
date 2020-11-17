@@ -86,6 +86,107 @@
     &lt;ttc code="singlev" point1="ab01" point2="sh02" stem="Y: 100"/&gt;
   &lt;/ttProgram&gt;
 </string>
+      <key>public.truetype.instructions</key>
+      <dict>
+        <key>assembly</key>
+        <string>
+PUSHB[ ]	/* 1 value pushed */
+10
+MDAP[1]	/* MoveDirectAbsPt */
+PUSHB[ ]	/* 1 value pushed */
+58
+MDAP[1]	/* MoveDirectAbsPt */
+PUSHB[ ]	/* 1 value pushed */
+26
+MDRP[10000]	/* MoveDirectRelPt */
+PUSHB[ ]	/* 1 value pushed */
+26
+MDAP[1]	/* MoveDirectAbsPt */
+PUSHB[ ]	/* 1 value pushed */
+10
+SRP0[ ]	/* SetRefPoint0 */
+PUSHB[ ]	/* 2 values pushed */
+52 2
+MIRP[10100]	/* MoveIndirectRelPt */
+PUSHB[ ]	/* 1 value pushed */
+37
+MDRP[10000]	/* MoveDirectRelPt */
+PUSHB[ ]	/* 3 values pushed */
+43 58 10
+SRP1[ ]	/* SetRefPoint1 */
+SRP2[ ]	/* SetRefPoint2 */
+IP[ ]	/* InterpolatePts */
+PUSHB[ ]	/* 1 value pushed */
+43
+MDAP[1]	/* MoveDirectAbsPt */
+SVTCA[0]	/* SetFPVectorToAxis */
+PUSHB[ ]	/* 3 values pushed */
+18 9 0
+RCVT[ ]	/* ReadCVT */
+IF[ ]	/* If */
+  PUSHB[ ]	/* 1 value pushed */
+  1
+  ADD[ ]	/* Add */
+  RCVT[ ]	/* ReadCVT */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP0[ ]	/* SetRefPoint0 */
+  ROLL[ ]	/* RollTopThreeStack */
+  MSIRP[0]	/* MoveStackIndirRelPt */
+  MDAP[1]	/* MoveDirectAbsPt */
+ELSE[ ]	/* Else */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP2[ ]	/* SetRefPoint2 */
+  SWAP[ ]	/* SwapTopStack */
+  MIAP[0]	/* MoveIndirectAbsPt */
+EIF[ ]	/* EndIf */
+PUSHB[ ]	/* 3 values pushed */
+5 3 0
+RCVT[ ]	/* ReadCVT */
+IF[ ]	/* If */
+  PUSHB[ ]	/* 1 value pushed */
+  1
+  ADD[ ]	/* Add */
+  RCVT[ ]	/* ReadCVT */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP0[ ]	/* SetRefPoint0 */
+  ROLL[ ]	/* RollTopThreeStack */
+  MSIRP[0]	/* MoveStackIndirRelPt */
+  MDAP[1]	/* MoveDirectAbsPt */
+ELSE[ ]	/* Else */
+  SWAP[ ]	/* SwapTopStack */
+  DUP[ ]	/* DuplicateTopStack */
+  SRP2[ ]	/* SetRefPoint2 */
+  SWAP[ ]	/* SwapTopStack */
+  MIAP[0]	/* MoveIndirectAbsPt */
+EIF[ ]	/* EndIf */
+PUSHB[ ]	/* 4 values pushed */
+46 1 40 3
+CALL[ ]	/* CallFunction */
+PUSHB[ ]	/* 1 value pushed */
+18
+SRP0[ ]	/* SetRefPoint0 */
+PUSHB[ ]	/* 2 values pushed */
+34 1
+MIRP[10100]	/* MoveIndirectRelPt */
+PUSHB[ ]	/* 1 value pushed */
+5
+SRP0[ ]	/* SetRefPoint0 */
+PUSHB[ ]	/* 2 values pushed */
+52 1
+MIRP[10100]	/* MoveIndirectRelPt */
+IUP[0]	/* InterpolateUntPts */
+IUP[1]	/* InterpolateUntPts */
+</string>
+        <key>formatVersion</key>
+        <string>1</string>
+        <key>id</key>
+        <string>ae2637ff721b9dca572f155f8c775de23fd902256aab74c2e6bc762c12d4c5ea113861f2cca8025ee7e7643e635e8cd77ae50dd18fba8527c2dd700b0d213789</string>
+      </dict>
     </dict>
   </lib>
 </glyph>
