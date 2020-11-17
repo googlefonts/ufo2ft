@@ -233,6 +233,19 @@ class IntegrationTest(object):
         assert "prep" in ttf
         expectTTX(ttf, "Instructions.ttx")
 
+    def test_Instructions_drop_glyph_names(self, instructions_ufo):
+        from ufo2ft.constants import KEEP_GLYPH_NAMES
+
+        instructions_ufo.lib[KEEP_GLYPH_NAMES] = False
+        ttf = compileTTF(
+            instructions_ufo, reverseDirection=False, removeOverlaps=False
+        )
+        assert "cvt " in ttf
+        assert "gasp" in ttf
+        assert "fpgm" in ttf
+        assert "prep" in ttf
+        expectTTX(ttf, "Instructions.drop_glyph_names.ttx")
+
 
 if __name__ == "__main__":
     sys.exit(pytest.main(sys.argv))
