@@ -103,6 +103,9 @@ class PostProcessor(object):
                 subroutinizer=subroutinizer,
             )
 
+        if "glyf" in self.otf:
+            print(self.otf["glyf"].keys())
+
         self.process_glyph_names(useProductionNames)
 
         return self.otf
