@@ -25,6 +25,11 @@ def testufo(FontClass):
     return FontClass(getpath("TestFont.ufo"))
 
 
+@pytest.fixture
+def instructions_ufo(FontClass):
+    return FontClass(getpath("Instructions.ufo"))
+
+
 def readLines(f):
     f.seek(0)
     lines = []
@@ -217,6 +222,16 @@ class IntegrationTest(object):
         compile_func = globals()[f"compile{output_format}"]
         ttf = compile_func(testufo, **options)
         expectTTX(ttf, expected_ttx)
+
+    def test_Instructions(self, instructions_ufo):
+        ttf = compileTTF(
+            instructions_ufo, reverseDirection=False, removeOverlaps=False
+        )
+        assert "cvt " in ttf
+        assert "gasp" in ttf
+        assert "fpgm" in ttf
+        assert "prep" in ttf
+        expectTTX(ttf, "Instructions.ttx")
 
 
 if __name__ == "__main__":
