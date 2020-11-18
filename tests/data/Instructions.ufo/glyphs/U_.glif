@@ -205,6 +205,8 @@ MDRP[10000]	/* MoveDirectRelPt */
 PUSHB[ ]	/* 1 value pushed */
 29
 MDAP[1]	/* MoveDirectAbsPt */
+IUP[0]	/* InterpolateUntPts */
+IUP[1]	/* InterpolateUntPts */
 SVTCA[1]	/* SetFPVectorToAxis */
 PUSHB[ ]	/* 3 values pushed */
 57 19 1
@@ -213,8 +215,6 @@ PUSHB[ ]	/* 6 values pushed */
 42 19 1 26 19 1
 DELTAP1[ ]	/* DeltaExceptionP1 */
 DELTAP1[ ]	/* DeltaExceptionP1 */
-IUP[0]	/* InterpolateUntPts */
-IUP[1]	/* InterpolateUntPts */
 </string>
         <key>formatVersion</key>
         <string>1</string>

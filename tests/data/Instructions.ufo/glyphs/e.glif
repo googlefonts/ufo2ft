@@ -182,6 +182,8 @@ SRP0[ ]	/* SetRefPoint0 */
 PUSHB[ ]	/* 2 values pushed */
 34 1
 MIRP[10100]	/* MoveIndirectRelPt */
+IUP[0]	/* InterpolateUntPts */
+IUP[1]	/* InterpolateUntPts */
 SVTCA[1]	/* SetFPVectorToAxis */
 PUSHB[ ]	/* 3 values pushed */
 42 22 1
@@ -201,8 +203,6 @@ NPUSHB[ ]	/* 9 values pushed */
 DELTAP1[ ]	/* DeltaExceptionP1 */
 DELTAP1[ ]	/* DeltaExceptionP1 */
 DELTAP1[ ]	/* DeltaExceptionP1 */
-IUP[0]	/* InterpolateUntPts */
-IUP[1]	/* InterpolateUntPts */
 </string>
         <key>formatVersion</key>
         <string>1</string>
