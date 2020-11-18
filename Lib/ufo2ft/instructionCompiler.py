@@ -225,8 +225,3 @@ class InstructionCompiler(object):
         self.compile_glyf()
         # maxp depends on the other programs, to it needs to be last
         self.compile_maxp()
-        # from fontTools.misc.py23 import BytesIO
-        # from fontTools.ttLib import TTFont
-        # tmp = BytesIO()
-        # self.font.save(tmp)
-        # self.font = TTFont(tmp)

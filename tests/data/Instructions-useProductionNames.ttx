@@ -19,9 +19,9 @@
     <GlyphID id="13" name="odieresis"/>
     <GlyphID id="14" name="udieresis"/>
     <GlyphID id="15" name="uni0308"/>
-    <GlyphID id="16" name="a.005"/>
-    <GlyphID id="17" name="NULL"/>
-    <GlyphID id="18" name="CR"/>
+    <GlyphID id="16" name="glyph00016"/>
+    <GlyphID id="17" name="uni0000"/>
+    <GlyphID id="18" name="uni000D"/>
     <GlyphID id="19" name="space"/>
   </GlyphOrder>
 
@@ -141,31 +141,31 @@
   <hmtx>
     <mtx name=".notdef" width="310" lsb="0"/>
     <mtx name="A" width="652" lsb="6"/>
-    <mtx name="CR" width="310" lsb="0"/>
     <mtx name="E" width="566" lsb="58"/>
     <mtx name="I" width="297" lsb="85"/>
-    <mtx name="NULL" width="0" lsb="0"/>
     <mtx name="O" width="730" lsb="33"/>
     <mtx name="U" width="605" lsb="39"/>
     <mtx name="a" width="617" lsb="19"/>
-    <mtx name="a.005" width="604" lsb="26"/>
     <mtx name="adieresis" width="604" lsb="26"/>
     <mtx name="e" width="498" lsb="32"/>
     <mtx name="edieresis" width="498" lsb="32"/>
+    <mtx name="glyph00016" width="604" lsb="26"/>
     <mtx name="i" width="240" lsb="52"/>
     <mtx name="o" width="574" lsb="32"/>
     <mtx name="odieresis" width="572" lsb="32"/>
     <mtx name="space" width="310" lsb="0"/>
     <mtx name="u" width="673" lsb="54"/>
     <mtx name="udieresis" width="673" lsb="54"/>
+    <mtx name="uni0000" width="0" lsb="0"/>
+    <mtx name="uni000D" width="310" lsb="0"/>
     <mtx name="uni0308" width="1" lsb="-304"/>
   </hmtx>
 
   <cmap>
     <tableVersion version="0"/>
     <cmap_format_4 platformID="0" platEncID="3" language="0">
-      <map code="0x0" name="NULL"/><!-- ???? -->
-      <map code="0xd" name="CR"/><!-- ???? -->
+      <map code="0x0" name="uni0000"/><!-- ???? -->
+      <map code="0xd" name="uni000D"/><!-- ???? -->
       <map code="0x20" name="space"/><!-- SPACE -->
       <map code="0x41" name="A"/><!-- LATIN CAPITAL LETTER A -->
       <map code="0x45" name="E"/><!-- LATIN CAPITAL LETTER E -->
@@ -184,8 +184,8 @@
       <map code="0x308" name="uni0308"/><!-- COMBINING DIAERESIS -->
     </cmap_format_4>
     <cmap_format_4 platformID="3" platEncID="1" language="0">
-      <map code="0x0" name="NULL"/><!-- ???? -->
-      <map code="0xd" name="CR"/><!-- ???? -->
+      <map code="0x0" name="uni0000"/><!-- ???? -->
+      <map code="0xd" name="uni000D"/><!-- ???? -->
       <map code="0x20" name="space"/><!-- SPACE -->
       <map code="0x41" name="A"/><!-- LATIN CAPITAL LETTER A -->
       <map code="0x45" name="E"/><!-- LATIN CAPITAL LETTER E -->
@@ -775,8 +775,6 @@
       </instructions>
     </TTGlyph>
 
-    <TTGlyph name="CR"/><!-- contains no outline data -->
-
     <TTGlyph name="E" xMin="58" yMin="-8" xMax="529" yMax="743">
       <contour>
         <pt x="458" y="-2" on="1"/>
@@ -1034,8 +1032,6 @@
         </assembly>
       </instructions>
     </TTGlyph>
-
-    <TTGlyph name="NULL"/><!-- contains no outline data -->
 
     <TTGlyph name="O" xMin="33" yMin="-7" xMax="699" yMax="715">
       <contour>
@@ -1614,158 +1610,9 @@
       </instructions>
     </TTGlyph>
 
-    <TTGlyph name="a.005" xMin="26" yMin="-6" xMax="586" yMax="521">
-      <contour>
-        <pt x="174" y="-6" on="1"/>
-        <pt x="135" y="-6" on="0"/>
-        <pt x="75" y="24" on="0"/>
-        <pt x="38" y="80" on="0"/>
-        <pt x="26" y="159" on="0"/>
-        <pt x="34" y="208" on="1"/>
-        <pt x="44" y="266" on="0"/>
-        <pt x="103" y="370" on="0"/>
-        <pt x="190" y="453" on="0"/>
-        <pt x="301" y="509" on="0"/>
-        <pt x="362" y="518" on="1"/>
-        <pt x="385" y="521" on="0"/>
-        <pt x="418" y="509" on="0"/>
-        <pt x="434" y="487" on="0"/>
-        <pt x="432" y="460" on="0"/>
-        <pt x="420" y="450" on="1"/>
-        <pt x="434" y="445" on="0"/>
-        <pt x="456" y="420" on="0"/>
-        <pt x="458" y="398" on="1"/>
-        <pt x="461" y="357" on="0"/>
-        <pt x="468" y="276" on="0"/>
-        <pt x="482" y="203" on="0"/>
-        <pt x="503" y="141" on="0"/>
-        <pt x="520" y="119" on="1"/>
-        <pt x="554" y="117" on="0"/>
-        <pt x="586" y="85" on="0"/>
-        <pt x="586" y="48" on="0"/>
-        <pt x="557" y="18" on="0"/>
-        <pt x="531" y="18" on="1"/>
-        <pt x="491" y="18" on="0"/>
-        <pt x="429" y="69" on="0"/>
-        <pt x="412" y="113" on="1"/>
-        <pt x="405" y="131" on="0"/>
-        <pt x="393" y="176" on="0"/>
-        <pt x="389" y="206" on="1"/>
-        <pt x="354" y="94" on="0"/>
-        <pt x="241" y="-6" on="0"/>
-      </contour>
-      <contour>
-        <pt x="357" y="401" on="1"/>
-        <pt x="354" y="416" on="0"/>
-        <pt x="359" y="427" on="1"/>
-        <pt x="301" y="408" on="0"/>
-        <pt x="220" y="352" on="0"/>
-        <pt x="168" y="287" on="0"/>
-        <pt x="141" y="219" on="0"/>
-        <pt x="136" y="187" on="1"/>
-        <pt x="129" y="143" on="0"/>
-        <pt x="151" y="94" on="0"/>
-        <pt x="178" y="94" on="1"/>
-        <pt x="208" y="94" on="0"/>
-        <pt x="266" y="136" on="0"/>
-        <pt x="315" y="216" on="0"/>
-        <pt x="350" y="329" on="0"/>
-      </contour>
-      <instructions>
-        <assembly>
-          SVTCA[0]	/* SetFPVectorToAxis */
-          PUSHB[ ]	/* 3 values pushed */
-          10 7 0
-          RCVT[ ]	/* ReadCVT */
-          IF[ ]	/* If */
-            PUSHB[ ]	/* 1 value pushed */
-            1
-            ADD[ ]	/* Add */
-            RCVT[ ]	/* ReadCVT */
-            SWAP[ ]	/* SwapTopStack */
-            DUP[ ]	/* DuplicateTopStack */
-            DUP[ ]	/* DuplicateTopStack */
-            SRP0[ ]	/* SetRefPoint0 */
-            ROLL[ ]	/* RollTopThreeStack */
-            MSIRP[0]	/* MoveStackIndirRelPt */
-            MDAP[1]	/* MoveDirectAbsPt */
-          ELSE[ ]	/* Else */
-            SWAP[ ]	/* SwapTopStack */
-            DUP[ ]	/* DuplicateTopStack */
-            SRP2[ ]	/* SetRefPoint2 */
-            SWAP[ ]	/* SwapTopStack */
-            MIAP[0]	/* MoveIndirectAbsPt */
-          EIF[ ]	/* EndIf */
-          PUSHB[ ]	/* 3 values pushed */
-          28 3 0
-          RCVT[ ]	/* ReadCVT */
-          IF[ ]	/* If */
-            PUSHB[ ]	/* 1 value pushed */
-            1
-            ADD[ ]	/* Add */
-            RCVT[ ]	/* ReadCVT */
-            SWAP[ ]	/* SwapTopStack */
-            DUP[ ]	/* DuplicateTopStack */
-            DUP[ ]	/* DuplicateTopStack */
-            SRP0[ ]	/* SetRefPoint0 */
-            ROLL[ ]	/* RollTopThreeStack */
-            MSIRP[0]	/* MoveStackIndirRelPt */
-            MDAP[1]	/* MoveDirectAbsPt */
-          ELSE[ ]	/* Else */
-            SWAP[ ]	/* SwapTopStack */
-            DUP[ ]	/* DuplicateTopStack */
-            SRP2[ ]	/* SetRefPoint2 */
-            SWAP[ ]	/* SwapTopStack */
-            MIAP[0]	/* MoveIndirectAbsPt */
-          EIF[ ]	/* EndIf */
-          PUSHB[ ]	/* 3 values pushed */
-          0 3 0
-          RCVT[ ]	/* ReadCVT */
-          IF[ ]	/* If */
-            PUSHB[ ]	/* 1 value pushed */
-            1
-            ADD[ ]	/* Add */
-            RCVT[ ]	/* ReadCVT */
-            SWAP[ ]	/* SwapTopStack */
-            DUP[ ]	/* DuplicateTopStack */
-            DUP[ ]	/* DuplicateTopStack */
-            SRP0[ ]	/* SetRefPoint0 */
-            ROLL[ ]	/* RollTopThreeStack */
-            MSIRP[0]	/* MoveStackIndirRelPt */
-            MDAP[1]	/* MoveDirectAbsPt */
-          ELSE[ ]	/* Else */
-            SWAP[ ]	/* SwapTopStack */
-            DUP[ ]	/* DuplicateTopStack */
-            SRP2[ ]	/* SetRefPoint2 */
-            SWAP[ ]	/* SwapTopStack */
-            MIAP[0]	/* MoveIndirectAbsPt */
-          EIF[ ]	/* EndIf */
-          PUSHB[ ]	/* 1 value pushed */
-          28
-          SRP0[ ]	/* SetRefPoint0 */
-          PUSHB[ ]	/* 2 values pushed */
-          23 1
-          MIRP[10100]	/* MoveIndirectRelPt */
-          PUSHB[ ]	/* 1 value pushed */
-          10
-          SRP0[ ]	/* SetRefPoint0 */
-          PUSHB[ ]	/* 2 values pushed */
-          39 1
-          MIRP[10100]	/* MoveIndirectRelPt */
-          PUSHB[ ]	/* 1 value pushed */
-          0
-          SRP0[ ]	/* SetRefPoint0 */
-          PUSHB[ ]	/* 2 values pushed */
-          47 1
-          MIRP[10100]	/* MoveIndirectRelPt */
-          IUP[0]	/* InterpolateUntPts */
-        </assembly>
-      </instructions>
-    </TTGlyph>
-
     <TTGlyph name="adieresis" xMin="26" yMin="-6" xMax="586" yMax="736">
       <component glyphName="uni0308" x="443" y="-8" flags="0x4"/>
-      <component glyphName="a.005" x="0" y="0" flags="0x204"/>
+      <component glyphName="glyph00016" x="0" y="0" flags="0x204"/>
     </TTGlyph>
 
     <TTGlyph name="e" xMin="32" yMin="-51" xMax="455" yMax="531">
@@ -1946,6 +1793,155 @@
     <TTGlyph name="edieresis" xMin="32" yMin="-51" xMax="455" yMax="744">
       <component glyphName="e" x="0" y="0" flags="0x204"/>
       <component glyphName="uni0308" x="418" y="0" flags="0x4"/>
+    </TTGlyph>
+
+    <TTGlyph name="glyph00016" xMin="26" yMin="-6" xMax="586" yMax="521">
+      <contour>
+        <pt x="174" y="-6" on="1"/>
+        <pt x="135" y="-6" on="0"/>
+        <pt x="75" y="24" on="0"/>
+        <pt x="38" y="80" on="0"/>
+        <pt x="26" y="159" on="0"/>
+        <pt x="34" y="208" on="1"/>
+        <pt x="44" y="266" on="0"/>
+        <pt x="103" y="370" on="0"/>
+        <pt x="190" y="453" on="0"/>
+        <pt x="301" y="509" on="0"/>
+        <pt x="362" y="518" on="1"/>
+        <pt x="385" y="521" on="0"/>
+        <pt x="418" y="509" on="0"/>
+        <pt x="434" y="487" on="0"/>
+        <pt x="432" y="460" on="0"/>
+        <pt x="420" y="450" on="1"/>
+        <pt x="434" y="445" on="0"/>
+        <pt x="456" y="420" on="0"/>
+        <pt x="458" y="398" on="1"/>
+        <pt x="461" y="357" on="0"/>
+        <pt x="468" y="276" on="0"/>
+        <pt x="482" y="203" on="0"/>
+        <pt x="503" y="141" on="0"/>
+        <pt x="520" y="119" on="1"/>
+        <pt x="554" y="117" on="0"/>
+        <pt x="586" y="85" on="0"/>
+        <pt x="586" y="48" on="0"/>
+        <pt x="557" y="18" on="0"/>
+        <pt x="531" y="18" on="1"/>
+        <pt x="491" y="18" on="0"/>
+        <pt x="429" y="69" on="0"/>
+        <pt x="412" y="113" on="1"/>
+        <pt x="405" y="131" on="0"/>
+        <pt x="393" y="176" on="0"/>
+        <pt x="389" y="206" on="1"/>
+        <pt x="354" y="94" on="0"/>
+        <pt x="241" y="-6" on="0"/>
+      </contour>
+      <contour>
+        <pt x="357" y="401" on="1"/>
+        <pt x="354" y="416" on="0"/>
+        <pt x="359" y="427" on="1"/>
+        <pt x="301" y="408" on="0"/>
+        <pt x="220" y="352" on="0"/>
+        <pt x="168" y="287" on="0"/>
+        <pt x="141" y="219" on="0"/>
+        <pt x="136" y="187" on="1"/>
+        <pt x="129" y="143" on="0"/>
+        <pt x="151" y="94" on="0"/>
+        <pt x="178" y="94" on="1"/>
+        <pt x="208" y="94" on="0"/>
+        <pt x="266" y="136" on="0"/>
+        <pt x="315" y="216" on="0"/>
+        <pt x="350" y="329" on="0"/>
+      </contour>
+      <instructions>
+        <assembly>
+          SVTCA[0]	/* SetFPVectorToAxis */
+          PUSHB[ ]	/* 3 values pushed */
+          10 7 0
+          RCVT[ ]	/* ReadCVT */
+          IF[ ]	/* If */
+            PUSHB[ ]	/* 1 value pushed */
+            1
+            ADD[ ]	/* Add */
+            RCVT[ ]	/* ReadCVT */
+            SWAP[ ]	/* SwapTopStack */
+            DUP[ ]	/* DuplicateTopStack */
+            DUP[ ]	/* DuplicateTopStack */
+            SRP0[ ]	/* SetRefPoint0 */
+            ROLL[ ]	/* RollTopThreeStack */
+            MSIRP[0]	/* MoveStackIndirRelPt */
+            MDAP[1]	/* MoveDirectAbsPt */
+          ELSE[ ]	/* Else */
+            SWAP[ ]	/* SwapTopStack */
+            DUP[ ]	/* DuplicateTopStack */
+            SRP2[ ]	/* SetRefPoint2 */
+            SWAP[ ]	/* SwapTopStack */
+            MIAP[0]	/* MoveIndirectAbsPt */
+          EIF[ ]	/* EndIf */
+          PUSHB[ ]	/* 3 values pushed */
+          28 3 0
+          RCVT[ ]	/* ReadCVT */
+          IF[ ]	/* If */
+            PUSHB[ ]	/* 1 value pushed */
+            1
+            ADD[ ]	/* Add */
+            RCVT[ ]	/* ReadCVT */
+            SWAP[ ]	/* SwapTopStack */
+            DUP[ ]	/* DuplicateTopStack */
+            DUP[ ]	/* DuplicateTopStack */
+            SRP0[ ]	/* SetRefPoint0 */
+            ROLL[ ]	/* RollTopThreeStack */
+            MSIRP[0]	/* MoveStackIndirRelPt */
+            MDAP[1]	/* MoveDirectAbsPt */
+          ELSE[ ]	/* Else */
+            SWAP[ ]	/* SwapTopStack */
+            DUP[ ]	/* DuplicateTopStack */
+            SRP2[ ]	/* SetRefPoint2 */
+            SWAP[ ]	/* SwapTopStack */
+            MIAP[0]	/* MoveIndirectAbsPt */
+          EIF[ ]	/* EndIf */
+          PUSHB[ ]	/* 3 values pushed */
+          0 3 0
+          RCVT[ ]	/* ReadCVT */
+          IF[ ]	/* If */
+            PUSHB[ ]	/* 1 value pushed */
+            1
+            ADD[ ]	/* Add */
+            RCVT[ ]	/* ReadCVT */
+            SWAP[ ]	/* SwapTopStack */
+            DUP[ ]	/* DuplicateTopStack */
+            DUP[ ]	/* DuplicateTopStack */
+            SRP0[ ]	/* SetRefPoint0 */
+            ROLL[ ]	/* RollTopThreeStack */
+            MSIRP[0]	/* MoveStackIndirRelPt */
+            MDAP[1]	/* MoveDirectAbsPt */
+          ELSE[ ]	/* Else */
+            SWAP[ ]	/* SwapTopStack */
+            DUP[ ]	/* DuplicateTopStack */
+            SRP2[ ]	/* SetRefPoint2 */
+            SWAP[ ]	/* SwapTopStack */
+            MIAP[0]	/* MoveIndirectAbsPt */
+          EIF[ ]	/* EndIf */
+          PUSHB[ ]	/* 1 value pushed */
+          28
+          SRP0[ ]	/* SetRefPoint0 */
+          PUSHB[ ]	/* 2 values pushed */
+          23 1
+          MIRP[10100]	/* MoveIndirectRelPt */
+          PUSHB[ ]	/* 1 value pushed */
+          10
+          SRP0[ ]	/* SetRefPoint0 */
+          PUSHB[ ]	/* 2 values pushed */
+          39 1
+          MIRP[10100]	/* MoveIndirectRelPt */
+          PUSHB[ ]	/* 1 value pushed */
+          0
+          SRP0[ ]	/* SetRefPoint0 */
+          PUSHB[ ]	/* 2 values pushed */
+          47 1
+          MIRP[10100]	/* MoveIndirectRelPt */
+          IUP[0]	/* InterpolateUntPts */
+        </assembly>
+      </instructions>
     </TTGlyph>
 
     <TTGlyph name="i" xMin="52" yMin="-11" xMax="207" yMax="747">
@@ -2488,6 +2484,10 @@
       <component glyphName="u" x="0" y="0" flags="0x204"/>
       <component glyphName="uni0308" x="497" y="-7" flags="0x4"/>
     </TTGlyph>
+
+    <TTGlyph name="uni0000"/><!-- contains no outline data -->
+
+    <TTGlyph name="uni000D"/><!-- contains no outline data -->
 
     <TTGlyph name="uni0308" xMin="-304" yMin="603" xMax="19" yMax="744">
       <contour>

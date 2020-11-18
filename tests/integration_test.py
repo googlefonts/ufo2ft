@@ -244,7 +244,7 @@ class IntegrationTest(object):
         assert "gasp" in ttf
         assert "fpgm" in ttf
         assert "prep" in ttf
-        expectTTX(ttf, "Instructions.drop_glyph_names.ttx")
+        expectTTX(ttf, "Instructions-useProductionNames.ttx")
 
 
 if __name__ == "__main__":

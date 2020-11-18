@@ -113,6 +113,10 @@ class PostProcessor(object):
 
         if compileTrueTypeHinting and "glyf" in self.otf:
             self._compile_truetype_hinting()
+            # Force compilation of the font to avoid glyph name problems
+            tmp = BytesIO()
+            self.otf.save(tmp)
+            self.otf = TTFont(tmp)
 
         self.process_glyph_names(useProductionNames)
 
