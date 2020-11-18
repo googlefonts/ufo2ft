@@ -717,6 +717,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         generated = self.writeFeatures(ufo)
 
+        # MC_top should be last thanks to the anchorSortKey
         assert str(generated) == dedent(
             """\
             markClass acutecomb <anchor 100 200> @MC_top;
@@ -724,17 +725,17 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
-                    pos ligature f_l <anchor 102 502> mark @MC_top
-                        ligComponent <anchor NULL>;
-                } mark2liga;
-
-                lookup mark2liga_1 {
                     pos ligature f_f <anchor 101 501> mark @MC_topOther
                         ligComponent <anchor 601 501> mark @MC_topOther;
                     pos ligature f_l <anchor NULL>
                         ligComponent <anchor 602 502> mark @MC_topOther;
+                } mark2liga;
+
+                lookup mark2liga_1 {
+                    pos ligature f_i <anchor 100 500> mark @MC_top
+                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_l <anchor 102 502> mark @MC_top
+                        ligComponent <anchor NULL>;
                 } mark2liga_1;
 
             } mark;
@@ -766,6 +767,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             "Only one will prevail; which exactly is not guaranteed." in caplog.text
         )
 
+        # MC_top should be last thanks to the anchorSortKey
         assert str(generated) == dedent(
             """\
             markClass acutecomb <anchor 100 200> @MC_top;
@@ -773,11 +775,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 500> mark @MC_top;
+                    pos base a <anchor 150 550> mark @MC_topOther;
                 } mark2base;
 
                 lookup mark2base_1 {
-                    pos base a <anchor 150 550> mark @MC_topOther;
+                    pos base a <anchor 100 500> mark @MC_top;
                 } mark2base_1;
 
             } mark;
