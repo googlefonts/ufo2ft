@@ -751,6 +751,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         of mark positioning. See this comment for more information:
         https://github.com/googlefonts/ufo2ft/pull/416#issuecomment-721693266
         """
+        caplog.set_level(logging.INFO)
+
         ufo = FontClass()
         liga = ufo.newGlyph("a")
         liga.appendAnchor({"name": "top", "x": 100, "y": 500})

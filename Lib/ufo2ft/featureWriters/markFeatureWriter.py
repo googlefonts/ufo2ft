@@ -34,7 +34,7 @@ class AbstractMarkPos(object):
                 markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
         for markGlyph, markClasses in markGlyphToMarkClasses.items():
             if len(markClasses) > 1:
-                log.warning(
+                log.info(
                     "The base glyph %s and mark glyph %s are ambiguously "
                     "connected by several anchor classes: %s. "
                     "Only one will prevail; which exactly is not guaranteed.",
@@ -89,7 +89,7 @@ class MarkToLigaPos(AbstractMarkPos):
                     markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
         for markGlyph, markClasses in markGlyphToMarkClasses.items():
             if len(markClasses) > 1:
-                log.warning(
+                log.info(
                     "The base ligature %s and mark glyph %s are ambiguously "
                     "connected by several anchor classes: %s. "
                     "Only one will prevail; which exactly is not guaranteed.",
