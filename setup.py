@@ -37,8 +37,6 @@ setup(
     ],
     extras_require={
         "pathops": ["skia-pathops>=0.2.0"],
-        # For compiling TrueType instructions:
-        "htic": ["htic>=3.4.0"],
         "cffsubr": ["cffsubr>=0.2.6"],
     },
     python_requires=">=3.6",
@@ -52,7 +50,6 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
         "Topic :: Multimedia :: Graphics",
         "Topic :: Multimedia :: Graphics :: Graphics Conversion",
