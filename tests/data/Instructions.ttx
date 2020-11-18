@@ -761,6 +761,8 @@
           PUSHB[ ]	/* 1 value pushed */
           46
           MDRP[10000]	/* MoveDirectRelPt */
+          IUP[0]	/* InterpolateUntPts */
+          IUP[1]	/* InterpolateUntPts */
           SVTCA[1]	/* SetFPVectorToAxis */
           PUSHB[ ]	/* 6 values pushed */
           37 17 1 21 17 1
@@ -769,8 +771,6 @@
           PUSHB[ ]	/* 3 values pushed */
           54 48 1
           DELTAP1[ ]	/* DeltaExceptionP1 */
-          IUP[0]	/* InterpolateUntPts */
-          IUP[1]	/* InterpolateUntPts */
         </assembly>
       </instructions>
     </TTGlyph>
@@ -1170,6 +1170,8 @@
           PUSHB[ ]	/* 2 values pushed */
           45 1
           MIRP[10100]	/* MoveIndirectRelPt */
+          IUP[0]	/* InterpolateUntPts */
+          IUP[1]	/* InterpolateUntPts */
           SVTCA[1]	/* SetFPVectorToAxis */
           PUSHB[ ]	/* 3 values pushed */
           70 5 1
@@ -1198,8 +1200,6 @@
           PUSHB[ ]	/* 3 values pushed */
           74 48 1
           DELTAP1[ ]	/* DeltaExceptionP1 */
-          IUP[0]	/* InterpolateUntPts */
-          IUP[1]	/* InterpolateUntPts */
         </assembly>
       </instructions>
     </TTGlyph>
@@ -1383,6 +1383,8 @@
           PUSHB[ ]	/* 1 value pushed */
           29
           MDAP[1]	/* MoveDirectAbsPt */
+          IUP[0]	/* InterpolateUntPts */
+          IUP[1]	/* InterpolateUntPts */
           SVTCA[1]	/* SetFPVectorToAxis */
           PUSHB[ ]	/* 3 values pushed */
           57 19 1
@@ -1391,8 +1393,6 @@
           42 19 1 26 19 1
           DELTAP1[ ]	/* DeltaExceptionP1 */
           DELTAP1[ ]	/* DeltaExceptionP1 */
-          IUP[0]	/* InterpolateUntPts */
-          IUP[1]	/* InterpolateUntPts */
         </assembly>
       </instructions>
     </TTGlyph>
@@ -1579,6 +1579,8 @@
           PUSHB[ ]	/* 2 values pushed */
           62 1
           MIRP[10100]	/* MoveIndirectRelPt */
+          IUP[0]	/* InterpolateUntPts */
+          IUP[1]	/* InterpolateUntPts */
           SVTCA[1]	/* SetFPVectorToAxis */
           NPUSHB[ ]	/* 9 values pushed */
           42 1 1 26 1 1 10 1 1
@@ -1608,8 +1610,6 @@
           PUSHB[ ]	/* 3 values pushed */
           42 46 1
           DELTAP1[ ]	/* DeltaExceptionP1 */
-          IUP[0]	/* InterpolateUntPts */
-          IUP[1]	/* InterpolateUntPts */
         </assembly>
       </instructions>
     </TTGlyph>
@@ -1918,6 +1918,8 @@
           PUSHB[ ]	/* 2 values pushed */
           34 1
           MIRP[10100]	/* MoveIndirectRelPt */
+          IUP[0]	/* InterpolateUntPts */
+          IUP[1]	/* InterpolateUntPts */
           SVTCA[1]	/* SetFPVectorToAxis */
           PUSHB[ ]	/* 3 values pushed */
           42 22 1
@@ -1937,8 +1939,6 @@
           DELTAP1[ ]	/* DeltaExceptionP1 */
           DELTAP1[ ]	/* DeltaExceptionP1 */
           DELTAP1[ ]	/* DeltaExceptionP1 */
-          IUP[0]	/* InterpolateUntPts */
-          IUP[1]	/* InterpolateUntPts */
         </assembly>
       </instructions>
     </TTGlyph>
@@ -2220,6 +2220,8 @@
           PUSHB[ ]	/* 2 values pushed */
           36 1
           MIRP[10100]	/* MoveIndirectRelPt */
+          IUP[0]	/* InterpolateUntPts */
+          IUP[1]	/* InterpolateUntPts */
           SVTCA[1]	/* SetFPVectorToAxis */
           PUSHB[ ]	/* 3 values pushed */
           53 3 1
@@ -2239,8 +2241,6 @@
           PUSHB[ ]	/* 3 values pushed */
           42 39 1
           DELTAP1[ ]	/* DeltaExceptionP1 */
-          IUP[0]	/* InterpolateUntPts */
-          IUP[1]	/* InterpolateUntPts */
         </assembly>
       </instructions>
     </TTGlyph>
@@ -2462,6 +2462,8 @@
           PUSHB[ ]	/* 2 values pushed */
           37 1
           MIRP[10100]	/* MoveIndirectRelPt */
+          IUP[0]	/* InterpolateUntPts */
+          IUP[1]	/* InterpolateUntPts */
           SVTCA[1]	/* SetFPVectorToAxis */
           PUSHB[ ]	/* 3 values pushed */
           41 21 1
@@ -2478,8 +2480,6 @@
           DELTAP1[ ]	/* DeltaExceptionP1 */
           DELTAP1[ ]	/* DeltaExceptionP1 */
           DELTAP1[ ]	/* DeltaExceptionP1 */
-          IUP[0]	/* InterpolateUntPts */
-          IUP[1]	/* InterpolateUntPts */
         </assembly>
       </instructions>
     </TTGlyph>
