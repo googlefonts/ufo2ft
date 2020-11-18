@@ -245,32 +245,6 @@ def firstAvailable(colorSet):
         count += 1
 
 
-def _groupMarkClasses(markGlyphToMarkClasses):
-    # To compute the number of lookups that we need to build, we want
-    # the minimum number of lookups such that, whenever a mark glyph
-    # belongs to several mark classes, these classes are not in the same
-    # lookup. A trivial solution is to make 1 lookup per mark class
-    # but that's a bit wasteful, we might be able to do better by grouping
-    # mark classes that do not conflict.
-    # This is a graph coloring problem: the graph nodes are mark classes,
-    # edges are between classes that would conflict and the colors are
-    # the lookups in which they can go.
-    adjacency = {
-        # We'll get the same markClass several times in the dict
-        # comprehension below but it's ok, only one will be kept.
-        markClass: set()
-        for markClasses in markGlyphToMarkClasses.values()
-        for markClass in markClasses
-    }
-    for _markGlyph, markClasses in markGlyphToMarkClasses.items():
-        for markClass, other in itertools.combinations(markClasses, 2):
-            adjacency[markClass].add(other)
-            adjacency[other].add(markClass)
-    colorGroups = colorGraph(adjacency)
-    # Sort the groups for reproducibility
-    return sorted(colorGroups)
-
-
 class MarkFeatureWriter(BaseFeatureWriter):
     """Generates a mark, mkmk, abvm and blwm features based on glyph anchors.
 
@@ -523,6 +497,57 @@ class MarkFeatureWriter(BaseFeatureWriter):
             result.append(pos)
         return result
 
+    def _groupMarkClasses(self, markGlyphToMarkClasses):
+        # To compute the number of lookups that we need to build, we want
+        # the minimum number of lookups such that, whenever a mark glyph
+        # belongs to several mark classes, these classes are not in the same
+        # lookup. A trivial solution is to make 1 lookup per mark class
+        # but that's a bit wasteful, we might be able to do better by grouping
+        # mark classes that do not conflict.
+        # This is a graph coloring problem: the graph nodes are mark classes,
+        # edges are between classes that would conflict and the colors are
+        # the lookups in which they can go.
+        adjacency = {
+            # We'll get the same markClass several times in the dict
+            # comprehension below but it's ok, only one will be kept.
+            markClass: set()
+            for markClasses in markGlyphToMarkClasses.values()
+            for markClass in markClasses
+        }
+        for _markGlyph, markClasses in markGlyphToMarkClasses.items():
+            for markClass, other in itertools.combinations(markClasses, 2):
+                adjacency[markClass].add(other)
+                adjacency[other].add(markClass)
+        colorGroups = colorGraph(adjacency)
+        # Sort the groups, because the group that contains MC_top or MC_bottom
+        # needs to go to the end (as specified in self.anchorSortKey) so that
+        # they are applied last and "win" in case of conflict.
+        # We also sort alphabetically for reproducibility, both within each
+        # group and between groups.
+        return sorted(
+            [sorted(group) for group in colorGroups],
+            key=lambda group: (
+                # The first part sorts _top and _bottom at the end.
+                # There's a minus sign in front of the min because the original
+                # self.anchorSortKey was designed to put the _top and _bottom
+                # at the start (and now we want them at the end).
+                -min(
+                    # Remove the MC prefix because that's how the mark classes
+                    # are looking at this stage (the original
+                    # self.anchorSortKey was applied at a different stage of
+                    # the algorithm, on anchors instead of mark classes)
+                    self.anchorSortKey.get(self._removeClassPrefix(markClass), 0)
+                    for markClass in group
+                ),
+                # Second part of the tuple sorts the groups lexicographically
+                group,
+            ),
+        )
+
+    def _removeClassPrefix(self, markClass):
+        assert markClass.startswith(self.markClassPrefix)
+        return markClass[len(self.markClassPrefix):]
+
     def _makeGroupedMarkToBaseAttachments(self):
         """Make markToBase attachments, then group them so that no group
         contains conflicting anchor classes for the same glyph.
@@ -537,7 +562,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
             for namedAnchor in attachment.marks:
                 for markGlyph in namedAnchor.markClass.glyphs:
                     markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
-        groupedMarkClasses = _groupMarkClasses(markGlyphToMarkClasses)
+        groupedMarkClasses = self._groupMarkClasses(markGlyphToMarkClasses)
         lookups = []
         for markClasses in groupedMarkClasses:
             lookup = []
@@ -642,7 +667,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                         markGlyphToMarkClasses[markGlyph].add(
                             namedAnchor.markClass.name
                         )
-        groupedMarkClasses = _groupMarkClasses(markGlyphToMarkClasses)
+        groupedMarkClasses = self._groupMarkClasses(markGlyphToMarkClasses)
         lookups = []
         for markClasses in groupedMarkClasses:
             lookup = []
