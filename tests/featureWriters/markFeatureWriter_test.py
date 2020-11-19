@@ -765,8 +765,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         assert (
             "The base glyph a and mark glyph acutecomb are ambiguously "
-            "connected by several anchor classes: MC_top, MC_topOther. "
-            "Only one will prevail; which exactly is not guaranteed." in caplog.text
+            "connected by several anchor classes: MC_topOther, MC_top. "
+            "The last one will prevail." in caplog.text
         )
 
         # MC_top should be last thanks to the anchorSortKey

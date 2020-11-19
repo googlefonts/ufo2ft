@@ -24,25 +24,6 @@ class AbstractMarkPos(object):
         self.name = name
         self.marks = marks
 
-    def warnIfAmbiguous(self, log):
-        """This anchor attachment is ambiguous if for the same mark glyph, more
-        than one mark class can be used to attach it to the base.
-        """
-        markGlyphToMarkClasses = defaultdict(set)
-        for namedAnchor in self.marks:
-            for markGlyph in namedAnchor.markClass.glyphs:
-                markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
-        for markGlyph, markClasses in markGlyphToMarkClasses.items():
-            if len(markClasses) > 1:
-                log.info(
-                    "The base glyph %s and mark glyph %s are ambiguously "
-                    "connected by several anchor classes: %s. "
-                    "Only one will prevail; which exactly is not guaranteed.",
-                    self.name,
-                    markGlyph,
-                    ", ".join(sorted(markClasses)),
-                )
-
     def _filterMarks(self, include):
         return [anchor for anchor in self.marks if include(anchor)]
 
@@ -63,6 +44,14 @@ class AbstractMarkPos(object):
         marks = self._filterMarks(include)
         return self.__class__(self.name, marks) if any(marks) else None
 
+    def getMarkGlyphToMarkClasses(self):
+        """Return a list of pairs (markGlyph, markClasses)."""
+        markGlyphToMarkClasses = defaultdict(set)
+        for namedAnchor in self.marks:
+            for markGlyph in namedAnchor.markClass.glyphs:
+                markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
+        return markGlyphToMarkClasses.items()
+
 
 class MarkToBasePos(AbstractMarkPos):
 
@@ -78,26 +67,6 @@ class MarkToLigaPos(AbstractMarkPos):
 
     Statement = ast.MarkLigPosStatement
 
-    def warnIfAmbiguous(self, log):
-        """This anchor attachment is ambiguous if for the same mark glyph, more
-        than one mark class can be used to attach it to the base.
-        """
-        markGlyphToMarkClasses = defaultdict(set)
-        for component in self.marks:
-            for namedAnchor in component:
-                for markGlyph in namedAnchor.markClass.glyphs:
-                    markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
-        for markGlyph, markClasses in markGlyphToMarkClasses.items():
-            if len(markClasses) > 1:
-                log.info(
-                    "The base ligature %s and mark glyph %s are ambiguously "
-                    "connected by several anchor classes: %s. "
-                    "Only one will prevail; which exactly is not guaranteed.",
-                    self.name,
-                    markGlyph,
-                    ", ".join(sorted(markClasses)),
-                )
-
     def _filterMarks(self, include):
         return [
             [anchor for anchor in component if include(anchor)]
@@ -112,6 +81,15 @@ class MarkToLigaPos(AbstractMarkPos):
             ]
             for component in self.marks
         ]
+
+    def getMarkGlyphToMarkClasses(self):
+        """Return a list of pairs (markGlyph, markClasses)."""
+        markGlyphToMarkClasses = defaultdict(set)
+        for component in self.marks:
+            for namedAnchor in component:
+                for markGlyph in namedAnchor.markClass.glyphs:
+                    markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
+        return markGlyphToMarkClasses.items()
 
 
 MARK_PREFIX = LIGA_SEPARATOR = "_"
@@ -471,32 +449,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     continue
                 anchor.markClass = markClasses[anchor.key]
 
-    def _makeMarkToBaseAttachments(self):
-        markGlyphNames = self.context.markGlyphNames
-        baseClass = self.context.gdefClasses.base
-        result = []
-        for glyphName, anchors in self.context.anchorLists.items():
-            # exclude mark glyphs, or glyphs not listed in GDEF Base
-            if glyphName in markGlyphNames or (
-                baseClass is not None and glyphName not in baseClass
-            ):
-                continue
-            baseMarks = []
-            for anchor in anchors:
-                if anchor.markClass is None or anchor.number is not None:
-                    # skip anchors for which no mark class is defined; also
-                    # skip '_1', '_2', etc. suffixed anchors for this lookup
-                    # type; these will be are added in the mark2liga lookup
-                    continue
-                assert not anchor.isMark
-                baseMarks.append(anchor)
-            if not baseMarks:
-                continue
-            pos = MarkToBasePos(glyphName, baseMarks)
-            pos.warnIfAmbiguous(self.log)
-            result.append(pos)
-        return result
-
     def _groupMarkClasses(self, markGlyphToMarkClasses):
         # To compute the number of lookups that we need to build, we want
         # the minimum number of lookups such that, whenever a mark glyph
@@ -544,25 +496,58 @@ class MarkFeatureWriter(BaseFeatureWriter):
             ),
         )
 
+    def _logIfAmbiguous(self, attachments, groupedMarkClasses):
+        """Warn about ambiguous situations and log the current resolution.
+        An anchor attachment is ambiguous if for the same mark glyph, more
+        than one mark class can be used to attach it to the base.
+        """
+        for attachment in attachments:
+            for markGlyph, markClasses in attachment.getMarkGlyphToMarkClasses():
+                if len(markClasses) > 1:
+                    self.log.info(
+                        "The base glyph %s and mark glyph %s are ambiguously "
+                        "connected by several anchor classes: %s. "
+                        "The last one will prevail.",
+                        attachment.name,
+                        markGlyph,
+                        ", ".join(
+                            markClass
+                            for group in groupedMarkClasses
+                            for markClass in group
+                            if markClass in markClasses
+                        ),
+                    )
+
     def _removeClassPrefix(self, markClass):
         assert markClass.startswith(self.markClassPrefix)
-        return markClass[len(self.markClassPrefix):]
+        return markClass[len(self.markClassPrefix) :]
 
-    def _makeGroupedMarkToBaseAttachments(self):
-        """Make markToBase attachments, then group them so that no group
-        contains conflicting anchor classes for the same glyph.
+    def _groupAttachments(self, attachments):
+        """Group the given attachments so that no group contains conflicting
+        anchor classes for the same glyph.
         """
-        attachments = self._makeMarkToBaseAttachments()
-        # Idea: attachments is a list of mark to base pairs, linked together through an anchor name
-        # We have to put them into one or more lookups with the constraint
-        # that the same mark glyph cannot appear twice in the same lookup while
-        # using different anchor names.
+        # Idea for mark2base:
+        #   attachments is a list of mark to base pairs, linked together through
+        #   an anchor name We have to put them into one or more lookups with the
+        #   constraint that the same mark glyph cannot appear twice in the same
+        #   lookup while using different anchor names.
+        # Idea for mark2liga:
+        #   attachments is a list of mark to liga positioning. Each links
+        #   together a base ligature with several marks, through numbered anchor
+        #   names.
+        #   We have to put them into one or more lookups with the constraint that
+        #   the same mark glyph cannot appear twice in the same lookup while
+        #   using different anchor names.
+        #   To do so, if a single attachment refers to to the same mark twice
+        #   through different anchor names, we may have to split the attachment
+        #   into two attachments, using null anchors instead of one or the other
+        #   mark class in each split attachment.
         markGlyphToMarkClasses = defaultdict(set)
         for attachment in attachments:
-            for namedAnchor in attachment.marks:
-                for markGlyph in namedAnchor.markClass.glyphs:
-                    markGlyphToMarkClasses[markGlyph].add(namedAnchor.markClass.name)
+            for markGlyph, markClasses in attachment.getMarkGlyphToMarkClasses():
+                markGlyphToMarkClasses[markGlyph].update(markClasses)
         groupedMarkClasses = self._groupMarkClasses(markGlyphToMarkClasses)
+        self._logIfAmbiguous(attachments, groupedMarkClasses)
         lookups = []
         for markClasses in groupedMarkClasses:
             lookup = []
@@ -580,6 +565,30 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     lookup.append(filteredAttachment)
             lookups.append(lookup)
         return lookups
+
+    def _makeMarkToBaseAttachments(self):
+        markGlyphNames = self.context.markGlyphNames
+        baseClass = self.context.gdefClasses.base
+        result = []
+        for glyphName, anchors in self.context.anchorLists.items():
+            # exclude mark glyphs, or glyphs not listed in GDEF Base
+            if glyphName in markGlyphNames or (
+                baseClass is not None and glyphName not in baseClass
+            ):
+                continue
+            baseMarks = []
+            for anchor in anchors:
+                if anchor.markClass is None or anchor.number is not None:
+                    # skip anchors for which no mark class is defined; also
+                    # skip '_1', '_2', etc. suffixed anchors for this lookup
+                    # type; these will be are added in the mark2liga lookup
+                    continue
+                assert not anchor.isMark
+                baseMarks.append(anchor)
+            if not baseMarks:
+                continue
+            result.append(MarkToBasePos(glyphName, baseMarks))
+        return result
 
     def _makeMarkToMarkAttachments(self):
         markGlyphNames = self.context.markGlyphNames
@@ -602,7 +611,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     )
                     continue
                 pos = MarkToMarkPos(glyphName, [anchor])
-                pos.warnIfAmbiguous(self.log)
                 results.setdefault(anchor.key, []).append(pos)
         return results
 
@@ -639,52 +647,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
             # anchor number means the component has <anchor NULL>
             for number in range(1, max(componentAnchors.keys()) + 1):
                 ligatureMarks.append(componentAnchors.get(number, []))
-            pos = MarkToLigaPos(glyphName, ligatureMarks)
-            pos.warnIfAmbiguous(self.log)
-            result.append(pos)
+            result.append(MarkToLigaPos(glyphName, ligatureMarks))
         return result
-
-    def _makeGroupedMarkToLigaAttachments(self):
-        """Make markToLiga attachments, then group them so that no group
-        contains conflicting anchor classes for the same glyph.
-        """
-        attachments = self._makeMarkToLigaAttachments()
-        # Idea: attachments is a list of mark to liga positioning.
-        # Each links together a base ligature with several marks, through
-        # numbered anchor names.
-        # We have to put them into one or more lookups with the constraint
-        # that the same mark glyph cannot appear twice in the same lookup while
-        # using different anchor names.
-        # To do so, if a single attachment refers to to the same mark twice
-        # through different anchor names, we may have to split the attachment
-        # into two attachments, using null anchors instead of one or the other
-        # mark class in each split attachment.
-        markGlyphToMarkClasses = defaultdict(set)
-        for attachment in attachments:
-            for component in attachment.marks:
-                for namedAnchor in component:
-                    for markGlyph in namedAnchor.markClass.glyphs:
-                        markGlyphToMarkClasses[markGlyph].add(
-                            namedAnchor.markClass.name
-                        )
-        groupedMarkClasses = self._groupMarkClasses(markGlyphToMarkClasses)
-        lookups = []
-        for markClasses in groupedMarkClasses:
-            lookup = []
-            # Filter existing attachments
-            for attachment in attachments:
-                # One attachment has one base glyph and many marks, each of
-                # the class NamedAnchor. Each NamedAnchor has one markClass.
-                # We keep the NamedAnchor if the markClass is allowed in the
-                # current lookup.
-                def include(anchor):
-                    return anchor.markClass.name in markClasses
-
-                filteredAttachment = attachment.filter(include)
-                if filteredAttachment:
-                    lookup.append(filteredAttachment)
-            lookups.append(lookup)
-        return lookups
 
     @staticmethod
     def _iterAttachments(attachments, include=None, marksFilter=None):
@@ -849,8 +813,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
     def _makeFeatures(self):
         ctx = self.context
 
-        ctx.groupedMarkToBaseAttachments = self._makeGroupedMarkToBaseAttachments()
-        ctx.groupedMarkToLigaAttachments = self._makeGroupedMarkToLigaAttachments()
+        ctx.groupedMarkToBaseAttachments = self._groupAttachments(
+            self._makeMarkToBaseAttachments()
+        )
+        ctx.groupedMarkToLigaAttachments = self._groupAttachments(
+            self._makeMarkToLigaAttachments()
+        )
         ctx.markToMarkAttachments = self._makeMarkToMarkAttachments()
 
         indicGlyphs = self._getIndicGlyphs()
