@@ -143,16 +143,20 @@ class BaseFeatureWriter(object):
         return cmap
 
     def getOrderedGlyphSet(self):
-        """Return OrderedDict[glyphName, glyph] sorted by glyphOrder.
-        """
+        """Return OrderedDict[glyphName, glyph] sorted by glyphOrder."""
         compiler = self.context.compiler
         if compiler is not None:
             return compiler.glyphSet
 
-        from ufo2ft.util import makeOfficialGlyphOrder
+        from ufo2ft.util import _GlyphSet, makeOfficialGlyphOrder
 
-        glyphSet = self.context.font
-        glyphOrder = makeOfficialGlyphOrder(self.context.font)
+        font = self.context.font
+        glyphOrder = makeOfficialGlyphOrder(font)
+        # subset glyphSet by skipExportGlyphs if any
+        glyphSet = _GlyphSet.from_layer(
+            font,
+            skipExportGlyphs=set(font.lib.get("public.skipExportGlyphs", [])),
+        )
         return OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
 
     def compileGSUB(self):
