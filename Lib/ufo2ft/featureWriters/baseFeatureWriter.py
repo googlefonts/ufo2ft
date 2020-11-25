@@ -157,6 +157,7 @@ class BaseFeatureWriter(object):
             font,
             skipExportGlyphs=set(font.lib.get("public.skipExportGlyphs", [])),
         )
+        glyphOrder = [g for g in glyphOrder if g in glyphSet.keys()]
         return OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
 
     def compileGSUB(self):
