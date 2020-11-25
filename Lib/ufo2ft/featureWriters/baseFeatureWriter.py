@@ -151,12 +151,12 @@ class BaseFeatureWriter(object):
         from ufo2ft.util import _GlyphSet, makeOfficialGlyphOrder
 
         font = self.context.font
-        glyphOrder = makeOfficialGlyphOrder(font)
         # subset glyphSet by skipExportGlyphs if any
         glyphSet = _GlyphSet.from_layer(
             font,
             skipExportGlyphs=set(font.lib.get("public.skipExportGlyphs", [])),
         )
+        glyphOrder = makeOfficialGlyphOrder(glyphSet, font.glyphOrder)
         return OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
 
     def compileGSUB(self):
