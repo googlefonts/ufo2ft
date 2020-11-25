@@ -788,6 +788,25 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_skipExportGlyphs(self, testufo):
+        testufo.lib["public.skipExportGlyphs"] = ["f_i", "tildecomb"]
+        testufo.glyphOrder = ["a", "f_i", "acutecomb", "tildcomb"]
+
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+            } mark;
+            """
+        )
+
 
 if __name__ == "__main__":
     import sys
