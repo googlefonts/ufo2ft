@@ -110,7 +110,9 @@ class TTFPreProcessor(OTFPreProcessor):
     """Preprocessor for building TrueType-flavored OpenType fonts.
 
     By default, it decomposes all the glyphs with mixed component/contour
-    outlines.
+    outlines. If the ``flattenComponents`` setting is True, glyphs with
+    nested components are flattened so that they have at most one level of
+    components.
 
     If ``removeOverlaps`` is True, it performs a union boolean operation on
     all the glyphs' contours.
@@ -144,6 +146,7 @@ class TTFPreProcessor(OTFPreProcessor):
         self,
         removeOverlaps=False,
         overlapsBackend=None,
+        flattenComponents=False,
         convertCubics=True,
         conversionError=None,
         reverseDirection=True,
@@ -153,9 +156,13 @@ class TTFPreProcessor(OTFPreProcessor):
 
         _init_explode_color_layer_glyphs_filter(self.ufo, filters)
 
-        # len(g) is the number of contours, so we include the all glyphs
-        # that have both components and at least one contour
-        filters.append(DecomposeComponentsFilter(include=lambda g: len(g)))
+        if flattenComponents:
+            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+            filters.append(FlattenComponentsFilter())
+        else:
+            # len(g) is the number of contours, so we include the all glyphs
+            # that have both components and at least one contour
+            filters.append(DecomposeComponentsFilter(include=lambda g: len(g)))
 
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
