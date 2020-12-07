@@ -119,6 +119,16 @@ class IntegrationTest(object):
         ttf = compileTTF(testufo, removeOverlaps=True, overlapsBackend="pathops")
         expectTTX(ttf, "TestFont-NoOverlaps-TTF-pathops.ttx")
 
+    def test_nestedComponents_noFlatten(self, FontClass):
+        ufo = FontClass(getpath("NestedComponents.ufo"))
+        ttf = compileTTF(ufo)
+        expectTTX(ttf, "NestedComponents.ttx")
+
+    def test_nestedComponents_flatten(self, FontClass):
+        ufo = FontClass(getpath("NestedComponents.ufo"))
+        ttf = compileTTF(ufo, flattenComponents=True)
+        expectTTX(ttf, "NestedComponents-flat.ttx")
+
     def test_interpolatableTTFs_lazy(self, FontClass):
         # two same UFOs **must** be interpolatable
         ufos = [FontClass(getpath("TestFont.ufo")) for _ in range(2)]
