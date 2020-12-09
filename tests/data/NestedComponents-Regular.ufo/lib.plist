@@ -2,37 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>com.schriftgestaltung.DisplayStrings</key>
-	<array>
-		<string>e</string>
-	</array>
 	<key>com.schriftgestaltung.disablesAutomaticAlignment</key>
 	<false/>
 	<key>com.schriftgestaltung.font.customParameters</key>
 	<array>
-		<dict>
-			<key>name</key>
-			<string>glyphOrder</string>
-			<key>value</key>
-			<array>
-				<string>.notdef</string>
-				<string>glyph1</string>
-				<string>glyph2</string>
-				<string>space</string>
-				<string>a</string>
-				<string>b</string>
-				<string>c</string>
-				<string>d</string>
-				<string>e</string>
-				<string>f</string>
-				<string>g</string>
-				<string>h</string>
-				<string>i</string>
-				<string>j</string>
-				<string>k</string>
-				<string>l</string>
-			</array>
-		</dict>
 		<dict>
 			<key>name</key>
 			<string>openTypeGaspRangeRecords</string>
@@ -92,19 +65,28 @@
 			</array>
 		</dict>
 	</array>
+	<key>com.schriftgestaltung.font.userData</key>
+	<dict>
+		<key>GSDimensionPlugin.Dimensions</key>
+		<dict>
+			<key>master01</key>
+			<dict/>
+		</dict>
+	</dict>
 	<key>com.schriftgestaltung.fontMaster.customParameters</key>
 	<array>
 		<dict>
 			<key>name</key>
-			<string>underlineThickness</string>
+			<string>Alignment Zones</string>
 			<key>value</key>
-			<integer>20</integer>
-		</dict>
-		<dict>
-			<key>name</key>
-			<string>underlinePosition</string>
-			<key>value</key>
-			<integer>-200</integer>
+			<array>
+				<dict>
+					<key>pos</key>
+					<real>-260.0</real>
+					<key>size</key>
+					<real>10.0</real>
+				</dict>
+			</array>
 		</dict>
 	</array>
 	<key>com.schriftgestaltung.fontMasterID</key>
@@ -130,6 +112,8 @@
 	</array>
 	<key>com.schriftgestaltung.useNiceNames</key>
 	<false/>
+	<key>com.schriftgestaltung.weightValue</key>
+	<integer>400</integer>
 	<key>public.glyphOrder</key>
 	<array>
 		<string>.notdef</string>
