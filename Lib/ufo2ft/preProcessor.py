@@ -156,13 +156,13 @@ class TTFPreProcessor(OTFPreProcessor):
 
         _init_explode_color_layer_glyphs_filter(self.ufo, filters)
 
-        if flattenComponents:
-            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
-            filters.append(FlattenComponentsFilter())
-
         # len(g) is the number of contours, so we include the all glyphs
         # that have both components and at least one contour
         filters.append(DecomposeComponentsFilter(include=lambda g: len(g)))
+
+        if flattenComponents:
+            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+            filters.append(FlattenComponentsFilter())
 
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
@@ -266,13 +266,13 @@ class TTFInterpolatablePreProcessor(object):
             remember_curve_type=self._rememberCurveType and self.inplace,
         )
 
-        if self.flattenComponents:
-            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
-            FlattenComponentsFilter()(ufo, glyphSet)
-
         decompose = DecomposeComponentsFilter(include=lambda g: len(g))
         for ufo, glyphSet in zip(self.ufos, self.glyphSets):
             decompose(ufo, glyphSet)
+
+        if self.flattenComponents:
+            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+            FlattenComponentsFilter()(ufo, glyphSet)
 
         # finally apply all custom post-filters
         for funcs, ufo, glyphSet in zip(self.postFilters, self.ufos, self.glyphSets):
