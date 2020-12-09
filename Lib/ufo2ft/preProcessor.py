@@ -272,7 +272,8 @@ class TTFInterpolatablePreProcessor(object):
 
         if self.flattenComponents:
             from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
-            FlattenComponentsFilter()(ufo, glyphSet)
+            for ufo, glyphSet in zip(self.ufos, self.glyphSets):
+                FlattenComponentsFilter()(ufo, glyphSet)
 
         # finally apply all custom post-filters
         for funcs, ufo, glyphSet in zip(self.postFilters, self.ufos, self.glyphSets):
