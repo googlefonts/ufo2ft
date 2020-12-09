@@ -159,10 +159,10 @@ class TTFPreProcessor(OTFPreProcessor):
         if flattenComponents:
             from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
             filters.append(FlattenComponentsFilter())
-        else:
-            # len(g) is the number of contours, so we include the all glyphs
-            # that have both components and at least one contour
-            filters.append(DecomposeComponentsFilter(include=lambda g: len(g)))
+
+        # len(g) is the number of contours, so we include the all glyphs
+        # that have both components and at least one contour
+        filters.append(DecomposeComponentsFilter(include=lambda g: len(g)))
 
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
