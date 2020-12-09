@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="b" format="2">
+	<advance width="374" height="750"/>
+	<unicode hex="0062"/>
+	<outline>
+		<contour>
+			<point x="151" y="197" type="curve"/>
+			<point x="117" y="197"/>
+			<point x="90" y="170"/>
+			<point x="90" y="137" type="curve"/>
+			<point x="90" y="104"/>
+			<point x="117" y="77"/>
+			<point x="151" y="77" type="curve"/>
+			<point x="184" y="77"/>
+			<point x="211" y="104"/>
+			<point x="211" y="137" type="curve"/>
+			<point x="211" y="170"/>
+			<point x="184" y="197"/>
+		</contour>
+	</outline>
+	<lib>
+		<dict>
+			<key>com.schriftgestaltung.Glyphs.lastChange</key>
+			<string>2020-12-07 11:48:16 +0000</string>
+		</dict>
+	</lib>
+</glyph>
