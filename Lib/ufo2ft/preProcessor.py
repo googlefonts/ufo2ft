@@ -203,14 +203,16 @@ class TTFInterpolatablePreProcessor(object):
     be interpolation compatible, depending on the particular filter used or
     whether they are applied to only some vs all of the UFOs.
 
-    The ``conversionError``, ``reverseDirection`` and ``rememberCurveType``
-    arguments work in the same way as in the ``TTFPreProcessor``.
+    The ``conversionError``, ``reverseDirection``, ``flattenComponents`` and
+    ``rememberCurveType`` arguments work in the same way as in the
+    ``TTFPreProcessor``.
     """
 
     def __init__(
         self,
         ufos,
         inplace=False,
+        flattenComponents=False,
         conversionError=None,
         reverseDirection=True,
         rememberCurveType=True,
@@ -221,6 +223,7 @@ class TTFInterpolatablePreProcessor(object):
 
         self.ufos = ufos
         self.inplace = inplace
+        self.flattenComponents = flattenComponents
 
         if layerNames is None:
             layerNames = [None] * len(ufos)
@@ -262,6 +265,10 @@ class TTFInterpolatablePreProcessor(object):
             dump_stats=True,
             remember_curve_type=self._rememberCurveType and self.inplace,
         )
+
+        if self.flattenComponents:
+            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+            FlattenComponentsFilter()(ufo, glyphSet)
 
         decompose = DecomposeComponentsFilter(include=lambda g: len(g))
         for ufo, glyphSet in zip(self.ufos, self.glyphSets):
