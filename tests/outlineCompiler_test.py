@@ -7,11 +7,19 @@ from fontTools import designspaceLib
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 
-from ufo2ft import (compileInterpolatableOTFsFromDS, compileInterpolatableTTFs,
-                    compileInterpolatableTTFsFromDS, compileOTF, compileTTF)
-from ufo2ft.constants import (GLYPHS_DONT_USE_PRODUCTION_NAMES,
-                              SPARSE_OTF_MASTER_TABLES,
-                              SPARSE_TTF_MASTER_TABLES, USE_PRODUCTION_NAMES)
+from ufo2ft import (
+    compileInterpolatableOTFsFromDS,
+    compileInterpolatableTTFs,
+    compileInterpolatableTTFsFromDS,
+    compileOTF,
+    compileTTF,
+)
+from ufo2ft.constants import (
+    GLYPHS_DONT_USE_PRODUCTION_NAMES,
+    SPARSE_OTF_MASTER_TABLES,
+    SPARSE_TTF_MASTER_TABLES,
+    USE_PRODUCTION_NAMES,
+)
 from ufo2ft.fontInfoData import intListToNum
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 

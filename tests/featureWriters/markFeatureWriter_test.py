@@ -6,9 +6,11 @@ import pytest
 
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
-from ufo2ft.featureWriters.markFeatureWriter import (MarkFeatureWriter,
-                                                     NamedAnchor,
-                                                     parseAnchorName)
+from ufo2ft.featureWriters.markFeatureWriter import (
+    MarkFeatureWriter,
+    NamedAnchor,
+    parseAnchorName,
+)
 
 from . import FeatureWriterTest
 

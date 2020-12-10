@@ -6,8 +6,13 @@ import warnings
 
 import pytest
 
-from ufo2ft import (compileInterpolatableTTFs, compileOTF, compileTTF,
-                    compileVariableCFF2, compileVariableTTF)
+from ufo2ft import (
+    compileInterpolatableTTFs,
+    compileOTF,
+    compileTTF,
+    compileVariableCFF2,
+    compileVariableTTF,
+)
 
 
 def getpath(filename):

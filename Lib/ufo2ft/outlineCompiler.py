@@ -4,8 +4,15 @@ from collections import Counter, namedtuple
 from io import BytesIO
 from types import SimpleNamespace
 
-from fontTools.cffLib import (CharStrings, GlobalSubrsIndex, IndexedStrings,
-                              PrivateDict, SubrsIndex, TopDict, TopDictIndex)
+from fontTools.cffLib import (
+    CharStrings,
+    GlobalSubrsIndex,
+    IndexedStrings,
+    PrivateDict,
+    SubrsIndex,
+    TopDict,
+    TopDictIndex,
+)
 from fontTools.misc.arrayTools import unionRect
 from fontTools.misc.fixedTools import otRound
 from fontTools.pens.boundsPen import ControlBoundsPen
@@ -19,11 +26,19 @@ from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
 from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_PALETTES_KEY
 from ufo2ft.errors import InvalidFontData
-from ufo2ft.fontInfoData import (dateStringForNow, dateStringToTimeValue,
-                                 getAttrWithFallback, intListToNum,
-                                 normalizeStringForPostscript)
-from ufo2ft.util import (_copyGlyph, calcCodePageRanges,
-                         makeOfficialGlyphOrder, makeUnicodeToGlyphNameMapping)
+from ufo2ft.fontInfoData import (
+    dateStringForNow,
+    dateStringToTimeValue,
+    getAttrWithFallback,
+    intListToNum,
+    normalizeStringForPostscript,
+)
+from ufo2ft.util import (
+    _copyGlyph,
+    calcCodePageRanges,
+    makeOfficialGlyphOrder,
+    makeUnicodeToGlyphNameMapping,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -446,9 +461,7 @@ class BaseOutlineCompiler:
 
         from fontTools.ttLib.tables._c_m_a_p import cmap_format_4
 
-        nonBMP = {
-            k: v for k, v in self.unicodeToGlyphNameMapping.items() if k > 65535
-        }
+        nonBMP = {k: v for k, v in self.unicodeToGlyphNameMapping.items() if k > 65535}
         if nonBMP:
             mapping = {
                 k: v for k, v in self.unicodeToGlyphNameMapping.items() if k <= 65535

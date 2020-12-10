@@ -3,6 +3,7 @@
 
 import collections
 import re
+
 # we re-export here all the feaLib AST classes so they can be used from
 # writer modules with a single `from ufo2ft.featureWriters import ast`
 import sys
