@@ -5,7 +5,7 @@ from ufo2ft.filters.decomposeTransformedComponents import \
 from ufo2ft.util import logger
 
 
-class DecomposeTransformedComponentsFilterTest(object):
+class DecomposeTransformedComponentsFilterTest:
     def test_transformed_components(self, FontClass):
         ufo = FontClass()
         a = ufo.newGlyph("six.lf")

@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import logging
 import os
 from textwrap import dedent
@@ -61,10 +58,7 @@ def test_NamedAnchor_invalid():
 def test_NamedAnchor_repr():
     import sys
 
-    if sys.version_info >= (3,):
-        expected = "NamedAnchor(name='top', x=1.0, y=2.0)"
-    else:
-        expected = "NamedAnchor(name=u'top', x=1.0, y=2.0)"
+    expected = "NamedAnchor(name='top', x=1.0, y=2.0)"
     assert repr(NamedAnchor("top", 1.0, 2.0)) == expected
 
 

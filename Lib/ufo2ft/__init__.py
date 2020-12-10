@@ -1,10 +1,7 @@
-from __future__ import absolute_import, division, print_function
-
 import logging
 from enum import IntEnum
 
 from fontTools import varLib
-from fontTools.misc.py23 import *
 
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, SPARSE_TTF_MASTER_TABLES
 from ufo2ft.featureCompiler import (MTI_FEATURES_PREFIX, FeatureCompiler,

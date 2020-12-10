@@ -1,11 +1,8 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 
 
-class FeatureWriterTest(object):
+class FeatureWriterTest:
 
     # subclasses must override this
     FeatureWriter = None

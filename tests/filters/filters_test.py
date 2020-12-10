@@ -1,8 +1,7 @@
-from __future__ import absolute_import, division, print_function
+from types import SimpleNamespace
 
 import pytest
 from fontTools.misc.loggingTools import CapturingLogHandler
-from fontTools.misc.py23 import SimpleNamespace
 
 from ufo2ft.filters import (UFO2FT_FILTERS_KEY, BaseFilter, getFilterClass,
                             loadFilters, logger)

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import pytest
 from fontTools.misc.loggingTools import CapturingLogHandler
 
@@ -125,7 +123,7 @@ def font(request, FontClass):
     return font
 
 
-class PropagateAnchorsFilterTest(object):
+class PropagateAnchorsFilterTest:
     def test_empty_glyph(self, font):
         philter = PropagateAnchorsFilter(include={"space"})
         assert not philter(font)
@@ -192,16 +190,14 @@ class PropagateAnchorsFilterTest(object):
     def test_whole_font(self, font):
         philter = PropagateAnchorsFilter()
         modified = philter(font)
-        assert modified == set(
-            [
+        assert modified == {
                 "a-cyr",
                 "amacron",
                 "adieresis",
                 "adieresismacron",
                 "amacrondieresis",
                 "a_a",
-            ]
-        )
+        }
 
     def test_fail_during_anchor_propagation(self, font):
         name = "emacron"

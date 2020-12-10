@@ -65,7 +65,7 @@ class TransformationsFilter(BaseFilter):
             raise AssertionError(origin)
 
     def set_context(self, font, glyphSet):
-        ctx = super(TransformationsFilter, self).set_context(font, glyphSet)
+        ctx = super().set_context(font, glyphSet)
 
         origin_height = self.get_origin_height(font, self.options.Origin)
 

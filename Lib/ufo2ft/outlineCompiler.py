@@ -1,17 +1,13 @@
-# -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import logging
 import math
 from collections import Counter, namedtuple
+from io import BytesIO
 from types import SimpleNamespace
 
 from fontTools.cffLib import (CharStrings, GlobalSubrsIndex, IndexedStrings,
                               PrivateDict, SubrsIndex, TopDict, TopDictIndex)
 from fontTools.misc.arrayTools import unionRect
 from fontTools.misc.fixedTools import otRound
-from fontTools.misc.py23 import BytesIO, byteord, round, tounicode, unichr
 from fontTools.pens.boundsPen import ControlBoundsPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
@@ -53,7 +49,7 @@ def _getVerticalOrigin(font, glyph):
     return otRound(verticalOrigin)
 
 
-class BaseOutlineCompiler(object):
+class BaseOutlineCompiler:
     """Create a feature-less outline binary."""
 
     sfntVersion = None
@@ -368,7 +364,7 @@ class BaseOutlineCompiler(object):
             # ascii-encoded bytes when it can. On the other hand, fontTools's
             # name table `setName` method wants unicode strings, so we must
             # decode them first
-            nameVal = tounicode(nameRecord["string"], encoding="ascii")
+            nameVal = nameRecord["string"]
             name.setName(nameVal, nameId, platformId, platEncId, langId)
 
         # Build name records
@@ -380,7 +376,7 @@ class BaseOutlineCompiler(object):
         preferredSubfamilyName = getAttrWithFallback(
             font.info, "openTypeNamePreferredSubfamilyName"
         )
-        fullName = "%s %s" % (preferredFamilyName, preferredSubfamilyName)
+        fullName = f"{preferredFamilyName} {preferredSubfamilyName}"
 
         nameVals = {
             0: getAttrWithFallback(font.info, "copyright"),
@@ -419,7 +415,6 @@ class BaseOutlineCompiler(object):
             nameVal = nameVals[nameId]
             if not nameVal:
                 continue
-            nameVal = tounicode(nameVal, encoding="ascii")
             platformId = 3
             platEncId = 10 if _isNonBMP(nameVal) else 1
             langId = 0x409
@@ -451,13 +446,13 @@ class BaseOutlineCompiler(object):
 
         from fontTools.ttLib.tables._c_m_a_p import cmap_format_4
 
-        nonBMP = dict(
-            (k, v) for k, v in self.unicodeToGlyphNameMapping.items() if k > 65535
-        )
+        nonBMP = {
+            k: v for k, v in self.unicodeToGlyphNameMapping.items() if k > 65535
+        }
         if nonBMP:
-            mapping = dict(
-                (k, v) for k, v in self.unicodeToGlyphNameMapping.items() if k <= 65535
-            )
+            mapping = {
+                k: v for k, v in self.unicodeToGlyphNameMapping.items() if k <= 65535
+            }
         else:
             mapping = dict(self.unicodeToGlyphNameMapping)
         # mac
@@ -617,11 +612,8 @@ class BaseOutlineCompiler(object):
         os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
 
         # vendor id
-        os2.achVendID = tounicode(
-            getAttrWithFallback(font.info, "openTypeOS2VendorID"),
-            encoding="ascii",
-            errors="ignore",
-        )
+        os2.achVendID = getAttrWithFallback(font.info, "openTypeOS2VendorID")
+
         # vertical metrics
         os2.sxHeight = otRound(getAttrWithFallback(font.info, "xHeight"))
         os2.sCapHeight = otRound(getAttrWithFallback(font.info, "capHeight"))
@@ -998,7 +990,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         else:
             # round all coordinates to integers by default
             self.roundTolerance = 0.5
-        super(OutlineOTFCompiler, self).__init__(
+        super().__init__(
             font,
             glyphSet=glyphSet,
             glyphOrder=glyphOrder,
@@ -1348,7 +1340,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
-        super(OutlineTTFCompiler, self).setupTable_post()
+        super().setupTable_post()
         if "post" not in self.otf:
             return
 
@@ -1406,7 +1398,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                     break
 
 
-class StubGlyph(object):
+class StubGlyph:
 
     """
     This object will be used to create missing glyphs

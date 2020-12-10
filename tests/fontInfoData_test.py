@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import os
 import random
 import time
@@ -25,7 +22,7 @@ def info(InfoClass):
     return self
 
 
-class GetAttrWithFallbackTest(object):
+class GetAttrWithFallbackTest:
     @pytest.mark.parametrize(
         "infoDict,expected",
         [
@@ -186,7 +183,7 @@ class GetAttrWithFallbackTest(object):
         assert getAttrWithFallback(info, "descender") == -410
 
 
-class PostscriptBlueScaleFallbackTest(object):
+class PostscriptBlueScaleFallbackTest:
     def test_without_blue_zones(self, info):
         postscriptBlueScale = getAttrWithFallback(info, "postscriptBlueScale")
         assert postscriptBlueScale == 0.039625
@@ -213,7 +210,7 @@ class PostscriptBlueScaleFallbackTest(object):
         assert postscriptBlueScale == 0.0375
 
 
-class NormalizeStringForPostscriptTest(object):
+class NormalizeStringForPostscriptTest:
     def test_no_change(self):
         assert (
             normalizeStringForPostscript("Sample copyright notice.")
@@ -221,7 +218,7 @@ class NormalizeStringForPostscriptTest(object):
         )
 
 
-class DateStringToTimeValueTest(object):
+class DateStringToTimeValueTest:
     def test_roundtrip_random_timestamp(self):
         timestamp = random.randint(0, 10 ** 9)
         ds = time.strftime("%Y/%m/%d %H:%M:%S", time.gmtime(timestamp))
