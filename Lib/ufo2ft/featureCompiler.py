@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def parseLayoutFeatures(font):
-    """ Parse OpenType layout features in the UFO and return a
+    """Parse OpenType layout features in the UFO and return a
     feaLib.ast.FeatureFile instance.
     """
     featxt = tounicode(font.features.text or "", "utf-8")
@@ -92,7 +92,7 @@ class BaseFeatureCompiler(object):
         self.glyphSet = OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
 
     def setupFeatures(self):
-        """ Make the features source.
+        """Make the features source.
 
         **This should not be called externally.** Subclasses
         must override this method.
@@ -100,7 +100,7 @@ class BaseFeatureCompiler(object):
         raise NotImplementedError
 
     def buildTables(self):
-        """ Compile OpenType feature tables from the source.
+        """Compile OpenType feature tables from the source.
 
         **This should not be called externally.** Subclasses
         must override this method.
@@ -179,7 +179,7 @@ class FeatureCompiler(BaseFeatureCompiler):
             )
 
     def initFeatureWriters(self, featureWriters=None):
-        """ Initialize feature writer classes as specified in the UFO lib.
+        """Initialize feature writer classes as specified in the UFO lib.
         If none are defined in the UFO, the default feature writers are used:
         currently, KernFeatureWriter and MarkFeatureWriter.
         The 'featureWriters' argument can be used to override these.
@@ -261,9 +261,8 @@ class FeatureCompiler(BaseFeatureCompiler):
             raise
 
 
-
 class MtiFeatureCompiler(BaseFeatureCompiler):
-    """ Compile OpenType layout tables from MTI feature files using
+    """Compile OpenType layout tables from MTI feature files using
     fontTools.mtiLib.
     """
 

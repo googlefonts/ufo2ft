@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def makeOfficialGlyphOrder(font, glyphOrder=None):
-    """ Make the final glyph order for 'font'.
+    """Make the final glyph order for 'font'.
 
     If glyphOrder is None, try getting the font.glyphOrder list.
     If not explicit glyphOrder is defined, sort glyphs alphabetically.
@@ -201,7 +201,7 @@ def deepCopyContours(
 
 
 def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
-    """ Make a unicode: glyph name mapping for this glyph set (dict or Font).
+    """Make a unicode: glyph name mapping for this glyph set (dict or Font).
 
     Raises InvalidFontData exception if multiple glyphs are mapped to the
     same unicode codepoint.
@@ -226,7 +226,7 @@ def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
 
 
 def compileGSUB(featureFile, glyphOrder):
-    """ Compile and return a GSUB table from `featureFile` (feaLib
+    """Compile and return a GSUB table from `featureFile` (feaLib
     FeatureFile), using the given `glyphOrder` (list of glyph names).
     """
     font = ttLib.TTFont()
@@ -236,7 +236,7 @@ def compileGSUB(featureFile, glyphOrder):
 
 
 def closeGlyphsOverGSUB(gsub, glyphs):
-    """ Use the FontTools subsetter to perform a closure over the GSUB table
+    """Use the FontTools subsetter to perform a closure over the GSUB table
     given the initial `glyphs` (set of glyph names, str). Update the set
     in-place adding all the glyph names that can be reached via GSUB
     substitutions from this initial set.
@@ -247,7 +247,7 @@ def closeGlyphsOverGSUB(gsub, glyphs):
 
 
 def classifyGlyphs(unicodeFunc, cmap, gsub=None):
-    """ 'unicodeFunc' is a callable that takes a Unicode codepoint and
+    """'unicodeFunc' is a callable that takes a Unicode codepoint and
     returns a string denoting some Unicode property associated with the
     given character (or None if a character is considered 'neutral').
     'cmap' is a dictionary mapping Unicode codepoints to glyph names.
@@ -280,7 +280,7 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
 
 
 def unicodeInScripts(uv, scripts):
-    """ Check UnicodeData's ScriptExtension property for unicode codepoint
+    """Check UnicodeData's ScriptExtension property for unicode codepoint
     'uv' and return True if it intersects with the set of 'scripts' provided,
     False if it does not intersect.
     Return None for 'Common' script ('Zyyy').
@@ -292,7 +292,7 @@ def unicodeInScripts(uv, scripts):
 
 
 def calcCodePageRanges(unicodes):
-    """ Given a set of Unicode codepoints (integers), calculate the
+    """Given a set of Unicode codepoints (integers), calculate the
     corresponding OS/2 CodePage range bits.
     This is a direct translation of FontForge implementation:
     https://github.com/fontforge/fontforge/blob/7b2c074/fontforge/tottf.c#L3158

@@ -162,6 +162,7 @@ class TTFPreProcessor(OTFPreProcessor):
 
         if flattenComponents:
             from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+
             filters.append(FlattenComponentsFilter())
 
         if removeOverlaps:
@@ -272,6 +273,7 @@ class TTFInterpolatablePreProcessor(object):
 
         if self.flattenComponents:
             from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+
             for ufo, glyphSet in zip(self.ufos, self.glyphSets):
                 FlattenComponentsFilter()(ufo, glyphSet)
 

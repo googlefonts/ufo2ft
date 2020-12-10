@@ -771,7 +771,6 @@ class NamesTest(object):
 
 
 class ColrCpalTest:
-
     def test_colr_cpal(self, FontClass):
         testufo = FontClass(getpath("ColorTest.ufo"))
         assert "com.github.googlei18n.ufo2ft.colorLayerMapping" in testufo.lib
@@ -779,22 +778,31 @@ class ColrCpalTest:
         result = compileTTF(testufo)
         assert "COLR" in result
         assert "CPAL" in result
-        layers = {gn: [(layer.name, layer.colorID) for layer in layers]
-                      for gn, layers in result["COLR"].ColorLayers.items()}
-        assert layers == {'a': [('a.color1', 0), ('a.color2', 1)],
-                          'b': [('b.color1', 1), ('b.color2', 0)],
-                          'c': [('c.color2', 1), ('c.color1', 0)]}
+        layers = {
+            gn: [(layer.name, layer.colorID) for layer in layers]
+            for gn, layers in result["COLR"].ColorLayers.items()
+        }
+        assert layers == {
+            "a": [("a.color1", 0), ("a.color2", 1)],
+            "b": [("b.color1", 1), ("b.color2", 0)],
+            "c": [("c.color2", 1), ("c.color1", 0)],
+        }
 
     def test_colr_cpal_raw(self, FontClass):
         testufo = FontClass(getpath("ColorTestRaw.ufo"))
         assert "com.github.googlei18n.ufo2ft.colorLayers" in testufo.lib
         assert "com.github.googlei18n.ufo2ft.colorPalettes" in testufo.lib
         result = compileTTF(testufo)
-        palettes = [[(c.red, c.green, c.blue, c.alpha) for c in p] for p in result["CPAL"].palettes]
+        palettes = [
+            [(c.red, c.green, c.blue, c.alpha) for c in p]
+            for p in result["CPAL"].palettes
+        ]
         assert palettes == [[(255, 76, 26, 255), (0, 102, 204, 255)]]
-        layers = {gn: [(layer.name, layer.colorID) for layer in layers]
-                      for gn, layers in result["COLR"].ColorLayers.items()}
-        assert layers == {"a": [('a.color1', 0), ('a.color2', 1)]}
+        layers = {
+            gn: [(layer.name, layer.colorID) for layer in layers]
+            for gn, layers in result["COLR"].ColorLayers.items()
+        }
+        assert layers == {"a": [("a.color1", 0), ("a.color2", 1)]}
 
 
 ASCII = [unichr(c) for c in range(0x20, 0x7E)]

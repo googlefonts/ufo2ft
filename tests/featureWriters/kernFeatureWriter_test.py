@@ -226,7 +226,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert str(feaFile) == existing
 
     def test_arabic_numerals(self, FontClass):
-        """ Test that arabic numerals (with bidi type AN) are kerned LTR.
+        """Test that arabic numerals (with bidi type AN) are kerned LTR.
         https://github.com/googlei18n/ufo2ft/issues/198
         https://github.com/googlei18n/ufo2ft/pull/200
         """

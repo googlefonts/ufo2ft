@@ -528,7 +528,7 @@ def compileFeatures(
     featureCompilerClass=None,
     debugFeatureFile=None,
 ):
-    """ Compile OpenType Layout features from `ufo` into FontTools OTL tables.
+    """Compile OpenType Layout features from `ufo` into FontTools OTL tables.
     If `ttFont` is None, a new TTFont object is created containing the new
     tables, else the provided `ttFont` is updated with the new tables.
 
