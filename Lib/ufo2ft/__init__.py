@@ -172,6 +172,7 @@ def compileTTF(
     rememberCurveType=True,
     removeOverlaps=False,
     overlapsBackend=None,
+    flattenComponents=False,
     inplace=False,
     layerName=None,
     skipExportGlyphs=None,
@@ -181,6 +182,9 @@ def compileTTF(
     """Create FontTools TrueType font from a UFO.
 
     *removeOverlaps* performs a union operation on all the glyphs' contours.
+
+    *flattenComponents* un-nests glyphs so that they have at most one level of
+    components.
 
     *convertCubics* and *cubicConversionError* specify how the conversion from cubic
     to quadratic curves should be handled.
@@ -205,6 +209,7 @@ def compileTTF(
         inplace=inplace,
         removeOverlaps=removeOverlaps,
         overlapsBackend=overlapsBackend,
+        flattenComponents=flattenComponents,
         convertCubics=convertCubics,
         conversionError=cubicConversionError,
         reverseDirection=reverseDirection,
@@ -247,6 +252,7 @@ def compileInterpolatableTTFs(
     useProductionNames=None,
     cubicConversionError=None,
     reverseDirection=True,
+    flattenComponents=False,
     inplace=False,
     layerNames=None,
     skipExportGlyphs=None,
@@ -290,6 +296,7 @@ def compileInterpolatableTTFs(
         ufos,
         inplace=inplace,
         conversionError=cubicConversionError,
+        flattenComponents=flattenComponents,
         reverseDirection=reverseDirection,
         layerNames=layerNames,
         skipExportGlyphs=skipExportGlyphs,
@@ -353,6 +360,7 @@ def compileInterpolatableTTFsFromDS(
     useProductionNames=None,
     cubicConversionError=None,
     reverseDirection=True,
+    flattenComponents=False,
     inplace=False,
     debugFeatureFile=None,
     notdefGlyph=None,
@@ -407,6 +415,7 @@ def compileInterpolatableTTFsFromDS(
         useProductionNames=useProductionNames,
         cubicConversionError=cubicConversionError,
         reverseDirection=reverseDirection,
+        flattenComponents=flattenComponents,
         inplace=inplace,
         layerNames=layerNames,
         skipExportGlyphs=skipExportGlyphs,
@@ -568,6 +577,7 @@ def compileVariableTTF(
     reverseDirection=True,
     excludeVariationTables=(),
     optimizeGvar=True,
+    flattenComponents=False,
     inplace=False,
     debugFeatureFile=None,
     notdefGlyph=None,
@@ -597,6 +607,7 @@ def compileVariableTTF(
         useProductionNames=False,  # will rename glyphs after varfont is built
         cubicConversionError=cubicConversionError,
         reverseDirection=reverseDirection,
+        flattenComponents=flattenComponents,
         inplace=inplace,
         debugFeatureFile=debugFeatureFile,
         notdefGlyph=notdefGlyph,

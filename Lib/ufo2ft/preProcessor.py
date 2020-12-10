@@ -110,7 +110,9 @@ class TTFPreProcessor(OTFPreProcessor):
     """Preprocessor for building TrueType-flavored OpenType fonts.
 
     By default, it decomposes all the glyphs with mixed component/contour
-    outlines.
+    outlines. If the ``flattenComponents`` setting is True, glyphs with
+    nested components are flattened so that they have at most one level of
+    components.
 
     If ``removeOverlaps`` is True, it performs a union boolean operation on
     all the glyphs' contours.
@@ -144,6 +146,7 @@ class TTFPreProcessor(OTFPreProcessor):
         self,
         removeOverlaps=False,
         overlapsBackend=None,
+        flattenComponents=False,
         convertCubics=True,
         conversionError=None,
         reverseDirection=True,
@@ -156,6 +159,10 @@ class TTFPreProcessor(OTFPreProcessor):
         # len(g) is the number of contours, so we include the all glyphs
         # that have both components and at least one contour
         filters.append(DecomposeComponentsFilter(include=lambda g: len(g)))
+
+        if flattenComponents:
+            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+            filters.append(FlattenComponentsFilter())
 
         if removeOverlaps:
             from ufo2ft.filters.removeOverlaps import RemoveOverlapsFilter
@@ -196,14 +203,16 @@ class TTFInterpolatablePreProcessor(object):
     be interpolation compatible, depending on the particular filter used or
     whether they are applied to only some vs all of the UFOs.
 
-    The ``conversionError``, ``reverseDirection`` and ``rememberCurveType``
-    arguments work in the same way as in the ``TTFPreProcessor``.
+    The ``conversionError``, ``reverseDirection``, ``flattenComponents`` and
+    ``rememberCurveType`` arguments work in the same way as in the
+    ``TTFPreProcessor``.
     """
 
     def __init__(
         self,
         ufos,
         inplace=False,
+        flattenComponents=False,
         conversionError=None,
         reverseDirection=True,
         rememberCurveType=True,
@@ -214,6 +223,7 @@ class TTFInterpolatablePreProcessor(object):
 
         self.ufos = ufos
         self.inplace = inplace
+        self.flattenComponents = flattenComponents
 
         if layerNames is None:
             layerNames = [None] * len(ufos)
@@ -259,6 +269,11 @@ class TTFInterpolatablePreProcessor(object):
         decompose = DecomposeComponentsFilter(include=lambda g: len(g))
         for ufo, glyphSet in zip(self.ufos, self.glyphSets):
             decompose(ufo, glyphSet)
+
+        if self.flattenComponents:
+            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+            for ufo, glyphSet in zip(self.ufos, self.glyphSets):
+                FlattenComponentsFilter()(ufo, glyphSet)
 
         # finally apply all custom post-filters
         for funcs, ufo, glyphSet in zip(self.postFilters, self.ufos, self.glyphSets):
