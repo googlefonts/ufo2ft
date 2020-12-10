@@ -1,7 +1,9 @@
-from ufo2ft.filters.transformations import TransformationsFilter, log
-from fontTools.misc.loggingTools import CapturingLogHandler
 from math import isclose
+
 import pytest
+from fontTools.misc.loggingTools import CapturingLogHandler
+
+from ufo2ft.filters.transformations import TransformationsFilter, log
 
 
 @pytest.fixture(

@@ -1,10 +1,10 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-
-from ufo2ft.filters import BaseFilter
-from enum import Enum
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import logging
+from enum import Enum
 
+from ufo2ft.filters import BaseFilter
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class RemoveOverlapsFilter(BaseFilter):
         self.options.backend = self.Backend(self.options.backend)
 
         if self.options.backend is self.Backend.BOOLEAN_OPERATIONS:
-            from booleanOperations import union, BooleanOperationsError
+            from booleanOperations import BooleanOperationsError, union
 
             self.union = union
             self.Error = BooleanOperationsError
@@ -29,7 +29,7 @@ class RemoveOverlapsFilter(BaseFilter):
 
             logger.debug("using booleanOperations as RemoveOverlapsFilter backend")
         elif self.options.backend is self.Backend.SKIA_PATHOPS:
-            from pathops import union, PathOpsError
+            from pathops import PathOpsError, union
 
             self.union = union
             self.Error = PathOpsError

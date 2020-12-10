@@ -1,25 +1,20 @@
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
+import logging
 from enum import IntEnum
 
-from fontTools.misc.py23 import *
 from fontTools import varLib
+from fontTools.misc.py23 import *
 
-from ufo2ft.preProcessor import (
-    OTFPreProcessor,
-    TTFPreProcessor,
-    TTFInterpolatablePreProcessor,
-)
-from ufo2ft.featureCompiler import (
-    FeatureCompiler,
-    MtiFeatureCompiler,
-    MTI_FEATURES_PREFIX,
-)
+from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, SPARSE_TTF_MASTER_TABLES
+from ufo2ft.featureCompiler import (MTI_FEATURES_PREFIX, FeatureCompiler,
+                                    MtiFeatureCompiler)
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
-from ufo2ft.constants import SPARSE_TTF_MASTER_TABLES, SPARSE_OTF_MASTER_TABLES
-from ufo2ft.util import getDefaultMasterFont, _getDefaultNotdefGlyph
-import logging
+from ufo2ft.preProcessor import (OTFPreProcessor,
+                                 TTFInterpolatablePreProcessor,
+                                 TTFPreProcessor)
+from ufo2ft.util import _getDefaultNotdefGlyph, getDefaultMasterFont
 
 try:
     from ._version import version as __version__

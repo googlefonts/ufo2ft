@@ -1,7 +1,7 @@
 import os
+
 import py
 import pytest
-
 from fontTools import designspaceLib
 
 

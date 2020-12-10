@@ -1,28 +1,24 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, absolute_import, division, unicode_literals
-from cu2qu.ufo import font_to_quadratic
-from fontTools.ttLib import TTFont
-from fontTools.misc.py23 import basestring, unichr, byteord
-from fontTools import designspaceLib
-from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
-from ufo2ft.fontInfoData import intListToNum
-from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
-from ufo2ft.constants import (
-    USE_PRODUCTION_NAMES,
-    GLYPHS_DONT_USE_PRODUCTION_NAMES,
-    SPARSE_TTF_MASTER_TABLES,
-    SPARSE_OTF_MASTER_TABLES,
-)
-from ufo2ft import (
-    compileTTF,
-    compileOTF,
-    compileInterpolatableTTFs,
-    compileInterpolatableTTFsFromDS,
-    compileInterpolatableOTFsFromDS,
-)
-import os
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 import logging
+import os
+
 import pytest
+from cu2qu.ufo import font_to_quadratic
+from fontTools import designspaceLib
+from fontTools.misc.py23 import basestring, byteord, unichr
+from fontTools.ttLib import TTFont
+from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
+
+from ufo2ft import (compileInterpolatableOTFsFromDS, compileInterpolatableTTFs,
+                    compileInterpolatableTTFsFromDS, compileOTF, compileTTF)
+from ufo2ft.constants import (GLYPHS_DONT_USE_PRODUCTION_NAMES,
+                              SPARSE_OTF_MASTER_TABLES,
+                              SPARSE_TTF_MASTER_TABLES, USE_PRODUCTION_NAMES)
+from ufo2ft.fontInfoData import intListToNum
+from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 
 
 def getpath(filename):

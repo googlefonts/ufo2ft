@@ -1,22 +1,22 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-import os
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 import logging
-import ufo2ft
-from ufo2ft.preProcessor import (
-    TTFPreProcessor,
-    TTFInterpolatablePreProcessor,
-    _init_explode_color_layer_glyphs_filter,
-)
-from ufo2ft.filters import UFO2FT_FILTERS_KEY
-from ufo2ft.filters.explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
+import os
+
+import pytest
 from cu2qu.ufo import CURVE_TYPE_LIB_KEY
 from fontTools import designspaceLib
-from ufo2ft.constants import (
-    COLOR_LAYERS_KEY,
-    COLOR_LAYER_MAPPING_KEY,
-    COLOR_PALETTES_KEY,
-)
-import pytest
+
+import ufo2ft
+from ufo2ft.constants import (COLOR_LAYER_MAPPING_KEY, COLOR_LAYERS_KEY,
+                              COLOR_PALETTES_KEY)
+from ufo2ft.filters import UFO2FT_FILTERS_KEY
+from ufo2ft.filters.explodeColorLayerGlyphs import \
+    ExplodeColorLayerGlyphsFilter
+from ufo2ft.preProcessor import (TTFInterpolatablePreProcessor,
+                                 TTFPreProcessor,
+                                 _init_explode_color_layer_glyphs_filter)
 
 
 def getpath(filename):

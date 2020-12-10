@@ -1,14 +1,13 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from fontTools.misc.py23 import basestring
-from ufo2ft.constants import (
-    COLOR_LAYERS_KEY,
-    COLOR_LAYER_MAPPING_KEY,
-    COLOR_PALETTES_KEY,
-)
-from ufo2ft.fontInfoData import getAttrWithFallback
+
+from ufo2ft.constants import (COLOR_LAYER_MAPPING_KEY, COLOR_LAYERS_KEY,
+                              COLOR_PALETTES_KEY)
 from ufo2ft.filters import loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
+from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet
 
 
@@ -70,7 +69,8 @@ def _init_explode_color_layer_glyphs_filter(ufo, filters):
             or any(COLOR_LAYER_MAPPING_KEY in g.lib for g in ufo)
         )
     ):
-        from ufo2ft.filters.explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
+        from ufo2ft.filters.explodeColorLayerGlyphs import \
+            ExplodeColorLayerGlyphsFilter
 
         filters.append(ExplodeColorLayerGlyphsFilter())
 
@@ -161,7 +161,8 @@ class TTFPreProcessor(OTFPreProcessor):
         filters.append(DecomposeComponentsFilter(include=lambda g: len(g)))
 
         if flattenComponents:
-            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+            from ufo2ft.filters.flattenComponents import \
+                FlattenComponentsFilter
 
             filters.append(FlattenComponentsFilter())
 
@@ -272,7 +273,8 @@ class TTFInterpolatablePreProcessor(object):
             decompose(ufo, glyphSet)
 
         if self.flattenComponents:
-            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+            from ufo2ft.filters.flattenComponents import \
+                FlattenComponentsFilter
 
             for ufo, glyphSet in zip(self.ufos, self.glyphSets):
                 FlattenComponentsFilter()(ufo, glyphSet)

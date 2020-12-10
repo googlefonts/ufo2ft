@@ -1,8 +1,8 @@
-from fontTools.misc.transform import Transform
-from ufo2ft.filters import BaseFilter
-
 import logging
 
+from fontTools.misc.transform import Transform
+
+from ufo2ft.filters import BaseFilter
 
 logger = logging.getLogger(__name__)
 

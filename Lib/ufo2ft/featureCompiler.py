@@ -1,24 +1,21 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 import logging
 import os
+from collections import OrderedDict
 from inspect import isclass
 from tempfile import NamedTemporaryFile
-from collections import OrderedDict
 
-from fontTools.misc.py23 import tobytes, tounicode, UnicodeIO
-from fontTools.feaLib.parser import Parser
-from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
-from fontTools.feaLib.error import IncludedFeaNotFound, FeatureLibError
 from fontTools import mtiLib
+from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
+from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
+from fontTools.feaLib.parser import Parser
+from fontTools.misc.py23 import UnicodeIO, tobytes, tounicode
 
 from ufo2ft.constants import MTI_FEATURES_PREFIX
-from ufo2ft.featureWriters import (
-    KernFeatureWriter,
-    MarkFeatureWriter,
-    loadFeatureWriters,
-    ast,
-)
-
+from ufo2ft.featureWriters import (KernFeatureWriter, MarkFeatureWriter, ast,
+                                   loadFeatureWriters)
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +75,7 @@ class BaseFeatureCompiler(object):
 
         if ttFont is None:
             from fontTools.ttLib import TTFont
+
             from ufo2ft.util import makeOfficialGlyphOrder
 
             ttFont = TTFont()

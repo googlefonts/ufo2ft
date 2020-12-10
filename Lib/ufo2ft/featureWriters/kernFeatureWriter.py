@@ -1,12 +1,12 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import unichr, basestring, SimpleNamespace
-from fontTools.misc.fixedTools import otRound
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 from fontTools import unicodedata
+from fontTools.misc.fixedTools import otRound
+from fontTools.misc.py23 import SimpleNamespace, basestring, unichr
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import classifyGlyphs
-
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."

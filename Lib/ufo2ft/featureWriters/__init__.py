@@ -1,20 +1,22 @@
-from __future__ import print_function, absolute_import, division, unicode_literals
-from .baseFeatureWriter import BaseFeatureWriter
-from .kernFeatureWriter import KernFeatureWriter
-from .markFeatureWriter import MarkFeatureWriter
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import importlib
 import re
 from inspect import isclass
 
+from .baseFeatureWriter import BaseFeatureWriter
+from .kernFeatureWriter import KernFeatureWriter
+from .markFeatureWriter import MarkFeatureWriter
+
 try:
     from inspect import getfullargspec as getargspec  # PY3
 except ImportError:
     from inspect import getargspec  # PY2
+
 import logging
 
 from ufo2ft.constants import FEATURE_WRITERS_KEY
-
 
 __all__ = [
     "BaseFeatureWriter",

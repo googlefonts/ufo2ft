@@ -1,13 +1,17 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+import itertools
 import re
 from collections import OrderedDict, defaultdict
 from functools import partial
-import itertools
-from fontTools.misc.py23 import tostr, tounicode
+
 from fontTools.misc.fixedTools import otRound
+from fontTools.misc.py23 import tostr, tounicode
+
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import unicodeInScripts, classifyGlyphs
 from ufo2ft.fontInfoData import getAttrWithFallback
+from ufo2ft.util import classifyGlyphs, unicodeInScripts
 
 
 class AbstractMarkPos(object):

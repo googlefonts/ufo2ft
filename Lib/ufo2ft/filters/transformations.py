@@ -1,16 +1,15 @@
+import logging
 import math
 from collections import namedtuple
-import logging
-
-from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.filters import BaseFilter
-
-from fontTools.misc.fixedTools import otRound
-from fontTools.misc.transform import Transform, Identity
-from fontTools.pens.recordingPen import RecordingPointPen
-from fontTools.pens.transformPen import TransformPointPen as _TransformPointPen
 from enum import IntEnum
 
+from fontTools.misc.fixedTools import otRound
+from fontTools.misc.transform import Identity, Transform
+from fontTools.pens.recordingPen import RecordingPointPen
+from fontTools.pens.transformPen import TransformPointPen as _TransformPointPen
+
+from ufo2ft.filters import BaseFilter
+from ufo2ft.fontInfoData import getAttrWithFallback
 
 log = logging.getLogger(__name__)
 

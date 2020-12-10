@@ -1,4 +1,4 @@
-from fontTools.misc.transform import Transform, Identity
+from fontTools.misc.transform import Identity, Transform
 
 import ufo2ft.util
 from ufo2ft.filters import BaseFilter

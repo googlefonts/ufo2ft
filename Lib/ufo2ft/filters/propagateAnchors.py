@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import sys
 
 import fontTools.pens.boundsPen
 from fontTools.misc.transform import Transform
+
 from ufo2ft.filters import BaseFilter
-
-import logging
-
 
 logger = logging.getLogger(__name__)
 
