@@ -111,7 +111,7 @@ If the UFO data directory has a ``com.github.fonttools.ttx`` folder with TTX
 files ending with ``.ttx``, these will be merged in the generated font.
 The index TTX (generated when using using ``ttx -s``) is not required.
 
-.. |GitHub Actions status| image:: https://github.com/googlefonts/ufo2ft/workflows/Test/badge.svg
+.. |GitHub Actions status| image:: https://github.com/googlefonts/ufo2ft/workflows/Test%20+%20Deploy/badge.svg
 .. |PyPI Version| image:: https://img.shields.io/pypi/v/ufo2ft.svg
    :target: https://pypi.org/project/ufo2ft/
 .. |Codecov| image:: https://codecov.io/gh/googlefonts/ufo2ft/branch/master/graph/badge.svg
