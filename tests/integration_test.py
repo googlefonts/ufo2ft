@@ -127,8 +127,10 @@ class IntegrationTest(object):
         assert ttf["maxp"].maxComponentDepth == 1
 
     def test_nestedComponents_interpolatable(self, FontClass):
-        ufos = [ FontClass(getpath("NestedComponents-Regular.ufo")),
-                 FontClass(getpath("NestedComponents-Bold.ufo")) ]
+        ufos = [
+            FontClass(getpath("NestedComponents-Regular.ufo")),
+            FontClass(getpath("NestedComponents-Bold.ufo")),
+        ]
         ttfs = compileInterpolatableTTFs(ufos)
         for ttf in ttfs:
             assert ttf["maxp"].maxComponentDepth != 1

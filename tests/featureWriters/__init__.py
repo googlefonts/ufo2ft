@@ -10,7 +10,7 @@ class FeatureWriterTest(object):
 
     @classmethod
     def writeFeatures(cls, ufo, **kwargs):
-        """ Return a new FeatureFile object containing only the newly
+        """Return a new FeatureFile object containing only the newly
         generated statements, or None if no new feature was generated.
         """
         writer = cls.FeatureWriter(**kwargs)

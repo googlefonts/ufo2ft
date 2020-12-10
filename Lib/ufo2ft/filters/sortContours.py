@@ -28,7 +28,8 @@ class SortContoursFilter(BaseFilter):
 
         if glyph.components:
             logger.warning(
-                "Glyph '%s' contains components which will not be sorted.", glyph.name,
+                "Glyph '%s' contains components which will not be sorted.",
+                glyph.name,
             )
 
         contours = sorted(

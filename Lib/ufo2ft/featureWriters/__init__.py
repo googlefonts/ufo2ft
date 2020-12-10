@@ -116,7 +116,7 @@ _featureWriterSpecRE = re.compile(
 
 
 def loadFeatureWriterFromString(spec):
-    """ Take a string specifying a feature writer class to load (either a
+    """Take a string specifying a feature writer class to load (either a
     built-in writer or one defined in an external, user-defined module),
     initialize it with given options and return the writer object.
 

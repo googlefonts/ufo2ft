@@ -87,7 +87,7 @@ def makeLookupFlag(name=None, markAttachment=None, markFilteringSet=None):
 
 
 def makeGlyphClassDefinitions(groups, feaFile=None, stripPrefix=""):
-    """ Given a groups dictionary ({str: list[str]}), create feaLib
+    """Given a groups dictionary ({str: list[str]}), create feaLib
     GlyphClassDefinition objects for each group.
     Return a dict keyed by the original group name.
 

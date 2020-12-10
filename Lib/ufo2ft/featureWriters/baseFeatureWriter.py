@@ -63,7 +63,7 @@ class BaseFeatureWriter(object):
         self.log = logging.getLogger(logger)
 
     def setContext(self, font, feaFile, compiler=None):
-        """ Populate a temporary `self.context` namespace, which is reset
+        """Populate a temporary `self.context` namespace, which is reset
         after each new call to `_write` method.
         Subclasses can override this to provide contextual information
         which depends on other data, or set any temporary attributes.
@@ -90,7 +90,7 @@ class BaseFeatureWriter(object):
         return self.context
 
     def shouldContinue(self):
-        """ Decide whether to start generating features or return early.
+        """Decide whether to start generating features or return early.
         Returns a boolean: True to proceed, False to skip.
 
         Sublcasses may override this to skip generation based on the presence
@@ -121,8 +121,7 @@ class BaseFeatureWriter(object):
         raise NotImplementedError
 
     def makeUnicodeToGlyphNameMapping(self):
-        """Return the Unicode to glyph name mapping for the current font.
-        """
+        """Return the Unicode to glyph name mapping for the current font."""
         # Try to get the "best" Unicode cmap subtable if this writer is running
         # in the context of a FeatureCompiler, else create a new mapping from
         # the UFO glyphs
@@ -160,8 +159,7 @@ class BaseFeatureWriter(object):
         return OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
 
     def compileGSUB(self):
-        """Compile a temporary GSUB table from the current feature file.
-        """
+        """Compile a temporary GSUB table from the current feature file."""
         from ufo2ft.util import compileGSUB
 
         compiler = self.context.compiler

@@ -151,12 +151,11 @@ class BaseFilter(object):
         return "{0}({1})".format(type(self).__name__, ", ".join(items))
 
     def start(self):
-        """ Subclasses can perform here custom initialization code.
-        """
+        """Subclasses can perform here custom initialization code."""
         pass
 
     def set_context(self, font, glyphSet):
-        """ Populate a `self.context` namespace, which is reset before each
+        """Populate a `self.context` namespace, which is reset before each
         new filter call.
 
         Subclasses can override this to provide contextual information
@@ -175,7 +174,7 @@ class BaseFilter(object):
         return self.context
 
     def filter(self, glyph):
-        """ This is where the filter is applied to a single glyph.
+        """This is where the filter is applied to a single glyph.
         Subclasses must override this method, and return True
         when the glyph was modified.
         """
@@ -186,7 +185,7 @@ class BaseFilter(object):
         return self.__class__.__name__
 
     def __call__(self, font, glyphSet=None):
-        """ Run this filter on all the included glyphs.
+        """Run this filter on all the included glyphs.
         Return the set of glyph names that were modified, if any.
 
         If `glyphSet` (dict) argument is provided, run the filter on

@@ -73,8 +73,20 @@ class BaseOutlineCompiler(object):
 
     sfntVersion = None
     tables = frozenset(
-        ["head", "hmtx", "hhea", "name", "maxp", "cmap", "OS/2", "post", "vmtx", "vhea",
-         "COLR", "CPAL"]
+        [
+            "head",
+            "hmtx",
+            "hhea",
+            "name",
+            "maxp",
+            "cmap",
+            "OS/2",
+            "post",
+            "vmtx",
+            "vhea",
+            "COLR",
+            "CPAL",
+        ]
     )
 
     def __init__(
@@ -120,8 +132,9 @@ class BaseOutlineCompiler(object):
             getAttrWithFallback(self.ufo.info, metric) is not None
             for metric in vertical_metrics
         )
-        self.colorLayers = COLOR_LAYERS_KEY in self.ufo.lib and \
-                           COLOR_PALETTES_KEY in self.ufo.lib
+        self.colorLayers = (
+            COLOR_LAYERS_KEY in self.ufo.lib and COLOR_PALETTES_KEY in self.ufo.lib
+        )
 
         # write the glyph order
         self.otf.setGlyphOrder(self.glyphOrder)
@@ -1289,8 +1302,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
 
 class OutlineTTFCompiler(BaseOutlineCompiler):
-    """Compile a .ttf font with TrueType outlines.
-    """
+    """Compile a .ttf font with TrueType outlines."""
 
     sfntVersion = "\000\001\000\000"
     tables = BaseOutlineCompiler.tables | {"loca", "gasp", "glyf"}
@@ -1386,7 +1398,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
     @staticmethod
     def autoUseMyMetrics(ttGlyph, glyphName, hmtx):
-        """ Set the "USE_MY_METRICS" flag on the first component having the
+        """Set the "USE_MY_METRICS" flag on the first component having the
         same advance width as the composite glyph, no transform and no
         horizontal shift (but allow it to shift vertically).
         This forces the composite glyph to use the possibly hinted horizontal
