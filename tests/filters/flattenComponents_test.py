@@ -91,5 +91,5 @@ class FlattenComponentsFilterTest:
     def test_logger(self, font):
         with CapturingLogHandler(logger, level="INFO") as captor:
             philter = FlattenComponentsFilter()
-            modified = philter(font)
+            _ = philter(font)
         captor.assertRegex("Flattened composite glyphs: 2")

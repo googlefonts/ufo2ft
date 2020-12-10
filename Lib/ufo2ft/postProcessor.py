@@ -342,7 +342,8 @@ class PostProcessor:
 
 
 # Adapted from fontTools.cff.specializer.programToCommands
-# https://github.com/fonttools/fonttools/blob/babca16/Lib/fontTools/cffLib/specializer.py#L40-L122
+# https://github.com/fonttools/fonttools/blob/babca16
+# /Lib/fontTools/cffLib/specializer.py#L40-L122
 # When converting from CFF to CFF2 we need to drop the charstrings' widths.
 # This function returns a new charstring program without the initial width value.
 # TODO: Move to fontTools?

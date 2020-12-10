@@ -58,8 +58,6 @@ def test_NamedAnchor_invalid():
 
 
 def test_NamedAnchor_repr():
-    import sys
-
     expected = "NamedAnchor(name='top', x=1.0, y=2.0)"
     assert repr(NamedAnchor("top", 1.0, 2.0)) == expected
 
@@ -168,7 +166,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         logger = "ufo2ft.featureWriters.markFeatureWriter.MarkFeatureWriter"
         with caplog.at_level(logging.WARNING, logger=logger):
-            fea = self.writeFeatures(testufo)
+            _ = self.writeFeatures(testufo)
 
         assert len(caplog.records) == 1
         assert "invalid ligature anchor 'top_1' in mark glyph" in caplog.text
@@ -373,7 +371,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
+            """  # noqa: B950
         )
 
     def test_abvm_blwm_features(self, FontClass):
@@ -449,18 +447,18 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2base;
 
             } mark;
-            """
+            """  # noqa: B950
         )
 
     def test_all_features(self, testufo):
         ufo = testufo
         ufo.info.unitsPerEm = 1000
 
-        cedilla = ufo.newGlyph("cedillacomb").anchors = [
+        ufo.newGlyph("cedillacomb").anchors = [
             {"name": "_bottom", "x": 10, "y": -5},
             {"name": "bottom", "x": 20, "y": -309},
         ]
-        c = ufo.newGlyph("c").appendAnchor({"name": "bottom", "x": 240, "y": 0})
+        ufo.newGlyph("c").appendAnchor({"name": "bottom", "x": 240, "y": 0})
 
         dottedCircle = ufo.newGlyph("dottedCircle")
         dottedCircle.unicode = 0x25CC
@@ -594,7 +592,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
+            """  # noqa: B950
         )
 
     def test_mark_mkmk_features_with_GDEF(self, testufo):

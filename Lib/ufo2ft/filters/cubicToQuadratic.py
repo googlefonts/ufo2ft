@@ -45,7 +45,7 @@ class CubicToQuadraticFilter(BaseFilter):
             stats = self.context.stats
             logger.info(
                 "New spline lengths: %s"
-                % (", ".join("%s: %d" % (l, stats[l]) for l in sorted(stats.keys())))
+                % (", ".join("%s: %d" % (ln, stats[ln]) for ln in sorted(stats.keys())))
             )
 
         if self.options.rememberCurveType:

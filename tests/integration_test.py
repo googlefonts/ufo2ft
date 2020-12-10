@@ -2,7 +2,6 @@ import difflib
 import io
 import os
 import sys
-import warnings
 
 import pytest
 
@@ -217,7 +216,7 @@ class IntegrationTest:
     def test_debugFeatureFile(self, designspace):
         tmp = io.StringIO()
 
-        varfont = compileVariableTTF(designspace, debugFeatureFile=tmp)
+        _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
 
         assert "### LayerFont-Regular ###" in tmp.getvalue()
         assert "### LayerFont-Bold ###" in tmp.getvalue()
