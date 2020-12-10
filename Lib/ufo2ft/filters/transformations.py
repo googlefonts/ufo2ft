@@ -1,6 +1,5 @@
 import logging
 import math
-from collections import namedtuple
 from enum import IntEnum
 
 from fontTools.misc.fixedTools import otRound

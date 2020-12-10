@@ -197,7 +197,7 @@ class BaseOutlineCompiler:
         in a different way if desired.
         """
         fontBox = None
-        for glyphName, glyphBox in self.glyphBoundingBoxes.items():
+        for glyphBox in self.glyphBoundingBoxes.values():
             if glyphBox is None:
                 continue
             if fontBox is None:
@@ -1425,7 +1425,7 @@ class StubGlyph:
         unitsPerEm,
         ascender,
         descender,
-        unicodes=[],
+        unicodes=None,
         reverseContour=False,
     ):
         self.name = name
@@ -1433,11 +1433,11 @@ class StubGlyph:
         self.unitsPerEm = unitsPerEm
         self.ascender = ascender
         self.descender = descender
-        self.unicodes = unicodes
+        self.unicodes = unicodes if unicodes is not None else []
         self.components = []
         self.anchors = []
-        if unicodes:
-            self.unicode = unicodes[0]
+        if self.unicodes:
+            self.unicode = self.unicodes[0]
         else:
             self.unicode = None
         if name == ".notdef":
