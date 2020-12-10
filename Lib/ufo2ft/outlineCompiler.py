@@ -1,48 +1,33 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import byteord, tounicode, round, unichr, BytesIO
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import logging
 import math
 from collections import Counter, namedtuple
 from types import SimpleNamespace
 
-from fontTools.ttLib import TTFont, newTable
-from fontTools.cffLib import (
-    TopDictIndex,
-    TopDict,
-    CharStrings,
-    SubrsIndex,
-    GlobalSubrsIndex,
-    PrivateDict,
-    IndexedStrings,
-)
-from fontTools.pens.reverseContourPen import ReverseContourPen
-from fontTools.pens.boundsPen import ControlBoundsPen
-from fontTools.pens.t2CharStringPen import T2CharStringPen
-from fontTools.pens.ttGlyphPen import TTGlyphPen
-from fontTools.ttLib.tables.O_S_2f_2 import Panose
-from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
-from fontTools.ttLib.tables._g_l_y_f import Glyph, USE_MY_METRICS
+from fontTools.cffLib import (CharStrings, GlobalSubrsIndex, IndexedStrings,
+                              PrivateDict, SubrsIndex, TopDict, TopDictIndex)
 from fontTools.misc.arrayTools import unionRect
 from fontTools.misc.fixedTools import otRound
+from fontTools.misc.py23 import BytesIO, byteord, round, tounicode, unichr
+from fontTools.pens.boundsPen import ControlBoundsPen
+from fontTools.pens.reverseContourPen import ReverseContourPen
+from fontTools.pens.t2CharStringPen import T2CharStringPen
+from fontTools.pens.ttGlyphPen import TTGlyphPen
+from fontTools.ttLib import TTFont, newTable
+from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS, Glyph
+from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
+from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
-from ufo2ft.errors import InvalidFontData
-from ufo2ft.fontInfoData import (
-    getAttrWithFallback,
-    dateStringToTimeValue,
-    dateStringForNow,
-    intListToNum,
-    normalizeStringForPostscript,
-)
-from ufo2ft.util import (
-    makeOfficialGlyphOrder,
-    makeUnicodeToGlyphNameMapping,
-    calcCodePageRanges,
-    _copyGlyph,
-)
 from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_PALETTES_KEY
-
+from ufo2ft.errors import InvalidFontData
+from ufo2ft.fontInfoData import (dateStringForNow, dateStringToTimeValue,
+                                 getAttrWithFallback, intListToNum,
+                                 normalizeStringForPostscript)
+from ufo2ft.util import (_copyGlyph, calcCodePageRanges,
+                         makeOfficialGlyphOrder, makeUnicodeToGlyphNameMapping)
 
 logger = logging.getLogger(__name__)
 

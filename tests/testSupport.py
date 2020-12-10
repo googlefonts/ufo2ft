@@ -1,8 +1,10 @@
-from __future__ import print_function, division, absolute_import
-import sys
-import os
-import types
+from __future__ import absolute_import, division, print_function
+
 import contextlib
+import os
+import sys
+import types
+
 from fontTools.misc.py23 import tostr
 
 

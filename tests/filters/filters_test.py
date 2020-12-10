@@ -1,17 +1,12 @@
-from __future__ import print_function, division, absolute_import
-
-from ufo2ft.filters import (
-    getFilterClass,
-    BaseFilter,
-    loadFilters,
-    UFO2FT_FILTERS_KEY,
-    logger,
-)
-
-from fontTools.misc.py23 import SimpleNamespace
-from fontTools.misc.loggingTools import CapturingLogHandler
+from __future__ import absolute_import, division, print_function
 
 import pytest
+from fontTools.misc.loggingTools import CapturingLogHandler
+from fontTools.misc.py23 import SimpleNamespace
+
+from ufo2ft.filters import (UFO2FT_FILTERS_KEY, BaseFilter, getFilterClass,
+                            loadFilters, logger)
+
 from ..testSupport import _TempModule
 
 

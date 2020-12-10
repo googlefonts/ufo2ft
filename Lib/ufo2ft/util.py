@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 try:
     from inspect import getfullargspec as getargspec  # PY3
 except ImportError:
     from inspect import getargspec  # PY2
+
+import logging
 from copy import deepcopy
-from fontTools.misc.py23 import unichr
-from fontTools import ttLib
-from fontTools import subset
-from fontTools import unicodedata
+
+from fontTools import subset, ttLib, unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
+from fontTools.misc.py23 import unichr
 from fontTools.misc.transform import Identity, Transform
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
-import logging
-
 
 logger = logging.getLogger(__name__)
 

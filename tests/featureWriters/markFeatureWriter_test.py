@@ -1,16 +1,18 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-from textwrap import dedent
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 import logging
-from ufo2ft.featureWriters import ast
-from ufo2ft.featureWriters.markFeatureWriter import (
-    MarkFeatureWriter,
-    NamedAnchor,
-    parseAnchorName,
-)
-from ufo2ft.featureCompiler import parseLayoutFeatures
+import os
+from textwrap import dedent
 
 import pytest
-import os
+
+from ufo2ft.featureCompiler import parseLayoutFeatures
+from ufo2ft.featureWriters import ast
+from ufo2ft.featureWriters.markFeatureWriter import (MarkFeatureWriter,
+                                                     NamedAnchor,
+                                                     parseAnchorName)
+
 from . import FeatureWriterTest
 
 

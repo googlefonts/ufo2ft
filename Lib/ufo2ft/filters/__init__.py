@@ -1,12 +1,15 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import importlib
 import logging
-from fontTools.misc.py23 import SimpleNamespace
-from fontTools.misc.loggingTools import Timer
-from ufo2ft.util import _LazyFontName, _GlyphSet
-from ufo2ft.constants import FILTERS_KEY as UFO2FT_FILTERS_KEY  # keep previous name
 
+from fontTools.misc.loggingTools import Timer
+from fontTools.misc.py23 import SimpleNamespace
+
+from ufo2ft.constants import \
+    FILTERS_KEY as UFO2FT_FILTERS_KEY  # keep previous name
+from ufo2ft.util import _GlyphSet, _LazyFontName
 
 logger = logging.getLogger(__name__)
 

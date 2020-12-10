@@ -1,7 +1,9 @@
-from __future__ import print_function, division, absolute_import
-from ufo2ft.filters.flattenComponents import FlattenComponentsFilter, logger
-from fontTools.misc.loggingTools import CapturingLogHandler
+from __future__ import absolute_import, division, print_function
+
 import pytest
+from fontTools.misc.loggingTools import CapturingLogHandler
+
+from ufo2ft.filters.flattenComponents import FlattenComponentsFilter, logger
 
 
 @pytest.fixture(

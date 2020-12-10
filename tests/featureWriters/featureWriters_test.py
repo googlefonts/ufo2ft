@@ -1,14 +1,12 @@
-from __future__ import print_function, absolute_import, division, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from ufo2ft.featureWriters import (
-    BaseFeatureWriter,
-    FEATURE_WRITERS_KEY,
-    loadFeatureWriters,
-    loadFeatureWriterFromString,
-)
+from ufo2ft.featureWriters import (FEATURE_WRITERS_KEY, BaseFeatureWriter,
+                                   loadFeatureWriterFromString,
+                                   loadFeatureWriters)
 
 try:
-    from plistlib import loads, FMT_XML
+    from plistlib import FMT_XML, loads
 
     def readPlistFromString(s):
         return loads(s, fmt=FMT_XML)
@@ -18,8 +16,8 @@ except ImportError:
     from plistlib import readPlistFromString
 
 import pytest
-from ..testSupport import _TempModule
 
+from ..testSupport import _TempModule
 
 TEST_LIB_PLIST = readPlistFromString(
     """

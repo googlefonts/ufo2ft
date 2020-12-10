@@ -11,20 +11,21 @@ for synthesizing values for specific attributes. These can be
 used externally as well.
 """
 
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
+import calendar
 import logging
 import math
-from datetime import datetime
-import calendar
+import os
 import time
 import unicodedata
-import os
+from datetime import datetime
 
-from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr
-from fontTools.misc.fixedTools import otRound
-from fontTools.misc.textTools import binary2num
 from fontTools import ufoLib
+from fontTools.misc.fixedTools import otRound
+from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr
+from fontTools.misc.textTools import binary2num
 
 logger = logging.getLogger(__name__)
 

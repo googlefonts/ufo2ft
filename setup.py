@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, division, absolute_import
-import sys
-from setuptools import setup, find_packages
+from __future__ import absolute_import, division, print_function
 
+import sys
+
+from setuptools import find_packages, setup
 
 needs_pytest = {"pytest", "test"}.intersection(sys.argv)
 pytest_runner = ["pytest_runner"] if needs_pytest else []

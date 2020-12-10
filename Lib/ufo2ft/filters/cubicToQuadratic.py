@@ -1,12 +1,13 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-
-from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.filters import BaseFilter
-from cu2qu.ufo import DEFAULT_MAX_ERR, CURVE_TYPE_LIB_KEY
-from cu2qu.pens import Cu2QuPointPen
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import logging
 
+from cu2qu.pens import Cu2QuPointPen
+from cu2qu.ufo import CURVE_TYPE_LIB_KEY, DEFAULT_MAX_ERR
+
+from ufo2ft.filters import BaseFilter
+from ufo2ft.fontInfoData import getAttrWithFallback
 
 logger = logging.getLogger(__name__)
 

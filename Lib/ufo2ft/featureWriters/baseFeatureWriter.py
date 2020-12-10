@@ -1,7 +1,10 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import SimpleNamespace
-from collections import OrderedDict
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 import logging
+from collections import OrderedDict
+
+from fontTools.misc.py23 import SimpleNamespace
 
 from ufo2ft.featureWriters import ast
 

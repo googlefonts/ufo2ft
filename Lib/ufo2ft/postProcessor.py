@@ -1,16 +1,15 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from fontTools.misc.py23 import BytesIO
-from fontTools.ttLib import TTFont
-from ufo2ft.constants import (
-    USE_PRODUCTION_NAMES,
-    GLYPHS_DONT_USE_PRODUCTION_NAMES,
-    KEEP_GLYPH_NAMES,
-)
 import enum
 import logging
 import re
 
+from fontTools.misc.py23 import BytesIO
+from fontTools.ttLib import TTFont
+
+from ufo2ft.constants import (GLYPHS_DONT_USE_PRODUCTION_NAMES,
+                              KEEP_GLYPH_NAMES, USE_PRODUCTION_NAMES)
 
 logger = logging.getLogger(__name__)
 

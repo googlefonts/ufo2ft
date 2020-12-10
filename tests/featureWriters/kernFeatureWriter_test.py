@@ -1,12 +1,14 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from textwrap import dedent
 import logging
+from textwrap import dedent
+
+import pytest
 
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
 
-import pytest
 from . import FeatureWriterTest
 
 

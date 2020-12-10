@@ -1,9 +1,10 @@
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
+
+import pytest
+from fontTools.misc.loggingTools import CapturingLogHandler
 
 import ufo2ft.filters
 from ufo2ft.filters.propagateAnchors import PropagateAnchorsFilter, logger
-from fontTools.misc.loggingTools import CapturingLogHandler
-import pytest
 
 
 @pytest.fixture(
