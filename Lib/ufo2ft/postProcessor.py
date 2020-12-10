@@ -5,8 +5,11 @@ from io import BytesIO
 
 from fontTools.ttLib import TTFont
 
-from ufo2ft.constants import (GLYPHS_DONT_USE_PRODUCTION_NAMES,
-                              KEEP_GLYPH_NAMES, USE_PRODUCTION_NAMES)
+from ufo2ft.constants import (
+    GLYPHS_DONT_USE_PRODUCTION_NAMES,
+    KEEP_GLYPH_NAMES,
+    USE_PRODUCTION_NAMES,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -234,7 +237,9 @@ class PostProcessor:
         # use name derived from unicode value
         unicode_val = glyph.unicode
         if glyph.unicode is not None:
-            return "{}{:04X}".format("u" if unicode_val > 0xFFFF else "uni", unicode_val)
+            return "{}{:04X}".format(
+                "u" if unicode_val > 0xFFFF else "uni", unicode_val
+            )
 
         # use production name + last (non-script) suffix if possible
         parts = glyph.name.rsplit(".", 1)

@@ -3,8 +3,13 @@ from types import SimpleNamespace
 import pytest
 from fontTools.misc.loggingTools import CapturingLogHandler
 
-from ufo2ft.filters import (UFO2FT_FILTERS_KEY, BaseFilter, getFilterClass,
-                            loadFilters, logger)
+from ufo2ft.filters import (
+    UFO2FT_FILTERS_KEY,
+    BaseFilter,
+    getFilterClass,
+    loadFilters,
+    logger,
+)
 
 from ..testSupport import _TempModule
 

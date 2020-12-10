@@ -1,6 +1,9 @@
-from ufo2ft.featureWriters import (FEATURE_WRITERS_KEY, BaseFeatureWriter,
-                                   loadFeatureWriterFromString,
-                                   loadFeatureWriters)
+from ufo2ft.featureWriters import (
+    FEATURE_WRITERS_KEY,
+    BaseFeatureWriter,
+    loadFeatureWriterFromString,
+    loadFeatureWriters,
+)
 
 try:
     from plistlib import FMT_XML, loads

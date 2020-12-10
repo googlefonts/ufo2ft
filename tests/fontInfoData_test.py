@@ -4,8 +4,11 @@ import time
 
 import pytest
 
-from ufo2ft.fontInfoData import (dateStringToTimeValue, getAttrWithFallback,
-                                 normalizeStringForPostscript)
+from ufo2ft.fontInfoData import (
+    dateStringToTimeValue,
+    getAttrWithFallback,
+    normalizeStringForPostscript,
+)
 
 
 @pytest.fixture

@@ -11,8 +11,12 @@ from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
 from fontTools.feaLib.parser import Parser
 
 from ufo2ft.constants import MTI_FEATURES_PREFIX
-from ufo2ft.featureWriters import (KernFeatureWriter, MarkFeatureWriter, ast,
-                                   loadFeatureWriters)
+from ufo2ft.featureWriters import (
+    KernFeatureWriter,
+    MarkFeatureWriter,
+    ast,
+    loadFeatureWriters,
+)
 
 logger = logging.getLogger(__name__)
 

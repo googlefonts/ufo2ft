@@ -4,13 +4,18 @@ from enum import IntEnum
 from fontTools import varLib
 
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, SPARSE_TTF_MASTER_TABLES
-from ufo2ft.featureCompiler import (MTI_FEATURES_PREFIX, FeatureCompiler,
-                                    MtiFeatureCompiler)
+from ufo2ft.featureCompiler import (
+    MTI_FEATURES_PREFIX,
+    FeatureCompiler,
+    MtiFeatureCompiler,
+)
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 from ufo2ft.postProcessor import PostProcessor
-from ufo2ft.preProcessor import (OTFPreProcessor,
-                                 TTFInterpolatablePreProcessor,
-                                 TTFPreProcessor)
+from ufo2ft.preProcessor import (
+    OTFPreProcessor,
+    TTFInterpolatablePreProcessor,
+    TTFPreProcessor,
+)
 from ufo2ft.util import _getDefaultNotdefGlyph, getDefaultMasterFont
 
 try:

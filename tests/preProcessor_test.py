@@ -6,14 +6,18 @@ from cu2qu.ufo import CURVE_TYPE_LIB_KEY
 from fontTools import designspaceLib
 
 import ufo2ft
-from ufo2ft.constants import (COLOR_LAYER_MAPPING_KEY, COLOR_LAYERS_KEY,
-                              COLOR_PALETTES_KEY)
+from ufo2ft.constants import (
+    COLOR_LAYER_MAPPING_KEY,
+    COLOR_LAYERS_KEY,
+    COLOR_PALETTES_KEY,
+)
 from ufo2ft.filters import UFO2FT_FILTERS_KEY
-from ufo2ft.filters.explodeColorLayerGlyphs import \
-    ExplodeColorLayerGlyphsFilter
-from ufo2ft.preProcessor import (TTFInterpolatablePreProcessor,
-                                 TTFPreProcessor,
-                                 _init_explode_color_layer_glyphs_filter)
+from ufo2ft.filters.explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
+from ufo2ft.preProcessor import (
+    TTFInterpolatablePreProcessor,
+    TTFPreProcessor,
+    _init_explode_color_layer_glyphs_filter,
+)
 
 
 def getpath(filename):

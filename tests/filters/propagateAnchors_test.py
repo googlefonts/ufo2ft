@@ -191,12 +191,12 @@ class PropagateAnchorsFilterTest:
         philter = PropagateAnchorsFilter()
         modified = philter(font)
         assert modified == {
-                "a-cyr",
-                "amacron",
-                "adieresis",
-                "adieresismacron",
-                "amacrondieresis",
-                "a_a",
+            "a-cyr",
+            "amacron",
+            "adieresis",
+            "adieresismacron",
+            "amacrondieresis",
+            "a_a",
         }
 
     def test_fail_during_anchor_propagation(self, font):

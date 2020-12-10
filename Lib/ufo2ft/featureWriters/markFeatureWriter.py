@@ -295,9 +295,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
     anchorSortKey = {"_bottom": -2, "_top": -1}
 
     def setContext(self, font, feaFile, compiler=None):
-        ctx = super().setContext(
-            font, feaFile, compiler=compiler
-        )
+        ctx = super().setContext(font, feaFile, compiler=compiler)
         ctx.gdefClasses = ast.getGDEFGlyphClasses(feaFile)
         ctx.anchorLists = self._getAnchorLists()
         ctx.anchorPairs = self._getAnchorPairs()

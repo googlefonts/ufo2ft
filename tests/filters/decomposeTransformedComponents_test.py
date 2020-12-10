@@ -1,7 +1,8 @@
 import logging
 
-from ufo2ft.filters.decomposeTransformedComponents import \
-    DecomposeTransformedComponentsFilter
+from ufo2ft.filters.decomposeTransformedComponents import (
+    DecomposeTransformedComponentsFilter,
+)
 from ufo2ft.util import logger
 
 

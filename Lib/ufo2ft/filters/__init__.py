@@ -4,8 +4,7 @@ from types import SimpleNamespace
 
 from fontTools.misc.loggingTools import Timer
 
-from ufo2ft.constants import \
-    FILTERS_KEY as UFO2FT_FILTERS_KEY  # keep previous name
+from ufo2ft.constants import FILTERS_KEY as UFO2FT_FILTERS_KEY  # keep previous name
 from ufo2ft.util import _GlyphSet, _LazyFontName
 
 logger = logging.getLogger(__name__)
@@ -45,7 +44,7 @@ def loadFilters(ufo):
             include=filterDict.get("include"),
             exclude=filterDict.get("exclude"),
             *filterDict.get("args", []),
-            **filterDict.get("kwargs", {})
+            **filterDict.get("kwargs", {}),
         )
         if filterDict.get("pre"):
             preFilters.append(filterObj)

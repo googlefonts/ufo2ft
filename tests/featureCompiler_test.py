@@ -8,8 +8,12 @@ from fontTools import ttLib
 from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
 
 from ufo2ft.featureCompiler import FeatureCompiler, logger, parseLayoutFeatures
-from ufo2ft.featureWriters import (FEATURE_WRITERS_KEY, BaseFeatureWriter,
-                                   KernFeatureWriter, ast)
+from ufo2ft.featureWriters import (
+    FEATURE_WRITERS_KEY,
+    BaseFeatureWriter,
+    KernFeatureWriter,
+    ast,
+)
 
 from .testSupport import pushd
 
