@@ -1,11 +1,8 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import importlib
 import logging
+from types import SimpleNamespace
 
 from fontTools.misc.loggingTools import Timer
-from fontTools.misc.py23 import SimpleNamespace
 
 from ufo2ft.constants import \
     FILTERS_KEY as UFO2FT_FILTERS_KEY  # keep previous name
@@ -57,7 +54,7 @@ def loadFilters(ufo):
     return preFilters, postFilters
 
 
-class BaseFilter(object):
+class BaseFilter:
 
     # tuple of strings listing the names of required positional arguments
     # which will be set as attributes of the filter instance
@@ -77,7 +74,7 @@ class BaseFilter(object):
             missing = [repr(a) for a in self._args[num_args:]]
             num_missing = len(missing)
             raise TypeError(
-                "missing {0} required positional argument{1}: {2}".format(
+                "missing {} required positional argument{}: {}".format(
                     num_missing, "s" if num_missing > 1 else "", ", ".join(missing)
                 )
             )
@@ -85,7 +82,7 @@ class BaseFilter(object):
             extra = [repr(a) for a in args[num_required:]]
             num_extra = len(extra)
             raise TypeError(
-                "got {0} unsupported positional argument{1}: {2}".format(
+                "got {} unsupported positional argument{}: {}".format(
                     num_extra, "s" if num_extra > 1 else "", ", ".join(extra)
                 )
             )
@@ -124,10 +121,10 @@ class BaseFilter(object):
         if kwargs:
             num_left = len(kwargs)
             raise TypeError(
-                "got {0}unsupported keyword argument{1}: {2}".format(
+                "got {}unsupported keyword argument{}: {}".format(
                     "an " if num_left == 1 else "",
                     "s" if len(kwargs) > 1 else "",
-                    ", ".join("'{}'".format(k) for k in kwargs),
+                    ", ".join(f"'{k}'" for k in kwargs),
                 )
             )
 
@@ -143,15 +140,15 @@ class BaseFilter(object):
         if self._kwargs:
             items.append(
                 ", ".join(
-                    "{0}={1!r}".format(k, getattr(self.options, k))
+                    "{}={!r}".format(k, getattr(self.options, k))
                     for k in sorted(self._kwargs)
                 )
             )
         if hasattr(self, "_include_repr"):
-            items.append("include={}".format(self._include_repr()))
+            items.append(f"include={self._include_repr()}")
         elif hasattr(self, "_exclude_repr"):
-            items.append("exclude={}".format(self._exclude_repr()))
-        return "{0}({1})".format(type(self).__name__, ", ".join(items))
+            items.append(f"exclude={self._exclude_repr()}")
+        return "{}({})".format(type(self).__name__, ", ".join(items))
 
     def start(self):
         """Subclasses can perform here custom initialization code."""

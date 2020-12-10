@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 from ufo2ft.featureWriters import (FEATURE_WRITERS_KEY, BaseFeatureWriter,
                                    loadFeatureWriterFromString,
                                    loadFeatureWriters)
@@ -20,7 +17,7 @@ import pytest
 from ..testSupport import _TempModule
 
 TEST_LIB_PLIST = readPlistFromString(
-    """
+    b"""
 <dict>
     <key>com.github.googlei18n.ufo2ft.featureWriters</key>
     <array>
@@ -35,9 +32,7 @@ TEST_LIB_PLIST = readPlistFromString(
         </dict>
     </array>
 </dict>
-""".encode(
-        "utf-8"
-    )
+"""
 )
 
 

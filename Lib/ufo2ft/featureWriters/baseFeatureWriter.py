@@ -1,15 +1,11 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import logging
 from collections import OrderedDict
-
-from fontTools.misc.py23 import SimpleNamespace
+from types import SimpleNamespace
 
 from ufo2ft.featureWriters import ast
 
 
-class BaseFeatureWriter(object):
+class BaseFeatureWriter:
     """Abstract features writer.
 
     The `tableTag` class attribute (str) states the tag of the OpenType

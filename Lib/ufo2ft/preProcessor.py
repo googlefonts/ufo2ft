@@ -1,8 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-from fontTools.misc.py23 import basestring
-
 from ufo2ft.constants import (COLOR_LAYER_MAPPING_KEY, COLOR_LAYERS_KEY,
                               COLOR_PALETTES_KEY)
 from ufo2ft.filters import loadFilters
@@ -11,7 +6,7 @@ from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet
 
 
-class BasePreProcessor(object):
+class BasePreProcessor:
     """Base class for objects that performs pre-processing operations on
     the UFO glyphs, such as decomposing composites, removing overlaps, or
     applying custom filters.
@@ -187,7 +182,7 @@ class TTFPreProcessor(OTFPreProcessor):
         return filters
 
 
-class TTFInterpolatablePreProcessor(object):
+class TTFInterpolatablePreProcessor:
     """Preprocessor for building TrueType-flavored OpenType fonts with
     interpolatable quadratic outlines.
 

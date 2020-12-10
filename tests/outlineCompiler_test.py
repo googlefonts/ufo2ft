@@ -1,14 +1,9 @@
-# -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import logging
 import os
 
 import pytest
 from cu2qu.ufo import font_to_quadratic
 from fontTools import designspaceLib
-from fontTools.misc.py23 import basestring, byteord, unichr
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 
@@ -58,7 +53,7 @@ def emptyufo(FontClass):
     return font
 
 
-class OutlineTTFCompilerTest(object):
+class OutlineTTFCompilerTest:
     def test_setupTable_gasp(self, testufo):
         compiler = OutlineTTFCompiler(testufo)
         compiler.otf = TTFont()
@@ -182,7 +177,7 @@ class OutlineTTFCompilerTest(object):
         assert len(glyf["e"].components) == 1
 
 
-class OutlineOTFCompilerTest(object):
+class OutlineOTFCompilerTest:
     def test_setupTable_CFF_all_blues_defined(self, testufo):
         testufo.info.postscriptBlueFuzz = 2
         testufo.info.postscriptBlueShift = 8
@@ -277,10 +272,10 @@ class OutlineOTFCompilerTest(object):
     def assertProgramEqual(self, expected, actual):
         assert len(expected) == len(actual)
         for exp_token, act_token in zip(expected, actual):
-            if isinstance(exp_token, basestring):
+            if isinstance(exp_token, str):
                 assert exp_token == act_token
             else:
-                assert not isinstance(act_token, basestring)
+                assert not isinstance(act_token, str)
                 assert exp_token == pytest.approx(act_token)
 
     def test_setupTable_CFF_round_all(self, testufo):
@@ -516,7 +511,7 @@ class OutlineOTFCompilerTest(object):
         assert private.nominalWidthX == 0
 
 
-class GlyphOrderTest(object):
+class GlyphOrderTest:
     def test_compile_original_glyph_order(self, testufo):
         DEFAULT_ORDER = [
             ".notdef",
@@ -587,7 +582,7 @@ class GlyphOrderTest(object):
         assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
 
 
-class NamesTest(object):
+class NamesTest:
     @pytest.mark.parametrize(
         "prod_names_key, prod_names_value",
         [(USE_PRODUCTION_NAMES, False), (GLYPHS_DONT_USE_PRODUCTION_NAMES, True)],
@@ -801,7 +796,7 @@ class ColrCpalTest:
         assert layers == {"a": [("a.color1", 0), ("a.color2", 1)]}
 
 
-ASCII = [unichr(c) for c in range(0x20, 0x7E)]
+ASCII = [chr(c) for c in range(0x20, 0x7E)]
 
 
 @pytest.mark.parametrize(
@@ -845,7 +840,7 @@ ASCII = [unichr(c) for c in range(0x20, 0x7E)]
 def test_calcCodePageRanges(emptyufo, unicodes, expected):
     font = emptyufo
     for i, c in enumerate(unicodes):
-        font.newGlyph("glyph%d" % i).unicode = byteord(c)
+        font.newGlyph("glyph%d" % i).unicode = ord(c)
 
     compiler = OutlineOTFCompiler(font)
     compiler.compile()

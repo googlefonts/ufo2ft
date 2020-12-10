@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import logging
 import os
 
@@ -30,7 +27,7 @@ def glyph_has_qcurve(ufo, glyph_name):
     )
 
 
-class TTFPreProcessorTest(object):
+class TTFPreProcessorTest:
     def test_no_inplace(self, FontClass):
         ufo = FontClass(getpath("TestFont.ufo"))
 
@@ -77,7 +74,7 @@ class TTFPreProcessorTest(object):
             assert glyph_has_qcurve(ufo, "c")
 
 
-class TTFInterpolatablePreProcessorTest(object):
+class TTFInterpolatablePreProcessorTest:
     def test_no_inplace(self, FontClass):
         ufo1 = FontClass(getpath("TestFont.ufo"))
         ufo2 = FontClass(getpath("TestFont.ufo"))
@@ -144,7 +141,7 @@ class TTFInterpolatablePreProcessorTest(object):
         assert (glyphSets[1]["a"][0][0].y - glyphSets[0]["a"][0][0].y) == 10
 
 
-class SkipExportGlyphsTest(object):
+class SkipExportGlyphsTest:
     def test_skip_export_glyphs_filter(self, FontClass):
         from ufo2ft.util import _GlyphSet
 
@@ -152,7 +149,7 @@ class SkipExportGlyphsTest(object):
         skipExportGlyphs = ["b", "d"]
         glyphSet = _GlyphSet.from_layer(ufo, skipExportGlyphs=skipExportGlyphs)
 
-        assert set(glyphSet.keys()) == set(["a", "c", "e", "f"])
+        assert set(glyphSet.keys()) == {"a", "c", "e", "f"}
         assert len(glyphSet["a"]) == 1
         assert not glyphSet["a"].components
         assert len(glyphSet["c"]) == 5  # 4 "d" components decomposed plus 1 outline
@@ -282,7 +279,7 @@ def color_ufo(FontClass):
     return ufo
 
 
-class InitExplodeColorLayerGlyphsFilterTest(object):
+class InitExplodeColorLayerGlyphsFilterTest:
     def test_no_color_palettes(self, FontClass):
         ufo = FontClass()
         filters = []

@@ -1,18 +1,9 @@
-# -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
-try:
-    from inspect import getfullargspec as getargspec  # PY3
-except ImportError:
-    from inspect import getargspec  # PY2
-
 import logging
 from copy import deepcopy
+from inspect import getfullargspec
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
-from fontTools.misc.py23 import unichr
 from fontTools.misc.transform import Identity, Transform
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
@@ -105,7 +96,7 @@ def _copyLayer(layer, obj_type=dict):
 def _getNewGlyphFactory(glyph):
     # defcon.Glyph doesn't take a name argument, ufoLib2 requires one...
     cls = glyph.__class__
-    if "name" in getargspec(cls.__init__).args:
+    if "name" in getfullargspec(cls.__init__).args:
 
         def newGlyph(name):
             return cls(name=name)
@@ -285,7 +276,7 @@ def unicodeInScripts(uv, scripts):
     False if it does not intersect.
     Return None for 'Common' script ('Zyyy').
     """
-    sx = unicodedata.script_extension(unichr(uv))
+    sx = unicodedata.script_extension(chr(uv))
     if "Zyyy" in sx:
         return None
     return not sx.isdisjoint(scripts)
@@ -299,7 +290,7 @@ def calcCodePageRanges(unicodes):
     """
     codepageRanges = set()
 
-    chars = [unichr(u) for u in unicodes]
+    chars = [chr(u) for u in unicodes]
 
     hasAscii = set(range(0x20, 0x7E)).issubset(unicodes)
     hasLineart = "┤" in chars
@@ -359,7 +350,7 @@ def calcCodePageRanges(unicodes):
             codepageRanges.add(30)  # OEM Character Set
         # TODO: Symbol bit has a special meaning (check the spec), we need
         # to confirm if this is wanted by default.
-        # elif unichr(0xF000) <= char <= unichr(0xF0FF):
+        # elif chr(0xF000) <= char <= chr(0xF0FF):
         #    codepageRanges.add(31)          # Symbol Character Set
         elif char == "þ" and hasAscii and hasLineart:
             codepageRanges.add(54)  # MS-DOS Icelandic
@@ -386,7 +377,7 @@ def calcCodePageRanges(unicodes):
     return codepageRanges
 
 
-class _LazyFontName(object):
+class _LazyFontName:
     def __init__(self, font):
         self.font = font
 

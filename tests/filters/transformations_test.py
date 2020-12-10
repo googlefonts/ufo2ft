@@ -74,7 +74,7 @@ def origin(request):
     return request.param
 
 
-class TransformationsFilterTest(object):
+class TransformationsFilterTest:
     def test_invalid_origin_value(self):
         with pytest.raises(ValueError) as excinfo:
             TransformationsFilter(Origin=5)

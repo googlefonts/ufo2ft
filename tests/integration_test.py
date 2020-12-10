@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import difflib
 import io
 import os
@@ -8,7 +5,6 @@ import sys
 import warnings
 
 import pytest
-from fontTools.misc.py23 import *
 
 from ufo2ft import (compileInterpolatableTTFs, compileOTF, compileTTF,
                     compileVariableCFF2, compileVariableTTF)
@@ -38,12 +34,12 @@ def readLines(f):
 
 
 def expectTTX(font, expectedTTX, tables=None):
-    with open(getpath(expectedTTX), "r", encoding="utf-8") as f:
+    with open(getpath(expectedTTX), encoding="utf-8") as f:
         expected = readLines(f)
     font.recalcTimestamp = False
     font["head"].created, font["head"].modified = 3570196637, 3601822698
     font["head"].checkSumAdjustment = 0x12345678
-    f = UnicodeIO()
+    f = io.StringIO()
     font.saveXML(f, tables=tables)
 
     actual = readLines(f)
@@ -60,7 +56,7 @@ def useProductionNames(request):
     return request.param
 
 
-class IntegrationTest(object):
+class IntegrationTest:
 
     _layoutTables = ["GDEF", "GSUB", "GPOS", "BASE"]
 

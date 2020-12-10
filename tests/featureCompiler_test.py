@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import logging
 import re
 from textwrap import dedent
@@ -17,7 +14,7 @@ from ufo2ft.featureWriters import (FEATURE_WRITERS_KEY, BaseFeatureWriter,
 from .testSupport import pushd
 
 
-class ParseLayoutFeaturesTest(object):
+class ParseLayoutFeaturesTest:
     def test_include(self, FontClass, tmpdir):
         tmpdir.join("test.fea").write_text(
             dedent(
@@ -77,7 +74,7 @@ class ParseLayoutFeaturesTest(object):
         assert "change the file name in the include" in caplog.text
 
 
-class FeatureCompilerTest(object):
+class FeatureCompilerTest:
     def test_ttFont(self, FontClass):
         ufo = FontClass()
         ufo.newGlyph("f")

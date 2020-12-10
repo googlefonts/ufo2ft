@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 import logging
 
 from cu2qu.pens import Cu2QuPointPen
@@ -21,7 +18,7 @@ class CubicToQuadraticFilter(BaseFilter):
     }
 
     def set_context(self, font, glyphSet):
-        ctx = super(CubicToQuadraticFilter, self).set_context(font, glyphSet)
+        ctx = super().set_context(font, glyphSet)
 
         relativeError = self.options.conversionError or DEFAULT_MAX_ERR
         ctx.absoluteError = relativeError * getAttrWithFallback(font.info, "unitsPerEm")
@@ -43,7 +40,7 @@ class CubicToQuadraticFilter(BaseFilter):
                 else:
                     raise NotImplementedError(curve_type)
 
-        modified = super(CubicToQuadraticFilter, self).__call__(font, glyphSet)
+        modified = super().__call__(font, glyphSet)
         if modified:
             stats = self.context.stats
             logger.info(
