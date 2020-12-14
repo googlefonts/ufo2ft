@@ -1,11 +1,11 @@
+from ufo2ft.constants import COLOR_LAYER_MAPPING_KEY, COLOR_LAYERS_KEY
 from ufo2ft.filters import BaseFilter
 from ufo2ft.util import _GlyphSet
-from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_LAYER_MAPPING_KEY
 
 
 class ExplodeColorLayerGlyphsFilter(BaseFilter):
 
-    """ This filter doesn't really filter glyphs, but copies glyphs
+    """This filter doesn't really filter glyphs, but copies glyphs
     from UFO layers to alternate glyphs in the default layer, for use
     in the COLR table.
     """

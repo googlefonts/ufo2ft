@@ -1,15 +1,15 @@
-from fontTools.misc.transform import Transform
-from ufo2ft.filters import BaseFilter
-
 import logging
 
+from fontTools.misc.transform import Transform
+
+from ufo2ft.filters import BaseFilter
 
 logger = logging.getLogger(__name__)
 
 
 class FlattenComponentsFilter(BaseFilter):
     def __call__(self, font, glyphSet=None):
-        if super(FlattenComponentsFilter, self).__call__(font, glyphSet):
+        if super().__call__(font, glyphSet):
             modified = self.context.modified
             if modified:
                 logger.info("Flattened composite glyphs: %i" % len(modified))

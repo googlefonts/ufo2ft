@@ -1,20 +1,19 @@
-from __future__ import print_function, absolute_import, division, unicode_literals
-from .baseFeatureWriter import BaseFeatureWriter
-from .kernFeatureWriter import KernFeatureWriter
-from .markFeatureWriter import MarkFeatureWriter
-
 import importlib
 import re
 from inspect import isclass
+
+from .baseFeatureWriter import BaseFeatureWriter
+from .kernFeatureWriter import KernFeatureWriter
+from .markFeatureWriter import MarkFeatureWriter
 
 try:
     from inspect import getfullargspec as getargspec  # PY3
 except ImportError:
     from inspect import getargspec  # PY2
+
 import logging
 
 from ufo2ft.constants import FEATURE_WRITERS_KEY
-
 
 __all__ = [
     "BaseFeatureWriter",
@@ -116,7 +115,7 @@ _featureWriterSpecRE = re.compile(
 
 
 def loadFeatureWriterFromString(spec):
-    """ Take a string specifying a feature writer class to load (either a
+    """Take a string specifying a feature writer class to load (either a
     built-in writer or one defined in an external, user-defined module),
     initialize it with given options and return the writer object.
 

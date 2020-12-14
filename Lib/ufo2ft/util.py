@@ -1,27 +1,18 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function, division, absolute_import, unicode_literals
-
-try:
-    from inspect import getfullargspec as getargspec  # PY3
-except ImportError:
-    from inspect import getargspec  # PY2
+import logging
 from copy import deepcopy
-from fontTools.misc.py23 import unichr
-from fontTools import ttLib
-from fontTools import subset
-from fontTools import unicodedata
+from inspect import getfullargspec
+
+from fontTools import subset, ttLib, unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
 from fontTools.misc.transform import Identity, Transform
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
-import logging
-
 
 logger = logging.getLogger(__name__)
 
 
 def makeOfficialGlyphOrder(font, glyphOrder=None):
-    """ Make the final glyph order for 'font'.
+    """Make the final glyph order for 'font'.
 
     If glyphOrder is None, try getting the font.glyphOrder list.
     If not explicit glyphOrder is defined, sort glyphs alphabetically.
@@ -105,7 +96,7 @@ def _copyLayer(layer, obj_type=dict):
 def _getNewGlyphFactory(glyph):
     # defcon.Glyph doesn't take a name argument, ufoLib2 requires one...
     cls = glyph.__class__
-    if "name" in getargspec(cls.__init__).args:
+    if "name" in getfullargspec(cls.__init__).args:
 
         def newGlyph(name):
             return cls(name=name)
@@ -201,7 +192,7 @@ def deepCopyContours(
 
 
 def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
-    """ Make a unicode: glyph name mapping for this glyph set (dict or Font).
+    """Make a unicode: glyph name mapping for this glyph set (dict or Font).
 
     Raises InvalidFontData exception if multiple glyphs are mapped to the
     same unicode codepoint.
@@ -226,7 +217,7 @@ def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
 
 
 def compileGSUB(featureFile, glyphOrder):
-    """ Compile and return a GSUB table from `featureFile` (feaLib
+    """Compile and return a GSUB table from `featureFile` (feaLib
     FeatureFile), using the given `glyphOrder` (list of glyph names).
     """
     font = ttLib.TTFont()
@@ -236,7 +227,7 @@ def compileGSUB(featureFile, glyphOrder):
 
 
 def closeGlyphsOverGSUB(gsub, glyphs):
-    """ Use the FontTools subsetter to perform a closure over the GSUB table
+    """Use the FontTools subsetter to perform a closure over the GSUB table
     given the initial `glyphs` (set of glyph names, str). Update the set
     in-place adding all the glyph names that can be reached via GSUB
     substitutions from this initial set.
@@ -247,7 +238,7 @@ def closeGlyphsOverGSUB(gsub, glyphs):
 
 
 def classifyGlyphs(unicodeFunc, cmap, gsub=None):
-    """ 'unicodeFunc' is a callable that takes a Unicode codepoint and
+    """'unicodeFunc' is a callable that takes a Unicode codepoint and
     returns a string denoting some Unicode property associated with the
     given character (or None if a character is considered 'neutral').
     'cmap' is a dictionary mapping Unicode codepoints to glyph names.
@@ -280,26 +271,26 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
 
 
 def unicodeInScripts(uv, scripts):
-    """ Check UnicodeData's ScriptExtension property for unicode codepoint
+    """Check UnicodeData's ScriptExtension property for unicode codepoint
     'uv' and return True if it intersects with the set of 'scripts' provided,
     False if it does not intersect.
     Return None for 'Common' script ('Zyyy').
     """
-    sx = unicodedata.script_extension(unichr(uv))
+    sx = unicodedata.script_extension(chr(uv))
     if "Zyyy" in sx:
         return None
     return not sx.isdisjoint(scripts)
 
 
 def calcCodePageRanges(unicodes):
-    """ Given a set of Unicode codepoints (integers), calculate the
+    """Given a set of Unicode codepoints (integers), calculate the
     corresponding OS/2 CodePage range bits.
     This is a direct translation of FontForge implementation:
     https://github.com/fontforge/fontforge/blob/7b2c074/fontforge/tottf.c#L3158
     """
     codepageRanges = set()
 
-    chars = [unichr(u) for u in unicodes]
+    chars = [chr(u) for u in unicodes]
 
     hasAscii = set(range(0x20, 0x7E)).issubset(unicodes)
     hasLineart = "┤" in chars
@@ -359,7 +350,7 @@ def calcCodePageRanges(unicodes):
             codepageRanges.add(30)  # OEM Character Set
         # TODO: Symbol bit has a special meaning (check the spec), we need
         # to confirm if this is wanted by default.
-        # elif unichr(0xF000) <= char <= unichr(0xF0FF):
+        # elif chr(0xF000) <= char <= chr(0xF0FF):
         #    codepageRanges.add(31)          # Symbol Character Set
         elif char == "þ" and hasAscii and hasLineart:
             codepageRanges.add(54)  # MS-DOS Icelandic
@@ -386,7 +377,7 @@ def calcCodePageRanges(unicodes):
     return codepageRanges
 
 
-class _LazyFontName(object):
+class _LazyFontName:
     def __init__(self, font):
         self.font = font
 

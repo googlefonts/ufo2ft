@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import logging
 
 import pytest
@@ -62,7 +60,7 @@ def test_warn_pre_filter(font, caplog):
     with caplog.at_level(
         logging.WARNING, logger=ufo2ft.filters.sortContours.logger.name
     ):
-        font_compiled = ufo2ft.compileTTF(font, inplace=True)
+        _ = ufo2ft.compileTTF(font, inplace=True)
 
     assert len(caplog.records) == 1
     assert "contains components which will not be sorted" in caplog.text
@@ -73,7 +71,7 @@ def test_no_warn_post_filter(font, caplog):
     with caplog.at_level(
         logging.WARNING, logger=ufo2ft.filters.sortContours.logger.name
     ):
-        font_compiled = ufo2ft.compileTTF(font, inplace=True)
+        _ = ufo2ft.compileTTF(font, inplace=True)
 
     assert len(caplog.records) == 0
 

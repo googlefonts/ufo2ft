@@ -1,7 +1,7 @@
-from __future__ import print_function, division, absolute_import
-from ufo2ft.filters.flattenComponents import FlattenComponentsFilter, logger
-from fontTools.misc.loggingTools import CapturingLogHandler
 import pytest
+from fontTools.misc.loggingTools import CapturingLogHandler
+
+from ufo2ft.filters.flattenComponents import FlattenComponentsFilter, logger
 
 
 @pytest.fixture(
@@ -54,7 +54,7 @@ def font(request, FontClass):
     return font
 
 
-class FlattenComponentsFilterTest(object):
+class FlattenComponentsFilterTest:
     def test_empty_glyph(self, font):
         philter = FlattenComponentsFilter(include={"space"})
         assert not philter(font)
@@ -70,7 +70,7 @@ class FlattenComponentsFilterTest(object):
     def test_nested_components_glyph(self, font):
         philter = FlattenComponentsFilter(include={"c"})
         modified = philter(font)
-        assert modified == set(["c"])
+        assert modified == {"c"}
         assert [(c.baseGlyph, c.transformation) for c in font["c"].components] == [
             ("a", (1, 0, 0, 1, 0, 0))
         ]
@@ -78,7 +78,7 @@ class FlattenComponentsFilterTest(object):
     def test_whole_font(self, font):
         philter = FlattenComponentsFilter()
         modified = philter(font)
-        assert modified == set(["c", "d"])
+        assert modified == {"c", "d"}
         assert [(c.baseGlyph, c.transformation) for c in font["c"].components] == [
             ("a", (1, 0, 0, 1, 0, 0))
         ]
@@ -91,5 +91,5 @@ class FlattenComponentsFilterTest(object):
     def test_logger(self, font):
         with CapturingLogHandler(logger, level="INFO") as captor:
             philter = FlattenComponentsFilter()
-            modified = philter(font)
+            _ = philter(font)
         captor.assertRegex("Flattened composite glyphs: 2")

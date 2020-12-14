@@ -1,7 +1,7 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
+import logging
+
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
 from ufo2ft.util import logger
-import logging
 
 
 def test_missing_component_is_dropped(FontClass, caplog):

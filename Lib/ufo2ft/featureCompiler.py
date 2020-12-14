@@ -1,36 +1,34 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
 import logging
 import os
-from inspect import isclass
-from tempfile import NamedTemporaryFile
 from collections import OrderedDict
+from inspect import isclass
+from io import StringIO
+from tempfile import NamedTemporaryFile
 
-from fontTools.misc.py23 import tobytes, tounicode, UnicodeIO
-from fontTools.feaLib.parser import Parser
-from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
-from fontTools.feaLib.error import IncludedFeaNotFound, FeatureLibError
 from fontTools import mtiLib
+from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
+from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
+from fontTools.feaLib.parser import Parser
 
 from ufo2ft.constants import MTI_FEATURES_PREFIX
 from ufo2ft.featureWriters import (
     KernFeatureWriter,
     MarkFeatureWriter,
-    loadFeatureWriters,
     ast,
+    loadFeatureWriters,
 )
-
 
 logger = logging.getLogger(__name__)
 
 
 def parseLayoutFeatures(font):
-    """ Parse OpenType layout features in the UFO and return a
+    """Parse OpenType layout features in the UFO and return a
     feaLib.ast.FeatureFile instance.
     """
-    featxt = tounicode(font.features.text or "", "utf-8")
+    featxt = font.features.text or ""
     if not featxt:
         return ast.FeatureFile()
-    buf = UnicodeIO(featxt)
+    buf = StringIO(featxt)
     ufoPath = font.path
     includeDir = None
     if ufoPath is not None:
@@ -58,7 +56,7 @@ def parseLayoutFeatures(font):
     return doc
 
 
-class BaseFeatureCompiler(object):
+class BaseFeatureCompiler:
     """Base class for generating OpenType features and compiling OpenType
     layout tables from these.
     """
@@ -78,6 +76,7 @@ class BaseFeatureCompiler(object):
 
         if ttFont is None:
             from fontTools.ttLib import TTFont
+
             from ufo2ft.util import makeOfficialGlyphOrder
 
             ttFont = TTFont()
@@ -92,7 +91,7 @@ class BaseFeatureCompiler(object):
         self.glyphSet = OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
 
     def setupFeatures(self):
-        """ Make the features source.
+        """Make the features source.
 
         **This should not be called externally.** Subclasses
         must override this method.
@@ -100,7 +99,7 @@ class BaseFeatureCompiler(object):
         raise NotImplementedError
 
     def buildTables(self):
-        """ Compile OpenType feature tables from the source.
+        """Compile OpenType feature tables from the source.
 
         **This should not be called externally.** Subclasses
         must override this method.
@@ -137,7 +136,7 @@ def _deprecateMethod(arg, repl):
     import warnings
 
     warnings.warn(
-        "%r method is deprecated; use %r instead" % (arg, repl),
+        f"{arg!r} method is deprecated; use {repl!r} instead",
         category=UserWarning,
         stacklevel=3,
     )
@@ -179,7 +178,7 @@ class FeatureCompiler(BaseFeatureCompiler):
             )
 
     def initFeatureWriters(self, featureWriters=None):
-        """ Initialize feature writer classes as specified in the UFO lib.
+        """Initialize feature writer classes as specified in the UFO lib.
         If none are defined in the UFO, the default feature writers are used:
         currently, KernFeatureWriter and MarkFeatureWriter.
         The 'featureWriters' argument can be used to override these.
@@ -226,7 +225,7 @@ class FeatureCompiler(BaseFeatureCompiler):
             self.features = featureFile.asFea()
         else:
             # no featureWriters, simply read existing features' text
-            self.features = tounicode(self.ufo.features.text or "", "utf-8")
+            self.features = self.ufo.features.text or ""
 
     def writeFeatures(self, outfile):
         if hasattr(self, "features"):
@@ -254,16 +253,15 @@ class FeatureCompiler(BaseFeatureCompiler):
         except FeatureLibError:
             if path is None:
                 # if compilation fails, create temporary file for inspection
-                data = tobytes(self.features, encoding="utf-8")
+                data = self.features.encode("utf-8")
                 with NamedTemporaryFile(delete=False) as tmp:
                     tmp.write(data)
                 logger.error("Compilation failed! Inspect temporary file: %r", tmp.name)
             raise
 
 
-
 class MtiFeatureCompiler(BaseFeatureCompiler):
-    """ Compile OpenType layout tables from MTI feature files using
+    """Compile OpenType layout tables from MTI feature files using
     fontTools.mtiLib.
     """
 
@@ -274,7 +272,7 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
         prefixLength = len(MTI_FEATURES_PREFIX) + 1
         for fn in ufo.data.fileNames:
             if fn.startswith(MTI_FEATURES_PREFIX) and fn.endswith(".mti"):
-                content = tounicode(ufo.data[fn], encoding="utf-8")
+                content = ufo.data[fn].decode("utf-8")
                 features[fn[prefixLength:-4]] = content
         self.mtiFeatures = features
 

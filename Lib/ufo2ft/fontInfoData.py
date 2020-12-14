@@ -11,20 +11,18 @@ for synthesizing values for specific attributes. These can be
 used externally as well.
 """
 
-from __future__ import print_function, division, absolute_import, unicode_literals
 
+import calendar
 import logging
 import math
-from datetime import datetime
-import calendar
+import os
 import time
 import unicodedata
-import os
+from datetime import datetime
 
-from fontTools.misc.py23 import tobytes, tostr, tounicode, unichr
+from fontTools import ufoLib
 from fontTools.misc.fixedTools import otRound
 from fontTools.misc.textTools import binary2num
-from fontTools import ufoLib
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +182,7 @@ def openTypeNameUniqueIDFallback(info):
     version = getAttrWithFallback(info, "openTypeNameVersion").replace("Version ", "")
     vendor = getAttrWithFallback(info, "openTypeOS2VendorID")
     fontName = getAttrWithFallback(info, "postscriptFontName")
-    return "%s;%s;%s" % (version, vendor, fontName)
+    return f"{version};{vendor};{fontName}"
 
 
 def openTypeNamePreferredFamilyNameFallback(info):
@@ -259,11 +257,10 @@ def openTypeOS2WinDescentFallback(info):
 # postscript
 
 _postscriptFontNameExceptions = set("[](){}<>/%")
-_postscriptFontNameAllowed = set([unichr(i) for i in range(33, 127)])
+_postscriptFontNameAllowed = {chr(i) for i in range(33, 127)}
 
 
 def normalizeStringForPostscript(s, allowSpaces=True):
-    s = tounicode(s)
     normalized = []
     for c in s:
         if c == " " and not allowSpaces:
@@ -274,8 +271,8 @@ def normalizeStringForPostscript(s, allowSpaces=True):
             # Use compatibility decomposed form, to keep parts in ascii
             c = unicodedata.normalize("NFKD", c)
             if not set(c) < _postscriptFontNameAllowed:
-                c = tounicode(tobytes(c, errors="replace"))
-        normalized.append(tostr(c))
+                c = c.encode("ascii", errors="replace").decode()
+        normalized.append(c)
     return "".join(normalized)
 
 
@@ -289,7 +286,7 @@ def postscriptFontNameFallback(info):
     as defined in the specification. This will draw from
     *openTypeNamePreferredFamilyName* and *openTypeNamePreferredSubfamilyName*.
     """
-    name = "%s-%s" % (
+    name = "{}-{}".format(
         getAttrWithFallback(info, "openTypeNamePreferredFamilyName"),
         getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"),
     )
@@ -300,7 +297,7 @@ def postscriptFullNameFallback(info):
     """
     Fallback to *openTypeNamePreferredFamilyName openTypeNamePreferredSubfamilyName*.
     """
-    return "%s %s" % (
+    return "{} {}".format(
         getAttrWithFallback(info, "openTypeNamePreferredFamilyName"),
         getAttrWithFallback(info, "openTypeNamePreferredSubfamilyName"),
     )
@@ -466,39 +463,37 @@ requiredAttributes = set(ufoLib.fontInfoAttributesVersion2) - (
     set(staticFallbackData.keys()) | set(specialFallbacks.keys())
 )
 
-recommendedAttributes = set(
-    [
-        "styleMapFamilyName",
-        "versionMajor",
-        "versionMinor",
-        "copyright",
-        "trademark",
-        "openTypeHeadCreated",
-        "openTypeNameDesigner",
-        "openTypeNameDesignerURL",
-        "openTypeNameManufacturer",
-        "openTypeNameManufacturerURL",
-        "openTypeNameLicense",
-        "openTypeNameLicenseURL",
-        "openTypeNameDescription",
-        "openTypeNameSampleText",
-        "openTypeOS2WidthClass",
-        "openTypeOS2WeightClass",
-        "openTypeOS2VendorID",
-        "openTypeOS2Panose",
-        "openTypeOS2FamilyClass",
-        "openTypeOS2UnicodeRanges",
-        "openTypeOS2CodePageRanges",
-        "openTypeOS2TypoLineGap",
-        "openTypeOS2Type",
-        "postscriptBlueValues",
-        "postscriptOtherBlues",
-        "postscriptFamilyBlues",
-        "postscriptFamilyOtherBlues",
-        "postscriptStemSnapH",
-        "postscriptStemSnapV",
-    ]
-)
+recommendedAttributes = {
+    "styleMapFamilyName",
+    "versionMajor",
+    "versionMinor",
+    "copyright",
+    "trademark",
+    "openTypeHeadCreated",
+    "openTypeNameDesigner",
+    "openTypeNameDesignerURL",
+    "openTypeNameManufacturer",
+    "openTypeNameManufacturerURL",
+    "openTypeNameLicense",
+    "openTypeNameLicenseURL",
+    "openTypeNameDescription",
+    "openTypeNameSampleText",
+    "openTypeOS2WidthClass",
+    "openTypeOS2WeightClass",
+    "openTypeOS2VendorID",
+    "openTypeOS2Panose",
+    "openTypeOS2FamilyClass",
+    "openTypeOS2UnicodeRanges",
+    "openTypeOS2CodePageRanges",
+    "openTypeOS2TypoLineGap",
+    "openTypeOS2Type",
+    "postscriptBlueValues",
+    "postscriptOtherBlues",
+    "postscriptFamilyBlues",
+    "postscriptFamilyOtherBlues",
+    "postscriptStemSnapH",
+    "postscriptStemSnapV",
+}
 
 # ------------
 # Main Methods

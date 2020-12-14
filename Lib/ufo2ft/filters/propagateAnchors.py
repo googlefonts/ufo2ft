@@ -12,26 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
+import logging
 
 import fontTools.pens.boundsPen
 from fontTools.misc.transform import Transform
+
 from ufo2ft.filters import BaseFilter
-
-import logging
-
 
 logger = logging.getLogger(__name__)
 
 
 class PropagateAnchorsFilter(BaseFilter):
     def set_context(self, font, glyphSet):
-        ctx = super(PropagateAnchorsFilter, self).set_context(font, glyphSet)
+        ctx = super().set_context(font, glyphSet)
         ctx.processed = set()
         return ctx
 
     def __call__(self, font, glyphSet=None):
-        if super(PropagateAnchorsFilter, self).__call__(font, glyphSet):
+        if super().__call__(font, glyphSet):
             modified = self.context.modified
             if modified:
                 logger.info("Glyphs with propagated anchors: %i" % len(modified))
@@ -181,5 +179,5 @@ def _bounds(component, glyph_set):
         return pen.bounds[:2]
     else:
         raise ValueError(
-            "Don't know to to compute the bounds of component '{}' ".format(component)
+            f"Don't know to to compute the bounds of component '{component}' "
         )

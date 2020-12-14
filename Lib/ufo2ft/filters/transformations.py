@@ -1,16 +1,14 @@
-import math
-from collections import namedtuple
 import logging
-
-from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.filters import BaseFilter
-
-from fontTools.misc.fixedTools import otRound
-from fontTools.misc.transform import Transform, Identity
-from fontTools.pens.recordingPen import RecordingPointPen
-from fontTools.pens.transformPen import TransformPointPen as _TransformPointPen
+import math
 from enum import IntEnum
 
+from fontTools.misc.fixedTools import otRound
+from fontTools.misc.transform import Identity, Transform
+from fontTools.pens.recordingPen import RecordingPointPen
+from fontTools.pens.transformPen import TransformPointPen as _TransformPointPen
+
+from ufo2ft.filters import BaseFilter
+from ufo2ft.fontInfoData import getAttrWithFallback
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +64,7 @@ class TransformationsFilter(BaseFilter):
             raise AssertionError(origin)
 
     def set_context(self, font, glyphSet):
-        ctx = super(TransformationsFilter, self).set_context(font, glyphSet)
+        ctx = super().set_context(font, glyphSet)
 
         origin_height = self.get_origin_height(font, self.options.Origin)
 

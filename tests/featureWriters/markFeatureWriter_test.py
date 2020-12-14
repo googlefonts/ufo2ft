@@ -1,15 +1,17 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-from textwrap import dedent
 import logging
+import os
+from textwrap import dedent
+
+import pytest
+
+from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.featureWriters.markFeatureWriter import (
     MarkFeatureWriter,
     NamedAnchor,
     parseAnchorName,
 )
-from ufo2ft.featureCompiler import parseLayoutFeatures
 
-import pytest
 from . import FeatureWriterTest
 
 
@@ -56,12 +58,7 @@ def test_NamedAnchor_invalid():
 
 
 def test_NamedAnchor_repr():
-    import sys
-
-    if sys.version_info >= (3,):
-        expected = "NamedAnchor(name='top', x=1.0, y=2.0)"
-    else:
-        expected = "NamedAnchor(name=u'top', x=1.0, y=2.0)"
+    expected = "NamedAnchor(name='top', x=1.0, y=2.0)"
     assert repr(NamedAnchor("top", 1.0, 2.0)) == expected
 
 
@@ -169,7 +166,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         logger = "ufo2ft.featureWriters.markFeatureWriter.MarkFeatureWriter"
         with caplog.at_level(logging.WARNING, logger=logger):
-            fea = self.writeFeatures(testufo)
+            _ = self.writeFeatures(testufo)
 
         assert len(caplog.records) == 1
         assert "invalid ligature anchor 'top_1' in mark glyph" in caplog.text
@@ -306,7 +303,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert "feature mkmk" not in fea
 
     def test_predefined_anchor_lists(self, FontClass):
-        """ Roboto uses some weird anchor naming scheme, see:
+        """Roboto uses some weird anchor naming scheme, see:
         https://github.com/google/roboto/blob/
             5700de83856781fa0c097a349e46dbaae5792cb0/
             scripts/lib/fontbuild/markFeature.py#L41-L47
@@ -374,7 +371,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
+            """  # noqa: B950
         )
 
     def test_abvm_blwm_features(self, FontClass):
@@ -450,18 +447,18 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2base;
 
             } mark;
-            """
+            """  # noqa: B950
         )
 
     def test_all_features(self, testufo):
         ufo = testufo
         ufo.info.unitsPerEm = 1000
 
-        cedilla = ufo.newGlyph("cedillacomb").anchors = [
+        ufo.newGlyph("cedillacomb").anchors = [
             {"name": "_bottom", "x": 10, "y": -5},
             {"name": "bottom", "x": 20, "y": -309},
         ]
-        c = ufo.newGlyph("c").appendAnchor({"name": "bottom", "x": 240, "y": 0})
+        ufo.newGlyph("c").appendAnchor({"name": "bottom", "x": 240, "y": 0})
 
         dottedCircle = ufo.newGlyph("dottedCircle")
         dottedCircle.unicode = 0x25CC
@@ -595,7 +592,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
+            """  # noqa: B950
         )
 
     def test_mark_mkmk_features_with_GDEF(self, testufo):
@@ -604,14 +601,14 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             {"name": "top", "x": 300, "y": 700},
             {"name": "center", "x": 320, "y": 360},
         ]
-        # these glyphs have compatible anchors but since they not lised in
+        # these glyphs have compatible anchors but since they not listed in
         # the GDEF groups, they won't be included in the mark/mkmk feature
         testufo.newGlyph("Alpha").appendAnchor({"name": "topleft", "x": -10, "y": 400})
         testufo.newGlyph("psili").appendAnchor({"name": "_topleft", "x": 0, "y": 50})
         dotaccentcomb = testufo.newGlyph("dotaccentcomb")
-        # this mark glyph has more than one mark anchor, but only one will be
-        # used to define its markClass. Following Glyphs.app, the anchors
-        # '_bottom' and '_top' get priority over others.
+        # this mark glyph has more than one mark anchor, and both will be
+        # generated. Since the two mark anchors cannot cohabit in the same
+        # mark lookup, two lookups will be generated.
         dotaccentcomb.anchors = [
             {"name": "_center", "x": 0, "y": 0},
             {"name": "_top", "x": 0, "y": 0},
@@ -641,15 +638,20 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         assert str(generated) == dedent(
             """\
+            markClass dotaccentcomb <anchor 0 0> @MC_center;
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass dotaccentcomb <anchor 0 0> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mark {
                 lookup mark2base {
+                    pos base D <anchor 320 360> mark @MC_center;
+                } mark2base;
+
+                lookup mark2base_1 {
                     pos base D <anchor 300 700> mark @MC_top;
                     pos base a <anchor 100 200> mark @MC_top;
-                } mark2base;
+                } mark2base_1;
 
                 lookup mark2liga {
                     pos ligature f_i <anchor 100 500> mark @MC_top
@@ -667,6 +669,137 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
+            """
+        )
+
+    def test_multiple_anchor_classes_base(self, FontClass):
+        dirname = os.path.dirname(os.path.dirname(__file__))
+        fontPath = os.path.join(dirname, "data", "MultipleAnchorClasses.ufo")
+        testufo = FontClass(fontPath)
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor -175 589> @MC_topA;
+            markClass acutecomb <anchor -175 572> @MC_topE;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 515 581> mark @MC_topA;
+                } mark2base;
+
+                lookup mark2base_1 {
+                    pos base e <anchor -21 396> mark @MC_topE;
+                } mark2base_1;
+
+            } mark;
+            """
+        )
+
+    def test_multiple_anchor_classes_liga(self, FontClass):
+        ufo = FontClass()
+        liga = ufo.newGlyph("f_i")
+        liga.appendAnchor({"name": "top_1", "x": 100, "y": 500})
+        liga.appendAnchor({"name": "top_2", "x": 600, "y": 500})
+        ligaOther = ufo.newGlyph("f_f")
+        ligaOther.appendAnchor({"name": "topOther_1", "x": 101, "y": 501})
+        ligaOther.appendAnchor({"name": "topOther_2", "x": 601, "y": 501})
+        ligaMix = ufo.newGlyph("f_l")
+        ligaMix.appendAnchor({"name": "top_1", "x": 102, "y": 502})
+        ligaMix.appendAnchor({"name": "topOther_2", "x": 602, "y": 502})
+        acutecomb = ufo.newGlyph("acutecomb")
+        acutecomb.appendAnchor({"name": "_top", "x": 100, "y": 200})
+        acutecomb.appendAnchor({"name": "_topOther", "x": 150, "y": 250})
+
+        generated = self.writeFeatures(ufo)
+
+        # MC_top should be last thanks to the anchorSortKey
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass acutecomb <anchor 150 250> @MC_topOther;
+
+            feature mark {
+                lookup mark2liga {
+                    pos ligature f_f <anchor 101 501> mark @MC_topOther
+                        ligComponent <anchor 601 501> mark @MC_topOther;
+                    pos ligature f_l <anchor NULL>
+                        ligComponent <anchor 602 502> mark @MC_topOther;
+                } mark2liga;
+
+                lookup mark2liga_1 {
+                    pos ligature f_i <anchor 100 500> mark @MC_top
+                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_l <anchor 102 502> mark @MC_top
+                        ligComponent <anchor NULL>;
+                } mark2liga_1;
+
+            } mark;
+            """
+        )
+
+    def test_multiple_anchor_classes_conflict_warning(self, FontClass, caplog):
+        """Check that when there is an ambiguity in the form of one base glyph
+        and one mark glyph being able to be linked through two different
+        anchor pairs, the mark feature writer emits a warning about the
+        situation but still outputs a valid feature declaraction. The last
+        lookup in that feature declaration will "win" and determine the outcome
+        of mark positioning. See this comment for more information:
+        https://github.com/googlefonts/ufo2ft/pull/416#issuecomment-721693266
+        """
+        caplog.set_level(logging.INFO)
+
+        ufo = FontClass()
+        liga = ufo.newGlyph("a")
+        liga.appendAnchor({"name": "top", "x": 100, "y": 500})
+        liga.appendAnchor({"name": "topOther", "x": 150, "y": 550})
+        acutecomb = ufo.newGlyph("acutecomb")
+        acutecomb.appendAnchor({"name": "_top", "x": 100, "y": 200})
+        acutecomb.appendAnchor({"name": "_topOther", "x": 150, "y": 250})
+
+        generated = self.writeFeatures(ufo)
+
+        assert (
+            "The base glyph a and mark glyph acutecomb are ambiguously "
+            "connected by several anchor classes: MC_topOther, MC_top. "
+            "The last one will prevail." in caplog.text
+        )
+
+        # MC_top should be last thanks to the anchorSortKey
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass acutecomb <anchor 150 250> @MC_topOther;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 150 550> mark @MC_topOther;
+                } mark2base;
+
+                lookup mark2base_1 {
+                    pos base a <anchor 100 500> mark @MC_top;
+                } mark2base_1;
+
+            } mark;
+            """
+        )
+
+    def test_skipExportGlyphs(self, testufo):
+        testufo.lib["public.skipExportGlyphs"] = ["f_i", "tildecomb"]
+        testufo.glyphOrder = ["a", "f_i", "acutecomb", "tildcomb"]
+
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+            } mark;
             """
         )
 

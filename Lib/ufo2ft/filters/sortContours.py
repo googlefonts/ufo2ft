@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
 
 import fontTools.pens.boundsPen
@@ -28,7 +26,8 @@ class SortContoursFilter(BaseFilter):
 
         if glyph.components:
             logger.warning(
-                "Glyph '%s' contains components which will not be sorted.", glyph.name,
+                "Glyph '%s' contains components which will not be sorted.",
+                glyph.name,
             )
 
         contours = sorted(

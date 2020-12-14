@@ -1,17 +1,16 @@
-from __future__ import print_function, division, absolute_import
+from types import SimpleNamespace
+
+import pytest
+from fontTools.misc.loggingTools import CapturingLogHandler
 
 from ufo2ft.filters import (
-    getFilterClass,
-    BaseFilter,
-    loadFilters,
     UFO2FT_FILTERS_KEY,
+    BaseFilter,
+    getFilterClass,
+    loadFilters,
     logger,
 )
 
-from fontTools.misc.py23 import SimpleNamespace
-from fontTools.misc.loggingTools import CapturingLogHandler
-
-import pytest
 from ..testSupport import _TempModule
 
 
@@ -90,7 +89,7 @@ def test_loadFilters_custom_namespace(ufo):
     ufo.lib[UFO2FT_FILTERS_KEY][0]["namespace"] = "my_dangerous_filters"
 
     class SelfDestructFilter(FooBarFilter):
-        def filter(glyph):
+        def filter(self, glyph):
             # Don't try this at home!!! LOL :)
             # shutil.rmtree(os.path.expanduser("~"))
             return True
@@ -198,11 +197,15 @@ def test_BaseFilter_repr():
         == "FooBarFilter('e', 'f', c=2.0, exclude=('z',))"
     )
 
-    f = lambda g: False
+    def f(g):
+        return False
+
     assert repr(
         FooBarFilter("g", "h", include=f)
     ) == "FooBarFilter('g', 'h', c=0, include={})".format(repr(f))
 
 
 if __name__ == "__main__":
+    import sys
+
     sys.exit(pytest.main(sys.argv))
