@@ -1,22 +1,24 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-from textwrap import dedent
 import logging
 import re
-from fontTools import ttLib
-from fontTools.feaLib.error import IncludedFeaNotFound, FeatureLibError
-from ufo2ft.featureWriters import (
-    BaseFeatureWriter,
-    KernFeatureWriter,
-    FEATURE_WRITERS_KEY,
-    ast,
-)
-from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures, logger
+from textwrap import dedent
+
 import py
 import pytest
+from fontTools import ttLib
+from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
+
+from ufo2ft.featureCompiler import FeatureCompiler, logger, parseLayoutFeatures
+from ufo2ft.featureWriters import (
+    FEATURE_WRITERS_KEY,
+    BaseFeatureWriter,
+    KernFeatureWriter,
+    ast,
+)
+
 from .testSupport import pushd
 
 
-class ParseLayoutFeaturesTest(object):
+class ParseLayoutFeaturesTest:
     def test_include(self, FontClass, tmpdir):
         tmpdir.join("test.fea").write_text(
             dedent(
@@ -76,7 +78,7 @@ class ParseLayoutFeaturesTest(object):
         assert "change the file name in the include" in caplog.text
 
 
-class FeatureCompilerTest(object):
+class FeatureCompilerTest:
     def test_ttFont(self, FontClass):
         ufo = FontClass()
         ufo.newGlyph("f")

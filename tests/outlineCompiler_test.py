@@ -1,28 +1,26 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function, absolute_import, division, unicode_literals
+import logging
+import os
+
+import pytest
 from cu2qu.ufo import font_to_quadratic
 from fontTools.ttLib import TTFont
-from fontTools.misc.py23 import basestring, unichr, byteord
-from fontTools import designspaceLib
-from ufo2ft.outlineCompiler import OutlineTTFCompiler, OutlineOTFCompiler
-from ufo2ft.fontInfoData import intListToNum
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
-from ufo2ft.constants import (
-    USE_PRODUCTION_NAMES,
-    GLYPHS_DONT_USE_PRODUCTION_NAMES,
-    SPARSE_TTF_MASTER_TABLES,
-    SPARSE_OTF_MASTER_TABLES,
-)
+
 from ufo2ft import (
-    compileTTF,
-    compileOTF,
+    compileInterpolatableOTFsFromDS,
     compileInterpolatableTTFs,
     compileInterpolatableTTFsFromDS,
-    compileInterpolatableOTFsFromDS,
+    compileOTF,
+    compileTTF,
 )
-import os
-import logging
-import pytest
+from ufo2ft.constants import (
+    GLYPHS_DONT_USE_PRODUCTION_NAMES,
+    SPARSE_OTF_MASTER_TABLES,
+    SPARSE_TTF_MASTER_TABLES,
+    USE_PRODUCTION_NAMES,
+)
+from ufo2ft.fontInfoData import intListToNum
+from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 
 
 def getpath(filename):
@@ -62,7 +60,7 @@ def emptyufo(FontClass):
     return font
 
 
-class OutlineTTFCompilerTest(object):
+class OutlineTTFCompilerTest:
     def test_setupTable_gasp(self, testufo):
         compiler = OutlineTTFCompiler(testufo)
         compiler.otf = TTFont()
@@ -186,7 +184,7 @@ class OutlineTTFCompilerTest(object):
         assert len(glyf["e"].components) == 1
 
 
-class OutlineOTFCompilerTest(object):
+class OutlineOTFCompilerTest:
     def test_setupTable_CFF_all_blues_defined(self, testufo):
         testufo.info.postscriptBlueFuzz = 2
         testufo.info.postscriptBlueShift = 8
@@ -281,10 +279,10 @@ class OutlineOTFCompilerTest(object):
     def assertProgramEqual(self, expected, actual):
         assert len(expected) == len(actual)
         for exp_token, act_token in zip(expected, actual):
-            if isinstance(exp_token, basestring):
+            if isinstance(exp_token, str):
                 assert exp_token == act_token
             else:
-                assert not isinstance(act_token, basestring)
+                assert not isinstance(act_token, str)
                 assert exp_token == pytest.approx(act_token)
 
     def test_setupTable_CFF_round_all(self, testufo):
@@ -520,7 +518,7 @@ class OutlineOTFCompilerTest(object):
         assert private.nominalWidthX == 0
 
 
-class GlyphOrderTest(object):
+class GlyphOrderTest:
     def test_compile_original_glyph_order(self, testufo):
         DEFAULT_ORDER = [
             ".notdef",
@@ -591,7 +589,7 @@ class GlyphOrderTest(object):
         assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
 
 
-class NamesTest(object):
+class NamesTest:
     @pytest.mark.parametrize(
         "prod_names_key, prod_names_value",
         [(USE_PRODUCTION_NAMES, False), (GLYPHS_DONT_USE_PRODUCTION_NAMES, True)],
@@ -771,7 +769,6 @@ class NamesTest(object):
 
 
 class ColrCpalTest:
-
     def test_colr_cpal(self, FontClass):
         testufo = FontClass(getpath("ColorTest.ufo"))
         assert "com.github.googlei18n.ufo2ft.colorLayerMapping" in testufo.lib
@@ -779,25 +776,34 @@ class ColrCpalTest:
         result = compileTTF(testufo)
         assert "COLR" in result
         assert "CPAL" in result
-        layers = {gn: [(layer.name, layer.colorID) for layer in layers]
-                      for gn, layers in result["COLR"].ColorLayers.items()}
-        assert layers == {'a': [('a.color1', 0), ('a.color2', 1)],
-                          'b': [('b.color1', 1), ('b.color2', 0)],
-                          'c': [('c.color2', 1), ('c.color1', 0)]}
+        layers = {
+            gn: [(layer.name, layer.colorID) for layer in layers]
+            for gn, layers in result["COLR"].ColorLayers.items()
+        }
+        assert layers == {
+            "a": [("a.color1", 0), ("a.color2", 1)],
+            "b": [("b.color1", 1), ("b.color2", 0)],
+            "c": [("c.color2", 1), ("c.color1", 0)],
+        }
 
     def test_colr_cpal_raw(self, FontClass):
         testufo = FontClass(getpath("ColorTestRaw.ufo"))
         assert "com.github.googlei18n.ufo2ft.colorLayers" in testufo.lib
         assert "com.github.googlei18n.ufo2ft.colorPalettes" in testufo.lib
         result = compileTTF(testufo)
-        palettes = [[(c.red, c.green, c.blue, c.alpha) for c in p] for p in result["CPAL"].palettes]
+        palettes = [
+            [(c.red, c.green, c.blue, c.alpha) for c in p]
+            for p in result["CPAL"].palettes
+        ]
         assert palettes == [[(255, 76, 26, 255), (0, 102, 204, 255)]]
-        layers = {gn: [(layer.name, layer.colorID) for layer in layers]
-                      for gn, layers in result["COLR"].ColorLayers.items()}
-        assert layers == {"a": [('a.color1', 0), ('a.color2', 1)]}
+        layers = {
+            gn: [(layer.name, layer.colorID) for layer in layers]
+            for gn, layers in result["COLR"].ColorLayers.items()
+        }
+        assert layers == {"a": [("a.color1", 0), ("a.color2", 1)]}
 
 
-ASCII = [unichr(c) for c in range(0x20, 0x7E)]
+ASCII = [chr(c) for c in range(0x20, 0x7E)]
 
 
 @pytest.mark.parametrize(
@@ -841,7 +847,7 @@ ASCII = [unichr(c) for c in range(0x20, 0x7E)]
 def test_calcCodePageRanges(emptyufo, unicodes, expected):
     font = emptyufo
     for i, c in enumerate(unicodes):
-        font.newGlyph("glyph%d" % i).unicode = byteord(c)
+        font.newGlyph("glyph%d" % i).unicode = ord(c)
 
     compiler = OutlineOTFCompiler(font)
     compiler.compile()

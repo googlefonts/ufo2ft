@@ -1,12 +1,10 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-
-from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.filters import BaseFilter
-from cu2qu.ufo import DEFAULT_MAX_ERR, CURVE_TYPE_LIB_KEY
-from cu2qu.pens import Cu2QuPointPen
-
 import logging
 
+from cu2qu.pens import Cu2QuPointPen
+from cu2qu.ufo import CURVE_TYPE_LIB_KEY, DEFAULT_MAX_ERR
+
+from ufo2ft.filters import BaseFilter
+from ufo2ft.fontInfoData import getAttrWithFallback
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +18,7 @@ class CubicToQuadraticFilter(BaseFilter):
     }
 
     def set_context(self, font, glyphSet):
-        ctx = super(CubicToQuadraticFilter, self).set_context(font, glyphSet)
+        ctx = super().set_context(font, glyphSet)
 
         relativeError = self.options.conversionError or DEFAULT_MAX_ERR
         ctx.absoluteError = relativeError * getAttrWithFallback(font.info, "unitsPerEm")
@@ -42,12 +40,12 @@ class CubicToQuadraticFilter(BaseFilter):
                 else:
                     raise NotImplementedError(curve_type)
 
-        modified = super(CubicToQuadraticFilter, self).__call__(font, glyphSet)
+        modified = super().__call__(font, glyphSet)
         if modified:
             stats = self.context.stats
             logger.info(
                 "New spline lengths: %s"
-                % (", ".join("%s: %d" % (l, stats[l]) for l in sorted(stats.keys())))
+                % (", ".join("%s: %d" % (ln, stats[ln]) for ln in sorted(stats.keys())))
             )
 
         if self.options.rememberCurveType:

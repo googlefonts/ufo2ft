@@ -1,48 +1,44 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import byteord, tounicode, round, unichr, BytesIO
-
 import logging
 import math
 from collections import Counter, namedtuple
+from io import BytesIO
 from types import SimpleNamespace
 
-from fontTools.ttLib import TTFont, newTable
 from fontTools.cffLib import (
-    TopDictIndex,
-    TopDict,
     CharStrings,
-    SubrsIndex,
     GlobalSubrsIndex,
-    PrivateDict,
     IndexedStrings,
+    PrivateDict,
+    SubrsIndex,
+    TopDict,
+    TopDictIndex,
 )
-from fontTools.pens.reverseContourPen import ReverseContourPen
-from fontTools.pens.boundsPen import ControlBoundsPen
-from fontTools.pens.t2CharStringPen import T2CharStringPen
-from fontTools.pens.ttGlyphPen import TTGlyphPen
-from fontTools.ttLib.tables.O_S_2f_2 import Panose
-from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
-from fontTools.ttLib.tables._g_l_y_f import Glyph, USE_MY_METRICS
 from fontTools.misc.arrayTools import unionRect
 from fontTools.misc.fixedTools import otRound
+from fontTools.pens.boundsPen import ControlBoundsPen
+from fontTools.pens.reverseContourPen import ReverseContourPen
+from fontTools.pens.t2CharStringPen import T2CharStringPen
+from fontTools.pens.ttGlyphPen import TTGlyphPen
+from fontTools.ttLib import TTFont, newTable
+from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS, Glyph
+from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
+from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
+from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_PALETTES_KEY
 from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import (
-    getAttrWithFallback,
-    dateStringToTimeValue,
     dateStringForNow,
+    dateStringToTimeValue,
+    getAttrWithFallback,
     intListToNum,
     normalizeStringForPostscript,
 )
 from ufo2ft.util import (
+    _copyGlyph,
+    calcCodePageRanges,
     makeOfficialGlyphOrder,
     makeUnicodeToGlyphNameMapping,
-    calcCodePageRanges,
-    _copyGlyph,
 )
-from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_PALETTES_KEY
-
 
 logger = logging.getLogger(__name__)
 
@@ -68,13 +64,25 @@ def _getVerticalOrigin(font, glyph):
     return otRound(verticalOrigin)
 
 
-class BaseOutlineCompiler(object):
+class BaseOutlineCompiler:
     """Create a feature-less outline binary."""
 
     sfntVersion = None
     tables = frozenset(
-        ["head", "hmtx", "hhea", "name", "maxp", "cmap", "OS/2", "post", "vmtx", "vhea",
-         "COLR", "CPAL"]
+        [
+            "head",
+            "hmtx",
+            "hhea",
+            "name",
+            "maxp",
+            "cmap",
+            "OS/2",
+            "post",
+            "vmtx",
+            "vhea",
+            "COLR",
+            "CPAL",
+        ]
     )
 
     def __init__(
@@ -120,8 +128,9 @@ class BaseOutlineCompiler(object):
             getAttrWithFallback(self.ufo.info, metric) is not None
             for metric in vertical_metrics
         )
-        self.colorLayers = COLOR_LAYERS_KEY in self.ufo.lib and \
-                           COLOR_PALETTES_KEY in self.ufo.lib
+        self.colorLayers = (
+            COLOR_LAYERS_KEY in self.ufo.lib and COLOR_PALETTES_KEY in self.ufo.lib
+        )
 
         # write the glyph order
         self.otf.setGlyphOrder(self.glyphOrder)
@@ -188,7 +197,7 @@ class BaseOutlineCompiler(object):
         in a different way if desired.
         """
         fontBox = None
-        for glyphName, glyphBox in self.glyphBoundingBoxes.items():
+        for glyphBox in self.glyphBoundingBoxes.values():
             if glyphBox is None:
                 continue
             if fontBox is None:
@@ -370,7 +379,7 @@ class BaseOutlineCompiler(object):
             # ascii-encoded bytes when it can. On the other hand, fontTools's
             # name table `setName` method wants unicode strings, so we must
             # decode them first
-            nameVal = tounicode(nameRecord["string"], encoding="ascii")
+            nameVal = nameRecord["string"]
             name.setName(nameVal, nameId, platformId, platEncId, langId)
 
         # Build name records
@@ -382,7 +391,7 @@ class BaseOutlineCompiler(object):
         preferredSubfamilyName = getAttrWithFallback(
             font.info, "openTypeNamePreferredSubfamilyName"
         )
-        fullName = "%s %s" % (preferredFamilyName, preferredSubfamilyName)
+        fullName = f"{preferredFamilyName} {preferredSubfamilyName}"
 
         nameVals = {
             0: getAttrWithFallback(font.info, "copyright"),
@@ -421,7 +430,6 @@ class BaseOutlineCompiler(object):
             nameVal = nameVals[nameId]
             if not nameVal:
                 continue
-            nameVal = tounicode(nameVal, encoding="ascii")
             platformId = 3
             platEncId = 10 if _isNonBMP(nameVal) else 1
             langId = 0x409
@@ -453,13 +461,11 @@ class BaseOutlineCompiler(object):
 
         from fontTools.ttLib.tables._c_m_a_p import cmap_format_4
 
-        nonBMP = dict(
-            (k, v) for k, v in self.unicodeToGlyphNameMapping.items() if k > 65535
-        )
+        nonBMP = {k: v for k, v in self.unicodeToGlyphNameMapping.items() if k > 65535}
         if nonBMP:
-            mapping = dict(
-                (k, v) for k, v in self.unicodeToGlyphNameMapping.items() if k <= 65535
-            )
+            mapping = {
+                k: v for k, v in self.unicodeToGlyphNameMapping.items() if k <= 65535
+            }
         else:
             mapping = dict(self.unicodeToGlyphNameMapping)
         # mac
@@ -619,11 +625,8 @@ class BaseOutlineCompiler(object):
         os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
 
         # vendor id
-        os2.achVendID = tounicode(
-            getAttrWithFallback(font.info, "openTypeOS2VendorID"),
-            encoding="ascii",
-            errors="ignore",
-        )
+        os2.achVendID = getAttrWithFallback(font.info, "openTypeOS2VendorID")
+
         # vertical metrics
         os2.sxHeight = otRound(getAttrWithFallback(font.info, "xHeight"))
         os2.sCapHeight = otRound(getAttrWithFallback(font.info, "capHeight"))
@@ -854,7 +857,10 @@ class BaseOutlineCompiler(object):
         vorg.defaultVertOriginY = vorg_count.most_common(1)[0][0]
         if len(vorg_count) > 1:
             for glyphName, glyph in self.allGlyphs.items():
-                vorg.VOriginRecords[glyphName] = _getVerticalOrigin(self.otf, glyph)
+                vertOriginY = _getVerticalOrigin(self.otf, glyph)
+                if vertOriginY == vorg.defaultVertOriginY:
+                    continue
+                vorg.VOriginRecords[glyphName] = vertOriginY
         vorg.numVertOriginYMetrics = len(vorg.VOriginRecords)
 
     def setupTable_vhea(self):
@@ -997,7 +1003,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         else:
             # round all coordinates to integers by default
             self.roundTolerance = 0.5
-        super(OutlineOTFCompiler, self).__init__(
+        super().__init__(
             font,
             glyphSet=glyphSet,
             glyphOrder=glyphOrder,
@@ -1286,8 +1292,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
 
 class OutlineTTFCompiler(BaseOutlineCompiler):
-    """Compile a .ttf font with TrueType outlines.
-    """
+    """Compile a .ttf font with TrueType outlines."""
 
     sfntVersion = "\000\001\000\000"
     tables = BaseOutlineCompiler.tables | {"loca", "gasp", "glyf"}
@@ -1348,7 +1353,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
-        super(OutlineTTFCompiler, self).setupTable_post()
+        super().setupTable_post()
         if "post" not in self.otf:
             return
 
@@ -1383,7 +1388,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
     @staticmethod
     def autoUseMyMetrics(ttGlyph, glyphName, hmtx):
-        """ Set the "USE_MY_METRICS" flag on the first component having the
+        """Set the "USE_MY_METRICS" flag on the first component having the
         same advance width as the composite glyph, no transform and no
         horizontal shift (but allow it to shift vertically).
         This forces the composite glyph to use the possibly hinted horizontal
@@ -1406,7 +1411,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                     break
 
 
-class StubGlyph(object):
+class StubGlyph:
 
     """
     This object will be used to create missing glyphs
@@ -1420,7 +1425,7 @@ class StubGlyph(object):
         unitsPerEm,
         ascender,
         descender,
-        unicodes=[],
+        unicodes=None,
         reverseContour=False,
     ):
         self.name = name
@@ -1428,11 +1433,11 @@ class StubGlyph(object):
         self.unitsPerEm = unitsPerEm
         self.ascender = ascender
         self.descender = descender
-        self.unicodes = unicodes
+        self.unicodes = unicodes if unicodes is not None else []
         self.components = []
         self.anchors = []
-        if unicodes:
-            self.unicode = unicodes[0]
+        if self.unicodes:
+            self.unicode = self.unicodes[0]
         else:
             self.unicode = None
         if name == ".notdef":

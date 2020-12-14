@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 SPARSE_TTF_MASTER_TABLES = frozenset(
     ["glyf", "head", "hmtx", "loca", "maxp", "post", "vmtx"]
 )

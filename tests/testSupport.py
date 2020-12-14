@@ -1,16 +1,14 @@
-from __future__ import print_function, division, absolute_import
-import sys
-import os
-import types
 import contextlib
-from fontTools.misc.py23 import tostr
+import os
+import sys
+import types
 
 
-class _TempModule(object):
+class _TempModule:
     """Temporarily replace a module in sys.modules with an empty namespace"""
 
     def __init__(self, mod_name):
-        mod_name = tostr(mod_name, encoding="ascii")
+        mod_name = str(mod_name)
         self.mod_name = mod_name
         self.module = types.ModuleType(mod_name)
         self._saved_module = []

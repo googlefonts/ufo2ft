@@ -1,16 +1,15 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-
-from fontTools.misc.py23 import BytesIO
-from fontTools.ttLib import TTFont
-from ufo2ft.constants import (
-    USE_PRODUCTION_NAMES,
-    GLYPHS_DONT_USE_PRODUCTION_NAMES,
-    KEEP_GLYPH_NAMES,
-)
 import enum
 import logging
 import re
+from io import BytesIO
 
+from fontTools.ttLib import TTFont
+
+from ufo2ft.constants import (
+    GLYPHS_DONT_USE_PRODUCTION_NAMES,
+    KEEP_GLYPH_NAMES,
+    USE_PRODUCTION_NAMES,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class CFFVersion(enum.IntEnum):
     CFF2 = 2
 
 
-class PostProcessor(object):
+class PostProcessor:
     """Does some post-processing operations on a compiled OpenType font, using
     info from the source UFO where necessary.
     """
@@ -54,7 +53,6 @@ class PostProcessor(object):
         optimizeCFF=True,
         cffVersion=None,
         subroutinizer=None,
-        compileTrueTypeHinting=True,
     ):
         """
         useProductionNames (Optional[bool]):
@@ -96,13 +94,6 @@ class PostProcessor(object):
           is True and CFF or CFF2 table is present. Choose between "compreffor" or
           "cffsubr". By default "compreffor" is used for CFF 1, and "cffsubr" for CFF 2.
           NOTE: compreffor currently doesn't support input fonts with CFF2 table.
-
-        compileTrueTypeHinting:
-          Compile TrueType hinting from the UFO, if present. You must make sure
-          that the outlines from the UFO have not been altered before this
-          step. The point indices change e.g. when removing overlaps or
-          changing the path directions. This will most certainly make any
-          hinting data in the source UFO invalid.
         """
         if self._get_cff_version(self.otf):
             self.process_cff(
@@ -110,13 +101,6 @@ class PostProcessor(object):
                 cffVersion=cffVersion,
                 subroutinizer=subroutinizer,
             )
-
-        if compileTrueTypeHinting and "glyf" in self.otf:
-            self._compile_truetype_hinting()
-            # Force compilation of the font to avoid glyph name problems
-            tmp = BytesIO()
-            self.otf.save(tmp)
-            self.otf = TTFont(tmp)
 
         self.process_glyph_names(useProductionNames)
 
@@ -200,9 +184,7 @@ class PostProcessor(object):
             cff.CharStrings.charStrings = {
                 rename_map.get(n, n): v for n, v in char_strings.items()
             }
-            if cff_tag == "CFF ":
-                cff.charset = [rename_map.get(n, n) for n in cff.charset]
-        return rename_map
+            cff.charset = [rename_map.get(n, n) for n in cff.charset]
 
     def _build_production_names(self):
         seen = {}
@@ -232,12 +214,6 @@ class PostProcessor(object):
             rename_map[name] = self._unique_name(valid_name, seen)
         return rename_map
 
-    def _compile_truetype_hinting(self, rename_map={}):
-        logger.info("Compiling TrueType hinting")
-        from ufo2ft.instructionCompiler import InstructionCompiler
-        ic = InstructionCompiler(ufo=self.ufo, ttf=self.otf)
-        ic.compile()
-
     @staticmethod
     def _unique_name(name, seen):
         """Append incremental '.N' suffix if glyph is a duplicate."""
@@ -261,12 +237,14 @@ class PostProcessor(object):
         # use name derived from unicode value
         unicode_val = glyph.unicode
         if glyph.unicode is not None:
-            return "%s%04X" % ("u" if unicode_val > 0xFFFF else "uni", unicode_val)
+            return "{}{:04X}".format(
+                "u" if unicode_val > 0xFFFF else "uni", unicode_val
+            )
 
         # use production name + last (non-script) suffix if possible
         parts = glyph.name.rsplit(".", 1)
         if len(parts) == 2 and parts[0] in self.glyphSet:
-            return "%s.%s" % (
+            return "{}.{}".format(
                 self._build_production_name(self.glyphSet[parts[0]]),
                 parts[1],
             )
@@ -274,7 +252,7 @@ class PostProcessor(object):
         # use ligature name, making sure to look up components with suffixes
         parts = glyph.name.split(".", 1)
         if len(parts) == 2:
-            liga_parts = ["%s.%s" % (n, parts[1]) for n in parts[0].split("_")]
+            liga_parts = ["{}.{}".format(n, parts[1]) for n in parts[0].split("_")]
         else:
             liga_parts = glyph.name.split("_")
         if len(liga_parts) > 1 and all(n in self.glyphSet for n in liga_parts):
@@ -364,7 +342,8 @@ class PostProcessor(object):
 
 
 # Adapted from fontTools.cff.specializer.programToCommands
-# https://github.com/fonttools/fonttools/blob/babca16/Lib/fontTools/cffLib/specializer.py#L40-L122
+# https://github.com/fonttools/fonttools/blob/babca16
+# /Lib/fontTools/cffLib/specializer.py#L40-L122
 # When converting from CFF to CFF2 we need to drop the charstrings' widths.
 # This function returns a new charstring program without the initial width value.
 # TODO: Move to fontTools?

@@ -1,18 +1,17 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-import io
-from fontTools.misc.py23 import *
-from ufo2ft import (
-    compileOTF,
-    compileTTF,
-    compileInterpolatableTTFs,
-    compileVariableTTF,
-    compileVariableCFF2,
-)
-import warnings
 import difflib
+import io
 import os
 import sys
+
 import pytest
+
+from ufo2ft import (
+    compileInterpolatableTTFs,
+    compileOTF,
+    compileTTF,
+    compileVariableCFF2,
+    compileVariableTTF,
+)
 
 
 def getpath(filename):
@@ -44,12 +43,12 @@ def readLines(f):
 
 
 def expectTTX(font, expectedTTX, tables=None):
-    with open(getpath(expectedTTX), "r", encoding="utf-8") as f:
+    with open(getpath(expectedTTX), encoding="utf-8") as f:
         expected = readLines(f)
     font.recalcTimestamp = False
     font["head"].created, font["head"].modified = 3570196637, 3601822698
     font["head"].checkSumAdjustment = 0x12345678
-    f = UnicodeIO()
+    f = io.StringIO()
     font.saveXML(f, tables=tables)
 
     actual = readLines(f)
@@ -66,7 +65,7 @@ def useProductionNames(request):
     return request.param
 
 
-class IntegrationTest(object):
+class IntegrationTest:
 
     _layoutTables = ["GDEF", "GSUB", "GPOS", "BASE"]
 
@@ -123,6 +122,25 @@ class IntegrationTest(object):
     def test_removeOverlaps_pathops(self, testufo):
         ttf = compileTTF(testufo, removeOverlaps=True, overlapsBackend="pathops")
         expectTTX(ttf, "TestFont-NoOverlaps-TTF-pathops.ttx")
+
+    def test_nestedComponents(self, FontClass):
+        ufo = FontClass(getpath("NestedComponents-Regular.ufo"))
+        ttf = compileTTF(ufo)
+        assert ttf["maxp"].maxComponentDepth != 1
+        ttf = compileTTF(ufo, flattenComponents=True)
+        assert ttf["maxp"].maxComponentDepth == 1
+
+    def test_nestedComponents_interpolatable(self, FontClass):
+        ufos = [
+            FontClass(getpath("NestedComponents-Regular.ufo")),
+            FontClass(getpath("NestedComponents-Bold.ufo")),
+        ]
+        ttfs = compileInterpolatableTTFs(ufos)
+        for ttf in ttfs:
+            assert ttf["maxp"].maxComponentDepth != 1
+        ttfs = compileInterpolatableTTFs(ufos, flattenComponents=True)
+        for ttf in ttfs:
+            assert ttf["maxp"].maxComponentDepth == 1
 
     def test_interpolatableTTFs_lazy(self, FontClass):
         # two same UFOs **must** be interpolatable
@@ -203,7 +221,7 @@ class IntegrationTest(object):
     def test_debugFeatureFile(self, designspace):
         tmp = io.StringIO()
 
-        varfont = compileVariableTTF(designspace, debugFeatureFile=tmp)
+        _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
 
         assert "### LayerFont-Regular ###" in tmp.getvalue()
         assert "### LayerFont-Bold ###" in tmp.getvalue()

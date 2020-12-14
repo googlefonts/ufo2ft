@@ -1,8 +1,5 @@
 """Helpers to build or extract data from feaLib AST objects."""
 
-from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.feaLib import ast
-from fontTools import unicodedata
 
 import collections
 import re
@@ -10,6 +7,9 @@ import re
 # we re-export here all the feaLib AST classes so they can be used from
 # writer modules with a single `from ufo2ft.featureWriters import ast`
 import sys
+
+from fontTools import unicodedata
+from fontTools.feaLib import ast
 
 self = sys.modules[__name__]
 for name in getattr(ast, "__all__", dir(ast)):
@@ -87,7 +87,7 @@ def makeLookupFlag(name=None, markAttachment=None, markFilteringSet=None):
 
 
 def makeGlyphClassDefinitions(groups, feaFile=None, stripPrefix=""):
-    """ Given a groups dictionary ({str: list[str]}), create feaLib
+    """Given a groups dictionary ({str: list[str]}), create feaLib
     GlyphClassDefinition objects for each group.
     Return a dict keyed by the original group name.
 

@@ -1,12 +1,10 @@
-from __future__ import print_function, division, absolute_import, unicode_literals
-from fontTools.misc.py23 import unichr, basestring, SimpleNamespace
-from fontTools.misc.fixedTools import otRound
+from types import SimpleNamespace
 
 from fontTools import unicodedata
+from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import classifyGlyphs
-
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -109,7 +107,7 @@ DFLT_SCRIPTS = {"Zyyy", "Zinh"}
 
 
 def unicodeScriptDirection(uv):
-    sc = unicodedata.script(unichr(uv))
+    sc = unicodedata.script(chr(uv))
     if sc in DFLT_SCRIPTS:
         return None
     return unicodedata.script_horizontal_direction(sc)
@@ -123,7 +121,7 @@ def unicodeBidiType(uv):
     """Return "R" for characters with RTL direction, or "L" for LTR (whether
     'strong' or 'weak'), or None for neutral direction.
     """
-    char = unichr(uv)
+    char = chr(uv)
     bidiType = unicodedata.bidirectional(char)
     if bidiType in RTL_BIDI_TYPES:
         return "R"
@@ -133,19 +131,19 @@ def unicodeBidiType(uv):
         return None
 
 
-class KerningPair(object):
+class KerningPair:
 
     __slots__ = ("side1", "side2", "value", "directions", "bidiTypes")
 
     def __init__(self, side1, side2, value, directions=None, bidiTypes=None):
-        if isinstance(side1, basestring):
+        if isinstance(side1, str):
             self.side1 = ast.GlyphName(side1)
         elif isinstance(side1, ast.GlyphClassDefinition):
             self.side1 = ast.GlyphClassName(side1)
         else:
             raise AssertionError(side1)
 
-        if isinstance(side2, basestring):
+        if isinstance(side2, str):
             self.side2 = ast.GlyphName(side2)
         elif isinstance(side2, ast.GlyphClassDefinition):
             self.side2 = ast.GlyphClassName(side2)
@@ -168,18 +166,18 @@ class KerningPair(object):
     def glyphs(self):
         if self.firstIsClass:
             classDef1 = self.side1.glyphclass
-            glyphs1 = set(g.asFea() for g in classDef1.glyphSet())
+            glyphs1 = {g.asFea() for g in classDef1.glyphSet()}
         else:
             glyphs1 = {self.side1.asFea()}
         if self.secondIsClass:
             classDef2 = self.side2.glyphclass
-            glyphs2 = set(g.asFea() for g in classDef2.glyphSet())
+            glyphs2 = {g.asFea() for g in classDef2.glyphSet()}
         else:
             glyphs2 = {self.side2.asFea()}
         return glyphs1 | glyphs2
 
     def __repr__(self):
-        return "<%s %s %s %s%s%s>" % (
+        return "<{} {} {} {}{}{}>".format(
             self.__class__.__name__,
             self.side1,
             self.side2,
@@ -204,9 +202,7 @@ class KernFeatureWriter(BaseFeatureWriter):
     options = dict(ignoreMarks=True)
 
     def setContext(self, font, feaFile, compiler=None):
-        ctx = super(KernFeatureWriter, self).setContext(
-            font, feaFile, compiler=compiler
-        )
+        ctx = super().setContext(font, feaFile, compiler=compiler)
         ctx.gdefClasses = ast.getGDEFGlyphClasses(feaFile)
         ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
 
@@ -227,7 +223,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             )
             self.context.todo.remove("dist")
 
-        return super(KernFeatureWriter, self).shouldContinue()
+        return super().shouldContinue()
 
     def _write(self):
         lookups = self._makeKerningLookups()

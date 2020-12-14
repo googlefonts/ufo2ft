@@ -1,14 +1,12 @@
-from __future__ import print_function, absolute_import, division, unicode_literals
-
 from ufo2ft.featureWriters import (
-    BaseFeatureWriter,
     FEATURE_WRITERS_KEY,
-    loadFeatureWriters,
+    BaseFeatureWriter,
     loadFeatureWriterFromString,
+    loadFeatureWriters,
 )
 
 try:
-    from plistlib import loads, FMT_XML
+    from plistlib import FMT_XML, loads
 
     def readPlistFromString(s):
         return loads(s, fmt=FMT_XML)
@@ -18,11 +16,11 @@ except ImportError:
     from plistlib import readPlistFromString
 
 import pytest
+
 from ..testSupport import _TempModule
 
-
 TEST_LIB_PLIST = readPlistFromString(
-    """
+    b"""
 <dict>
     <key>com.github.googlei18n.ufo2ft.featureWriters</key>
     <array>
@@ -37,9 +35,7 @@ TEST_LIB_PLIST = readPlistFromString(
         </dict>
     </array>
 </dict>
-""".encode(
-        "utf-8"
-    )
+"""
 )
 
 
