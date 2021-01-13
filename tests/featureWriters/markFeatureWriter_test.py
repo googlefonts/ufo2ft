@@ -4,6 +4,7 @@ from textwrap import dedent
 
 import pytest
 
+import ufo2ft.errors
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.featureWriters.markFeatureWriter import (
@@ -11,7 +12,6 @@ from ufo2ft.featureWriters.markFeatureWriter import (
     NamedAnchor,
     parseAnchorName,
 )
-import ufo2ft.errors
 
 from . import FeatureWriterTest
 

@@ -5,10 +5,10 @@ from functools import partial
 
 from fontTools.misc.fixedTools import otRound
 
-from ufo2ft.featureWriters import BaseFeatureWriter, ast, findFeatureInsertionMarkers
+import ufo2ft.featureWriters
+from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import classifyGlyphs, unicodeInScripts
-from ufo2ft.errors import InvalidFeaturesData
 
 
 class AbstractMarkPos:
@@ -877,7 +877,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
         feaFile = self.context.feaFile
 
-        insertion_tag2index = findFeatureInsertionMarkers(feaFile)
+        insertion_tag2index = ufo2ft.featureWriters.findFeatureInsertionMarkers(feaFile)
 
         if insertion_tag2index:
             # Write the class definitions at the first feature insertion point,
