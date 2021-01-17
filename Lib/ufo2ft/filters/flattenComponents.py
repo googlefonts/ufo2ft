@@ -36,7 +36,8 @@ def _flattenComponent(glyphSet, component):
     """Returns a list of tuples (baseGlyph, transform) of nested component."""
 
     glyph = glyphSet[component.baseGlyph]
-    if not glyph.components:
+    # Any contour will cause components to be decomposed
+    if not glyph.components or len(glyph) > 0:
         transformation = Transform(*component.transformation)
         return [(component.baseGlyph, transformation)]
 
