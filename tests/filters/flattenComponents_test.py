@@ -10,7 +10,7 @@ from ufo2ft.filters.flattenComponents import FlattenComponentsFilter, logger
             "glyphs": [
                 {"name": "space", "width": 500},
                 {
-                    "name": "a",
+                    "name": "contourGlyph",
                     "width": 350,
                     "outline": [
                         ("moveTo", ((0, 0),)),
@@ -21,22 +21,27 @@ from ufo2ft.filters.flattenComponents import FlattenComponentsFilter, logger
                     ],
                 },
                 {
-                    "name": "b",
+                    "name": "componentGlyph",
                     "width": 350,
-                    "outline": [("addComponent", ("a", (1, 0, 0, 1, 0, 0)))],
+                    "outline": [("addComponent", ("contourGlyph", (1, 0, 0, 1, 0, 0)))],
                 },
                 {
-                    "name": "c",
+                    "name": "nestedComponentGlyph",
                     "width": 350,
-                    "outline": [("addComponent", ("b", (1, 0, 0, 1, 0, 0)))],
+                    "outline": [
+                        ("addComponent", ("componentGlyph", (1, 0, 0, 1, 0, 0)))
+                    ],
                 },
                 {
-                    "name": "d",
+                    "name": "componentAndNestedComponentsGlyph",
                     "width": 700,
                     "outline": [
-                        ("addComponent", ("a", (1, 0, 0, 1, 0, 0))),
-                        ("addComponent", ("b", (1, 0, 0, 1, 350, 0))),
-                        ("addComponent", ("c", (1, 0, 0, 1, 700, 0))),
+                        ("addComponent", ("contourGlyph", (1, 0, 0, 1, 0, 0))),
+                        ("addComponent", ("componentGlyph", (1, 0, 0, 1, 350, 0))),
+                        (
+                            "addComponent",
+                            ("nestedComponentGlyph", (1, 0, 0, 1, 700, 0)),
+                        ),
                     ],
                 },
             ]
@@ -60,32 +65,40 @@ class FlattenComponentsFilterTest:
         assert not philter(font)
 
     def test_contour_glyph(self, font):
-        philter = FlattenComponentsFilter(include={"a"})
+        philter = FlattenComponentsFilter(include={"contourGlyph"})
         assert not philter(font)
 
     def test_component_glyph(self, font):
-        philter = FlattenComponentsFilter(include={"b"})
+        philter = FlattenComponentsFilter(include={"componentGlyph"})
         assert not philter(font)
 
     def test_nested_components_glyph(self, font):
-        philter = FlattenComponentsFilter(include={"c"})
+        philter = FlattenComponentsFilter(include={"nestedComponentGlyph"})
         modified = philter(font)
-        assert modified == {"c"}
-        assert [(c.baseGlyph, c.transformation) for c in font["c"].components] == [
-            ("a", (1, 0, 0, 1, 0, 0))
-        ]
+        assert modified == {"nestedComponentGlyph"}
+        assert [
+            (c.baseGlyph, c.transformation)
+            for c in font["nestedComponentGlyph"].components
+        ] == [("contourGlyph", (1, 0, 0, 1, 0, 0))]
 
     def test_whole_font(self, font):
         philter = FlattenComponentsFilter()
         modified = philter(font)
-        assert modified == {"c", "d"}
-        assert [(c.baseGlyph, c.transformation) for c in font["c"].components] == [
-            ("a", (1, 0, 0, 1, 0, 0))
-        ]
-        assert [(c.baseGlyph, c.transformation) for c in font["d"].components] == [
-            ("a", (1, 0, 0, 1, 0, 0)),
-            ("a", (1, 0, 0, 1, 350, 0)),
-            ("a", (1, 0, 0, 1, 700, 0)),
+        assert modified == {
+            "nestedComponentGlyph",
+            "componentAndNestedComponentsGlyph",
+        }
+        assert [
+            (c.baseGlyph, c.transformation)
+            for c in font["nestedComponentGlyph"].components
+        ] == [("contourGlyph", (1, 0, 0, 1, 0, 0))]
+        assert [
+            (c.baseGlyph, c.transformation)
+            for c in font["componentAndNestedComponentsGlyph"].components
+        ] == [
+            ("contourGlyph", (1, 0, 0, 1, 0, 0)),
+            ("contourGlyph", (1, 0, 0, 1, 350, 0)),
+            ("contourGlyph", (1, 0, 0, 1, 700, 0)),
         ]
 
     def test_logger(self, font):
