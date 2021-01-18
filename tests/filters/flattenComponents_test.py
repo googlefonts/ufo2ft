@@ -76,6 +76,36 @@ from ufo2ft.filters.flattenComponents import FlattenComponentsFilter, logger
                         ),
                     ],
                 },
+                {
+                    "name": "scaledComponentGlyph",
+                    "width": 600,
+                    "outline": [
+                        (
+                            "addComponent",
+                            ("contourGlyph", (0.5, 0, 0, 0.5, 50, 50)),
+                        ),
+                    ],
+                },
+                {
+                    "name": "nestedScaledComponentGlyph",
+                    "width": 600,
+                    "outline": [
+                        (
+                            "addComponent",
+                            ("scaledComponentGlyph", (1, 0, 0, 1, 40, 40)),
+                        ),
+                    ],
+                },
+                {
+                    "name": "scaledNestedComponentGlyph",
+                    "width": 600,
+                    "outline": [
+                        (
+                            "addComponent",
+                            ("scaledComponentGlyph", (1.2, 0, 0, 1.2, 40, 40)),
+                        ),
+                    ],
+                },
             ]
         }
     ]
@@ -127,6 +157,28 @@ class FlattenComponentsFilterTest:
             for c in font["nestedNestedContourAndComponentGlyph"].components
         ] == [("contourAndComponentGlyph", (1, 0, 0, 1, 95, 0))]
 
+    def test_scaled_component_glyph(self, font):
+        philter = FlattenComponentsFilter(
+            include={
+                "scaledComponentGlyph",
+                "nestedScaledComponentGlyph",
+                "scaledNestedComponentGlyph",
+            }
+        )
+        modified = philter(font)
+        assert modified == {
+            "nestedScaledComponentGlyph",
+            "scaledNestedComponentGlyph",
+        }
+        assert [
+            (c.baseGlyph, c.transformation)
+            for c in font["nestedScaledComponentGlyph"].components
+        ] == [("contourGlyph", (0.5, 0, 0, 0.5, 90, 90))]
+        assert [
+            (c.baseGlyph, c.transformation)
+            for c in font["scaledNestedComponentGlyph"].components
+        ] == [("contourGlyph", (0.6, 0, 0, 0.6, 100, 100))]
+
     def test_whole_font(self, font):
         philter = FlattenComponentsFilter()
         modified = philter(font)
@@ -134,6 +186,8 @@ class FlattenComponentsFilterTest:
             "nestedComponentGlyph",
             "componentAndNestedComponentsGlyph",
             "nestedNestedContourAndComponentGlyph",
+            "nestedScaledComponentGlyph",
+            "scaledNestedComponentGlyph",
         }
         assert [
             (c.baseGlyph, c.transformation)
@@ -157,9 +211,17 @@ class FlattenComponentsFilterTest:
             (c.baseGlyph, c.transformation)
             for c in font["nestedNestedContourAndComponentGlyph"].components
         ] == [("contourAndComponentGlyph", (1, 0, 0, 1, 95, 0))]
+        assert [
+            (c.baseGlyph, c.transformation)
+            for c in font["nestedScaledComponentGlyph"].components
+        ] == [("contourGlyph", (0.5, 0, 0, 0.5, 90, 90))]
+        assert [
+            (c.baseGlyph, c.transformation)
+            for c in font["scaledNestedComponentGlyph"].components
+        ] == [("contourGlyph", (0.6, 0, 0, 0.6, 100, 100))]
 
     def test_logger(self, font):
         with CapturingLogHandler(logger, level="INFO") as captor:
             philter = FlattenComponentsFilter()
             _ = philter(font)
-        captor.assertRegex("Flattened composite glyphs: 3")
+        captor.assertRegex("Flattened composite glyphs: 5")
