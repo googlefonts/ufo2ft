@@ -44,8 +44,10 @@ def _flattenComponent(glyphSet, component):
     all_flattened_components = []
     for nested in glyph.components:
         flattened_components = _flattenComponent(glyphSet, nested)
-        for i, (_, tr) in enumerate(flattened_components):
-            tr = tr.transform(component.transformation)
-            flattened_components[i] = (flattened_components[i][0], tr)
+        for i, (name, tr) in enumerate(flattened_components):
+            flat_tr = Transform(*component.transformation)
+            flat_tr = flat_tr.translate(tr.dx, tr.dy)
+            flat_tr = flat_tr.transform((tr.xx, tr.xy, tr.yx, tr.yy, 0, 0))
+            flattened_components[i] = (name, flat_tr)
         all_flattened_components.extend(flattened_components)
     return all_flattened_components
