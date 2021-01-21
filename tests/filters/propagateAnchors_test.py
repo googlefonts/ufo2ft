@@ -106,6 +106,14 @@ from ufo2ft.filters.propagateAnchors import PropagateAnchorsFilter, logger
                         ("addComponent", ("macroncomb", (1, 0, 0, 1, 175, 0))),
                     ],
                 },
+                {
+                    "name": "macroncomb.alt",
+                    "width": 0,
+                    "outline": [
+                        ("addComponent", ("macroncomb", (1, 0, 0, 1, 0, -30))),
+                    ],
+                    "anchors": [(0, 340, "_top")],
+                },
             ]
         }
     ]
@@ -187,6 +195,15 @@ class PropagateAnchorsFilterTest:
             ("top_2", 525, 300),
         ]
 
+    def test_mark_glyph(self, font):
+        name = "macroncomb.alt"
+        philter = PropagateAnchorsFilter(include={name})
+        assert philter(font) == {name}
+        assert [(a.name, a.x, a.y) for a in font[name].anchors] == [
+            ("_top", 0, 340),
+            ("top", 0, 450),
+        ]
+
     def test_whole_font(self, font):
         philter = PropagateAnchorsFilter()
         modified = philter(font)
@@ -197,6 +214,8 @@ class PropagateAnchorsFilterTest:
             "adieresismacron",
             "amacrondieresis",
             "a_a",
+            "emacron",
+            "macroncomb.alt",
         }
 
     def test_fail_during_anchor_propagation(self, font):
@@ -212,7 +231,7 @@ class PropagateAnchorsFilterTest:
         with CapturingLogHandler(logger, level="INFO") as captor:
             philter = PropagateAnchorsFilter()
             philter(font)
-        captor.assertRegex("Glyphs with propagated anchors: 6")
+        captor.assertRegex("Glyphs with propagated anchors: 8")
 
 
 def test_CantarellAnchorPropagation(FontClass, datadir):
