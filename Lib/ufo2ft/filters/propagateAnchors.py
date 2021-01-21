@@ -76,21 +76,27 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
                 base_components.append(component)
                 anchor_names |= {a.name for a in glyph.anchors}
 
-    if mark_components and not base_components and _is_ligature_mark(composite):
-        # The composite is a mark that is composed of other marks (E.g.
-        # "circumflexcomb_tildecomb"). Promote the mark that is positioned closest
-        # to the origin to a base.
-        try:
-            component = _component_closest_to_origin(mark_components, glyphSet)
-        except Exception as e:
-            raise Exception(
-                "Error while determining which component of composite "
-                "'{}' is the lowest: {}".format(composite.name, str(e))
-            )
-        mark_components.remove(component)
-        base_components.append(component)
-        glyph = glyphSet[component.baseGlyph]
-        anchor_names |= {a.name for a in glyph.anchors}
+    if mark_components and not base_components:
+        if _is_ligature_mark(composite):
+            # The composite is a mark that is composed of other marks (E.g.
+            # "circumflexcomb_tildecomb"). Promote the mark that is positioned closest
+            # to the origin to a base.
+            try:
+                component = _component_closest_to_origin(mark_components, glyphSet)
+            except Exception as e:
+                raise Exception(
+                    "Error while determining which component of composite "
+                    "'{}' is the lowest: {}".format(composite.name, str(e))
+                )
+            components = [component]
+        else:
+            components = mark_components
+
+        for component in components:
+            mark_components.remove(component)
+            base_components.append(component)
+            glyph = glyphSet[component.baseGlyph]
+            anchor_names |= {a.name for a in glyph.anchors}
 
     for anchor_name in anchor_names:
         # don't add if composite glyph already contains this anchor OR any
