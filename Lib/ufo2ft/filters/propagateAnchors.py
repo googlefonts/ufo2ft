@@ -101,7 +101,10 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
     for anchor_name in anchor_names:
         # don't add if composite glyph already contains this anchor OR any
         # associated ligature anchors (e.g. "top_1, top_2" for "top")
-        if not any(a.name.startswith(anchor_name) for a in composite.anchors):
+        if not any(
+            a.name == anchor_name or a.name.split("_")[0] == (anchor_name)
+            for a in composite.anchors
+        ):
             _get_anchor_data(to_add, glyphSet, base_components, anchor_name)
 
     for component in mark_components:
