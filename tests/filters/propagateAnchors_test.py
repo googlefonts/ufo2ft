@@ -114,6 +114,36 @@ from ufo2ft.filters.propagateAnchors import PropagateAnchorsFilter, logger
                     ],
                     "anchors": [(0, 340, "_top")],
                 },
+                {
+                    "name": "o",
+                    "width": 350,
+                    "outline": [
+                        ("moveTo", ((20, 0),)),
+                        ("lineTo", ((330, 0),)),
+                        ("lineTo", ((330, 330),)),
+                        ("lineTo", ((20, 330),)),
+                        ("closePath", ()),
+                        ("moveTo", ((40, 20),)),
+                        ("lineTo", ((310, 0),)),
+                        ("lineTo", ((310, 310),)),
+                        ("lineTo", ((40, 310),)),
+                        ("closePath", ()),
+                    ],
+                    "anchors": [(175, 340, "top"), (175, 0, "bottom")],
+                },
+                {
+                    "name": "ohorn",
+                    "width": 350,
+                    "outline": [
+                        ("moveTo", ((310, 310),)),
+                        ("lineTo", ((345, 310),)),
+                        ("lineTo", ((345, 345),)),
+                        ("lineTo", ((345, 345),)),
+                        ("closePath", ()),
+                        ("addComponent", ("o", (1, 0, 0, 1, 0, 0))),
+                    ],
+                    "anchors": [(345, 340, "topright")],
+                },
             ]
         }
     ]
@@ -184,6 +214,16 @@ class PropagateAnchorsFilterTest:
             ("top", 175, 660),
         ]
 
+    def test_similar_anchor_name(self, font):
+        name = "ohorn"
+        philter = PropagateAnchorsFilter(include={name})
+        assert philter(font) == {name}
+        assert [(a.name, a.x, a.y) for a in font[name].anchors] == [
+            ("topright", 345, 340),
+            ("bottom", 175, 0),
+            ("top", 175, 340),
+        ]
+
     def test_ligature_glyph(self, font):
         name = "a_a"
         philter = PropagateAnchorsFilter(include={name})
@@ -216,6 +256,7 @@ class PropagateAnchorsFilterTest:
             "a_a",
             "emacron",
             "macroncomb.alt",
+            "ohorn",
         }
 
     def test_fail_during_anchor_propagation(self, font):
@@ -231,7 +272,7 @@ class PropagateAnchorsFilterTest:
         with CapturingLogHandler(logger, level="INFO") as captor:
             philter = PropagateAnchorsFilter()
             philter(font)
-        captor.assertRegex("Glyphs with propagated anchors: 8")
+        captor.assertRegex("Glyphs with propagated anchors: 9")
 
 
 def test_CantarellAnchorPropagation(FontClass, datadir):
