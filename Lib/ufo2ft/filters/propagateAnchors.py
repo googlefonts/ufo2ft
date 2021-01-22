@@ -74,7 +74,7 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
                 mark_components.append(component)
             else:
                 base_components.append(component)
-                anchor_names |= {a.name for a in glyph.anchors}
+                anchor_names.update(a.name for a in glyph.anchors)
 
     if mark_components and not base_components:
         if _is_ligature_mark(composite):
@@ -96,7 +96,7 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
             mark_components.remove(component)
             base_components.append(component)
             glyph = glyphSet[component.baseGlyph]
-            anchor_names |= {a.name for a in glyph.anchors}
+            anchor_names.update(a.name for a in glyph.anchors)
 
     for anchor_name in anchor_names:
         # don't add if composite glyph already contains this anchor OR any
