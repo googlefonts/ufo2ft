@@ -49,6 +49,22 @@ def findFeatureTags(feaFile):
     return {f.name for f in iterFeatureBlocks(feaFile)}
 
 
+def findCommentPattern(feaFile, pattern):
+    for statement in feaFile.statements:
+        if isinstance(statement, ast.Comment):
+            if re.match(pattern, str(statement)):
+                yield statement
+        elif hasattr(statement, "statements"):
+            for s in findCommentPattern(statement, pattern):
+                yield (statement, s)
+
+
+def iterMarkClassDefinitions(feaFile):
+    for s in feaFile.statements:
+        if isinstance(s, ast.MarkClassDefinition):
+            yield s
+
+
 def iterClassDefinitions(feaFile, featureTag=None):
     if featureTag is None:
         # start from top-level class definitions
