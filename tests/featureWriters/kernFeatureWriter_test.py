@@ -224,6 +224,140 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert str(feaFile) == existing
 
+    def test_insert_comment_before(self, FontClass):
+        ufo = FontClass()
+        for name in ("one", "four", "six", "seven"):
+            ufo.newGlyph(name)
+        existing = dedent(
+            """\
+            feature kern {
+                #
+                # Automatic Code
+                #
+                pos one four' -50 six;
+            } kern;
+            """
+        )
+        ufo.features.text = existing
+        ufo.kerning.update({("seven", "six"): 25.0})
+
+        writer = KernFeatureWriter(mode="append")
+        feaFile = parseLayoutFeatures(ufo)
+        assert writer.write(ufo, feaFile)
+
+        expected = dedent(
+            """\
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+
+            feature kern {
+                #
+                # Automatic Code
+                #
+                pos one four' -50 six;
+            } kern;
+            """
+        )
+
+        assert str(feaFile).strip() == expected.strip()
+
+    def test_insert_comment_after(self, FontClass):
+        ufo = FontClass()
+        for name in ("one", "four", "six", "seven"):
+            ufo.newGlyph(name)
+        existing = dedent(
+            """\
+            feature kern {
+                pos one four' -50 six;
+                #
+                # Automatic Code
+                #
+            } kern;
+            """
+        )
+        ufo.features.text = existing
+        ufo.kerning.update({("seven", "six"): 25.0})
+
+        writer = KernFeatureWriter(mode="append")
+        feaFile = parseLayoutFeatures(ufo)
+        assert writer.write(ufo, feaFile)
+
+        expected = dedent(
+            """\
+            feature kern {
+                pos one four' -50 six;
+                #
+                # Automatic Code
+                #
+            } kern;
+
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+            """
+        )
+
+        assert str(feaFile) == expected
+
+    def test_insert_comment_split(self, FontClass):
+        ufo = FontClass()
+        for name in ("one", "four", "six", "seven"):
+            ufo.newGlyph(name)
+        existing = dedent(
+            """\
+            feature kern {
+                pos one four' -50 six;
+                #
+                # Automatic Code
+                #
+                pos one six' -50 six;
+            } kern;
+            """
+        )
+        ufo.features.text = existing
+        ufo.kerning.update({("seven", "six"): 25.0})
+
+        writer = KernFeatureWriter(mode="append")
+        feaFile = parseLayoutFeatures(ufo)
+        assert writer.write(ufo, feaFile)
+
+        expected = dedent(
+            """\
+            feature kern {
+                pos one four' -50 six;
+                #
+            } kern;
+
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+
+            feature kern {
+                # Automatic Code
+                #
+                pos one six' -50 six;
+            } kern;
+            """
+        )
+
+        assert str(feaFile) == expected
+
     def test_arabic_numerals(self, FontClass):
         """Test that arabic numerals (with bidi type AN) are kerned LTR.
         https://github.com/googlei18n/ufo2ft/issues/198

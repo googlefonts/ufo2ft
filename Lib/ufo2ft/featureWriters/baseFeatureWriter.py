@@ -4,6 +4,8 @@ from types import SimpleNamespace
 
 from ufo2ft.featureWriters import ast
 
+FEATURE_INSERT_MARKER = "# Automatic Code"
+
 
 class BaseFeatureWriter:
     """Abstract features writer.
@@ -118,6 +120,89 @@ class BaseFeatureWriter:
     def _write(self):
         """Subclasses must override this."""
         raise NotImplementedError
+
+    def _insert(self, feaFile, classDefs=None, markClassDefs=None, lookups=None,
+                features=None, insertFeatureMarker=FEATURE_INSERT_MARKER):
+        """Insert feature at insert marker comment"""
+
+        statements = feaFile.statements
+
+        # Find last class definition and insert classDefs
+        if classDefs:
+            # currentClassDefs = [
+            #     cd for cd in ast.iterClassDefinitions(self.context.feaFile)
+            # ]
+            statements.extend(classDefs)
+
+        # Insert markClassDefs
+        if markClassDefs:
+            currentMarkClassDefs = [
+                cd for cd in ast.iterMarkClassDefinitions(feaFile)
+            ]
+            if self.mode == "prepend" and currentMarkClassDefs:
+                index = statements.index(currentMarkClassDefs[-1]) + 1
+                statements = feaFile.statements = (
+                    statements[:index] + markClassDefs + statements[index:]
+                )
+            else:
+                statements.extend(markClassDefs)
+
+        # Collect insert markers in blocks
+        insertComments = dict()
+        for parent, comment in ast.findCommentPattern(feaFile, insertFeatureMarker):
+            if parent is None:
+                # TODO: handle insert markers outside of blocks (when parent is None)
+                pass
+            elif parent.name not in insertComments.keys():
+                insertComments[parent.name] = (parent, comment)
+
+        # Add the lookup blocks
+        if lookups is None:
+            wroteLookups = True
+        elif not insertComments:
+            if statements:
+                statements.append(ast.Comment(""))
+            statements.extend(lookups)
+            wroteLookups = True
+        else:
+            wroteLookups = False
+
+        for _, feature in features:
+            if feature.name in insertComments:
+                block, comment = insertComments[feature.name]
+                index = block.statements.index(comment)
+                # insertMark comment is at the top of the feature block
+                # or only preceded by other comments
+                if all(
+                    isinstance(s, ast.ast.Comment) for s in
+                    block.statements[:index]
+                ):
+                    index = statements.index(block)
+                # insertMark comment is at the bottom of the feature block
+                # or only followed by other comments
+                elif all(
+                    isinstance(s, ast.ast.Comment) for s in
+                    block.statements[index:]
+                ):
+
+                    index = statements.index(block) + 1
+                # insertMark comment is in the middle of the feature block
+                # preceded and followed by statements that are not comments
+                else:
+                    split_block = ast.FeatureBlock(block.name)
+                    split_block.statements = block.statements[index:]
+                    block.statements = block.statements[:index]
+                    index = statements.index(block) + 1
+                    statements.insert(index, split_block)
+            else:
+                index = len(statements)
+
+            statements.insert(index, feature)
+            if not wroteLookups:
+                statements = feaFile.statements = (
+                    statements[:index] + lookups + statements[index:]
+                )
+                wroteLookups = True
 
     def makeUnicodeToGlyphNameMapping(self):
         """Return the Unicode to glyph name mapping for the current font."""

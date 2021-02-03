@@ -875,9 +875,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
             return False
 
         feaFile = self.context.feaFile
-        feaFile.statements.extend(newClassDefs)
-        # add empty line to separate classes from following statements
-        feaFile.statements.append(ast.Comment(""))
-        for _, feature in sorted(features.items()):
-            feaFile.statements.append(feature)
+
+        self._insert(
+            feaFile=feaFile,
+            classDefs=newClassDefs,
+            features=sorted(features.items()),
+        )
+
         return True
