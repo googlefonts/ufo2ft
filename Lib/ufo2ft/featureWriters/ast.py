@@ -63,12 +63,6 @@ def findCommentPattern(feaFile, pattern):
                 yield (statement, s)
 
 
-def iterMarkClassDefinitions(feaFile):
-    for s in feaFile.statements:
-        if isinstance(s, ast.MarkClassDefinition):
-            yield s
-
-
 def iterClassDefinitions(feaFile, featureTag=None):
     if featureTag is None:
         # start from top-level class definitions
