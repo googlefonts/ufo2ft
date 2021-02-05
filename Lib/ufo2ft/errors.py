@@ -10,6 +10,12 @@ class InvalidFontData(Error):
     pass
 
 
+class InvalidFeaturesData(Error):
+    """Raised when input font contains invalid features data."""
+
+    pass
+
+
 class InvalidDesignSpaceData(Error):
     """Raised when input DesignSpace document contains invalid data."""
 
