@@ -5,7 +5,25 @@ from types import SimpleNamespace
 from ufo2ft.featureWriters import ast
 from ufo2ft.errors import InvalidFeaturesData
 
-FEATURE_INSERT_MARKER = "# Automatic Code"
+INSERT_FEATURE_MARKER = "# Automatic Code"
+
+
+def _collectInsertMarkers(feaFile, insertFeatureMarker):
+    """
+    Returns a dictionary of tuples (block, comment) keyed by feature tag
+    """
+    insertComments = dict()
+    for parent, comment in ast.findCommentPattern(
+        feaFile, insertFeatureMarker
+    ):
+        if parent is None:
+            raise InvalidFeaturesData(
+                "Invalid insert marker \"%s\" outside of feature block"
+                % str(comment)
+            )
+        elif parent.name not in insertComments.keys():
+            insertComments[parent.name] = (parent, comment)
+    return insertComments
 
 
 class BaseFeatureWriter:
@@ -123,22 +141,27 @@ class BaseFeatureWriter:
         raise NotImplementedError
 
     def _insert(self, feaFile, classDefs=None, markClassDefs=None, lookups=None,
-                features=None, insertFeatureMarker=FEATURE_INSERT_MARKER):
-        """Insert feature at insert marker comment"""
+                features=None, insertFeatureMarker=INSERT_FEATURE_MARKER,
+                ):
+        """
+        Insert feature, its classDefs or markClassDefs and lookups at insert
+        marker comment.
+
+        If the insert marker is at the top of a feature block, the feature is
+        inserted before that block, and after if the insert marker is at the
+        bottom.
+        If the insert marker is in the middle of a feature block, that block
+        is split in to two blocks separated by the feature.
+        """
 
         statements = feaFile.statements
 
         # Collect insert markers in blocks
-        insertComments = dict()
-        for parent, comment in ast.findCommentPattern(feaFile, insertFeatureMarker):
-            if parent is None:
-                raise InvalidFeaturesData(
-                    "Invalid insert marker \"%s\" outside of feature block" % str(comment)
-                )
-            elif parent.name not in insertComments.keys():
-                insertComments[parent.name] = (parent, comment)
+        insertComments = _collectInsertMarkers(feaFile, insertFeatureMarker)
 
-        # Find last class definition and insert classDefs
+        # Insert classDefs
+        # Note: The AFDKO spec says glyph classes should be defined before any
+        # are used, but ufo2ft featureWriters has never done that.
         if classDefs:
             statements.extend(classDefs)
 
