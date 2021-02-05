@@ -3,6 +3,7 @@ from collections import OrderedDict
 from types import SimpleNamespace
 
 from ufo2ft.featureWriters import ast
+from ufo2ft.errors import InvalidFeaturesData
 
 FEATURE_INSERT_MARKER = "# Automatic Code"
 
@@ -136,23 +137,20 @@ class BaseFeatureWriter:
 
         # Insert markClassDefs
         if markClassDefs:
-            currentMarkClassDefs = [
-                cd for cd in ast.iterMarkClassDefinitions(feaFile)
-            ]
-            if self.mode == "prepend" and currentMarkClassDefs:
-                index = statements.index(currentMarkClassDefs[-1]) + 1
-                statements = feaFile.statements = (
-                    statements[:index] + markClassDefs + statements[index:]
-                )
-            else:
-                statements.extend(markClassDefs)
+            markClassDefs.append(ast.Comment(""))
+            # currentMarkClassDefs = [
+            #     cd for cd in ast.iterMarkClassDefinitions(feaFile)
+            # ]
+            statements.extend(markClassDefs)
 
         # Collect insert markers in blocks
         insertComments = dict()
         for parent, comment in ast.findCommentPattern(feaFile, insertFeatureMarker):
             if parent is None:
                 # TODO: handle insert markers outside of blocks (when parent is None)
-                pass
+                raise InvalidFeaturesData(
+                    "Invalid insert marker \"%s\" outside of feature block" % str(comment)
+                )
             elif parent.name not in insertComments.keys():
                 insertComments[parent.name] = (parent, comment)
 
