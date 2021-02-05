@@ -54,11 +54,13 @@ class BaseFeatureWriter:
     tableTag = None
     features = frozenset()
     mode = "skip"
+    insertFeatureMarker = INSERT_FEATURE_MARKER
     options = {}
 
     _SUPPORTED_MODES = frozenset(["skip", "append"])
 
-    def __init__(self, features=None, mode=None, **kwargs):
+    def __init__(self, features=None, mode=None, insertFeatureMarker=None,
+                 **kwargs):
         if features is not None:
             features = frozenset(features)
             assert features, "features cannot be empty"
@@ -71,6 +73,9 @@ class BaseFeatureWriter:
             self.mode = mode
         if self.mode not in self._SUPPORTED_MODES:
             raise ValueError(self.mode)
+
+        if insertFeatureMarker is not None:
+            self.insertFeatureMarker = insertFeatureMarker
 
         options = dict(self.__class__.options)
         for k in kwargs:
@@ -141,7 +146,7 @@ class BaseFeatureWriter:
         raise NotImplementedError
 
     def _insert(self, feaFile, classDefs=None, markClassDefs=None, lookups=None,
-                features=None, insertFeatureMarker=INSERT_FEATURE_MARKER,
+                features=None
                 ):
         """
         Insert feature, its classDefs or markClassDefs and lookups at insert
@@ -157,7 +162,7 @@ class BaseFeatureWriter:
         statements = feaFile.statements
 
         # Collect insert markers in blocks
-        insertComments = _collectInsertMarkers(feaFile, insertFeatureMarker)
+        insertComments = _collectInsertMarkers(feaFile, self.insertFeatureMarker)
 
         # Insert classDefs
         # Note: The AFDKO spec says glyph classes should be defined before any
