@@ -2,8 +2,8 @@ import logging
 from collections import OrderedDict
 from types import SimpleNamespace
 
-from ufo2ft.featureWriters import ast
 from ufo2ft.errors import InvalidFeaturesData
+from ufo2ft.featureWriters import ast
 
 INSERT_FEATURE_MARKER = "# Automatic Code"
 
@@ -13,13 +13,10 @@ def _collectInsertMarkers(feaFile, insertFeatureMarker):
     Returns a dictionary of tuples (block, comment) keyed by feature tag
     """
     insertComments = dict()
-    for parent, comment in ast.findCommentPattern(
-        feaFile, insertFeatureMarker
-    ):
+    for parent, comment in ast.findCommentPattern(feaFile, insertFeatureMarker):
         if parent is None:
             raise InvalidFeaturesData(
-                "Invalid insert marker \"%s\" outside of feature block"
-                % str(comment)
+                "Invalid insert marker '%s' outside of feature block" % str(comment)
             )
         elif parent.name not in insertComments.keys():
             insertComments[parent.name] = (parent, comment)
@@ -60,8 +57,14 @@ class BaseFeatureWriter:
 
     _SUPPORTED_MODES = frozenset(["skip", "append"])
 
-    def __init__(self, features=None, mode=None, insertFeatureMarker=None,
-                 insertFeatureMarkerEnd=None, **kwargs):
+    def __init__(
+        self,
+        features=None,
+        mode=None,
+        insertFeatureMarker=None,
+        insertFeatureMarkerEnd=None,
+        **kwargs
+    ):
         if features is not None:
             features = frozenset(features)
             assert features, "features cannot be empty"
@@ -148,9 +151,9 @@ class BaseFeatureWriter:
         """Subclasses must override this."""
         raise NotImplementedError
 
-    def _insert(self, feaFile, classDefs=None, markClassDefs=None, lookups=None,
-                features=None
-                ):
+    def _insert(
+        self, feaFile, classDefs=None, markClassDefs=None, lookups=None, features=None
+    ):
         """
         Insert feature, its classDefs or markClassDefs and lookups at insert
         marker comment.
@@ -206,13 +209,14 @@ class BaseFeatureWriter:
                 # block.
                 markerEndIndex = None
                 if (
-                    self.insertFeatureMarkerEnd and insertEndComments
+                    self.insertFeatureMarkerEnd
+                    and insertEndComments
                     and (feature.name in insertEndComments)
                 ):
                     # TODO: somehow this sometimes yields just endBlock
                     # for endBlock, endComment in insertEndComments[feature.name]:
                     for end in insertEndComments[feature.name]:
-                        if not isinstance(end , tuple):
+                        if not isinstance(end, tuple):
                             end = insertEndComments[feature.name]
                         endBlock, endComment = end
                         # This feature's comment and endComment are in the same
@@ -220,8 +224,8 @@ class BaseFeatureWriter:
                         if id(endBlock) == id(block):
                             markerEndIndex = block.statements.index(endComment)
                             block.statements = (
-                                block.statements[:markerIndex + 1]
-                                + block.statements[markerEndIndex - 1:]
+                                block.statements[: markerIndex + 1]
+                                + block.statements[markerEndIndex - 1 :]
                             )
                             # Leave both markers in new feature block
                             feature.statements.insert(0, comment)
@@ -233,12 +237,10 @@ class BaseFeatureWriter:
                         )
 
                 onlyCommentsBefore = all(
-                    isinstance(s, ast.ast.Comment) for s in
-                    block.statements[:markerIndex]
+                    isinstance(s, ast.Comment) for s in block.statements[:markerIndex]
                 )
                 onlyCommentsAfter = all(
-                    isinstance(s, ast.ast.Comment) for s in
-                    block.statements[markerIndex:]
+                    isinstance(s, ast.Comment) for s in block.statements[markerIndex:]
                 )
 
                 # Remove insert marker(s) from feature block.
@@ -273,9 +275,7 @@ class BaseFeatureWriter:
 
             else:
                 if insertEndComments and feature.name in insertEndComments:
-                    raise InvalidFeaturesData(
-                        "Insert marker ends but doesn't start"
-                    )
+                    raise InvalidFeaturesData("Insert marker ends but doesn't start")
                 index = len(statements)
 
             statements.insert(index, feature)

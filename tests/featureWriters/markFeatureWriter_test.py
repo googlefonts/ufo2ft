@@ -444,7 +444,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         with pytest.raises(
             InvalidFeaturesData,
-            match="Invalid insert marker \"# Automatic Code\" outside of "
+            match="Invalid insert marker '# Automatic Code' outside of "
             "feature block",
         ):
             writer.write(testufo, feaFile)
@@ -467,7 +467,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         with pytest.raises(
             InvalidFeaturesData,
-            match="Invalid insert marker \"# Automatic Code\" outside of "
+            match="Invalid insert marker '# Automatic Code' outside of "
             "feature block",
         ):
             writer.write(testufo, feaFile)
