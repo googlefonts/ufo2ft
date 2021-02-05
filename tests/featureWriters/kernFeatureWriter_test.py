@@ -258,7 +258,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             feature kern {
                 #
-                # Automatic Code
                 #
                 pos one four' -50 six;
             } kern;
@@ -293,7 +292,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
             feature kern {
                 pos one four' -50 six;
                 #
-                # Automatic Code
                 #
             } kern;
 
@@ -349,7 +347,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern;
 
             feature kern {
-                # Automatic Code
                 #
                 pos one six' -50 six;
             } kern;

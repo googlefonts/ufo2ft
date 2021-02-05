@@ -55,12 +55,13 @@ class BaseFeatureWriter:
     features = frozenset()
     mode = "skip"
     insertFeatureMarker = INSERT_FEATURE_MARKER
+    insertFeatureMarkerEnd = None
     options = {}
 
     _SUPPORTED_MODES = frozenset(["skip", "append"])
 
     def __init__(self, features=None, mode=None, insertFeatureMarker=None,
-                 **kwargs):
+                 insertFeatureMarkerEnd=None, **kwargs):
         if features is not None:
             features = frozenset(features)
             assert features, "features cannot be empty"
@@ -76,6 +77,8 @@ class BaseFeatureWriter:
 
         if insertFeatureMarker is not None:
             self.insertFeatureMarker = insertFeatureMarker
+        if insertFeatureMarkerEnd is not None:
+            self.insertFeatureMarkerEnd = insertFeatureMarkerEnd
 
         options = dict(self.__class__.options)
         for k in kwargs:
@@ -164,6 +167,12 @@ class BaseFeatureWriter:
         # Collect insert markers in blocks
         insertComments = _collectInsertMarkers(feaFile, self.insertFeatureMarker)
 
+        insertEndComments = None
+        if self.insertFeatureMarkerEnd is not None:
+            insertEndComments = _collectInsertMarkers(
+                feaFile, self.insertFeatureMarkerEnd
+            )
+
         # Insert classDefs
         # Note: The AFDKO spec says glyph classes should be defined before any
         # are used, but ufo2ft featureWriters has never done that.
@@ -191,24 +200,69 @@ class BaseFeatureWriter:
                 block, comment = insertComments[feature.name]
                 markerIndex = block.statements.index(comment)
 
-                # insertFeatureMarker is at the top of the feature block
-                # or only preceded by other comments
-                if all(
+                # If there are both insertFeatureMarker and
+                # insertFeatureMarkerEnd in this block, remove statements
+                # between them before insertion. Leave markers in new feature
+                # block.
+                markerEndIndex = None
+                if (
+                    self.insertFeatureMarkerEnd and insertEndComments
+                    and (feature.name in insertEndComments)
+                ):
+                    # TODO: somehow this sometimes yields just endBlock
+                    # for endBlock, endComment in insertEndComments[feature.name]:
+                    for end in insertEndComments[feature.name]:
+                        if not isinstance(end , tuple):
+                            end = insertEndComments[feature.name]
+                        endBlock, endComment = end
+                        # This feature's comment and endComment are in the same
+                        # block.
+                        if id(endBlock) == id(block):
+                            markerEndIndex = block.statements.index(endComment)
+                            block.statements = (
+                                block.statements[:markerIndex + 1]
+                                + block.statements[markerEndIndex - 1:]
+                            )
+                            # Leave both markers in new feature block
+                            feature.statements.insert(0, comment)
+                            feature.statements.append(endComment)
+                            break
+                    if markerEndIndex is None:
+                        raise InvalidFeaturesData(
+                            "Insert marker starts but doesn't end"
+                        )
+
+                onlyCommentsBefore = all(
                     isinstance(s, ast.ast.Comment) for s in
                     block.statements[:markerIndex]
-                ):
-                    index = statements.index(block)
-
-                # insertFeatureMarker is at the bottom of the feature block
-                # or only followed by other comments
-                elif all(
+                )
+                onlyCommentsAfter = all(
                     isinstance(s, ast.ast.Comment) for s in
                     block.statements[markerIndex:]
-                ):
+                )
 
+                # Remove insert marker(s) from feature block.
+                del block.statements[markerIndex]
+                if markerEndIndex:
+                    del block.statements[markerEndIndex - 1]
+
+                # insertFeatureMarker is in a block with only comments.
+                # Replace that block with new feature block.
+                if onlyCommentsBefore and onlyCommentsAfter:
+                    index = statements.index(block)
+                    statements.remove(block)
+
+                # insertFeatureMarker is at the top of a feature block
+                # or only preceded by other comments.
+                elif onlyCommentsBefore:
+                    index = statements.index(block)
+
+                # insertFeatureMarker is at the bottom of a feature block
+                # or only followed by other comments
+                elif onlyCommentsAfter:
                     index = statements.index(block) + 1
 
-                # insertFeatureMarker is in the middle of the feature block
+                # insertFeatureMarker is in the middle of a feature block
                 # preceded and followed by statements that are not comments
                 else:
                     split_block = ast.FeatureBlock(block.name)
@@ -216,7 +270,12 @@ class BaseFeatureWriter:
                     block.statements = block.statements[:markerIndex]
                     index = statements.index(block) + 1
                     statements.insert(index, split_block)
+
             else:
+                if insertEndComments and feature.name in insertEndComments:
+                    raise InvalidFeaturesData(
+                        "Insert marker ends but doesn't start"
+                    )
                 index = len(statements)
 
             statements.insert(index, feature)
