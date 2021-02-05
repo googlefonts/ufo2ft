@@ -189,28 +189,31 @@ class BaseFeatureWriter:
         for _, feature in features:
             if feature.name in insertComments:
                 block, comment = insertComments[feature.name]
-                index = block.statements.index(comment)
-                # insertMark comment is at the top of the feature block
+                markerIndex = block.statements.index(comment)
+
+                # insertFeatureMarker is at the top of the feature block
                 # or only preceded by other comments
                 if all(
                     isinstance(s, ast.ast.Comment) for s in
-                    block.statements[:index]
+                    block.statements[:markerIndex]
                 ):
                     index = statements.index(block)
-                # insertMark comment is at the bottom of the feature block
+
+                # insertFeatureMarker is at the bottom of the feature block
                 # or only followed by other comments
                 elif all(
                     isinstance(s, ast.ast.Comment) for s in
-                    block.statements[index:]
+                    block.statements[markerIndex:]
                 ):
 
                     index = statements.index(block) + 1
-                # insertMark comment is in the middle of the feature block
+
+                # insertFeatureMarker is in the middle of the feature block
                 # preceded and followed by statements that are not comments
                 else:
                     split_block = ast.FeatureBlock(block.name)
-                    split_block.statements = block.statements[index:]
-                    block.statements = block.statements[:index]
+                    split_block.statements = block.statements[markerIndex:]
+                    block.statements = block.statements[:markerIndex]
                     index = statements.index(block) + 1
                     statements.insert(index, split_block)
             else:
