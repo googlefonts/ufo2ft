@@ -128,6 +128,16 @@ class BaseFeatureWriter:
 
         statements = feaFile.statements
 
+        # Collect insert markers in blocks
+        insertComments = dict()
+        for parent, comment in ast.findCommentPattern(feaFile, insertFeatureMarker):
+            if parent is None:
+                raise InvalidFeaturesData(
+                    "Invalid insert marker \"%s\" outside of feature block" % str(comment)
+                )
+            elif parent.name not in insertComments.keys():
+                insertComments[parent.name] = (parent, comment)
+
         # Find last class definition and insert classDefs
         if classDefs:
             # currentClassDefs = [
@@ -142,17 +152,6 @@ class BaseFeatureWriter:
             #     cd for cd in ast.iterMarkClassDefinitions(feaFile)
             # ]
             statements.extend(markClassDefs)
-
-        # Collect insert markers in blocks
-        insertComments = dict()
-        for parent, comment in ast.findCommentPattern(feaFile, insertFeatureMarker):
-            if parent is None:
-                # TODO: handle insert markers outside of blocks (when parent is None)
-                raise InvalidFeaturesData(
-                    "Invalid insert marker \"%s\" outside of feature block" % str(comment)
-                )
-            elif parent.name not in insertComments.keys():
-                insertComments[parent.name] = (parent, comment)
 
         # Add the lookup blocks
         if lookups is None:

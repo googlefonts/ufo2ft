@@ -50,12 +50,16 @@ def findFeatureTags(feaFile):
 
 
 def findCommentPattern(feaFile, pattern):
+    """
+    Return the parent and the comment matching a given pattern.
+    Parent is either None or a block.
+    """
     for statement in feaFile.statements:
         if isinstance(statement, ast.Comment):
             if re.match(pattern, str(statement)):
-                yield statement
+                yield (None, statement)
         elif hasattr(statement, "statements"):
-            for s in findCommentPattern(statement, pattern):
+            for _, s in findCommentPattern(statement, pattern):
                 yield (statement, s)
 
 
