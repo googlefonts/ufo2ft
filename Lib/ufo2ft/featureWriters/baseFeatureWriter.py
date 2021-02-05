@@ -140,17 +140,11 @@ class BaseFeatureWriter:
 
         # Find last class definition and insert classDefs
         if classDefs:
-            # currentClassDefs = [
-            #     cd for cd in ast.iterClassDefinitions(self.context.feaFile)
-            # ]
             statements.extend(classDefs)
 
         # Insert markClassDefs
         if markClassDefs:
             markClassDefs.append(ast.Comment(""))
-            # currentMarkClassDefs = [
-            #     cd for cd in ast.iterMarkClassDefinitions(feaFile)
-            # ]
             statements.extend(markClassDefs)
 
         # Add the lookup blocks
