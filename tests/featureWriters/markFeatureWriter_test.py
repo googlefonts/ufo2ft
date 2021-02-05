@@ -4,6 +4,7 @@ from textwrap import dedent
 
 import pytest
 
+from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.featureWriters.markFeatureWriter import (
@@ -432,6 +433,47 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             } mkmk;
             """
         )
+
+    def test_insert_comment_outside_block(self, testufo):
+        writer = MarkFeatureWriter()
+        testufo.features.text = dedent(
+            """\
+            #
+            # Automatic Code
+            #
+            """
+        )
+        feaFile = parseLayoutFeatures(testufo)
+
+        with pytest.raises(
+            InvalidFeaturesData,
+            match="Invalid insert marker \"# Automatic Code\" outside of "
+            "feature block",
+        ):
+            writer.write(testufo, feaFile)
+
+        testufo.features.text = dedent(
+            """\
+            #
+            # Automatic Code
+            #
+            markClass acutecomb <anchor 100 200> @MC_top;
+            feature mark {
+                lookup mark1 {
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark1;
+
+            } mark;
+            """
+        )
+        feaFile = parseLayoutFeatures(testufo)
+
+        with pytest.raises(
+            InvalidFeaturesData,
+            match="Invalid insert marker \"# Automatic Code\" outside of "
+            "feature block",
+        ):
+            writer.write(testufo, feaFile)
 
     def test_mark_mkmk_features(self, testufo):
         writer = MarkFeatureWriter()  # by default both mark + mkmk are built
