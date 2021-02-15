@@ -12,6 +12,7 @@ from ufo2ft import (
     compileVariableCFF2,
     compileVariableTTF,
 )
+from ufo2ft.constants import KEEP_GLYPH_NAMES
 
 
 def getpath(filename):
@@ -229,11 +230,25 @@ class IntegrationTest:
         ],
     )
     def test_drop_glyph_names(self, testufo, output_format, options, expected_ttx):
-        from ufo2ft.constants import KEEP_GLYPH_NAMES
-
         testufo.lib[KEEP_GLYPH_NAMES] = False
         compile_func = globals()[f"compile{output_format}"]
         ttf = compile_func(testufo, **options)
+        expectTTX(ttf, expected_ttx)
+
+    @pytest.mark.parametrize(
+        "output_format, options, expected_ttx",
+        [
+            ("VariableTTF", {}, "TestVariableFont-TTF-post3.ttx"),
+            ("VariableCFF2", {}, "TestVariableFont-CFF2-post3.ttx"),
+        ],
+    )
+    def test_drop_glyph_names_variable(
+        self, designspace, output_format, options, expected_ttx
+    ):
+        # set keepGlyphNames in the default UFO.lib where postProcessor finds it
+        designspace.findDefault().font.lib[KEEP_GLYPH_NAMES] = False
+        compile_func = globals()[f"compile{output_format}"]
+        ttf = compile_func(designspace, **options)
         expectTTX(ttf, expected_ttx)
 
 
