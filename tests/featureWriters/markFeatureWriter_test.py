@@ -275,6 +275,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert str(feaFile) == dedent(
             """\
             markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
             feature mark {
                 lookup mark2base {
                     pos base a <anchor 100 200> mark @MC_top;
@@ -295,8 +297,6 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark1;
 
             } mark;
-
-            markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mkmk {
                 lookup mark2mark_top {
@@ -369,6 +369,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 #
             } mark;
 
+            markClass tildecomb <anchor 100 200> @MC_top;
+
             feature mark {
                 lookup mark2base {
                     pos base a <anchor 100 200> mark @MC_top;
@@ -380,8 +382,6 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2liga;
 
             } mark;
-
-            markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mkmk {
                 lookup mark2mark_top {

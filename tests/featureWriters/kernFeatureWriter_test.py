@@ -311,6 +311,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 #
             } kern;
 
+
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
