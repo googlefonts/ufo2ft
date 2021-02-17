@@ -3,6 +3,7 @@ from textwrap import dedent
 
 import pytest
 
+from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
 
@@ -241,7 +242,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo.features.text = existing
         ufo.kerning.update({("seven", "six"): 25.0})
 
-        writer = KernFeatureWriter(mode="append")
+        writer = KernFeatureWriter()
         feaFile = parseLayoutFeatures(ufo)
         assert writer.write(ufo, feaFile)
 
@@ -283,7 +284,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo.features.text = existing
         ufo.kerning.update({("seven", "six"): 25.0})
 
-        writer = KernFeatureWriter(mode="append")
+        writer = KernFeatureWriter()
         feaFile = parseLayoutFeatures(ufo)
         assert writer.write(ufo, feaFile)
 
@@ -326,34 +327,19 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo.features.text = existing
         ufo.kerning.update({("seven", "six"): 25.0})
 
-        writer = KernFeatureWriter(mode="append")
+        writer = KernFeatureWriter()
         feaFile = parseLayoutFeatures(ufo)
+
+        with pytest.raises(
+            InvalidFeaturesData,
+            match="Insert marker has rules before and after, feature kern "
+            "cannot be inserted.",
+        ):
+            writer.write(ufo, feaFile)
+
+        writer = KernFeatureWriter(mode="append")
+        expected = str(feaFile)
         assert writer.write(ufo, feaFile)
-
-        expected = dedent(
-            """\
-            feature kern {
-                pos one four' -50 six;
-                #
-            } kern;
-
-            lookup kern_ltr {
-                lookupflag IgnoreMarks;
-                pos seven six 25;
-            } kern_ltr;
-
-            feature kern {
-                lookup kern_ltr;
-            } kern;
-
-            feature kern {
-                #
-                pos one six' -50 six;
-            } kern;
-            """
-        )
-
-        assert str(feaFile) == expected
 
     def test_arabic_numerals(self, FontClass):
         """Test that arabic numerals (with bidi type AN) are kerned LTR.

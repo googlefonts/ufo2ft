@@ -254,7 +254,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_insert_comment_before(self, testufo):
-        writer = MarkFeatureWriter(mode="append")
+        writer = MarkFeatureWriter()
         testufo.features.text = dedent(
             """\
             markClass acutecomb <anchor 100 200> @MC_top;
@@ -310,7 +310,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_insert_comment_after(self, testufo):
-        writer = MarkFeatureWriter(mode="append")
+        writer = MarkFeatureWriter()
         testufo.features.text = dedent(
             """\
             markClass acutecomb <anchor 100 200> @MC_top;
@@ -366,7 +366,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         )
 
     def test_insert_comment_split(self, testufo):
-        writer = MarkFeatureWriter(mode="append")
+        writer = MarkFeatureWriter()
         testufo.features.text = dedent(
             """\
             markClass acutecomb <anchor 100 200> @MC_top;
@@ -385,51 +385,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         )
         feaFile = parseLayoutFeatures(testufo)
 
+        with pytest.raises(
+            InvalidFeaturesData,
+            match="Insert marker has rules before and after, feature mark "
+            "cannot be inserted.",
+        ):
+            writer.write(testufo, feaFile)
+
+        writer = MarkFeatureWriter(mode="append")
         assert writer.write(testufo, feaFile)
-
-        assert str(feaFile) == dedent(
-            """\
-            markClass acutecomb <anchor 100 200> @MC_top;
-            feature mark {
-                lookup mark1 {
-                    pos base a <anchor 100 200> mark @MC_top;
-                } mark1;
-
-                #
-            } mark;
-
-            feature mark {
-                lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
-                } mark2base;
-
-                lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
-                } mark2liga;
-
-            } mark;
-
-            feature mark {
-                #
-                lookup mark2 {
-                    pos base a <anchor 150 250> mark @MC_top;
-                } mark2;
-
-            } mark;
-
-            markClass tildecomb <anchor 100 200> @MC_top;
-
-            feature mkmk {
-                lookup mark2mark_top {
-                    @MFS_mark2mark_top = [acutecomb tildecomb];
-                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
-                } mark2mark_top;
-
-            } mkmk;
-            """
-        )
 
     def test_insert_comment_outside_block(self, testufo):
         writer = MarkFeatureWriter()
