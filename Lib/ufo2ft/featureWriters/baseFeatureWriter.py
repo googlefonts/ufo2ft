@@ -100,12 +100,22 @@ class BaseFeatureWriter:
         Returns the context namespace instance.
         """
         todo = set(self.features)
+        insertComments = None
         if self.mode == "skip":
+            insertComments = _collectInsertMarkers(feaFile, self.insertFeatureMarker)
+            # find existing feature blocks
             existing = ast.findFeatureTags(feaFile)
+            # ignore features with insert marker
+            existing.difference_update(insertComments.keys())
+            # remove existing feature without insert marker from todo list
             todo.difference_update(existing)
 
         self.context = SimpleNamespace(
-            font=font, feaFile=feaFile, compiler=compiler, todo=todo
+            font=font,
+            feaFile=feaFile,
+            compiler=compiler,
+            todo=todo,
+            insertComments=insertComments,
         )
 
         return self.context
@@ -158,7 +168,7 @@ class BaseFeatureWriter:
         statements = feaFile.statements
 
         # Collect insert markers in blocks
-        insertComments = _collectInsertMarkers(feaFile, self.insertFeatureMarker)
+        insertComments = self.context.insertComments
 
         # Insert classDefs
         # Note: The AFDKO spec says glyph classes should be defined before any
@@ -183,7 +193,7 @@ class BaseFeatureWriter:
             wroteLookups = False
 
         for _, feature in features:
-            if feature.name in insertComments:
+            if insertComments and feature.name in insertComments:
                 block, comment = insertComments[feature.name]
                 markerIndex = block.statements.index(comment)
 
@@ -215,12 +225,17 @@ class BaseFeatureWriter:
 
                 # insertFeatureMarker is in the middle of a feature block
                 # preceded and followed by statements that are not comments
+                #
+                # Glyphs3 can insert a feature block when rules are before
+                # and after the insert marker.
+                # See
+                # https://github.com/googlefonts/ufo2ft/issues/351#issuecomment-765294436
+                # This is currently not supported.
                 else:
-                    split_block = ast.FeatureBlock(block.name)
-                    split_block.statements = block.statements[markerIndex:]
-                    block.statements = block.statements[:markerIndex]
-                    index = statements.index(block) + 1
-                    statements.insert(index, split_block)
+                    raise InvalidFeaturesData(
+                        "Insert marker has rules before and after, feature %s "
+                        "cannot be inserted." % block.name
+                    )
 
             else:
                 index = len(statements)
