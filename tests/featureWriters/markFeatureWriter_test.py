@@ -309,6 +309,35 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+        # test append mode ignores insert marker
+        generated = self.writeFeatures(testufo, mode="append")
+        assert str(generated) == dedent(
+            """\
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i <anchor 100 500> mark @MC_top
+                        ligComponent <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
     def test_insert_comment_after(self, testufo):
         writer = MarkFeatureWriter()
         testufo.features.text = dedent(
@@ -365,7 +394,36 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
-    def test_insert_comment_split(self, testufo):
+        # test append mode ignores insert marker
+        generated = self.writeFeatures(testufo, mode="append")
+        assert str(generated) == dedent(
+            """\
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i <anchor 100 500> mark @MC_top
+                        ligComponent <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
+    def test_insert_comment_middle(self, testufo):
         writer = MarkFeatureWriter()
         testufo.features.text = dedent(
             """\
@@ -392,8 +450,34 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         ):
             writer.write(testufo, feaFile)
 
-        writer = MarkFeatureWriter(mode="append")
-        assert writer.write(testufo, feaFile)
+        # test append mode ignores insert marker
+        generated = self.writeFeatures(testufo, mode="append")
+        assert str(generated) == dedent(
+            """\
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i <anchor 100 500> mark @MC_top
+                        ligComponent <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
 
     def test_insert_comment_outside_block(self, testufo):
         writer = MarkFeatureWriter()
@@ -435,6 +519,10 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             "feature block",
         ):
             writer.write(testufo, feaFile)
+
+        # test append mode
+        writer = MarkFeatureWriter(mode="append")
+        assert writer.write(testufo, feaFile)
 
     def test_mark_mkmk_features(self, testufo):
         writer = MarkFeatureWriter()  # by default both mark + mkmk are built

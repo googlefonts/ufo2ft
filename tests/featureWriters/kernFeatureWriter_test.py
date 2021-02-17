@@ -267,6 +267,21 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert str(feaFile).strip() == expected.strip()
 
+        # test append mode ignores insert marker
+        generated = self.writeFeatures(ufo, mode="append")
+        assert str(generated) == dedent(
+            """
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+            """
+        )
+
     def test_insert_comment_after(self, FontClass):
         ufo = FontClass()
         for name in ("one", "four", "six", "seven"):
@@ -309,7 +324,22 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert str(feaFile) == expected
 
-    def test_insert_comment_split(self, FontClass):
+        # test append mode ignores insert marker
+        generated = self.writeFeatures(ufo, mode="append")
+        assert str(generated) == dedent(
+            """
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+            """
+        )
+
+    def test_insert_comment_middle(self, FontClass):
         ufo = FontClass()
         for name in ("one", "four", "six", "seven"):
             ufo.newGlyph(name)
@@ -337,9 +367,20 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ):
             writer.write(ufo, feaFile)
 
-        writer = KernFeatureWriter(mode="append")
-        expected = str(feaFile)
-        assert writer.write(ufo, feaFile)
+        # test append mode ignores insert marker
+        generated = self.writeFeatures(ufo, mode="append")
+        assert str(generated) == dedent(
+            """
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+            """
+        )
 
     def test_arabic_numerals(self, FontClass):
         """Test that arabic numerals (with bidi type AN) are kerned LTR.
