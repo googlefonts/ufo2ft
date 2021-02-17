@@ -103,6 +103,8 @@ class BaseFeatureWriter:
         insertComments = None
         if self.mode == "skip":
             insertComments = _collectInsertMarkers(feaFile, self.insertFeatureMarker)
+            # only keep insert marker comments for our features
+            insertComments = {k: v for k, v in insertComments.items() if k in todo}
             # find existing feature blocks
             existing = ast.findFeatureTags(feaFile)
             # ignore features with insert marker
@@ -170,28 +172,7 @@ class BaseFeatureWriter:
         # Collect insert markers in blocks
         insertComments = self.context.insertComments
 
-        # Insert classDefs
-        # Note: The AFDKO spec says glyph classes should be defined before any
-        # are used, but ufo2ft featureWriters has never done that.
-        if classDefs:
-            statements.extend(classDefs)
-
-        # Insert markClassDefs
-        if markClassDefs:
-            markClassDefs.append(ast.Comment(""))
-            statements.extend(markClassDefs)
-
-        # Add the lookup blocks
-        if lookups is None:
-            wroteLookups = True
-        elif not insertComments:
-            if statements:
-                statements.append(ast.Comment(""))
-            statements.extend(lookups)
-            wroteLookups = True
-        else:
-            wroteLookups = False
-
+        wroteOthers = False
         for _, feature in features:
             if insertComments and feature.name in insertComments:
                 block, comment = insertComments[feature.name]
@@ -240,12 +221,31 @@ class BaseFeatureWriter:
             else:
                 index = len(statements)
 
+            if not wroteOthers:
+                others = []
+                # Insert classDefs
+                # Note: The AFDKO spec says glyph classes should be defined before any
+                # are used, but ufo2ft featureWriters has never done that.
+                if classDefs:
+                    others.extend(classDefs)
+                    others.append(ast.Comment(""))
+                # Insert markClassDefs
+                if markClassDefs:
+                    others.extend(markClassDefs)
+                    others.append(ast.Comment(""))
+                # Insert lookups
+                if lookups:
+                    if index > 0 and not others:
+                        others.append(ast.Comment(""))
+                    others.extend(lookups)
+                if others:
+                    feaFile.statements = statements = (
+                        statements[:index] + others + statements[index:]
+                    )
+                    index = index + len(others)
+                wroteOthers = True
+
             statements.insert(index, feature)
-            if not wroteLookups:
-                statements = feaFile.statements = (
-                    statements[:index] + lookups + statements[index:]
-                )
-                wroteLookups = True
 
     def makeUnicodeToGlyphNameMapping(self):
         """Return the Unicode to glyph name mapping for the current font."""
