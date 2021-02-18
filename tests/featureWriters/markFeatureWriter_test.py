@@ -490,12 +490,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         )
         feaFile = parseLayoutFeatures(testufo)
 
-        with pytest.raises(
-            InvalidFeaturesData,
-            match="Invalid insert marker '# Automatic Code' outside of "
-            "feature block",
-        ):
-            writer.write(testufo, feaFile)
+        assert writer.write(testufo, feaFile)
 
         testufo.features.text = dedent(
             """\
@@ -513,12 +508,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         )
         feaFile = parseLayoutFeatures(testufo)
 
-        with pytest.raises(
-            InvalidFeaturesData,
-            match="Invalid insert marker '# Automatic Code' outside of "
-            "feature block",
-        ):
-            writer.write(testufo, feaFile)
+        assert writer.write(testufo, feaFile)
 
         # test append mode
         writer = MarkFeatureWriter(mode="append")

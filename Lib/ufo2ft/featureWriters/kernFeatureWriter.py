@@ -238,7 +238,6 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         # extend feature file with the new generated statements
         feaFile = self.context.feaFile
-        # statements = feaFile.statements
 
         # first add the glyph class definitions
         side1Classes = self.context.kerning.side1Classes
@@ -255,9 +254,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             feaFile=feaFile,
             classDefs=newClassDefs,
             lookups=lookupGroups,
-            features=sorted(
-                features.items(), key=lambda x: ["kern", "dist"].index(x[0])
-            ),
+            features=[features[tag] for tag in ["kern", "dist"] if tag in features],
         )
         return True
 
