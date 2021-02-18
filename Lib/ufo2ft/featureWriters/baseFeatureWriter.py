@@ -154,7 +154,13 @@ class BaseFeatureWriter:
         raise NotImplementedError
 
     def _insert(
-        self, feaFile, classDefs=None, markClassDefs=None, lookups=None, features=None
+        self,
+        feaFile,
+        classDefs=None,
+        anchorDefs=None,
+        markClassDefs=None,
+        lookups=None,
+        features=None,
     ):
         """
         Insert feature, its classDefs or markClassDefs and lookups at insert
@@ -228,6 +234,10 @@ class BaseFeatureWriter:
                 # are used, but ufo2ft featureWriters has never done that.
                 if classDefs:
                     others.extend(classDefs)
+                    others.append(ast.Comment(""))
+                # Insert anchorDefs
+                if anchorDefs:
+                    others.extend(anchorDefs)
                     others.append(ast.Comment(""))
                 # Insert markClassDefs
                 if markClassDefs:
