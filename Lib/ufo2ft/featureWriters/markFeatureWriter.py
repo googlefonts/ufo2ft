@@ -879,7 +879,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         self._insert(
             feaFile=feaFile,
             markClassDefs=newClassDefs,
-            features=sorted(features.items()),
+            features=[features[tag] for tag in sorted(features.keys())],
         )
 
         return True

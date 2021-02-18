@@ -8,21 +8,6 @@ from ufo2ft.featureWriters import ast
 INSERT_FEATURE_MARKER = r"\s*# Automatic Code"
 
 
-def _collectInsertMarkers(feaFile, insertFeatureMarker):
-    """
-    Returns a dictionary of tuples (block, comment) keyed by feature tag
-    """
-    insertComments = dict()
-    for parent, comment in ast.findCommentPattern(feaFile, insertFeatureMarker):
-        if parent is None:
-            raise InvalidFeaturesData(
-                "Invalid insert marker '%s' outside of feature block" % str(comment)
-            )
-        elif parent.name not in insertComments.keys():
-            insertComments[parent.name] = (parent, comment)
-    return insertComments
-
-
 class BaseFeatureWriter:
     """Abstract features writer.
 
@@ -102,9 +87,9 @@ class BaseFeatureWriter:
         todo = set(self.features)
         insertComments = None
         if self.mode == "skip":
-            insertComments = _collectInsertMarkers(feaFile, self.insertFeatureMarker)
-            # only keep insert marker comments for our features
-            insertComments = {k: v for k, v in insertComments.items() if k in todo}
+            insertComments = self.collectInsertMarkers(
+                feaFile, self.insertFeatureMarker, todo
+            )
             # find existing feature blocks
             existing = ast.findFeatureTags(feaFile)
             # ignore features with insert marker
@@ -169,8 +154,6 @@ class BaseFeatureWriter:
         If the insert marker is at the top of a feature block, the feature is
         inserted before that block, and after if the insert marker is at the
         bottom.
-        If the insert marker is in the middle of a feature block, that block
-        is split in to two blocks separated by the feature.
         """
 
         statements = feaFile.statements
@@ -179,7 +162,7 @@ class BaseFeatureWriter:
         insertComments = self.context.insertComments
 
         wroteOthers = False
-        for _, feature in features:
+        for feature in features:
             if insertComments and feature.name in insertComments:
                 block, comment = insertComments[feature.name]
                 markerIndex = block.statements.index(comment)
@@ -229,20 +212,11 @@ class BaseFeatureWriter:
 
             if not wroteOthers:
                 others = []
-                # Insert classDefs
-                # Note: The AFDKO spec says glyph classes should be defined before any
-                # are used, but ufo2ft featureWriters has never done that.
-                if classDefs:
-                    others.extend(classDefs)
-                    others.append(ast.Comment(""))
-                # Insert anchorDefs
-                if anchorDefs:
-                    others.extend(anchorDefs)
-                    others.append(ast.Comment(""))
-                # Insert markClassDefs
-                if markClassDefs:
-                    others.extend(markClassDefs)
-                    others.append(ast.Comment(""))
+                # Insert classDefs, anchorsDefs, markClassDefs
+                for defs in [classDefs, anchorDefs, markClassDefs]:
+                    if defs:
+                        others.extend(defs)
+                        others.append(ast.Comment(""))
                 # Insert lookups
                 if lookups:
                     if index > 0 and not others:
@@ -256,6 +230,22 @@ class BaseFeatureWriter:
                 wroteOthers = True
 
             statements.insert(index, feature)
+
+    @staticmethod
+    def collectInsertMarkers(feaFile, insertFeatureMarker, featureTags):
+        """
+        Returns a dictionary of tuples (block, comment) keyed by feature tag
+        with the block that contains the comment matching the insert feature
+        marker, for given feature tags.
+        """
+        insertComments = dict()
+        for match in ast.findCommentPattern(feaFile, insertFeatureMarker):
+            blocks, comment = match[:-1], match[-1]
+            if len(blocks) == 1 and isinstance(blocks[0], ast.FeatureBlock):
+                block = blocks[0]
+                if block.name in featureTags and block.name not in insertComments:
+                    insertComments[block.name] = (block, comment)
+        return insertComments
 
     def makeUnicodeToGlyphNameMapping(self):
         """Return the Unicode to glyph name mapping for the current font."""
