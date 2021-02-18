@@ -253,12 +253,10 @@
       <FontBBox value="-55 -280 454 750"/>
       <StrokeWidth value="0"/>
       <!-- charset is dumped separately as the 'GlyphOrder' element -->
-      <Encoding name="StandardEncoding"/>
+      <Encoding>
+      </Encoding>
       <Private>
         <BlueValues value="500 510"/>
-        <OtherBlues value="-250 -260"/>
-        <FamilyBlues value="500 510"/>
-        <FamilyOtherBlues value="-250 -260"/>
         <BlueScale value="0.039625"/>
         <BlueShift value="7"/>
         <BlueFuzz value="1"/>
@@ -270,15 +268,17 @@
         <LanguageGroup value="0"/>
         <ExpansionFactor value="0.06"/>
         <initialRandomSeed value="0"/>
-        <defaultWidthX value="400"/>
-        <nominalWidthX value="400"/>
+        <defaultWidthX value="600"/>
+        <nominalWidthX value="357"/>
         <Subrs>
           <!-- The 'index' attribute is only for humans; it is ignored when parsed. -->
           <CharString index="0">
             -55 23 rmoveto
             509 hlineto
             140 -44 53 -173 6 vhcurveto
-            85 288 -256 0 85 -288 rlineto
+            85 288 rlineto
+            -256 hlineto
+            85 -288 rlineto
             -164 -8 -42 -54 -137 vvcurveto
             return
           </CharString>
@@ -287,46 +287,57 @@
             -34 -27 -27 -33 -33 27 -27 34 33 27 27 33 33 -27 27 -33 hvcurveto
             return
           </CharString>
+          <CharString index="2">
+            66 hmoveto
+            256 hlineto
+            -128 510 rlineto
+            endchar
+          </CharString>
+          <CharString index="3">
+            rmoveto
+            -510 210 510 vlineto
+            endchar
+          </CharString>
+          <CharString index="4">
+            hlineto
+            123 -34 55 -127 16 vhcurveto
+            return
+          </CharString>
         </Subrs>
       </Private>
       <CharStrings>
         <CharString name=".notdef">
-          100 450 hmoveto
+          143 450 hmoveto
           750 -400 -750 vlineto
           350 50 rmoveto
           -300 650 300 hlineto
           endchar
         </CharString>
         <CharString name="uni0020">
-          -150 endchar
+          -107 endchar
         </CharString>
         <CharString name="uni0061">
-          -12 66 hmoveto
-          256 hlineto
-          -128 510 rlineto
-          endchar
+          31 -105 callsubr
         </CharString>
         <CharString name="uni0062">
-          10 100 505 rmoveto
-          -510 210 510 vlineto
-          endchar
+          53 100 505 -104 callsubr
         </CharString>
         <CharString name="uni0063">
-          -26 300 -10 rmoveto
+          17 300 -10 rmoveto
           510 vlineto
           -150 -50 -50 -205 -205 50 -50 150 hvcurveto
           endchar
         </CharString>
         <CharString name="uni0064">
-          -26 151 197 -106 callsubr
+          17 151 197 -106 callsubr
           endchar
         </CharString>
         <CharString name="uni0065">
-          -12 -107 callsubr
+          31 -107 callsubr
           endchar
         </CharString>
         <CharString name="uni0066">
-          10 -107 callsubr
+          53 -107 callsubr
           254 200 rmoveto
           13 13 0 -1 12 hvcurveto
           -43 -147 -43 147 rlineto
@@ -334,43 +345,38 @@
           endchar
         </CharString>
         <CharString name="uni0067">
-          -12 66 hmoveto
-          256 hlineto
-          -128 510 rlineto
-          endchar
+          31 -105 callsubr
         </CharString>
         <CharString name="uni0068">
-          10 211 657 -106 callsubr
-          -111 -152 rmoveto
-          -510 210 510 vlineto
-          endchar
+          53 211 657 -106 callsubr
+          -111 -152 -104 callsubr
         </CharString>
         <CharString name="uni0069">
-          200 -55 -80 rmoveto
-          509 hlineto
-          123 -34 55 -127 16 vhcurveto
+          -55 -80 rmoveto
+          509 -103 callsubr
           -99 396 -100 -397 rlineto
           -117 -18 -32 -56 -119 vvcurveto
           endchar
         </CharString>
         <CharString name="uni006A">
-          200 -55 -80 rmoveto
+          -55 -80 rmoveto
           199 hlineto
           50 -200 50 200 rlineto
-          210 hlineto
-          123 -34 55 -127 16 vhcurveto
-          29 116 -256 0 29 -117 rlineto
+          210 -103 callsubr
+          29 116 rlineto
+          -256 hlineto
+          29 -117 rlineto
           -118 -18 -32 -55 -120 vvcurveto
           endchar
         </CharString>
         <CharString name="uni006B">
-          200 66 hmoveto
+          66 hmoveto
           356 hlineto
           -128 510 -50 -199 -50 199 rlineto
           endchar
         </CharString>
         <CharString name="uni006C">
-          200 294 510 rmoveto
+          294 510 rmoveto
           -44 -175 -44 175 -128 -510 rlineto
           344 hlineto
           endchar

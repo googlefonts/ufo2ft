@@ -100,8 +100,8 @@ def compileOTF(
 
     *subroutinizer* (Optional[str]) is the name of the library to use for
       compressing CFF charstrings, if subroutinization is enabled by optimizeCFF
-      parameter. Choose between "compreffor" or "cffsubr".
-      By default "compreffor" is used for CFF 1, and "cffsubr" for CFF 2.
+      parameter. Choose between "cffsubr" or "compreffor".
+      By default "cffsubr" is used for both CFF 1 and CFF 2.
       NOTE: cffsubr is required for subroutinizing CFF2 tables, as compreffor
       currently doesn't support it.
     """
