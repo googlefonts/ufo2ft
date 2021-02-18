@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ttFont sfntVersion="OTTO" ttLibVersion="4.10">
+<ttFont sfntVersion="OTTO" ttLibVersion="4.11">
 
   <GlyphOrder>
     <!-- The 'id' attribute is only for humans; it is ignored when parsed. -->
@@ -253,12 +253,10 @@
       <FontBBox value="-55 -280 454 750"/>
       <StrokeWidth value="0"/>
       <!-- charset is dumped separately as the 'GlyphOrder' element -->
-      <Encoding name="StandardEncoding"/>
+      <Encoding>
+      </Encoding>
       <Private>
         <BlueValues value="500 510"/>
-        <OtherBlues value="-250 -260"/>
-        <FamilyBlues value="500 510"/>
-        <FamilyOtherBlues value="-250 -260"/>
         <BlueScale value="0.039625"/>
         <BlueShift value="7"/>
         <BlueFuzz value="1"/>
@@ -270,108 +268,126 @@
         <LanguageGroup value="0"/>
         <ExpansionFactor value="0.06"/>
         <initialRandomSeed value="0"/>
-        <defaultWidthX value="400"/>
-        <nominalWidthX value="400"/>
+        <defaultWidthX value="600"/>
+        <nominalWidthX value="357"/>
         <Subrs>
           <!-- The 'index' attribute is only for humans; it is ignored when parsed. -->
           <CharString index="0">
-            256 hlineto
-            -128 510 rlineto
-            endchar
+            -55 -80 rmoveto
+            509 hlineto
+            149 -98 callsubr
+            -149 vhcurveto
+            121 return
           </CharString>
           <CharString index="1">
-            200 -55 -80 rmoveto
+            rmoveto
             509 hlineto
-            149 -50 50 -205 -204 -50 -50 -149 vhcurveto
-            121 return
+            150 -98 callsubr
+            -150 vhcurveto
+            endchar
           </CharString>
           <CharString index="2">
             rmoveto
-            509 hlineto
-            150 -50 50 -205 -204 -50 -50 -150 vhcurveto
-            endchar
-          </CharString>
-          <CharString index="3">
-            rmoveto
             -34 -27 -27 -33 -33 27 -27 34 33 27 27 33 33 -27 27 -33 hvcurveto
             return
+          </CharString>
+          <CharString index="3">
+            -102 callsubr
+            endchar
+          </CharString>
+          <CharString index="4">
+            rmoveto
+            -99 callsubr
+            endchar
+          </CharString>
+          <CharString index="5">
+            66 -100 callsubr
+            return
+          </CharString>
+          <CharString index="6">
+            rmoveto
+            -510 210 510 vlineto
+            endchar
+          </CharString>
+          <CharString index="7">
+            hmoveto
+            -99 callsubr
+            return
+          </CharString>
+          <CharString index="8">
+            256 hlineto
+            -128 510 rlineto
+            return
+          </CharString>
+          <CharString index="9">
+            -50 50 -205 -204 -50 -50 return
           </CharString>
         </Subrs>
       </Private>
       <CharStrings>
         <CharString name=".notdef">
-          100 450 hmoveto
+          143 450 hmoveto
           750 -400 -750 vlineto
           350 50 rmoveto
           -300 650 300 hlineto
           endchar
         </CharString>
         <CharString name="uni0020">
-          -150 endchar
+          -107 endchar
         </CharString>
         <CharString name="uni0061">
-          -12 66 hmoveto
-          -107 callsubr
+          31 -104 callsubr
         </CharString>
         <CharString name="uni0062">
-          10 100 505 rmoveto
-          -510 210 510 vlineto
-          endchar
+          53 100 505 -101 callsubr
         </CharString>
         <CharString name="uni0063">
-          -26 300 -10 rmoveto
+          17 300 -10 rmoveto
           510 vlineto
           -150 -50 -50 -205 -205 50 -50 150 hvcurveto
           endchar
         </CharString>
         <CharString name="uni0064">
-          -26 151 197 -104 callsubr
+          17 151 197 -105 callsubr
           endchar
         </CharString>
         <CharString name="uni0065">
-          -12 66 510 rmoveto
+          31 66 510 rmoveto
           128 -435 128 435 rlineto
-          -377 -487 -105 callsubr
+          -377 -487 -106 callsubr
         </CharString>
         <CharString name="uni0066">
-          10 66 510 rmoveto
+          53 66 510 rmoveto
           256 hlineto
           -128 -435 rlineto
-          -249 -52 -105 callsubr
+          -249 -52 -106 callsubr
         </CharString>
         <CharString name="uni0067">
-          -12 66 hmoveto
-          -107 callsubr
+          31 -104 callsubr
         </CharString>
         <CharString name="uni0068">
-          10 211 657 -104 callsubr
-          -111 -152 rmoveto
-          -510 210 510 vlineto
-          endchar
+          53 211 657 -105 callsubr
+          -111 -152 -101 callsubr
         </CharString>
         <CharString name="uni0069">
-          -106 callsubr
-          80 rmoveto
           -107 callsubr
+          80 -103 callsubr
         </CharString>
         <CharString name="uni006A">
-          -106 callsubr
+          -107 callsubr
           310 rmoveto
           128 -510 128 510 rlineto
           endchar
         </CharString>
         <CharString name="uni006B">
-          200 66 hmoveto
-          256 hlineto
-          -128 510 rlineto
-          -28 -510 rmoveto
-          -107 callsubr
+          -102 callsubr
+          -28 -510 -103 callsubr
         </CharString>
         <CharString name="uni006C">
-          200 334 hmoveto
+          334 hmoveto
           -128 510 -128 -510 rlineto
-          88 hmoveto
-          -107 callsubr
+          88 -100 callsubr
+          endchar
         </CharString>
       </CharStrings>
     </CFFFont>
