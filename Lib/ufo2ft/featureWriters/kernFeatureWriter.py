@@ -237,25 +237,25 @@ class KernFeatureWriter(BaseFeatureWriter):
             return False
 
         # extend feature file with the new generated statements
-        statements = self.context.feaFile.statements
+        feaFile = self.context.feaFile
 
         # first add the glyph class definitions
         side1Classes = self.context.kerning.side1Classes
         side2Classes = self.context.kerning.side2Classes
+        newClassDefs = []
         for classes in (side1Classes, side2Classes):
-            statements.extend([c for _, c in sorted(classes.items())])
+            newClassDefs.extend([c for _, c in sorted(classes.items())])
 
-        # add empty line to separate classes from following statements
-        if statements:
-            statements.append(ast.Comment(""))
-
-        # finally add the lookup and feature blocks
+        lookupGroups = []
         for _, lookupGroup in sorted(lookups.items()):
-            statements.extend(lookupGroup)
-        if "kern" in features:
-            statements.append(features["kern"])
-        if "dist" in features:
-            statements.append(features["dist"])
+            lookupGroups.extend(lookupGroup)
+
+        self._insert(
+            feaFile=feaFile,
+            classDefs=newClassDefs,
+            lookups=lookupGroups,
+            features=[features[tag] for tag in ["kern", "dist"] if tag in features],
+        )
         return True
 
     @classmethod

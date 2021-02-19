@@ -49,6 +49,21 @@ def findFeatureTags(feaFile):
     return {f.name for f in iterFeatureBlocks(feaFile)}
 
 
+def findCommentPattern(feaFile, pattern):
+    """
+    Yield a tuple of statements, starting with the parent block, followed by
+    nested blocks if present, ending with the comment matching a given pattern.
+    There is not parent block if the matched comment is a the root level.
+    """
+    for statement in feaFile.statements:
+        if hasattr(statement, "statements"):
+            for res in findCommentPattern(statement, pattern):
+                yield (statement, *res)
+        elif isinstance(statement, ast.Comment):
+            if re.match(pattern, str(statement)):
+                yield (statement,)
+
+
 def iterClassDefinitions(feaFile, featureTag=None):
     if featureTag is None:
         # start from top-level class definitions
