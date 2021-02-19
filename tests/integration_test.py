@@ -167,8 +167,8 @@ class IntegrationTest:
         "subroutinizer, cff_version, expected_ttx",
         [
             (None, 1, "TestFont-CFF.ttx"),
-            ("compreffor", 1, "TestFont-CFF.ttx"),
-            ("cffsubr", 1, "TestFont-CFF-cffsubr.ttx"),
+            ("compreffor", 1, "TestFont-CFF-compreffor.ttx"),
+            ("cffsubr", 1, "TestFont-CFF.ttx"),
             (None, 2, "TestFont-CFF2-cffsubr.ttx"),
             # ("compreffor", 2, "TestFont-CFF2-compreffor.ttx"),
             ("cffsubr", 2, "TestFont-CFF2-cffsubr.ttx"),
