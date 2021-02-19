@@ -51,7 +51,9 @@ def findFeatureTags(feaFile):
 
 def findCommentPattern(feaFile, pattern):
     """
-    Return a tuple with the block (or nested blocks) and the comment matching a given pattern.
+    Yield a tuple of statements, starting with the parent block, followed by
+    nested blocks if present, ending with the comment matching a given pattern.
+    There is not parent block if the matched comment is a the root level.
     """
     for statement in feaFile.statements:
         if hasattr(statement, "statements"):
