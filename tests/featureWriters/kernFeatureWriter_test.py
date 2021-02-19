@@ -3,6 +3,7 @@ from textwrap import dedent
 
 import pytest
 
+from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
 
@@ -223,6 +224,164 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert not writer.write(ufo, feaFile)
 
         assert str(feaFile) == existing
+
+    def test_insert_comment_before(self, FontClass):
+        ufo = FontClass()
+        for name in ("one", "four", "six", "seven"):
+            ufo.newGlyph(name)
+        existing = dedent(
+            """\
+            feature kern {
+                #
+                # Automatic Code
+                #
+                pos one four' -50 six;
+            } kern;
+            """
+        )
+        ufo.features.text = existing
+        ufo.kerning.update({("seven", "six"): 25.0})
+
+        writer = KernFeatureWriter()
+        feaFile = parseLayoutFeatures(ufo)
+        assert writer.write(ufo, feaFile)
+
+        expected = dedent(
+            """\
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+
+            feature kern {
+                #
+                #
+                pos one four' -50 six;
+            } kern;
+            """
+        )
+
+        assert str(feaFile).strip() == expected.strip()
+
+        # test append mode ignores insert marker
+        generated = self.writeFeatures(ufo, mode="append")
+        assert str(generated) == dedent(
+            """
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+            """
+        )
+
+    def test_insert_comment_after(self, FontClass):
+        ufo = FontClass()
+        for name in ("one", "four", "six", "seven"):
+            ufo.newGlyph(name)
+        existing = dedent(
+            """\
+            feature kern {
+                pos one four' -50 six;
+                #
+                # Automatic Code
+                #
+            } kern;
+            """
+        )
+        ufo.features.text = existing
+        ufo.kerning.update({("seven", "six"): 25.0})
+
+        writer = KernFeatureWriter()
+        feaFile = parseLayoutFeatures(ufo)
+        assert writer.write(ufo, feaFile)
+
+        expected = dedent(
+            """\
+            feature kern {
+                pos one four' -50 six;
+                #
+                #
+            } kern;
+
+
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+            """
+        )
+
+        assert str(feaFile) == expected
+
+        # test append mode ignores insert marker
+        generated = self.writeFeatures(ufo, mode="append")
+        assert str(generated) == dedent(
+            """
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+            """
+        )
+
+    def test_insert_comment_middle(self, FontClass):
+        ufo = FontClass()
+        for name in ("one", "four", "six", "seven"):
+            ufo.newGlyph(name)
+        existing = dedent(
+            """\
+            feature kern {
+                pos one four' -50 six;
+                #
+                # Automatic Code
+                #
+                pos one six' -50 six;
+            } kern;
+            """
+        )
+        ufo.features.text = existing
+        ufo.kerning.update({("seven", "six"): 25.0})
+
+        writer = KernFeatureWriter()
+        feaFile = parseLayoutFeatures(ufo)
+
+        with pytest.raises(
+            InvalidFeaturesData,
+            match="Insert marker has rules before and after, feature kern "
+            "cannot be inserted.",
+        ):
+            writer.write(ufo, feaFile)
+
+        # test append mode ignores insert marker
+        generated = self.writeFeatures(ufo, mode="append")
+        assert str(generated) == dedent(
+            """
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+            """
+        )
 
     def test_arabic_numerals(self, FontClass):
         """Test that arabic numerals (with bidi type AN) are kerned LTR.
