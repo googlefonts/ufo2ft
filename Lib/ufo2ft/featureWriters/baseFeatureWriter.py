@@ -41,7 +41,7 @@ class BaseFeatureWriter:
 
     _SUPPORTED_MODES = frozenset(["skip", "append"])
 
-    def __init__(self, features=None, mode=None, insertFeatureMarker=None, **kwargs):
+    def __init__(self, features=None, mode=None, **kwargs):
         if features is not None:
             features = frozenset(features)
             assert features, "features cannot be empty"
@@ -54,9 +54,6 @@ class BaseFeatureWriter:
             self.mode = mode
         if self.mode not in self._SUPPORTED_MODES:
             raise ValueError(self.mode)
-
-        if insertFeatureMarker is not None:
-            self.insertFeatureMarker = insertFeatureMarker
 
         options = dict(self.__class__.options)
         for k in kwargs:
@@ -203,13 +200,15 @@ class BaseFeatureWriter:
                 # This is currently not supported.
                 else:
                     raise InvalidFeaturesData(
-                        "Insert marker has rules before and after, feature %s "
-                        "cannot be inserted." % block.name
+                        "Insert marker has rules before and after, feature "
+                        f"{block.name} cannot be inserted. This is not supported."
                     )
 
             else:
                 index = len(statements)
 
+            # Write classDefs, anchorsDefs, markClassDefs, lookups on the first
+            # iteration.
             if not wroteOthers:
                 others = []
                 # Insert classDefs, anchorsDefs, markClassDefs
