@@ -36,7 +36,7 @@ setup(
     ],
     extras_require={
         "pathops": ["skia-pathops>=0.5.1"],
-        "cffsubr": ["cffsubr>=0.2.7"],
+        "cffsubr": ["cffsubr>=0.2.8"],
     },
     python_requires=">=3.6",
     classifiers=[

@@ -31,10 +31,9 @@ class PostProcessor:
         COMPREFFOR = "compreffor"
         CFFSUBR = "cffsubr"
 
-    # keep defaulting to compreffor for CFF 1.0, use cffsubr for CFF2;
     # can override by passing explicit subroutinizer parameter to process method
     DEFAULT_SUBROUTINIZER_FOR_CFF_VERSION = {
-        1: SubroutinizerBackend.COMPREFFOR,
+        1: SubroutinizerBackend.CFFSUBR,
         2: SubroutinizerBackend.CFFSUBR,
     }
 
@@ -91,8 +90,8 @@ class PostProcessor:
 
         subroutinizer (Optional[str]):
           The name of the library to use for compressing CFF charstrings, if optimizeCFF
-          is True and CFF or CFF2 table is present. Choose between "compreffor" or
-          "cffsubr". By default "compreffor" is used for CFF 1, and "cffsubr" for CFF 2.
+          is True and CFF or CFF2 table is present. Choose between "cffsubr" or
+          "compreffor". By default "cffsubr" is used for both CFF 1 and CFF 2.
           NOTE: compreffor currently doesn't support input fonts with CFF2 table.
         """
         if self._get_cff_version(self.otf):

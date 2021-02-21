@@ -12,6 +12,7 @@ from ufo2ft import (
     compileVariableCFF2,
     compileVariableTTF,
 )
+from ufo2ft.constants import KEEP_GLYPH_NAMES
 
 
 def getpath(filename):
@@ -171,8 +172,8 @@ class IntegrationTest:
         "subroutinizer, cff_version, expected_ttx",
         [
             (None, 1, "TestFont-CFF.ttx"),
-            ("compreffor", 1, "TestFont-CFF.ttx"),
-            ("cffsubr", 1, "TestFont-CFF-cffsubr.ttx"),
+            ("compreffor", 1, "TestFont-CFF-compreffor.ttx"),
+            ("cffsubr", 1, "TestFont-CFF.ttx"),
             (None, 2, "TestFont-CFF2-cffsubr.ttx"),
             # ("compreffor", 2, "TestFont-CFF2-compreffor.ttx"),
             ("cffsubr", 2, "TestFont-CFF2-cffsubr.ttx"),
@@ -234,8 +235,6 @@ class IntegrationTest:
         ],
     )
     def test_drop_glyph_names(self, testufo, output_format, options, expected_ttx):
-        from ufo2ft.constants import KEEP_GLYPH_NAMES
-
         testufo.lib[KEEP_GLYPH_NAMES] = False
         compile_func = globals()[f"compile{output_format}"]
         ttf = compile_func(testufo, **options)
@@ -252,8 +251,6 @@ class IntegrationTest:
         expectTTX(ttf, "Instructions.ttx")
 
     def test_Instructions_drop_glyph_names(self, instructions_ufo):
-        from ufo2ft.constants import KEEP_GLYPH_NAMES
-
         instructions_ufo.lib[KEEP_GLYPH_NAMES] = False
         ttf = compileTTF(
             instructions_ufo, reverseDirection=False, removeOverlaps=False
@@ -263,6 +260,23 @@ class IntegrationTest:
         assert "fpgm" in ttf
         assert "prep" in ttf
         expectTTX(ttf, "Instructions-useProductionNames.ttx")
+
+    @pytest.mark.parametrize(
+        "output_format, options, expected_ttx",
+        [
+            ("VariableTTF", {}, "TestVariableFont-TTF-post3.ttx"),
+            ("VariableCFF2", {}, "TestVariableFont-CFF2-post3.ttx"),
+        ],
+    )
+
+    def test_drop_glyph_names_variable(
+        self, designspace, output_format, options, expected_ttx
+    ):
+        # set keepGlyphNames in the default UFO.lib where postProcessor finds it
+        designspace.findDefault().font.lib[KEEP_GLYPH_NAMES] = False
+        compile_func = globals()[f"compile{output_format}"]
+        ttf = compile_func(designspace, **options)
+        expectTTX(ttf, expected_ttx)
 
 
 if __name__ == "__main__":

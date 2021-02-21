@@ -919,8 +919,9 @@ class BaseOutlineCompiler:
         from fontTools.colorLib.builder import buildCOLR
 
         layerInfo = self.ufo.lib[COLOR_LAYERS_KEY]
+        glyphMap = self.otf.getReverseGlyphMap()
         if layerInfo:
-            self.otf["COLR"] = buildCOLR(layerInfo)
+            self.otf["COLR"] = buildCOLR(layerInfo, glyphMap=glyphMap)
 
     def setupTable_CPAL(self):
         """

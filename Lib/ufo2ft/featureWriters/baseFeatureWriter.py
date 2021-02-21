@@ -2,7 +2,10 @@ import logging
 from collections import OrderedDict
 from types import SimpleNamespace
 
+from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureWriters import ast
+
+INSERT_FEATURE_MARKER = r"\s*# Automatic Code"
 
 
 class BaseFeatureWriter:
@@ -33,6 +36,7 @@ class BaseFeatureWriter:
     tableTag = None
     features = frozenset()
     mode = "skip"
+    insertFeatureMarker = INSERT_FEATURE_MARKER
     options = {}
 
     _SUPPORTED_MODES = frozenset(["skip", "append"])
@@ -78,12 +82,24 @@ class BaseFeatureWriter:
         Returns the context namespace instance.
         """
         todo = set(self.features)
+        insertComments = None
         if self.mode == "skip":
+            insertComments = self.collectInsertMarkers(
+                feaFile, self.insertFeatureMarker, todo
+            )
+            # find existing feature blocks
             existing = ast.findFeatureTags(feaFile)
+            # ignore features with insert marker
+            existing.difference_update(insertComments.keys())
+            # remove existing feature without insert marker from todo list
             todo.difference_update(existing)
 
         self.context = SimpleNamespace(
-            font=font, feaFile=feaFile, compiler=compiler, todo=todo
+            font=font,
+            feaFile=feaFile,
+            compiler=compiler,
+            todo=todo,
+            insertComments=insertComments,
         )
 
         return self.context
@@ -118,6 +134,117 @@ class BaseFeatureWriter:
     def _write(self):
         """Subclasses must override this."""
         raise NotImplementedError
+
+    def _insert(
+        self,
+        feaFile,
+        classDefs=None,
+        anchorDefs=None,
+        markClassDefs=None,
+        lookups=None,
+        features=None,
+    ):
+        """
+        Insert feature, its classDefs or markClassDefs and lookups at insert
+        marker comment.
+
+        If the insert marker is at the top of a feature block, the feature is
+        inserted before that block, and after if the insert marker is at the
+        bottom.
+        """
+
+        statements = feaFile.statements
+
+        # Collect insert markers in blocks
+        insertComments = self.context.insertComments
+
+        wroteOthers = False
+        for feature in features:
+            if insertComments and feature.name in insertComments:
+                block, comment = insertComments[feature.name]
+                markerIndex = block.statements.index(comment)
+
+                onlyCommentsBefore = all(
+                    isinstance(s, ast.Comment) for s in block.statements[:markerIndex]
+                )
+                onlyCommentsAfter = all(
+                    isinstance(s, ast.Comment) for s in block.statements[markerIndex:]
+                )
+
+                # Remove insert marker(s) from feature block.
+                del block.statements[markerIndex]
+
+                # insertFeatureMarker is in a block with only comments.
+                # Replace that block with new feature block.
+                if onlyCommentsBefore and onlyCommentsAfter:
+                    index = statements.index(block)
+                    statements.remove(block)
+
+                # insertFeatureMarker is at the top of a feature block
+                # or only preceded by other comments.
+                elif onlyCommentsBefore:
+                    index = statements.index(block)
+
+                # insertFeatureMarker is at the bottom of a feature block
+                # or only followed by other comments
+                elif onlyCommentsAfter:
+                    index = statements.index(block) + 1
+
+                # insertFeatureMarker is in the middle of a feature block
+                # preceded and followed by statements that are not comments
+                #
+                # Glyphs3 can insert a feature block when rules are before
+                # and after the insert marker.
+                # See
+                # https://github.com/googlefonts/ufo2ft/issues/351#issuecomment-765294436
+                # This is currently not supported.
+                else:
+                    raise InvalidFeaturesData(
+                        "Insert marker has rules before and after, feature "
+                        f"{block.name} cannot be inserted. This is not supported."
+                    )
+
+            else:
+                index = len(statements)
+
+            # Write classDefs, anchorsDefs, markClassDefs, lookups on the first
+            # iteration.
+            if not wroteOthers:
+                others = []
+                # Insert classDefs, anchorsDefs, markClassDefs
+                for defs in [classDefs, anchorDefs, markClassDefs]:
+                    if defs:
+                        others.extend(defs)
+                        others.append(ast.Comment(""))
+                # Insert lookups
+                if lookups:
+                    if index > 0 and not others:
+                        others.append(ast.Comment(""))
+                    others.extend(lookups)
+                if others:
+                    feaFile.statements = statements = (
+                        statements[:index] + others + statements[index:]
+                    )
+                    index = index + len(others)
+                wroteOthers = True
+
+            statements.insert(index, feature)
+
+    @staticmethod
+    def collectInsertMarkers(feaFile, insertFeatureMarker, featureTags):
+        """
+        Returns a dictionary of tuples (block, comment) keyed by feature tag
+        with the block that contains the comment matching the insert feature
+        marker, for given feature tags.
+        """
+        insertComments = dict()
+        for match in ast.findCommentPattern(feaFile, insertFeatureMarker):
+            blocks, comment = match[:-1], match[-1]
+            if len(blocks) == 1 and isinstance(blocks[0], ast.FeatureBlock):
+                block = blocks[0]
+                if block.name in featureTags and block.name not in insertComments:
+                    insertComments[block.name] = (block, comment)
+        return insertComments
 
     def makeUnicodeToGlyphNameMapping(self):
         """Return the Unicode to glyph name mapping for the current font."""
