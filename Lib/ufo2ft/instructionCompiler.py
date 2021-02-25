@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 import array
+import logging
 
-from fontTools.pens.hashPointPen import HashPointPen
 from fontTools import ttLib
+from fontTools.pens.hashPointPen import HashPointPen
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
     ROUND_XY_TO_GRID,
     USE_MY_METRICS,
 )
-
-import logging
-
 
 logger = logging.getLogger(__name__)
 
