@@ -142,8 +142,18 @@ def loadFilterFromString(spec):
         options = _kwargsEval(kwargs) if kwargs else {}
     except SyntaxError:
         raise ValueError("options have incorrect format: %r" % kwargs)
-    if "args" in options:
-        args = options.pop("args")
+
+    # Process positional arguments
+    requiredArgs = set(klass._args)
+    args = requiredArgs.intersection(options.keys())
+    missing = [a for a in klass._args if a not in options]
+    if missing:
+        raise TypeError(
+            f"missing {len(missing)} required "
+            f"argument{'s' if len(missing) > 1 else ''}: {', '.join(missing)}"
+        )
+    elif args:
+        args = [options.pop(a) for a in args]
         return klass(*args, **options)
     else:
         return klass(**options)

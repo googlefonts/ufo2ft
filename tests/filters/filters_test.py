@@ -183,7 +183,7 @@ def test_loadFilters_kwargs_unsupported(ufo):
 VALID_SPEC_STRINGS = [
     "RemoveOverlapsFilter",
     "PropagateAnchorsFilter(include=['a', 'b', 'c'])",
-    "ufo2ft.filters.fooBar::FooBarFilter(args=['aa', 'bb'], c=1)",
+    "ufo2ft.filters.fooBar::FooBarFilter(a='a', b='b', c=1)",
 ]
 
 
@@ -191,6 +191,20 @@ VALID_SPEC_STRINGS = [
 def test_loadFilterFromString(spec, ufo):
     philter = loadFilterFromString(spec)
     assert callable(philter)
+
+
+def test_loadFilterFromString_args_missing(ufo):
+    with pytest.raises(TypeError) as info:
+        loadFilterFromString(
+            "ufo2ft.filters.fooBar::FooBarFilter(a='a', c=1)",
+        )
+    assert info.match("missing 1 required argument: b")
+
+    with pytest.raises(TypeError) as info:
+        loadFilterFromString(
+            "ufo2ft.filters.fooBar::FooBarFilter(c=1)",
+        )
+    assert info.match("missing 2 required arguments: a, b")
 
 
 def test_BaseFilter_repr():
