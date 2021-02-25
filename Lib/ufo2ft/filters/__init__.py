@@ -1,10 +1,9 @@
 import importlib
 import logging
-import re
 from inspect import getfullargspec, isclass
 
 from ufo2ft.constants import FILTERS_KEY as UFO2FT_FILTERS_KEY  # keep previous name
-from ufo2ft.util import _kwargsEval
+from ufo2ft.util import _loadPluginFromString
 
 from .base import BaseFilter
 from .cubicToQuadratic import CubicToQuadraticFilter
@@ -79,13 +78,6 @@ def loadFilters(ufo):
     return preFilters, postFilters
 
 
-_filterSpecRE = re.compile(
-    r"(?:([\w\.]+)::)?"  # MODULE_NAME + '::'
-    r"(\w+)"  # CLASS_NAME [required]
-    r"(?:\((.*)\))?"  # (KWARGS)
-)
-
-
 def isValidFilter(klass):
     """Return True if 'klass' is a valid filter class.
     A valid filter class is a class (of type 'type'), that has
@@ -108,7 +100,7 @@ def isValidFilter(klass):
 
 def loadFilterFromString(spec):
     """Take a string specifying a filter class to load (either a built-in
-    writer or one defined in an external, user-defined module), initialize it
+    filter or one defined in an external, user-defined module), initialize it
     with given options and return the filter object.
 
     The string must conform to the following notation:
@@ -126,34 +118,4 @@ def loadFilterFromString(spec):
     >>> loadFilterFromString("ufo2ft.filters.removeOverlaps::RemoveOverlapsFilter")
     <ufo2ft.filters.removeOverlaps.RemoveOverlapsFilter object at ...>
     """
-    spec = spec.strip()
-    m = _filterSpecRE.match(spec)
-    if not m or (m.end() - m.start()) != len(spec):
-        raise ValueError(spec)
-    moduleName = m.group(1) or "ufo2ft.filters"
-    className = m.group(2)
-    kwargs = m.group(3)
-
-    module = importlib.import_module(moduleName)
-    klass = getattr(module, className)
-    if not isValidFilter(klass):
-        raise TypeError(klass)
-    try:
-        options = _kwargsEval(kwargs) if kwargs else {}
-    except SyntaxError:
-        raise ValueError("options have incorrect format: %r" % kwargs)
-
-    # Process positional arguments
-    requiredArgs = set(klass._args)
-    args = requiredArgs.intersection(options.keys())
-    missing = [a for a in klass._args if a not in options]
-    if missing:
-        raise TypeError(
-            f"missing {len(missing)} required "
-            f"argument{'s' if len(missing) > 1 else ''}: {', '.join(missing)}"
-        )
-    elif args:
-        args = [options.pop(a) for a in args]
-        return klass(*args, **options)
-    else:
-        return klass(**options)
+    return _loadPluginFromString(spec, "ufo2ft.filters", isValidFilter)

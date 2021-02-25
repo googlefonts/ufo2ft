@@ -1,8 +1,7 @@
 import importlib
-import re
 from inspect import isclass
 
-from ufo2ft.util import _kwargsEval
+from ufo2ft.util import _loadPluginFromString
 
 from .baseFeatureWriter import BaseFeatureWriter
 from .kernFeatureWriter import KernFeatureWriter
@@ -97,13 +96,6 @@ def loadFeatureWriters(ufo, ignoreErrors=True):
     return writers
 
 
-_featureWriterSpecRE = re.compile(
-    r"(?:([\w\.]+)::)?"  # MODULE_NAME + '::'
-    r"(\w+)"  # CLASS_NAME [required]
-    r"(?:\((.*)\))?"  # (KWARGS)
-)
-
-
 def loadFeatureWriterFromString(spec):
     """Take a string specifying a feature writer class to load (either a
     built-in writer or one defined in an external, user-defined module),
@@ -132,20 +124,4 @@ def loadFeatureWriterFromString(spec):
     >>> loadFeatureWriterFromString("ufo2ft.featureWriters::KernFeatureWriter")
     <ufo2ft.featureWriters.kernFeatureWriter.KernFeatureWriter object at ...>
     """
-    spec = spec.strip()
-    m = _featureWriterSpecRE.match(spec)
-    if not m or (m.end() - m.start()) != len(spec):
-        raise ValueError(spec)
-    moduleName = m.group(1) or "ufo2ft.featureWriters"
-    className = m.group(2)
-    kwargs = m.group(3)
-
-    module = importlib.import_module(moduleName)
-    klass = getattr(module, className)
-    if not isValidFeatureWriter(klass):
-        raise TypeError(klass)
-    try:
-        options = _kwargsEval(kwargs) if kwargs else {}
-    except SyntaxError:
-        raise ValueError("options have incorrect format: %r" % kwargs)
-    return klass(**options)
+    return _loadPluginFromString(spec, "ufo2ft.featureWriters", isValidFeatureWriter)
