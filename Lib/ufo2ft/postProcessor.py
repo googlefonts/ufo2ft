@@ -231,6 +231,7 @@ class PostProcessor:
     def _compile_truetype_hinting(self):
         logger.info("Compiling TrueType hinting")
         from ufo2ft.instructionCompiler import InstructionCompiler
+
         ic = InstructionCompiler(ufo=self.ufo, ttf=self.otf)
         ic.compile()
 
