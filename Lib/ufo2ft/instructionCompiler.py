@@ -133,6 +133,14 @@ class InstructionCompiler(object):
                 # doesn't have an identifier, we should autoset all component
                 # flags.
                 for i, c in enumerate(glyf.components):
+                    if i >= len(glyph.components):
+                        logger.error(
+                            "Number of components differ between UFO and TTF "
+                            f"in glyph '{name}' ({len(glyph.components)} vs. "
+                            f"{len(glyf.components)}, not setting flags in "
+                            "additional components."
+                        )
+                        break
                     ufo_component = glyph.components[i]
                     if (
                         ufo_component.identifier is None
