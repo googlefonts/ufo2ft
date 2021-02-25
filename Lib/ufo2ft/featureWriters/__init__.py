@@ -2,6 +2,8 @@ import importlib
 import re
 from inspect import isclass
 
+from ufo2ft.util import _kwargsEval
+
 from .baseFeatureWriter import BaseFeatureWriter
 from .kernFeatureWriter import KernFeatureWriter
 from .markFeatureWriter import MarkFeatureWriter
@@ -93,18 +95,6 @@ def loadFeatureWriters(ufo, ignoreErrors=True):
             raise
         writers.append(writer)
     return writers
-
-
-# NOTE about the security risk involved in using eval: the function below is
-# meant to be used to parse string coming from the command-line, which is
-# inherently "trusted"; if that weren't the case, a potential attacker
-# could do worse things than segfaulting the Python interpreter...
-
-
-def _kwargsEval(s):
-    return eval(
-        "dict(%s)" % s, {"__builtins__": {"True": True, "False": False, "dict": dict}}
-    )
 
 
 _featureWriterSpecRE = re.compile(

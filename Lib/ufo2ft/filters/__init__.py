@@ -4,7 +4,7 @@ import re
 from inspect import getfullargspec, isclass
 
 from ufo2ft.constants import FILTERS_KEY as UFO2FT_FILTERS_KEY  # keep previous name
-from ufo2ft.featureWriters import _kwargsEval
+from ufo2ft.util import _kwargsEval
 
 from .base import BaseFilter
 from .cubicToQuadratic import CubicToQuadraticFilter
