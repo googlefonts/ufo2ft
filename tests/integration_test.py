@@ -241,9 +241,7 @@ class IntegrationTest:
         expectTTX(ttf, expected_ttx)
 
     def test_Instructions(self, instructions_ufo):
-        ttf = compileTTF(
-            instructions_ufo, reverseDirection=False, removeOverlaps=False
-        )
+        ttf = compileTTF(instructions_ufo, reverseDirection=False, removeOverlaps=False)
         assert "cvt " in ttf
         assert "gasp" in ttf
         assert "fpgm" in ttf
@@ -252,9 +250,7 @@ class IntegrationTest:
 
     def test_Instructions_drop_glyph_names(self, instructions_ufo):
         instructions_ufo.lib[KEEP_GLYPH_NAMES] = False
-        ttf = compileTTF(
-            instructions_ufo, reverseDirection=False, removeOverlaps=False
-        )
+        ttf = compileTTF(instructions_ufo, reverseDirection=False, removeOverlaps=False)
         assert "cvt " in ttf
         assert "gasp" in ttf
         assert "fpgm" in ttf
@@ -268,7 +264,6 @@ class IntegrationTest:
             ("VariableCFF2", {}, "TestVariableFont-CFF2-post3.ttx"),
         ],
     )
-
     def test_drop_glyph_names_variable(
         self, designspace, output_format, options, expected_ttx
     ):

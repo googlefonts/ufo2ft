@@ -65,6 +65,7 @@ def test_warn_pre_filter(font, caplog):
     assert len(caplog.records) == 1
     assert "contains components which will not be sorted" in caplog.text
 
+
 def test_no_warn_post_filter(font, caplog):
     font.lib["com.github.googlei18n.ufo2ft.filters"][0]["include"].append("xxx")
 
