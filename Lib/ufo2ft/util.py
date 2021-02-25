@@ -1,4 +1,6 @@
+import importlib
 import logging
+import re
 from copy import deepcopy
 from inspect import getfullargspec
 
@@ -431,3 +433,45 @@ def _kwargsEval(s):
     return eval(
         "dict(%s)" % s, {"__builtins__": {"True": True, "False": False, "dict": dict}}
     )
+
+
+_pluginSpecRE = re.compile(
+    r"(?:([\w\.]+)::)?"  # MODULE_NAME + '::'
+    r"(\w+)"  # CLASS_NAME [required]
+    r"(?:\((.*)\))?"  # (KWARGS)
+)
+
+
+def _loadPluginFromString(spec, moduleName, isValidFunc):
+    spec = spec.strip()
+    m = _pluginSpecRE.match(spec)
+    if not m or (m.end() - m.start()) != len(spec):
+        raise ValueError(spec)
+    moduleName = m.group(1) or moduleName
+    className = m.group(2)
+    kwargs = m.group(3)
+
+    module = importlib.import_module(moduleName)
+    klass = getattr(module, className)
+    if not isValidFunc(klass):
+        raise TypeError(klass)
+    try:
+        options = _kwargsEval(kwargs) if kwargs else {}
+    except SyntaxError:
+        raise ValueError("options have incorrect format: %r" % kwargs)
+
+    if hasattr(klass, "_args"):
+        # Process positional arguments
+        requiredArgs = set(klass._args)
+        args = requiredArgs.intersection(options.keys())
+        missing = [a for a in klass._args if a not in options]
+        if missing:
+            raise TypeError(
+                f"missing {len(missing)} required "
+                f"argument{'s' if len(missing) > 1 else ''}: {', '.join(missing)}"
+            )
+        if args:
+            args = [options.pop(a) for a in args]
+            return klass(*args, **options)
+
+    return klass(**options)
