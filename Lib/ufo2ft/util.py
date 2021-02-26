@@ -460,18 +460,4 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
     except SyntaxError:
         raise ValueError("options have incorrect format: %r" % kwargs)
 
-    if hasattr(klass, "_args"):
-        # Process positional arguments
-        requiredArgs = set(klass._args)
-        args = requiredArgs.intersection(options.keys())
-        missing = [a for a in klass._args if a not in options]
-        if missing:
-            raise TypeError(
-                f"missing {len(missing)} required "
-                f"argument{'s' if len(missing) > 1 else ''}: {', '.join(missing)}"
-            )
-        if args:
-            args = [options.pop(a) for a in args]
-            return klass(*args, **options)
-
     return klass(**options)
