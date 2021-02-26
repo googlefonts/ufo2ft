@@ -1,10 +1,9 @@
 import argparse
-import importlib
 import logging
 
 from fontTools.misc.cliTools import makeOutputFileName
 
-from ufo2ft.filters import getFilterClass, loadFilterFromString, logger
+from ufo2ft.filters import loadFilterFromString, logger
 
 try:
     import ufoLib2
