@@ -198,13 +198,13 @@ def test_loadFilterFromString_args_missing(ufo):
         loadFilterFromString(
             "ufo2ft.filters.fooBar::FooBarFilter(a='a', c=1)",
         )
-    assert info.match("missing 1 required argument: b")
+    assert info.match("missing 1 required positional argument: 'b'")
 
     with pytest.raises(TypeError) as info:
         loadFilterFromString(
             "ufo2ft.filters.fooBar::FooBarFilter(c=1)",
         )
-    assert info.match("missing 2 required arguments: a, b")
+    assert info.match("missing 2 required positional arguments: 'a', 'b'")
 
 
 def test_BaseFilter_repr():

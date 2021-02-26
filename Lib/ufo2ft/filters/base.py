@@ -21,6 +21,8 @@ class BaseFilter:
     def __init__(self, *args, **kwargs):
         self.options = options = SimpleNamespace()
 
+        if len(args) == 0:
+            args = [kwargs.pop(a) for a in self._args if a in kwargs]
         # process positional arguments
         num_required = len(self._args)
         num_args = len(args)
