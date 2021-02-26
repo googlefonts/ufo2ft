@@ -1,23 +1,24 @@
-from ufo2ft.filters import getFilterClass, logger
-import logging
-import defcon
 import argparse
-from fontTools.misc.cliTools import makeOutputFileName
 import importlib
+import logging
+
+import defcon
+from fontTools.misc.cliTools import makeOutputFileName
+
+from ufo2ft.filters import getFilterClass, logger
 
 logging.basicConfig(level=logging.INFO)
 
-parser = argparse.ArgumentParser(description='Filter a UFO file')
-parser.add_argument('--output', '-o', metavar='OUTPUT',
-                    help='output file name')
-parser.add_argument('--include', metavar='GLYPHS',
-                    help='comma-separated list of glyphs to filter')
-parser.add_argument('--exclude', metavar='GLYPHS',
-                    help='comma-separated list of glyphs to not filter')
-parser.add_argument('ufo', metavar='UFO',
-                    help='UFO file')
-parser.add_argument('filters', metavar='FILTER', nargs='+',
-                    help='filter name')
+parser = argparse.ArgumentParser(description="Filter a UFO file")
+parser.add_argument("--output", "-o", metavar="OUTPUT", help="output file name")
+parser.add_argument(
+    "--include", metavar="GLYPHS", help="comma-separated list of glyphs to filter"
+)
+parser.add_argument(
+    "--exclude", metavar="GLYPHS", help="comma-separated list of glyphs to not filter"
+)
+parser.add_argument("ufo", metavar="UFO", help="UFO file")
+parser.add_argument("filters", metavar="FILTER", nargs="+", help="filter name")
 
 args = parser.parse_args()
 if not args.output:
