@@ -123,6 +123,8 @@ class BaseFeatureWriter:
         were generated.
         """
         self.setContext(font, feaFile, compiler=compiler)
+        if hasattr(font, "naked"):
+            font = font.naked()
         try:
             if self.shouldContinue():
                 return self._write()
