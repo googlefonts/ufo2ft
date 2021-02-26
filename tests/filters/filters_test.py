@@ -123,6 +123,26 @@ def test_loadFilters_args_unsupported(ufo):
     assert exc_info.match("unsupported")
 
 
+def test_loadFilters_args_as_keywords(ufo):
+    del ufo.lib[UFO2FT_FILTERS_KEY][0]["args"]
+    ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"] = {"a": "foo", "b": "bar"}
+
+    _, [filter_obj] = loadFilters(ufo)
+
+    assert filter_obj.options.a == "foo"
+    assert filter_obj.options.b == "bar"
+
+
+def test_loadFilters_args_as_duplicated_keywords(ufo):
+    ufo.lib[UFO2FT_FILTERS_KEY][0]["args"] = ["foo"]
+    ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"] = {"a": "foo", "b": "bar"}
+
+    with pytest.raises(TypeError) as exc_info:
+        loadFilters(ufo)
+
+    assert exc_info.match("duplicated")
+
+
 def test_loadFilters_include_all(ufo):
     _, [filter_obj] = loadFilters(ufo)
 

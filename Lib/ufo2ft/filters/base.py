@@ -21,11 +21,26 @@ class BaseFilter:
     def __init__(self, *args, **kwargs):
         self.options = options = SimpleNamespace()
 
-        if len(args) == 0:
-            args = [kwargs.pop(a) for a in self._args if a in kwargs]
-        # process positional arguments
         num_required = len(self._args)
         num_args = len(args)
+        # process positional arguments as keyword arguments
+        if num_args < num_required:
+            args = (
+                *args,
+                *(kwargs.pop(a) for a in self._args[num_args:] if a in kwargs),
+            )
+            num_args = len(args)
+            duplicated_args = [k for k in self._args if k in kwargs]
+            if duplicated_args:
+                num_duplicated = len(duplicated_args)
+                raise TypeError(
+                    "got {} duplicated positional argument{}: {}".format(
+                        num_duplicated,
+                        "s" if num_duplicated > 1 else "",
+                        ", ".join(duplicated_args),
+                    )
+                )
+        # process positional arguments
         if num_args < num_required:
             missing = [repr(a) for a in self._args[num_args:]]
             num_missing = len(missing)
