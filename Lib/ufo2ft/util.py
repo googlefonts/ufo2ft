@@ -1,4 +1,6 @@
+import importlib
 import logging
+import re
 from copy import deepcopy
 from inspect import getfullargspec
 
@@ -419,3 +421,43 @@ def _getDefaultNotdefGlyph(designSpaceDoc):
         except KeyError:
             notdefGlyph = None
     return notdefGlyph
+
+
+# NOTE about the security risk involved in using eval: the function below is
+# meant to be used to parse string coming from the command-line, which is
+# inherently "trusted"; if that weren't the case, a potential attacker
+# could do worse things than segfaulting the Python interpreter...
+
+
+def _kwargsEval(s):
+    return eval(
+        "dict(%s)" % s, {"__builtins__": {"True": True, "False": False, "dict": dict}}
+    )
+
+
+_pluginSpecRE = re.compile(
+    r"(?:([\w\.]+)::)?"  # MODULE_NAME + '::'
+    r"(\w+)"  # CLASS_NAME [required]
+    r"(?:\((.*)\))?"  # (KWARGS)
+)
+
+
+def _loadPluginFromString(spec, moduleName, isValidFunc):
+    spec = spec.strip()
+    m = _pluginSpecRE.match(spec)
+    if not m or (m.end() - m.start()) != len(spec):
+        raise ValueError(spec)
+    moduleName = m.group(1) or moduleName
+    className = m.group(2)
+    kwargs = m.group(3)
+
+    module = importlib.import_module(moduleName)
+    klass = getattr(module, className)
+    if not isValidFunc(klass):
+        raise TypeError(klass)
+    try:
+        options = _kwargsEval(kwargs) if kwargs else {}
+    except SyntaxError:
+        raise ValueError("options have incorrect format: %r" % kwargs)
+
+    return klass(**options)
