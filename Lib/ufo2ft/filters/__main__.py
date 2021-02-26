@@ -4,7 +4,7 @@ import logging
 
 from fontTools.misc.cliTools import makeOutputFileName
 
-from ufo2ft.filters import getFilterClass, logger, loadFilterFromString
+from ufo2ft.filters import getFilterClass, loadFilterFromString, logger
 
 try:
     import ufoLib2
