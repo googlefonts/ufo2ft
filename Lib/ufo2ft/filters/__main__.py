@@ -2,10 +2,18 @@ import argparse
 import importlib
 import logging
 
-import defcon
 from fontTools.misc.cliTools import makeOutputFileName
 
-from ufo2ft.filters import getFilterClass, logger
+from ufo2ft.filters import getFilterClass, logger, loadFilterFromString
+
+try:
+    import ufoLib2
+
+    loader = ufoLib2.Font
+except ImportError:
+    import defcon
+
+    loader = defcon.Font
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,26 +32,21 @@ args = parser.parse_args()
 if not args.output:
     args.output = makeOutputFileName(args.ufo)
 
-ufo = defcon.Font(args.ufo)
+ufo = loader(args.ufo)
 
-filterargs = {}
+filterargs = ""
 if args.include:
-    filterargs["include"] = args.include.split(",")
+    filterargs = "(include=%s)" % ",".join(
+        ['"%s"' % g for g in args.include.split(",")]
+    )
 if args.exclude:
-    filterargs["exclude"] = args.exclude.split(",")
+    filterargs = "(exclude=%s)" % ",".join(
+        ['"%s"' % g for g in args.exclude.split(",")]
+    )
 
 
 for filtername in args.filters:
-    try:
-        if "." in filtername:
-            module = importlib.import_module(filtername)
-            shortfiltername = (filtername.split("."))[-1]
-            className = shortfiltername[0].upper() + shortfiltername[1:] + "Filter"
-            f = getattr(module, className)(**filterargs)
-        else:
-            f = getFilterClass(filtername)(**filterargs)
-    except Exception as e:
-        raise ValueError("Couldn't find filter %s: %s" % (filtername, e))
+    f = loadFilterFromString(filtername + filterargs)
     f(ufo)
 
 logger.info("Written on %s" % args.output)
