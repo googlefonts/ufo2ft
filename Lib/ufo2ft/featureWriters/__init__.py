@@ -1,16 +1,13 @@
 import importlib
-from inspect import isclass, getfullargspec
+import logging
+from inspect import getfullargspec, isclass
 
+from ufo2ft.constants import FEATURE_WRITERS_KEY
 from ufo2ft.util import _loadPluginFromString
 
 from .baseFeatureWriter import BaseFeatureWriter
 from .kernFeatureWriter import KernFeatureWriter
 from .markFeatureWriter import MarkFeatureWriter
-
-
-import logging
-
-from ufo2ft.constants import FEATURE_WRITERS_KEY
 
 __all__ = [
     "BaseFeatureWriter",
