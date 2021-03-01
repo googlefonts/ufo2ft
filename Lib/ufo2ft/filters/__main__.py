@@ -18,10 +18,11 @@ logging.basicConfig(level=logging.INFO)
 
 parser = argparse.ArgumentParser(description="Filter a UFO file")
 parser.add_argument("--output", "-o", metavar="OUTPUT", help="output file name")
-parser.add_argument(
+include_group = parser.add_mutually_exclusive_group(required=False)
+include_group.add_argument(
     "--include", metavar="GLYPHS", help="comma-separated list of glyphs to filter"
 )
-parser.add_argument(
+include_group.add_argument(
     "--exclude", metavar="GLYPHS", help="comma-separated list of glyphs to not filter"
 )
 parser.add_argument("ufo", metavar="UFO", help="UFO file")
@@ -33,19 +34,26 @@ if not args.output:
 
 ufo = loader(args.ufo)
 
-filterargs = ""
+include = None
+
 if args.include:
-    filterargs = "(include=%s)" % ",".join(
-        ['"%s"' % g for g in args.include.split(",")]
-    )
-if args.exclude:
-    filterargs = "(exclude=%s)" % ",".join(
-        ['"%s"' % g for g in args.exclude.split(",")]
-    )
+    include_set = set(args.include.split(","))
+
+    def include(g):
+        return g.name in include_set
+
+
+elif args.exclude:
+    exclude_set = set(args.exclude.split(","))
+
+    def include(g):
+        return g.name not in exclude_set
 
 
 for filtername in args.filters:
-    f = loadFilterFromString(filtername + filterargs)
+    f = loadFilterFromString(filtername)
+    if include is not None:
+        f.include = include
     f(ufo)
 
 logger.info("Written on %s" % args.output)
