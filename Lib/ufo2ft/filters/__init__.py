@@ -87,13 +87,13 @@ def isValidFilter(klass):
            def __call__(self, font, feaFile, compiler=None)
     """
     if not isclass(klass):
-        logger.error("{klass!r} is not a class")
+        logger.error(f"{klass!r} is not a class")
         return False
     if not callable(klass):
-        logger.error("{klass!r} is not callable")
+        logger.error(f"{klass!r} is not callable")
         return False
     if getfullargspec(klass.__call__).args != getfullargspec(BaseFilter.__call__).args:
-        logger.error("{klass!r} '__call__' method has incorrect signature", klass)
+        logger.error(f"{klass!r} '__call__' method has incorrect signature")
         return False
     return True
 
