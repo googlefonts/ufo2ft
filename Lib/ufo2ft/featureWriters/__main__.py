@@ -4,7 +4,6 @@ from io import StringIO
 
 from fontTools.misc.cliTools import makeOutputFileName
 
-from ufo2ft.constants import FEATURE_WRITERS_KEY
 from ufo2ft.featureCompiler import FeatureCompiler
 from ufo2ft.featureWriters import loadFeatureWriterFromString, logger
 
@@ -40,9 +39,6 @@ compiler.setupFeatures()
 buf = StringIO()
 compiler.writeFeatures(buf)
 ufo.features.text = buf.getvalue()
-
-if FEATURE_WRITERS_KEY in ufo.lib:
-    del ufo.lib[FEATURE_WRITERS_KEY]
 
 logger.info("Written on %s" % args.output)
 ufo.save(args.output)
