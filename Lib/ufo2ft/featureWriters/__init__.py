@@ -1,20 +1,13 @@
 import importlib
-from inspect import isclass
+import logging
+from inspect import getfullargspec, isclass
 
+from ufo2ft.constants import FEATURE_WRITERS_KEY
 from ufo2ft.util import _loadPluginFromString
 
 from .baseFeatureWriter import BaseFeatureWriter
 from .kernFeatureWriter import KernFeatureWriter
 from .markFeatureWriter import MarkFeatureWriter
-
-try:
-    from inspect import getfullargspec as getargspec  # PY3
-except ImportError:
-    from inspect import getargspec  # PY2
-
-import logging
-
-from ufo2ft.constants import FEATURE_WRITERS_KEY
 
 __all__ = [
     "BaseFeatureWriter",
@@ -45,7 +38,7 @@ def isValidFeatureWriter(klass):
     if not hasattr(klass, "write"):
         logger.error("%r does not have a required 'write' method", klass)
         return False
-    if getargspec(klass.write).args != getargspec(BaseFeatureWriter.write).args:
+    if getfullargspec(klass.write).args != getfullargspec(BaseFeatureWriter.write).args:
         logger.error("%r 'write' method has incorrect signature", klass)
         return False
     return True
