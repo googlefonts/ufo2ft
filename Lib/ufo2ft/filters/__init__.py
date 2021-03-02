@@ -2,7 +2,7 @@ import importlib
 import logging
 from inspect import getfullargspec, isclass
 
-from ufo2ft.constants import FILTERS_KEY as UFO2FT_FILTERS_KEY  # keep previous name
+from ufo2ft.constants import FILTERS_KEY
 from ufo2ft.util import _loadPluginFromString
 
 from .base import BaseFilter
@@ -56,7 +56,7 @@ def loadFilters(ufo):
     glyphs, another for the filters that are applied after decomposition.
     """
     preFilters, postFilters = [], []
-    for filterDict in ufo.lib.get(UFO2FT_FILTERS_KEY, []):
+    for filterDict in ufo.lib.get(FILTERS_KEY, []):
         namespace = filterDict.get("namespace", "ufo2ft.filters")
         try:
             filterClass = getFilterClass(filterDict["name"], namespace)
