@@ -31,7 +31,13 @@ class BasePreProcessor:
     """
 
     def __init__(
-        self, ufo, inplace=False, layerName=None, skipExportGlyphs=None, **kwargs
+        self,
+        ufo,
+        inplace=False,
+        layerName=None,
+        skipExportGlyphs=None,
+        filters=None,
+        **kwargs
     ):
         self.ufo = ufo
         self.inplace = inplace
@@ -40,7 +46,10 @@ class BasePreProcessor:
             ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
         )
         self.defaultFilters = self.initDefaultFilters(**kwargs)
-        self.preFilters, self.postFilters = loadFilters(ufo)
+        if filters is None:
+            self.preFilters, self.postFilters = loadFilters(ufo)
+        else:
+            self.preFilters, self.postFilters = filters
 
     def initDefaultFilters(self, **kwargs):
         return []  # pragma: no cover
@@ -216,6 +225,7 @@ class TTFInterpolatablePreProcessor:
         rememberCurveType=True,
         layerNames=None,
         skipExportGlyphs=None,
+        filters=None,
     ):
         from cu2qu.ufo import DEFAULT_MAX_ERR
 
@@ -242,11 +252,14 @@ class TTFInterpolatablePreProcessor:
         self._reverseDirection = reverseDirection
         self._rememberCurveType = rememberCurveType
 
-        self.preFilters, self.postFilters = [], []
-        for ufo in ufos:
-            pre, post = loadFilters(ufo)
-            self.preFilters.append(pre)
-            self.postFilters.append(post)
+        if filters is None:
+            self.preFilters, self.postFilters = [], []
+            for ufo in ufos:
+                pre, post = loadFilters(ufo)
+                self.preFilters.append(pre)
+                self.postFilters.append(post)
+        else:
+            self.preFilters, self.postFilters = ((f,) * len(ufos) for f in filters)
 
     def process(self):
         from cu2qu.ufo import fonts_to_quadratic
