@@ -68,10 +68,11 @@ def loadFilters(ufo):
         filterObj = filterClass(
             include=filterDict.get("include"),
             exclude=filterDict.get("exclude"),
+            pre=filterDict.get("pre"),
             *filterDict.get("args", []),
             **filterDict.get("kwargs", {}),
         )
-        if filterDict.get("pre"):
+        if filterObj.pre:
             preFilters.append(filterObj)
         else:
             postFilters.append(filterObj)

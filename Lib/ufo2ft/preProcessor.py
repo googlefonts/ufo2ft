@@ -49,7 +49,8 @@ class BasePreProcessor:
         if filters is None:
             self.preFilters, self.postFilters = loadFilters(ufo)
         else:
-            self.preFilters, self.postFilters = filters
+            self.preFilters = [f for f in filters if f.pre]
+            self.postFilters = [f for f in filters if not f.pre]
 
     def initDefaultFilters(self, **kwargs):
         return []  # pragma: no cover

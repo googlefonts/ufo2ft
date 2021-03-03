@@ -69,7 +69,7 @@ class BaseFilter:
             setattr(options, key, kwargs.pop(key, default))
 
         # process special pre argument
-        self._pre = kwargs.pop("pre", False)
+        self.pre = kwargs.pop("pre", self._pre)
 
         # process special include/exclude arguments
         include = kwargs.pop("include", None)
