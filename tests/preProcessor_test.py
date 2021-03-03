@@ -11,7 +11,7 @@ from ufo2ft.constants import (
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
 )
-from ufo2ft.filters import UFO2FT_FILTERS_KEY
+from ufo2ft.filters import FILTERS_KEY
 from ufo2ft.filters.explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
 from ufo2ft.preProcessor import (
     TTFInterpolatablePreProcessor,
@@ -130,13 +130,11 @@ class TTFInterpolatablePreProcessorTest:
 
     def test_custom_filters(self, FontClass):
         ufo1 = FontClass(getpath("TestFont.ufo"))
-        ufo1.lib[UFO2FT_FILTERS_KEY] = [
+        ufo1.lib[FILTERS_KEY] = [
             {"name": "transformations", "kwargs": {"OffsetX": -40}, "pre": True}
         ]
         ufo2 = FontClass(getpath("TestFont.ufo"))
-        ufo2.lib[UFO2FT_FILTERS_KEY] = [
-            {"name": "transformations", "kwargs": {"OffsetY": 10}}
-        ]
+        ufo2.lib[FILTERS_KEY] = [{"name": "transformations", "kwargs": {"OffsetY": 10}}]
         ufos = [ufo1, ufo2]
 
         glyphSets = TTFInterpolatablePreProcessor(ufos).process()
