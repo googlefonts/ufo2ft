@@ -76,8 +76,10 @@ def compileOTF(
       writer in the given order. If featureWriters is None, the default
       feature writers [KernFeatureWriter, MarkFeatureWriter] are used.
 
-    *filters* argument is a tuple of two lists of BaseFilters subclasses or
-      pre-initialized instances, pre filters and post filters.
+    *filters* argument is a list of BaseFilters subclasses or pre-initialized
+      instances. Filters with 'pre' attribute set to True will be pre-filters
+      called before the default filters, otherwise they will be post-filters,
+      called after the default filters.
       Filters will modify glyphs or the glyph set. The default filters cannot
       be disabled.
 
