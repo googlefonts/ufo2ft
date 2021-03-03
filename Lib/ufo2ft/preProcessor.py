@@ -253,14 +253,18 @@ class TTFInterpolatablePreProcessor:
         self._reverseDirection = reverseDirection
         self._rememberCurveType = rememberCurveType
 
+        self.preFilters, self.postFilters = [], []
         if filters is None:
-            self.preFilters, self.postFilters = [], []
             for ufo in ufos:
                 pre, post = loadFilters(ufo)
                 self.preFilters.append(pre)
                 self.postFilters.append(post)
         else:
-            self.preFilters, self.postFilters = ((f,) * len(ufos) for f in filters)
+            pre = [f for f in filters if f.pre]
+            post = [f for f in filters if not f.pre]
+            for _ in ufos:
+                self.preFilters.append(pre)
+                self.postFilters.append(post)
 
     def process(self):
         from cu2qu.ufo import fonts_to_quadratic
