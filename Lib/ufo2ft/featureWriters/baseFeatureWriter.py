@@ -306,3 +306,24 @@ class BaseFeatureWriter:
         if compiler and not hasattr(compiler, "_gsub"):
             compiler._gsub = gsub
         return gsub
+
+    def compileGDEF(self):
+        """Compile a temporary GDEF table from the current feature file."""
+        from ufo2ft.util import compileGDEF
+
+        compiler = self.context.compiler
+        if compiler is not None:
+            # The result is cached in the compiler instance, so if another
+            # writer requests one it is not compiled again.
+            if hasattr(compiler, "_gdef"):
+                return compiler._gdef
+
+            glyphOrder = compiler.ttFont.getGlyphOrder()
+        else:
+            glyphOrder = sorted(self.context.font.keys())
+
+        gdef = compileGDEF(self.context.feaFile, glyphOrder)
+
+        if compiler:
+            compiler._gdef = gdef
+        return gdef
