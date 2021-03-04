@@ -228,6 +228,26 @@ def compileGSUB(featureFile, glyphOrder):
     return font.get("GSUB")
 
 
+def compileGDEF(featureFile, glyphOrder):
+    """Compile and return a GDEF table from `featureFile` (feaLib FeatureFile),
+    using the given `glyphOrder` (list of glyph names).
+    """
+    from fontTools.feaLib.ast import TableBlock
+
+    font = ttLib.TTFont()
+    font.setGlyphOrder(glyphOrder)
+    gdefDefined = False
+    for statement in featureFile.statements:
+        if isinstance(statement, TableBlock) and statement.name == "GDEF":
+            gdefDefined = True
+
+    if not gdefDefined:
+        addOpenTypeFeatures(font, featureFile, tables={"GDEF", "GPOS", "GSUB"})
+    else:
+        addOpenTypeFeatures(font, featureFile, tables={"GDEF"})
+    return font.get("GDEF")
+
+
 def closeGlyphsOverGSUB(gsub, glyphs):
     """Use the FontTools subsetter to perform a closure over the GSUB table
     given the initial `glyphs` (set of glyph names, str). Update the set
