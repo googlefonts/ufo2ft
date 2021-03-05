@@ -2,6 +2,7 @@ import logging
 from collections import OrderedDict
 from types import SimpleNamespace
 
+from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureWriters import ast
 
@@ -307,23 +308,47 @@ class BaseFeatureWriter:
             compiler._gsub = gsub
         return gsub
 
-    def compileGDEF(self):
-        """Compile a temporary GDEF table from the current feature file."""
-        from ufo2ft.util import compileGDEF
+    def getGDEFGlyphClasses(self, feaFile):
+        """Return GDEF GlyphClassDef base/mark/ligature/component glyphs, or
+        None if no GDEF table is defined in the feature file.
+        """
+        font = self.context.font
+        feaFile = self.context.feaFile
+        gdefClasses = ast.getGDEFGlyphClasses(feaFile)
 
-        compiler = self.context.compiler
-        if compiler is not None:
-            # The result is cached in the compiler instance, so if another
-            # writer requests one it is not compiled again.
-            if hasattr(compiler, "_gdef"):
-                return compiler._gdef
+        openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
 
-            glyphOrder = compiler.ttFont.getGlyphOrder()
-        else:
-            glyphOrder = sorted(self.context.font.keys())
+        if not openTypeCategories:
+            return gdefClasses
 
-        gdef = compileGDEF(self.context.feaFile, glyphOrder)
+        # Update glyphs classes with openTypeCategories data except if for
+        # glyphs already in glyphs classes.
+        bases, ligatures, marks, components = (
+            set(gdefClasses.base),
+            set(gdefClasses.ligature),
+            set(gdefClasses.mark),
+            set(gdefClasses.component),
+        )
+        for glyphName, category in openTypeCategories.items():
+            if (
+                glyphName in bases
+                or glyphName in ligatures
+                or glyphName in marks
+                or glyphName in components
+            ):
+                continue
+            if category == "base":
+                bases.add(glyphName)
+            elif category == "ligature":
+                ligatures.add(glyphName)
+            elif category == "mark":
+                marks.add(glyphName)
+            elif category == "component":
+                components.add(glyphName)
 
-        if compiler:
-            compiler._gdef = gdef
-        return gdef
+        return ast._GDEFGlyphClasses(
+            frozenset(bases),
+            frozenset(ligatures),
+            frozenset(marks),
+            frozenset(components),
+        )
