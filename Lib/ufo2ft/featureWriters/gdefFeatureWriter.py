@@ -30,6 +30,8 @@ class GdefFeatureWriter(BaseFeatureWriter):
         for statement in feaFile.statements:
             if isinstance(statement, ast.TableBlock) and statement.name == "GDEF":
                 gdefFea = statement
+                break
+
         if gdefFea:
             ctx.gdefFea = gdefFea
             ctx.gdefTable = self.compileGDEF()
@@ -41,14 +43,18 @@ class GdefFeatureWriter(BaseFeatureWriter):
             ctx.marks,
             ctx.ligatures,
             ctx.components,
-        ) = self._getGDEFGlyphClasses()
+        ) = self.getGDEFGlyphClasses(feaFile)
 
         ctx.ligatureCarets = self._getLigatureCarets()
         ctx.todo = [True]
 
         return ctx
 
-    def _getGDEFGlyphClasses(self):
+    def getGDEFGlyphClasses(self, feaFile):
+        """Return GDEF GlyphClassDef base/mark/ligature/component glyphs, or
+        None if no GDEF table is defined in the feature file or generated from
+        the lookups in the feature file.
+        """
         font = self.context.font
         bases, ligatures, marks, components = set(), set(), set(), set()
         gdefTable = self.context.gdefTable
@@ -59,13 +65,12 @@ class GdefFeatureWriter(BaseFeatureWriter):
         openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
 
         for glyphName in self.context.orderedGlyphSet.keys():
-
-            classDef = classDefs.get(glyphName)
             category = openTypeCategories.get(glyphName)
+            classDef = classDefs.get(glyphName)
 
             if classDef is None and category is None:
                 continue
-            if classDef == 1 or (classDef is None and category == "base"):
+            elif classDef == 1 or (classDef is None and category == "base"):
                 bases.add(glyphName)
             elif classDef == 2 or (classDef is None and category == "ligature"):
                 ligatures.add(glyphName)
@@ -74,7 +79,39 @@ class GdefFeatureWriter(BaseFeatureWriter):
             elif classDef == 4 or (classDef is None and category == "component"):
                 components.add(glyphName)
 
-        return (bases, ligatures, marks, components)
+        return (
+            frozenset(bases),
+            frozenset(ligatures),
+            frozenset(marks),
+            frozenset(components),
+        )
+
+    def compileGDEF(self):
+        """Compile a temporary GDEF table from the current feature file
+        or from a given GDEF Table Block object."""
+        from ufo2ft.util import compileGDEF
+
+        compiler = self.context.compiler
+        if compiler is not None:
+            # The result is cached in the compiler instance, so if another
+            # writer requests one it is not compiled again.
+            if hasattr(compiler, "_gdef"):
+                return compiler._gdef
+
+            glyphOrder = compiler.ttFont.getGlyphOrder()
+        else:
+            glyphOrder = sorted(self.context.font.keys())
+
+        if self.context.gdefFea:
+            feaFile = ast.FeatureFile()
+            feaFile.statements.append(self.context.gdefFea)
+            gdef = compileGDEF(feaFile, glyphOrder)
+        else:
+            gdef = compileGDEF(self.context.feaFile, glyphOrder)
+
+        if compiler:
+            compiler._gdef = gdef
+        return gdef
 
     def _getLigatureCarets(self):
         carets = dict()
