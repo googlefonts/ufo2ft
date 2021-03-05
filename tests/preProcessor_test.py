@@ -92,13 +92,13 @@ class TTFPreProcessorTest:
         assert (glyphSets1["a"][0][0].y - glyphSets0["a"][0][0].y) == 10
 
     def test_custom_filters_as_argument(self, FontClass):
+        from ufo2ft.filters import RemoveOverlapsFilter, TransformationsFilter
+
         ufo1 = FontClass(getpath("TestFont.ufo"))
         ufo2 = FontClass(getpath("TestFont.ufo"))
-        filter1 = loadFilterFromString("RemoveOverlapsFilter(backend='pathops')")
-        filter2 = loadFilterFromString(
-            "TransformationsFilter(OffsetY=-200, include=['d'], pre=True)"
-        )
-        filter3 = loadFilterFromString("TransformationsFilter(OffsetX=10)")
+        filter1 = RemoveOverlapsFilter(backend="pathops")
+        filter2 = TransformationsFilter(include=["d"], pre=True, OffsetY=-200)
+        filter3 = TransformationsFilter(OffsetX=10)
 
         glyphSets0 = TTFPreProcessor(
             ufo1, filters=[filter1, filter2, filter3]
