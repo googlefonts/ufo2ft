@@ -4,6 +4,7 @@ import os
 import sys
 
 import pytest
+from fontTools.pens.boundsPen import BoundsPen
 
 from ufo2ft import (
     compileInterpolatableTTFs,
@@ -13,6 +14,7 @@ from ufo2ft import (
     compileVariableTTF,
 )
 from ufo2ft.constants import KEEP_GLYPH_NAMES
+from ufo2ft.filters import TransformationsFilter
 
 
 def getpath(filename):
@@ -250,6 +252,81 @@ class IntegrationTest:
         compile_func = globals()[f"compile{output_format}"]
         ttf = compile_func(designspace, **options)
         expectTTX(ttf, expected_ttx)
+
+    @pytest.mark.parametrize(
+        "compileFunc",
+        [
+            (compileOTF),
+            (compileTTF),
+        ],
+    )
+    def test_compile_filters(self, compileFunc, FontClass):
+        ufo = FontClass(getpath("LayerFont-Regular.ufo"))
+        filters = [TransformationsFilter(OffsetY=10)]
+        ttf = compileFunc(ufo, filters=filters)
+
+        pen1 = BoundsPen(ufo)
+        glyph = ufo["a"]
+        glyph.draw(pen1)
+
+        glyphSet = ttf.getGlyphSet()
+        tt_glyph = glyphSet["a"]
+        pen2 = BoundsPen(glyphSet)
+        tt_glyph.draw(pen2)
+
+        assert pen1.bounds[0] == pen2.bounds[0]
+        assert pen1.bounds[1] + 10 == pen2.bounds[1]
+        assert pen1.bounds[2] == pen2.bounds[2]
+        assert pen1.bounds[3] + 10 == pen2.bounds[3]
+
+    @pytest.mark.parametrize(
+        "compileFunc",
+        [
+            (compileVariableTTF),
+            (compileVariableCFF2),
+        ],
+    )
+    def test_compileVariable_filters(self, designspace, compileFunc):
+        filters = [TransformationsFilter(OffsetY=10)]
+        varfont = compileFunc(designspace, filters=filters)
+
+        ufo = designspace.sources[0].font
+        pen1 = BoundsPen(ufo)
+        glyph = ufo["a"]
+        glyph.draw(pen1)
+
+        glyphSet = varfont.getGlyphSet()
+        tt_glyph = glyphSet["a"]
+        pen2 = BoundsPen(glyphSet)
+        tt_glyph.draw(pen2)
+
+        assert pen1.bounds[0] == pen2.bounds[0]
+        assert pen1.bounds[1] + 10 == pen2.bounds[1]
+        assert pen1.bounds[2] == pen2.bounds[2]
+        assert pen1.bounds[3] + 10 == pen2.bounds[3]
+
+    def test_compileInterpolatableTTFs(self, FontClass):
+        ufos = [
+            FontClass(getpath("NestedComponents-Regular.ufo")),
+            FontClass(getpath("NestedComponents-Bold.ufo")),
+        ]
+        filters = [TransformationsFilter(OffsetY=10)]
+        ttfs = compileInterpolatableTTFs(ufos, filters=filters)
+
+        for i, ttf in enumerate(ttfs):
+            glyph = ufos[i]["a"]
+            pen1 = BoundsPen(ufos[i])
+            glyph.draw(pen1)
+
+            glyphSet = ttf.getGlyphSet()
+            tt_glyph = glyphSet["uni0061"]
+            pen2 = BoundsPen(glyphSet)
+            tt_glyph.draw(pen2)
+
+            assert pen1.bounds[0] == pen2.bounds[0]
+            assert pen1.bounds[1] + 10 == pen2.bounds[1]
+            assert pen1.bounds[2] == pen2.bounds[2]
+            assert pen1.bounds[3] + 10 == pen2.bounds[3]
 
 
 if __name__ == "__main__":
