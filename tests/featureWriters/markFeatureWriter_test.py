@@ -934,6 +934,90 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_mark_mkmk_features_with_GDEF_and_openTypeCategories(self, testufo):
+        # this glyph has compatible anchors and has an openTypeCategories "base"
+        # value
+        D = testufo.newGlyph("D")
+        D.anchors = [
+            {"name": "top", "x": 300, "y": 700},
+            {"name": "center", "x": 320, "y": 360},
+        ]
+        # these glyphs have compatible anchors but since they not listed in
+        # the GDEF groups, they won't be included in the mark/mkmk feature
+        testufo.newGlyph("Alpha").appendAnchor({"name": "topleft", "x": -10, "y": 400})
+        testufo.newGlyph("psili").appendAnchor({"name": "_topleft", "x": 0, "y": 50})
+        dotaccentcomb = testufo.newGlyph("dotaccentcomb")
+        # this mark glyph has more than one mark anchor, and both will be
+        # generated. Since the two mark anchors cannot cohabit in the same
+        # mark lookup, two lookups will be generated.
+        dotaccentcomb.anchors = [
+            {"name": "_center", "x": 0, "y": 0},
+            {"name": "_top", "x": 0, "y": 0},
+            {"name": "top", "x": 0, "y": 300},
+        ]
+        testufo.lib["public.openTypeCategories"] = {
+            "D": "base",
+            "dotaccentcomb": "mark",
+            "tildecomb": "base",  # will be ignored because in GDEF table below
+        }
+        testufo.features.text = dedent(
+            """\
+            @Bases = [a];
+            @Marks = [acutecomb tildecomb];
+            table GDEF {
+                GlyphClassDef @Bases, [f_i], @Marks, ;
+            } GDEF;
+            """
+        )
+        testufo.glyphOrder = [
+            "Alpha",
+            "D",
+            "a",
+            "acutecomb",
+            "dotaccentcomb",
+            "f_i",
+            "psili",
+            "tildecomb",
+        ]
+
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+            markClass dotaccentcomb <anchor 0 0> @MC_center;
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass dotaccentcomb <anchor 0 0> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base D <anchor 320 360> mark @MC_center;
+                } mark2base;
+
+                lookup mark2base_1 {
+                    pos base D <anchor 300 700> mark @MC_top;
+                    pos base a <anchor 100 200> mark @MC_top;
+                } mark2base_1;
+
+                lookup mark2liga {
+                    pos ligature f_i <anchor 100 500> mark @MC_top
+                        ligComponent <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb dotaccentcomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark dotaccentcomb <anchor 0 300> mark @MC_top;
+                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
     def test_multiple_anchor_classes_base(self, FontClass):
         dirname = os.path.dirname(os.path.dirname(__file__))
         fontPath = os.path.join(dirname, "data", "MultipleAnchorClasses.ufo")
