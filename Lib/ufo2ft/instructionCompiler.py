@@ -13,8 +13,10 @@ from fontTools.ttLib.tables._g_l_y_f import (
 logger = logging.getLogger(__name__)
 
 TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"
+TRUETYPE_ROUND_KEY = "public.truetype.roundOffsetToGrid"
+TRUETYPE_METRICS_KEY = "public.truetype.useMyMetrics"
+TRUETYPE_OVERLAP_KEY = "public.truetype.overlap"
 OBJECT_LIBS_KEY = "public.objectLibs"
-OBJECT_IDENTIFIERS_KEY = "public.objectIdentifiers"
 
 
 class InstructionCompiler(object):
@@ -128,10 +130,9 @@ class InstructionCompiler(object):
 
                 # Set component flags
 
-                # We need to decide when to set the flags automatically.
+                # We need to decide when to set the flags.
                 # Let's assume if any lib key is not there, or the component
-                # doesn't have an identifier, we should autoset all component
-                # flags.
+                # doesn't have an identifier, we should leave the flags alone.
                 for i, c in enumerate(glyf.components):
                     if i >= len(glyph.components):
                         logger.error(
@@ -141,54 +142,45 @@ class InstructionCompiler(object):
                             "additional components."
                         )
                         break
-                    ufo_component = glyph.components[i]
+                    ufo_component_id = glyph.components[i].identifier
                     if (
-                        ufo_component.identifier is None
-                        or OBJECT_LIBS_KEY not in glyph.lib
-                        or OBJECT_IDENTIFIERS_KEY
-                        not in glyph.lib[OBJECT_LIBS_KEY]
-                        or ufo_component.identifier
-                        not in glyph.lib[OBJECT_LIBS_KEY][
-                            OBJECT_IDENTIFIERS_KEY
-                        ]
-                        or TRUETYPE_INSTRUCTIONS_KEY
-                        not in glyph.lib[OBJECT_LIBS_KEY][
-                            OBJECT_IDENTIFIERS_KEY
-                        ][ufo_component.identifier]
+                        ufo_component_id is not None
+                        and OBJECT_LIBS_KEY in glyph.lib
+                        and ufo_component_id in glyph.lib[OBJECT_LIBS_KEY]
+                        and (
+                            TRUETYPE_ROUND_KEY
+                            in glyph.lib[OBJECT_LIBS_KEY][ufo_component_id]
+                            or TRUETYPE_METRICS_KEY
+                            in glyph.lib[OBJECT_LIBS_KEY][ufo_component_id]
+                        )
                     ):
-                        # Auto set
-
-                        # We don't try to set the "OVERLAP_COMPOUND" flag
-
-                        # Set "ROUND_XY_TO_GRID" if the component has an offset
-                        # c.flags &= ~ROUND_XY_TO_GRID
-                        # if c.x != 0 or c.y != 0:
-                        #     c.flags |= ROUND_XY_TO_GRID
-
-                        # Nope, don't change the flag:
-                        # https://github.com/googlefonts/ufo2ft/pull/425
-                        pass
-
-                        # "USE_MY_METRICS" has been set already by
-                        # outlineCompiler.OutlineTTFCompiler.autoUseMyMetrics
-
-                    else:
-                        # Use values from lib
-
-                        flags = glyph.lib[OBJECT_LIBS_KEY][
-                            OBJECT_IDENTIFIERS_KEY
-                        ][glyph.components[i].identifier][
-                            TRUETYPE_INSTRUCTIONS_KEY
+                        component_lib = glyph.lib[OBJECT_LIBS_KEY][
+                            ufo_component_id
                         ]
 
                         for key, flag in (
-                            ("overlap", OVERLAP_COMPOUND),
-                            ("round", ROUND_XY_TO_GRID),
-                            ("useMyMetrics", USE_MY_METRICS),
+                            (TRUETYPE_ROUND_KEY, ROUND_XY_TO_GRID),
+                            (TRUETYPE_METRICS_KEY, USE_MY_METRICS),
                         ):
                             c.flags &= ~flag
-                            if flags.get(key, False):
+                            if component_lib.get(key, False):
                                 c.flags |= flag
+
+                    # We might automatically set the flags if no data is present,
+                    # but:
+                    # - https://github.com/googlefonts/ufo2ft/pull/425 recommends
+                    #   against setting the ROUND_XY_TO_GRID flag
+                    # - USE_MY_METRICS has been set already by
+                    #   outlineCompiler.OutlineTTFCompiler.autoUseMyMetrics
+
+                    if (
+                        i == 0
+                        and TRUETYPE_OVERLAP_KEY in glyph.lib
+                    ):
+                        # Set OVERLAP_COMPOUND on the first component only
+                        c.flags &= ~OVERLAP_COMPOUND
+                        if glyph.lib.get(TRUETYPE_OVERLAP_KEY, False):
+                            c.flags |= OVERLAP_COMPOUND
 
     def compile_maxp(self):
         maxp = self.font["maxp"]
