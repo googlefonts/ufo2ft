@@ -4,6 +4,20 @@
   <unicode hex="00EB"/>
   <outline>
     <component base="e"/>
-    <component base="uni0308" xOffset="418"/>
+    <component base="uni0308" xOffset="418" id="component1"/>
   </outline>
+  <lib>
+    <dict>
+      <key>public.objectLibs</key>
+      <dict>
+        <key>component1</key>
+        <dict>
+          <key>public.truetype.roundOffsetToGrid</key>
+          <true/>
+        </dict>
+      </dict>
+    </dict>
+    <key>public.truetype.overlap</key>
+    <false/>
+  </lib>
 </glyph>
