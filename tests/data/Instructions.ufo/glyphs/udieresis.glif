@@ -10,8 +10,8 @@
     <dict>
       <key>public.objectLibs</key>
       <dict/>
+       <key>public.truetype.overlap</key>
+      <false/>
     </dict>
-    <key>public.truetype.overlap</key>
-    <false/>
   </lib>
 </glyph>
