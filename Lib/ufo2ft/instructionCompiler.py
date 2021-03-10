@@ -165,8 +165,9 @@ class InstructionCompiler(object):
                         if component_lib.get(TRUETYPE_METRICS_KEY, False):
                             if use_my_metrics_comp:
                                 logger.warning(
-                                    f"Ignoring USE_MY_METRICS flag on component '{ufo_component_id}' because"
-                                    f"it has been set on component '{use_my_metrics_comp}' already."
+                                    "Ignoring USE_MY_METRICS flag on component "
+                                    f"'{ufo_component_id}' because it has been set on "
+                                    f"component '{use_my_metrics_comp}' already."
                                 )
                             else:
                                 c.flags |= USE_MY_METRICS
