@@ -1611,8 +1611,8 @@
     </TTGlyph>
 
     <TTGlyph name="adieresis" xMin="26" yMin="-6" xMax="586" yMax="736">
-      <component glyphName="uni0308" x="443" y="-8" flags="0x4"/>
-      <component glyphName="glyph00016" x="0" y="0" flags="0x204"/>
+      <component glyphName="uni0308" x="443" y="-8" flags="0x404"/>
+      <component glyphName="glyph00016" x="0" y="0" flags="0x200"/>
     </TTGlyph>
 
     <TTGlyph name="e" xMin="32" yMin="-51" xMax="455" yMax="531">
@@ -2242,8 +2242,8 @@
     </TTGlyph>
 
     <TTGlyph name="odieresis" xMin="32" yMin="-27" xMax="536" yMax="726">
-      <component glyphName="o" x="0" y="18" flags="0x4"/>
-      <component glyphName="uni0308" x="457" y="-18" flags="0x4"/>
+      <component glyphName="o" x="0" y="18" flags="0x200"/>
+      <component glyphName="uni0308" x="457" y="-18" flags="0x0"/>
     </TTGlyph>
 
     <TTGlyph name="space"/><!-- contains no outline data -->
