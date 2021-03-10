@@ -3,17 +3,26 @@
   <advance width="604"/>
   <unicode hex="00E4"/>
   <outline>
-    <component base="uni0308" xOffset="443" yOffset="-8"/>
-    <component base="a.005"/>
+    <component base="uni0308" xOffset="443" yOffset="-8" id="component0"/>
+    <component base="a.005" id="component1"/>
   </outline>
   <lib>
     <dict>
-      <key>com.fontlab.ttprogram</key>
-      <string>  &lt;ttProgram&gt;
-    &lt;ttc code="alignt" point="" zone="t: 0"/&gt;
-    &lt;ttc code="singlev" point1="" point2="" round="true"/&gt;
-  &lt;/ttProgram&gt;
-</string>
+      <key>public.objectLibs</key>
+      <dict>
+        <key>component0</key>
+        <dict>
+          <key>public.truetype.roundOffsetToGrid</key>
+          <true/>
+        </dict>
+        <key>component1</key>
+        <dict>
+          <key>public.truetype.useMyMetrics</key>
+          <true/>
+        </dict>
+      </dict>
     </dict>
+    <key>public.truetype.overlap</key>
+    <true/>
   </lib>
 </glyph>
