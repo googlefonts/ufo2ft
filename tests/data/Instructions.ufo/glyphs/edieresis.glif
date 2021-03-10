@@ -4,7 +4,7 @@
   <unicode hex="00EB"/>
   <outline>
     <component base="e"/>
-    <component base="uni0308" xOffset="418" id="component1"/>
+    <component base="uni0308" xOffset="418" identifier="component1"/>
   </outline>
   <lib>
     <dict>
@@ -16,8 +16,8 @@
           <true/>
         </dict>
       </dict>
+      <key>public.truetype.overlap</key>
+      <false/>
     </dict>
-    <key>public.truetype.overlap</key>
-    <false/>
   </lib>
 </glyph>

@@ -3,8 +3,8 @@
   <advance width="604"/>
   <unicode hex="00E4"/>
   <outline>
-    <component base="uni0308" xOffset="443" yOffset="-8" id="component0"/>
-    <component base="a.005" id="component1"/>
+    <component base="uni0308" xOffset="443" yOffset="-8" identifier="component0"/>
+    <component base="a.005" identifier="component1"/>
   </outline>
   <lib>
     <dict>
@@ -21,8 +21,8 @@
           <true/>
         </dict>
       </dict>
+      <key>public.truetype.overlap</key>
+      <true/>
     </dict>
-    <key>public.truetype.overlap</key>
-    <true/>
   </lib>
 </glyph>
