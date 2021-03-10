@@ -133,6 +133,7 @@ class InstructionCompiler(object):
                 # We need to decide when to set the flags.
                 # Let's assume if any lib key is not there, or the component
                 # doesn't have an identifier, we should leave the flags alone.
+                use_my_metrics_comp = None
                 for i, c in enumerate(glyf.components):
                     if i >= len(glyph.components):
                         logger.error(
@@ -156,13 +157,20 @@ class InstructionCompiler(object):
                     ):
                         component_lib = glyph.lib[OBJECT_LIBS_KEY][ufo_component_id]
 
-                        for key, flag in (
-                            (TRUETYPE_ROUND_KEY, ROUND_XY_TO_GRID),
-                            (TRUETYPE_METRICS_KEY, USE_MY_METRICS),
-                        ):
-                            c.flags &= ~flag
-                            if component_lib.get(key, False):
-                                c.flags |= flag
+                        c.flags &= ~ROUND_XY_TO_GRID
+                        if component_lib.get(TRUETYPE_ROUND_KEY, False):
+                            c.flags |= ROUND_XY_TO_GRID
+
+                        c.flags &= ~USE_MY_METRICS
+                        if component_lib.get(TRUETYPE_METRICS_KEY, False):
+                            if use_my_metrics_comp:
+                                logger.warning(
+                                    f"Ignoring USE_MY_METRICS flag on component '{ufo_component_id}' because"
+                                    f"it has been set on component '{use_my_metrics_comp}' already."
+                                )
+                            else:
+                                c.flags |= USE_MY_METRICS
+                                use_my_metrics_comp = ufo_component_id
 
                     # We might automatically set the flags if no data is present,
                     # but:
