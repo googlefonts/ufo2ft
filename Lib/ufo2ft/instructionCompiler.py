@@ -154,9 +154,7 @@ class InstructionCompiler(object):
                             in glyph.lib[OBJECT_LIBS_KEY][ufo_component_id]
                         )
                     ):
-                        component_lib = glyph.lib[OBJECT_LIBS_KEY][
-                            ufo_component_id
-                        ]
+                        component_lib = glyph.lib[OBJECT_LIBS_KEY][ufo_component_id]
 
                         for key, flag in (
                             (TRUETYPE_ROUND_KEY, ROUND_XY_TO_GRID),
@@ -173,10 +171,7 @@ class InstructionCompiler(object):
                     # - USE_MY_METRICS has been set already by
                     #   outlineCompiler.OutlineTTFCompiler.autoUseMyMetrics
 
-                    if (
-                        i == 0
-                        and TRUETYPE_OVERLAP_KEY in glyph.lib
-                    ):
+                    if i == 0 and TRUETYPE_OVERLAP_KEY in glyph.lib:
                         # Set OVERLAP_COMPOUND on the first component only
                         c.flags &= ~OVERLAP_COMPOUND
                         if glyph.lib.get(TRUETYPE_OVERLAP_KEY, False):
