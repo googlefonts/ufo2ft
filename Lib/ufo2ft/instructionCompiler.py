@@ -12,7 +12,9 @@ from fontTools.ttLib.tables._g_l_y_f import (
 
 logger = logging.getLogger(__name__)
 
-ufoLibKey = "public.truetype.instructions"
+TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"
+OBJECT_LIBS_KEY = "public.objectLibs"
+OBJECT_IDENTIFIERS_KEY = "public.objectIdentifiers"
 
 
 class InstructionCompiler(object):
@@ -22,7 +24,7 @@ class InstructionCompiler(object):
 
     def _compile_program(self, key, table_tag):
         assert table_tag in ("prep", "fpgm")
-        ttdata = self.ufo.lib.get(ufoLibKey, None)
+        ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata:
             formatVersion = ttdata.get("formatVersion", None)
             if int(formatVersion) != 1:
@@ -44,7 +46,7 @@ class InstructionCompiler(object):
 
     def compile_cvt(self):
         cvts = []
-        ttdata = self.ufo.lib.get(ufoLibKey, None)
+        ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata:
             formatVersion = ttdata.get("formatVersion", None)
             if int(formatVersion) != 1:
@@ -76,7 +78,7 @@ class InstructionCompiler(object):
     def compile_glyf(self):
         for name in sorted(self.ufo.keys()):
             glyph = self.ufo[name]
-            ttdata = glyph.lib.get(ufoLibKey, None)
+            ttdata = glyph.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
             if name not in self.font["glyf"]:
                 if ttdata is not None:
                     logger.warning(
@@ -144,16 +146,16 @@ class InstructionCompiler(object):
                     ufo_component = glyph.components[i]
                     if (
                         ufo_component.identifier is None
-                        or "public.objectLibs" not in glyph.lib
-                        or "public.objectIdentifiers"
-                        not in glyph.lib["public.objectLibs"]
+                        or OBJECT_LIBS_KEY not in glyph.lib
+                        or OBJECT_IDENTIFIERS_KEY
+                        not in glyph.lib[OBJECT_LIBS_KEY]
                         or ufo_component.identifier
-                        not in glyph.lib["public.objectLibs"][
-                            "public.objectIdentifiers"
+                        not in glyph.lib[OBJECT_LIBS_KEY][
+                            OBJECT_IDENTIFIERS_KEY
                         ]
-                        or "public.truetype.instructions"
-                        not in glyph.lib["public.objectLibs"][
-                            "public.objectIdentifiers"
+                        or TRUETYPE_INSTRUCTIONS_KEY
+                        not in glyph.lib[OBJECT_LIBS_KEY][
+                            OBJECT_IDENTIFIERS_KEY
                         ][ufo_component.identifier]
                     ):
                         # Auto set
@@ -175,10 +177,10 @@ class InstructionCompiler(object):
                     else:
                         # Use values from lib
 
-                        flags = glyph.lib["public.objectLibs"][
-                            "public.objectIdentifiers"
+                        flags = glyph.lib[OBJECT_LIBS_KEY][
+                            OBJECT_IDENTIFIERS_KEY
                         ][glyph.components[i].identifier][
-                            "public.truetype.instructions"
+                            TRUETYPE_INSTRUCTIONS_KEY
                         ]
 
                         for key, flag in (
@@ -192,7 +194,7 @@ class InstructionCompiler(object):
 
     def compile_maxp(self):
         maxp = self.font["maxp"]
-        ttdata = self.ufo.lib.get(ufoLibKey, None)
+        ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata:
             for name in (
                 "maxStorage",
