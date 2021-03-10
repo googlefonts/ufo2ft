@@ -1,19 +1,13 @@
 import importlib
-import re
-from inspect import isclass
+import logging
+from inspect import getfullargspec, isclass
+
+from ufo2ft.constants import FEATURE_WRITERS_KEY
+from ufo2ft.util import _loadPluginFromString
 
 from .baseFeatureWriter import BaseFeatureWriter
 from .kernFeatureWriter import KernFeatureWriter
 from .markFeatureWriter import MarkFeatureWriter
-
-try:
-    from inspect import getfullargspec as getargspec  # PY3
-except ImportError:
-    from inspect import getargspec  # PY2
-
-import logging
-
-from ufo2ft.constants import FEATURE_WRITERS_KEY
 
 __all__ = [
     "BaseFeatureWriter",
@@ -44,7 +38,7 @@ def isValidFeatureWriter(klass):
     if not hasattr(klass, "write"):
         logger.error("%r does not have a required 'write' method", klass)
         return False
-    if getargspec(klass.write).args != getargspec(BaseFeatureWriter.write).args:
+    if getfullargspec(klass.write).args != getfullargspec(BaseFeatureWriter.write).args:
         logger.error("%r 'write' method has incorrect signature", klass)
         return False
     return True
@@ -95,25 +89,6 @@ def loadFeatureWriters(ufo, ignoreErrors=True):
     return writers
 
 
-# NOTE about the security risk involved in using eval: the function below is
-# meant to be used to parse string coming from the command-line, which is
-# inherently "trusted"; if that weren't the case, a potential attacker
-# could do worse things than segfaulting the Python interpreter...
-
-
-def _kwargsEval(s):
-    return eval(
-        "dict(%s)" % s, {"__builtins__": {"True": True, "False": False, "dict": dict}}
-    )
-
-
-_featureWriterSpecRE = re.compile(
-    r"(?:([\w\.]+)::)?"  # MODULE_NAME + '::'
-    r"(\w+)"  # CLASS_NAME [required]
-    r"(?:\((.*)\))?"  # (KWARGS)
-)
-
-
 def loadFeatureWriterFromString(spec):
     """Take a string specifying a feature writer class to load (either a
     built-in writer or one defined in an external, user-defined module),
@@ -142,20 +117,4 @@ def loadFeatureWriterFromString(spec):
     >>> loadFeatureWriterFromString("ufo2ft.featureWriters::KernFeatureWriter")
     <ufo2ft.featureWriters.kernFeatureWriter.KernFeatureWriter object at ...>
     """
-    spec = spec.strip()
-    m = _featureWriterSpecRE.match(spec)
-    if not m or (m.end() - m.start()) != len(spec):
-        raise ValueError(spec)
-    moduleName = m.group(1) or "ufo2ft.featureWriters"
-    className = m.group(2)
-    kwargs = m.group(3)
-
-    module = importlib.import_module(moduleName)
-    klass = getattr(module, className)
-    if not isValidFeatureWriter(klass):
-        raise TypeError(klass)
-    try:
-        options = _kwargsEval(kwargs) if kwargs else {}
-    except SyntaxError:
-        raise ValueError("options have incorrect format: %r" % kwargs)
-    return klass(**options)
+    return _loadPluginFromString(spec, "ufo2ft.featureWriters", isValidFeatureWriter)
