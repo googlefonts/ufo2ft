@@ -256,8 +256,8 @@ class IntegrationTest:
     @pytest.mark.parametrize(
         "compileFunc",
         [
-            (compileOTF),
-            (compileTTF),
+            compileOTF,
+            compileTTF,
         ],
     )
     def test_compile_filters(self, compileFunc, FontClass):
@@ -282,8 +282,8 @@ class IntegrationTest:
     @pytest.mark.parametrize(
         "compileFunc",
         [
-            (compileVariableTTF),
-            (compileVariableCFF2),
+            compileVariableTTF,
+            compileVariableCFF2,
         ],
     )
     def test_compileVariable_filters(self, designspace, compileFunc):
