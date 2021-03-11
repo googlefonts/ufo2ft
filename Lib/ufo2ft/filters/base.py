@@ -18,6 +18,10 @@ class BaseFilter:
     # their default values, which will be set as instance attributes
     _kwargs = {}
 
+    # pre-filter when True, post-filter when False, meaning before or after default
+    # filters
+    _pre = False
+
     def __init__(self, *args, **kwargs):
         self.options = options = SimpleNamespace()
 
@@ -63,6 +67,9 @@ class BaseFilter:
         # process optional keyword arguments
         for key, default in self._kwargs.items():
             setattr(options, key, kwargs.pop(key, default))
+
+        # process special pre argument
+        self.pre = kwargs.pop("pre", self._pre)
 
         # process special include/exclude arguments
         include = kwargs.pop("include", None)

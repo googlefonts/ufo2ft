@@ -39,6 +39,7 @@ def compileOTF(
     outlineCompilerClass=OutlineOTFCompiler,
     featureCompilerClass=None,
     featureWriters=None,
+    filters=None,
     glyphOrder=None,
     useProductionNames=None,
     optimizeCFF=CFFOptimization.SUBROUTINIZE,
@@ -74,6 +75,13 @@ def compileOTF(
       pre-initialized instances. Features will be written by each feature
       writer in the given order. If featureWriters is None, the default
       feature writers [KernFeatureWriter, MarkFeatureWriter] are used.
+
+    *filters* argument is a list of BaseFilters subclasses or pre-initialized
+      instances. Filters with 'pre' attribute set to True will be pre-filters
+      called before the default filters, otherwise they will be post-filters,
+      called after the default filters.
+      Filters will modify glyphs or the glyph set. The default filters cannot
+      be disabled.
 
     *useProductionNames* renames glyphs in TrueType 'post' or OpenType 'CFF '
       tables based on the 'public.postscriptNames' mapping in the UFO lib,
@@ -117,6 +125,7 @@ def compileOTF(
         overlapsBackend=overlapsBackend,
         layerName=layerName,
         skipExportGlyphs=skipExportGlyphs,
+        filters=filters,
     )
     glyphSet = preProcessor.process()
 
@@ -161,6 +170,7 @@ def compileTTF(
     outlineCompilerClass=OutlineTTFCompiler,
     featureCompilerClass=None,
     featureWriters=None,
+    filters=None,
     glyphOrder=None,
     useProductionNames=None,
     convertCubics=True,
@@ -213,6 +223,7 @@ def compileTTF(
         rememberCurveType=rememberCurveType,
         layerName=layerName,
         skipExportGlyphs=skipExportGlyphs,
+        filters=filters,
     )
     glyphSet = preProcessor.process()
 
@@ -248,6 +259,7 @@ def compileInterpolatableTTFs(
     glyphOrder=None,
     useProductionNames=None,
     cubicConversionError=None,
+    filters=None,
     reverseDirection=True,
     flattenComponents=False,
     inplace=False,
@@ -297,6 +309,7 @@ def compileInterpolatableTTFs(
         reverseDirection=reverseDirection,
         layerNames=layerNames,
         skipExportGlyphs=skipExportGlyphs,
+        filters=filters,
     )
     glyphSets = preProcessor.process()
 
@@ -356,6 +369,7 @@ def compileInterpolatableTTFsFromDS(
     glyphOrder=None,
     useProductionNames=None,
     cubicConversionError=None,
+    filters=None,
     reverseDirection=True,
     flattenComponents=False,
     inplace=False,
@@ -411,6 +425,7 @@ def compileInterpolatableTTFsFromDS(
         glyphOrder=glyphOrder,
         useProductionNames=useProductionNames,
         cubicConversionError=cubicConversionError,
+        filters=filters,
         reverseDirection=reverseDirection,
         flattenComponents=flattenComponents,
         inplace=inplace,
@@ -436,6 +451,7 @@ def compileInterpolatableOTFsFromDS(
     outlineCompilerClass=OutlineOTFCompiler,
     featureCompilerClass=None,
     featureWriters=None,
+    filters=None,
     glyphOrder=None,
     useProductionNames=None,
     roundTolerance=None,
@@ -495,6 +511,7 @@ def compileInterpolatableOTFsFromDS(
                 useProductionNames=useProductionNames,
                 optimizeCFF=CFFOptimization.NONE,
                 roundTolerance=roundTolerance,
+                filters=filters,
                 removeOverlaps=False,
                 overlapsBackend=None,
                 inplace=inplace,
@@ -571,6 +588,7 @@ def compileVariableTTF(
     glyphOrder=None,
     useProductionNames=None,
     cubicConversionError=None,
+    filters=None,
     reverseDirection=True,
     excludeVariationTables=(),
     optimizeGvar=True,
@@ -603,6 +621,7 @@ def compileVariableTTF(
         glyphOrder=glyphOrder,
         useProductionNames=False,  # will rename glyphs after varfont is built
         cubicConversionError=cubicConversionError,
+        filters=filters,
         reverseDirection=reverseDirection,
         flattenComponents=flattenComponents,
         inplace=inplace,
@@ -631,6 +650,7 @@ def compileVariableCFF2(
     glyphOrder=None,
     useProductionNames=None,
     roundTolerance=None,
+    filters=None,
     excludeVariationTables=(),
     inplace=False,
     debugFeatureFile=None,
@@ -663,6 +683,7 @@ def compileVariableCFF2(
         outlineCompilerClass=outlineCompilerClass,
         featureCompilerClass=featureCompilerClass,
         featureWriters=featureWriters,
+        filters=filters,
         glyphOrder=glyphOrder,
         useProductionNames=False,  # will rename glyphs after varfont is built
         roundTolerance=roundTolerance,
