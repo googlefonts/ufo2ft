@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureWriters import ast
 
-INSERT_FEATURE_MARKER = r"\s*# Automatic Code"
+INSERT_FEATURE_MARKER = r"\s*# Automatic Code.*"
 
 
 class BaseFeatureWriter:
