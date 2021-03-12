@@ -1,4 +1,3 @@
-from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 
 
@@ -18,54 +17,24 @@ class GdefFeatureWriter(BaseFeatureWriter):
         ctx = super().setContext(font, feaFile, compiler=compiler)
         ctx.orderedGlyphSet = self.getOrderedGlyphSet()
         ctx.ligatureCarets = self._getLigatureCarets()
-        (
-            ctx.bases,
-            ctx.ligatures,
-            ctx.marks,
-            ctx.components,
-        ) = self._getOpenTypeCategories()
+        ctx.openTypeCategories = self.getOpenTypeCategories()
         ctx.todo = {"GlyphClassDefs", "LigatureCarets"}
 
         return ctx
 
     def shouldContinue(self):
         # skip if a GDEF is in the features
-        for statement in self.context.feaFile.statements:
-            if isinstance(statement, ast.TableBlock) and statement.name == "GDEF":
-                self.context.todo.clear()
-                return super().shouldContinue()
+        if ast.findTable(self.context.feaFile, "GDEF") is not None:
+            self.context.todo.clear()
+            return super().shouldContinue()
 
         if not self.context.ligatureCarets:
             self.context.todo.remove("LigatureCarets")
 
-        if not self.context.font.lib.get(OPENTYPE_CATEGORIES_KEY):
+        if not any(self.context.openTypeCategories):
             self.context.todo.remove("GlyphClassDefs")
 
         return super().shouldContinue()
-
-    def _getOpenTypeCategories(self):
-        """Return GDEF GlyphClassDef base/ligature/mark/component glyphs based
-        on 'public.openTypeCategories' values.
-        """
-        font = self.context.font
-        bases, ligatures, marks, components = list(), list(), list(), list()
-        openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
-
-        for glyphName in self.context.orderedGlyphSet.keys():
-            category = openTypeCategories.get(glyphName)
-
-            if category is None or category == "unassigned":
-                continue
-            elif category == "base":
-                bases.append(glyphName)
-            elif category == "ligature":
-                ligatures.append(glyphName)
-            elif category == "mark":
-                marks.append(glyphName)
-            elif category == "component":
-                components.append(glyphName)
-
-        return (bases, ligatures, marks, components)
 
     def _getLigatureCarets(self):
         carets = dict()
@@ -91,15 +60,19 @@ class GdefFeatureWriter(BaseFeatureWriter):
 
         return carets
 
+    def _sortedGlyphClass(self, glyphNames):
+        return sorted(n for n in self.context.orderedGlyphSet if n in glyphNames)
+
     def _makeGDEF(self):
         fea = ast.TableBlock("GDEF")
+        categories = self.context.openTypeCategories
 
         if "GlyphClassDefs" in self.context.todo:
             glyphClassDefs = ast.GlyphClassDefStatement(
-                ast.GlyphClass(self.context.bases),
-                ast.GlyphClass(self.context.marks),
-                ast.GlyphClass(self.context.ligatures),
-                ast.GlyphClass(self.context.components),
+                ast.GlyphClass(self._sortedGlyphClass(categories.base)),
+                ast.GlyphClass(self._sortedGlyphClass(categories.mark)),
+                ast.GlyphClass(self._sortedGlyphClass(categories.ligature)),
+                ast.GlyphClass(self._sortedGlyphClass(categories.component)),
             )
             fea.statements.append(glyphClassDefs)
 

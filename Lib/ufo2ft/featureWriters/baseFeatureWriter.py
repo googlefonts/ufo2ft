@@ -308,27 +308,17 @@ class BaseFeatureWriter:
             compiler._gsub = gsub
         return gsub
 
-    def getGDEFGlyphClasses(self):
-        """Return GDEF GlyphClassDef base/ligature/mark/component glyphs, from
-        None if no 'public.openTypeCategories' values are defined or if no GDEF table
-        is defined in the feature file.
-        """
+    def getOpenTypeCategories(self):
+        """Return 'public.openTypeCategories' values as a tuple of lists of bases,
+        ligatures, marks, components."""
         font = self.context.font
-        feaFile = self.context.feaFile
-
-        gdefTableFound = False
-        for statement in feaFile.statements:
-            if isinstance(statement, ast.TableBlock) and statement.name == "GDEF":
-                gdefTableFound = True
-
-        if gdefTableFound:
-            return ast.getGDEFGlyphClasses(feaFile)
-
+        bases, ligatures, marks, components = set(), set(), set(), set()
         openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
 
-        bases, ligatures, marks, components = set(), set(), set(), set()
         for glyphName, category in openTypeCategories.items():
-            if category == "base":
+            if category is None or category == "unassigned":
+                continue
+            elif category == "base":
                 bases.add(glyphName)
             elif category == "ligature":
                 ligatures.add(glyphName)
@@ -336,7 +326,27 @@ class BaseFeatureWriter:
                 marks.add(glyphName)
             elif category == "component":
                 components.add(glyphName)
+        return ast._GDEFGlyphClasses(
+            frozenset(bases),
+            frozenset(ligatures),
+            frozenset(marks),
+            frozenset(components),
+        )
 
+    def getGDEFGlyphClasses(self):
+        """Return GDEF GlyphClassDef base/ligature/mark/component glyphs, from
+        None if no 'public.openTypeCategories' values are defined or if no GDEF table
+        is defined in the feature file.
+        """
+        feaFile = self.context.feaFile
+
+        if ast.findTable(feaFile, "GDEF") is not None:
+            return ast.getGDEFGlyphClasses(feaFile)
+
+        bases, ligatures, marks, components = self.getOpenTypeCategories()
+
+        if not any((bases, ligatures, marks, components)):
+            return ast._GDEFGlyphClasses(None, None, None, None)
         return ast._GDEFGlyphClasses(
             frozenset(bases),
             frozenset(ligatures),
