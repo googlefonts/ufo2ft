@@ -67,16 +67,7 @@ class GdefFeatureWriterTest(FeatureWriterTest):
             } GDEF;
             """
         )
-        newFea = self.writeGDEF(testufo)
-        assert str(newFea) == dedent(
-            """\
-            table GDEF {
-                GlyphClassDef [a], [], [acutecomb], [];
-                LigatureCaretByPos f_f_i 200 400;
-                LigatureCaretByPos f_i 300;
-            } GDEF;
-            """
-        )
+        assert self.writeGDEF(testufo) is None
 
     def test_openTypeCategories_in_font(self, testufo):
         testufo.lib["public.openTypeCategories"] = {
@@ -111,16 +102,7 @@ class GdefFeatureWriterTest(FeatureWriterTest):
              } GDEF;
              """
         )
-        newFea = self.writeGDEF(testufo)
-        assert str(newFea) == dedent(
-            """\
-            table GDEF {
-                GlyphClassDef [a i], [f_i], [acutecomb tildecomb], [f.component];
-                LigatureCaretByPos f_f_i 200 400;
-                LigatureCaretByPos f_i 100;
-            } GDEF;
-            """
-        )
+        assert self.writeGDEF(testufo) is None
 
     def test_mark_and_openTypeCategories_in_font(self, testufo):
         testufo.lib["public.openTypeCategories"] = {
