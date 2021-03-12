@@ -308,35 +308,26 @@ class BaseFeatureWriter:
             compiler._gsub = gsub
         return gsub
 
-    def getGDEFGlyphClasses(self, feaFile):
-        """Return GDEF GlyphClassDef base/mark/ligature/component glyphs, or
-        None if no GDEF table is defined in the feature file.
+    def getGDEFGlyphClasses(self):
+        """Return GDEF GlyphClassDef base/ligature/mark/component glyphs, from
+        None if no 'public.openTypeCategories' values are defined or if no GDEF table
+        is defined in the feature file.
         """
         font = self.context.font
         feaFile = self.context.feaFile
-        gdefClasses = ast.getGDEFGlyphClasses(feaFile)
+
+        gdefTableFound = False
+        for statement in feaFile.statements:
+            if isinstance(statement, ast.TableBlock) and statement.name == "GDEF":
+                gdefTableFound = True
+
+        if gdefTableFound:
+            return ast.getGDEFGlyphClasses(feaFile)
 
         openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
 
-        if not openTypeCategories:
-            return gdefClasses
-
-        # Update glyphs classes with openTypeCategories data except if for
-        # glyphs already in glyphs classes.
-        bases, ligatures, marks, components = (
-            set(gdefClasses.base),
-            set(gdefClasses.ligature),
-            set(gdefClasses.mark),
-            set(gdefClasses.component),
-        )
+        bases, ligatures, marks, components = set(), set(), set(), set()
         for glyphName, category in openTypeCategories.items():
-            if (
-                glyphName in bases
-                or glyphName in ligatures
-                or glyphName in marks
-                or glyphName in components
-            ):
-                continue
             if category == "base":
                 bases.add(glyphName)
             elif category == "ligature":
