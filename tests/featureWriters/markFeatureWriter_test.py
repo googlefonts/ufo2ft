@@ -955,10 +955,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             {"name": "_top", "x": 0, "y": 0},
             {"name": "top", "x": 0, "y": 300},
         ]
+        # will be ignored because in GDEF table below
         testufo.lib["public.openTypeCategories"] = {
             "D": "base",
             "dotaccentcomb": "mark",
-            "tildecomb": "base",  # will be ignored because in GDEF table below
+            "tildecomb": "base",
         }
         testufo.features.text = dedent(
             """\
@@ -984,20 +985,13 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         assert str(generated) == dedent(
             """\
-            markClass dotaccentcomb <anchor 0 0> @MC_center;
             markClass acutecomb <anchor 100 200> @MC_top;
-            markClass dotaccentcomb <anchor 0 0> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mark {
                 lookup mark2base {
-                    pos base D <anchor 320 360> mark @MC_center;
-                } mark2base;
-
-                lookup mark2base_1 {
-                    pos base D <anchor 300 700> mark @MC_top;
                     pos base a <anchor 100 200> mark @MC_top;
-                } mark2base_1;
+                } mark2base;
 
                 lookup mark2liga {
                     pos ligature f_i <anchor 100 500> mark @MC_top
@@ -1008,9 +1002,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mkmk {
                 lookup mark2mark_top {
-                    @MFS_mark2mark_top = [acutecomb dotaccentcomb tildecomb];
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark dotaccentcomb <anchor 0 300> mark @MC_top;
                     pos mark tildecomb <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
