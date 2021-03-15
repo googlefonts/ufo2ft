@@ -43,6 +43,7 @@ class PostProcessor:
         stream = BytesIO()
         otf.save(stream)
         stream.seek(0)
+        stream.name = ufo.path
         self.otf = TTFont(stream)
         self._postscriptNames = ufo.lib.get("public.postscriptNames")
 
