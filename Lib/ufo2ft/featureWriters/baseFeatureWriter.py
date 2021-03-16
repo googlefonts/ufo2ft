@@ -316,7 +316,7 @@ class BaseFeatureWriter:
         openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
 
         for glyphName, category in openTypeCategories.items():
-            if category is None or category == "unassigned":
+            if category == "unassigned":
                 continue
             elif category == "base":
                 bases.add(glyphName)
@@ -334,7 +334,7 @@ class BaseFeatureWriter:
         )
 
     def getGDEFGlyphClasses(self):
-        """Return GDEF GlyphClassDef base/ligature/mark/component glyphs, from
+        """Return GDEF GlyphClassDef base/ligature/mark/component glyphs,
         None if no 'public.openTypeCategories' values are defined or if no GDEF table
         is defined in the feature file.
         """
