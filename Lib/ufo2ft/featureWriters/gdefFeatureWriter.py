@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 
 
@@ -14,18 +16,25 @@ class GdefFeatureWriter(BaseFeatureWriter):
     tableTag = "GDEF"
 
     def setContext(self, font, feaFile, compiler=None):
-        ctx = super().setContext(font, feaFile, compiler=compiler)
+        ctx = self.context = SimpleNamespace(
+            font=font,
+            feaFile=feaFile,
+            compiler=compiler,
+            todo=set(),
+        )
+        # skip if a GDEF is in the features
+        if ast.findTable(self.context.feaFile, "GDEF") is not None:
+            return ctx
+
         ctx.orderedGlyphSet = self.getOrderedGlyphSet()
         ctx.ligatureCarets = self._getLigatureCarets()
         ctx.openTypeCategories = self.getOpenTypeCategories()
-        ctx.todo = {"GlyphClassDefs", "LigatureCarets"}
+        ctx.todo.update({"GlyphClassDefs", "LigatureCarets"})
 
         return ctx
 
     def shouldContinue(self):
-        # skip if a GDEF is in the features
-        if ast.findTable(self.context.feaFile, "GDEF") is not None:
-            self.context.todo.clear()
+        if not self.context.todo:
             return super().shouldContinue()
 
         if not self.context.ligatureCarets:
