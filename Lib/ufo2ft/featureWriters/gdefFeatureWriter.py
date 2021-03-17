@@ -1,5 +1,3 @@
-from types import SimpleNamespace
-
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 
 
@@ -14,34 +12,41 @@ class GdefFeatureWriter(BaseFeatureWriter):
     """
 
     tableTag = "GDEF"
+    features = frozenset(["GlyphClassDefs", "LigatureCarets"])
+    insertFeatureMarker = None
 
     def setContext(self, font, feaFile, compiler=None):
-        ctx = self.context = SimpleNamespace(
-            font=font,
-            feaFile=feaFile,
-            compiler=compiler,
-            todo=set(),
-        )
-        # skip if a GDEF is in the features
-        if ast.findTable(self.context.feaFile, "GDEF") is not None:
-            return ctx
+        ctx = super().setContext(font, feaFile, compiler=compiler)
+
+        ctx.gdefTableBlock = ast.findTable(self.context.feaFile, "GDEF")
+        if ctx.gdefTableBlock:
+            for fea in ctx.gdefTableBlock.statements:
+                if isinstance(fea, ast.GlyphClassDefStatement):
+                    ctx.todo.remove("GlyphClassDefs")
+                elif isinstance(fea, ast.LigatureCaretByIndexStatement) or isinstance(
+                    fea, ast.LigatureCaretByPosStatement
+                ):
+                    ctx.todo.remove("LigatureCarets")
 
         ctx.orderedGlyphSet = self.getOrderedGlyphSet()
-        ctx.ligatureCarets = self._getLigatureCarets()
-        ctx.openTypeCategories = self.getOpenTypeCategories()
-        ctx.todo.update({"GlyphClassDefs", "LigatureCarets"})
+
+        if "GlyphClassDefs" in ctx.todo:
+            ctx.openTypeCategories = self.getOpenTypeCategories()
+        if "LigatureCarets" in ctx.todo:
+            ctx.ligatureCarets = self._getLigatureCarets()
 
         return ctx
 
     def shouldContinue(self):
-        if not self.context.todo:
+        todo = self.context.todo
+        if not todo:
             return super().shouldContinue()
 
-        if not self.context.ligatureCarets:
-            self.context.todo.remove("LigatureCarets")
+        if "LigatureCarets" in todo and not self.context.ligatureCarets:
+            todo.remove("LigatureCarets")
 
-        if not any(self.context.openTypeCategories):
-            self.context.todo.remove("GlyphClassDefs")
+        if "GlyphClassDefs" in todo and not any(self.context.openTypeCategories):
+            todo.remove("GlyphClassDefs")
 
         return super().shouldContinue()
 
@@ -73,29 +78,34 @@ class GdefFeatureWriter(BaseFeatureWriter):
         return sorted(n for n in self.context.orderedGlyphSet if n in glyphNames)
 
     def _makeGDEF(self):
-        fea = ast.TableBlock("GDEF")
-        categories = self.context.openTypeCategories
+        gdefTableBlock = self.context.gdefTableBlock
+        if not gdefTableBlock:
+            gdefTableBlock = ast.TableBlock("GDEF")
 
         if "GlyphClassDefs" in self.context.todo:
+            categories = self.context.openTypeCategories
             glyphClassDefs = ast.GlyphClassDefStatement(
                 ast.GlyphClass(self._sortedGlyphClass(categories.base)),
                 ast.GlyphClass(self._sortedGlyphClass(categories.mark)),
                 ast.GlyphClass(self._sortedGlyphClass(categories.ligature)),
                 ast.GlyphClass(self._sortedGlyphClass(categories.component)),
             )
-            fea.statements.append(glyphClassDefs)
+            gdefTableBlock.statements.append(glyphClassDefs)
 
         if "LigatureCarets" in self.context.todo:
             ligatureCarets = [
                 ast.LigatureCaretByPosStatement(ast.GlyphName(glyphName), carets)
                 for glyphName, carets in self.context.ligatureCarets.items()
             ]
-            fea.statements.extend(ligatureCarets)
+            gdefTableBlock.statements.extend(ligatureCarets)
 
-        return fea
+        return gdefTableBlock
 
     def _write(self):
         feaFile = self.context.feaFile
-        feaFile.statements.append(self._makeGDEF())
+        if self.context.gdefTableBlock:
+            self._makeGDEF()
+        else:
+            feaFile.statements.append(self._makeGDEF())
 
         return True
