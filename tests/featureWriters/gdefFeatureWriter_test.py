@@ -104,6 +104,55 @@ class GdefFeatureWriterTest(FeatureWriterTest):
         )
         assert self.writeGDEF(testufo) is None
 
+    def test_GDEF_LigatureCarets_and_openTypeCategories_in_font(self, testufo):
+        testufo.lib["public.openTypeCategories"] = {
+            "a": "base",
+            "f.component": "component",
+            "f_i": "ligature",
+            "acutecomb": "mark",
+        }
+        testufo.features.text = dedent(
+            """\
+            table GDEF {
+                LigatureCaretByPos f_i 100;
+            } GDEF;
+             """
+        )
+        newFea = self.writeGDEF(testufo)
+        assert str(newFea) == dedent(
+            """\
+            table GDEF {
+                LigatureCaretByPos f_i 100;
+                GlyphClassDef [a], [f_i], [acutecomb], [f.component];
+            } GDEF;
+            """
+        )
+
+    def test_GDEF_GlyphClassDef_and_carets_in_font(self, testufo):
+        testufo.lib["public.openTypeCategories"] = {
+            "a": "base",
+            "f.component": "component",
+            "f_i": "ligature",
+            "acutecomb": "mark",
+        }
+        testufo.features.text = dedent(
+            """\
+            table GDEF {
+                GlyphClassDef [], [], [acutecomb tildecomb], [];
+            } GDEF;
+             """
+        )
+        newFea = self.writeGDEF(testufo)
+        assert str(newFea) == dedent(
+            """\
+            table GDEF {
+                GlyphClassDef [], [], [acutecomb tildecomb], [];
+                LigatureCaretByPos f_f_i 200 400;
+                LigatureCaretByPos f_i 200;
+            } GDEF;
+            """
+        )
+
     def test_mark_and_openTypeCategories_in_font(self, testufo):
         testufo.lib["public.openTypeCategories"] = {
             "a": "base",
