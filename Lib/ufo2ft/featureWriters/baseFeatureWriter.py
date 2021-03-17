@@ -328,6 +328,13 @@ class BaseFeatureWriter:
                 marks.add(glyphName)
             elif category == "component":
                 components.add(glyphName)
+            else:
+                self.log.warning(
+                    f"The '{OPENTYPE_CATEGORIES_KEY}' value of {glyphName} in "
+                    f"{font.info.familyName} {font.info.styleName} is '{category}' "
+                    "when it should be 'unassigned', 'base', 'ligature', 'mark' "
+                    "or 'component'."
+                )
         return ast._GDEFGlyphClasses(
             frozenset(bases),
             frozenset(ligatures),
