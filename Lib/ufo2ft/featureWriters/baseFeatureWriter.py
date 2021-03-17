@@ -85,13 +85,15 @@ class BaseFeatureWriter:
         todo = set(self.features)
         insertComments = None
         if self.mode == "skip":
-            insertComments = self.collectInsertMarkers(
-                feaFile, self.insertFeatureMarker, todo
-            )
+            if self.insertFeatureMarker is not None:
+                insertComments = self.collectInsertMarkers(
+                    feaFile, self.insertFeatureMarker, todo
+                )
             # find existing feature blocks
             existing = ast.findFeatureTags(feaFile)
             # ignore features with insert marker
-            existing.difference_update(insertComments.keys())
+            if insertComments:
+                existing.difference_update(insertComments.keys())
             # remove existing feature without insert marker from todo list
             todo.difference_update(existing)
 
