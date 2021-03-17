@@ -336,9 +336,10 @@ class BaseFeatureWriter:
         )
 
     def getGDEFGlyphClasses(self):
-        """Return GDEF GlyphClassDef base/ligature/mark/component glyphs,
-        None if no 'public.openTypeCategories' values are defined or if no GDEF table
-        is defined in the feature file.
+        """Return a tuple of GDEF GlyphClassDef base, ligature, mark, component
+        glyph names.
+        Sets are `None` if no 'public.openTypeCategories' values are defined or
+        if no GDEF table is defined in the feature file.
         """
         feaFile = self.context.feaFile
 
