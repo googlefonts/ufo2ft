@@ -1,3 +1,4 @@
+import logging
 from textwrap import dedent
 
 import pytest
@@ -203,3 +204,21 @@ class GdefFeatureWriterTest(FeatureWriterTest):
             } GDEF;
             """
         )
+
+    def test_getOpenTypeCategories_invalid(self, testufo, caplog):
+        caplog.set_level(logging.WARNING)
+        testufo.lib["public.openTypeCategories"] = {
+            "a": "base",
+            "f.component": "component",
+            "f_f_i": "base",
+            "f_i": "ligature",
+            "acutecomb": "mark",
+            "tildecomb": "components",
+        }
+        logger = "ufo2ft.featureWriters.gdefFeatureWriter.GdefFeatureWriter"
+        with caplog.at_level(logging.WARNING, logger=logger):
+            self.writeGDEF(testufo)
+
+        assert len(caplog.records) == 1
+        assert "The 'public.openTypeCategories' value of tildecomb in" in caplog.text
+        assert "is 'components' when it should be" in caplog.text
