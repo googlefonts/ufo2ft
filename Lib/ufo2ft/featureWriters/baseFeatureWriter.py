@@ -1,5 +1,5 @@
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from types import SimpleNamespace
 
 from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
@@ -311,15 +311,21 @@ class BaseFeatureWriter:
         return gsub
 
     def getOpenTypeCategories(self):
-        """Return 'public.openTypeCategories' values as a tuple of lists of bases,
-        ligatures, marks, components."""
+        """Return 'public.openTypeCategories' values as a tuple of sets of
+        unassigned, bases, ligatures, marks, components."""
         font = self.context.font
-        bases, ligatures, marks, components = set(), set(), set(), set()
+        unassigned, bases, ligatures, marks, components = (
+            set(),
+            set(),
+            set(),
+            set(),
+            set(),
+        )
         openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
 
         for glyphName, category in openTypeCategories.items():
             if category == "unassigned":
-                continue
+                unassigned.add(glyphName)
             elif category == "base":
                 bases.add(glyphName)
             elif category == "ligature":
@@ -335,7 +341,10 @@ class BaseFeatureWriter:
                     "when it should be 'unassigned', 'base', 'ligature', 'mark' "
                     "or 'component'."
                 )
-        return ast._GDEFGlyphClasses(
+        return namedtuple(
+            "OpenTypeCategories", "unassigned base ligature mark component"
+        )(
+            frozenset(unassigned),
             frozenset(bases),
             frozenset(ligatures),
             frozenset(marks),
@@ -353,9 +362,9 @@ class BaseFeatureWriter:
         if ast.findTable(feaFile, "GDEF") is not None:
             return ast.getGDEFGlyphClasses(feaFile)
 
-        bases, ligatures, marks, components = self.getOpenTypeCategories()
+        unassigned, bases, ligatures, marks, components = self.getOpenTypeCategories()
 
-        if not any((bases, ligatures, marks, components)):
+        if not any((unassigned, bases, ligatures, marks, components)):
             return ast._GDEFGlyphClasses(None, None, None, None)
         return ast._GDEFGlyphClasses(
             frozenset(bases),
