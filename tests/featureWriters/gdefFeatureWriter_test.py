@@ -167,11 +167,16 @@ class GdefFeatureWriterTest(FeatureWriterTest):
             """\
             feature mark {
                 markClass tildecomb <anchor 0 500> @TOP_MARKS;
-                pos base a <anchor 250 500> mark @TOP_MARKS;
-                pos base f <anchor 250 500> mark @TOP_MARKS;
-                pos ligature f_f_i <anchor 150 700> mark @TOP_MARKS
-                    ligComponent <anchor 450 700> mark @TOP_MARKS
-                    ligComponent <anchor 600 700> mark @TOP_MARKS;
+                pos base a
+                    <anchor 250 500> mark @TOP_MARKS;
+                pos base f
+                    <anchor 250 500> mark @TOP_MARKS;
+                pos ligature f_f_i
+                        <anchor 150 700> mark @TOP_MARKS
+                    ligComponent
+                        <anchor 450 700> mark @TOP_MARKS
+                    ligComponent
+                        <anchor 600 700> mark @TOP_MARKS;
             } mark;
             """
         )
