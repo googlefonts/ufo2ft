@@ -18,7 +18,7 @@ from fontTools.misc.fixedTools import otRound
 from fontTools.pens.boundsPen import ControlBoundsPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
-from fontTools.pens.ttGlyphPointPen import TTGlyphPointPen
+from fontTools.pens.ttGlyphPen import TTGlyphPointPen
 from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS, Glyph
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
