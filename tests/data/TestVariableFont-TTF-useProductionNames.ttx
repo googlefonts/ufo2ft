@@ -314,7 +314,7 @@
 
   <GDEF>
     <Version value="0x00010003"/>
-    <GlyphClassDef Format="1">
+    <GlyphClassDef>
       <ClassDef glyph="uni0065" class="1"/>
       <ClassDef glyph="uni0307" class="3"/>
     </GlyphClassDef>
@@ -376,10 +376,10 @@
         <LookupFlag value="0"/>
         <!-- SubTableCount=1 -->
         <MarkBasePos index="0" Format="1">
-          <MarkCoverage Format="1">
+          <MarkCoverage>
             <Glyph value="uni0307"/>
           </MarkCoverage>
-          <BaseCoverage Format="1">
+          <BaseCoverage>
             <Glyph value="uni0065"/>
           </BaseCoverage>
           <!-- ClassCount=1 -->
@@ -449,7 +449,7 @@
         <LookupType value="4"/>
         <LookupFlag value="0"/>
         <!-- SubTableCount=1 -->
-        <LigatureSubst index="0" Format="1">
+        <LigatureSubst index="0">
           <LigatureSet glyph="uni0061">
             <Ligature components="uni0065,uni0073,uni0073" glyph="uni0073"/>
           </LigatureSet>
