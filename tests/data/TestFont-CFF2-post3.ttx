@@ -266,6 +266,8 @@
             <StdVW value="80"/>
             <StemSnapH value="100 120"/>
             <StemSnapV value="80 90"/>
+            <LanguageGroup value="0"/>
+            <ExpansionFactor value="0.06"/>
             <Subrs>
               <!-- The 'index' attribute is only for humans; it is ignored when parsed. -->
               <CharString index="0">
@@ -415,7 +417,7 @@
         <LookupFlag value="8"/><!-- ignoreMarks -->
         <!-- SubTableCount=1 -->
         <PairPos index="0" Format="1">
-          <Coverage Format="1">
+          <Coverage>
             <Glyph value="a"/>
             <Glyph value="b"/>
           </Coverage>

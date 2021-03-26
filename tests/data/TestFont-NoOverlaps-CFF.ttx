@@ -428,7 +428,7 @@
         <LookupFlag value="8"/><!-- ignoreMarks -->
         <!-- SubTableCount=1 -->
         <PairPos index="0" Format="1">
-          <Coverage Format="1">
+          <Coverage>
             <Glyph value="uni0061"/>
             <Glyph value="uni0062"/>
           </Coverage>
