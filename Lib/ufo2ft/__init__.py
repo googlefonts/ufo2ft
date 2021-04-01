@@ -1,5 +1,6 @@
 import logging
 from enum import IntEnum
+from typing import Any, Optional
 
 from fontTools import varLib
 
@@ -53,6 +54,7 @@ def compileOTF(
     cffVersion=1,
     subroutinizer=None,
     notdefGlyph=None,
+    postProcessorClass: Optional[Any] = PostProcessor,
     _tables=None,
 ):
     """Create FontTools CFF font from a UFO.
@@ -153,13 +155,14 @@ def compileOTF(
             debugFeatureFile=debugFeatureFile,
         )
 
-    postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
-    otf = postProcessor.process(
-        useProductionNames,
-        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
-        subroutinizer=subroutinizer,
-        cffVersion=cffVersion,
-    )
+    if postProcessorClass is not None:
+        postProcessor = postProcessorClass(otf, ufo, glyphSet=glyphSet)
+        otf = postProcessor.process(
+            useProductionNames,
+            optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+            subroutinizer=subroutinizer,
+            cffVersion=cffVersion,
+        )
 
     return otf
 
@@ -185,6 +188,7 @@ def compileTTF(
     skipExportGlyphs=None,
     debugFeatureFile=None,
     notdefGlyph=None,
+    postProcessorClass: Optional[Any] = PostProcessor,
 ):
     """Create FontTools TrueType font from a UFO.
 
@@ -244,8 +248,9 @@ def compileTTF(
             debugFeatureFile=debugFeatureFile,
         )
 
-    postProcessor = PostProcessor(otf, ufo, glyphSet=glyphSet)
-    otf = postProcessor.process(useProductionNames)
+    if postProcessorClass is not None:
+        postProcessor = postProcessorClass(otf, ufo, glyphSet=glyphSet)
+        otf = postProcessor.process(useProductionNames)
 
     return otf
 
@@ -267,6 +272,7 @@ def compileInterpolatableTTFs(
     skipExportGlyphs=None,
     debugFeatureFile=None,
     notdefGlyph=None,
+    postProcessorClass: Optional[Any] = PostProcessor,
 ):
     """Create FontTools TrueType fonts from a list of UFOs with interpolatable
     outlines. Cubic curves are converted compatibly to quadratic curves using
@@ -343,8 +349,9 @@ def compileInterpolatableTTFs(
                 debugFeatureFile=debugFeatureFile,
             )
 
-        postProcessor = PostProcessor(ttf, ufo, glyphSet=glyphSet)
-        ttf = postProcessor.process(useProductionNames)
+        if postProcessorClass is not None:
+            postProcessor = postProcessorClass(ttf, ufo, glyphSet=glyphSet)
+            ttf = postProcessor.process(useProductionNames)
 
         if layerName is not None:
             # for sparse masters (i.e. containing only a subset of the glyphs), we
@@ -375,6 +382,7 @@ def compileInterpolatableTTFsFromDS(
     inplace=False,
     debugFeatureFile=None,
     notdefGlyph=None,
+    postProcessorClass: Optional[Any] = PostProcessor,
 ):
     """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines. Cubic curves are converted compatibly to
@@ -433,6 +441,7 @@ def compileInterpolatableTTFsFromDS(
         skipExportGlyphs=skipExportGlyphs,
         debugFeatureFile=debugFeatureFile,
         notdefGlyph=notdefGlyph,
+        postProcessorClass=postProcessorClass,
     )
 
     if inplace:
@@ -458,6 +467,7 @@ def compileInterpolatableOTFsFromDS(
     inplace=False,
     debugFeatureFile=None,
     notdefGlyph=None,
+    postProcessorClass: Optional[Any] = PostProcessor,
 ):
     """Create FontTools CFF fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines.
@@ -519,6 +529,7 @@ def compileInterpolatableOTFsFromDS(
                 debugFeatureFile=debugFeatureFile,
                 notdefGlyph=notdefGlyph,
                 _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
+                postProcessorClass=postProcessorClass,
             )
         )
 
@@ -596,6 +607,7 @@ def compileVariableTTF(
     inplace=False,
     debugFeatureFile=None,
     notdefGlyph=None,
+    postProcessorClass: Optional[Any] = PostProcessor,
 ):
     """Create FontTools TrueType variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
@@ -627,6 +639,8 @@ def compileVariableTTF(
         inplace=inplace,
         debugFeatureFile=debugFeatureFile,
         notdefGlyph=notdefGlyph,
+        # No need to post-process intermediate fonts.
+        postProcessorClass=None,
     )
 
     logger.info("Building variable TTF font")
@@ -635,8 +649,9 @@ def compileVariableTTF(
         ttfDesignSpace, exclude=excludeVariationTables, optimize=optimizeGvar
     )[0]
 
-    postProcessor = PostProcessor(varfont, baseUfo)
-    varfont = postProcessor.process(useProductionNames)
+    if postProcessorClass is not None:
+        postProcessor = postProcessorClass(varfont, baseUfo)
+        varfont = postProcessor.process(useProductionNames)
 
     return varfont
 
@@ -656,6 +671,7 @@ def compileVariableCFF2(
     debugFeatureFile=None,
     optimizeCFF=CFFOptimization.SPECIALIZE,
     notdefGlyph=None,
+    postProcessorClass: Optional[Any] = PostProcessor,
 ):
     """Create FontTools CFF2 variable font from the DesignSpaceDocument UFO sources
     with interpolatable outlines, using fontTools.varLib.build.
@@ -690,6 +706,8 @@ def compileVariableCFF2(
         inplace=inplace,
         debugFeatureFile=debugFeatureFile,
         notdefGlyph=notdefGlyph,
+        # No need to post-process intermediate fonts.
+        postProcessorClass=None,
     )
 
     logger.info("Building variable CFF2 font")
@@ -704,10 +722,11 @@ def compileVariableCFF2(
         optimize=optimizeCFF >= CFFOptimization.SPECIALIZE,
     )[0]
 
-    postProcessor = PostProcessor(varfont, baseUfo)
-    varfont = postProcessor.process(
-        useProductionNames,
-        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
-    )
+    if postProcessorClass is not None:
+        postProcessor = postProcessorClass(varfont, baseUfo)
+        varfont = postProcessor.process(
+            useProductionNames,
+            optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+        )
 
     return varfont
