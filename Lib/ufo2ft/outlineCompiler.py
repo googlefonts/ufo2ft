@@ -537,7 +537,7 @@ class BaseOutlineCompiler:
         # subscript, superscript, strikeout values, taken from AFDKO:
         # FDK/Tools/Programs/makeotf/makeotf_lib/source/hotconv/hot.c
         unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
-        italicAngle = getAttrWithFallback(font.info, "italicAngle")
+        italicAngle = float(getAttrWithFallback(font.info, "italicAngle"))
         xHeight = getAttrWithFallback(font.info, "xHeight")
 
         def adjustOffset(offset, angle):
@@ -889,7 +889,7 @@ class BaseOutlineCompiler:
         font = self.ufo
         post.formatType = 3.0
         # italic angle
-        italicAngle = getAttrWithFallback(font.info, "italicAngle")
+        italicAngle = float(getAttrWithFallback(font.info, "italicAngle"))
         post.italicAngle = italicAngle
         # underline
         underlinePosition = getAttrWithFallback(
@@ -900,7 +900,9 @@ class BaseOutlineCompiler:
             font.info, "postscriptUnderlineThickness"
         )
         post.underlineThickness = otRound(underlineThickness)
-        post.isFixedPitch = getAttrWithFallback(font.info, "postscriptIsFixedPitch")
+        post.isFixedPitch = int(
+            getAttrWithFallback(font.info, "postscriptIsFixedPitch")
+        )
         # misc
         post.minMemType42 = 0
         post.maxMemType42 = 0
@@ -1218,8 +1220,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         )
         topDict.Weight = getAttrWithFallback(info, "postscriptWeightName")
         # populate various numbers
-        topDict.isFixedPitch = getAttrWithFallback(info, "postscriptIsFixedPitch")
-        topDict.ItalicAngle = getAttrWithFallback(info, "italicAngle")
+        topDict.isFixedPitch = int(getAttrWithFallback(info, "postscriptIsFixedPitch"))
+        topDict.ItalicAngle = float(getAttrWithFallback(info, "italicAngle"))
         underlinePosition = getAttrWithFallback(info, "postscriptUnderlinePosition")
         topDict.UnderlinePosition = otRound(underlinePosition)
         underlineThickness = getAttrWithFallback(info, "postscriptUnderlineThickness")
