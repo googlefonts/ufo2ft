@@ -1140,6 +1140,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
         self.otf["CFF "] = cff = newTable("CFF ")
         cff = cff.cff
+        # NOTE: Set up a back-reference to be used by some CFFFontSet methods
+        # down the line (as of fontTools 4.21.1).
+        cff.otFont = self.otf
         # set up the basics
         cff.major = 1
         cff.minor = 0
