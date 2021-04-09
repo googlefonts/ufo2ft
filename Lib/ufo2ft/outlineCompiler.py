@@ -24,7 +24,11 @@ from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS, Glyph
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
-from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_PALETTES_KEY
+from ufo2ft.constants import (
+    COLOR_LAYERS_KEY,
+    COLOR_PALETTES_KEY,
+    UNICODE_VARIATION_SEQUENCES_KEY,
+)
 from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import (
     dateStringForNow,
@@ -504,6 +508,26 @@ class BaseOutlineCompiler:
             cmap12_3_10.cmap = nonBMP
             # update tables registry
             cmap.tables = [cmap4_0_3, cmap4_3_1, cmap12_0_4, cmap12_3_10]
+        # unicode variation sequences
+        uvsMapping = self.ufo.lib.get(UNICODE_VARIATION_SEQUENCES_KEY)
+        if uvsMapping:
+            from fontTools.ttLib.tables._c_m_a_p import cmap_format_14
+
+            cmap14_0_5 = cmap_format_14(14)
+            cmap14_0_5.platformID = 0
+            cmap14_0_5.platEncID = 5
+            cmap14_0_5.language = 0
+            if nonBMP:
+                mapping = nonBMP
+            cmap14_0_5.uvsDict = {
+                uvs: {
+                    uv: None if glyphName == mapping[uv] else glyphName
+                    for (uv, glyphName) in glyphMapping.items()
+                }
+                for (uvs, glyphMapping) in uvsMapping.items()
+            }
+            # update tables registry
+            cmap.tables.append(cmap14_0_5)
 
     def setupTable_OS2(self):
         """
