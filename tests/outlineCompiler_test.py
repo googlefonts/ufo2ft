@@ -829,7 +829,7 @@ class CmapTest:
         u1F170 = testufo.newGlyph("u1F170")
         u1F170.unicode = 0x1F170
         testufo.newGlyph("u1F170.text")
-        testufo.lib["com.github.googlei18n.ufo2ft.UnicodeVariationSequences"] = {
+        testufo.lib["public.unicodeVariationSequences"] = {
             0xFE0E: {
                 0x1F170: "u1F170.text",
             },
