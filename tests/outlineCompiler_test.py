@@ -839,12 +839,11 @@ class CmapTest:
         }
 
         compiler = OutlineOTFCompiler(testufo)
-        otf = compiler.otf = TTFont(sfntVersion="OTTO")
-
-        compiler.setupTable_cmap()
+        otf = compiler.compile()
 
         assert "cmap" in otf
         cmap = otf["cmap"]
+        cmap.compile(otf)
         assert len(cmap.tables) == 5
         cmap4_0_3 = cmap.tables[0]
         cmap4_3_1 = cmap.tables[1]
