@@ -830,11 +830,11 @@ class CmapTest:
         u1F170.unicode = 0x1F170
         testufo.newGlyph("u1F170.text")
         testufo.lib["public.unicodeVariationSequences"] = {
-            0xFE0E: {
-                0x1F170: "u1F170.text",
+            "FE0E": {
+                "1F170": "u1F170.text",
             },
-            0xFE0F: {
-                0x1F170: "u1F170",
+            "FE0F": {
+                "1F170": "u1F170",
             },
         }
 
@@ -846,10 +846,10 @@ class CmapTest:
         cmap.compile(otf)
         assert len(cmap.tables) == 5
         cmap4_0_3 = cmap.tables[0]
-        cmap4_3_1 = cmap.tables[1]
-        cmap12_0_4 = cmap.tables[2]
-        cmap12_3_10 = cmap.tables[3]
-        cmap14_0_5 = cmap.tables[4]
+        cmap12_0_4 = cmap.tables[1]
+        cmap14_0_5 = cmap.tables[2]
+        cmap4_3_1 = cmap.tables[3]
+        cmap12_3_10 = cmap.tables[4]
 
         assert (cmap4_0_3.platformID, cmap4_0_3.platEncID) == (0, 3)
         assert (cmap4_3_1.platformID, cmap4_3_1.platEncID) == (3, 1)
@@ -871,8 +871,8 @@ class CmapTest:
         assert (cmap14_0_5.platformID, cmap14_0_5.platEncID) == (0, 5)
         assert cmap14_0_5.language == 0
         assert cmap14_0_5.uvsDict == {
-            0xFE0E: {0x1F170: "u1F170.text"},
-            0xFE0F: {0x1F170: None},
+            0xFE0E: [(0x1F170, "u1F170.text")],
+            0xFE0F: [(0x1F170, None)],
         }
 
 
