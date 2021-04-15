@@ -517,15 +517,22 @@ class BaseOutlineCompiler:
             cmap14_0_5.platformID = 0
             cmap14_0_5.platEncID = 5
             cmap14_0_5.language = 0
+            cmap14_0_5.cmap = {}
             if nonBMP:
                 mapping = nonBMP
-            cmap14_0_5.uvsDict = {
-                uvs: {
-                    uv: None if glyphName == mapping[uv] else glyphName
-                    for (uv, glyphName) in glyphMapping.items()
-                }
-                for (uvs, glyphMapping) in uvsMapping.items()
-            }
+            uvsDict = dict()
+            # public.unicodeVariationSequences uses hex strings as keys and
+            # a dict of dicts, while cmap uses ints and a dict of tuples.
+            for hexvs, glyphMapping in uvsMapping.items():
+                uvsList = []
+                for hexvalue, glyphName in glyphMapping.items():
+                    value = int(hexvalue, 16)
+                    if glyphName == mapping[value]:
+                        uvsList.append((value, None))
+                    else:
+                        uvsList.append((value, glyphName))
+                uvsDict[int(hexvs, 16)] = uvsList
+            cmap14_0_5.uvsDict = uvsDict
             # update tables registry
             cmap.tables.append(cmap14_0_5)
 
