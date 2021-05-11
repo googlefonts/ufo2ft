@@ -4,7 +4,7 @@ import pytest
 from fontTools.misc.loggingTools import CapturingLogHandler
 
 from ufo2ft.filters import (
-    UFO2FT_FILTERS_KEY,
+    FILTERS_KEY,
     BaseFilter,
     getFilterClass,
     loadFilterFromString,
@@ -66,19 +66,19 @@ class MockGlyph(SimpleNamespace):
 
 def test_loadFilters_empty():
     ufo = MockFont(lib={})
-    assert UFO2FT_FILTERS_KEY not in ufo.lib
+    assert FILTERS_KEY not in ufo.lib
     assert loadFilters(ufo) == ([], [])
 
 
 @pytest.fixture
 def ufo():
     ufo = MockFont(lib={})
-    ufo.lib[UFO2FT_FILTERS_KEY] = [{"name": "Foo Bar", "args": ["foo", "bar"]}]
+    ufo.lib[FILTERS_KEY] = [{"name": "Foo Bar", "args": ["foo", "bar"]}]
     return ufo
 
 
 def test_loadFilters_pre(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["pre"] = True
+    ufo.lib[FILTERS_KEY][0]["pre"] = True
     pre, post = loadFilters(ufo)
     assert len(pre) == 1
     assert not post
@@ -86,8 +86,8 @@ def test_loadFilters_pre(ufo):
 
 
 def test_loadFilters_custom_namespace(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["name"] = "Self Destruct"
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["namespace"] = "my_dangerous_filters"
+    ufo.lib[FILTERS_KEY][0]["name"] = "Self Destruct"
+    ufo.lib[FILTERS_KEY][0]["namespace"] = "my_dangerous_filters"
 
     class SelfDestructFilter(FooBarFilter):
         def filter(self, glyph):
@@ -106,7 +106,7 @@ def test_loadFilters_custom_namespace(ufo):
 
 
 def test_loadFilters_args_missing(ufo):
-    del ufo.lib[UFO2FT_FILTERS_KEY][0]["args"]
+    del ufo.lib[FILTERS_KEY][0]["args"]
 
     with pytest.raises(TypeError) as exc_info:
         loadFilters(ufo)
@@ -115,7 +115,7 @@ def test_loadFilters_args_missing(ufo):
 
 
 def test_loadFilters_args_unsupported(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["args"].append("baz")
+    ufo.lib[FILTERS_KEY][0]["args"].append("baz")
 
     with pytest.raises(TypeError) as exc_info:
         loadFilters(ufo)
@@ -124,8 +124,8 @@ def test_loadFilters_args_unsupported(ufo):
 
 
 def test_loadFilters_args_as_keywords(ufo):
-    del ufo.lib[UFO2FT_FILTERS_KEY][0]["args"]
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"] = {"a": "foo", "b": "bar"}
+    del ufo.lib[FILTERS_KEY][0]["args"]
+    ufo.lib[FILTERS_KEY][0]["kwargs"] = {"a": "foo", "b": "bar"}
 
     _, [filter_obj] = loadFilters(ufo)
 
@@ -134,8 +134,8 @@ def test_loadFilters_args_as_keywords(ufo):
 
 
 def test_loadFilters_args_as_duplicated_keywords(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["args"] = ["foo"]
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"] = {"a": "foo", "b": "bar"}
+    ufo.lib[FILTERS_KEY][0]["args"] = ["foo"]
+    ufo.lib[FILTERS_KEY][0]["kwargs"] = {"a": "foo", "b": "bar"}
 
     with pytest.raises(TypeError) as exc_info:
         loadFilters(ufo)
@@ -151,7 +151,7 @@ def test_loadFilters_include_all(ufo):
 
 
 def test_loadFilters_include_list(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["include"] = ["a", "b"]
+    ufo.lib[FILTERS_KEY][0]["include"] = ["a", "b"]
 
     _, [filter_obj] = loadFilters(ufo)
 
@@ -161,7 +161,7 @@ def test_loadFilters_include_list(ufo):
 
 
 def test_loadFilters_exclude_list(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["exclude"] = ["a", "b"]
+    ufo.lib[FILTERS_KEY][0]["exclude"] = ["a", "b"]
 
     _, [filter_obj] = loadFilters(ufo)
 
@@ -171,8 +171,8 @@ def test_loadFilters_exclude_list(ufo):
 
 
 def test_loadFilters_both_include_exclude(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["include"] = ["a", "b"]
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["exclude"] = ["c", "d"]
+    ufo.lib[FILTERS_KEY][0]["include"] = ["a", "b"]
+    ufo.lib[FILTERS_KEY][0]["exclude"] = ["c", "d"]
 
     with pytest.raises(ValueError) as exc_info:
         loadFilters(ufo)
@@ -181,7 +181,7 @@ def test_loadFilters_both_include_exclude(ufo):
 
 
 def test_loadFilters_failed(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY].append(dict(name="Non Existent"))
+    ufo.lib[FILTERS_KEY].append(dict(name="Non Existent"))
 
     with CapturingLogHandler(logger, level="ERROR") as captor:
         loadFilters(ufo)
@@ -190,9 +190,9 @@ def test_loadFilters_failed(ufo):
 
 
 def test_loadFilters_kwargs_unsupported(ufo):
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"] = {}
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"]["c"] = 1
-    ufo.lib[UFO2FT_FILTERS_KEY][0]["kwargs"]["d"] = 2  # unknown
+    ufo.lib[FILTERS_KEY][0]["kwargs"] = {}
+    ufo.lib[FILTERS_KEY][0]["kwargs"]["c"] = 1
+    ufo.lib[FILTERS_KEY][0]["kwargs"]["d"] = 2  # unknown
 
     with pytest.raises(TypeError) as exc_info:
         loadFilters(ufo)
