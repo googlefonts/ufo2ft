@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import array
 import logging
 
 from fontTools import ttLib
@@ -45,34 +44,6 @@ class InstructionCompiler(object):
                 # Roundtrip once, or if the font is dumped to XML before having
                 # been saved, the assembly code if will look awful.
                 table.program.fromBytecode(table.program.getBytecode())
-
-    def compile_cvt(self):
-        cvts = []
-        ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
-        if ttdata:
-            formatVersion = ttdata.get("formatVersion", None)
-            if int(formatVersion) != 1:
-                logger.error(
-                    f"Unknown formatVersion {formatVersion} "
-                    f"in key 'controlValue', "
-                    f"table 'cvt' will be empty in font."
-                )
-                return
-            cvt_list = ttdata.get("controlValue", None)
-            if cvt_list is not None:
-                # Convert string keys to int
-                cvt_dict = {int(v["id"]): v["value"] for v in cvt_list}
-                # Find the maximum cvt index.
-                # We can't just use the dict keys because the cvt must be
-                # filled consecutively.
-                max_cvt = max(cvt_dict.keys())
-                # Make value list, filling entries for missing keys with 0
-                cvts = [cvt_dict.get(i, 0) for i in range(max_cvt + 1)]
-
-        if cvts:
-            # Only write cvt to font if it contains any values
-            self.font["cvt "] = cvt = ttLib.newTable("cvt ")
-            cvt.values = array.array("h", cvts)
 
     def compile_fpgm(self):
         self._compile_program("fontProgram", "fpgm")
@@ -216,7 +187,6 @@ class InstructionCompiler(object):
         self._compile_program("controlValueProgram", "prep")
 
     def compile(self):
-        self.compile_cvt()
         self.compile_fpgm()
         self.compile_prep()
         self.compile_glyf()
