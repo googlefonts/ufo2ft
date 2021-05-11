@@ -9,14 +9,15 @@ from fontTools.ttLib.tables._g_l_y_f import (
     ROUND_XY_TO_GRID,
     USE_MY_METRICS,
 )
+from ufo2ft.constants import (
+    TRUETYPE_INSTRUCTIONS_KEY,
+    TRUETYPE_ROUND_KEY,
+    TRUETYPE_METRICS_KEY,
+    TRUETYPE_OVERLAP_KEY,
+    OBJECT_LIBS_KEY,
+)
 
 logger = logging.getLogger(__name__)
-
-TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"
-TRUETYPE_ROUND_KEY = "public.truetype.roundOffsetToGrid"
-TRUETYPE_METRICS_KEY = "public.truetype.useMyMetrics"
-TRUETYPE_OVERLAP_KEY = "public.truetype.overlap"
-OBJECT_LIBS_KEY = "public.objectLibs"
 
 
 class InstructionCompiler(object):
