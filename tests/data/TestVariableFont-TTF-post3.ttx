@@ -151,6 +151,12 @@
     </cmap_format_4>
   </cmap>
 
+  <cvt>
+    <cv index="0" value="132"/>
+    <cv index="1" value="0"/>
+    <cv index="2" value="0"/>
+  </cvt>
+
   <loca>
     <!-- The 'loca' table will be calculated by the compiler -->
   </loca>
@@ -535,6 +541,16 @@
     <!-- AxisValueCount=0 -->
     <ElidedFallbackNameID value="2"/>  <!-- Regular -->
   </STAT>
+
+  <cvar>
+    <version major="1" minor="0"/>
+    <tuple>
+      <coord axis="wght" min="0.36365" value="1.0" max="1.0"/>
+      <delta cvt="0" value="124"/>
+      <delta cvt="1" value="0"/>
+      <delta cvt="2" value="0"/>
+    </tuple>
+  </cvar>
 
   <fvar>
 
