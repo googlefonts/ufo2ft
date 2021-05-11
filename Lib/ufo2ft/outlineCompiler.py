@@ -1,3 +1,4 @@
+import array
 import logging
 import math
 from collections import Counter, namedtuple
@@ -39,6 +40,7 @@ from ufo2ft.util import (
     makeOfficialGlyphOrder,
     makeUnicodeToGlyphNameMapping,
 )
+from ufo2ft.constants import TRUETYPE_INSTRUCTIONS_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +94,7 @@ class BaseOutlineCompiler:
         glyphOrder=None,
         tables=None,
         notdefGlyph=None,
+        compileTrueTypeHinting=True,
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
@@ -111,6 +114,7 @@ class BaseOutlineCompiler:
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
         self._compiledGlyphs = None
+        self.compileTrueTypeHinting = compileTrueTypeHinting
 
     def compile(self):
         """
@@ -1368,6 +1372,8 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         self.setupTable_glyf()
         if self.ufo.info.openTypeGaspRangeRecords:
             self.setupTable_gasp()
+        if self.compileTrueTypeHinting:
+            self.setupTable_cvt()
 
     def setupTable_glyf(self):
         """Make the glyf table."""
@@ -1386,6 +1392,35 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
             if ttGlyph.isComposite() and hmtx is not None and self.autoUseMyMetrics:
                 self.autoUseMyMetrics(ttGlyph, name, hmtx)
             glyf[name] = ttGlyph
+
+    def setupTable_cvt(self):
+        """Make the cvt table."""
+        cvts = []
+        ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
+        if ttdata:
+            formatVersion = ttdata.get("formatVersion", None)
+            if int(formatVersion) != 1:
+                logger.error(
+                    f"Unknown formatVersion {formatVersion} "
+                    f"in key 'controlValue', "
+                    f"table 'cvt' will be empty in font."
+                )
+                return
+            cvt_list = ttdata.get("controlValue", None)
+            if cvt_list is not None:
+                # Convert string keys to int
+                cvt_dict = {int(v["id"]): v["value"] for v in cvt_list}
+                # Find the maximum cvt index.
+                # We can't just use the dict keys because the cvt must be
+                # filled consecutively.
+                max_cvt = max(cvt_dict.keys())
+                # Make value list, filling entries for missing keys with 0
+                cvts = [cvt_dict.get(i, 0) for i in range(max_cvt + 1)]
+
+        if cvts:
+            # Only write cvt to font if it contains any values
+            self.otf["cvt "] = cvt = newTable("cvt ")
+            cvt.values = array.array("h", cvts)
 
     @staticmethod
     def autoUseMyMetrics(ttGlyph, glyphName, hmtx):
