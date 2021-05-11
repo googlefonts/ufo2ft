@@ -803,6 +803,79 @@ class ColrCpalTest:
         assert layers == {"a": [("a.color1", 0), ("a.color2", 1)]}
 
 
+class CmapTest:
+    def test_cmap_BMP(self, testufo):
+        compiler = OutlineOTFCompiler(testufo)
+        otf = compiler.otf = TTFont(sfntVersion="OTTO")
+
+        compiler.setupTable_cmap()
+
+        assert "cmap" in otf
+        cmap = otf["cmap"]
+        assert len(cmap.tables) == 2
+        cmap4_0_3 = cmap.tables[0]
+        cmap4_3_1 = cmap.tables[1]
+
+        assert (cmap4_0_3.platformID, cmap4_0_3.platEncID) == (0, 3)
+        assert (cmap4_3_1.platformID, cmap4_3_1.platEncID) == (3, 1)
+        assert cmap4_0_3.language == cmap4_3_1.language
+        assert cmap4_0_3.language == 0
+        mapping = {c: chr(c) for c in range(0x61, 0x6D)}
+        mapping[0x20] = "space"
+        assert cmap4_0_3.cmap == cmap4_3_1.cmap
+        assert cmap4_0_3.cmap == mapping
+
+    def test_cmap_nonBMP_with_UVS(self, testufo):
+        u1F170 = testufo.newGlyph("u1F170")
+        u1F170.unicode = 0x1F170
+        testufo.newGlyph("u1F170.text")
+        testufo.lib["public.unicodeVariationSequences"] = {
+            "FE0E": {
+                "1F170": "u1F170.text",
+            },
+            "FE0F": {
+                "1F170": "u1F170",
+            },
+        }
+
+        compiler = OutlineOTFCompiler(testufo)
+        otf = compiler.compile()
+
+        assert "cmap" in otf
+        cmap = otf["cmap"]
+        cmap.compile(otf)
+        assert len(cmap.tables) == 5
+        cmap4_0_3 = cmap.tables[0]
+        cmap12_0_4 = cmap.tables[1]
+        cmap14_0_5 = cmap.tables[2]
+        cmap4_3_1 = cmap.tables[3]
+        cmap12_3_10 = cmap.tables[4]
+
+        assert (cmap4_0_3.platformID, cmap4_0_3.platEncID) == (0, 3)
+        assert (cmap4_3_1.platformID, cmap4_3_1.platEncID) == (3, 1)
+        assert cmap4_0_3.language == cmap4_3_1.language
+        assert cmap4_0_3.language == 0
+        mapping = {c: chr(c) for c in range(0x61, 0x6D)}
+        mapping[0x20] = "space"
+        assert cmap4_0_3.cmap == cmap4_3_1.cmap
+        assert cmap4_0_3.cmap == mapping
+
+        assert (cmap12_0_4.platformID, cmap12_0_4.platEncID) == (0, 4)
+        assert (cmap12_3_10.platformID, cmap12_3_10.platEncID) == (3, 10)
+        assert cmap12_0_4.language == cmap12_3_10.language
+        assert cmap12_0_4.language == 0
+        mapping[0x1F170] = "u1F170"
+        assert cmap12_0_4.cmap == cmap12_3_10.cmap
+        assert cmap12_0_4.cmap == mapping
+
+        assert (cmap14_0_5.platformID, cmap14_0_5.platEncID) == (0, 5)
+        assert cmap14_0_5.language == 0
+        assert cmap14_0_5.uvsDict == {
+            0xFE0E: [(0x1F170, "u1F170.text")],
+            0xFE0F: [(0x1F170, None)],
+        }
+
+
 ASCII = [chr(c) for c in range(0x20, 0x7E)]
 
 

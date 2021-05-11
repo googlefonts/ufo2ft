@@ -40,10 +40,15 @@ class PostProcessor:
     def __init__(self, otf, ufo, glyphSet=None):
         self.ufo = ufo
         self.glyphSet = glyphSet if glyphSet is not None else ufo
-        stream = BytesIO()
-        otf.save(stream)
-        stream.seek(0)
-        self.otf = TTFont(stream)
+
+        # FIXME: Stop reloading all incoming fonts here. It ensures that 1) we
+        # get the final binary layout, which canonicalizes data for us and 2)
+        # can easily rename glyphs later. The former point should be fixed, as
+        # reloading is expensive and it is within reason for the compiler to
+        # spit out something that can be used without reloading.
+        # https://github.com/googlefonts/ufo2ft/issues/485
+        self.otf = _reloadFont(otf)
+
         self._postscriptNames = ufo.lib.get("public.postscriptNames")
 
     def process(
@@ -401,3 +406,11 @@ def _stripCharStringWidth(program):
     if stack:
         result.extend(stack)
     return result
+
+
+def _reloadFont(font: TTFont) -> TTFont:
+    """Recompile a font to arrive at the final internal layout."""
+    stream = BytesIO()
+    font.save(stream)
+    stream.seek(0)
+    return TTFont(stream)

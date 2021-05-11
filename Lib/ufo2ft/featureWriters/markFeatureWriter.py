@@ -296,7 +296,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     def setContext(self, font, feaFile, compiler=None):
         ctx = super().setContext(font, feaFile, compiler=compiler)
-        ctx.gdefClasses = ast.getGDEFGlyphClasses(feaFile)
+        ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.anchorLists = self._getAnchorLists()
         ctx.anchorPairs = self._getAnchorPairs()
 

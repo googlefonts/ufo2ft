@@ -29,14 +29,15 @@ setup(
     setup_requires=pytest_runner + wheel + ["setuptools_scm"],
     tests_require=["pytest>=2.8"],
     install_requires=[
-        "fonttools[ufo]>=4.17.1",
+        "fonttools[ufo]>=4.22.0",
         "cu2qu>=1.6.7",
-        "compreffor>=0.4.6",
+        "cffsubr>=0.2.8",
         "booleanOperations>=0.9.0",
     ],
     extras_require={
         "pathops": ["skia-pathops>=0.5.1"],
-        "cffsubr": ["cffsubr>=0.2.8"],
+        "cffsubr": [],  # keep empty for backward compat
+        "compreffor": ["compreffor>=0.4.6"],
     },
     python_requires=">=3.6",
     classifiers=[
