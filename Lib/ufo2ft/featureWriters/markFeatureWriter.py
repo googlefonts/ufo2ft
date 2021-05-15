@@ -852,7 +852,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
     def _getIndicGlyphs(self):
         cmap = self.makeUnicodeToGlyphNameMapping()
         unicodeIsIndic = partial(unicodeInScripts, scripts=self.indicScripts)
-        if any(unicodeIsIndic for uv in cmap):
+        if any(unicodeIsIndic(uv) for uv in cmap):
             # If there are any characters from Indic scripts in the cmap, we
             # compile a temporary GSUB table to resolve substitutions and get
             # the set of all the "Indic" glyphs, including alternate glyphs.
