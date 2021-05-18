@@ -2615,7 +2615,7 @@
 
   <GDEF>
     <Version value="0x00010000"/>
-    <GlyphClassDef Format="2">
+    <GlyphClassDef>
       <ClassDef glyph="A" class="1"/>
       <ClassDef glyph="E" class="1"/>
       <ClassDef glyph="I" class="1"/>
@@ -2663,10 +2663,10 @@
         <LookupFlag value="0"/>
         <!-- SubTableCount=1 -->
         <MarkBasePos index="0" Format="1">
-          <MarkCoverage Format="1">
+          <MarkCoverage>
             <Glyph value="uni0308"/>
           </MarkCoverage>
-          <BaseCoverage Format="2">
+          <BaseCoverage>
             <Glyph value="A"/>
             <Glyph value="E"/>
             <Glyph value="I"/>
