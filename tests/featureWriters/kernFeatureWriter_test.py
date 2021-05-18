@@ -282,6 +282,48 @@ class KernFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_insert_comment_before_extended(self, FontClass):
+        ufo = FontClass()
+        for name in ("one", "four", "six", "seven"):
+            ufo.newGlyph(name)
+        existing = dedent(
+            """\
+            feature kern {
+                #
+                # Automatic Code End
+                #
+                pos one four' -50 six;
+            } kern;
+            """
+        )
+        ufo.features.text = existing
+        ufo.kerning.update({("seven", "six"): 25.0})
+
+        writer = KernFeatureWriter()
+        feaFile = parseLayoutFeatures(ufo)
+        assert writer.write(ufo, feaFile)
+
+        expected = dedent(
+            """\
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+
+            feature kern {
+                #
+                #
+                pos one four' -50 six;
+            } kern;
+            """
+        )
+
+        assert str(feaFile).strip() == expected.strip()
+
     def test_insert_comment_after(self, FontClass):
         ufo = FontClass()
         for name in ("one", "four", "six", "seven"):

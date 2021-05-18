@@ -11,7 +11,7 @@ from ufo2ft.constants import (
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
 )
-from ufo2ft.filters import UFO2FT_FILTERS_KEY
+from ufo2ft.filters import FILTERS_KEY, loadFilterFromString
 from ufo2ft.filters.explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
 from ufo2ft.preProcessor import (
     TTFInterpolatablePreProcessor,
@@ -77,6 +77,45 @@ class TTFPreProcessorTest:
             assert CURVE_TYPE_LIB_KEY not in ufo.layers.defaultLayer.lib
             assert glyph_has_qcurve(ufo, "c")
 
+    def test_custom_filters(self, FontClass):
+        ufo1 = FontClass(getpath("TestFont.ufo"))
+        ufo1.lib[FILTERS_KEY] = [
+            {"name": "transformations", "kwargs": {"OffsetX": -40}, "pre": True}
+        ]
+        ufo2 = FontClass(getpath("TestFont.ufo"))
+        ufo2.lib[FILTERS_KEY] = [{"name": "transformations", "kwargs": {"OffsetY": 10}}]
+
+        glyphSets0 = TTFPreProcessor(ufo1).process()
+        glyphSets1 = TTFPreProcessor(ufo2).process()
+
+        assert (glyphSets0["a"][0][0].x - glyphSets1["a"][0][0].x) == -40
+        assert (glyphSets1["a"][0][0].y - glyphSets0["a"][0][0].y) == 10
+
+    def test_custom_filters_as_argument(self, FontClass):
+        from ufo2ft.filters import RemoveOverlapsFilter, TransformationsFilter
+
+        ufo1 = FontClass(getpath("TestFont.ufo"))
+        ufo2 = FontClass(getpath("TestFont.ufo"))
+        filter1 = RemoveOverlapsFilter(backend="pathops")
+        filter2 = TransformationsFilter(include=["d"], pre=True, OffsetY=-200)
+        filter3 = TransformationsFilter(OffsetX=10)
+
+        glyphSets0 = TTFPreProcessor(
+            ufo1, filters=[filter1, filter2, filter3]
+        ).process()
+        glyphSets1 = TTFPreProcessor(
+            ufo2, filters=[filter1, filter2, filter3]
+        ).process()
+
+        # Both UFOs have the same filters applied
+        assert (glyphSets0["a"][0][0].x - glyphSets1["a"][0][0].x) == 0
+        # "a" has initially its starting point at (66, 0)
+        assert (glyphSets0["a"][0][0].x, glyphSets0["a"][0][0].y) == (76, 0)
+        assert (glyphSets1["a"][0][0].x, glyphSets1["a"][0][0].y) == (76, 0)
+        # A component was shifted to overlap with another in a pre-filter
+        # filter2, before overlaps were removed in a post-filter filter1
+        assert len(glyphSets0["d"].components) == 0
+
 
 class TTFInterpolatablePreProcessorTest:
     def test_no_inplace(self, FontClass):
@@ -130,19 +169,41 @@ class TTFInterpolatablePreProcessorTest:
 
     def test_custom_filters(self, FontClass):
         ufo1 = FontClass(getpath("TestFont.ufo"))
-        ufo1.lib[UFO2FT_FILTERS_KEY] = [
+        ufo1.lib[FILTERS_KEY] = [
             {"name": "transformations", "kwargs": {"OffsetX": -40}, "pre": True}
         ]
         ufo2 = FontClass(getpath("TestFont.ufo"))
-        ufo2.lib[UFO2FT_FILTERS_KEY] = [
-            {"name": "transformations", "kwargs": {"OffsetY": 10}}
-        ]
+        ufo2.lib[FILTERS_KEY] = [{"name": "transformations", "kwargs": {"OffsetY": 10}}]
         ufos = [ufo1, ufo2]
 
         glyphSets = TTFInterpolatablePreProcessor(ufos).process()
 
         assert (glyphSets[0]["a"][0][0].x - glyphSets[1]["a"][0][0].x) == -40
         assert (glyphSets[1]["a"][0][0].y - glyphSets[0]["a"][0][0].y) == 10
+
+    def test_custom_filters_as_argument(self, FontClass):
+        ufo1 = FontClass(getpath("TestFont.ufo"))
+        ufo2 = FontClass(getpath("TestFont.ufo"))
+        filter1 = loadFilterFromString("RemoveOverlapsFilter(backend='pathops')")
+        filter2 = loadFilterFromString(
+            "TransformationsFilter(OffsetY=-200, include=['d'], pre=True)"
+        )
+        filter3 = loadFilterFromString("TransformationsFilter(OffsetX=10)")
+        ufos = [ufo1, ufo2]
+
+        glyphSets = TTFInterpolatablePreProcessor(
+            ufos,
+            filters=[filter1, filter2, filter3],
+        ).process()
+
+        # Both UFOs have the same filters applied
+        assert (glyphSets[0]["a"][0][0].x - glyphSets[1]["a"][0][0].x) == 0
+        # "a" has initially its starting point at (66, 0)
+        assert (glyphSets[0]["a"][0][0].x, glyphSets[0]["a"][0][0].y) == (76, 0)
+        assert (glyphSets[1]["a"][0][0].x, glyphSets[1]["a"][0][0].y) == (76, 0)
+        # A component was shifted to overlap with another in a pre-filter
+        # filter2, before overlaps were removed in a post-filter filter1
+        assert len(glyphSets[0]["d"].components) == 0
 
 
 class SkipExportGlyphsTest:

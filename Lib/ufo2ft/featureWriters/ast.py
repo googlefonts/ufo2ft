@@ -64,6 +64,12 @@ def findCommentPattern(feaFile, pattern):
                 yield (statement,)
 
 
+def findTable(feaLib, tag):
+    for statement in feaLib.statements:
+        if isinstance(statement, ast.TableBlock) and statement.name == tag:
+            return statement
+
+
 def iterClassDefinitions(feaFile, featureTag=None):
     if featureTag is None:
         # start from top-level class definitions

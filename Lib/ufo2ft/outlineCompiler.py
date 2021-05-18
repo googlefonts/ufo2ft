@@ -24,7 +24,11 @@ from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS, Glyph
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
-from ufo2ft.constants import COLOR_LAYERS_KEY, COLOR_PALETTES_KEY
+from ufo2ft.constants import (
+    COLOR_LAYERS_KEY,
+    COLOR_PALETTES_KEY,
+    UNICODE_VARIATION_SEQUENCES_KEY,
+)
 from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import (
     dateStringForNow,
@@ -504,6 +508,33 @@ class BaseOutlineCompiler:
             cmap12_3_10.cmap = nonBMP
             # update tables registry
             cmap.tables = [cmap4_0_3, cmap4_3_1, cmap12_0_4, cmap12_3_10]
+        # unicode variation sequences
+        uvsMapping = self.ufo.lib.get(UNICODE_VARIATION_SEQUENCES_KEY)
+        if uvsMapping:
+            from fontTools.ttLib.tables._c_m_a_p import cmap_format_14
+
+            cmap14_0_5 = cmap_format_14(14)
+            cmap14_0_5.platformID = 0
+            cmap14_0_5.platEncID = 5
+            cmap14_0_5.language = 0
+            cmap14_0_5.cmap = {}
+            if nonBMP:
+                mapping = nonBMP
+            uvsDict = dict()
+            # public.unicodeVariationSequences uses hex strings as keys and
+            # a dict of dicts, while cmap uses ints and a dict of tuples.
+            for hexvs, glyphMapping in uvsMapping.items():
+                uvsList = []
+                for hexvalue, glyphName in glyphMapping.items():
+                    value = int(hexvalue, 16)
+                    if glyphName == mapping[value]:
+                        uvsList.append((value, None))
+                    else:
+                        uvsList.append((value, glyphName))
+                uvsDict[int(hexvs, 16)] = uvsList
+            cmap14_0_5.uvsDict = uvsDict
+            # update tables registry
+            cmap.tables.append(cmap14_0_5)
 
     def setupTable_OS2(self):
         """
@@ -537,7 +568,7 @@ class BaseOutlineCompiler:
         # subscript, superscript, strikeout values, taken from AFDKO:
         # FDK/Tools/Programs/makeotf/makeotf_lib/source/hotconv/hot.c
         unitsPerEm = getAttrWithFallback(font.info, "unitsPerEm")
-        italicAngle = getAttrWithFallback(font.info, "italicAngle")
+        italicAngle = float(getAttrWithFallback(font.info, "italicAngle"))
         xHeight = getAttrWithFallback(font.info, "xHeight")
 
         def adjustOffset(offset, angle):
@@ -889,7 +920,7 @@ class BaseOutlineCompiler:
         font = self.ufo
         post.formatType = 3.0
         # italic angle
-        italicAngle = getAttrWithFallback(font.info, "italicAngle")
+        italicAngle = float(getAttrWithFallback(font.info, "italicAngle"))
         post.italicAngle = italicAngle
         # underline
         underlinePosition = getAttrWithFallback(
@@ -900,7 +931,9 @@ class BaseOutlineCompiler:
             font.info, "postscriptUnderlineThickness"
         )
         post.underlineThickness = otRound(underlineThickness)
-        post.isFixedPitch = getAttrWithFallback(font.info, "postscriptIsFixedPitch")
+        post.isFixedPitch = int(
+            getAttrWithFallback(font.info, "postscriptIsFixedPitch")
+        )
         # misc
         post.minMemType42 = 0
         post.maxMemType42 = 0
@@ -1140,6 +1173,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
 
         self.otf["CFF "] = cff = newTable("CFF ")
         cff = cff.cff
+        # NOTE: Set up a back-reference to be used by some CFFFontSet methods
+        # down the line (as of fontTools 4.21.1).
+        cff.otFont = self.otf
         # set up the basics
         cff.major = 1
         cff.minor = 0
@@ -1215,8 +1251,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         )
         topDict.Weight = getAttrWithFallback(info, "postscriptWeightName")
         # populate various numbers
-        topDict.isFixedPitch = getAttrWithFallback(info, "postscriptIsFixedPitch")
-        topDict.ItalicAngle = getAttrWithFallback(info, "italicAngle")
+        topDict.isFixedPitch = int(getAttrWithFallback(info, "postscriptIsFixedPitch"))
+        topDict.ItalicAngle = float(getAttrWithFallback(info, "italicAngle"))
         underlinePosition = getAttrWithFallback(info, "postscriptUnderlinePosition")
         topDict.UnderlinePosition = otRound(underlinePosition)
         underlineThickness = getAttrWithFallback(info, "postscriptUnderlineThickness")

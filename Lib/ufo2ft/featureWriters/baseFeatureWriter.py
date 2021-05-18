@@ -1,11 +1,12 @@
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from types import SimpleNamespace
 
+from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureWriters import ast
 
-INSERT_FEATURE_MARKER = r"\s*# Automatic Code"
+INSERT_FEATURE_MARKER = r"\s*# Automatic Code.*"
 
 
 class BaseFeatureWriter:
@@ -84,13 +85,15 @@ class BaseFeatureWriter:
         todo = set(self.features)
         insertComments = None
         if self.mode == "skip":
-            insertComments = self.collectInsertMarkers(
-                feaFile, self.insertFeatureMarker, todo
-            )
+            if self.insertFeatureMarker is not None:
+                insertComments = self.collectInsertMarkers(
+                    feaFile, self.insertFeatureMarker, todo
+                )
             # find existing feature blocks
             existing = ast.findFeatureTags(feaFile)
             # ignore features with insert marker
-            existing.difference_update(insertComments.keys())
+            if insertComments:
+                existing.difference_update(insertComments.keys())
             # remove existing feature without insert marker from todo list
             todo.difference_update(existing)
 
@@ -306,3 +309,66 @@ class BaseFeatureWriter:
         if compiler and not hasattr(compiler, "_gsub"):
             compiler._gsub = gsub
         return gsub
+
+    def getOpenTypeCategories(self):
+        """Return 'public.openTypeCategories' values as a tuple of sets of
+        unassigned, bases, ligatures, marks, components."""
+        font = self.context.font
+        unassigned, bases, ligatures, marks, components = (
+            set(),
+            set(),
+            set(),
+            set(),
+            set(),
+        )
+        openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
+
+        for glyphName, category in openTypeCategories.items():
+            if category == "unassigned":
+                unassigned.add(glyphName)
+            elif category == "base":
+                bases.add(glyphName)
+            elif category == "ligature":
+                ligatures.add(glyphName)
+            elif category == "mark":
+                marks.add(glyphName)
+            elif category == "component":
+                components.add(glyphName)
+            else:
+                self.log.warning(
+                    f"The '{OPENTYPE_CATEGORIES_KEY}' value of {glyphName} in "
+                    f"{font.info.familyName} {font.info.styleName} is '{category}' "
+                    "when it should be 'unassigned', 'base', 'ligature', 'mark' "
+                    "or 'component'."
+                )
+        return namedtuple(
+            "OpenTypeCategories", "unassigned base ligature mark component"
+        )(
+            frozenset(unassigned),
+            frozenset(bases),
+            frozenset(ligatures),
+            frozenset(marks),
+            frozenset(components),
+        )
+
+    def getGDEFGlyphClasses(self):
+        """Return a tuple of GDEF GlyphClassDef base, ligature, mark, component
+        glyph names.
+        Sets are `None` if no 'public.openTypeCategories' values are defined or
+        if no GDEF table is defined in the feature file.
+        """
+        feaFile = self.context.feaFile
+
+        if ast.findTable(feaFile, "GDEF") is not None:
+            return ast.getGDEFGlyphClasses(feaFile)
+
+        unassigned, bases, ligatures, marks, components = self.getOpenTypeCategories()
+
+        if not any((unassigned, bases, ligatures, marks, components)):
+            return ast._GDEFGlyphClasses(None, None, None, None)
+        return ast._GDEFGlyphClasses(
+            frozenset(bases),
+            frozenset(ligatures),
+            frozenset(marks),
+            frozenset(components),
+        )

@@ -19,3 +19,7 @@ KEEP_GLYPH_NAMES = UFO2FT_PREFIX + "keepGlyphNames"
 COLOR_LAYERS_KEY = UFO2FT_PREFIX + "colorLayers"
 COLOR_PALETTES_KEY = UFO2FT_PREFIX + "colorPalettes"
 COLOR_LAYER_MAPPING_KEY = UFO2FT_PREFIX + "colorLayerMapping"
+
+OPENTYPE_CATEGORIES_KEY = "public.openTypeCategories"
+
+UNICODE_VARIATION_SEQUENCES_KEY = "public.unicodeVariationSequences"
