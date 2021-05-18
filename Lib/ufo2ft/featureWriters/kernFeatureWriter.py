@@ -203,7 +203,7 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def setContext(self, font, feaFile, compiler=None):
         ctx = super().setContext(font, feaFile, compiler=compiler)
-        ctx.gdefClasses = ast.getGDEFGlyphClasses(feaFile)
+        ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
 
         feaScripts = ast.getScriptLanguageSystems(feaFile)

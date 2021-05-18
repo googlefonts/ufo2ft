@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from textwrap import dedent
 
 import pytest
@@ -180,7 +181,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         ]
         generated = self.writeFeatures(testufo)
 
-        assert "ligComponent <anchor NULL>" in str(generated)
+        assert re.search(r"ligComponent\s+<anchor NULL>", str(generated))
 
     def test_skip_existing_feature(self, testufo):
         testufo.features.text = dedent(
@@ -188,7 +189,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark1;
             } mark;
             """
@@ -205,7 +207,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -218,7 +221,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark1;
             } mark;
             """
@@ -232,12 +236,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark2base;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
                 } mark2liga;
 
             } mark;
@@ -246,7 +253,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -263,7 +271,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 # Automatic Code
                 #
                 lookup mark1 {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark1;
             } mark;
             """
@@ -279,12 +288,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark2base;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
                 } mark2liga;
 
             } mark;
@@ -293,7 +305,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 #
                 #
                 lookup mark1 {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark1;
 
             } mark;
@@ -302,7 +315,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -317,12 +331,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark2base;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
                 } mark2liga;
 
             } mark;
@@ -331,7 +348,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -345,7 +363,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark1;
                 #
                 # Automatic Code
@@ -362,7 +381,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark1;
 
                 #
@@ -373,12 +393,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark2base;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
                 } mark2liga;
 
             } mark;
@@ -387,7 +410,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -402,12 +426,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark2base;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
                 } mark2liga;
 
             } mark;
@@ -416,7 +443,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -430,13 +458,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark1;
                 #
                 # Automatic Code
                 #
                 lookup mark2 {
-                    pos base a <anchor 150 250> mark @MC_top;
+                    pos base a
+                        <anchor 150 250> mark @MC_top;
                 } mark2;
             } mark;
             """
@@ -458,12 +488,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark2base;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
                 } mark2liga;
 
             } mark;
@@ -472,7 +505,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -500,7 +534,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark1;
 
             } mark;
@@ -526,12 +561,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark2base;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
                 } mark2liga;
 
             } mark;
@@ -540,7 +578,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -609,12 +648,16 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 250 -100> mark @MC_markbottom <anchor 250 600> mark @MC_marktop;
+                    pos base a
+                        <anchor 250 -100> mark @MC_markbottom
+                        <anchor 250 600> mark @MC_marktop;
                 } mark2base;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 200 700> mark @MC_marktop
-                        ligComponent <anchor 500 700> mark @MC_marktop;
+                    pos ligature f_i
+                            <anchor 200 700> mark @MC_marktop
+                        ligComponent
+                            <anchor 500 700> mark @MC_marktop;
                 } mark2liga;
 
             } mark;
@@ -623,13 +666,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_bottom {
                     @MFS_mark2mark_bottom = [cedillacomb gravecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_bottom;
-                    pos mark gravecomb <anchor 150 600> mark @MC_markbottom;
+                    pos mark gravecomb
+                        <anchor 150 600> mark @MC_markbottom;
                 } mark2mark_bottom;
 
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [gravecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark gravecomb <anchor 150 800> mark @MC_marktop;
+                    pos mark gravecomb
+                        <anchor 150 800> mark @MC_marktop;
                 } mark2mark_top;
 
             } mkmk;
@@ -690,22 +735,29 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature abvm {
                 lookup abvm_mark2base {
-                    pos base ka-kannada.base <anchor 291 547> mark @MC_top <anchor 391 460> mark @MC_topright;
+                    pos base ka-kannada.base
+                        <anchor 291 547> mark @MC_top
+                        <anchor 391 460> mark @MC_topright;
                 } abvm_mark2base;
 
             } abvm;
 
             feature blwm {
                 lookup blwm_mark2base {
-                    pos base ka-kannada <anchor 290 0> mark @MC_bottom;
-                    pos base ka-kannada.base <anchor 290 0> mark @MC_bottom;
+                    pos base ka-kannada
+                        <anchor 290 0> mark @MC_bottom;
+                    pos base ka-kannada.base
+                        <anchor 290 0> mark @MC_bottom;
                 } blwm_mark2base;
 
             } blwm;
 
             feature mark {
                 lookup mark2base {
-                    pos base dottedCircle <anchor 297 0> mark @MC_bottom <anchor 297 552> mark @MC_top <anchor 491 458> mark @MC_topright;
+                    pos base dottedCircle
+                        <anchor 297 0> mark @MC_bottom
+                        <anchor 297 552> mark @MC_top
+                        <anchor 491 458> mark @MC_topright;
                 } mark2base;
 
             } mark;
@@ -790,52 +842,70 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature abvm {
                 lookup abvm_mark2liga {
-                    pos ligature foo_bar_baz <anchor 100 500> mark @MC_top
-                        ligComponent <anchor NULL>
-                        ligComponent <anchor 1000 500> mark @MC_top;
-                    pos ligature bar_foo <anchor NULL>
-                        ligComponent <anchor 600 501> mark @MC_top;
+                    pos ligature foo_bar_baz
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor NULL>
+                        ligComponent
+                            <anchor 1000 500> mark @MC_top;
+                    pos ligature bar_foo
+                            <anchor NULL>
+                        ligComponent
+                            <anchor 600 501> mark @MC_top;
                 } abvm_mark2liga;
 
                 lookup abvm_mark2mark_top {
                     @MFS_abvm_mark2mark_top = [foocomb];
                     lookupflag UseMarkFilteringSet @MFS_abvm_mark2mark_top;
-                    pos mark foocomb <anchor 100 190> mark @MC_top;
+                    pos mark foocomb
+                        <anchor 100 190> mark @MC_top;
                 } abvm_mark2mark_top;
 
             } abvm;
 
             feature blwm {
                 lookup blwm_mark2liga {
-                    pos ligature foo_bar_baz <anchor 100 10> mark @MC_bottom
-                        ligComponent <anchor NULL>
-                        ligComponent <anchor 1100 499> mark @MC_bar;
+                    pos ligature foo_bar_baz
+                            <anchor 100 10> mark @MC_bottom
+                        ligComponent
+                            <anchor NULL>
+                        ligComponent
+                            <anchor 1100 499> mark @MC_bar;
                 } blwm_mark2liga;
 
                 lookup blwm_mark2mark_bar {
                     @MFS_blwm_mark2mark_bar = [barcomb];
                     lookupflag UseMarkFilteringSet @MFS_blwm_mark2mark_bar;
-                    pos mark barcomb <anchor 100 440> mark @MC_bar;
+                    pos mark barcomb
+                        <anchor 100 440> mark @MC_bar;
                 } blwm_mark2mark_bar;
 
                 lookup blwm_mark2mark_bottom {
                     @MFS_blwm_mark2mark_bottom = [bazcomb];
                     lookupflag UseMarkFilteringSet @MFS_blwm_mark2mark_bottom;
-                    pos mark bazcomb <anchor 100 -34> mark @MC_bottom;
+                    pos mark bazcomb
+                        <anchor 100 -34> mark @MC_bottom;
                 } blwm_mark2mark_bottom;
 
             } blwm;
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
-                    pos base c <anchor 240 0> mark @MC_bottom;
-                    pos base dottedCircle <anchor 491 458> mark @MC_bar <anchor 297 0> mark @MC_bottom <anchor 297 552> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
+                    pos base c
+                        <anchor 240 0> mark @MC_bottom;
+                    pos base dottedCircle
+                        <anchor 491 458> mark @MC_bar
+                        <anchor 297 0> mark @MC_bottom
+                        <anchor 297 552> mark @MC_top;
                 } mark2base;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
                 } mark2liga;
 
             } mark;
@@ -844,13 +914,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_bottom {
                     @MFS_mark2mark_bottom = [cedillacomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_bottom;
-                    pos mark cedillacomb <anchor 20 -309> mark @MC_bottom;
+                    pos mark cedillacomb
+                        <anchor 20 -309> mark @MC_bottom;
                 } mark2mark_bottom;
 
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -907,17 +979,22 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base D <anchor 320 360> mark @MC_center;
+                    pos base D
+                        <anchor 320 360> mark @MC_center;
                 } mark2base;
 
                 lookup mark2base_1 {
-                    pos base D <anchor 300 700> mark @MC_top;
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base D
+                        <anchor 300 700> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark2base_1;
 
                 lookup mark2liga {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
                 } mark2liga;
 
             } mark;
@@ -926,8 +1003,91 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb dotaccentcomb tildecomb];
                     lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
-                    pos mark dotaccentcomb <anchor 0 300> mark @MC_top;
-                    pos mark tildecomb <anchor 100 300> mark @MC_top;
+                    pos mark dotaccentcomb
+                        <anchor 0 300> mark @MC_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
+    def test_mark_mkmk_features_with_GDEF_and_openTypeCategories(self, testufo):
+        # this glyph has compatible anchors and has an openTypeCategories "base"
+        # value
+        D = testufo.newGlyph("D")
+        D.anchors = [
+            {"name": "top", "x": 300, "y": 700},
+            {"name": "center", "x": 320, "y": 360},
+        ]
+        # these glyphs have compatible anchors but since they not listed in
+        # the GDEF groups, they won't be included in the mark/mkmk feature
+        testufo.newGlyph("Alpha").appendAnchor({"name": "topleft", "x": -10, "y": 400})
+        testufo.newGlyph("psili").appendAnchor({"name": "_topleft", "x": 0, "y": 50})
+        dotaccentcomb = testufo.newGlyph("dotaccentcomb")
+        # this mark glyph has more than one mark anchor, and both will be
+        # generated. Since the two mark anchors cannot cohabit in the same
+        # mark lookup, two lookups will be generated.
+        dotaccentcomb.anchors = [
+            {"name": "_center", "x": 0, "y": 0},
+            {"name": "_top", "x": 0, "y": 0},
+            {"name": "top", "x": 0, "y": 300},
+        ]
+        # will be ignored because in GDEF table below
+        testufo.lib["public.openTypeCategories"] = {
+            "D": "base",
+            "dotaccentcomb": "mark",
+            "tildecomb": "base",
+        }
+        testufo.features.text = dedent(
+            """\
+            @Bases = [a];
+            @Marks = [acutecomb tildecomb];
+            table GDEF {
+                GlyphClassDef @Bases, [f_i], @Marks, ;
+            } GDEF;
+            """
+        )
+        testufo.glyphOrder = [
+            "Alpha",
+            "D",
+            "a",
+            "acutecomb",
+            "dotaccentcomb",
+            "f_i",
+            "psili",
+            "tildecomb",
+        ]
+
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
                 } mark2mark_top;
 
             } mkmk;
@@ -947,11 +1107,13 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 515 581> mark @MC_topA;
+                    pos base a
+                        <anchor 515 581> mark @MC_topA;
                 } mark2base;
 
                 lookup mark2base_1 {
-                    pos base e <anchor -21 396> mark @MC_topE;
+                    pos base e
+                        <anchor -21 396> mark @MC_topE;
                 } mark2base_1;
 
             } mark;
@@ -983,17 +1145,25 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2liga {
-                    pos ligature f_f <anchor 101 501> mark @MC_topOther
-                        ligComponent <anchor 601 501> mark @MC_topOther;
-                    pos ligature f_l <anchor NULL>
-                        ligComponent <anchor 602 502> mark @MC_topOther;
+                    pos ligature f_f
+                            <anchor 101 501> mark @MC_topOther
+                        ligComponent
+                            <anchor 601 501> mark @MC_topOther;
+                    pos ligature f_l
+                            <anchor NULL>
+                        ligComponent
+                            <anchor 602 502> mark @MC_topOther;
                 } mark2liga;
 
                 lookup mark2liga_1 {
-                    pos ligature f_i <anchor 100 500> mark @MC_top
-                        ligComponent <anchor 600 500> mark @MC_top;
-                    pos ligature f_l <anchor 102 502> mark @MC_top
-                        ligComponent <anchor NULL>;
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
+                    pos ligature f_l
+                            <anchor 102 502> mark @MC_top
+                        ligComponent
+                            <anchor NULL>;
                 } mark2liga_1;
 
             } mark;
@@ -1035,11 +1205,13 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 150 550> mark @MC_topOther;
+                    pos base a
+                        <anchor 150 550> mark @MC_topOther;
                 } mark2base;
 
                 lookup mark2base_1 {
-                    pos base a <anchor 100 500> mark @MC_top;
+                    pos base a
+                        <anchor 100 500> mark @MC_top;
                 } mark2base_1;
 
             } mark;
@@ -1058,7 +1230,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             feature mark {
                 lookup mark2base {
-                    pos base a <anchor 100 200> mark @MC_top;
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
                 } mark2base;
 
             } mark;
