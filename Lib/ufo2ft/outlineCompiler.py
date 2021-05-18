@@ -1493,6 +1493,9 @@ class StubGlyph:
     def draw(self, pen):
         pass
 
+    def drawPoints(self, pen):
+        pass
+
     def _drawDefaultNotdef(self, pen):
         # Draw contour in PostScript direction (counter-clockwise) by default. Reverse
         # for TrueType.
