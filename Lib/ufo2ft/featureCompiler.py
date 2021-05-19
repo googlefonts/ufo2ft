@@ -108,12 +108,12 @@ class BaseFeatureCompiler:
         raise NotImplementedError
 
     def setupFile_features(self):
-        """ DEPRECATED. Use 'setupFeatures' instead. """
+        """DEPRECATED. Use 'setupFeatures' instead."""
         _deprecateMethod("setupFile_features", "setupFeatures")
         self.setupFeatures()
 
     def setupFile_featureTables(self):
-        """ DEPRECATED. Use 'setupFeatures' instead. """
+        """DEPRECATED. Use 'setupFeatures' instead."""
         _deprecateMethod("setupFile_featureTables", "buildTables")
         self.buildTables()
 
