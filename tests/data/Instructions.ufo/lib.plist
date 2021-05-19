@@ -100,6 +100,18 @@
         </dict>
       </dict>
     </dict>
+    <key>com.lucasfonts.flufohint</key>
+    <dict>
+      <key>options</key>
+      <dict>
+        <key>disable_deltas</key>
+        <true/>
+        <key>lowest_rec_ppem</key>
+        <integer>9</integer>
+        <key>optimized_for_cleartype</key>
+        <integer>1</integer>
+      </dict>
+    </dict>
     <key>public.glyphOrder</key>
     <array>
       <string>.notdef</string>
@@ -128,78 +140,104 @@
       <key>controlValue</key>
       <array>
         <dict>
+          <key>comment</key>
+          <string>value to decide whether zones are off</string>
           <key>id</key>
           <integer>0</integer>
           <key>value</key>
           <integer>21</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>stem 'Y: 100' (19x)</string>
           <key>id</key>
           <integer>1</integer>
           <key>value</key>
           <integer>100</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>stem 'X: 100' (19x)</string>
           <key>id</key>
           <integer>2</integer>
           <key>value</key>
           <integer>100</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone 'b: 0' position</string>
           <key>id</key>
           <integer>3</integer>
           <key>value</key>
           <integer>6</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone width</string>
           <key>id</key>
           <integer>4</integer>
           <key>value</key>
           <integer>51</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone 'b: 1' position</string>
           <key>id</key>
           <integer>5</integer>
           <key>value</key>
           <integer>-406</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone width</string>
           <key>id</key>
           <integer>6</integer>
           <key>value</key>
           <integer>39</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone 't: 0' position</string>
           <key>id</key>
           <integer>7</integer>
           <key>value</key>
           <integer>494</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone width</string>
           <key>id</key>
           <integer>8</integer>
           <key>value</key>
           <integer>29</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone 't: 1' position</string>
           <key>id</key>
           <integer>9</integer>
           <key>value</key>
           <integer>721</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone width</string>
           <key>id</key>
           <integer>10</integer>
           <key>value</key>
           <integer>28</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone 't: 2' position</string>
           <key>id</key>
           <integer>11</integer>
           <key>value</key>
           <integer>767</integer>
         </dict>
         <dict>
+          <key>comment</key>
+          <string>zone width</string>
           <key>id</key>
           <integer>12</integer>
           <key>value</key>
