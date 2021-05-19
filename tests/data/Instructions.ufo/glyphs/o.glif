@@ -6,7 +6,6 @@
   <anchor x="265" y="0" name="bottom"/>
   <outline>
     <contour>
-      <point x="397" y="463" type="qcurve"/>
       <point x="422" y="467"/>
       <point x="476" y="432"/>
       <point x="517" y="367" name="fh01"/>
@@ -29,6 +28,7 @@
       <point x="278" y="513" type="qcurve" name="at01"/>
       <point x="310" y="513"/>
       <point x="379" y="489"/>
+      <point x="397" y="463" type="qcurve"/>
     </contour>
     <contour>
       <point x="367" y="415" type="qcurve"/>
@@ -83,7 +83,7 @@
         <key>assembly</key>
         <string>
 PUSHB[ ]	/* 1 value pushed */
-15
+14
 MDAP[1]	/* MoveDirectAbsPt */
 PUSHB[ ]	/* 1 value pushed */
 41
@@ -95,17 +95,17 @@ PUSHB[ ]	/* 3 values pushed */
 0 41 1
 DELTAP1[ ]	/* DeltaExceptionP1 */
 PUSHB[ ]	/* 2 values pushed */
-5 2
+4 2
 MIRP[10100]	/* MoveIndirectRelPt */
 PUSHB[ ]	/* 1 value pushed */
-15
+14
 SRP0[ ]	/* SetRefPoint0 */
 PUSHB[ ]	/* 2 values pushed */
 31 2
 MIRP[10100]	/* MoveIndirectRelPt */
 SVTCA[0]	/* SetFPVectorToAxis */
 PUSHB[ ]	/* 3 values pushed */
-20 7 0
+19 7 0
 RCVT[ ]	/* ReadCVT */
 IF[ ]	/* If */
   PUSHB[ ]	/* 1 value pushed */
@@ -127,7 +127,7 @@ ELSE[ ]	/* Else */
   MIAP[0]	/* MoveIndirectAbsPt */
 EIF[ ]	/* EndIf */
 PUSHB[ ]	/* 3 values pushed */
-10 3 0
+9 3 0
 RCVT[ ]	/* ReadCVT */
 IF[ ]	/* If */
   PUSHB[ ]	/* 1 value pushed */
@@ -149,13 +149,13 @@ ELSE[ ]	/* Else */
   MIAP[0]	/* MoveIndirectAbsPt */
 EIF[ ]	/* EndIf */
 PUSHB[ ]	/* 1 value pushed */
-20
+19
 SRP0[ ]	/* SetRefPoint0 */
 PUSHB[ ]	/* 2 values pushed */
 26 1
 MIRP[10100]	/* MoveIndirectRelPt */
 PUSHB[ ]	/* 1 value pushed */
-10
+9
 SRP0[ ]	/* SetRefPoint0 */
 PUSHB[ ]	/* 2 values pushed */
 36 1
@@ -164,16 +164,16 @@ IUP[0]	/* InterpolateUntPts */
 IUP[1]	/* InterpolateUntPts */
 SVTCA[1]	/* SetFPVectorToAxis */
 PUSHB[ ]	/* 3 values pushed */
-53 3 1
+53 2 1
 DELTAP1[ ]	/* DeltaExceptionP1 */
 PUSHB[ ]	/* 3 values pushed */
-9 13 1
+9 12 1
+DELTAP1[ ]	/* DeltaExceptionP1 */
+PUSHB[ ]	/* 3 values pushed */
+58 16 1
 DELTAP1[ ]	/* DeltaExceptionP1 */
 PUSHB[ ]	/* 3 values pushed */
 58 17 1
-DELTAP1[ ]	/* DeltaExceptionP1 */
-PUSHB[ ]	/* 3 values pushed */
-58 18 1
 DELTAP1[ ]	/* DeltaExceptionP1 */
 PUSHB[ ]	/* 3 values pushed */
 25 39 1
@@ -185,7 +185,7 @@ DELTAP1[ ]	/* DeltaExceptionP1 */
         <key>formatVersion</key>
         <string>1</string>
         <key>id</key>
-        <string>75c9b3fcd2f3b2c665e41702dbb5214cfe22396646b617f777c39fa8021622ff8c30cbefec1f07e14de091a1de3f2b9b437d39d92b16e1ec7afebb479c494d6a</string>
+        <string>09f322d1642c34d813dac85a3051e376ad5b25e95140d29311a527a5f8fa36622ca6aa2ea18a6ea4c0c4477b6c9f5f471a122c35d7c067c51a641e738a1d758c</string>
       </dict>
     </dict>
   </lib>
