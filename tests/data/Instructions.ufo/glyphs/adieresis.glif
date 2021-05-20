@@ -17,6 +17,8 @@
         </dict>
         <key>component1</key>
         <dict>
+          <key>public.truetype.roundOffsetToGrid</key>
+          <false/>
           <key>public.truetype.useMyMetrics</key>
           <true/>
         </dict>

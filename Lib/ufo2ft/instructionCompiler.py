@@ -133,12 +133,16 @@ class InstructionCompiler(object):
                     ):
                         component_lib = glyph.lib[OBJECT_LIBS_KEY][ufo_component_id]
 
-                        c.flags &= ~ROUND_XY_TO_GRID
-                        if component_lib.get(TRUETYPE_ROUND_KEY, False):
+                        # https://github.com/googlefonts/ufo2ft/pull/425 recommends
+                        # to always set the ROUND_XY_TO_GRID flag, so we only
+                        # unset it if explicitly done so in the lib
+                        if component_lib.get(TRUETYPE_ROUND_KEY, True):
                             c.flags |= ROUND_XY_TO_GRID
+                        else:
+                            c.flags &= ~ROUND_XY_TO_GRID
 
-                        c.flags &= ~USE_MY_METRICS
                         if component_lib.get(TRUETYPE_METRICS_KEY, False):
+                            c.flags &= ~USE_MY_METRICS
                             if use_my_metrics_comp:
                                 logger.warning(
                                     "Ignoring USE_MY_METRICS flag on component "
@@ -149,18 +153,12 @@ class InstructionCompiler(object):
                                 c.flags |= USE_MY_METRICS
                                 use_my_metrics_comp = ufo_component_id
 
-                    # We might automatically set the flags if no data is present,
-                    # but:
-                    # - https://github.com/googlefonts/ufo2ft/pull/425 recommends
-                    #   against setting the ROUND_XY_TO_GRID flag
-                    # - USE_MY_METRICS has been set already by
-                    #   outlineCompiler.OutlineTTFCompiler.autoUseMyMetrics
-
                     if i == 0 and TRUETYPE_OVERLAP_KEY in glyph.lib:
                         # Set OVERLAP_COMPOUND on the first component only
-                        c.flags &= ~OVERLAP_COMPOUND
                         if glyph.lib.get(TRUETYPE_OVERLAP_KEY, False):
                             c.flags |= OVERLAP_COMPOUND
+                        else:
+                            c.flags &= ~OVERLAP_COMPOUND
 
     def compile_maxp(self):
         maxp = self.font["maxp"]
