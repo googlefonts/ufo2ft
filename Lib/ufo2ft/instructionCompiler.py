@@ -54,8 +54,6 @@ class InstructionCompiler(object):
                         "skipping compilation of TrueType instructions "
                         "for this glyph."
                     )
-                logger.debug(f"UFO keys: {list(self.ufo.keys())}")
-                logger.debug(f"glyf keys: {list(self.font['glyf'].keys())}")
                 continue
 
             glyf = self.font["glyf"][name]
