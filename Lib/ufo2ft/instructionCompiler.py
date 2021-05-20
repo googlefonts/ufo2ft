@@ -49,7 +49,7 @@ class InstructionCompiler(object):
             ttdata = glyph.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
             if name not in self.font["glyf"]:
                 if ttdata is not None:
-                    logger.warning(
+                    logger.debug(
                         f"Glyph '{name}' not found in font, "
                         "skipping compilation of TrueType instructions "
                         "for this glyph."
