@@ -8,12 +8,13 @@ from fontTools.ttLib.tables._g_l_y_f import (
     ROUND_XY_TO_GRID,
     USE_MY_METRICS,
 )
+
 from ufo2ft.constants import (
+    OBJECT_LIBS_KEY,
     TRUETYPE_INSTRUCTIONS_KEY,
-    TRUETYPE_ROUND_KEY,
     TRUETYPE_METRICS_KEY,
     TRUETYPE_OVERLAP_KEY,
-    OBJECT_LIBS_KEY,
+    TRUETYPE_ROUND_KEY,
 )
 
 logger = logging.getLogger(__name__)
