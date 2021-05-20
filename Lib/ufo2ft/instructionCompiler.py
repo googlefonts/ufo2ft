@@ -82,9 +82,6 @@ class InstructionCompiler(object):
                 if asm is not None:
                     glyf.program = ttLib.tables.ttProgram.Program()
                     glyf.program.fromAssembly(asm)
-                    # Roundtrip once, or if the font is dumped to XML before
-                    # having been saved, the assembly code if will look awful.
-                    glyf.program.fromBytecode(glyf.program.getBytecode())
 
             # Handle composites
             if glyf.isComposite():
