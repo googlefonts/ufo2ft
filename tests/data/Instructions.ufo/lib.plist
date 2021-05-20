@@ -100,6 +100,8 @@
         </dict>
       </dict>
     </dict>
+    <key>com.github.googlei18n.cu2qu.curve_type</key>
+    <string>quadratic</string>
     <key>com.lucasfonts.flufohint</key>
     <dict>
       <key>options</key>
