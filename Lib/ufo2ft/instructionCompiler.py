@@ -30,12 +30,10 @@ class InstructionCompiler(object):
         if ttdata:
             formatVersion = ttdata.get("formatVersion", None)
             if int(formatVersion) != 1:
-                logger.error(
+                raise NotImplementedError(
                     f"Unknown formatVersion {formatVersion} "
-                    f"in key '{key}', "
-                    f"table '{table_tag}' will be empty in font."
+                    f"in key '{key}'."
                 )
-                return
             asm = ttdata.get(key, None)
             if asm is not None:
                 self.font[table_tag] = table = ttLib.newTable(table_tag)
