@@ -247,7 +247,7 @@ class IntegrationTest:
             instructions_ufo,
             convertCubics=False,
             reverseDirection=False,
-            removeOverlaps=False
+            removeOverlaps=False,
         )
         assert "cvt " not in ttf
         assert "gasp" in ttf
