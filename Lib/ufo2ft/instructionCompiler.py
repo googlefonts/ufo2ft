@@ -39,9 +39,6 @@ class InstructionCompiler(object):
                 self.font[table_tag] = table = ttLib.newTable(table_tag)
                 table.program = ttLib.tables.ttProgram.Program()
                 table.program.fromAssembly(asm)
-                # Roundtrip once, or if the font is dumped to XML before having
-                # been saved, the assembly code if will look awful.
-                table.program.fromBytecode(table.program.getBytecode())
 
     def compile_fpgm(self):
         self._compile_program("fontProgram", "fpgm")
