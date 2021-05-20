@@ -2091,7 +2091,6 @@
 
     <TTGlyph name="o" xMin="32" yMin="-45" xMax="536" yMax="513">
       <contour>
-        <pt x="397" y="463" on="1"/>
         <pt x="422" y="467" on="0"/>
         <pt x="476" y="432" on="0"/>
         <pt x="517" y="367" on="0"/>
@@ -2114,6 +2113,7 @@
         <pt x="278" y="513" on="1"/>
         <pt x="310" y="513" on="0"/>
         <pt x="379" y="489" on="0"/>
+        <pt x="397" y="463" on="1"/>
       </contour>
       <contour>
         <pt x="367" y="415" on="1"/>
@@ -2143,7 +2143,7 @@
       <instructions>
         <assembly>
           PUSHB[ ]	/* 1 value pushed */
-          15
+          14
           MDAP[1]	/* MoveDirectAbsPt */
           PUSHB[ ]	/* 1 value pushed */
           41
@@ -2155,17 +2155,17 @@
           0 41 1
           DELTAP1[ ]	/* DeltaExceptionP1 */
           PUSHB[ ]	/* 2 values pushed */
-          5 2
+          4 2
           MIRP[10100]	/* MoveIndirectRelPt */
           PUSHB[ ]	/* 1 value pushed */
-          15
+          14
           SRP0[ ]	/* SetRefPoint0 */
           PUSHB[ ]	/* 2 values pushed */
           31 2
           MIRP[10100]	/* MoveIndirectRelPt */
           SVTCA[0]	/* SetFPVectorToAxis */
           PUSHB[ ]	/* 3 values pushed */
-          20 7 0
+          19 7 0
           RCVT[ ]	/* ReadCVT */
           IF[ ]	/* If */
             PUSHB[ ]	/* 1 value pushed */
@@ -2187,7 +2187,7 @@
             MIAP[0]	/* MoveIndirectAbsPt */
           EIF[ ]	/* EndIf */
           PUSHB[ ]	/* 3 values pushed */
-          10 3 0
+          9 3 0
           RCVT[ ]	/* ReadCVT */
           IF[ ]	/* If */
             PUSHB[ ]	/* 1 value pushed */
@@ -2209,13 +2209,13 @@
             MIAP[0]	/* MoveIndirectAbsPt */
           EIF[ ]	/* EndIf */
           PUSHB[ ]	/* 1 value pushed */
-          20
+          19
           SRP0[ ]	/* SetRefPoint0 */
           PUSHB[ ]	/* 2 values pushed */
           26 1
           MIRP[10100]	/* MoveIndirectRelPt */
           PUSHB[ ]	/* 1 value pushed */
-          10
+          9
           SRP0[ ]	/* SetRefPoint0 */
           PUSHB[ ]	/* 2 values pushed */
           36 1
@@ -2224,16 +2224,16 @@
           IUP[1]	/* InterpolateUntPts */
           SVTCA[1]	/* SetFPVectorToAxis */
           PUSHB[ ]	/* 3 values pushed */
-          53 3 1
+          53 2 1
           DELTAP1[ ]	/* DeltaExceptionP1 */
           PUSHB[ ]	/* 3 values pushed */
-          9 13 1
+          9 12 1
+          DELTAP1[ ]	/* DeltaExceptionP1 */
+          PUSHB[ ]	/* 3 values pushed */
+          58 16 1
           DELTAP1[ ]	/* DeltaExceptionP1 */
           PUSHB[ ]	/* 3 values pushed */
           58 17 1
-          DELTAP1[ ]	/* DeltaExceptionP1 */
-          PUSHB[ ]	/* 3 values pushed */
-          58 18 1
           DELTAP1[ ]	/* DeltaExceptionP1 */
           PUSHB[ ]	/* 3 values pushed */
           25 39 1
