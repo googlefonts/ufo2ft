@@ -56,7 +56,7 @@ class InstructionCompiler(object):
                     )
                 continue
 
-            glyf = self.font["glyf"][name]
+            ttglyph = self.font["glyf"][name]
             if ttdata is not None:
                 formatVersion = ttdata.get("formatVersion", None)
                 if int(formatVersion) != 1:
@@ -80,14 +80,14 @@ class InstructionCompiler(object):
                 # Compile the glyph program
                 asm = ttdata.get("assembly", None)
                 if asm is not None:
-                    glyf.program = ttLib.tables.ttProgram.Program()
-                    glyf.program.fromAssembly(asm)
+                    ttglyph.program = ttLib.tables.ttProgram.Program()
+                    ttglyph.program.fromAssembly(asm)
 
             # Handle composites
-            if glyf.isComposite():
+            if ttglyph.isComposite():
                 # Remove empty glyph programs from composite glyphs
-                if hasattr(glyf, "program") and not glyf.program:
-                    delattr(glyf, "program")
+                if hasattr(ttglyph, "program") and not ttglyph.program:
+                    delattr(ttglyph, "program")
 
                 # Set component flags
 
@@ -95,12 +95,12 @@ class InstructionCompiler(object):
                 # Let's assume if any lib key is not there, or the component
                 # doesn't have an identifier, we should leave the flags alone.
                 use_my_metrics_comp = None
-                for i, c in enumerate(glyf.components):
+                for i, c in enumerate(ttglyph.components):
                     if i >= len(glyph.components):
                         logger.error(
                             "Number of components differ between UFO and TTF "
                             f"in glyph '{name}' ({len(glyph.components)} vs. "
-                            f"{len(glyf.components)}, not setting flags in "
+                            f"{len(ttglyph.components)}, not setting flags in "
                             "additional components."
                         )
                         break
@@ -166,9 +166,9 @@ class InstructionCompiler(object):
 
         # Recalculate maxp.maxSizeOfInstructions
         sizes = [
-            len(glyph.program.getBytecode())
-            for glyph in self.font["glyf"].glyphs.values()
-            if hasattr(glyph, "program")
+            len(ttglyph.program.getBytecode())
+            for ttglyph in self.font["glyf"].glyphs.values()
+            if hasattr(ttglyph, "program")
         ]
         maxp.maxSizeOfInstructions = max(sizes, default=0)
 
