@@ -28,6 +28,7 @@ from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from ufo2ft.constants import (
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
+    TRUETYPE_INSTRUCTIONS_KEY,
     UNICODE_VARIATION_SEQUENCES_KEY,
 )
 from ufo2ft.errors import InvalidFontData
@@ -44,7 +45,6 @@ from ufo2ft.util import (
     makeOfficialGlyphOrder,
     makeUnicodeToGlyphNameMapping,
 )
-from ufo2ft.constants import TRUETYPE_INSTRUCTIONS_KEY
 
 logger = logging.getLogger(__name__)
 
