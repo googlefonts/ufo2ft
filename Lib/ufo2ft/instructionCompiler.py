@@ -32,7 +32,7 @@ class InstructionCompiler(object):
             if int(formatVersion) != 1:
                 raise NotImplementedError(
                     f"Unknown formatVersion {formatVersion} "
-                    f"in key '{key}'."
+                    f"for instructions in lib key '{key}'."
                 )
             asm = ttdata.get(key, None)
             if asm is not None:
@@ -60,10 +60,9 @@ class InstructionCompiler(object):
             if ttdata is not None:
                 formatVersion = ttdata.get("formatVersion", None)
                 if int(formatVersion) != 1:
-                    logger.error(
+                    raise NotImplementedError(
                         f"Unknown formatVersion {formatVersion} "
-                        "in glyph '{name}', it will have "
-                        "no instructions in font."
+                        "for instructions in glyph '{name}'."
                     )
                     continue
 
