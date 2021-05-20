@@ -243,7 +243,12 @@ class IntegrationTest:
         expectTTX(ttf, expected_ttx)
 
     def test_Instructions(self, instructions_ufo):
-        ttf = compileTTF(instructions_ufo, reverseDirection=False, removeOverlaps=False)
+        ttf = compileTTF(
+            instructions_ufo,
+            convertCubics=False,
+            reverseDirection=False,
+            removeOverlaps=False
+        )
         assert "cvt " not in ttf
         assert "gasp" in ttf
         assert "fpgm" not in ttf
