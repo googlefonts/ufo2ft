@@ -70,7 +70,15 @@ class InstructionCompiler(object):
                 hash_pen = HashPointPen(glyph.width, self.ufo)
                 glyph.drawPoints(hash_pen)
                 glyph_id = ttdata.get("id", None)
-                if glyph_id is None or glyph_id != hash_pen.hash:
+                if glyph_id is None:
+                    # The glyph hash is required
+                    logger.error(
+                        f"Glyph hash missing, glyph '{name}' will have "
+                        "no instructions in font."
+                    )
+                    continue
+
+                if glyph_id != hash_pen.hash:
                     logger.error(
                         f"Glyph hash mismatch, glyph '{name}' will have "
                         "no instructions in font."
@@ -79,9 +87,16 @@ class InstructionCompiler(object):
 
                 # Compile the glyph program
                 asm = ttdata.get("assembly", None)
-                if asm is not None:
-                    ttglyph.program = ttLib.tables.ttProgram.Program()
-                    ttglyph.program.fromAssembly(asm)
+                if asm is None:
+                    # The "assembly" key is required.
+                    logger.error(
+                        f"Glyph assembly missing, glyph '{name}' will have "
+                        "no instructions in font."
+                    )
+                    continue
+
+                ttglyph.program = ttLib.tables.ttProgram.Program()
+                ttglyph.program.fromAssembly(asm)
 
             # Handle composites
             if ttglyph.isComposite():
