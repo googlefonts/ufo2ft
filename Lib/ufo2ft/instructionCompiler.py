@@ -175,8 +175,8 @@ class InstructionCompiler(object):
             len(glyph.program.getBytecode())
             for glyph in self.font["glyf"].glyphs.values()
             if hasattr(glyph, "program")
-        ] + [0]
-        maxp.maxSizeOfInstructions = max(sizes)
+        ]
+        maxp.maxSizeOfInstructions = max(sizes, default=0)
 
     def compile_prep(self):
         self._compile_program("controlValueProgram", "prep")
