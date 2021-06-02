@@ -305,6 +305,18 @@ def unicodeInScripts(uv, scripts):
     return not sx.isdisjoint(scripts)
 
 
+# we consider the 'Common' and 'Inherited' scripts as neutral for
+# determining a script horizontal direction
+DFLT_SCRIPTS = {"Zyyy", "Zinh"}
+
+
+def unicodeScriptDirection(uv):
+    sc = unicodedata.script(chr(uv))
+    if sc in DFLT_SCRIPTS:
+        return None
+    return unicodedata.script_horizontal_direction(sc)
+
+
 def calcCodePageRanges(unicodes):
     """Given a set of Unicode codepoints (integers), calculate the
     corresponding OS/2 CodePage range bits.
