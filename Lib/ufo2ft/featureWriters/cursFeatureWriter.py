@@ -85,11 +85,9 @@ class CursFeatureWriter(BaseFeatureWriter):
         lookup = ast.LookupBlock(name=f"curs{suffix}")
 
         if direction != "LTR":
-            lookup.statements.append(
-                ast.makeLookupFlag(flags=("IgnoreMarks", "RightToLeft"))
-            )
+            lookup.statements.append(ast.makeLookupFlag(("IgnoreMarks", "RightToLeft")))
         else:
-            lookup.statements.append(ast.makeLookupFlag(name="IgnoreMarks"))
+            lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
 
         lookup.statements.extend(statements)
 

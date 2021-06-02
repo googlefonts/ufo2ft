@@ -91,12 +91,11 @@ LOOKUP_FLAGS = {
 }
 
 
-def makeLookupFlag(name=None, flags=None, markAttachment=None, markFilteringSet=None):
-    value = 0
-    if name:
+def makeLookupFlag(name=None, markAttachment=None, markFilteringSet=None):
+    if isinstance(name, str):
         value = LOOKUP_FLAGS[name]
-    if flags:
-        value |= sum(LOOKUP_FLAGS[n] for n in flags)
+    else:
+        value = sum(LOOKUP_FLAGS[n] for n in name)
 
     if markAttachment is not None:
         assert isinstance(markAttachment, ast.GlyphClassDefinition)
