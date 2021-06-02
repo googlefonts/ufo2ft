@@ -1,8 +1,7 @@
 from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.featureWriters.kernFeatureWriter import unicodeScriptDirection
-from ufo2ft.util import classifyGlyphs
+from ufo2ft.util import classifyGlyphs, unicodeScriptDirection
 
 
 class CursFeatureWriter(BaseFeatureWriter):
