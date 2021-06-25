@@ -212,7 +212,8 @@ class OutlineTTFCompilerTest:
             "dlng": ["en-Latn", "nl-Latn"],
             "slng": ["Latn"],
             "PRIB": b"Some private bytes",
-            "PRIS": "Some private string",
+            "PRIA": "Some private ascii string",
+            "PRIU": "Some private unicode string…",
         }
 
         compiler = OutlineTTFCompiler(testufo)
@@ -224,7 +225,8 @@ class OutlineTTFCompilerTest:
         assert meta.data["dlng"] == "en-Latn,nl-Latn"
         assert meta.data["slng"] == "Latn"
         assert meta.data["PRIB"] == b"Some private bytes"
-        assert meta.data["PRIS"] == "Some private string"
+        assert meta.data["PRIA"] == b"Some private ascii string"
+        assert meta.data["PRIU"] == "Some private unicode string…".encode("utf-8")
 
 
 class OutlineOTFCompilerTest:
