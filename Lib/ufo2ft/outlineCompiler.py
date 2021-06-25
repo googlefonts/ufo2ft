@@ -1016,7 +1016,7 @@ class BaseOutlineCompiler:
             elif isinstance(value, bytes):
                 meta.data[key] = value
             elif isinstance(value, str):
-                meta.data[key] = value
+                meta.data[key] = value.encode("utf-8")
             else:
                 raise TypeError(
                     f"public.openTypeMeta '{key}' value should be bytes or a string."
