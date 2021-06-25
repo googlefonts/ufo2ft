@@ -999,17 +999,28 @@ class BaseOutlineCompiler:
         ufo_meta = font.lib.get(OPENTYPE_META_KEY)
         for key, value in ufo_meta.items():
             if key in ["dlng", "slng"]:
-                assert isinstance(value, (list, tuple))
-                assert all(isinstance(string, str) for string in value)
-            elif key in ["appl", "bild"]:
-                assert isinstance(value, bytes)
-
-            if isinstance(value, bytes):
-                meta.data[key] = value
-            elif key in ("dlng", "slng") and isinstance(value, (list, tuple)):
+                if not isinstance(value, list) or not all(
+                    isinstance(string, str) for string in value
+                ):
+                    raise TypeError(
+                        f"public.openTypeMeta '{key}' value should "
+                        "be a list of strings"
+                    )
                 meta.data[key] = ",".join(value)
+            elif key in ["appl", "bild"]:
+                if not isinstance(value, bytes):
+                    raise TypeError(
+                        f"public.openTypeMeta '{key}' value should be bytes."
+                    )
+                meta.data[key] = value
+            elif isinstance(value, bytes):
+                meta.data[key] = value
             elif isinstance(value, str):
                 meta.data[key] = value
+            else:
+                raise TypeError(
+                    f"public.openTypeMeta '{key}' value should be bytes or a string."
+                )
 
     def setupOtherTables(self):
         """
