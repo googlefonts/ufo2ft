@@ -205,6 +205,29 @@ class OutlineTTFCompilerTest:
         assert endPts == [4]
         assert list(flags) == [0, 0, 0, 0, 1]
 
+    def test_setupTable_meta(self, testufo):
+        testufo.lib["public.openTypeMeta"] = {
+            "appl": b"BEEF",
+            "bild": b"AAAA",
+            "dlng": ["en-Latn", "nl-Latn"],
+            "slng": ["Latn"],
+            "PRIB": b"Some private bytes",
+            "PRIA": "Some private ascii string",
+            "PRIU": "Some private unicode string…",
+        }
+
+        compiler = OutlineTTFCompiler(testufo)
+        ttFont = compiler.compile()
+        meta = ttFont["meta"]
+
+        assert meta.data["appl"] == b"BEEF"
+        assert meta.data["bild"] == b"AAAA"
+        assert meta.data["dlng"] == "en-Latn,nl-Latn"
+        assert meta.data["slng"] == "Latn"
+        assert meta.data["PRIB"] == b"Some private bytes"
+        assert meta.data["PRIA"] == b"Some private ascii string"
+        assert meta.data["PRIU"] == "Some private unicode string…".encode("utf-8")
+
 
 class OutlineOTFCompilerTest:
     def test_setupTable_CFF_all_blues_defined(self, testufo):

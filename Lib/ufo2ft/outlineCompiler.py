@@ -27,6 +27,7 @@ from fontTools.ttLib.tables.O_S_2f_2 import Panose
 from ufo2ft.constants import (
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
+    OPENTYPE_META_KEY,
     UNICODE_VARIATION_SEQUENCES_KEY,
 )
 from ufo2ft.errors import InvalidFontData
@@ -86,6 +87,7 @@ class BaseOutlineCompiler:
             "vhea",
             "COLR",
             "CPAL",
+            "meta",
         ]
     )
 
@@ -135,6 +137,7 @@ class BaseOutlineCompiler:
         self.colorLayers = (
             COLOR_LAYERS_KEY in self.ufo.lib and COLOR_PALETTES_KEY in self.ufo.lib
         )
+        self.meta = OPENTYPE_META_KEY in self.ufo.lib
 
         # write the glyph order
         self.otf.setGlyphOrder(self.glyphOrder)
@@ -154,6 +157,8 @@ class BaseOutlineCompiler:
         if self.colorLayers:
             self.setupTable_COLR()
             self.setupTable_CPAL()
+        if self.meta:
+            self.setupTable_meta()
         self.setupOtherTables()
         self.importTTX()
 
@@ -977,6 +982,45 @@ class BaseOutlineCompiler:
             self.otf["CPAL"] = buildCPAL(palettes)
         except ColorLibError as e:
             raise InvalidFontData("Failed to build CPAL table") from e
+
+    def setupTable_meta(self):
+        """
+        Make the meta table.
+
+        ***This should not be called externally.** Sublcasses
+        may override or supplement this method to handle the
+        table creation in a different way if desired.
+        """
+        if "meta" not in self.tables:
+            return
+
+        font = self.ufo
+        self.otf["meta"] = meta = newTable("meta")
+        ufo_meta = font.lib.get(OPENTYPE_META_KEY)
+        for key, value in ufo_meta.items():
+            if key in ["dlng", "slng"]:
+                if not isinstance(value, list) or not all(
+                    isinstance(string, str) for string in value
+                ):
+                    raise TypeError(
+                        f"public.openTypeMeta '{key}' value should "
+                        "be a list of strings"
+                    )
+                meta.data[key] = ",".join(value)
+            elif key in ["appl", "bild"]:
+                if not isinstance(value, bytes):
+                    raise TypeError(
+                        f"public.openTypeMeta '{key}' value should be bytes."
+                    )
+                meta.data[key] = value
+            elif isinstance(value, bytes):
+                meta.data[key] = value
+            elif isinstance(value, str):
+                meta.data[key] = value.encode("utf-8")
+            else:
+                raise TypeError(
+                    f"public.openTypeMeta '{key}' value should be bytes or a string."
+                )
 
     def setupOtherTables(self):
         """
