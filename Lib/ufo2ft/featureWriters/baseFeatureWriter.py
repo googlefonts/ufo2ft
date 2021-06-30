@@ -161,7 +161,7 @@ class BaseFeatureWriter:
         # Collect insert markers in blocks
         insertComments = self.context.insertComments
 
-        wroteOthers = False
+        indices = []
         for feature in features:
             if insertComments and feature.name in insertComments:
                 block, comment = insertComments[feature.name]
@@ -209,29 +209,26 @@ class BaseFeatureWriter:
 
             else:
                 index = len(statements)
-
-            # Write classDefs, anchorsDefs, markClassDefs, lookups on the first
-            # iteration.
-            if not wroteOthers:
-                others = []
-                # Insert classDefs, anchorsDefs, markClassDefs
-                for defs in [classDefs, anchorDefs, markClassDefs]:
-                    if defs:
-                        others.extend(defs)
-                        others.append(ast.Comment(""))
-                # Insert lookups
-                if lookups:
-                    if index > 0 and not others:
-                        others.append(ast.Comment(""))
-                    others.extend(lookups)
-                if others:
-                    feaFile.statements = statements = (
-                        statements[:index] + others + statements[index:]
-                    )
-                    index = index + len(others)
-                wroteOthers = True
-
             statements.insert(index, feature)
+            indices.append(index)
+
+        # Write classDefs, anchorsDefs, markClassDefs, lookups at earliest
+        # opportunity.
+        others = []
+        minindex = min(indices)
+        for defs in [classDefs, anchorDefs, markClassDefs]:
+            if defs:
+                others.extend(defs)
+                others.append(ast.Comment(""))
+        # Insert lookups
+        if lookups:
+            if minindex > 0 and not others:
+                others.append(ast.Comment(""))
+            others.extend(lookups)
+        if others:
+            feaFile.statements = statements = (
+                statements[:minindex] + others + statements[minindex:]
+            )
 
     @staticmethod
     def collectInsertMarkers(feaFile, insertFeatureMarker, featureTags):
