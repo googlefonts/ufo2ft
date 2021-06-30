@@ -1220,7 +1220,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
     def test_skipExportGlyphs(self, testufo):
         testufo.lib["public.skipExportGlyphs"] = ["f_i", "tildecomb"]
-        testufo.glyphOrder = ["a", "f_i", "acutecomb", "tildcomb"]
+        testufo.glyphOrder = ["a", "f_i", "acutecomb", "tildecomb"]
 
         generated = self.writeFeatures(testufo)
 
