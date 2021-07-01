@@ -326,6 +326,10 @@ class MarkFeatureWriter(BaseFeatureWriter):
                         "unnamed anchor discarded in glyph '%s'", glyphName
                     )
                     continue
+                # Skip anchors not meant for export
+                # See https://github.com/googlefonts/ufo2ft/issues/477
+                if anchorName.startswith(("#", "_#")):
+                    continue
                 if anchorName in anchorDict:
                     self.log.warning(
                         "duplicate anchor '%s' in glyph '%s'", anchorName, glyphName

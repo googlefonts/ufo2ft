@@ -1280,7 +1280,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
     def test_skipExportGlyphs(self, testufo):
         testufo.lib["public.skipExportGlyphs"] = ["f_i", "tildecomb"]
-        testufo.glyphOrder = ["a", "f_i", "acutecomb", "tildcomb"]
+        testufo.glyphOrder = ["a", "f_i", "acutecomb", "tildecomb"]
 
         generated = self.writeFeatures(testufo)
 
@@ -1295,6 +1295,44 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2base;
 
             } mark;
+            """
+        )
+
+    def test_ignorableAnchors(self, testufo):
+        testufo["a"].appendAnchor({"name": "#top", "x": 123, "y": 456})
+        testufo["acutecomb"].appendAnchor({"name": "_#top", "x": 321, "y": 654})
+
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
             """
         )
 
