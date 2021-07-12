@@ -1,4 +1,4 @@
-fonttools[lxml,ufo]==4.24.4
+fonttools[ufo,lxml]==4.25.0
 defcon==0.8.1
 cu2qu==1.6.7
 compreffor==0.5.1
