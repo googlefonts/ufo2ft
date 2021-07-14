@@ -11,6 +11,7 @@ from .decomposeComponents import DecomposeComponentsFilter
 from .decomposeTransformedComponents import DecomposeTransformedComponentsFilter
 from .explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
 from .flattenComponents import FlattenComponentsFilter
+from .optimizeAnchors import OptimizeAnchorsFilter
 from .propagateAnchors import PropagateAnchorsFilter
 from .removeOverlaps import RemoveOverlapsFilter
 from .sortContours import SortContoursFilter
@@ -23,6 +24,7 @@ __all__ = [
     "DecomposeTransformedComponentsFilter",
     "ExplodeColorLayerGlyphsFilter",
     "FlattenComponentsFilter",
+    "OptimizeAnchorsFilter",
     "PropagateAnchorsFilter",
     "RemoveOverlapsFilter",
     "SortContoursFilter",
