@@ -158,11 +158,13 @@ class BaseFeatureWriter:
 
         statements = feaFile.statements
 
-        # Collect insert markers in blocks
-        insertComments = self.context.insertComments
-
-        indices = []
         for feature in features:
+            feature._inserted = False
+
+        # First handle those with a known location, i.e. insert markers
+        insertComments = self.context.insertComments
+        indices = []
+        for ix, feature in enumerate(features):
             if insertComments and feature.name in insertComments:
                 block, comment = insertComments[feature.name]
                 markerIndex = block.statements.index(comment)
@@ -207,8 +209,25 @@ class BaseFeatureWriter:
                         f"{block.name} cannot be inserted. This is not supported."
                     )
 
-            else:
-                index = len(statements)
+                statements.insert(index, feature)
+                indices.append(index)
+                feature._inserted = True
+
+                # Now walk feature list backwards and insert any dependent features
+                for i in range(ix-1, -1, -1):
+                    if features[i]._inserted:
+                        break
+                    # Insert this before the current one i.e. at same array index
+                    statements.insert(index, features[i])
+                    # All the indices recorded previously have now shifted up by one
+                    indices = [index] + [j+1 for j in indices]
+                    features[i]._inserted = True
+
+        # Finally, deal with any remaining features
+        for feature in features:
+            if feature._inserted:
+                continue
+            index = len(statements)
             statements.insert(index, feature)
             indices.append(index)
 
