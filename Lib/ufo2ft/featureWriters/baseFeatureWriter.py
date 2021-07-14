@@ -214,13 +214,13 @@ class BaseFeatureWriter:
                 feature._inserted = True
 
                 # Now walk feature list backwards and insert any dependent features
-                for i in range(ix-1, -1, -1):
+                for i in range(ix - 1, -1, -1):
                     if features[i]._inserted:
                         break
                     # Insert this before the current one i.e. at same array index
                     statements.insert(index, features[i])
                     # All the indices recorded previously have now shifted up by one
-                    indices = [index] + [j+1 for j in indices]
+                    indices = [index] + [j + 1 for j in indices]
                     features[i]._inserted = True
 
         # Finally, deal with any remaining features
