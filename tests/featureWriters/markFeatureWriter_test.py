@@ -573,6 +573,21 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
+            feature mark {
+                lookup mark2base {
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
             feature mkmk {
                 lookup mark2mark_top {
                     @MFS_mark2mark_top = [acutecomb tildecomb];
@@ -591,21 +606,6 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } move_acutecomb;
 
             } mkmk;
-
-            feature mark {
-                lookup mark2base {
-                    pos base a
-                        <anchor 100 200> mark @MC_top;
-                } mark2base;
-
-                lookup mark2liga {
-                    pos ligature f_i
-                            <anchor 100 500> mark @MC_top
-                        ligComponent
-                            <anchor 600 500> mark @MC_top;
-                } mark2liga;
-
-            } mark;
             """
         )
 
