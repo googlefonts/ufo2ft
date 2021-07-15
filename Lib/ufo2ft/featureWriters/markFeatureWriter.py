@@ -7,7 +7,7 @@ from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.util import classifyGlyphs, unicodeInScripts
+from ufo2ft.util import classifyGlyphs, quantize, unicodeInScripts
 
 
 class AbstractMarkPos:
@@ -260,7 +260,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
     names (see below). If Indic glyphs contain anchors with names not in those
     lists, the anchors' vertical position relative to the half of the UPEM
     square is used to decide whether they are considered above or below.
+
+    If the `quantization` argument is given in the filter options, the resulting
+    anchors are rounded to the nearest multiple of the quantization value.
     """
+
+    options = dict(quantization=1)
 
     tableTag = "GPOS"
     features = frozenset(["mark", "mkmk", "abvm", "blwm"])
@@ -330,7 +335,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     self.log.warning(
                         "duplicate anchor '%s' in glyph '%s'", anchorName, glyphName
                     )
-                a = self.NamedAnchor(name=anchorName, x=anchor.x, y=anchor.y)
+                x = quantize(anchor.x, self.options.quantization)
+                y = quantize(anchor.y, self.options.quantization)
+                a = self.NamedAnchor(name=anchorName, x=x, y=y)
                 anchorDict[anchorName] = a
             if anchorDict:
                 result[glyphName] = list(anchorDict.values())
