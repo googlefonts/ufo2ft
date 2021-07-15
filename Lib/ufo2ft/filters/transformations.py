@@ -91,6 +91,11 @@ class TransformationsFilter(BaseFilter):
 
         ctx.matrix = m
 
+        justscale = m._asdict()
+        justscale["dx"] = 0
+        justscale["dy"] = 0
+        ctx.justscale = Transform(**justscale)
+
         return ctx
 
     def filter(self, glyph):
@@ -98,6 +103,7 @@ class TransformationsFilter(BaseFilter):
         if matrix == Identity or not (glyph or glyph.components or glyph.anchors):
             return False  # nothing to do
 
+        justscale = self.context.justscale
         modified = self.context.modified
         glyphSet = self.context.glyphSet
         for component in glyph.components:
@@ -124,5 +130,9 @@ class TransformationsFilter(BaseFilter):
         # must be transformed separately
         for a in glyph.anchors:
             a.x, a.y = matrix.transformPoint((a.x, a.y))
+
+        glyph.width, glyph.height = justscale.transformPoint(
+            (glyph.width, glyph.height)
+        )
 
         return True
