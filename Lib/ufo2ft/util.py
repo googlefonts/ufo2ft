@@ -484,6 +484,6 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
     return klass(**options)
 
 
-def quantize(number, degree):
+def quantize(number, factor):
     """Round to a multiple of the given parameter"""
-    return degree * otRound(number / degree)
+    return factor * otRound(number / factor)
