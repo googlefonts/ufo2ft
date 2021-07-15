@@ -6,6 +6,7 @@ from textwrap import dedent
 import pytest
 
 from ufo2ft.errors import InvalidFeaturesData
+from ufo2ft.constants import FILTERS_KEY
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.featureWriters.markFeatureWriter import (
@@ -1287,6 +1288,28 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert str(generated) == dedent(
             """\
             markClass acutecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+            } mark;
+            """
+        )
+
+    def test_quantize(self, testufo):
+        testufo.newGlyph("ogonekcomb").anchors = [
+            {"name": "_top", "x": 236, "y": 188},
+        ]
+        testufo.lib["public.skipExportGlyphs"] = ["f_i", "tildecomb"]
+        generated = self.writeFeatures(testufo, quantization=50)
+
+        assert str(generated) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass ogonekcomb <anchor 250 200> @MC_top;
 
             feature mark {
                 lookup mark2base {

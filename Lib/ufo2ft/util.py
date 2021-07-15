@@ -9,6 +9,7 @@ from fontTools.feaLib.builder import addOpenTypeFeatures
 from fontTools.misc.transform import Identity, Transform
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
+from fontTools.misc.fixedTools import otRound
 
 logger = logging.getLogger(__name__)
 
@@ -481,3 +482,8 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
         raise ValueError("options have incorrect format: %r" % kwargs)
 
     return klass(**options)
+
+
+def quantize(number, degree):
+    """Round to a multiple of the given parameter"""
+    return degree * otRound(number / degree)
