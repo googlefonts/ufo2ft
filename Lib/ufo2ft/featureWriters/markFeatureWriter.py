@@ -7,7 +7,7 @@ from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.util import classifyGlyphs, unicodeInScripts, quantize
+from ufo2ft.util import classifyGlyphs, quantize, unicodeInScripts
 
 
 class AbstractMarkPos:

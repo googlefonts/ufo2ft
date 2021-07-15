@@ -6,10 +6,10 @@ from inspect import getfullargspec
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
+from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Identity, Transform
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
-from fontTools.misc.fixedTools import otRound
 
 logger = logging.getLogger(__name__)
 
