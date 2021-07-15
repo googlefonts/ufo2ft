@@ -1136,6 +1136,29 @@ class KernFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_quantize(self, FontClass):
+        font = FontClass()
+        for name in ("one", "four", "six"):
+            font.newGlyph(name)
+        font.kerning.update({("four", "six"): -57.0, ("one", "six"): -24.0})
+        writer = KernFeatureWriter(quantization=5)
+        feaFile = ast.FeatureFile()
+        assert writer.write(font, feaFile)
+
+        assert str(feaFile) == dedent(
+            """\
+            lookup kern_ltr {
+                lookupflag IgnoreMarks;
+                pos four six -55;
+                pos one six -25;
+            } kern_ltr;
+
+            feature kern {
+                lookup kern_ltr;
+            } kern;
+            """
+        )
+
 
 if __name__ == "__main__":
     import sys
