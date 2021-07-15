@@ -17,6 +17,14 @@ class OptimizeAnchorsFilter(TransformationsFilter):
             # We're a base!
             return False
 
+        # More sanity checks: skip over spacing marks
+        if glyph.width != 0:
+            return False
+        # Also skip over marks which are deliberately positioned over the
+        # previous glyphs
+        if glyph.getBounds().xMax < 0:
+            return False
+
         # We are a mark glyph with (at least) one attachment point.
         theanchor = glyph.anchors[0]
         self.context.matrix = Identity.translate(-theanchor.x, -theanchor.y)
