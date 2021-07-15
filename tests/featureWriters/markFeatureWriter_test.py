@@ -5,8 +5,8 @@ from textwrap import dedent
 
 import pytest
 
-from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.constants import FILTERS_KEY
+from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.featureWriters.markFeatureWriter import (
