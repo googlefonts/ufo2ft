@@ -157,9 +157,7 @@ class BaseFeatureWriter:
         """
 
         statements = feaFile.statements
-
-        for feature in features:
-            feature._inserted = False
+        inserted = {}
 
         # First handle those with a known location, i.e. insert markers
         insertComments = self.context.insertComments
@@ -211,21 +209,21 @@ class BaseFeatureWriter:
 
                 statements.insert(index, feature)
                 indices.append(index)
-                feature._inserted = True
+                inserted[id(feature)] = True
 
                 # Now walk feature list backwards and insert any dependent features
                 for i in range(ix - 1, -1, -1):
-                    if features[i]._inserted:
+                    if id(features[i]) in inserted:
                         break
                     # Insert this before the current one i.e. at same array index
                     statements.insert(index, features[i])
                     # All the indices recorded previously have now shifted up by one
                     indices = [index] + [j + 1 for j in indices]
-                    features[i]._inserted = True
+                    inserted[id(features[i])] = True
 
         # Finally, deal with any remaining features
         for feature in features:
-            if feature._inserted:
+            if id(feature) in inserted:
                 continue
             index = len(statements)
             statements.insert(index, feature)
