@@ -39,7 +39,7 @@ class OptimizeAnchorsFilter(TransformationsFilter):
         # We are a mark glyph with (at least) one attachment point.
         theanchor = glyph.anchors[0]
         self.context.matrix = Identity.translate(-theanchor.x, -theanchor.y)
-        log.warn(
+        log.info(
             "Transforming glyph %s to zero anchor %s: %s"
             % (glyph.name, theanchor.name, self.context.matrix)
         )
