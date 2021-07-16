@@ -1,4 +1,5 @@
 from ufo2ft.filters.transformations import TransformationsFilter
+from ufo2ft.filters import BaseFilter
 from fontTools.misc.transform import Identity, Transform
 import logging
 
@@ -7,8 +8,9 @@ log = logging.getLogger(__name__)
 
 class OptimizeAnchorsFilter(TransformationsFilter):
     def set_context(self, font, glyphSet):
-        # Skip over transformations filter to base filter
-        return super(TransformationsFilter, self).set_context(font, glyphSet)
+        self.context = BaseFilter.set_context(self, font, glyphSet)
+
+        return self.context
 
     def filter(self, glyph):
         if len(glyph.anchors) == 0 or any(
