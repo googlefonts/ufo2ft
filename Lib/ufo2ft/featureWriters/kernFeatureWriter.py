@@ -1,7 +1,6 @@
 from types import SimpleNamespace
 
 from fontTools import unicodedata
-from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import classifyGlyphs, quantize
