@@ -1,7 +1,9 @@
-from ufo2ft.filters.transformations import TransformationsFilter
-from ufo2ft.filters import BaseFilter
-from fontTools.misc.transform import Identity, Transform
 import logging
+
+from fontTools.misc.transform import Identity
+
+from ufo2ft.filters import BaseFilter
+from ufo2ft.filters.transformations import TransformationsFilter
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +19,6 @@ class OptimizeAnchorsFilter(TransformationsFilter):
 
         return self.context
 
-
     def filter(self, glyph):
         if not any(a.name.startswith("_") for a in glyph.anchors):
             # We're a base!
@@ -27,7 +28,7 @@ class OptimizeAnchorsFilter(TransformationsFilter):
         if glyph.width != 0:
             return False
 
-       # Are we anywhere used as a component?
+        # Are we anywhere used as a component?
         if glyph.name in self.context.component_use:
             return False
 
