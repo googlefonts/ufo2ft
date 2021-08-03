@@ -19,18 +19,19 @@ KEEP_GLYPH_NAMES = UFO2FT_PREFIX + "keepGlyphNames"
 COLOR_LAYERS_KEY = UFO2FT_PREFIX + "colorLayers"
 COLOR_PALETTES_KEY = UFO2FT_PREFIX + "colorPalettes"
 COLOR_LAYER_MAPPING_KEY = UFO2FT_PREFIX + "colorLayerMapping"
-# list of (glyphs, clipBox) tuples, where 'glyphs' is a list of
-# glyph names, and 'clipBox' a 5- or 4-tuple of ints or floats:
-# List[
-#   Tuple[
-#     List[str],  # glyph names
+# sequence of [glyphs, clipBox], where 'glyphs' is in turn a sequence of
+# glyph names, and 'clipBox' a 5- or 4-item sequence of numbers:
+# Sequence[
+#   Sequence[
+#     Sequence[str, ...],  # glyph names
 #     Union[
-#       Tuple[float, float, float, float, float],  # variable box
-#       Tuple[float, float, float, float],  # non-variable box
+#       Sequence[float, float, float, float, float],  # variable box
+#       Sequence[float, float, float, float],  # non-variable box
 #     ]
-#   ]
+#   ],
+#   ...
 # ]
-COLOR_CLIP_BOXES_KEY = UFO2FT_PREFIX + "colorClipBoxes"
+COLR_CLIP_BOXES_KEY = UFO2FT_PREFIX + "colrClipBoxes"
 
 OPENTYPE_CATEGORIES_KEY = "public.openTypeCategories"
 OPENTYPE_META_KEY = "public.openTypeMeta"
