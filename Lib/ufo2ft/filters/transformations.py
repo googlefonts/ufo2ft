@@ -98,6 +98,7 @@ class TransformationsFilter(BaseFilter):
         if matrix == Identity or not (glyph or glyph.components or glyph.anchors):
             return False  # nothing to do
 
+        justscale = self.context.justscale
         modified = self.context.modified
         glyphSet = self.context.glyphSet
         for component in glyph.components:
@@ -124,5 +125,7 @@ class TransformationsFilter(BaseFilter):
         # must be transformed separately
         for a in glyph.anchors:
             a.x, a.y = matrix.transformPoint((a.x, a.y))
+
+        glyph.width, glyph.height = matrix.transformVector((glyph.width, glyph.height))
 
         return True
