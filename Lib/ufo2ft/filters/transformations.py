@@ -98,7 +98,6 @@ class TransformationsFilter(BaseFilter):
         if matrix == Identity or not (glyph or glyph.components or glyph.anchors):
             return False  # nothing to do
 
-        justscale = self.context.justscale
         modified = self.context.modified
         glyphSet = self.context.glyphSet
         for component in glyph.components:
