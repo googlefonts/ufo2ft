@@ -25,6 +25,7 @@ from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
 from ufo2ft.constants import (
+    COLOR_CLIP_BOXES_KEY,
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
     OPENTYPE_META_KEY,
@@ -959,7 +960,18 @@ class BaseOutlineCompiler:
         layerInfo = self.ufo.lib[COLOR_LAYERS_KEY]
         glyphMap = self.otf.getReverseGlyphMap()
         if layerInfo:
-            self.otf["COLR"] = buildCOLR(layerInfo, glyphMap=glyphMap)
+            # unpack (glyphs, clipBox) tuples to a flat dict keyed by glyph name,
+            # as colorLib buildCOLR expects
+            clipBoxes = {
+                glyphName: tuple(box)
+                for glyphs, box in self.ufo.lib.get(COLOR_CLIP_BOXES_KEY, ())
+                for glyphName in glyphs
+            }
+            self.otf["COLR"] = buildCOLR(
+                layerInfo,
+                glyphMap=glyphMap,
+                clipBoxes=clipBoxes,
+            )
 
     def setupTable_CPAL(self):
         """
