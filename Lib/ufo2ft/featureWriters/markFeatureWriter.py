@@ -283,6 +283,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
     blwmAnchorNames = {"bottom", "bottomleft", "bottomright", "nukta"}
     indicScripts = {
         "Beng",  # Bengali
+        "Cakm",  # Chakma
         "Cham",  # Cham
         "Deva",  # Devanagari
         "Gujr",  # Gujarati
