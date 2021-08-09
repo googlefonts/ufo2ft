@@ -30,7 +30,8 @@ setup(
     tests_require=["pytest>=2.8"],
     install_requires=[
         "fonttools[ufo]>=4.26.1",
-        "cu2qu>=1.6.7",
+        # There are platform binary wheels available for CPython.
+        "cu2qu>=1.6.7 ; platform_python_implementation == 'CPython'",
         "cffsubr>=0.2.8",
         "booleanOperations>=0.9.0",
     ],

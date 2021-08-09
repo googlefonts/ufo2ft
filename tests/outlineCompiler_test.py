@@ -2,7 +2,11 @@ import logging
 import os
 
 import pytest
-from cu2qu.ufo import font_to_quadratic
+
+try:
+    from cu2qu.ufo import font_to_quadratic
+except ImportError:
+    from fontTools.cu2qu.ufo import font_to_quadratic
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 

@@ -1,7 +1,12 @@
 import logging
+from sys import exec_prefix
 
-from cu2qu.pens import Cu2QuPointPen
-from cu2qu.ufo import CURVE_TYPE_LIB_KEY, DEFAULT_MAX_ERR
+try:
+    from cu2qu.pens import Cu2QuPointPen
+    from cu2qu.ufo import CURVE_TYPE_LIB_KEY, DEFAULT_MAX_ERR
+except ImportError:
+    from fontTools.cu2qu.pens import Cu2QuPointPen
+    from fontTools.cu2qu.ufo import CURVE_TYPE_LIB_KEY, DEFAULT_MAX_ERR
 
 from ufo2ft.filters import BaseFilter
 from ufo2ft.fontInfoData import getAttrWithFallback

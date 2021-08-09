@@ -228,7 +228,10 @@ class TTFInterpolatablePreProcessor:
         skipExportGlyphs=None,
         filters=None,
     ):
-        from cu2qu.ufo import DEFAULT_MAX_ERR
+        try:
+            from cu2qu.ufo import DEFAULT_MAX_ERR
+        except ImportError:
+            from fontTools.cu2qu.ufo import DEFAULT_MAX_ERR
 
         self.ufos = ufos
         self.inplace = inplace
@@ -267,7 +270,10 @@ class TTFInterpolatablePreProcessor:
                 self.postFilters.append(post)
 
     def process(self):
-        from cu2qu.ufo import fonts_to_quadratic
+        try:
+            from cu2qu.ufo import fonts_to_quadratic
+        except ImportError:
+            from fontTools.cu2qu.ufo import fonts_to_quadratic
 
         # first apply all custom pre-filters
         for funcs, ufo, glyphSet in zip(self.preFilters, self.ufos, self.glyphSets):
