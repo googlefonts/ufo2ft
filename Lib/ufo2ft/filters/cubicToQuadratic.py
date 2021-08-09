@@ -1,5 +1,4 @@
 import logging
-from sys import exec_prefix
 
 try:
     from cu2qu.pens import Cu2QuPointPen
