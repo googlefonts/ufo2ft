@@ -183,6 +183,51 @@ class OutlineTTFCompilerTest:
         assert glyf["e"].numberOfContours == -1  # composite glyph
         assert len(glyf["e"].components) == 1
 
+    def test_contour_starts_with_offcurve_point(self, emptyufo):
+        ufo = emptyufo
+        a = ufo.newGlyph("a")
+        pen = a.getPointPen()
+        pen.beginPath()
+        pen.addPoint((0, 0), None)
+        pen.addPoint((0, 10), None)
+        pen.addPoint((10, 10), None)
+        pen.addPoint((10, 0), None)
+        pen.addPoint((5, 0), "qcurve")
+        pen.endPath()
+
+        compiler = OutlineTTFCompiler(ufo)
+        ttFont = compiler.compile()
+        glyf = ttFont["glyf"]
+
+        assert glyf["a"].numberOfContours == 1
+        coords, endPts, flags = glyf["a"].getCoordinates(glyf)
+        assert list(coords) == [(0, 0), (0, 10), (10, 10), (10, 0), (5, 0)]
+        assert endPts == [4]
+        assert list(flags) == [0, 0, 0, 0, 1]
+
+    def test_setupTable_meta(self, testufo):
+        testufo.lib["public.openTypeMeta"] = {
+            "appl": b"BEEF",
+            "bild": b"AAAA",
+            "dlng": ["en-Latn", "nl-Latn"],
+            "slng": ["Latn"],
+            "PRIB": b"Some private bytes",
+            "PRIA": "Some private ascii string",
+            "PRIU": "Some private unicode string…",
+        }
+
+        compiler = OutlineTTFCompiler(testufo)
+        ttFont = compiler.compile()
+        meta = ttFont["meta"]
+
+        assert meta.data["appl"] == b"BEEF"
+        assert meta.data["bild"] == b"AAAA"
+        assert meta.data["dlng"] == "en-Latn,nl-Latn"
+        assert meta.data["slng"] == "Latn"
+        assert meta.data["PRIB"] == b"Some private bytes"
+        assert meta.data["PRIA"] == b"Some private ascii string"
+        assert meta.data["PRIU"] == "Some private unicode string…".encode("utf-8")
+
 
 class OutlineOTFCompilerTest:
     def test_setupTable_CFF_all_blues_defined(self, testufo):

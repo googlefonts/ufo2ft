@@ -157,12 +157,12 @@ class BaseFeatureWriter:
         """
 
         statements = feaFile.statements
+        inserted = {}
 
-        # Collect insert markers in blocks
+        # First handle those with a known location, i.e. insert markers
         insertComments = self.context.insertComments
-
-        wroteOthers = False
-        for feature in features:
+        indices = []
+        for ix, feature in enumerate(features):
             if insertComments and feature.name in insertComments:
                 block, comment = insertComments[feature.name]
                 markerIndex = block.statements.index(comment)
@@ -207,31 +207,45 @@ class BaseFeatureWriter:
                         f"{block.name} cannot be inserted. This is not supported."
                     )
 
-            else:
-                index = len(statements)
+                statements.insert(index, feature)
+                indices.append(index)
+                inserted[id(feature)] = True
 
-            # Write classDefs, anchorsDefs, markClassDefs, lookups on the first
-            # iteration.
-            if not wroteOthers:
-                others = []
-                # Insert classDefs, anchorsDefs, markClassDefs
-                for defs in [classDefs, anchorDefs, markClassDefs]:
-                    if defs:
-                        others.extend(defs)
-                        others.append(ast.Comment(""))
-                # Insert lookups
-                if lookups:
-                    if index > 0 and not others:
-                        others.append(ast.Comment(""))
-                    others.extend(lookups)
-                if others:
-                    feaFile.statements = statements = (
-                        statements[:index] + others + statements[index:]
-                    )
-                    index = index + len(others)
-                wroteOthers = True
+                # Now walk feature list backwards and insert any dependent features
+                for i in range(ix - 1, -1, -1):
+                    if id(features[i]) in inserted:
+                        break
+                    # Insert this before the current one i.e. at same array index
+                    statements.insert(index, features[i])
+                    # All the indices recorded previously have now shifted up by one
+                    indices = [index] + [j + 1 for j in indices]
+                    inserted[id(features[i])] = True
 
+        # Finally, deal with any remaining features
+        for feature in features:
+            if id(feature) in inserted:
+                continue
+            index = len(statements)
             statements.insert(index, feature)
+            indices.append(index)
+
+        # Write classDefs, anchorsDefs, markClassDefs, lookups at earliest
+        # opportunity.
+        others = []
+        minindex = min(indices)
+        for defs in [classDefs, anchorDefs, markClassDefs]:
+            if defs:
+                others.extend(defs)
+                others.append(ast.Comment(""))
+        # Insert lookups
+        if lookups:
+            if minindex > 0 and not others:
+                others.append(ast.Comment(""))
+            others.extend(lookups)
+        if others:
+            feaFile.statements = statements = (
+                statements[:minindex] + others + statements[minindex:]
+            )
 
     @staticmethod
     def collectInsertMarkers(feaFile, insertFeatureMarker, featureTags):
