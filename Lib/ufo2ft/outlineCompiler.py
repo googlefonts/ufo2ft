@@ -1583,7 +1583,7 @@ class StubGlyph:
         pen.lineTo((xMax, yMin))
         pen.lineTo((xMin, yMin))
         pen.closePath()
-    
+
     def _drawDefaultNotdefPoints(self, pen):
         adapterPen = SegmentToPointPen(pen, guessSmooth=False)
         self.draw(adapterPen)
