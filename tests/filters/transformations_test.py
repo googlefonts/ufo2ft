@@ -127,6 +127,8 @@ class TransformationsFilterTest:
         assert (a[0][0].x, a[0][0].y) == (0, 0)
         assert (a[0][2].x, a[0][2].y) == (150, 300)
 
+        assert a.width == 350 * 0.50
+
     def test_ScaleY(self, font, origin):
         percent = 50
         filter_ = TransformationsFilter(ScaleY=percent, Origin=origin)
@@ -156,6 +158,7 @@ class TransformationsFilterTest:
         # both x and y change
         assert (a[0][0].x, a[0][0].y) == (0, bottom)
         assert (a[0][2].x, a[0][2].y) == (150, top)
+        assert a.width == 350 * factor
 
     def test_Slant(self, font, origin):
         filter_ = TransformationsFilter(Slant=45, Origin=origin)
@@ -190,3 +193,16 @@ class TransformationsFilterTest:
         # its original transform had a scale, so it was necessary to
         # compensate for the transformation applied on the base glyph
         assert d.components[0].transformation == (1, 0, 0, -1, 0, 102)
+
+    def test_ScaleOffset_width(self, font, origin):
+        percent = 50
+        filter_ = TransformationsFilter(
+            OffsetX=-100, ScaleX=percent, ScaleY=percent, Origin=origin
+        )
+        assert filter_(font)
+        factor = percent / 100
+
+        a = font["a"]
+        # The offset value here should not change the fact that the glyph
+        # bounding box is scaled by 50%.
+        assert a.width == 350 * factor

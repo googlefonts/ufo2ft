@@ -125,4 +125,6 @@ class TransformationsFilter(BaseFilter):
         for a in glyph.anchors:
             a.x, a.y = matrix.transformPoint((a.x, a.y))
 
+        glyph.width, glyph.height = matrix.transformVector((glyph.width, glyph.height))
+
         return True
