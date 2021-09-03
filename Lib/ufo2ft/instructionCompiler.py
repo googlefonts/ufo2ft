@@ -40,13 +40,6 @@ class InstructionCompiler(object):
                 table.program = ttLib.tables.ttProgram.Program()
                 table.program.fromAssembly(asm)
 
-    def compile_fpgm(self):
-        self._compile_program("fontProgram", "fpgm")
-
-    def compile_glyf(self):
-        for name in sorted(self.ufo.keys()):
-            self._compile_tt_glyph(name)
-
     def _compile_tt_glyph(self, name):
         glyph = self.ufo[name]
         ttdata = glyph.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
@@ -166,6 +159,13 @@ class InstructionCompiler(object):
                     c.flags |= OVERLAP_COMPOUND
                 else:
                     c.flags &= ~OVERLAP_COMPOUND
+
+    def compile_fpgm(self):
+        self._compile_program("fontProgram", "fpgm")
+
+    def compile_glyf(self):
+        for name in sorted(self.ufo.keys()):
+            self._compile_tt_glyph(name)
 
     def compile_maxp(self):
         maxp = self.font["maxp"]
