@@ -24,6 +24,36 @@ class InstructionCompiler(object):
         self.ufo = ufo
         self.font = ttf
 
+    def _check_glyph_hash(self, glyph, ttdata):
+        # Check if the glyph hash in the ufo matches the current outlines
+        hash_pen = HashPointPen(glyph.width, self.ufo)
+        glyph.drawPoints(hash_pen)
+        glyph_id = ttdata.get("id", None)
+        if glyph_id is None:
+            # The glyph hash is required
+            logger.error(
+                f"Glyph hash missing, glyph '{glyph.name}' will have "
+                "no instructions in font."
+            )
+            return False
+
+        if glyph_id != hash_pen.hash:
+            logger.error(
+                f"Glyph hash mismatch, glyph '{glyph.name}' will have "
+                "no instructions in font."
+            )
+            return False
+        return True
+
+    def _check_tt_data_format(self, ttdata):
+        # Make sure we understand the format version
+        formatVersion = ttdata.get("formatVersion", None)
+        if int(formatVersion) != 1:
+            raise NotImplementedError(
+                f"Unknown formatVersion {formatVersion} "
+                "for instructions in glyph '{name}'."
+            )
+
     def _compile_program(self, key, table_tag):
         assert table_tag in ("prep", "fpgm")
         ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
@@ -59,31 +89,8 @@ class InstructionCompiler(object):
             self._set_composite_flags(glyph, ttglyph)
 
     def _compile_tt_glyph_program(self, glyph, ttglyph, ttdata):
-        formatVersion = ttdata.get("formatVersion", None)
-        if int(formatVersion) != 1:
-            raise NotImplementedError(
-                f"Unknown formatVersion {formatVersion} "
-                "for instructions in glyph '{name}'."
-            )
-            return
-
-        # Check if glyph hash matches the current outlines
-        hash_pen = HashPointPen(glyph.width, self.ufo)
-        glyph.drawPoints(hash_pen)
-        glyph_id = ttdata.get("id", None)
-        if glyph_id is None:
-            # The glyph hash is required
-            logger.error(
-                f"Glyph hash missing, glyph '{glyph.name}' will have "
-                "no instructions in font."
-            )
-            return
-
-        if glyph_id != hash_pen.hash:
-            logger.error(
-                f"Glyph hash mismatch, glyph '{glyph.name}' will have "
-                "no instructions in font."
-            )
+        self._check_tt_data_format(ttdata)
+        if not self._check_glyph_hash(glyph, ttdata):
             return
 
         # Compile the glyph program
