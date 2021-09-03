@@ -113,17 +113,21 @@ class InstructionCompiler(object):
 
         # Set component flags
 
-        # We need to decide when to set the flags.
-        # Let's assume if any lib key is not there, or the component
-        # doesn't have an identifier, we should leave the flags alone.
-        use_my_metrics_comp = None
         if len(ttglyph.components) != len(glyph.components):
             logger.error(
                 "Number of components differ between UFO and TTF "
                 f"in glyph '{glyph.name}' ({len(glyph.components)} vs. "
-                f"{len(ttglyph.components)}, not setting component flags."
+                f"{len(ttglyph.components)}, not setting component flags from"
+                "UFO. They may still be set heuristically."
             )
             return
+
+        # We need to decide when to set the flags.
+        # Let's assume if any lib key is not there, or the component
+        # doesn't have an identifier, we should leave the flags alone.
+
+        # Keep track of which component has the USE_MY_METRICS flag
+        use_my_metrics_comp = None
 
         for i, c in enumerate(ttglyph.components):
             ufo_component_id = glyph.components[i].identifier
