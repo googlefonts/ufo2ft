@@ -39,6 +39,31 @@ class CFFOptimization(IntEnum):
     SUBROUTINIZE = 2
 
 
+def call_preprocessor(ufo_or_ufos, kwargs):
+    logger.info("Pre-processing glyphs")
+    if kwargs["skipExportGlyphs"] is None:
+        if isinstance(ufo_or_ufos, (list, tuple)):
+            kwargs["skipExportGlyphs"] = set()
+            for ufo in ufo_or_ufos:
+                kwargs["skipExportGlyphs"].update(
+                    ufo.lib.get("public.skipExportGlyphs", [])
+                )
+        else:
+            kwargs["skipExportGlyphs"] = ufo_or_ufos.lib.get(
+                "public.skipExportGlyphs", []
+            )
+
+    preProcessor = kwargs["preProcessorClass"](ufo_or_ufos, **kwargs)
+    return preProcessor.process()
+
+
+def call_postprocessor(otf, ufo, glyphSet, kwargs, **overrides):
+    if kwargs["postProcessorClass"] is not None:
+        postProcessor = kwargs["postProcessorClass"](otf, ufo, glyphSet=glyphSet)
+        otf = postProcessor.process(**inherit_dict(kwargs, **overrides))
+    return otf
+
+
 base_args = dict(
     postProcessorClass=PostProcessor,
     featureCompilerClass=None,
@@ -54,7 +79,6 @@ base_args = dict(
     debugFeatureFile=None,
     notdefGlyph=None,
 )
-
 
 compileOTF_args = inherit_dict(
     base_args,
@@ -127,15 +151,10 @@ def compileOTF(ufo, **kwargs):
       NOTE: cffsubr is required for subroutinizing CFF2 tables, as compreffor
       currently doesn't support it.
     """
-    logger.info("Pre-processing glyphs")
     kwargs = filter_kwargs(kwargs, compileOTF_args)
     optimizeCFF = kwargs["optimizeCFF"]
 
-    if kwargs["skipExportGlyphs"] is None:
-        kwargs["skipExportGlyphs"] = ufo.lib.get("public.skipExportGlyphs", [])
-
-    preProcessor = kwargs["preProcessorClass"](ufo, **kwargs)
-    glyphSet = preProcessor.process()
+    glyphSet = call_preprocessor(ufo, kwargs)
 
     logger.info("Building OpenType tables")
     optimizeCFF = CFFOptimization(optimizeCFF)
@@ -154,15 +173,13 @@ def compileOTF(ufo, **kwargs):
     if kwargs["layerName"] is None:
         compileFeatures(ufo, otf, glyphSet=glyphSet, **kwargs)
 
-    if kwargs["postProcessorClass"] is not None:
-        postProcessor = kwargs["postProcessorClass"](otf, ufo, glyphSet=glyphSet)
-        otf = postProcessor.process(
-            **inherit_dict(
-                kwargs, optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
-            )
-        )
-
-    return otf
+    return call_postprocessor(
+        otf,
+        ufo,
+        glyphSet,
+        kwargs,
+        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+    )
 
 
 compileTTF_args = inherit_dict(
@@ -198,14 +215,9 @@ def compileTTF(ufo, **kwargs):
     all glyphs are exported. UFO groups and kerning will be pruned of skipped
     glyphs.
     """
-    logger.info("Pre-processing glyphs")
     kwargs = filter_kwargs(kwargs, compileTTF_args)
 
-    if kwargs["skipExportGlyphs"] is None:
-        kwargs["skipExportGlyphs"] = ufo.lib.get("public.skipExportGlyphs", [])
-
-    preProcessor = kwargs["preProcessorClass"](ufo, **kwargs)
-    glyphSet = preProcessor.process()
+    glyphSet = call_preprocessor(ufo, kwargs)
 
     logger.info("Building OpenType tables")
     outlineCompiler = kwargs["outlineCompilerClass"](
@@ -220,11 +232,7 @@ def compileTTF(ufo, **kwargs):
     if kwargs["layerName"] is None:
         compileFeatures(ufo, otf, glyphSet=glyphSet, **kwargs)
 
-    if kwargs["postProcessorClass"] is not None:
-        postProcessor = kwargs["postProcessorClass"](otf, ufo, glyphSet=glyphSet)
-        otf = postProcessor.process(kwargs["useProductionNames"])
-
-    return otf
+    return call_postprocessor(otf, ufo, glyphSet, kwargs)
 
 
 compileInterpolatableTTFs_args = inherit_dict(
@@ -268,16 +276,7 @@ def compileInterpolatableTTFs(ufos, **kwargs):
         kwargs["layerNames"] = [None] * len(ufos)
     assert len(ufos) == len(kwargs["layerNames"])
 
-    if kwargs["skipExportGlyphs"] is None:
-        kwargs["skipExportGlyphs"] = set()
-        for ufo in ufos:
-            kwargs["skipExportGlyphs"].update(
-                ufo.lib.get("public.skipExportGlyphs", [])
-            )
-
-    logger.info("Pre-processing glyphs")
-    preProcessor = kwargs["preProcessorClass"](ufos, **kwargs)
-    glyphSets = preProcessor.process()
+    glyphSets = call_preprocessor(ufos, kwargs)
 
     for ufo, glyphSet, layerName in zip(ufos, glyphSets, kwargs["layerNames"]):
         fontName = _LazyFontName(ufo)
@@ -301,9 +300,7 @@ def compileInterpolatableTTFs(ufos, **kwargs):
                 kwargs["debugFeatureFile"].write("\n### %s ###\n" % fontName)
             compileFeatures(ufo, ttf, glyphSet=glyphSet, **kwargs)
 
-        if kwargs["postProcessorClass"] is not None:
-            postProcessor = kwargs["postProcessorClass"](ttf, ufo, glyphSet=glyphSet)
-            ttf = postProcessor.process(kwargs["useProductionNames"])
+        ttf = call_postprocessor(ttf, ufo, glyphSet, kwargs)
 
         if layerName is not None:
             # for sparse masters (i.e. containing only a subset of the glyphs), we
@@ -542,11 +539,7 @@ def compileVariableTTF(designSpaceDoc, **kwargs):
         optimize=kwargs["optimizeGvar"],
     )[0]
 
-    if kwargs["postProcessorClass"] is not None:
-        postProcessor = kwargs["postProcessorClass"](varfont, baseUfo)
-        varfont = postProcessor.process(**kwargs)
-
-    return varfont
+    return call_postprocessor(varfont, baseUfo, None, kwargs)
 
 
 compileVariableCFF2_args = inherit_dict(
@@ -603,12 +596,10 @@ def compileVariableCFF2(designSpaceDoc, **kwargs):
         optimize=optimizeCFF >= CFFOptimization.SPECIALIZE,
     )[0]
 
-    if kwargs["postProcessorClass"] is not None:
-        postProcessor = kwargs["postProcessorClass"](varfont, baseUfo)
-        varfont = postProcessor.process(
-            **inherit_dict(
-                kwargs, optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
-            )
-        )
-
-    return varfont
+    return call_postprocessor(
+        varfont,
+        baseUfo,
+        None,
+        kwargs,
+        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+    )
