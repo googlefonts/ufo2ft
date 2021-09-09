@@ -1,6 +1,5 @@
 import logging
 from enum import IntEnum
-from typing import Any, Optional
 
 from fontTools import varLib
 
@@ -19,8 +18,8 @@ from ufo2ft.preProcessor import (
 )
 from ufo2ft.util import (
     _getDefaultNotdefGlyph,
-    getDefaultMasterFont,
     filter_kwargs,
+    getDefaultMasterFont,
     inherit_dict,
 )
 

@@ -495,7 +495,7 @@ def inherit_dict(base_dict, **extra):
 
 def filter_kwargs(kwargs, defaults):
     new_kwargs = {}
-    for k,v in defaults.items():
+    for k, v in defaults.items():
         if k in kwargs:
             new_kwargs[k] = kwargs[k]
         else:

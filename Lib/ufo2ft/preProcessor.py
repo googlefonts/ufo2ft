@@ -29,6 +29,7 @@ class BasePreProcessor:
     These are specified in the UFO lib.plist under the private key
     "com.github.googlei18n.ufo2ft.filters".
     """
+
     allowed_kwargs = {}
 
     def __init__(
@@ -46,7 +47,9 @@ class BasePreProcessor:
         self.glyphSet = _GlyphSet.from_layer(
             ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
         )
-        self.defaultFilters = self.initDefaultFilters(**filter_kwargs(kwargs, self.allowed_kwargs))
+        self.defaultFilters = self.initDefaultFilters(
+            **filter_kwargs(kwargs, self.allowed_kwargs)
+        )
         if filters is None:
             self.preFilters, self.postFilters = loadFilters(ufo)
         else:
@@ -95,6 +98,7 @@ class OTFPreProcessor(BasePreProcessor):
     skia-pathops by setting ``overlapsBackend`` to the enum value
     ``RemoveOverlapsFilter.SKIA_PATHOPS``, or the string "pathops".
     """
+
     allowed_kwargs = dict(removeOverlaps=False, overlapsBackend=None)
 
     def initDefaultFilters(self, removeOverlaps=False, overlapsBackend=None):
@@ -150,13 +154,16 @@ class TTFPreProcessor(OTFPreProcessor):
     preprocessor will not try to convert them again if the curve type is
     already set to "quadratic".
     """
-    allowed_kwargs = dict(removeOverlaps=False,
+
+    allowed_kwargs = dict(
+        removeOverlaps=False,
         overlapsBackend=None,
         flattenComponents=False,
         convertCubics=True,
         conversionError=None,
         reverseDirection=True,
-        rememberCurveType=True,)
+        rememberCurveType=True,
+    )
 
     def initDefaultFilters(
         self,
