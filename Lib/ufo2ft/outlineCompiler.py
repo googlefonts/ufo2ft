@@ -99,7 +99,7 @@ class BaseOutlineCompiler:
         glyphOrder=None,
         tables=None,
         notdefGlyph=None,
-        **kwargs
+        **kwargs,
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
@@ -1088,7 +1088,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         notdefGlyph=None,
         roundTolerance=None,
         optimizeCFF=True,
-        **kwargs
+        **kwargs,
     ):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
