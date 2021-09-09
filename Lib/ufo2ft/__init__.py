@@ -57,6 +57,13 @@ def call_preprocessor(ufo_or_ufos, kwargs):
     return preProcessor.process()
 
 
+def call_outline_compiler(ufo, glyphSet, kwargs, **overrides):
+    outlineCompiler = kwargs["outlineCompilerClass"](
+        ufo, glyphSet=glyphSet, **inherit_dict(kwargs, **overrides)
+    )
+    return outlineCompiler.compile()
+
+
 def call_postprocessor(otf, ufo, glyphSet, kwargs, **overrides):
     if kwargs["postProcessorClass"] is not None:
         postProcessor = kwargs["postProcessorClass"](otf, ufo, glyphSet=glyphSet)
@@ -152,22 +159,17 @@ def compileOTF(ufo, **kwargs):
       currently doesn't support it.
     """
     kwargs = filter_kwargs(kwargs, compileOTF_args)
-    optimizeCFF = kwargs["optimizeCFF"]
-
     glyphSet = call_preprocessor(ufo, kwargs)
 
     logger.info("Building OpenType tables")
-    optimizeCFF = CFFOptimization(optimizeCFF)
-    outlineCompiler = kwargs["outlineCompilerClass"](
+    optimizeCFF = CFFOptimization(kwargs["optimizeCFF"])
+    otf = call_outline_compiler(
         ufo,
-        glyphSet=glyphSet,
-        **inherit_dict(
-            kwargs,
-            optimizeCFF=optimizeCFF >= CFFOptimization.SPECIALIZE,
-            tables=kwargs["_tables"],
-        )
+        glyphSet,
+        kwargs,
+        optimizeCFF=optimizeCFF >= CFFOptimization.SPECIALIZE,
+        tables=kwargs["_tables"],
     )
-    otf = outlineCompiler.compile()
 
     # Only the default layer is likely to have all glyphs used in feature code.
     if kwargs["layerName"] is None:
@@ -220,13 +222,7 @@ def compileTTF(ufo, **kwargs):
     glyphSet = call_preprocessor(ufo, kwargs)
 
     logger.info("Building OpenType tables")
-    outlineCompiler = kwargs["outlineCompilerClass"](
-        ufo,
-        glyphSet=glyphSet,
-        glyphOrder=kwargs["glyphOrder"],
-        notdefGlyph=kwargs["notdefGlyph"],
-    )
-    otf = outlineCompiler.compile()
+    otf = call_outline_compiler(ufo, glyphSet, kwargs)
 
     # Only the default layer is likely to have all glyphs used in feature code.
     if kwargs["layerName"] is None:
@@ -285,13 +281,12 @@ def compileInterpolatableTTFs(ufos, **kwargs):
         else:
             logger.info("Building OpenType tables for %s", fontName)
 
-        outlineCompiler = kwargs["outlineCompilerClass"](
+        ttf = call_outline_compiler(
             ufo,
-            glyphSet=glyphSet,
+            glyphSet,
+            kwargs,
             tables=SPARSE_TTF_MASTER_TABLES if layerName else None,
-            **kwargs
         )
-        ttf = outlineCompiler.compile()
 
         # Only the default layer is likely to have all glyphs used in feature
         # code.
