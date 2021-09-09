@@ -487,3 +487,17 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
 def quantize(number, factor):
     """Round to a multiple of the given parameter"""
     return factor * otRound(number / factor)
+
+
+def inherit_dict(base_dict, **extra):
+    return {**base_dict, **extra}
+
+
+def filter_kwargs(kwargs, defaults):
+    new_kwargs = {}
+    for k,v in defaults.items():
+        if k in kwargs:
+            new_kwargs[k] = kwargs[k]
+        else:
+            new_kwargs[k] = v
+    return new_kwargs

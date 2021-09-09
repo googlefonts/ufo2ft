@@ -6,7 +6,7 @@ from ufo2ft.constants import (
 from ufo2ft.filters import loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
 from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.util import _GlyphSet
+from ufo2ft.util import _GlyphSet, filter_kwargs
 
 
 class BasePreProcessor:
@@ -29,6 +29,7 @@ class BasePreProcessor:
     These are specified in the UFO lib.plist under the private key
     "com.github.googlei18n.ufo2ft.filters".
     """
+    allowed_kwargs = {}
 
     def __init__(
         self,
@@ -45,7 +46,7 @@ class BasePreProcessor:
         self.glyphSet = _GlyphSet.from_layer(
             ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
         )
-        self.defaultFilters = self.initDefaultFilters(**kwargs)
+        self.defaultFilters = self.initDefaultFilters(**filter_kwargs(kwargs, self.allowed_kwargs))
         if filters is None:
             self.preFilters, self.postFilters = loadFilters(ufo)
         else:
@@ -94,6 +95,7 @@ class OTFPreProcessor(BasePreProcessor):
     skia-pathops by setting ``overlapsBackend`` to the enum value
     ``RemoveOverlapsFilter.SKIA_PATHOPS``, or the string "pathops".
     """
+    allowed_kwargs = dict(removeOverlaps=False, overlapsBackend=None)
 
     def initDefaultFilters(self, removeOverlaps=False, overlapsBackend=None):
         filters = []
@@ -148,6 +150,13 @@ class TTFPreProcessor(OTFPreProcessor):
     preprocessor will not try to convert them again if the curve type is
     already set to "quadratic".
     """
+    allowed_kwargs = dict(removeOverlaps=False,
+        overlapsBackend=None,
+        flattenComponents=False,
+        convertCubics=True,
+        conversionError=None,
+        reverseDirection=True,
+        rememberCurveType=True,)
 
     def initDefaultFilters(
         self,
@@ -227,6 +236,7 @@ class TTFInterpolatablePreProcessor:
         layerNames=None,
         skipExportGlyphs=None,
         filters=None,
+        **kwargs
     ):
         from cu2qu.ufo import DEFAULT_MAX_ERR
 
