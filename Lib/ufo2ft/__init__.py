@@ -16,12 +16,7 @@ from ufo2ft.preProcessor import (
     TTFInterpolatablePreProcessor,
     TTFPreProcessor,
 )
-from ufo2ft.util import (
-    _getDefaultNotdefGlyph,
-    filter_kwargs,
-    getDefaultMasterFont,
-    inherit_dict,
-)
+from ufo2ft.util import _getDefaultNotdefGlyph, filter_kwargs, getDefaultMasterFont
 
 try:
     from ._version import version as __version__
@@ -58,7 +53,7 @@ def call_preprocessor(ufo_or_ufos, kwargs):
 
 def call_outline_compiler(ufo, glyphSet, kwargs, **overrides):
     outlineCompiler = kwargs["outlineCompilerClass"](
-        ufo, glyphSet=glyphSet, **inherit_dict(kwargs, **overrides)
+        ufo, glyphSet=glyphSet, **{**kwargs, **overrides}
     )
     return outlineCompiler.compile()
 
@@ -66,7 +61,7 @@ def call_outline_compiler(ufo, glyphSet, kwargs, **overrides):
 def call_postprocessor(otf, ufo, glyphSet, kwargs, **overrides):
     if kwargs["postProcessorClass"] is not None:
         postProcessor = kwargs["postProcessorClass"](otf, ufo, glyphSet=glyphSet)
-        otf = postProcessor.process(**inherit_dict(kwargs, **overrides))
+        otf = postProcessor.process(**{**kwargs, **overrides})
     return otf
 
 
@@ -86,16 +81,18 @@ base_args = dict(
     notdefGlyph=None,
 )
 
-compileOTF_args = inherit_dict(
-    base_args,
-    preProcessorClass=OTFPreProcessor,
-    outlineCompilerClass=OutlineOTFCompiler,
-    optimizeCFF=CFFOptimization.SUBROUTINIZE,
-    roundTolerance=None,
-    cffVersion=1,
-    subroutinizer=None,
-    _tables=None,
-)
+compileOTF_args = {
+    **base_args,
+    **dict(
+        preProcessorClass=OTFPreProcessor,
+        outlineCompilerClass=OutlineOTFCompiler,
+        optimizeCFF=CFFOptimization.SUBROUTINIZE,
+        roundTolerance=None,
+        cffVersion=1,
+        subroutinizer=None,
+        _tables=None,
+    ),
+}
 
 
 def compileOTF(ufo, **kwargs):
@@ -183,16 +180,18 @@ def compileOTF(ufo, **kwargs):
     )
 
 
-compileTTF_args = inherit_dict(
-    base_args,
-    preProcessorClass=TTFPreProcessor,
-    outlineCompilerClass=OutlineTTFCompiler,
-    convertCubics=True,
-    cubicConversionError=None,
-    reverseDirection=True,
-    rememberCurveType=True,
-    flattenComponents=False,
-)
+compileTTF_args = {
+    **base_args,
+    **dict(
+        preProcessorClass=TTFPreProcessor,
+        outlineCompilerClass=OutlineTTFCompiler,
+        convertCubics=True,
+        cubicConversionError=None,
+        reverseDirection=True,
+        rememberCurveType=True,
+        flattenComponents=False,
+    ),
+}
 
 
 def compileTTF(ufo, **kwargs):
@@ -230,15 +229,17 @@ def compileTTF(ufo, **kwargs):
     return call_postprocessor(otf, ufo, glyphSet, kwargs)
 
 
-compileInterpolatableTTFs_args = inherit_dict(
-    base_args,
-    preProcessorClass=TTFInterpolatablePreProcessor,
-    outlineCompilerClass=OutlineTTFCompiler,
-    cubicConversionError=None,
-    reverseDirection=True,
-    flattenComponents=False,
-    layerNames=None,
-)
+compileInterpolatableTTFs_args = {
+    **base_args,
+    **dict(
+        preProcessorClass=TTFInterpolatablePreProcessor,
+        outlineCompilerClass=OutlineTTFCompiler,
+        cubicConversionError=None,
+        reverseDirection=True,
+        flattenComponents=False,
+        layerNames=None,
+    ),
+}
 
 
 def compileInterpolatableTTFs(ufos, **kwargs):
@@ -364,14 +365,16 @@ def compileInterpolatableTTFsFromDS(designSpaceDoc, **kwargs):
     return result
 
 
-compileInterpolatableOTFs_args = inherit_dict(
-    base_args,
-    preProcessorClass=OTFPreProcessor,
-    outlineCompilerClass=OutlineOTFCompiler,
-    featureCompilerClass=None,
-    roundTolerance=None,
-    optimizeCFF=CFFOptimization.NONE,
-)
+compileInterpolatableOTFs_args = {
+    **base_args,
+    **dict(
+        preProcessorClass=OTFPreProcessor,
+        outlineCompilerClass=OutlineOTFCompiler,
+        featureCompilerClass=None,
+        roundTolerance=None,
+        optimizeCFF=CFFOptimization.NONE,
+    ),
+}
 
 
 def compileInterpolatableOTFsFromDS(designSpaceDoc, **kwargs):
@@ -419,14 +422,16 @@ def compileInterpolatableOTFsFromDS(designSpaceDoc, **kwargs):
         otfs.append(
             compileOTF(
                 ufo=source.font,
-                **inherit_dict(
-                    kwargs,
-                    layerName=source.layerName,
-                    removeOverlaps=False,
-                    overlapsBackend=None,
-                    optimizeCFF=CFFOptimization.NONE,
-                    _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
-                )
+                **{
+                    **kwargs,
+                    **dict(
+                        layerName=source.layerName,
+                        removeOverlaps=False,
+                        overlapsBackend=None,
+                        optimizeCFF=CFFOptimization.NONE,
+                        _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
+                    ),
+                }
             )
         )
 
@@ -488,14 +493,16 @@ def compileFeatures(
     return otFont
 
 
-compileVariableTTF_args = inherit_dict(
-    base_args,
-    preProcessorClass=TTFInterpolatablePreProcessor,
-    outlineCompilerClass=OutlineTTFCompiler,
-    reverseDirection=True,
-    excludeVariationTables=(),
-    optimizeGvar=True,
-)
+compileVariableTTF_args = {
+    **base_args,
+    **dict(
+        preProcessorClass=TTFInterpolatablePreProcessor,
+        outlineCompilerClass=OutlineTTFCompiler,
+        reverseDirection=True,
+        excludeVariationTables=(),
+        optimizeGvar=True,
+    ),
+}
 
 
 def compileVariableTTF(designSpaceDoc, **kwargs):
@@ -517,12 +524,14 @@ def compileVariableTTF(designSpaceDoc, **kwargs):
 
     ttfDesignSpace = compileInterpolatableTTFsFromDS(
         designSpaceDoc,
-        **inherit_dict(
-            kwargs,
-            useProductionNames=False,  # will rename glyphs after varfont is built
-            # No need to post-process intermediate fonts.
-            postProcessorClass=None,
-        )
+        **{
+            **kwargs,
+            **dict(
+                useProductionNames=False,  # will rename glyphs after varfont is built
+                # No need to post-process intermediate fonts.
+                postProcessorClass=None,
+            ),
+        }
     )
 
     logger.info("Building variable TTF font")
@@ -536,14 +545,16 @@ def compileVariableTTF(designSpaceDoc, **kwargs):
     return call_postprocessor(varfont, baseUfo, None, kwargs)
 
 
-compileVariableCFF2_args = inherit_dict(
-    base_args,
-    preProcessorClass=OTFPreProcessor,
-    outlineCompilerClass=OutlineOTFCompiler,
-    roundTolerance=None,
-    excludeVariationTables=(),
-    optimizeCFF=CFFOptimization.SPECIALIZE,
-)
+compileVariableCFF2_args = {
+    **base_args,
+    **dict(
+        preProcessorClass=OTFPreProcessor,
+        outlineCompilerClass=OutlineOTFCompiler,
+        roundTolerance=None,
+        excludeVariationTables=(),
+        optimizeCFF=CFFOptimization.SPECIALIZE,
+    ),
+}
 
 
 def compileVariableCFF2(designSpaceDoc, **kwargs):
@@ -570,12 +581,14 @@ def compileVariableCFF2(designSpaceDoc, **kwargs):
 
     otfDesignSpace = compileInterpolatableOTFsFromDS(
         designSpaceDoc,
-        **inherit_dict(
-            kwargs,
-            useProductionNames=False,  # will rename glyphs after varfont is built
-            # No need to post-process intermediate fonts.
-            postProcessorClass=None,
-        )
+        **{
+            **kwargs,
+            **dict(
+                useProductionNames=False,  # will rename glyphs after varfont is built
+                # No need to post-process intermediate fonts.
+                postProcessorClass=None,
+            ),
+        }
     )
 
     logger.info("Building variable CFF2 font")
