@@ -17,6 +17,7 @@ from fontTools.cffLib import (
 from fontTools.misc.arrayTools import unionRect
 from fontTools.misc.fixedTools import otRound
 from fontTools.pens.boundsPen import ControlBoundsPen
+from fontTools.pens.pointPen import SegmentToPointPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPointPen
@@ -1570,6 +1571,7 @@ class StubGlyph:
             self.unicode = None
         if name == ".notdef":
             self.draw = self._drawDefaultNotdef
+            self.drawPoints = self._drawDefaultNotdefPoints
         self.reverseContour = reverseContour
 
     def __len__(self):
@@ -1616,6 +1618,10 @@ class StubGlyph:
         pen.lineTo((xMax, yMin))
         pen.lineTo((xMin, yMin))
         pen.closePath()
+
+    def _drawDefaultNotdefPoints(self, pen):
+        adapterPen = SegmentToPointPen(pen, guessSmooth=False)
+        self.draw(adapterPen)
 
     def _get_controlPointBounds(self):
         pen = ControlBoundsPen(None)
