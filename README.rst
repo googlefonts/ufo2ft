@@ -119,3 +119,56 @@ The index TTX (generated when using using ``ttx -s``) is not required.
 .. |Gitter Chat| image:: https://badges.gitter.im/fonttools-dev/ufo2ft.svg
    :alt: Join the chat at https://gitter.im/fonttools-dev/ufo2ft
    :target: https://gitter.im/fonttools-dev/ufo2ft?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
+
+Color fonts
+~~~~~~~~~~~
+
+ufo2ft supports building ``COLR`` and ``CPAL`` tables.
+
+If there is ``com.github.googlei18n.ufo2ft.colorPalettes`` key in font lib, and
+``com.github.googlei18n.ufo2ft.colorLayerMapping`` key in the font or
+in any of the glyphs lib, then ufo2ft will build ``CPAL`` table from the color
+palettes, and ``COLR`` table from the color layers.
+
+``colorPalettes`` is a array of palettes, each palette is a array of colors and
+each color is a array of floats representing RGBA colors. For example:
+
+.. code:: xml
+
+    <key>com.github.googlei18n.ufo2ft.colorPalettes</key>
+    <array>
+      <array>
+        <array>
+          <real>0.26</real>
+          <real>0.0</real>
+          <real>0.23</real>
+          <real>1.0</real>
+        </array>
+        <array>
+          <real>0.86</real>
+          <real>0.73</real>
+          <real>0.28</real>
+          <real>1.0</real>
+        </array>
+      </array>
+    </array>
+
+
+``colorLayerMapping`` is a array of color layers, each color layer is a array of
+layer name and palette color index. It is a per-glyph key, but if present in
+the font lib then it will be used for all glyphs that lack it. For example:
+
+.. code:: xml
+
+      <key>com.github.googlei18n.ufo2ft.colorLayerMapping</key>
+      <array>
+        <array>
+          <string>color.1</string>
+          <integer>1</integer>
+        </array>
+        <array>
+          <string>color.2</string>
+          <integer>0</integer>
+        </array>
+      </array>
