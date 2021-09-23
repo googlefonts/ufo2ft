@@ -24,12 +24,11 @@ class InstructionCompiler(object):
         self.ufo = ufo
         self.font = ttf
 
-    def _check_glyph_hash(self, glyph, ttdata):
+    def _check_glyph_hash(self, glyph, ttglyph, glyph_hash):
         # Check if the glyph hash in the ufo matches the current outlines
-        hash_pen = HashPointPen(glyph.width, self.ufo)
-        glyph.drawPoints(hash_pen)
-        glyph_id = ttdata.get("id", None)
-        if glyph_id is None:
+        hash_pen = HashPointPen(glyph.width, self.font.getGlyphSet())
+        ttglyph.drawPoints(hash_pen, self.font["glyf"])
+        if glyph_hash is None:
             # The glyph hash is required
             logger.error(
                 f"Glyph hash missing, glyph '{glyph.name}' will have "
@@ -37,7 +36,7 @@ class InstructionCompiler(object):
             )
             return False
 
-        if glyph_id != hash_pen.hash:
+        if glyph_hash != hash_pen.hash:
             logger.error(
                 f"Glyph hash mismatch, glyph '{glyph.name}' will have "
                 "no instructions in font."
@@ -90,7 +89,8 @@ class InstructionCompiler(object):
 
     def _compile_tt_glyph_program(self, glyph, ttglyph, ttdata):
         self._check_tt_data_format(ttdata)
-        if not self._check_glyph_hash(glyph, ttdata):
+        glyph_hash = ttdata.get("id", None)
+        if not self._check_glyph_hash(glyph, ttglyph, glyph_hash):
             return
 
         # Compile the glyph program
