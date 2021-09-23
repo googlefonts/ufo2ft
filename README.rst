@@ -172,3 +172,35 @@ the font lib then it will be used for all glyphs that lack it. For example:
           <integer>0</integer>
         </array>
       </array>
+
+With these this key present, ufo2ft will copy the color layers into individual
+glyphs and setup ``COLR`` table.
+
+Alternatively, if the color layers are already separate UFO glyphs, the
+``com.github.googlei18n.ufo2ft.colorLayers`` font lib key can be used. It uses
+a table keyed by base glyph, and the value is an array of color layers, each
+color layer is an array of glyph name and palette color index. For example:
+
+.. code:: xml
+
+    <key>com.github.googlei18n.ufo2ft.colorLayers</key>
+    <dict>
+      <key>alef-ar</key>
+      <array>
+        <array>
+          <string>alef-ar.color0</string>
+          <integer>2</integer>
+        </array>
+      </array>
+      <key>alefHamzaabove-ar</key>
+      <array>
+        <array>
+          <string>alefHamzaabove-ar.color0</string>
+          <integer>1</integer>
+        </array>
+        <array>
+          <string>alefHamzaabove-ar.color1</string>
+          <integer>2</integer>
+        </array>
+      </array>
+    <dict>
