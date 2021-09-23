@@ -1499,7 +1499,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                 )
                 return
             cvt_list = ttdata.get("controlValue", None)
-            if cvt_list is not None:
+            if cvt_list:
                 # Convert string keys to int
                 cvt_dict = {int(v["id"]): v["value"] for v in cvt_list}
                 # Find the maximum cvt index.
