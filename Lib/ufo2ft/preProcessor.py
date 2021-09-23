@@ -253,6 +253,11 @@ class TTFInterpolatablePreProcessor:
         self._reverseDirection = reverseDirection
         self._rememberCurveType = rememberCurveType
 
+        self.defaultFilters = []
+        for ufo in ufos:
+            self.defaultFilters.append([])
+            _init_explode_color_layer_glyphs_filter(ufo, self.defaultFilters[-1])
+
         self.preFilters, self.postFilters = [], []
         if filters is None:
             for ufo in ufos:
@@ -271,6 +276,11 @@ class TTFInterpolatablePreProcessor:
 
         # first apply all custom pre-filters
         for funcs, ufo, glyphSet in zip(self.preFilters, self.ufos, self.glyphSets):
+            for func in funcs:
+                func(ufo, glyphSet)
+
+        # then apply all default filters
+        for funcs, ufo, glyphSet in zip(self.defaultFilters, self.ufos, self.glyphSets):
             for func in funcs:
                 func(ufo, glyphSet)
 

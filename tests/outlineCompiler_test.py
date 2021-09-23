@@ -847,6 +847,40 @@ class ColrCpalTest:
         }
         assert layers == {"a": [("a.color1", 0), ("a.color2", 1)]}
 
+    def test_colr_cpal_otf(self, FontClass):
+        testufo = FontClass(getpath("ColorTest.ufo"))
+        assert "com.github.googlei18n.ufo2ft.colorLayerMapping" in testufo.lib
+        assert "com.github.googlei18n.ufo2ft.colorPalettes" in testufo.lib
+        result = compileOTF(testufo)
+        assert "COLR" in result
+        assert "CPAL" in result
+        layers = {
+            gn: [(layer.name, layer.colorID) for layer in layers]
+            for gn, layers in result["COLR"].ColorLayers.items()
+        }
+        assert layers == {
+            "a": [("a.color1", 0), ("a.color2", 1)],
+            "b": [("b.color1", 1), ("b.color2", 0)],
+            "c": [("c.color2", 1), ("c.color1", 0)],
+        }
+
+    def test_colr_cpal_interpolatable_ttf(self, FontClass):
+        testufo = FontClass(getpath("ColorTest.ufo"))
+        assert "com.github.googlei18n.ufo2ft.colorLayerMapping" in testufo.lib
+        assert "com.github.googlei18n.ufo2ft.colorPalettes" in testufo.lib
+        result = list(compileInterpolatableTTFs([testufo]))[0]
+        assert "COLR" in result
+        assert "CPAL" in result
+        layers = {
+            gn: [(layer.name, layer.colorID) for layer in layers]
+            for gn, layers in result["COLR"].ColorLayers.items()
+        }
+        assert layers == {
+            "a": [("a.color1", 0), ("a.color2", 1)],
+            "b": [("b.color1", 1), ("b.color2", 0)],
+            "c": [("c.color2", 1), ("c.color1", 0)],
+        }
+
 
 class CmapTest:
     def test_cmap_BMP(self, testufo):
