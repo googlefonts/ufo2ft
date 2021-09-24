@@ -531,6 +531,15 @@ def compileVariableTTF(designSpaceDoc, **kwargs):
                 # No need to post-process intermediate fonts.
                 postProcessorClass=None,
             ),
+            "config": {
+                **kwargs.get("config", {}),
+                # Whichever level of GPOS optimization the user has chosen, we
+                # know here that the optimization would be pointless, because
+                # the interpolatable OTFs will be merged by varLib, which
+                # un-does the optimization, then re-optimized differently after
+                # the merge.
+                "otlLib.optimize.gpos.mode": 0,
+            },
         }
     )
 
@@ -588,6 +597,15 @@ def compileVariableCFF2(designSpaceDoc, **kwargs):
                 # No need to post-process intermediate fonts.
                 postProcessorClass=None,
             ),
+            "config": {
+                **kwargs.get("config", {}),
+                # Whichever level of GPOS optimization the user has chosen, we
+                # know here that the optimization would be pointless, because
+                # the interpolatable OTFs will be merged by varLib, which
+                # un-does the optimization, then re-optimized differently after
+                # the merge.
+                "otlLib.optimize.gpos.mode": 0,
+            },
         }
     )
 
