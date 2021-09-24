@@ -119,12 +119,13 @@ class BaseOutlineCompiler:
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
         self._compiledGlyphs = None
+        self._config = kwargs.get("config", {})
 
     def compile(self):
         """
         Compile the OpenType binary.
         """
-        self.otf = TTFont(sfntVersion=self.sfntVersion)
+        self.otf = TTFont(sfntVersion=self.sfntVersion, config=self._config)
 
         # only compile vertical metrics tables if vhea metrics are defined
         vertical_metrics = [
@@ -1101,6 +1102,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             glyphOrder=glyphOrder,
             tables=tables,
             notdefGlyph=notdefGlyph,
+            **kwargs,
         )
         self.optimizeCFF = optimizeCFF
         self._defaultAndNominalWidths = None

@@ -79,6 +79,7 @@ base_args = dict(
     skipExportGlyphs=None,
     debugFeatureFile=None,
     notdefGlyph=None,
+    config={},
 )
 
 compileOTF_args = {
