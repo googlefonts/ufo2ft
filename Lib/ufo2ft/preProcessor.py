@@ -239,6 +239,8 @@ class TTFInterpolatablePreProcessor:
         assert len(ufos) == len(layerNames)
         self.layerNames = layerNames
 
+        # For each UFO, make a mapping of name to glyph object (and ensure it
+        # contains none of the glyphs to be skipped, or any references to it).
         self.glyphSets = [
             _GlyphSet.from_layer(
                 ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
@@ -292,6 +294,9 @@ class TTFInterpolatablePreProcessor:
             remember_curve_type=self._rememberCurveType and self.inplace,
         )
 
+        # TrueType fonts cannot mix contours and components, so pick out all glyphs
+        # that have contours (`bool(len(g)) == True`) and decompose their
+        # components, if any.
         decompose = DecomposeComponentsFilter(include=lambda g: len(g))
         for ufo, glyphSet in zip(self.ufos, self.glyphSets):
             decompose(ufo, glyphSet)
