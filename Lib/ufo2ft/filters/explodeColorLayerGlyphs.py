@@ -69,9 +69,12 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
         for layerName, colorID in colorLayerMapping:
             layerGlyphSet = self._getLayer(font, layerName)
             if glyph.name in layerGlyphSet:
-                layerGlyphName = self._copyGlyph(
-                    layerGlyphSet, glyphSet, glyph.name, layerName
-                )
+                if glyph == layerGlyphSet[glyph.name]:
+                    layerGlyphName = glyph.name
+                else:
+                    layerGlyphName = self._copyGlyph(
+                        layerGlyphSet, glyphSet, glyph.name, layerName
+                    )
                 layers.append((layerGlyphName, colorID))
         if layers:
             colorLayers[glyph.name] = layers
