@@ -18,9 +18,9 @@ from ufo2ft.preProcessor import (
 )
 from ufo2ft.util import (
     _getDefaultNotdefGlyph,
+    getDefaultMasterFont,
     init_kwargs,
     prune_unknown_kwargs,
-    getDefaultMasterFont,
 )
 
 try:
