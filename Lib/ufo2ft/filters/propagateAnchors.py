@@ -86,7 +86,7 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
             raise Exception(
                 "Error while determining which component of composite "
                 "'{}' is the lowest: {}".format(composite.name, str(e))
-            )
+            ) from e
         mark_components.remove(component)
         base_components.append(component)
         glyph = glyphSet[component.baseGlyph]

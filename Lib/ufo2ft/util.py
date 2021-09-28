@@ -478,8 +478,8 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
         raise TypeError(klass)
     try:
         options = _kwargsEval(kwargs) if kwargs else {}
-    except SyntaxError:
-        raise ValueError("options have incorrect format: %r" % kwargs)
+    except SyntaxError as e:
+        raise ValueError("options have incorrect format: %r" % kwargs) from e
 
     return klass(**options)
 
