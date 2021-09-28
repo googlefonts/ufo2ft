@@ -1,5 +1,5 @@
 import logging
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 from types import SimpleNamespace
 
 from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
@@ -285,7 +285,7 @@ class BaseFeatureWriter:
         return cmap
 
     def getOrderedGlyphSet(self):
-        """Return OrderedDict[glyphName, glyph] sorted by glyphOrder."""
+        """Return dict[glyphName, glyph] sorted by glyphOrder."""
         compiler = self.context.compiler
         if compiler is not None:
             return compiler.glyphSet
@@ -299,7 +299,7 @@ class BaseFeatureWriter:
             skipExportGlyphs=set(font.lib.get("public.skipExportGlyphs", [])),
         )
         glyphOrder = makeOfficialGlyphOrder(glyphSet, font.glyphOrder)
-        return OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
+        return {gn: glyphSet[gn] for gn in glyphOrder}
 
     def compileGSUB(self):
         """Compile a temporary GSUB table from the current feature file."""

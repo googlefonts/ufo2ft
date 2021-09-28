@@ -1,6 +1,6 @@
 import itertools
 import re
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from functools import partial
 
 from fontTools.misc.fixedTools import otRound
@@ -319,11 +319,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
         else:
             # no GDEF table defined in feature file, include all glyphs
             include = None
-        result = OrderedDict()
+        result = {}
         for glyphName, glyph in self.getOrderedGlyphSet().items():
             if include is not None and glyphName not in include:
                 continue
-            anchorDict = OrderedDict()
+            anchorDict = {}
             for anchor in glyph.anchors:
                 anchorName = anchor.name
                 if not anchorName:
@@ -385,7 +385,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
             # Use all mark anchors. The rest of the algorithm will make sure
             # that the generated lookups will not have overlapping mark classes.
             for anchor in markAnchors:
-                group = groups.setdefault(anchor.name, OrderedDict())
+                group = groups.setdefault(anchor.name, {})
                 assert glyphName not in group
                 group[glyphName] = anchor
             markGlyphNames.add(glyphName)

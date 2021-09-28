@@ -1,6 +1,5 @@
 import logging
 import os
-from collections import OrderedDict
 from inspect import isclass
 from io import StringIO
 from tempfile import NamedTemporaryFile
@@ -89,7 +88,7 @@ class BaseFeatureCompiler:
             assert set(glyphOrder) == set(glyphSet.keys())
         else:
             glyphSet = ufo
-        self.glyphSet = OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
+        self.glyphSet = {gn: glyphSet[gn] for gn in glyphOrder}
 
     def setupFeatures(self):
         """Make the features source.

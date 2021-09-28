@@ -22,7 +22,7 @@ def getScriptLanguageSystems(feaFile):
     """Return dictionary keyed by Unicode script code containing lists of
     (OT_SCRIPT_TAG, [OT_LANGUAGE_TAG, ...]) tuples (excluding "DFLT").
     """
-    languagesByScript = collections.OrderedDict()
+    languagesByScript = {}
     for ls in [
         st for st in feaFile.statements if isinstance(st, ast.LanguageSystemStatement)
     ]:
@@ -30,7 +30,7 @@ def getScriptLanguageSystems(feaFile):
             continue
         languagesByScript.setdefault(ls.script, []).append(ls.language)
 
-    langSysMap = collections.OrderedDict()
+    langSysMap = {}
     for script, languages in languagesByScript.items():
         sc = unicodedata.ot_tag_to_script(script)
         langSysMap.setdefault(sc, []).append((script, languages))
