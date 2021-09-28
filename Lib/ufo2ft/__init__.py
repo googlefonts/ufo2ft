@@ -462,7 +462,6 @@ def compileFeatures(
     ufo,
     ttFont=None,
     glyphSet=None,
-    featureWriters=None,
     featureCompilerClass=None,
     debugFeatureFile=None,
     **kwargs
@@ -492,9 +491,9 @@ def compileFeatures(
             featureCompilerClass = MtiFeatureCompiler
         else:
             featureCompilerClass = FeatureCompiler
-    featureCompiler = featureCompilerClass(
-        ufo, ttFont, glyphSet=glyphSet, featureWriters=featureWriters
-    )
+
+    kwargs = prune_unknown_kwargs(kwargs, featureCompilerClass)
+    featureCompiler = featureCompilerClass(ufo, ttFont, glyphSet=glyphSet, **kwargs)
     otFont = featureCompiler.compile()
 
     if debugFeatureFile:
