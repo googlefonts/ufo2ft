@@ -57,7 +57,6 @@ class PostProcessor:
         optimizeCFF=True,
         cffVersion=None,
         subroutinizer=None,
-        **kwargs,
     ):
         """
         useProductionNames (Optional[bool]):
