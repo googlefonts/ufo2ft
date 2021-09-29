@@ -2,7 +2,7 @@ import importlib
 import logging
 import re
 from copy import deepcopy
-from inspect import getfullargspec
+from inspect import currentframe, getfullargspec
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
@@ -487,3 +487,32 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
 def quantize(number, factor):
     """Round to a multiple of the given parameter"""
     return factor * otRound(number / factor)
+
+
+def init_kwargs(kwargs, defaults):
+    """Initialise kwargs default values.
+
+    To be used as the first function in top-level `ufo2ft.compile*` functions.
+
+    Raise TypeError with unexpected keyword arguments (missing from 'defaults').
+    """
+    extra_kwargs = set(kwargs).difference(defaults)
+    if extra_kwargs:
+        # get the name of the function that called init_kwargs
+        func_name = currentframe().f_back.f_code.co_name
+        raise TypeError(
+            f"{func_name}() got unexpected keyword arguments: "
+            f"{', '.join(repr(k) for k in extra_kwargs)}"
+        )
+    return {k: (kwargs[k] if k in kwargs else v) for k, v in defaults.items()}
+
+
+def prune_unknown_kwargs(kwargs, *callables):
+    """Inspect callables and return a new dict skipping any unknown arguments.
+
+    To be used after `init_kwargs` to narrow down arguments for underlying code.
+    """
+    known_args = set()
+    for func in callables:
+        known_args.update(getfullargspec(func).args)
+    return {k: v for k, v in kwargs.items() if k in known_args}
