@@ -492,6 +492,8 @@ def quantize(number, factor):
 def init_kwargs(kwargs, defaults):
     """Initialise kwargs default values.
 
+    To be used as the first function in top-level `ufo2ft.compile*` functions.
+
     Raise TypeError with unexpected keyword arguments (missing from 'defaults').
     """
     extra_kwargs = set(kwargs).difference(defaults)
