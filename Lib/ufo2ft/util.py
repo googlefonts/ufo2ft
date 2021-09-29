@@ -509,7 +509,7 @@ def init_kwargs(kwargs, defaults):
 
 def prune_unknown_kwargs(kwargs, *callables):
     """Inspect callables and return a new dict skipping any unknown arguments.
-    
+
     To be used after `init_kwargs` to narrow down arguments for underlying code.
     """
     known_args = set()
