@@ -457,6 +457,7 @@ def _kwargsEval(s):
 
 
 _pluginSpecRE = re.compile(
+    r"(pre::)?"
     r"(?:([\w\.]+)::)?"  # MODULE_NAME + '::'
     r"(\w+)"  # CLASS_NAME [required]
     r"(?:\((.*)\))?"  # (KWARGS)
@@ -468,9 +469,10 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
     m = _pluginSpecRE.match(spec)
     if not m or (m.end() - m.start()) != len(spec):
         raise ValueError(spec)
-    moduleName = m.group(1) or moduleName
-    className = m.group(2)
-    kwargs = m.group(3)
+    pre = m.group(1)
+    moduleName = m.group(2) or moduleName
+    className = m.group(3)
+    kwargs = m.group(4)
 
     module = importlib.import_module(moduleName)
     klass = getattr(module, className)
@@ -481,7 +483,10 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
     except SyntaxError as e:
         raise ValueError("options have incorrect format: %r" % kwargs) from e
 
-    return klass(**options)
+    filterObj = klass(**options)
+    if pre:
+        filterObj.pre = True
+    return filterObj
 
 
 def quantize(number, factor):
