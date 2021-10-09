@@ -20,9 +20,6 @@ class CursFeatureWriter(BaseFeatureWriter):
     tableTag = "GPOS"
     features = frozenset(["curs"])
 
-    entryAnchorNames = {"entry"}
-    exitAnchorNames = {"exit"}
-
     def _makeCursiveFeature(self):
         cmap = self.makeUnicodeToGlyphNameMapping()
         if any(unicodeScriptDirection(uv) == "LTR" for uv in cmap):
@@ -100,9 +97,9 @@ class CursFeatureWriter(BaseFeatureWriter):
             for anchor in glyph.anchors:
                 if entryAnchor and exitAnchor:
                     break
-                if anchor.name in self.entryAnchorNames:
+                if anchor.name == "entry":
                     entryAnchor = ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y))
-                elif anchor.name in self.exitAnchorNames:
+                elif anchor.name == "exit":
                     exitAnchor = ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y))
 
             if entryAnchor or exitAnchor:
