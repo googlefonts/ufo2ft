@@ -102,6 +102,8 @@ class CursFeatureWriter(BaseFeatureWriter):
                 elif anchor.name == "exit":
                     exitAnchor = ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y))
 
+            # A glyph can have only one of the cursive anchors (e.g. if it
+            # attaches on one side only)
             if entryAnchor or exitAnchor:
                 cursiveAnchors[ast.GlyphName(glyph.name)] = (entryAnchor, exitAnchor)
 
