@@ -2,6 +2,8 @@
 
 
 import collections
+import functools
+import operator
 import re
 
 # we re-export here all the feaLib AST classes so they can be used from
@@ -95,7 +97,7 @@ def makeLookupFlag(flags=None, markAttachment=None, markFilteringSet=None):
     if isinstance(flags, str):
         value = LOOKUP_FLAGS[flags]
     elif flags is not None:
-        value = sum(LOOKUP_FLAGS[n] for n in flags)
+        value = functools.reduce(operator.or_, [LOOKUP_FLAGS[n] for n in flags], 0)
     else:
         value = 0
 
