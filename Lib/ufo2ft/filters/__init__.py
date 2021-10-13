@@ -6,6 +6,7 @@ from ufo2ft.constants import FILTERS_KEY
 from ufo2ft.util import _loadPluginFromString
 
 from .base import BaseFilter
+from .addExtrema import AddExtremaFilter
 from .cubicToQuadratic import CubicToQuadraticFilter
 from .decomposeComponents import DecomposeComponentsFilter
 from .decomposeTransformedComponents import DecomposeTransformedComponentsFilter
@@ -18,6 +19,7 @@ from .transformations import TransformationsFilter
 
 __all__ = [
     "BaseFilter",
+    "AddExtremaFilter",
     "CubicToQuadraticFilter",
     "DecomposeComponentsFilter",
     "DecomposeTransformedComponentsFilter",
