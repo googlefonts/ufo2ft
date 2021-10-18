@@ -508,7 +508,9 @@ compileVariableTTF_args = {
     **dict(
         preProcessorClass=TTFInterpolatablePreProcessor,
         outlineCompilerClass=OutlineTTFCompiler,
+        cubicConversionError=None,
         reverseDirection=True,
+        flattenComponents=False,
         excludeVariationTables=(),
         optimizeGvar=True,
     ),
