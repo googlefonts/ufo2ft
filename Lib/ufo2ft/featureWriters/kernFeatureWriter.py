@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from fontTools import unicodedata
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import classifyGlyphs, quantize
+from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -98,19 +98,6 @@ DIST_ENABLED_SCRIPTS = {
     # Unicode-12.0 additions
     "Nand",  # Nandinagari
 }
-
-
-# we consider the 'Common' and 'Inherited' scripts as neutral for
-# determining a kerning pair's horizontal direction
-DFLT_SCRIPTS = {"Zyyy", "Zinh"}
-
-
-def unicodeScriptDirection(uv):
-    sc = unicodedata.script(chr(uv))
-    if sc in DFLT_SCRIPTS:
-        return None
-    return unicodedata.script_horizontal_direction(sc)
-
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}

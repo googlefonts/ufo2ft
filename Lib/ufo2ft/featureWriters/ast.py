@@ -2,6 +2,8 @@
 
 
 import collections
+import functools
+import operator
 import re
 
 # we re-export here all the feaLib AST classes so they can be used from
@@ -91,8 +93,13 @@ LOOKUP_FLAGS = {
 }
 
 
-def makeLookupFlag(name=None, markAttachment=None, markFilteringSet=None):
-    value = 0 if name is None else LOOKUP_FLAGS[name]
+def makeLookupFlag(flags=None, markAttachment=None, markFilteringSet=None):
+    if isinstance(flags, str):
+        value = LOOKUP_FLAGS[flags]
+    elif flags is not None:
+        value = functools.reduce(operator.or_, [LOOKUP_FLAGS[n] for n in flags], 0)
+    else:
+        value = 0
 
     if markAttachment is not None:
         assert isinstance(markAttachment, ast.GlyphClassDefinition)
