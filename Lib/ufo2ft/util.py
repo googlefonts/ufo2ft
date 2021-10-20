@@ -2,7 +2,7 @@ import importlib
 import logging
 import re
 from copy import deepcopy
-from inspect import getfullargspec
+from inspect import currentframe, getfullargspec
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.feaLib.builder import addOpenTypeFeatures
@@ -305,6 +305,18 @@ def unicodeInScripts(uv, scripts):
     return not sx.isdisjoint(scripts)
 
 
+# we consider the 'Common' and 'Inherited' scripts as neutral for
+# determining a script horizontal direction
+DFLT_SCRIPTS = {"Zyyy", "Zinh"}
+
+
+def unicodeScriptDirection(uv):
+    sc = unicodedata.script(chr(uv))
+    if sc in DFLT_SCRIPTS:
+        return None
+    return unicodedata.script_horizontal_direction(sc)
+
+
 def calcCodePageRanges(unicodes):
     """Given a set of Unicode codepoints (integers), calculate the
     corresponding OS/2 CodePage range bits.
@@ -478,8 +490,8 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
         raise TypeError(klass)
     try:
         options = _kwargsEval(kwargs) if kwargs else {}
-    except SyntaxError:
-        raise ValueError("options have incorrect format: %r" % kwargs)
+    except SyntaxError as e:
+        raise ValueError("options have incorrect format: %r" % kwargs) from e
 
     return klass(**options)
 
@@ -487,3 +499,32 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
 def quantize(number, factor):
     """Round to a multiple of the given parameter"""
     return factor * otRound(number / factor)
+
+
+def init_kwargs(kwargs, defaults):
+    """Initialise kwargs default values.
+
+    To be used as the first function in top-level `ufo2ft.compile*` functions.
+
+    Raise TypeError with unexpected keyword arguments (missing from 'defaults').
+    """
+    extra_kwargs = set(kwargs).difference(defaults)
+    if extra_kwargs:
+        # get the name of the function that called init_kwargs
+        func_name = currentframe().f_back.f_code.co_name
+        raise TypeError(
+            f"{func_name}() got unexpected keyword arguments: "
+            f"{', '.join(repr(k) for k in extra_kwargs)}"
+        )
+    return {k: (kwargs[k] if k in kwargs else v) for k, v in defaults.items()}
+
+
+def prune_unknown_kwargs(kwargs, *callables):
+    """Inspect callables and return a new dict skipping any unknown arguments.
+
+    To be used after `init_kwargs` to narrow down arguments for underlying code.
+    """
+    known_args = set()
+    for func in callables:
+        known_args.update(getfullargspec(func).args)
+    return {k: v for k, v in kwargs.items() if k in known_args}
