@@ -4,8 +4,6 @@ from collections import Counter, namedtuple
 from io import BytesIO
 from types import SimpleNamespace
 
-from ufo2ft.instructionCompiler import InstructionCompiler
-
 from fontTools.cffLib import (
     CharStrings,
     GlobalSubrsIndex,
@@ -32,7 +30,6 @@ from ufo2ft.constants import (
     COLOR_PALETTES_KEY,
     COLR_CLIP_BOXES_KEY,
     OPENTYPE_META_KEY,
-    TRUETYPE_INSTRUCTIONS_KEY,
     UNICODE_VARIATION_SEQUENCES_KEY,
 )
 from ufo2ft.errors import InvalidFontData
@@ -43,6 +40,7 @@ from ufo2ft.fontInfoData import (
     intListToNum,
     normalizeStringForPostscript,
 )
+from ufo2ft.instructionCompiler import InstructionCompiler
 from ufo2ft.util import (
     _copyGlyph,
     calcCodePageRanges,
