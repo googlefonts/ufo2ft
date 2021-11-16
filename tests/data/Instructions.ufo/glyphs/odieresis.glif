@@ -13,7 +13,7 @@
         <key>component0</key>
         <dict>
           <key>public.truetype.useMyMetrics</key>
-          <true/>
+          <true/><!-- is ignored when autoUseMyMetrics is applied -->
         </dict>
         <key>component1</key>
         <dict>

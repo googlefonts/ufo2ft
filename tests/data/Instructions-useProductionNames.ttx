@@ -2242,7 +2242,7 @@
     </TTGlyph>
 
     <TTGlyph name="odieresis" xMin="32" yMin="-27" xMax="536" yMax="726">
-      <component glyphName="o" x="0" y="18" flags="0x204"/>
+      <component glyphName="o" x="0" y="18" flags="0x4"/>
       <component glyphName="uni0308" x="457" y="-18" flags="0x4"/>
     </TTGlyph>
 
