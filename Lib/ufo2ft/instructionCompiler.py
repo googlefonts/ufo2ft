@@ -64,6 +64,10 @@ class InstructionCompiler:
                 table.program.fromAssembly(asm)
 
     def compileGlyphInstructions(self, ttGlyph, name):
+        if name not in self.ufo:
+            # Skip glyphs that are not in the UFO, e.g. '.notdef'
+            return
+
         glyph = self.ufo[name]
         ttdata = glyph.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata is not None:
