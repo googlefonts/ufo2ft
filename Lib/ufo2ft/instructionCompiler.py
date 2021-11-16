@@ -48,8 +48,7 @@ class InstructionCompiler:
         formatVersion = ttdata.get("formatVersion", None)
         if int(formatVersion) != 1:
             raise NotImplementedError(
-                f"Unknown formatVersion {formatVersion} "
-                f"for instructions in {name}."
+                f"Unknown formatVersion {formatVersion} for instructions in {name}."
             )
 
     def _compile_program(self, key, table_tag):
@@ -143,9 +142,8 @@ class InstructionCompiler:
                 else:
                     c.flags &= ~ROUND_XY_TO_GRID
 
-                if (
-                    not self.autoUseMyMetrics
-                    and component_lib.get(TRUETYPE_METRICS_KEY, False)
+                if not self.autoUseMyMetrics and component_lib.get(
+                    TRUETYPE_METRICS_KEY, False
                 ):
                     c.flags &= ~USE_MY_METRICS
                     if use_my_metrics_comp:
@@ -193,13 +191,13 @@ class InstructionCompiler:
             if hasattr(ttglyph, "program")
         ]
         maxp.maxSizeOfInstructions = max(sizes, default=0)
-    
+
     def setupTable_cvt(self):
         """Make the cvt table."""
         cvts = []
         ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata:
-            self._check_tt_data_format(ttdata, f"key 'controlValue'")
+            self._check_tt_data_format(ttdata, "key 'controlValue'")
             cvt_list = ttdata.get("controlValue", None)
             if cvt_list:
                 # Convert string keys to int
@@ -218,6 +216,6 @@ class InstructionCompiler:
 
     def setupTable_fpgm(self):
         self._compile_program("fontProgram", "fpgm")
-    
+
     def setupTable_prep(self):
         self._compile_program("controlValueProgram", "prep")
