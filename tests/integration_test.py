@@ -255,20 +255,6 @@ class IntegrationTest:
         assert "prep" in ttf
         expectTTX(ttf, "Instructions.ttx")
 
-    def test_Instructions_drop_glyph_names(self, instructions_ufo):
-        instructions_ufo.lib[KEEP_GLYPH_NAMES] = False
-        ttf = compileTTF(
-            instructions_ufo,
-            convertCubics=False,
-            reverseDirection=False,
-            removeOverlaps=False,
-        )
-        assert "cvt " in ttf
-        assert "gasp" in ttf
-        assert "fpgm" in ttf
-        assert "prep" in ttf
-        expectTTX(ttf, "Instructions-useProductionNames.ttx")
-
     @pytest.mark.parametrize(
         "output_format, options, expected_ttx",
         [
