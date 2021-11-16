@@ -1,7 +1,9 @@
+import array
 import logging
 
 from fontTools import ttLib
 from fontTools.pens.hashPointPen import HashPointPen
+from fontTools.ttLib import newTable
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
     ROUND_XY_TO_GRID,
@@ -19,15 +21,11 @@ from ufo2ft.constants import (
 logger = logging.getLogger(__name__)
 
 
-class InstructionCompiler(object):
-    def __init__(self, ufo, ttf):
-        self.ufo = ufo
-        self.font = ttf
-
+class InstructionCompiler:
     def _check_glyph_hash(self, glyph, ttglyph, glyph_hash):
-        # Check if the glyph hash in the ufo matches the current outlines
-        hash_pen = HashPointPen(glyph.width, self.font.getGlyphSet())
-        ttglyph.drawPoints(hash_pen, self.font["glyf"])
+        """Check if the glyph hash in the ufo matches the current outlines."""
+        hash_pen = HashPointPen(glyph.width, self.otf.getGlyphSet())
+        ttglyph.drawPoints(hash_pen, self.otf["glyf"])
         if glyph_hash is None:
             # The glyph hash is required
             logger.error(
@@ -44,51 +42,38 @@ class InstructionCompiler(object):
             return False
         return True
 
-    def _check_tt_data_format(self, ttdata):
-        # Make sure we understand the format version
+    def _check_tt_data_format(self, ttdata, name):
+        """Make sure we understand the format version, currently only version 1
+        is supported."""
         formatVersion = ttdata.get("formatVersion", None)
         if int(formatVersion) != 1:
             raise NotImplementedError(
                 f"Unknown formatVersion {formatVersion} "
-                "for instructions in glyph '{name}'."
+                f"for instructions in {name}."
             )
 
     def _compile_program(self, key, table_tag):
+        """Compile the program for prep or fpgm."""
         assert table_tag in ("prep", "fpgm")
         ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata:
-            formatVersion = ttdata.get("formatVersion", None)
-            if int(formatVersion) != 1:
-                raise NotImplementedError(
-                    f"Unknown formatVersion {formatVersion} "
-                    f"for instructions in lib key '{key}'."
-                )
+            self._check_tt_data_format(ttdata, f"lib key '{key}'")
             asm = ttdata.get(key, None)
             if asm is not None:
-                self.font[table_tag] = table = ttLib.newTable(table_tag)
+                self.otf[table_tag] = table = ttLib.newTable(table_tag)
                 table.program = ttLib.tables.ttProgram.Program()
                 table.program.fromAssembly(asm)
 
-    def _compile_tt_glyph(self, name):
+    def compileGlyphInstructions(self, ttGlyph, name):
         glyph = self.ufo[name]
         ttdata = glyph.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
-        if name not in self.font["glyf"]:
-            if ttdata is not None:
-                logger.debug(
-                    f"Glyph '{name}' not found in font, "
-                    "skipping compilation of TrueType instructions "
-                    "for this glyph."
-                )
-            return
-
-        ttglyph = self.font["glyf"][name]
         if ttdata is not None:
-            self._compile_tt_glyph_program(glyph, ttglyph, ttdata)
-        if ttglyph.isComposite():
-            self._set_composite_flags(glyph, ttglyph)
+            self._compile_tt_glyph_program(glyph, ttGlyph, ttdata)
+        if ttGlyph.isComposite():
+            self._set_composite_flags(glyph, ttGlyph)
 
     def _compile_tt_glyph_program(self, glyph, ttglyph, ttdata):
-        self._check_tt_data_format(ttdata)
+        self._check_tt_data_format(ttdata, f"glyph '{glyph.name}'")
         glyph_hash = ttdata.get("id", None)
         if not self._check_glyph_hash(glyph, ttglyph, glyph_hash):
             return
@@ -131,9 +116,15 @@ class InstructionCompiler(object):
 
         for i, c in enumerate(ttglyph.components):
             ufo_component_id = glyph.components[i].identifier
-            if (
-                ufo_component_id is not None
-                and OBJECT_LIBS_KEY in glyph.lib
+            if ufo_component_id is None:
+                # No information about component flags is stored in the UFO,
+                # use heuristics.
+
+                # https://github.com/googlefonts/ufo2ft/pull/425 recommends
+                # to always set the ROUND_XY_TO_GRID flag
+                c.flags |= ROUND_XY_TO_GRID
+            elif (
+                OBJECT_LIBS_KEY in glyph.lib
                 and ufo_component_id in glyph.lib[OBJECT_LIBS_KEY]
                 and (
                     TRUETYPE_ROUND_KEY in glyph.lib[OBJECT_LIBS_KEY][ufo_component_id]
@@ -147,11 +138,15 @@ class InstructionCompiler(object):
                 # to always set the ROUND_XY_TO_GRID flag, so we only
                 # unset it if explicitly done so in the lib
                 if component_lib.get(TRUETYPE_ROUND_KEY, True):
+                    logger.info("    ROUND_XY_TO_GRID")
                     c.flags |= ROUND_XY_TO_GRID
                 else:
                     c.flags &= ~ROUND_XY_TO_GRID
 
-                if component_lib.get(TRUETYPE_METRICS_KEY, False):
+                if (
+                    not self.autoUseMyMetrics
+                    and component_lib.get(TRUETYPE_METRICS_KEY, False)
+                ):
                     c.flags &= ~USE_MY_METRICS
                     if use_my_metrics_comp:
                         logger.warning(
@@ -171,15 +166,11 @@ class InstructionCompiler(object):
                 else:
                     c.flags &= ~OVERLAP_COMPOUND
 
-    def compile_fpgm(self):
-        self._compile_program("fontProgram", "fpgm")
-
-    def compile_glyf(self):
-        for name in sorted(self.ufo.keys()):
-            self._compile_tt_glyph(name)
-
-    def compile_maxp(self):
-        maxp = self.font["maxp"]
+    def update_maxp(self):
+        """Update the maxp table with relevant values from the UFO and compiled
+        font.
+        """
+        maxp = self.otf["maxp"]
         ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata:
             for name in (
@@ -198,17 +189,35 @@ class InstructionCompiler(object):
         # Recalculate maxp.maxSizeOfInstructions
         sizes = [
             len(ttglyph.program.getBytecode())
-            for ttglyph in self.font["glyf"].glyphs.values()
+            for ttglyph in self.otf["glyf"].glyphs.values()
             if hasattr(ttglyph, "program")
         ]
         maxp.maxSizeOfInstructions = max(sizes, default=0)
+    
+    def setupTable_cvt(self):
+        """Make the cvt table."""
+        cvts = []
+        ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
+        if ttdata:
+            self._check_tt_data_format(ttdata, f"key 'controlValue'")
+            cvt_list = ttdata.get("controlValue", None)
+            if cvt_list:
+                # Convert string keys to int
+                cvt_dict = {int(v["id"]): v["value"] for v in cvt_list}
+                # Find the maximum cvt index.
+                # We can't just use the dict keys because the cvt must be
+                # filled consecutively.
+                max_cvt = max(cvt_dict.keys())
+                # Make value list, filling entries for missing keys with 0
+                cvts = [cvt_dict.get(i, 0) for i in range(max_cvt + 1)]
 
-    def compile_prep(self):
+        if cvts:
+            # Only write cvt to font if it contains any values
+            self.otf["cvt "] = cvt = newTable("cvt ")
+            cvt.values = array.array("h", cvts)
+
+    def setupTable_fpgm(self):
+        self._compile_program("fontProgram", "fpgm")
+    
+    def setupTable_prep(self):
         self._compile_program("controlValueProgram", "prep")
-
-    def compile(self):
-        self.compile_fpgm()
-        self.compile_prep()
-        self.compile_glyf()
-        # maxp depends on the other programs, to it needs to be last
-        self.compile_maxp()
