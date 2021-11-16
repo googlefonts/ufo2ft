@@ -1395,6 +1395,13 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
     sfntVersion = "\000\001\000\000"
     tables = BaseOutlineCompiler.tables | {"loca", "gasp", "glyf"}
 
+    def _compile_truetype_hinting(self):
+        logger.info("Compiling TrueType hinting")
+        from ufo2ft.instructionCompiler import InstructionCompiler
+
+        ic = InstructionCompiler(ufo=self.ufo, ttf=self.otf)
+        ic.compile()
+
     def compileGlyphs(self):
         """Compile and return the TrueType glyphs for this font."""
         allGlyphs = self.allGlyphs
@@ -1467,6 +1474,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
             self.setupTable_gasp()
         if self.compileTrueTypeHinting:
             self.setupTable_cvt()
+            self._compile_truetype_hinting()
 
     def setupTable_glyf(self):
         """Make the glyf table."""
