@@ -1,4 +1,4 @@
-fonttools[lxml,ufo]==4.28.1
+fonttools[lxml,ufo]==4.28.2
 defcon==0.9.0
 cu2qu==1.6.7.post1
 compreffor==0.5.1
@@ -7,4 +7,4 @@ cffsubr==0.2.9
 skia-pathops==0.7.1
 
 # alternative UFO implementation
-ufoLib2==0.11.4
+ufoLib2==0.12.1
