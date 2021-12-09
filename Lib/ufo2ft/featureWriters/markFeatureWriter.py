@@ -287,6 +287,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         "Deva",  # Devanagari
         "Gujr",  # Gujarati
         "Guru",  # Gurmukhi
+        "Khmr",  # Khmer
         "Knda",  # Kannada
         "Mlym",  # Malayalam
         "Orya",  # Oriya
