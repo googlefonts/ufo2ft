@@ -42,7 +42,6 @@ if args.include:
     def include(g):
         return g.name in include_set
 
-
 elif args.exclude:
     exclude_set = set(args.exclude.split(","))
 
