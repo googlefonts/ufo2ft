@@ -11,7 +11,6 @@ try:
     def readPlistFromString(s):
         return loads(s, fmt=FMT_XML)
 
-
 except ImportError:
     from plistlib import readPlistFromString
 
