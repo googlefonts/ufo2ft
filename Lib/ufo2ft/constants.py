@@ -37,3 +37,95 @@ OPENTYPE_CATEGORIES_KEY = "public.openTypeCategories"
 OPENTYPE_META_KEY = "public.openTypeMeta"
 
 UNICODE_VARIATION_SEQUENCES_KEY = "public.unicodeVariationSequences"
+
+INDIC_SCRIPTS = [
+    "Beng",  # Bengali
+    "Cham",  # Cham
+    "Deva",  # Devanagari
+    "Gujr",  # Gujarati
+    "Guru",  # Gurmukhi
+    "Knda",  # Kannada
+    "Mlym",  # Malayalam
+    "Orya",  # Oriya
+    "Taml",  # Tamil
+    "Telu",  # Telugu
+]
+
+USE_SCRIPTS = [
+    # Correct as at Unicode 14.0
+    "Tibt",  # Tibetan
+    "Mong",  # Mongolian
+    # HB has Sinhala commented out here?!
+    "Buhd",  # Buhid
+    "Hano",  # Hanunoo
+    "Tglg",  # Tagalog
+    "Tagb",  # Tagbanwa
+    "Limb",  # Limbu
+    "Tale",  # Tai Le
+    "Bugi",  # Buginese
+    "khar",  # Kharosthi
+    "Sylo",  # Syloti Nagri
+    "tfng",  # Tifinagh
+    "Bali",  # Balinese
+    "Nko ",  # Nko
+    "Phag",  # Phags Pa
+    "Cham",  # Cham
+    "Kali",  # Kayah Li
+    "Lepc",  # Lepcha
+    "Rjng",  # Rejang
+    "Saur",  # Saurashtra
+    "Sund",  # Sundanese
+    "Egyp",  # Egyptian Hieroglyphs
+    "Java",  # Javanese
+    "Kthi",  # Kaithi
+    "Mtei",  # Meetei Mayek
+    "Lana",  # Tai Tham
+    "Tavt",  # Tai Viet
+    "Batk",  # Batak
+    "Brah",  # Brahmi
+    "Mand",  # Mandaic
+    "Cakm",  # Chakma
+    "Plrd",  # Miao
+    "Shar",  # Sharada
+    "Takr",  # Takri
+    "Dupl",  # Duployan
+    "Gran",  # Grantha
+    "Khoj",  # Khojki
+    "Sind",  # Khudawadi
+    "Mahj",  # Mahajani
+    "Mani",  # Manichaean
+    "Modi",  # Modi
+    "Hmng",  # Pahawh Hmong
+    "Phlp",  # Psalter Pahlavi
+    "Sidd",  # Siddham
+    "Tirh",  # Tirhuta
+    "Ahom",  # Ahom
+    "Mult",  # Multani
+    "Adlm",  # Adlam
+    "Nhks",  # Bhaiksuki
+    "Marc",  # Marchen
+    "Newa",  # Newa
+    "Gonm",  # Masaram Gondi
+    "Soyo",  # Soyombo
+    "Zanb",  # Zanabazar Square
+    "Dogr",  # Dogra
+    "Gong",  # Gunjala Gondi
+    "Rohg",  # Hanifi Rohingya
+    "Maka",  # Makasar
+    "Medf",  # Medefaidrin
+    "Sogo",  # Old Sogdian
+    "Sogd",  # Sogdian
+    "Elym",  # Elymaic
+    "Nand",  # Nandinagari
+    "Hmnp",  # Nyiakeng Puachue Hmong
+    "Wcho",  # Wancho
+    "Chrs",  # Chorasmian
+    "Diak",  # Dives Akuru
+    "Kits",  # Khitan Small Script
+    "Yezi",  # Yezidi
+    "Cpmn",  # Cypro Minoan
+    "Ougr",  # Old Uyghur
+    "Tnsa",  # Tangsa
+    "Toto",  # Toto
+    "Vith",  # Vithkuqi
+]
