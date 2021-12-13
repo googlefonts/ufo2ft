@@ -8,7 +8,7 @@ from ufo2ft.filters import loadFilterFromString, logger
 try:
     import ufoLib2
 
-    loader = ufoLib2.Font
+    loader = ufoLib2.Font.open
 except ImportError:
     import defcon
 
