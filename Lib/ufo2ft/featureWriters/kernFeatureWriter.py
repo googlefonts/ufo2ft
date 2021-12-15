@@ -450,7 +450,9 @@ class KernFeatureWriter(BaseFeatureWriter):
                 basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
                 lookups["LTR"] = []
                 if basePairs:
-                    lookups["LTR"].append(self._makeKerningLookup("kern_ltr", basePairs))
+                    lookups["LTR"].append(
+                        self._makeKerningLookup("kern_ltr", basePairs)
+                    )
                 if markPairs:
                     lookups["LTR"].append(
                         self._makeKerningLookup(
