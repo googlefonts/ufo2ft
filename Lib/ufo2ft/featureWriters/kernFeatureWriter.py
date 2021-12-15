@@ -434,7 +434,8 @@ class KernFeatureWriter(BaseFeatureWriter):
                 # If there are pairs with a mix of mark/base then the IgnoreMarks
                 # flag is unnecessary and should not be set
                 basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
-                self._makeSplitDirectionKernLookups(lookups, basePairs)
+                if basePairs:
+                    self._makeSplitDirectionKernLookups(lookups, basePairs)
                 if markPairs:
                     self._makeSplitDirectionKernLookups(
                         lookups, markPairs, ignoreMarks=False, suffix="_marks"
@@ -447,7 +448,11 @@ class KernFeatureWriter(BaseFeatureWriter):
             pairs = self.context.kerning.pairs
             if self.options.ignoreMarks:
                 basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
-                lookups["LTR"] = [self._makeKerningLookup("kern_ltr", basePairs)]
+                lookups["LTR"] = []
+                if basePairs:
+                    lookups["LTR"].append(
+                        self._makeKerningLookup("kern_ltr", basePairs)
+                    )
                 if markPairs:
                     lookups["LTR"].append(
                         self._makeKerningLookup(
