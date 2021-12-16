@@ -86,7 +86,7 @@ USE_SCRIPTS = [
     "Mand",  # Mandaic
     "Cakm",  # Chakma
     "Plrd",  # Miao
-    "Shar",  # Sharada
+    "Shrd",  # Sharada
     "Takr",  # Takri
     "Dupl",  # Duployan
     "Gran",  # Grantha
