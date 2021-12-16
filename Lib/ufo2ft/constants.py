@@ -47,6 +47,7 @@ INDIC_SCRIPTS = [
     "Knda",  # Kannada
     "Mlym",  # Malayalam
     "Orya",  # Oriya
+    "Sinh",  # Sinhala
     "Taml",  # Tamil
     "Telu",  # Telugu
 ]
