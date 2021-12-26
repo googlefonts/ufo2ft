@@ -8,7 +8,7 @@ from ufo2ft.filters import loadFilterFromString, logger
 try:
     import ufoLib2
 
-    loader = ufoLib2.Font
+    loader = ufoLib2.Font.open
 except ImportError:
     import defcon
 
@@ -41,7 +41,6 @@ if args.include:
 
     def include(g):
         return g.name in include_set
-
 
 elif args.exclude:
     exclude_set = set(args.exclude.split(","))
