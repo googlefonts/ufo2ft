@@ -510,7 +510,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert "kern" in scriptGroups
         assert list(scriptGroups["kern"]["LTR"]) == [
             ("latn", ["dflt", "TRK "]),
-            ("math", ["dflt"])
+            ("math", ["dflt"]),
         ]
         assert list(scriptGroups["kern"]["RTL"]) == [("arab", ["dflt", "URD "])]
 
