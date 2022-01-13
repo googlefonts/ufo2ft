@@ -292,9 +292,12 @@ class InstructionCompilerTest:
                     # "assembly": "",
                 },
             )
-        assert ("Glyph assembly missing, glyph 'a' will have no instructions in font." in caplog.text)
+        assert (
+            "Glyph assembly missing, glyph 'a' will have no instructions in font."
+            in caplog.text
+        )
 
-    def test_compile_tt_glyph_program_empty_asm(self, quaduforeversed, quadfont, caplog):
+    def test_compile_tt_glyph_program_empty_asm(self, quaduforeversed, quadfont):
         # UFO glyph contains "public.truetype.instructions" lib key, but the
         # assembly code entry is empty
         ic = InstructionCompiler()
@@ -318,7 +321,7 @@ class InstructionCompilerTest:
         # assert ic.otf["glyf"]["a"].program.getBytecode() == b""
         assert not hasattr(ic.otf["glyf"]["h"], "program")
 
-    def test_compile_tt_glyph_program_empty_asm_composite(self, quaduforeversed, quadfont, caplog):
+    def test_compile_tt_glyph_program_empty_asm_composite(self, quaduforeversed, quadfont):
         # UFO glyph contains "public.truetype.instructions" lib key, but the
         # assembly code entry is empty. The glyph is a composite.
         ic = InstructionCompiler()
@@ -342,7 +345,7 @@ class InstructionCompilerTest:
         # Components must not have an empty program
         assert not hasattr(ic.otf["glyf"]["h"], "program")
 
-    def test_compile_tt_glyph_program(self, quaduforeversed, quadfont, caplog):
+    def test_compile_tt_glyph_program(self, quaduforeversed, quadfont):
         # UFO glyph contains "public.truetype.instructions" lib key, and the
         # assembly code entry is present.
         ic = InstructionCompiler()
