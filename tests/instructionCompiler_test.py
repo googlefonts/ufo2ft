@@ -256,10 +256,130 @@ class InstructionCompilerTest:
 
     # setupTable_fpgm
 
-    def test_setupTable_fpgm(self):
-        pass
+    def test_setupTable_fpgm_no_ttdata(self, quadufo):
+        # UFO contains no "public.truetype.instructions" lib key
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.setupTable_fpgm()
+        assert "fpgm" not in ic.otf
+
+    def test_setupTable_fpgm_no_program(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, but the font and
+        # control value programs are not there. (They are optional)
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+        }
+        ic.setupTable_fpgm()
+        assert "fpgm" not in ic.otf
+
+    def test_setupTable_fpgm_none(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, but the font and
+        # control value programs are None.
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+            "fontProgram": None,
+        }
+        ic.setupTable_fpgm()
+        assert "fpgm" not in ic.otf
+
+    def test_setupTable_fpgm_empty(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, but the font and
+        # control value programs are empty.
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+            "fontProgram": "",
+        }
+        ic.setupTable_fpgm()
+        assert "fpgm" not in ic.otf
+
+    def test_setupTable_fpgm(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, and the font and
+        # control value programs are present.
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+            "fontProgram": "PUSHB[]\n0\nFDEF[]\nPOP[]\nENDF[]",
+        }
+        ic.setupTable_fpgm()
+
+        assert "fpgm" in ic.otf
+
+        # Check if the bytecode is correct, though this may be out of scope
+        assert ic.otf["fpgm"].program.getBytecode() == b'\xb0\x00\x2C\x21\x2D'
 
     # setupTable_prep
 
-    def test_setupTable_prep(self):
-        pass
+    def test_setupTable_prep_no_ttdata(self, quadufo):
+        # UFO contains no "public.truetype.instructions" lib key
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.setupTable_prep()
+        assert "prep" not in ic.otf
+
+    def test_setupTable_prep_no_program(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, but the font and
+        # control value programs are not there. (They are optional)
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+        }
+        ic.setupTable_prep()
+        assert "prep" not in ic.otf
+
+    def test_setupTable_prep_none(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, but the font and
+        # control value programs are None.
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+            "controlValueProgram": None,
+        }
+        ic.setupTable_prep()
+        assert "prep" not in ic.otf
+
+    def test_setupTable_prep_empty(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, but the font and
+        # control value programs are empty.
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+            "controlValueProgram": "",
+        }
+        ic.setupTable_prep()
+        assert "prep" not in ic.otf
+
+    def test_setupTable_prep(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, and the font and
+        # control value programs are present.
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+            "controlValueProgram": "PUSHW[]\n511\nSCANCTRL[]",
+        }
+        ic.setupTable_prep()
+
+        assert "prep" in ic.otf
+
+        # Check if the bytecode is correct, though this may be out of scope
+        assert ic.otf["prep"].program.getBytecode() == b'\xb8\x01\xff\x85'
