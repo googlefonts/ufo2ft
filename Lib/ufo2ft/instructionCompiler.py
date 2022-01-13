@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 
 
 class InstructionCompiler:
-    def _check_glyph_hash(self, glyph, ttglyph, glyph_hash, otf, otf_glyph_name=None):
+    def _check_glyph_hash(
+        self, glyph, ttglyph, glyph_hash, otf, otf_glyph_name=None
+    ):
         """Check if the supplied glyph hash from the ufo matches the current outlines."""
         if otf_glyph_name is None:
             # Use the name of the UFO glyph
