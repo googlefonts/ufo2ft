@@ -248,13 +248,9 @@ class InstructionCompilerTest:
         # missing in the UFO, e.g. '.notdef'
         ic = InstructionCompiler()
         ic.ufo = dict()
-        with caplog.at_level(
-            logging.INFO, logger="ufo2ft.instructionCompiler"
-        ):
+        with caplog.at_level(logging.INFO, logger="ufo2ft.instructionCompiler"):
             ic.compileGlyphInstructions(None, "A")
-        assert (
-            "Skipping compilation of instructions for glyph 'A'" in caplog.text
-        )
+        assert "Skipping compilation of instructions for glyph 'A'" in caplog.text
 
     # _compile_tt_glyph_program
 
@@ -321,7 +317,9 @@ class InstructionCompilerTest:
         # assert ic.otf["glyf"]["a"].program.getBytecode() == b""
         assert not hasattr(ic.otf["glyf"]["h"], "program")
 
-    def test_compile_tt_glyph_program_empty_asm_composite(self, quaduforeversed, quadfont):
+    def test_compile_tt_glyph_program_empty_asm_composite(
+        self, quaduforeversed, quadfont
+    ):
         # UFO glyph contains "public.truetype.instructions" lib key, but the
         # assembly code entry is empty. The glyph is a composite.
         ic = InstructionCompiler()
