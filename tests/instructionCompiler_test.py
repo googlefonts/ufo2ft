@@ -1,12 +1,10 @@
-import logging
-
 import pytest
 from cu2qu.ufo import font_to_quadratic
 from fontTools.pens.hashPointPen import HashPointPen
 from fontTools.ttLib.ttFont import TTFont
 
 from ufo2ft.instructionCompiler import InstructionCompiler
-from .outlineCompiler_test import getpath, testufo, quadufo
+from .outlineCompiler_test import getpath
 
 
 def get_hash_ufo(glyph, ufo):
@@ -34,6 +32,13 @@ def quadfont():
 def quaduforeversed(FontClass):
     font = FontClass(getpath("TestFont.ufo"))
     font_to_quadratic(font=font, reverse_direction=True)
+    return font
+
+
+@pytest.fixture
+def testufo(FontClass):
+    font = FontClass(getpath("TestFont.ufo"))
+    del font.lib["public.postscriptNames"]
     return font
 
 
