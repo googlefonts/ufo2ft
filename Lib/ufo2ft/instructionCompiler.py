@@ -64,6 +64,8 @@ class InstructionCompiler:
                 table.program.fromAssembly(asm)
 
     def compileGlyphInstructions(self, ttGlyph, name):
+        """Compile the glyph instructions from the UFO glyph `name` to bytecode
+        and add it to `ttGlyph`."""
         if name not in self.ufo:
             # Skip glyphs that are not in the UFO, e.g. '.notdef'
             return
@@ -102,6 +104,7 @@ class InstructionCompiler:
         # Set component flags
 
         if len(ttglyph.components) != len(glyph.components):
+            # May happen if nested components have been flattened by a filter
             logger.error(
                 "Number of components differ between UFO and TTF "
                 f"in glyph '{glyph.name}' ({len(glyph.components)} vs. "
