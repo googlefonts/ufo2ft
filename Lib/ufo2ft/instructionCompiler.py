@@ -52,7 +52,11 @@ class InstructionCompiler:
         """Make sure we understand the format version, currently only version 1
         is supported."""
         formatVersion = ttdata.get("formatVersion", None)
-        if int(formatVersion) != 1:
+        if not isinstance(formatVersion, str):
+            raise TypeError(
+                f"Illegal type '{type(formatVersion).__name__}' instead of 'str' for formatVersion for instructions in {name}."
+            )
+        if formatVersion != "1":
             raise NotImplementedError(
                 f"Unknown formatVersion {formatVersion} for instructions in {name}."
             )
