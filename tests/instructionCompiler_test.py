@@ -262,8 +262,17 @@ class InstructionCompilerTest:
 
     # _compile_tt_glyph_program
 
-    def test_compile_tt_glyph_program(self):
-        pass
+    def test_compile_tt_glyph_program_empty(self, quaduforeversed, quadfont):
+        # UFO glyph contains no "public.truetype.instructions" lib key
+        with pytest.raises(
+            TypeError,
+            match="Illegal type 'NoneType' instead of 'str' for formatVersion for instructions in glyph 'a'.",
+        ):
+            InstructionCompiler()._compile_tt_glyph_program(
+                glyph=quaduforeversed["a"],
+                ttglyph=quadfont["glyf"]["uni0061"],
+                ttdata={},
+            )
 
     # _set_composite_flags
 
