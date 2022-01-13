@@ -291,6 +291,72 @@ class InstructionCompilerTest:
             )
         assert ("Glyph assembly missing, glyph 'a' will have no instructions in font." in caplog.text)
 
+    def test_compile_tt_glyph_program_empty_asm(self, quaduforeversed, quadfont, caplog):
+        # UFO glyph contains "public.truetype.instructions" lib key, but the
+        # assembly code entry is empty
+        ic = InstructionCompiler()
+        ic.ufo = quaduforeversed
+        ic.otf = quadfont
+
+        glyph = ic.ufo["a"]
+        glyph_hash = get_hash_ufo(glyph, ic.ufo)
+
+        ic._compile_tt_glyph_program(
+            glyph=ic.ufo["a"],
+            ttglyph=ic.otf["glyf"]["a"],
+            ttdata={
+                "formatVersion": "1",
+                "id": glyph_hash,
+                "assembly": "",
+            },
+        )
+        # assert ic.otf["glyf"]["a"].program.getBytecode() == b""
+        assert not hasattr(ic.otf["glyf"]["h"], "program")
+
+    def test_compile_tt_glyph_program_empty_asm_composite(self, quaduforeversed, quadfont, caplog):
+        # UFO glyph contains "public.truetype.instructions" lib key, but the
+        # assembly code entry is empty. The glyph is a composite.
+        ic = InstructionCompiler()
+        ic.ufo = quaduforeversed
+        ic.otf = quadfont
+
+        glyph = ic.ufo["h"]
+        glyph_hash = get_hash_ufo(glyph, ic.ufo)
+
+        assert ic.otf["glyf"]["h"].isComposite()
+
+        ic._compile_tt_glyph_program(
+            glyph=ic.ufo["h"],
+            ttglyph=ic.otf["glyf"]["h"],
+            ttdata={
+                "formatVersion": "1",
+                "id": glyph_hash,
+                "assembly": "",
+            },
+        )
+        # Components must not have an empty program
+        assert not hasattr(ic.otf["glyf"]["h"], "program")
+
+    def test_compile_tt_glyph_program(self, quaduforeversed, quadfont, caplog):
+        # UFO glyph contains no "public.truetype.instructions" lib key
+        ic = InstructionCompiler()
+        ic.ufo = quaduforeversed
+        ic.otf = quadfont
+
+        glyph = ic.ufo["a"]
+        glyph_hash = get_hash_ufo(glyph, ic.ufo)
+
+        ic._compile_tt_glyph_program(
+            glyph=ic.ufo["a"],
+            ttglyph=ic.otf["glyf"]["a"],
+            ttdata={
+                "formatVersion": "1",
+                "id": glyph_hash,
+                "assembly": "PUSHB[]\n0\nMDAP[1]",
+            },
+        )
+        assert ic.otf["glyf"]["a"].program.getBytecode() == b"\xb0\x00\x2f"
+
     # _set_composite_flags
 
     def test_set_composite_flags(self):
