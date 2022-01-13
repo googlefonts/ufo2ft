@@ -158,7 +158,10 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+        for key, tag in (
+            ("controlValueProgram", "prep"),
+            ("fontProgram", "fpgm"),
+        ):
             ic._compile_program(key=key, table_tag=tag)
         assert "fpgm" not in ic.otf
         assert "prep" not in ic.otf
@@ -172,7 +175,10 @@ class InstructionCompilerTest:
         ic.ufo.lib["public.truetype.instructions"] = {
             "formatVersion": "1",
         }
-        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+        for key, tag in (
+            ("controlValueProgram", "prep"),
+            ("fontProgram", "fpgm"),
+        ):
             ic._compile_program(key=key, table_tag=tag)
         assert "fpgm" not in ic.otf
         assert "prep" not in ic.otf
@@ -188,7 +194,10 @@ class InstructionCompilerTest:
             "controlValueProgram": None,
             "fontProgram": None,
         }
-        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+        for key, tag in (
+            ("controlValueProgram", "prep"),
+            ("fontProgram", "fpgm"),
+        ):
             ic._compile_program(key=key, table_tag=tag)
         assert "fpgm" not in ic.otf
         assert "prep" not in ic.otf
@@ -204,7 +213,10 @@ class InstructionCompilerTest:
             "controlValueProgram": "",
             "fontProgram": "",
         }
-        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+        for key, tag in (
+            ("controlValueProgram", "prep"),
+            ("fontProgram", "fpgm"),
+        ):
             ic._compile_program(key=key, table_tag=tag)
         assert "fpgm" not in ic.otf
         assert "prep" not in ic.otf
@@ -220,15 +232,18 @@ class InstructionCompilerTest:
             "controlValueProgram": "PUSHW[]\n511\nSCANCTRL[]",
             "fontProgram": "PUSHB[]\n0\nFDEF[]\nPOP[]\nENDF[]",
         }
-        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+        for key, tag in (
+            ("controlValueProgram", "prep"),
+            ("fontProgram", "fpgm"),
+        ):
             ic._compile_program(key=key, table_tag=tag)
 
         assert "fpgm" in ic.otf
         assert "prep" in ic.otf
 
         # Check if the bytecode is correct, though this may be out of scope
-        assert ic.otf["fpgm"].program.getBytecode() == b'\xb0\x00\x2C\x21\x2D'
-        assert ic.otf["prep"].program.getBytecode() == b'\xb8\x01\xff\x85'
+        assert ic.otf["fpgm"].program.getBytecode() == b"\xb0\x00\x2C\x21\x2D"
+        assert ic.otf["prep"].program.getBytecode() == b"\xb8\x01\xff\x85"
 
     # compileGlyphInstructions
 
@@ -237,9 +252,13 @@ class InstructionCompilerTest:
         # missing in the UFO, e.g. '.notdef'
         ic = InstructionCompiler()
         ic.ufo = dict()
-        with caplog.at_level(logging.INFO, logger="ufo2ft.instructionCompiler"):
+        with caplog.at_level(
+            logging.INFO, logger="ufo2ft.instructionCompiler"
+        ):
             ic.compileGlyphInstructions(None, "A")
-        assert "Skipping compilation of instructions for glyph 'A'" in caplog.text
+        assert (
+            "Skipping compilation of instructions for glyph 'A'" in caplog.text
+        )
 
     # _compile_tt_glyph_program
 
@@ -324,7 +343,7 @@ class InstructionCompilerTest:
         assert "fpgm" in ic.otf
 
         # Check if the bytecode is correct, though this may be out of scope
-        assert ic.otf["fpgm"].program.getBytecode() == b'\xb0\x00\x2C\x21\x2D'
+        assert ic.otf["fpgm"].program.getBytecode() == b"\xb0\x00\x2C\x21\x2D"
 
     # setupTable_prep
 
@@ -389,4 +408,4 @@ class InstructionCompilerTest:
         assert "prep" in ic.otf
 
         # Check if the bytecode is correct, though this may be out of scope
-        assert ic.otf["prep"].program.getBytecode() == b'\xb8\x01\xff\x85'
+        assert ic.otf["prep"].program.getBytecode() == b"\xb8\x01\xff\x85"
