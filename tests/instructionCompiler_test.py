@@ -7,7 +7,7 @@ from fontTools.ttLib.ttFont import TTFont
 
 from ufo2ft.instructionCompiler import InstructionCompiler
 
-from .outlineCompiler_test import getpath
+from .outlineCompiler_test import getpath, quadufo
 
 
 def get_hash_ufo(glyph, ufo):
@@ -139,8 +139,87 @@ class InstructionCompilerTest:
                 name="location",
             )
 
-    def test_compile_program(self):
-        pass
+    # _compile_program
+
+    def test_compile_program_invalid_tag(self):
+        with pytest.raises(AssertionError):
+            # table_tag must be "fpgm" or "prep"
+            InstructionCompiler()._compile_program(key="foo", table_tag="bar")
+
+    def test_compile_program_no_ttdata(self, quadufo):
+        # UFO contains no "public.truetype.instructions" lib key
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+            ic._compile_program(key=key, table_tag=tag)
+        assert "fpgm" not in ic.otf
+        assert "prep" not in ic.otf
+
+    def test_compile_program_no_programs(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, but the font and
+        # control value programs are not there. (They are optional)
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+        }
+        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+            ic._compile_program(key=key, table_tag=tag)
+        assert "fpgm" not in ic.otf
+        assert "prep" not in ic.otf
+
+    def test_compile_program_none(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, but the font and
+        # control value programs are None.
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+            "controlValueProgram": None,
+            "fontProgram": None,
+        }
+        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+            ic._compile_program(key=key, table_tag=tag)
+        assert "fpgm" not in ic.otf
+        assert "prep" not in ic.otf
+
+    def test_compile_program_empty(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, but the font and
+        # control value programs are empty.
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+            "controlValueProgram": "",
+            "fontProgram": "",
+        }
+        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+            ic._compile_program(key=key, table_tag=tag)
+        assert "fpgm" not in ic.otf
+        assert "prep" not in ic.otf
+
+    def test_compile_program(self, quadufo):
+        # UFO contains the "public.truetype.instructions" lib key, and the font and
+        # control value programs are present.
+        ic = InstructionCompiler()
+        ic.ufo = quadufo
+        ic.otf = TTFont()
+        ic.ufo.lib["public.truetype.instructions"] = {
+            "formatVersion": "1",
+            "controlValueProgram": "PUSHW[]\n511\nSCANCTRL[]",
+            "fontProgram": "PUSHB[]\n0\nFDEF[]\nPOP[]\nENDF[]",
+        }
+        for key, tag in (("controlValueProgram", "prep"), ("fontProgram", "fpgm")):
+            ic._compile_program(key=key, table_tag=tag)
+            ic.otf[tag].program.getBytecode()
+        assert "fpgm" in ic.otf
+        assert "prep" in ic.otf
+        assert ic.otf["fpgm"].program.getBytecode() == b'\xb0\x00\x2C\x21\x2D'
+
     # compileGlyphInstructions
 
     def test_compileGlyphInstructions_missing_glyph(self, caplog):
