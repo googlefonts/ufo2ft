@@ -46,6 +46,9 @@ def testufo(FontClass):
 
 
 class InstructionCompilerTest:
+
+    # _check_glyph_hash
+
     def test_check_glyph_hash_match(self, quaduforeversed, quadfont):
         glyph = quaduforeversed["a"]
         ufo_hash = get_hash_ufo(glyph, quaduforeversed)
@@ -107,6 +110,8 @@ class InstructionCompilerTest:
         )
         assert not result
 
+    # _check_tt_data_format
+
     def test_check_tt_data_format_match_str(self):
         result = InstructionCompiler()._check_tt_data_format(
             ttdata={"formatVersion": "1"},
@@ -136,6 +141,7 @@ class InstructionCompilerTest:
 
     def test_compile_program(self):
         pass
+    # compileGlyphInstructions
 
     def test_compileGlyphInstructions_missing_glyph(self, caplog):
         # The method logs an info when trying to compile a glyph which is
@@ -146,20 +152,32 @@ class InstructionCompilerTest:
             ic.compileGlyphInstructions(None, "A")
         assert "Skipping compilation of instructions for glyph 'A'" in caplog.text
 
+    # _compile_tt_glyph_program
+
     def test_compile_tt_glyph_program(self):
         pass
+
+    # _set_composite_flags
 
     def test_set_composite_flags(self):
         pass
 
+    # update_maxp
+
     def test_update_maxp(self):
         pass
+
+    # setupTable_cvt
 
     def test_setupTable_cvt(self):
         pass
 
+    # setupTable_fpgm
+
     def test_setupTable_fpgm(self):
         pass
+
+    # setupTable_prep
 
     def test_setupTable_prep(self):
         pass
