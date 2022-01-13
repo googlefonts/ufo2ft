@@ -270,6 +270,27 @@ class InstructionCompilerTest:
                 ttdata={},
             )
 
+    def test_compile_tt_glyph_program_no_asm(self, quaduforeversed, quadfont, caplog):
+        # UFO glyph contains no "public.truetype.instructions" lib key
+        ic = InstructionCompiler()
+        ic.ufo = quaduforeversed
+        ic.otf = quadfont
+
+        glyph = ic.ufo["a"]
+        glyph_hash = get_hash_ufo(glyph, ic.ufo)
+
+        with caplog.at_level(logging.ERROR, logger="ufo2ft.instructionCompiler"):
+            ic._compile_tt_glyph_program(
+                glyph=ic.ufo["a"],
+                ttglyph=ic.otf["glyf"]["a"],
+                ttdata={
+                    "formatVersion": "1",
+                    "id": glyph_hash,
+                    # "assembly": "",
+                },
+            )
+        assert ("Glyph assembly missing, glyph 'a' will have no instructions in font." in caplog.text)
+
     # _set_composite_flags
 
     def test_set_composite_flags(self):
