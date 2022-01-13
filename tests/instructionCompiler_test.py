@@ -277,6 +277,8 @@ class InstructionCompilerTest:
         ic.ufo = quaduforeversed
         ic.otf = quadfont
 
+        assert not ic.otf["glyf"]["a"].isComposite()
+
         glyph = ic.ufo["a"]
         glyph_hash = get_hash_ufo(glyph, ic.ufo)
 
@@ -298,6 +300,8 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quaduforeversed
         ic.otf = quadfont
+
+        assert not ic.otf["glyf"]["a"].isComposite()
 
         glyph = ic.ufo["a"]
         glyph_hash = get_hash_ufo(glyph, ic.ufo)
@@ -339,10 +343,13 @@ class InstructionCompilerTest:
         assert not hasattr(ic.otf["glyf"]["h"], "program")
 
     def test_compile_tt_glyph_program(self, quaduforeversed, quadfont, caplog):
-        # UFO glyph contains no "public.truetype.instructions" lib key
+        # UFO glyph contains "public.truetype.instructions" lib key, and the
+        # assembly code entry is present.
         ic = InstructionCompiler()
         ic.ufo = quaduforeversed
         ic.otf = quadfont
+
+        assert not ic.otf["glyf"]["a"].isComposite()
 
         glyph = ic.ufo["a"]
         glyph_hash = get_hash_ufo(glyph, ic.ufo)
