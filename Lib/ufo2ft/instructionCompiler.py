@@ -67,7 +67,7 @@ class InstructionCompiler:
         if ttdata:
             self._check_tt_data_format(ttdata, f"lib key '{key}'")
             asm = ttdata.get(key, None)
-            if asm is not None:
+            if asm:
                 self.otf[table_tag] = table = ttLib.newTable(table_tag)
                 table.program = ttLib.tables.ttProgram.Program()
                 table.program.fromAssembly(asm)
