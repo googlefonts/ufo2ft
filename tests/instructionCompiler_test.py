@@ -125,7 +125,10 @@ class InstructionCompilerTest:
     def test_check_tt_data_format_type_error(self):
         with pytest.raises(
             TypeError,
-            match="Illegal type 'int' instead of 'str' for formatVersion for instructions in location.",
+            match=(
+                "Illegal type 'int' instead of 'str' for formatVersion "
+                "for instructions in location."
+            ),
         ):
             InstructionCompiler()._check_tt_data_format(
                 ttdata={"formatVersion": 1},  # Spec requires a str
@@ -258,7 +261,10 @@ class InstructionCompilerTest:
         # UFO glyph contains no "public.truetype.instructions" lib key
         with pytest.raises(
             TypeError,
-            match="Illegal type 'NoneType' instead of 'str' for formatVersion for instructions in glyph 'a'.",
+            match=(
+                "Illegal type 'NoneType' instead of 'str' for formatVersion "
+                "for instructions in glyph 'a'."
+            ),
         ):
             InstructionCompiler()._compile_tt_glyph_program(
                 glyph=quaduforeversed["a"],
