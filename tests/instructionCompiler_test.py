@@ -58,6 +58,18 @@ class InstructionCompilerTest:
         )
         assert result
 
+    def test_check_glyph_hash_missing(self, quaduforeversed, quadfont):
+        glyph = quaduforeversed["a"]
+
+        result = InstructionCompiler()._check_glyph_hash(
+            glyph=glyph,
+            ttglyph=quadfont["glyf"]["uni0061"],
+            glyph_hash=None,
+            otf=quadfont,
+            otf_glyph_name="uni0061",
+        )
+        assert not result
+
     def test_check_glyph_hash_mismatch(self, testufo, quadfont):
         glyph = testufo["a"]
         ufo_hash = get_hash_ufo(glyph, testufo)
