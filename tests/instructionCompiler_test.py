@@ -7,7 +7,7 @@ from fontTools.ttLib.ttFont import TTFont
 
 from ufo2ft.instructionCompiler import InstructionCompiler
 
-from .outlineCompiler_test import getpath, quadufo
+from .outlineCompiler_test import getpath
 
 
 def get_hash_ufo(glyph, ufo):
@@ -28,6 +28,13 @@ def get_hash_ttf(glyph_name, ttf):
 def quadfont():
     font = TTFont()
     font.importXML(getpath("Testfont.ttx"))
+    return font
+
+
+@pytest.fixture
+def quadufo(FontClass):
+    font = FontClass(getpath("TestFont.ufo"))
+    font_to_quadratic(font)
     return font
 
 
