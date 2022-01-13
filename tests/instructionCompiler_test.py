@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from cu2qu.ufo import font_to_quadratic
 from fontTools.pens.hashPointPen import HashPointPen
@@ -131,3 +133,12 @@ class InstructionCompilerTest:
                 ttdata={"formatVersion": "1.5"},  # Maps to the correct int
                 name="location",
             )
+    def test_compileGlyphInstructions_missing_glyph(self, caplog):
+        # The method logs an info when trying to compile a glyph which is
+        # missing in the UFO, e.g. '.notdef'
+        ic = InstructionCompiler()
+        ic.ufo = dict()
+        with caplog.at_level(logging.INFO, logger="ufo2ft.instructionCompiler"):
+            ic.compileGlyphInstructions(None, "A")
+        assert "Skipping compilation of instructions for glyph 'A'" in caplog.text
+
