@@ -91,3 +91,30 @@ class InstructionCompilerTest:
             otf_glyph_name="uni0061",
         )
         assert not result
+
+    def test_check_tt_data_format_match_str(self):
+        result = InstructionCompiler()._check_tt_data_format(
+            ttdata={"formatVersion": "1"},
+            name="",
+        )
+        assert result is None
+
+    def test_check_tt_data_format_type_error(self):
+        with pytest.raises(
+            TypeError,
+            match="Illegal type 'int' instead of 'str' for formatVersion for instructions in location.",
+        ):
+            InstructionCompiler()._check_tt_data_format(
+                ttdata={"formatVersion": 1},  # Spec requires a str
+                name="location",
+            )
+
+    def test_check_tt_data_format_mismatch_str(self):
+        with pytest.raises(
+            NotImplementedError,
+            match="Unknown formatVersion 1.5 for instructions in location.",
+        ):
+            InstructionCompiler()._check_tt_data_format(
+                ttdata={"formatVersion": "1.5"},  # Maps to the correct int
+                name="location",
+            )
