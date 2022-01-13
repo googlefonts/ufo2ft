@@ -22,10 +22,14 @@ logger = logging.getLogger(__name__)
 
 
 class InstructionCompiler:
-    def _check_glyph_hash(self, glyph, ttglyph, glyph_hash):
-        """Check if the glyph hash in the ufo matches the current outlines."""
-        hash_pen = HashPointPen(glyph.width, self.otf.getGlyphSet())
-        ttglyph.drawPoints(hash_pen, self.otf["glyf"])
+    def _check_glyph_hash(self, glyph, ttglyph, glyph_hash, otf, otf_glyph_name=None):
+        """Check if the supplied glyph hash from the ufo matches the current outlines."""
+        if otf_glyph_name is None:
+            # Use the name of the UFO glyph
+            otf_glyph_name = glyph.name
+        ttwidth = otf["hmtx"][otf_glyph_name][0]
+        hash_pen = HashPointPen(ttwidth, otf.getGlyphSet())
+        ttglyph.drawPoints(hash_pen, otf["glyf"])
         if glyph_hash is None:
             # The glyph hash is required
             logger.error(
@@ -80,7 +84,7 @@ class InstructionCompiler:
     def _compile_tt_glyph_program(self, glyph, ttglyph, ttdata):
         self._check_tt_data_format(ttdata, f"glyph '{glyph.name}'")
         glyph_hash = ttdata.get("id", None)
-        if not self._check_glyph_hash(glyph, ttglyph, glyph_hash):
+        if not self._check_glyph_hash(glyph, ttglyph, glyph_hash, self.otf):
             return
 
         # Compile the glyph program
