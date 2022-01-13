@@ -133,6 +133,10 @@ class InstructionCompilerTest:
                 ttdata={"formatVersion": "1.5"},  # Maps to the correct int
                 name="location",
             )
+
+    def test_compile_program(self):
+        pass
+
     def test_compileGlyphInstructions_missing_glyph(self, caplog):
         # The method logs an info when trying to compile a glyph which is
         # missing in the UFO, e.g. '.notdef'
@@ -142,3 +146,20 @@ class InstructionCompilerTest:
             ic.compileGlyphInstructions(None, "A")
         assert "Skipping compilation of instructions for glyph 'A'" in caplog.text
 
+    def test_compile_tt_glyph_program(self):
+        pass
+
+    def test_set_composite_flags(self):
+        pass
+
+    def test_update_maxp(self):
+        pass
+
+    def test_setupTable_cvt(self):
+        pass
+
+    def test_setupTable_fpgm(self):
+        pass
+
+    def test_setupTable_prep(self):
+        pass
