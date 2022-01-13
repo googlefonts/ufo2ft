@@ -4,6 +4,7 @@ from fontTools.pens.hashPointPen import HashPointPen
 from fontTools.ttLib.ttFont import TTFont
 
 from ufo2ft.instructionCompiler import InstructionCompiler
+
 from .outlineCompiler_test import getpath
 
 
