@@ -77,6 +77,10 @@ class InstructionCompiler:
         and add it to `ttGlyph`."""
         if name not in self.ufo:
             # Skip glyphs that are not in the UFO, e.g. '.notdef'
+            logger.info(
+                f"Skipping compilation of instructions for glyph '{name}' because it "
+                "is not in the input UFO."
+            )
             return
 
         glyph = self.ufo[name]
