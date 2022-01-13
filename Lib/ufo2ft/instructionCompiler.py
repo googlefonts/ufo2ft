@@ -95,7 +95,7 @@ class InstructionCompiler:
 
         # Compile the glyph program
         asm = ttdata.get("assembly", None)
-        if asm is None:
+        if not asm:
             # The "assembly" key is required.
             logger.error(
                 f"Glyph assembly missing, glyph '{glyph.name}' will have "
