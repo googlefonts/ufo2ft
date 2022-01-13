@@ -27,7 +27,7 @@ def get_hash_ttf(glyph_name, ttf):
 @pytest.fixture
 def quadfont():
     font = TTFont()
-    font.importXML(getpath("Testfont.ttx"))
+    font.importXML(getpath("Testfont-TTF-post3.ttx"))
     return font
 
 
@@ -59,14 +59,13 @@ class InstructionCompilerTest:
     def test_check_glyph_hash_match(self, quaduforeversed, quadfont):
         glyph = quaduforeversed["a"]
         ufo_hash = get_hash_ufo(glyph, quaduforeversed)
-        ttglyph = quadfont["glyf"]["uni0061"]
+        ttglyph = quadfont["glyf"]["a"]
 
         result = InstructionCompiler()._check_glyph_hash(
             glyph=glyph,
             ttglyph=ttglyph,
             glyph_hash=ufo_hash,
             otf=quadfont,
-            otf_glyph_name="uni0061",
         )
         assert result
 
@@ -75,17 +74,16 @@ class InstructionCompilerTest:
 
         result = InstructionCompiler()._check_glyph_hash(
             glyph=glyph,
-            ttglyph=quadfont["glyf"]["uni0061"],
+            ttglyph=quadfont["glyf"]["a"],
             glyph_hash=None,
             otf=quadfont,
-            otf_glyph_name="uni0061",
         )
         assert not result
 
     def test_check_glyph_hash_mismatch(self, testufo, quadfont):
         glyph = testufo["a"]
         ufo_hash = get_hash_ufo(glyph, testufo)
-        ttglyph = quadfont["glyf"]["uni0061"]
+        ttglyph = quadfont["glyf"]["a"]
 
         # The contour direction is reversed in testufo vs. quadfont, so the
         # hash should not match
@@ -95,7 +93,6 @@ class InstructionCompilerTest:
             ttglyph=ttglyph,
             glyph_hash=ufo_hash,
             otf=quadfont,
-            otf_glyph_name="uni0061",
         )
         assert not result
 
@@ -106,14 +103,13 @@ class InstructionCompilerTest:
         glyph.width += 10
 
         ufo_hash = get_hash_ufo(glyph, quaduforeversed)
-        ttglyph = quadfont["glyf"]["uni0061"]
+        ttglyph = quadfont["glyf"]["a"]
 
         result = InstructionCompiler()._check_glyph_hash(
             glyph=glyph,
             ttglyph=ttglyph,
             glyph_hash=ufo_hash,
             otf=quadfont,
-            otf_glyph_name="uni0061",
         )
         assert not result
 
@@ -270,7 +266,7 @@ class InstructionCompilerTest:
         ):
             InstructionCompiler()._compile_tt_glyph_program(
                 glyph=quaduforeversed["a"],
-                ttglyph=quadfont["glyf"]["uni0061"],
+                ttglyph=quadfont["glyf"]["a"],
                 ttdata={},
             )
 
