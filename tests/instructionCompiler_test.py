@@ -271,7 +271,8 @@ class InstructionCompilerTest:
             )
 
     def test_compile_tt_glyph_program_no_asm(self, quaduforeversed, quadfont, caplog):
-        # UFO glyph contains no "public.truetype.instructions" lib key
+        # UFO glyph contains "public.truetype.instructions" lib key, but no
+        # assembly code entry
         ic = InstructionCompiler()
         ic.ufo = quaduforeversed
         ic.otf = quadfont
