@@ -230,10 +230,10 @@ class InstructionCompiler:
         ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata:
             self._check_tt_data_format(ttdata, "key 'controlValue'")
-            cvt_list = ttdata.get("controlValue", None)
-            if cvt_list:
+            cvt_dict = ttdata.get("controlValue", None)
+            if cvt_dict:
                 # Convert string keys to int
-                cvt_dict = {int(v["id"]): v["value"] for v in cvt_list}
+                cvt_dict = {int(k): v for k, v in cvt_dict.items()}
                 # Find the maximum cvt index.
                 # We can't just use the dict keys because the cvt must be
                 # filled consecutively.
