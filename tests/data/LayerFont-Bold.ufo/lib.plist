@@ -10,37 +10,5 @@
       <string>dotabovecomb</string>
       <string>edotabove</string>
     </array>
-    <key>public.truetype.instructions</key>
-    <dict>
-      <key>controlValue</key>
-      <array>
-        <dict>
-          <key>id</key>
-          <integer>0</integer>
-          <key>value</key>
-          <integer>256</integer>
-        </dict>
-        <dict>
-          <key>id</key>
-          <integer>2</integer>
-          <key>value</key>
-          <integer>0</integer>
-        </dict>
-      </array>
-      <key>formatVersion</key>
-      <string>1</string>
-      <key>maxFunctionDefs</key>
-      <integer>0</integer>
-      <key>maxInstructionDefs</key>
-      <integer>0</integer>
-      <key>maxStackElements</key>
-      <integer>0</integer>
-      <key>maxStorage</key>
-      <integer>0</integer>
-      <key>maxTwilightPoints</key>
-      <integer>0</integer>
-      <key>maxZones</key>
-      <integer>1</integer>
-    </dict>
   </dict>
 </plist>
