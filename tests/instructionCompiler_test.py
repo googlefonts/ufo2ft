@@ -27,7 +27,7 @@ def get_hash_ttf(glyph_name, ttf):
 @pytest.fixture
 def quadfont():
     font = TTFont()
-    font.importXML(getpath("Testfont-TTF-post3.ttx"))
+    font.importXML(getpath("TestFont-TTF-post3.ttx"))
     return font
 
 
