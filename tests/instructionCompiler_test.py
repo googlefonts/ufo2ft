@@ -454,6 +454,68 @@ class InstructionCompilerTest:
         assert ttglyph.components[0].flags & OVERLAP_COMPOUND
         assert not ttglyph.components[1].flags & OVERLAP_COMPOUND
 
+    def test_set_composite_flags(self, quadufo, quadfont):
+        ic = InstructionCompiler()
+        ic.autoUseMyMetrics = False
+
+        glyph = quadufo["h"]
+        glyph.components[0].identifier = "component0"
+        glyph.components[1].identifier = "component1"
+        glyph.lib = {
+            "public.objectLibs": {
+                "component0": {
+                    "public.truetype.roundOffsetToGrid": False,
+                    "public.truetype.useMyMetrics": False,
+                },
+                "component1": {
+                    "public.truetype.roundOffsetToGrid": True,
+                    "public.truetype.useMyMetrics": True,
+                },
+            },
+        }
+        ttglyph = quadfont["glyf"]["h"]
+
+        ic._set_composite_flags(
+            glyph=glyph,
+            ttglyph=ttglyph,
+        )
+
+        assert not ttglyph.components[0].flags & OVERLAP_COMPOUND
+        assert not ttglyph.components[0].flags & ROUND_XY_TO_GRID
+        assert not ttglyph.components[0].flags & USE_MY_METRICS
+
+        assert not ttglyph.components[1].flags & OVERLAP_COMPOUND
+        assert ttglyph.components[1].flags & ROUND_XY_TO_GRID
+        assert ttglyph.components[1].flags & USE_MY_METRICS
+
+    def test_set_composite_flags_metrics_first_only(self, quadufo, quadfont):
+        ic = InstructionCompiler()
+        ic.autoUseMyMetrics = False
+
+        glyph = quadufo["h"]
+        glyph.components[0].identifier = "component0"
+        glyph.components[1].identifier = "component1"
+        glyph.lib = {
+            "public.objectLibs": {
+                "component0": {
+                    "public.truetype.useMyMetrics": True,
+                },
+                "component1": {
+                    "public.truetype.useMyMetrics": True,
+                },
+            },
+        }
+        ttglyph = quadfont["glyf"]["h"]
+
+        ic._set_composite_flags(
+            glyph=glyph,
+            ttglyph=ttglyph,
+        )
+
+        # Flag on component 1 should have been ignored
+        assert ttglyph.components[0].flags & USE_MY_METRICS
+        assert not ttglyph.components[1].flags & USE_MY_METRICS
+
     # update_maxp
 
     def test_update_maxp(self):
