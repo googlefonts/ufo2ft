@@ -372,6 +372,30 @@ class InstructionCompilerTest:
         )
         assert ic.otf["glyf"]["a"].program.getBytecode() == b"\xb0\x00\x2f"
 
+    def test_compile_tt_glyph_program_composite(self, quaduforeversed, quadfont):
+        # UFO glyph contains "public.truetype.instructions" lib key, and the
+        # assembly code entry is present. The glyph is a composite.
+        ic = InstructionCompiler()
+        ic.ufo = quaduforeversed
+        ic.otf = quadfont
+
+        assert ic.otf["glyf"]["h"].isComposite()
+
+        # We calculate the hash from the OTF to allow compilation; the component
+        # glyphs in the UFO have cubic curves, so the hash from UFO wouldn't match.
+        glyph_hash = get_hash_ttf("h", ic.otf)
+
+        ic._compile_tt_glyph_program(
+            glyph=ic.ufo["h"],
+            ttglyph=ic.otf["glyf"]["h"],
+            ttdata={
+                "formatVersion": "1",
+                "id": glyph_hash,
+                "assembly": "PUSHB[]\n0\nMDAP[1]",
+            },
+        )
+        assert ic.otf["glyf"]["h"].program.getBytecode() == b"\xb0\x00\x2f"
+
     # _set_composite_flags
 
     def test_set_composite_flags(self):
