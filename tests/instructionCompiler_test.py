@@ -201,7 +201,7 @@ class InstructionCompilerTest:
         assert "fpgm" not in ic.otf
         assert "prep" not in ic.otf
 
-    def test_compile_program_empty(self, quadufo):
+    def test_compile_program_empty(self, quadufo, caplog):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are empty.
         ic = InstructionCompiler()
@@ -212,11 +212,20 @@ class InstructionCompilerTest:
             "controlValueProgram": "",
             "fontProgram": "",
         }
-        for key, tag in (
-            ("controlValueProgram", "prep"),
-            ("fontProgram", "fpgm"),
-        ):
-            ic._compile_program(key=key, table_tag=tag)
+        with caplog.at_level(logging.DEBUG, logger="ufo2ft.instructionCompiler"):
+            for key, tag in (
+                ("controlValueProgram", "prep"),
+                ("fontProgram", "fpgm"),
+            ):
+                ic._compile_program(key=key, table_tag=tag)
+        assert(
+            "Assembly for table 'fpgm' is empty, table not added to font."
+            in caplog.text
+        )
+        assert(
+            "Assembly for table 'prep' is empty, table not added to font."
+            in caplog.text
+        )
         assert "fpgm" not in ic.otf
         assert "prep" not in ic.otf
 

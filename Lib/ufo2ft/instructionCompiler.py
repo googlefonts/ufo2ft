@@ -64,10 +64,20 @@ class InstructionCompiler:
         if ttdata:
             self._check_tt_data_format(ttdata, f"lib key '{key}'")
             asm = ttdata.get(key, None)
-            if asm:
-                self.otf[table_tag] = table = ttLib.newTable(table_tag)
-                table.program = ttLib.tables.ttProgram.Program()
-                table.program.fromAssembly(asm)
+            if asm is None:
+                # The optional key is not there, quit right here
+                return
+            if not asm:
+                # If assembly code is empty, don't bother to add the table
+                logger.debug(
+                    f"Assembly for table '{table_tag}' is empty, "
+                    "table not added to font."
+                )
+                return
+
+            self.otf[table_tag] = table = ttLib.newTable(table_tag)
+            table.program = ttLib.tables.ttProgram.Program()
+            table.program.fromAssembly(asm)
 
     def compileGlyphInstructions(self, ttGlyph, name):
         """Compile the glyph instructions from the UFO glyph `name` to bytecode
