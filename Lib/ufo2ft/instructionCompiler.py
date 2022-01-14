@@ -119,9 +119,7 @@ class InstructionCompiler:
 
         if not asm:
             # If the assembly code is empty, don't bother adding a program
-            logger.debug(
-                f"Glyph '{glyph.name}' has no instructions."
-            )
+            logger.debug(f"Glyph '{glyph.name}' has no instructions.")
             return
 
         ttglyph.program = ttLib.tables.ttProgram.Program()
