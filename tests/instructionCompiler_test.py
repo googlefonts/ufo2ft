@@ -299,7 +299,7 @@ class InstructionCompilerTest:
             in caplog.text
         )
 
-    def test_compile_tt_glyph_program_empty_asm(self, quaduforeversed, quadfont):
+    def test_compile_tt_glyph_program_empty_asm(self, quaduforeversed, quadfont, caplog):
         # UFO glyph contains "public.truetype.instructions" lib key, but the
         # assembly code entry is empty
         ic = InstructionCompiler()
@@ -311,16 +311,20 @@ class InstructionCompilerTest:
         glyph = ic.ufo["a"]
         glyph_hash = get_hash_ufo(glyph, ic.ufo)
 
-        ic._compile_tt_glyph_program(
-            glyph=ic.ufo["a"],
-            ttglyph=ic.otf["glyf"]["a"],
-            ttdata={
-                "formatVersion": "1",
-                "id": glyph_hash,
-                "assembly": "",
-            },
+        with caplog.at_level(logging.DEBUG, logger="ufo2ft.instructionCompiler"):
+            ic._compile_tt_glyph_program(
+                glyph=ic.ufo["a"],
+                ttglyph=ic.otf["glyf"]["a"],
+                ttdata={
+                    "formatVersion": "1",
+                    "id": glyph_hash,
+                    "assembly": "",
+                },
+            )
+        assert (
+            "Glyph 'a' has no instructions."
+            in caplog.text
         )
-        # assert ic.otf["glyf"]["a"].program.getBytecode() == b""
         assert not hasattr(ic.otf["glyf"]["h"], "program")
 
     def test_compile_tt_glyph_program_empty_asm_composite(

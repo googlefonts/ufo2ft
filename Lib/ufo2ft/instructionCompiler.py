@@ -95,11 +95,18 @@ class InstructionCompiler:
 
         # Compile the glyph program
         asm = ttdata.get("assembly", None)
-        if not asm:
+        if asm is None:
             # The "assembly" key is required.
             logger.error(
                 f"Glyph assembly missing, glyph '{glyph.name}' will have "
                 "no instructions in font."
+            )
+            return
+
+        if not asm:
+            # If the assembly code is empty, don't bother adding a program
+            logger.debug(
+                f"Glyph '{glyph.name}' has no instructions."
             )
             return
 
