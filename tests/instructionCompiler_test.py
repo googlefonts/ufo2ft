@@ -4,6 +4,11 @@ import pytest
 from cu2qu.ufo import font_to_quadratic
 from fontTools.pens.hashPointPen import HashPointPen
 from fontTools.ttLib.ttFont import TTFont
+from fontTools.ttLib.tables._g_l_y_f import (
+    OVERLAP_COMPOUND,
+    ROUND_XY_TO_GRID,
+    USE_MY_METRICS,
+)
 
 from ufo2ft.instructionCompiler import InstructionCompiler
 
@@ -411,8 +416,25 @@ class InstructionCompilerTest:
 
     # _set_composite_flags
 
-    def test_set_composite_flags(self):
-        pass
+    def test_set_composite_flags_no_ttdata(self, quadufo, quadfont):
+        ic = InstructionCompiler()
+        ic.autoUseMyMetrics = False
+
+        glyph = quadufo["h"]
+        ttglyph = quadfont["glyf"]["h"]
+
+        ic._set_composite_flags(
+            glyph=glyph,
+            ttglyph=ttglyph,
+        )
+
+        # Flags have been set by heuristics
+        assert not ttglyph.components[0].flags & OVERLAP_COMPOUND
+        assert ttglyph.components[0].flags & ROUND_XY_TO_GRID
+        assert not ttglyph.components[0].flags & USE_MY_METRICS
+        assert not ttglyph.components[1].flags & OVERLAP_COMPOUND
+        assert ttglyph.components[1].flags & ROUND_XY_TO_GRID
+        assert ttglyph.components[1].flags & USE_MY_METRICS
 
     # update_maxp
 
