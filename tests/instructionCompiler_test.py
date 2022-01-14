@@ -436,6 +436,24 @@ class InstructionCompilerTest:
         assert ttglyph.components[1].flags & ROUND_XY_TO_GRID
         assert ttglyph.components[1].flags & USE_MY_METRICS
 
+    def test_set_composite_flags_compound(self, quadufo, quadfont):
+        ic = InstructionCompiler()
+        ic.autoUseMyMetrics = False
+
+        glyph = quadufo["k"]
+        glyph.components[0].identifier = "component0"
+        glyph.components[1].identifier = "component1"
+        glyph.lib = {"public.truetype.overlap": True}
+        ttglyph = quadfont["glyf"]["k"]
+
+        ic._set_composite_flags(
+            glyph=glyph,
+            ttglyph=ttglyph,
+        )
+        # The OVERLAP_COMPOUND flag is only set on 1st component
+        assert ttglyph.components[0].flags & OVERLAP_COMPOUND
+        assert not ttglyph.components[1].flags & OVERLAP_COMPOUND
+
     # update_maxp
 
     def test_update_maxp(self):
