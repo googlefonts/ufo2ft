@@ -604,6 +604,45 @@ class InstructionCompilerTest:
         assert "cvt " in ic.otf
         assert list(ic.otf["cvt "].values) == [0, 500, 750, -250]
 
+    def test_setupTable_cvt_empty(self, quaduforeversed, quadfont):
+        ic = InstructionCompiler()
+        ic.otf = quadfont
+        ic.ufo = quaduforeversed
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
+            "formatVersion": "1",
+            "controlValue": {}
+        }
+        ic.setupTable_cvt()
+        assert "cvt " not in ic.otf
+
+    def test_setupTable_cvt_none(self, quaduforeversed, quadfont):
+        ic = InstructionCompiler()
+        ic.otf = quadfont
+        ic.ufo = quaduforeversed
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
+            "formatVersion": "1",
+            "controlValue": None,
+        }
+        ic.setupTable_cvt()
+        assert "cvt " not in ic.otf
+
+    def test_setupTable_cvt_missing(self, quaduforeversed, quadfont):
+        ic = InstructionCompiler()
+        ic.otf = quadfont
+        ic.ufo = quaduforeversed
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
+            "formatVersion": "1",
+        }
+        ic.setupTable_cvt()
+        assert "cvt " not in ic.otf
+
+    def test_setupTable_cvt_no_ttdata(self, quaduforeversed, quadfont):
+        ic = InstructionCompiler()
+        ic.otf = quadfont
+        ic.ufo = quaduforeversed
+        ic.setupTable_cvt()
+        assert "cvt " not in ic.otf
+
     # setupTable_fpgm
 
     def test_setupTable_fpgm_no_ttdata(self, quadufo):
