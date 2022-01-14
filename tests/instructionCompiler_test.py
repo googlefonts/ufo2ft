@@ -588,8 +588,21 @@ class InstructionCompilerTest:
 
     # setupTable_cvt
 
-    def test_setupTable_cvt(self):
-        pass
+    def test_setupTable_cvt(self, quaduforeversed, quadfont):
+        ic = InstructionCompiler()
+        ic.otf = quadfont
+        ic.ufo = quaduforeversed
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
+            "formatVersion": "1",
+            "controlValue": {
+                "1": 500,
+                "2": 750,
+                "3": -250,
+            }
+        }
+        ic.setupTable_cvt()
+        assert "cvt " in ic.otf
+        assert list(ic.otf["cvt "].values) == [0, 500, 750, -250]
 
     # setupTable_fpgm
 
