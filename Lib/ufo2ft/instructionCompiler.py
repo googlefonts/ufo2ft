@@ -95,6 +95,10 @@ class InstructionCompiler:
         if ttdata is not None:
             self._compile_tt_glyph_program(glyph, ttGlyph, ttdata)
         if ttGlyph.isComposite():
+            # Remove empty glyph programs from composite glyphs
+            if hasattr(ttGlyph, "program") and not ttGlyph.program:
+                logger.debug(f"Removing empty program from composite glyph '{name}'")
+                delattr(ttGlyph, "program")
             self._set_composite_flags(glyph, ttGlyph)
 
     def _compile_tt_glyph_program(self, glyph, ttglyph, ttdata):
@@ -124,10 +128,6 @@ class InstructionCompiler:
         ttglyph.program.fromAssembly(asm)
 
     def _set_composite_flags(self, glyph, ttglyph):
-        # Remove empty glyph programs from composite glyphs
-        if hasattr(ttglyph, "program") and not ttglyph.program:
-            delattr(ttglyph, "program")
-
         # Set component flags
 
         if len(ttglyph.components) != len(glyph.components):
