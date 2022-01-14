@@ -566,6 +566,25 @@ class InstructionCompilerTest:
         ic.update_maxp()
         expect_maxp(ic.otf)
 
+    def test_update_maxp(self, quaduforeversed, quadfont):
+        ic = InstructionCompiler()
+        ic.otf = quadfont
+        ic.ufo = quaduforeversed
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
+            "formatVersion": "1",
+            "maxStorage": 1,
+            "maxFunctionDefs": 1,
+            "maxInstructionDefs": 1,
+            "maxStackElements": 1,
+            "maxSizeOfInstructions": 1,
+            "maxZones": 2,
+            "maxTwilightPoints": 1,
+        }
+        # Make a glyph program of size 3 in "a"
+        self.test_compile_tt_glyph_program(quaduforeversed, quadfont)
+        ic.update_maxp()
+        # maxSizeOfInstructions should be 3 because it is calculated from the font
+        expect_maxp(ic.otf, 1, 1, 1, 1, 3, 2, 1)
 
     # setupTable_cvt
 
