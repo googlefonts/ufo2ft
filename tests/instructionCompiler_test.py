@@ -17,6 +17,27 @@ from .outlineCompiler_test import getpath
 
 TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"
 
+
+def expect_maxp(
+    font,
+    maxStorage=0,
+    maxFunctionDefs=0,
+    maxInstructionDefs=0,
+    maxStackElements=0,
+    maxSizeOfInstructions=0,
+    maxZones=1,
+    maxTwilightPoints=0
+):
+    maxp = font["maxp"]
+    assert maxp.maxStorage == maxStorage
+    assert maxp.maxFunctionDefs == maxFunctionDefs
+    assert maxp.maxInstructionDefs == maxInstructionDefs
+    assert maxp.maxStackElements == maxStackElements
+    assert maxp.maxSizeOfInstructions == maxSizeOfInstructions
+    assert maxp.maxZones == maxZones
+    assert maxp.maxTwilightPoints == maxTwilightPoints
+
+
 def get_hash_ufo(glyph, ufo):
     hash_pen = HashPointPen(glyph.width, ufo)
     glyph.drawPoints(hash_pen)
@@ -537,8 +558,14 @@ class InstructionCompilerTest:
 
     # update_maxp
 
-    def test_update_maxp(self):
-        pass
+    def test_update_maxp_no_ttdata(self, quaduforeversed, quadfont):
+        ic = InstructionCompiler()
+        ic.otf = quadfont
+        ic.ufo = quaduforeversed
+
+        ic.update_maxp()
+        expect_maxp(ic.otf)
+
 
     # setupTable_cvt
 
