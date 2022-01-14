@@ -26,7 +26,7 @@ def expect_maxp(
     maxStackElements=0,
     maxSizeOfInstructions=0,
     maxZones=1,
-    maxTwilightPoints=0
+    maxTwilightPoints=0,
 ):
     maxp = font["maxp"]
     assert maxp.maxStorage == maxStorage
@@ -246,11 +246,11 @@ class InstructionCompilerTest:
                 ("fontProgram", "fpgm"),
             ):
                 ic._compile_program(key=key, table_tag=tag)
-        assert(
+        assert (
             "Assembly for table 'fpgm' is empty, table not added to font."
             in caplog.text
         )
-        assert(
+        assert (
             "Assembly for table 'prep' is empty, table not added to font."
             in caplog.text
         )
@@ -336,7 +336,9 @@ class InstructionCompilerTest:
             in caplog.text
         )
 
-    def test_compile_tt_glyph_program_empty_asm(self, quaduforeversed, quadfont, caplog):
+    def test_compile_tt_glyph_program_empty_asm(
+        self, quaduforeversed, quadfont, caplog
+    ):
         # UFO glyph contains "public.truetype.instructions" lib key, but the
         # assembly code entry is empty
         ic = InstructionCompiler()
@@ -358,10 +360,7 @@ class InstructionCompilerTest:
                     "assembly": "",
                 },
             )
-        assert (
-            "Glyph 'a' has no instructions."
-            in caplog.text
-        )
+        assert "Glyph 'a' has no instructions." in caplog.text
         assert not hasattr(ic.otf["glyf"]["h"], "program")
 
     def test_compile_tt_glyph_program_empty_asm_composite(
@@ -598,7 +597,7 @@ class InstructionCompilerTest:
                 "1": 500,
                 "2": 750,
                 "3": -250,
-            }
+            },
         }
         ic.setupTable_cvt()
         assert "cvt " in ic.otf
@@ -610,7 +609,7 @@ class InstructionCompilerTest:
         ic.ufo = quaduforeversed
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
-            "controlValue": {}
+            "controlValue": {},
         }
         ic.setupTable_cvt()
         assert "cvt " not in ic.otf
