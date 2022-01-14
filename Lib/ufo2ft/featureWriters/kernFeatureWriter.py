@@ -337,7 +337,10 @@ class KernFeatureWriter(BaseFeatureWriter):
         # direction (DFLT is excluded)
         scriptGroups = {}
         for scriptCode, scriptLangSys in feaScripts.items():
-            direction = unicodedata.script_horizontal_direction(scriptCode)
+            if scriptCode:
+                direction = unicodedata.script_horizontal_direction(scriptCode)
+            else:
+                direction = "LTR"
             if scriptCode in DIST_ENABLED_SCRIPTS:
                 tag = "dist"
             else:
