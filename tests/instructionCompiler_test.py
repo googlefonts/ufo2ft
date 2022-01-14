@@ -15,6 +15,8 @@ from ufo2ft.instructionCompiler import InstructionCompiler
 from .outlineCompiler_test import getpath
 
 
+TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"
+
 def get_hash_ufo(glyph, ufo):
     hash_pen = HashPointPen(glyph.width, ufo)
     glyph.drawPoints(hash_pen)
@@ -176,7 +178,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
         }
         for key, tag in (
@@ -193,7 +195,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": None,
             "fontProgram": None,
@@ -212,7 +214,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": "",
             "fontProgram": "",
@@ -240,7 +242,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": "PUSHW[]\n511\nSCANCTRL[]",
             "fontProgram": "PUSHB[]\n0\nFDEF[]\nPOP[]\nENDF[]",
@@ -559,7 +561,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
         }
         ic.setupTable_fpgm()
@@ -571,7 +573,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "fontProgram": None,
         }
@@ -584,7 +586,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "fontProgram": "",
         }
@@ -597,7 +599,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "fontProgram": "PUSHB[]\n0\nFDEF[]\nPOP[]\nENDF[]",
         }
@@ -624,7 +626,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
         }
         ic.setupTable_prep()
@@ -636,7 +638,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": None,
         }
@@ -649,7 +651,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": "",
         }
@@ -662,7 +664,7 @@ class InstructionCompilerTest:
         ic = InstructionCompiler()
         ic.ufo = quadufo
         ic.otf = TTFont()
-        ic.ufo.lib["public.truetype.instructions"] = {
+        ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": "PUSHW[]\n511\nSCANCTRL[]",
         }
