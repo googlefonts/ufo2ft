@@ -3,17 +3,16 @@ import logging
 import pytest
 from cu2qu.ufo import font_to_quadratic
 from fontTools.pens.hashPointPen import HashPointPen
-from fontTools.ttLib.ttFont import TTFont
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
     ROUND_XY_TO_GRID,
     USE_MY_METRICS,
 )
+from fontTools.ttLib.ttFont import TTFont
 
 from ufo2ft.instructionCompiler import InstructionCompiler
 
 from .outlineCompiler_test import getpath
-
 
 TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"
 
