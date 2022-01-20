@@ -51,6 +51,13 @@ def get_hash_ttf(glyph_name, ttf):
     return hash_pen.hash
 
 
+def get_instruction_compiler(ufo, otf):
+    ic = InstructionCompiler()
+    ic.ufo = ufo
+    ic.otf = otf
+    return ic
+
+
 @pytest.fixture
 def quadfont():
     font = TTFont()
@@ -88,22 +95,18 @@ class InstructionCompilerTest:
         ufo_hash = get_hash_ufo(glyph, quaduforeversed)
         ttglyph = quadfont["glyf"]["a"]
 
-        result = InstructionCompiler()._check_glyph_hash(
-            glyph=glyph,
-            ttglyph=ttglyph,
-            glyph_hash=ufo_hash,
-            otf=quadfont,
-        )
+        ic = get_instruction_compiler(quaduforeversed, quadfont)
+        result = ic._check_glyph_hash(glyph=glyph, ttglyph=ttglyph, glyph_hash=ufo_hash)
         assert result
 
     def test_check_glyph_hash_missing(self, quaduforeversed, quadfont):
         glyph = quaduforeversed["a"]
 
-        result = InstructionCompiler()._check_glyph_hash(
+        ic = get_instruction_compiler(quaduforeversed, quadfont)
+        result = ic._check_glyph_hash(
             glyph=glyph,
             ttglyph=quadfont["glyf"]["a"],
             glyph_hash=None,
-            otf=quadfont,
         )
         assert not result
 
@@ -115,11 +118,27 @@ class InstructionCompilerTest:
         # The contour direction is reversed in testufo vs. quadfont, so the
         # hash should not match
 
-        result = InstructionCompiler()._check_glyph_hash(
+        ic = get_instruction_compiler(testufo, quadfont)
+        result = ic._check_glyph_hash(
             glyph=glyph,
             ttglyph=ttglyph,
             glyph_hash=ufo_hash,
-            otf=quadfont,
+        )
+        assert not result
+
+    def test_check_glyph_hash_mismatch_composite(self, testufo, quadfont):
+        glyph = testufo["h"]
+        ufo_hash = get_hash_ufo(glyph, testufo)
+        ttglyph = quadfont["glyf"]["h"]
+
+        # The contour direction is reversed in testufo vs. quadfont, so the
+        # hash should not match
+
+        ic = get_instruction_compiler(testufo, quadfont)
+        result = ic._check_glyph_hash(
+            glyph=glyph,
+            ttglyph=ttglyph,
+            glyph_hash=ufo_hash,
         )
         assert not result
 
@@ -132,11 +151,11 @@ class InstructionCompilerTest:
         ufo_hash = get_hash_ufo(glyph, quaduforeversed)
         ttglyph = quadfont["glyf"]["a"]
 
-        result = InstructionCompiler()._check_glyph_hash(
+        ic = get_instruction_compiler(quaduforeversed, quadfont)
+        result = ic._check_glyph_hash(
             glyph=glyph,
             ttglyph=ttglyph,
             glyph_hash=ufo_hash,
-            otf=quadfont,
         )
         assert not result
 
@@ -181,9 +200,7 @@ class InstructionCompilerTest:
 
     def test_compile_program_no_ttdata(self, quadufo):
         # UFO contains no "public.truetype.instructions" lib key
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = get_instruction_compiler(quadufo, TTFont())
         for key, tag in (
             ("controlValueProgram", "prep"),
             ("fontProgram", "fpgm"),
@@ -195,9 +212,7 @@ class InstructionCompilerTest:
     def test_compile_program_no_programs(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are not there. (They are optional)
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = get_instruction_compiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
         }
@@ -212,9 +227,7 @@ class InstructionCompilerTest:
     def test_compile_program_none(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are None.
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = get_instruction_compiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": None,
@@ -231,9 +244,7 @@ class InstructionCompilerTest:
     def test_compile_program_empty(self, quadufo, caplog):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are empty.
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = get_instruction_compiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": "",
@@ -259,9 +270,7 @@ class InstructionCompilerTest:
     def test_compile_program(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, and the font and
         # control value programs are present.
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = get_instruction_compiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": "PUSHW[]\n511\nSCANCTRL[]",
@@ -285,8 +294,7 @@ class InstructionCompilerTest:
     def test_compileGlyphInstructions_missing_glyph(self, caplog):
         # The method logs an info when trying to compile a glyph which is
         # missing in the UFO, e.g. '.notdef'
-        ic = InstructionCompiler()
-        ic.ufo = dict()
+        ic = get_instruction_compiler(dict(), None)
         with caplog.at_level(logging.INFO, logger="ufo2ft.instructionCompiler"):
             ic.compileGlyphInstructions(None, "A")
         assert "Skipping compilation of instructions for glyph 'A'" in caplog.text
@@ -340,9 +348,7 @@ class InstructionCompilerTest:
     ):
         # UFO glyph contains "public.truetype.instructions" lib key, but the
         # assembly code entry is empty
-        ic = InstructionCompiler()
-        ic.ufo = quaduforeversed
-        ic.otf = quadfont
+        ic = get_instruction_compiler(quaduforeversed, quadfont)
 
         assert not ic.otf["glyf"]["a"].isComposite()
 
@@ -367,9 +373,7 @@ class InstructionCompilerTest:
     ):
         # UFO glyph contains "public.truetype.instructions" lib key, but the
         # assembly code entry is empty. The glyph is a composite.
-        ic = InstructionCompiler()
-        ic.ufo = quaduforeversed
-        ic.otf = quadfont
+        ic = get_instruction_compiler(quaduforeversed, quadfont)
 
         glyph = ic.ufo["h"]
         glyph_hash = get_hash_ufo(glyph, ic.ufo)
@@ -391,9 +395,7 @@ class InstructionCompilerTest:
     def test_compile_tt_glyph_program(self, quaduforeversed, quadfont):
         # UFO glyph contains "public.truetype.instructions" lib key, and the
         # assembly code entry is present.
-        ic = InstructionCompiler()
-        ic.ufo = quaduforeversed
-        ic.otf = quadfont
+        ic = get_instruction_compiler(quaduforeversed, quadfont)
 
         assert not ic.otf["glyf"]["a"].isComposite()
 
@@ -414,35 +416,35 @@ class InstructionCompilerTest:
     def test_compile_tt_glyph_program_composite(self, quaduforeversed, quadfont):
         # UFO glyph contains "public.truetype.instructions" lib key, and the
         # assembly code entry is present. The glyph is a composite.
-        ic = InstructionCompiler()
-        ic.ufo = quaduforeversed
-        ic.otf = quadfont
+        name = "k"  # Name of the composite glyph
+        ic = get_instruction_compiler(quaduforeversed, quadfont)
 
-        assert ic.otf["glyf"]["h"].isComposite()
+        assert ic.otf["glyf"][name].isComposite()
 
-        # We calculate the hash from the OTF to allow compilation; the component
-        # glyphs in the UFO have cubic curves, so the hash from UFO wouldn't match.
-        glyph_hash = get_hash_ttf("h", ic.otf)
+        glyph_hash = get_hash_ufo(ic.ufo[name], ic.ufo)
 
         ic._compile_tt_glyph_program(
-            glyph=ic.ufo["h"],
-            ttglyph=ic.otf["glyf"]["h"],
+            glyph=ic.ufo[name],
+            ttglyph=ic.otf["glyf"][name],
             ttdata={
                 "formatVersion": "1",
                 "id": glyph_hash,
                 "assembly": "PUSHB[]\n0\nMDAP[1]",
             },
         )
-        assert ic.otf["glyf"]["h"].program.getBytecode() == b"\xb0\x00\x2f"
+        ttglyph = ic.otf["glyf"][name]
+        assert hasattr(ttglyph, "program")
+        assert ttglyph.program.getBytecode() == b"\xb0\x00\x2f"
 
     # _set_composite_flags
 
     def test_set_composite_flags_no_ttdata(self, quadufo, quadfont):
+        name = "h"  # Name of the composite glyph
         ic = InstructionCompiler()
         ic.autoUseMyMetrics = False
 
-        glyph = quadufo["h"]
-        ttglyph = quadfont["glyf"]["h"]
+        glyph = quadufo[name]
+        ttglyph = quadfont["glyf"][name]
 
         ic._set_composite_flags(
             glyph=glyph,
@@ -458,14 +460,15 @@ class InstructionCompilerTest:
         assert ttglyph.components[1].flags & USE_MY_METRICS
 
     def test_set_composite_flags_compound(self, quadufo, quadfont):
+        name = "k"  # Name of the composite glyph
         ic = InstructionCompiler()
         ic.autoUseMyMetrics = False
 
-        glyph = quadufo["k"]
+        glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
         glyph.components[1].identifier = "component1"
         glyph.lib = {"public.truetype.overlap": True}
-        ttglyph = quadfont["glyf"]["k"]
+        ttglyph = quadfont["glyf"][name]
 
         ic._set_composite_flags(
             glyph=glyph,
@@ -476,14 +479,15 @@ class InstructionCompilerTest:
         assert not ttglyph.components[1].flags & OVERLAP_COMPOUND
 
     def test_set_composite_flags_no_compound(self, quadufo, quadfont):
+        name = "k"  # Name of the composite glyph
         ic = InstructionCompiler()
         ic.autoUseMyMetrics = False
 
-        glyph = quadufo["k"]
+        glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
         glyph.components[1].identifier = "component1"
         glyph.lib = {"public.truetype.overlap": False}
-        ttglyph = quadfont["glyf"]["k"]
+        ttglyph = quadfont["glyf"][name]
 
         ic._set_composite_flags(
             glyph=glyph,
@@ -493,10 +497,11 @@ class InstructionCompilerTest:
         assert not ttglyph.components[1].flags & OVERLAP_COMPOUND
 
     def test_set_composite_flags(self, quadufo, quadfont):
+        name = "h"  # Name of the composite glyph
         ic = InstructionCompiler()
         ic.autoUseMyMetrics = False
 
-        glyph = quadufo["h"]
+        glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
         glyph.components[1].identifier = "component1"
         glyph.lib = {
@@ -511,7 +516,7 @@ class InstructionCompilerTest:
                 },
             },
         }
-        ttglyph = quadfont["glyf"]["h"]
+        ttglyph = quadfont["glyf"][name]
 
         ic._set_composite_flags(
             glyph=glyph,
@@ -527,10 +532,11 @@ class InstructionCompilerTest:
         assert ttglyph.components[1].flags & USE_MY_METRICS
 
     def test_set_composite_flags_metrics_first_only(self, quadufo, quadfont):
+        name = "h"  # Name of the composite glyph
         ic = InstructionCompiler()
         ic.autoUseMyMetrics = False
 
-        glyph = quadufo["h"]
+        glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
         glyph.components[1].identifier = "component1"
         glyph.lib = {
@@ -543,7 +549,7 @@ class InstructionCompilerTest:
                 },
             },
         }
-        ttglyph = quadfont["glyf"]["h"]
+        ttglyph = quadfont["glyf"][name]
 
         ic._set_composite_flags(
             glyph=glyph,
