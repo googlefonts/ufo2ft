@@ -95,12 +95,7 @@ class BaseOutlineCompiler:
     )
 
     def __init__(
-        self,
-        font,
-        glyphSet=None,
-        glyphOrder=None,
-        tables=None,
-        notdefGlyph=None,
+        self, font, glyphSet=None, glyphOrder=None, tables=None, notdefGlyph=None
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
