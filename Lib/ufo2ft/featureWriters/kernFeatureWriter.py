@@ -4,7 +4,7 @@ from fontTools import unicodedata
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection
-from ufo2ft.constants import USE_SCRIPTS
+from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -16,26 +16,7 @@ SIDE2_PREFIX = "public.kern2."
 #   src/hb-ot-shape-complex-khmer.cc
 # We derived the list of scripts associated to each dist-enabled shaper from
 # `hb_ot_shape_complex_categorize` in src/hb-ot-shape-complex-private.hh
-DIST_ENABLED_SCRIPTS = {
-    # Indic shaper's scripts
-    # Unicode-1.1 additions
-    "Beng",  # Bengali
-    "Deva",  # Devanagari
-    "Gujr",  # Gujarati
-    "Guru",  # Gurmukhi
-    "Knda",  # Kannada
-    "Mlym",  # Malayalam
-    "Orya",  # Oriya
-    "Taml",  # Tamil
-    "Telu",  # Telugu
-    # Unicode-3.0 additions
-    "Sinh",  # Sinhala
-    # Khmer shaper
-    "Khmr",  # Khmer
-    # Myanmar shaper
-    "Mymr",  # Myanmar
-    # USE shaper's scripts
-    } | set(USE_SCRIPTS)
+DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | set(["Khmr", "Mymr"]) | set(USE_SCRIPTS)
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
