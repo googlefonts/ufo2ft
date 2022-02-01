@@ -2,9 +2,9 @@ from types import SimpleNamespace
 
 from fontTools import unicodedata
 
+from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection
-from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
