@@ -4,6 +4,7 @@ from fontTools import unicodedata
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection
+from ufo2ft.constants import USE_SCRIPTS
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -34,70 +35,7 @@ DIST_ENABLED_SCRIPTS = {
     # Myanmar shaper
     "Mymr",  # Myanmar
     # USE shaper's scripts
-    # Unicode-3.2 additions
-    "Buhd",  # Buhid
-    "Hano",  # Hanunoo
-    "Tglg",  # Tagalog
-    "Tagb",  # Tagbanwa
-    # Unicode-4.0 additions
-    "Limb",  # Limbu
-    "Tale",  # Tai Le
-    # Unicode-4.1 additions
-    "Bugi",  # Buginese
-    "Khar",  # Kharoshthi
-    "Sylo",  # Syloti Nagri
-    "Tfng",  # Tifinagh
-    # Unicode-5.0 additions
-    "Bali",  # Balinese
-    # Unicode-5.1 additions
-    "Cham",  # Cham
-    "Kali",  # Kayah Li
-    "Lepc",  # Lepcha
-    "Rjng",  # Rejang
-    "Saur",  # Saurashtra
-    "Sund",  # Sundanese
-    # Unicode-5.2 additions
-    "Egyp",  # Egyptian Hieroglyphs
-    "Java",  # Javanese
-    "Kthi",  # Kaithi
-    "Mtei",  # Meetei Mayek
-    "Lana",  # Tai Tham
-    "Tavt",  # Tai Viet
-    # Unicode-6.0 additions
-    "Batk",  # Batak
-    "Brah",  # Brahmi
-    # Unicode-6.1 additions
-    "Cakm",  # Chakma
-    "Shrd",  # Sharada
-    "Takr",  # Takri
-    # Unicode-7.0 additions
-    "Dupl",  # Duployan
-    "Gran",  # Grantha
-    "Khoj",  # Khojki
-    "Sind",  # Khudawadi
-    "Mahj",  # Mahajani
-    "Modi",  # Modi
-    "Hmng",  # Pahawh Hmong
-    "Sidd",  # Siddham
-    "Tirh",  # Tirhuta
-    # Unicode-8.0 additions
-    "Ahom",  # Ahom
-    "Mult",  # Multani
-    # Unicode-9.0 additions
-    "Bhks",  # Bhaiksuki
-    "Marc",  # Marchen
-    "Newa",  # Newa
-    # Unicode-10.0 additions
-    "Gonm",  # Masaram Gondi
-    "Soyo",  # Soyombo
-    "Zanb",  # Zanabazar Square
-    # Unicode-11.0 additions
-    "Dogr",  # Dogra
-    "Gong",  # Gunjala Gondi
-    "Maka",  # Makasar
-    # Unicode-12.0 additions
-    "Nand",  # Nandinagari
-}
+    } | set(USE_SCRIPTS)
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
