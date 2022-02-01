@@ -11,7 +11,7 @@ SIDE2_PREFIX = "public.kern2."
 # In HarfBuzz the 'dist' feature is automatically enabled for these shapers:
 #   src/hb-ot-shape-complex-myanmar.cc
 #   src/hb-ot-shape-complex-use.cc
-#   src/hb-ot-shape-complex-dist.cc
+#   src/hb-ot-shape-complex-indic.cc
 #   src/hb-ot-shape-complex-khmer.cc
 # We derived the list of scripts associated to each dist-enabled shaper from
 # `hb_ot_shape_complex_categorize` in src/hb-ot-shape-complex-private.hh
