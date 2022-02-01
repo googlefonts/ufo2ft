@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 from fontTools import unicodedata
 
+from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection
 
@@ -11,93 +12,11 @@ SIDE2_PREFIX = "public.kern2."
 # In HarfBuzz the 'dist' feature is automatically enabled for these shapers:
 #   src/hb-ot-shape-complex-myanmar.cc
 #   src/hb-ot-shape-complex-use.cc
-#   src/hb-ot-shape-complex-dist.cc
+#   src/hb-ot-shape-complex-indic.cc
 #   src/hb-ot-shape-complex-khmer.cc
 # We derived the list of scripts associated to each dist-enabled shaper from
 # `hb_ot_shape_complex_categorize` in src/hb-ot-shape-complex-private.hh
-DIST_ENABLED_SCRIPTS = {
-    # Indic shaper's scripts
-    # Unicode-1.1 additions
-    "Beng",  # Bengali
-    "Deva",  # Devanagari
-    "Gujr",  # Gujarati
-    "Guru",  # Gurmukhi
-    "Knda",  # Kannada
-    "Mlym",  # Malayalam
-    "Orya",  # Oriya
-    "Taml",  # Tamil
-    "Telu",  # Telugu
-    # Unicode-3.0 additions
-    "Sinh",  # Sinhala
-    # Khmer shaper
-    "Khmr",  # Khmer
-    # Myanmar shaper
-    "Mymr",  # Myanmar
-    # USE shaper's scripts
-    # Unicode-3.2 additions
-    "Buhd",  # Buhid
-    "Hano",  # Hanunoo
-    "Tglg",  # Tagalog
-    "Tagb",  # Tagbanwa
-    # Unicode-4.0 additions
-    "Limb",  # Limbu
-    "Tale",  # Tai Le
-    # Unicode-4.1 additions
-    "Bugi",  # Buginese
-    "Khar",  # Kharoshthi
-    "Sylo",  # Syloti Nagri
-    "Tfng",  # Tifinagh
-    # Unicode-5.0 additions
-    "Bali",  # Balinese
-    # Unicode-5.1 additions
-    "Cham",  # Cham
-    "Kali",  # Kayah Li
-    "Lepc",  # Lepcha
-    "Rjng",  # Rejang
-    "Saur",  # Saurashtra
-    "Sund",  # Sundanese
-    # Unicode-5.2 additions
-    "Egyp",  # Egyptian Hieroglyphs
-    "Java",  # Javanese
-    "Kthi",  # Kaithi
-    "Mtei",  # Meetei Mayek
-    "Lana",  # Tai Tham
-    "Tavt",  # Tai Viet
-    # Unicode-6.0 additions
-    "Batk",  # Batak
-    "Brah",  # Brahmi
-    # Unicode-6.1 additions
-    "Cakm",  # Chakma
-    "Shrd",  # Sharada
-    "Takr",  # Takri
-    # Unicode-7.0 additions
-    "Dupl",  # Duployan
-    "Gran",  # Grantha
-    "Khoj",  # Khojki
-    "Sind",  # Khudawadi
-    "Mahj",  # Mahajani
-    "Modi",  # Modi
-    "Hmng",  # Pahawh Hmong
-    "Sidd",  # Siddham
-    "Tirh",  # Tirhuta
-    # Unicode-8.0 additions
-    "Ahom",  # Ahom
-    "Mult",  # Multani
-    # Unicode-9.0 additions
-    "Bhks",  # Bhaiksuki
-    "Marc",  # Marchen
-    "Newa",  # Newa
-    # Unicode-10.0 additions
-    "Gonm",  # Masaram Gondi
-    "Soyo",  # Soyombo
-    "Zanb",  # Zanabazar Square
-    # Unicode-11.0 additions
-    "Dogr",  # Dogra
-    "Gong",  # Gunjala Gondi
-    "Maka",  # Makasar
-    # Unicode-12.0 additions
-    "Nand",  # Nandinagari
-}
+DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | set(["Khmr", "Mymr"]) | set(USE_SCRIPTS)
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
