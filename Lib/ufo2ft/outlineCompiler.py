@@ -1480,7 +1480,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
         compilation_order = [
             name
             for _, name in sorted(
-                [(int(ttGlyphs[name].isComposite()), name) for name in self.glyphOrder]
+                [(ttGlyphs[name].isComposite(), name) for name in self.glyphOrder]
             )
         ]
         for name in compilation_order:
