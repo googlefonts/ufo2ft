@@ -1474,7 +1474,16 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
 
         hmtx = self.otf.get("hmtx")
         ttGlyphs = self.getCompiledGlyphs()
-        for name in self.glyphOrder:
+        # Sort the glyphs so that simple glyphs are compiled first, and composite
+        # glyphs are compiled later. Otherwise the glyph hashes may not be ready
+        # to calculate when a base glyph of a composite glyph is not in the font yet.
+        compilation_order = [
+            name
+            for _, name in sorted(
+                [(int(ttGlyphs[name].isComposite()), name) for name in self.glyphOrder]
+            )
+        ]
+        for name in compilation_order:
             ttGlyph = ttGlyphs[name]
             if ttGlyph.isComposite() and hmtx is not None and self.autoUseMyMetrics:
                 self.autoUseMyMetrics(ttGlyph, name, hmtx)
