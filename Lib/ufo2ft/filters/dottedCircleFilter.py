@@ -1,8 +1,7 @@
 import logging
 import math
 
-from fontTools.misc.transform import Transform
-from ufoLib2.objects import Anchor, Glyph
+from ufoLib2.objects import Glyph
 
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
@@ -61,7 +60,7 @@ class DottedCircleFilter(BaseFilter):
         if glyphSet is None:
             glyphSet = _GlyphSet.from_layer(font)
 
-        context = self.set_context(font, glyphSet)
+        self.set_context(font, glyphSet)
         dotted_circle = self.check_dotted_circle(glyphSet)
         return self.check_dotted_circle_anchors(dotted_circle)
 
@@ -81,8 +80,6 @@ class DottedCircleFilter(BaseFilter):
         right = self.options.sidebearing + bigradius * 2 - littleradius
         middleY = font.info.xHeight / 2
         middleX = (left + right) / 2
-        top = font.info.xHeight - self.options.border
-        bottom = self.options.border
         subangle = 2 * math.pi / self.options.dots
         for t in range(self.options.dots):
             angle = t * subangle
