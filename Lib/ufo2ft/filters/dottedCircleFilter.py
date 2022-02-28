@@ -2,12 +2,12 @@ import logging
 import math
 
 from fontTools.misc.transform import Transform
-from ufoLib2.objects import Glyph, Anchor
+from ufoLib2.objects import Anchor, Glyph
 
-from ufo2ft.filters import BaseFilter
-from ufo2ft.util import _GlyphSet, _LazyFontName
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
+from ufo2ft.filters import BaseFilter
+from ufo2ft.util import _GlyphSet, _LazyFontName
 
 logger = logging.getLogger(__name__)
 CIRCULAR_SUPERNESS = 0.551784777779014
