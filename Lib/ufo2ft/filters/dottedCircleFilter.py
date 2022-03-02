@@ -45,7 +45,7 @@ def circle(pen, origin, radius):
 
 class DottedCircleFilter(BaseFilter):
 
-    _kwargs = {"border": 80, "sidebearing": 160, "dots": 12}
+    _kwargs = {"margin": 80, "sidebearing": 160, "dots": 12}
 
     def __call__(self, font, glyphSet=None):
         fontName = _LazyFontName(font)
@@ -71,7 +71,7 @@ class DottedCircleFilter(BaseFilter):
         glyph.unicodes = [0x25CC]
         pen = glyph.getPen()
 
-        bigradius = (font.info.xHeight - 2 * self.options.border) / 2
+        bigradius = (font.info.xHeight - 2 * self.options.margin) / 2
         littleradius = bigradius / 6
         left = self.options.sidebearing + littleradius
         right = self.options.sidebearing + bigradius * 2 - littleradius
