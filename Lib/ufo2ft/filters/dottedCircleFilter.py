@@ -68,7 +68,6 @@ class DottedCircleFilter(BaseFilter):
             logger.info("Found dotted circle glyph %s", dotted_circle)
             return dotted_circle[0]
         glyph = Glyph(name="uni25CC", unicodes=[0x25CC])
-        glyph.unicodes = [0x25CC]
         pen = glyph.getPen()
 
         bigradius = (font.info.xHeight - 2 * self.options.margin) / 2
