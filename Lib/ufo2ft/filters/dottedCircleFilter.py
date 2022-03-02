@@ -116,6 +116,9 @@ class DottedCircleFilter(BaseFilter):
 
         added_anchors = self.check_and_add_anchors(dotted_circle)
 
+        if added_anchors:
+            self.ensure_base(dotted_circle)
+
         if added_glyph or added_anchors:
             return [dotted_circle]
         else:
@@ -206,8 +209,6 @@ class DottedCircleFilter(BaseFilter):
                 }
             )
             any_added = True
-        if any_added:
-            self.ensure_base(dotted_circle)
         return any_added
 
     # We have added some anchors to the dotted circle glyph. Now we need to
