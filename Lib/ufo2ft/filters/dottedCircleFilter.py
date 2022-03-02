@@ -1,3 +1,48 @@
+"""
+Dotted Circle Filter
+
+This filter checks whether a font contains a glyph for U+25CC (DOTTED CIRCLE),
+which is inserted by complex shapers to display mark glyphs which have no
+associated base glyph, usually as a result of broken clusters but also for
+pedagogical reasons. (For example, to display the marks in a table of glyphs.)
+
+If no dotted circle glyph is present in the font, then one is drawn and added.
+
+Next, the filter creates any additional anchors for the dotted circle glyph to
+ensure that all marks can be attached to it. It does this by gathering a list
+of anchors, finding the set of base glyphs for each anchor, computing the
+average position of the anchor on the base glyph (relative to the glyph's width),
+and then creating an anchor at that average position on the dotted circle glyph.
+
+The filter must be run as a "pre" filter. This can be done from the command
+line like so::
+
+    fontmake -o ttf -g MyFont.glyphs --filter "DottedCircleFilter(pre=True)"
+
+or in the ``lib.plist`` file of a UFO::
+
+    <key>com.github.googlei18n.ufo2ft.filters</key>
+    <array>
+      <dict>
+        <key>name</key>
+        <string>DottedCircleFilter</string>
+        <key>pre</key>
+        <true/>
+      </dict>
+    </array>
+
+The filter supports the following options:
+
+margin
+    When drawing a dotted circle, the vertical space in units around the dotted
+    circle.
+sidebearings
+    When drawing a dotted circle, additional horizontal space in units around
+    the dotted circle.
+dots
+    Number of dots in the circle.
+
+"""
 from statistics import mean
 import logging
 import math
@@ -5,12 +50,16 @@ import math
 from fontTools.misc.fixedTools import otRound
 from ufoLib2.objects import Glyph
 
+from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.filters import BaseFilter
 from ufo2ft.util import _GlyphSet, _LazyFontName
 
 logger = logging.getLogger(__name__)
+
+# Length of cubic Bezier handle used when drawing quarter circles.
+# See https://pomax.github.io/bezierinfo/#circles_cubic
 CIRCULAR_SUPERNESS = 0.551784777779014
 
 
@@ -73,6 +122,7 @@ class DottedCircleFilter(BaseFilter):
             return []
 
     def check_dotted_circle(self):
+        """Check for the presence of a dotted circle glyph and return its name"""
         font = self.context.font
         dotted_circle = next((g.name for g in font if 0x25CC in g.unicodes), None)
         if dotted_circle:
@@ -80,6 +130,7 @@ class DottedCircleFilter(BaseFilter):
             return dotted_circle
 
     def draw_dotted_circle(self, glyphSet):
+        """Add a new dotted circle glyph, drawing its outlines"""
         logger.debug("Adding dotted circle glyph")
         glyph = Glyph(name="uni25CC", unicodes=[0x25CC])
         pen = glyph.getPen()
@@ -103,47 +154,55 @@ class DottedCircleFilter(BaseFilter):
         return "uni25CC"
 
     def check_and_add_anchors(self, dotted_circle):
+        """Check that all mark-attached anchors are present on the dotted
+        circle glyph, synthesizing a position for any missing anchors."""
         font = self.context.font
+
+        # First we will gather information about all the anchors in the
+        # font at present; for the anchors on marks (starting with "_")
+        # we just want to know their names, so we can match them with
+        # bases later. For the anchors on bases, we also want to store
+        # the position of the anchor so we can average them.
         all_anchors = {}
         any_added = False
         for glyph in font:
             bounds = glyph.getBounds(font)
             if bounds:
-                width = bounds.xMax
+                width = bounds.xMax - bounds.xMin
             else:
                 width = glyph.width
             for anchor in glyph.anchors:
                 if anchor.name.startswith("_"):
-                    # We don't want their coordinates, just their names
-                    # so we can match them with base anchors later.
                     all_anchors[anchor.name] = []
                     continue
                 if not width:
                     continue
                 x_percentage = anchor.x / width
-                all_anchors.setdefault(anchor.name, []).append(
-                    (glyph.name, x_percentage, anchor.y)
-                )
+                all_anchors.setdefault(anchor.name, []).append((x_percentage, anchor.y))
+
+        # Now we move to the dotted circle. What anchors do we have already?
         dsglyph = font[dotted_circle]
         dsanchors = set([a.name for a in dsglyph.anchors])
-        for anchor, vals in all_anchors.items():
+        for anchor, positions in all_anchors.items():
             # Skip existing anchors on the dotted-circle, and any anchors
-            # which don't have a matching mark glyph.
+            # which don't have a matching mark glyph (mark-to-lig etc.).
             if anchor in dsanchors or f"_{anchor}" not in all_anchors:
                 continue
-            average_x = mean([v[1] for v in vals])
-            average_y = mean([v[2] for v in vals])
+
+            # And now we're creating a new one
+            anchor_x = dsglyph.width * mean([v[0] for v in positions])
+            anchor_y = mean([v[1] for v in positions])
             logger.debug(
                 "Adding anchor %s to dotted circle glyph at %i,%i",
                 anchor,
-                dsglyph.width * average_x,
-                average_y,
+                anchor_x,
+                anchor_y,
             )
             dsglyph.appendAnchor(
                 {
                     "name": anchor,
-                    "x": otRound(dsglyph.width * average_x),
-                    "y": otRound(average_y),
+                    "x": otRound(anchor_x),
+                    "y": otRound(anchor_y),
                 }
             )
             any_added = True
@@ -151,14 +210,25 @@ class DottedCircleFilter(BaseFilter):
             self.ensure_base(dotted_circle)
         return any_added
 
-    # We need to ensure the glyph is a base or else it won't feature
-    # in the mark features writer. And if it previously had no anchors,
-    # glyphsLib does not consider it a base.
+    # We have added some anchors to the dotted circle glyph. Now we need to
+    # ensure the glyph is a base (and specifically a base glyph, not just
+    # unclassified), or else it won't be in the list of base glyphs when
+    # we come to the mark features writer, and all our work will be for nothing.
+    # Also note that if we had a dotted circle glyph in the font already and
+    # we have come from Glyphs, glyphsLib would only consider the glyph to
+    # be a base if it has anchors, and it might not have had any when glyphsLib
+    # wrote the GDEF table.
+    # So we have to go digging around for a GDEF table and modify it.
     def ensure_base(self, dotted_circle):
         font = self.context.font
         feaFile = parseLayoutFeatures(font)
         if ast.findTable(feaFile, "GDEF") is None:
+            # We have no GDEF table. GDEFFeatureWriter will create one
+            # using the font's lib.
+            font.lib.setdefault(OPENTYPE_CATEGORIES_KEY, {})[dotted_circle] = "base"
             return
+        # We have GDEF table, so we need to find the GlyphClassDef, and add
+        # ourselves to the baseGlyphs set.
         for st in feaFile.statements:
             if isinstance(st, ast.TableBlock) and st.name == "GDEF":
                 for st in st.statements:
@@ -168,4 +238,5 @@ class DottedCircleFilter(BaseFilter):
                             and dotted_circle not in st.baseGlyphs.glyphSet()
                         ):
                             st.baseGlyphs.glyphs.append(dotted_circle)
+        # And then put the modified feature file back into the font
         font.features.text = feaFile.asFea()
