@@ -2,6 +2,7 @@ from statistics import mean
 import logging
 import math
 
+from fontTools.misc.fixedTools import otRound
 from ufoLib2.objects import Glyph
 
 from ufo2ft.featureCompiler import parseLayoutFeatures
@@ -128,8 +129,8 @@ class DottedCircleFilter(BaseFilter):
             dsglyph.appendAnchor(
                 {
                     "name": anchor,
-                    "x": int(dsglyph.width * average_x),
-                    "y": int(average_y),
+                    "x": otRound(dsglyph.width * average_x),
+                    "y": otRound(average_y),
                 }
             )
             any_added = True
