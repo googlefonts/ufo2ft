@@ -59,15 +59,21 @@ class DottedCircleFilter(BaseFilter):
             glyphSet = _GlyphSet.from_layer(font)
 
         self.set_context(font, glyphSet)
-        dotted_circle = self.check_dotted_circle(glyphSet)
+        dotted_circle = self.check_dotted_circle()
+        if not dotted_circle:
+            dotted_circle = self.draw_dotted_circle(glyphSet)
+
         return self.check_dotted_circle_anchors(dotted_circle)
 
     def check_dotted_circle(self, glyphSet):
         font = self.context.font
-        dotted_circle = [g for g in font.keys() if font[g].unicode == 0x25CC]
+        dotted_circle = next((g for g in font if 0x25CC in g.unicodes), None)
         if dotted_circle:
-            logger.info("Found dotted circle glyph %s", dotted_circle)
-            return dotted_circle[0]
+            logger.debug("Found dotted circle glyph %s", dotted_circle.name)
+            return dotted_circle.name
+
+    def draw_dotted_circle(self, glyphSet):
+        logger.debug("Adding dotted circle glyph")
         glyph = Glyph(name="uni25CC", unicodes=[0x25CC])
         pen = glyph.getPen()
 
