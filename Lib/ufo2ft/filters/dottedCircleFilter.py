@@ -59,13 +59,20 @@ class DottedCircleFilter(BaseFilter):
             glyphSet = _GlyphSet.from_layer(font)
 
         self.set_context(font, glyphSet)
+        added_glyph = False
         dotted_circle = self.check_dotted_circle()
         if not dotted_circle:
             dotted_circle = self.draw_dotted_circle(glyphSet)
+            added_glyph = True
 
-        return self.check_dotted_circle_anchors(dotted_circle)
+        added_anchors = self.check_and_add_anchors(dotted_circle)
 
-    def check_dotted_circle(self, glyphSet):
+        if added_glyph or added_anchors:
+            return [dotted_circle]
+        else:
+            return []
+
+    def check_dotted_circle(self):
         font = self.context.font
         dotted_circle = next((g for g in font if 0x25CC in g.unicodes), None)
         if dotted_circle:
@@ -95,7 +102,7 @@ class DottedCircleFilter(BaseFilter):
         glyphSet["uni25CC"] = glyph
         return "uni25CC"
 
-    def check_dotted_circle_anchors(self, dotted_circle):
+    def check_and_add_anchors(self, dotted_circle):
         font = self.context.font
         all_anchors = {}
         any_added = False
@@ -142,9 +149,7 @@ class DottedCircleFilter(BaseFilter):
             any_added = True
         if any_added:
             self.ensure_base(dotted_circle)
-            return dotted_circle
-        else:
-            return []
+        return any_added
 
     # We need to ensure the glyph is a base or else it won't feature
     # in the mark features writer. And if it previously had no anchors,
