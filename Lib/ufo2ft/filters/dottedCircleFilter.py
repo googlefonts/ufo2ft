@@ -74,10 +74,10 @@ class DottedCircleFilter(BaseFilter):
 
     def check_dotted_circle(self):
         font = self.context.font
-        dotted_circle = next((g for g in font if 0x25CC in g.unicodes), None)
+        dotted_circle = next((g.name for g in font if 0x25CC in g.unicodes), None)
         if dotted_circle:
-            logger.debug("Found dotted circle glyph %s", dotted_circle.name)
-            return dotted_circle.name
+            logger.debug("Found dotted circle glyph %s", dotted_circle)
+            return dotted_circle
 
     def draw_dotted_circle(self, glyphSet):
         logger.debug("Adding dotted circle glyph")
