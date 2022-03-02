@@ -1,3 +1,4 @@
+from statistics import mean
 import logging
 import math
 
@@ -10,10 +11,6 @@ from ufo2ft.util import _GlyphSet, _LazyFontName
 
 logger = logging.getLogger(__name__)
 CIRCULAR_SUPERNESS = 0.551784777779014
-
-
-def average(lst):
-    return sum(lst) / len(lst)
 
 
 def circle(pen, origin, radius):
@@ -121,9 +118,14 @@ class DottedCircleFilter(BaseFilter):
             # which don't have a matching mark glyph.
             if anchor in dsanchors or f"_{anchor}" not in all_anchors:
                 continue
-            average_x = average([v[1] for v in vals])
-            average_y = average([v[2] for v in vals])
-            logger.debug("Adding anchor %s to dotted circle glyph", anchor)
+            average_x = mean([v[1] for v in vals])
+            average_y = mean([v[2] for v in vals])
+            logger.debug(
+                "Adding anchor %s to dotted circle glyph at %i,%i",
+                anchor,
+                dsglyph.width * average_x,
+                average_y,
+            )
             dsglyph.appendAnchor(
                 {
                     "name": anchor,
