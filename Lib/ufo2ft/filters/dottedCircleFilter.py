@@ -43,9 +43,9 @@ dots
     Number of dots in the circle.
 
 """
-from statistics import mean
 import logging
 import math
+from statistics import mean
 
 from fontTools.misc.fixedTools import otRound
 from ufoLib2.objects import Glyph
