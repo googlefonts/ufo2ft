@@ -134,6 +134,7 @@ class DottedCircleFilter(BaseFilter):
 
     def draw_dotted_circle(self, glyphSet):
         """Add a new dotted circle glyph, drawing its outlines"""
+        font = self.context.font
         logger.debug("Adding dotted circle glyph")
         glyph = Glyph(name="uni25CC", unicodes=[0x25CC])
         pen = glyph.getPen()
