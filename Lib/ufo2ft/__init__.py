@@ -1,7 +1,9 @@
 import logging
 from enum import IntEnum
+import os
 
 from fontTools import varLib
+from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
 
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, SPARSE_TTF_MASTER_TABLES
 from ufo2ft.featureCompiler import (
@@ -537,6 +539,9 @@ def compileVariableTTF(designSpaceDoc, **kwargs):
     excludeVariationTables = kwargs.pop("excludeVariationTables")
     optimizeGvar = kwargs.pop("optimizeGvar")
 
+    # Disable GPOS compaction while building masters because the compaction
+    # will be undone anyway by varLib merge and then done again on the VF
+    gpos_compact_value = os.environ.pop(GPOS_COMPACT_MODE_ENV_KEY, None)
     ttfDesignSpace = compileInterpolatableTTFsFromDS(
         designSpaceDoc,
         **{
@@ -548,6 +553,8 @@ def compileVariableTTF(designSpaceDoc, **kwargs):
             ),
         },
     )
+    if gpos_compact_value is not None:
+        os.environ[GPOS_COMPACT_MODE_ENV_KEY] = gpos_compact_value
 
     logger.info("Building variable TTF font")
 
@@ -596,6 +603,9 @@ def compileVariableCFF2(designSpaceDoc, **kwargs):
 
     excludeVariationTables = kwargs.pop("excludeVariationTables")
 
+    # Disable GPOS compaction while building masters because the compaction
+    # will be undone anyway by varLib merge and then done again on the VF
+    gpos_compact_value = os.environ.pop(GPOS_COMPACT_MODE_ENV_KEY, None)
     otfDesignSpace = compileInterpolatableOTFsFromDS(
         designSpaceDoc,
         **{
@@ -607,6 +617,8 @@ def compileVariableCFF2(designSpaceDoc, **kwargs):
             ),
         },
     )
+    if gpos_compact_value is not None:
+        os.environ[GPOS_COMPACT_MODE_ENV_KEY] = gpos_compact_value
 
     logger.info("Building variable CFF2 font")
 
