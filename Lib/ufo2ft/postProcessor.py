@@ -155,7 +155,7 @@ class PostProcessor:
 
             if useProductionNames:
                 logger.info("Renaming glyphs to final production names")
-                self.rename_glyphs(self.otf, self._build_production_names())
+                self._rename_glyphs_from_ufo()
 
         else:
             if "CFF " in self.otf:
