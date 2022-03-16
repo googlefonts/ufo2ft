@@ -155,7 +155,7 @@ class PostProcessor:
 
             if useProductionNames:
                 logger.info("Renaming glyphs to final production names")
-                self._rename_glyphs_from_ufo()
+                self.rename_glyphs(self.otf, self._build_production_names())
 
         else:
             if "CFF " in self.otf:
@@ -168,8 +168,10 @@ class PostProcessor:
     def _rename_glyphs_from_ufo(self):
         """Rename glyphs using ufo.lib.public.postscriptNames in UFO."""
         rename_map = self._build_production_names()
+        self.rename_glyphs(self.otf, rename_map)
 
-        otf = self.otf
+    @staticmethod
+    def rename_glyphs(otf, rename_map):
         otf.setGlyphOrder([rename_map.get(n, n) for n in otf.getGlyphOrder()])
 
         # we need to compile format 2 'post' table so that the 'extraNames'
