@@ -1,6 +1,6 @@
 import logging
-from enum import IntEnum
 import os
+from enum import IntEnum
 
 from fontTools import varLib
 from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
