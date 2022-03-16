@@ -1,7 +1,9 @@
 import logging
+import os
 from enum import IntEnum
 
 from fontTools import varLib
+from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
 
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, SPARSE_TTF_MASTER_TABLES
 from ufo2ft.featureCompiler import (
@@ -537,17 +539,25 @@ def compileVariableTTF(designSpaceDoc, **kwargs):
     excludeVariationTables = kwargs.pop("excludeVariationTables")
     optimizeGvar = kwargs.pop("optimizeGvar")
 
-    ttfDesignSpace = compileInterpolatableTTFsFromDS(
-        designSpaceDoc,
-        **{
-            **kwargs,
-            **dict(
-                useProductionNames=False,  # will rename glyphs after varfont is built
-                # No need to post-process intermediate fonts.
-                postProcessorClass=None,
-            ),
-        },
-    )
+    # FIXME: Hack until we get a fontTools config module. Disable GPOS
+    # compaction while building masters because the compaction will be undone
+    # anyway by varLib merge and then done again on the VF
+    gpos_compact_value = os.environ.pop(GPOS_COMPACT_MODE_ENV_KEY, None)
+    try:
+        ttfDesignSpace = compileInterpolatableTTFsFromDS(
+            designSpaceDoc,
+            **{
+                **kwargs,
+                **dict(
+                    useProductionNames=False,  # will rename glyphs after varfont is built
+                    # No need to post-process intermediate fonts.
+                    postProcessorClass=None,
+                ),
+            },
+        )
+    finally:
+        if gpos_compact_value is not None:
+            os.environ[GPOS_COMPACT_MODE_ENV_KEY] = gpos_compact_value
 
     logger.info("Building variable TTF font")
 
@@ -596,17 +606,25 @@ def compileVariableCFF2(designSpaceDoc, **kwargs):
 
     excludeVariationTables = kwargs.pop("excludeVariationTables")
 
-    otfDesignSpace = compileInterpolatableOTFsFromDS(
-        designSpaceDoc,
-        **{
-            **kwargs,
-            **dict(
-                useProductionNames=False,  # will rename glyphs after varfont is built
-                # No need to post-process intermediate fonts.
-                postProcessorClass=None,
-            ),
-        },
-    )
+    # FIXME: Hack until we get a fontTools config module. Disable GPOS
+    # compaction while building masters because the compaction will be undone
+    # anyway by varLib merge and then done again on the VF
+    gpos_compact_value = os.environ.pop(GPOS_COMPACT_MODE_ENV_KEY, None)
+    try:
+        otfDesignSpace = compileInterpolatableOTFsFromDS(
+            designSpaceDoc,
+            **{
+                **kwargs,
+                **dict(
+                    useProductionNames=False,  # will rename glyphs after varfont is built
+                    # No need to post-process intermediate fonts.
+                    postProcessorClass=None,
+                ),
+            },
+        )
+    finally:
+        if gpos_compact_value is not None:
+            os.environ[GPOS_COMPACT_MODE_ENV_KEY] = gpos_compact_value
 
     logger.info("Building variable CFF2 font")
 
