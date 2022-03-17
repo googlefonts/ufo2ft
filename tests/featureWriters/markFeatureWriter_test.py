@@ -907,12 +907,20 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         ligComponent
                             <anchor NULL>
                         ligComponent
+                            <anchor 1100 499> mark @MC_bar
                             <anchor 1000 500> mark @MC_top;
                     pos ligature bar_foo
                             <anchor NULL>
                         ligComponent
                             <anchor 600 501> mark @MC_top;
                 } abvm_mark2liga;
+
+                lookup abvm_mark2mark_bar {
+                    @MFS_abvm_mark2mark_bar = [barcomb];
+                    lookupflag UseMarkFilteringSet @MFS_abvm_mark2mark_bar;
+                    pos mark barcomb
+                        <anchor 100 440> mark @MC_bar;
+                } abvm_mark2mark_bar;
 
                 lookup abvm_mark2mark_top {
                     @MFS_abvm_mark2mark_top = [foocomb];
@@ -930,15 +938,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         ligComponent
                             <anchor NULL>
                         ligComponent
-                            <anchor 1100 499> mark @MC_bar;
+                            <anchor NULL>;
                 } blwm_mark2liga;
-
-                lookup blwm_mark2mark_bar {
-                    @MFS_blwm_mark2mark_bar = [barcomb];
-                    lookupflag UseMarkFilteringSet @MFS_blwm_mark2mark_bar;
-                    pos mark barcomb
-                        <anchor 100 440> mark @MC_bar;
-                } blwm_mark2mark_bar;
 
                 lookup blwm_mark2mark_bottom {
                     @MFS_blwm_mark2mark_bottom = [bazcomb];

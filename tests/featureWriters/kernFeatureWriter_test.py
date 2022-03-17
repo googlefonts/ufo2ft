@@ -499,6 +499,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
             languagesystem arab URD;
             languagesystem deva dflt;
             languagesystem dev2 dflt;
+            languagesystem math dflt;
             """
         )
 
@@ -507,7 +508,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
         scriptGroups = KernFeatureWriter._groupScriptsByTagAndDirection(scripts)
 
         assert "kern" in scriptGroups
-        assert list(scriptGroups["kern"]["LTR"]) == [("latn", ["dflt", "TRK "])]
+        assert list(scriptGroups["kern"]["LTR"]) == [
+            ("latn", ["dflt", "TRK "]),
+            ("math", ["dflt"]),
+        ]
         assert list(scriptGroups["kern"]["RTL"]) == [("arab", ["dflt", "URD "])]
 
         assert "dist" in scriptGroups
