@@ -7,7 +7,6 @@ from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import classifyGlyphs, quantize, unicodeInScripts
 
 
@@ -278,10 +277,15 @@ class MarkFeatureWriter(BaseFeatureWriter):
     # @MC_top, @MC_bottom, etc.
     markClassPrefix = "MC"
 
-    # The anchor names and list of scripts for which 'abvm' and 'blwm'
-    # features are generated is the same as the one Glyphs.app uses, see:
-    # https://github.com/googlei18n/ufo2ft/issues/179
-    abvmAnchorNames = {"top", "topleft", "topright", "candra", "bindu", "candrabindu"}
+    abvmAnchorNames = {
+        "top",
+        "topleft",
+        "topright",
+        "candra",
+        "bindu",
+        "candrabindu",
+        "imatra",
+    }
     blwmAnchorNames = {"bottom", "bottomleft", "bottomright", "nukta"}
 
     scriptsUsingAbvm = set(INDIC_SCRIPTS + USE_SCRIPTS + ["Khmr"])
@@ -736,20 +740,20 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
         return feature if feature.statements else None
 
-    def _getVerticalThreshold(self):
-        # anchors with unknown names whose Y coordinate is greater or equal to
-        # the line that cuts the UPEM square in half will be treated as "above
-        # base" marks, those that fall below the threshold as "below base".
-        return getAttrWithFallback(self.context.font.info, "unitsPerEm") // 2
-
     def _isAboveMark(self, anchor):
         if anchor.name in self.abvmAnchorNames:
             return True
-        if anchor.name in self.blwmAnchorNames:
+        if anchor.name in self.blwmAnchorNames or anchor.name.startswith("bottom"):
             return False
-        if anchor.y >= self.context.threshold:
-            return True
-        return False
+        # Glyphs uses (used to use?) a heuristic to guess whether an anchor
+        # should go into abvm or blwm. (See
+        # https://github.com/googlefonts/ufo2ft/issues/179#issuecomment-390391382)
+        # However, this causes issues in variable fonts where an anchor in one
+        # master is assigned to a different feature from the same anchor in
+        # another master if the Y-coordinates happen to straddle the threshold
+        # coordinate. For simplicity, we just place all unknown anchors into
+        # the abvm feature.
+        return True
 
     def _isBelowMark(self, anchor):
         return not self._isAboveMark(anchor)
@@ -838,7 +842,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 features["mkmk"] = mkmk
         if "abvm" in todo or "blwm" in todo:
             if abvmGlyphs:
-                self.context.threshold = self._getVerticalThreshold()
                 for tag in ("abvm", "blwm"):
                     if tag not in todo:
                         continue

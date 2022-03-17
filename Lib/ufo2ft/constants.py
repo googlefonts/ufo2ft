@@ -70,7 +70,7 @@ USE_SCRIPTS = [
     "Limb",  # Limbu
     "Tale",  # Tai Le
     "Bugi",  # Buginese
-    "khar",  # Kharosthi
+    "Khar",  # Kharosthi
     "Sylo",  # Syloti Nagri
     "tfng",  # Tifinagh
     "Bali",  # Balinese
