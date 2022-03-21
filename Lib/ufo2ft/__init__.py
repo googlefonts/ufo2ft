@@ -24,7 +24,6 @@ from ufo2ft.preProcessor import (
 from ufo2ft.util import (
     _getDefaultNotdefGlyph,
     ensure_all_sources_have_names,
-    getDefaultMasterFont,
     init_kwargs,
     prune_unknown_kwargs,
 )
@@ -582,7 +581,8 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
     excludeVariationTables = kwargs.pop("excludeVariationTables")
     variableFontNames = kwargs.pop("variableFontNames")
 
-    # Pop inplace because we'll make a copy at this level so deeper functions don't need to worry
+    # Pop inplace because we'll make a copy at this level so deeper functions
+    # don't need to worry
     inplace = kwargs.pop("inplace")
     if not inplace:
         designSpaceDoc = copy.deepcopy(designSpaceDoc)
@@ -695,7 +695,8 @@ def compileVariableCFF2s(designSpaceDoc, **kwargs):
     optimizeCFF = CFFOptimization(kwargs.pop("optimizeCFF"))
     variableFontNames = kwargs.pop("variableFontNames")
 
-    # Pop inplace because we'll make a copy at this level so deeper functions don't need to worry
+    # Pop inplace because we'll make a copy at this level so deeper functions
+    # don't need to worry
     inplace = kwargs.pop("inplace")
     if not inplace:
         designSpaceDoc = copy.deepcopy(designSpaceDoc)
