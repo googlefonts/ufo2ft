@@ -1,4 +1,3 @@
-import copy
 import logging
 import os
 from enum import IntEnum
@@ -374,7 +373,7 @@ def compileInterpolatableTTFsFromDS(designSpaceDoc, **kwargs):
     if kwargs["inplace"]:
         result = designSpaceDoc
     else:
-        result = copy.deepcopy(designSpaceDoc)
+        result = designSpaceDoc.deepcopyExceptFonts()
     for source, ttf in zip(result.sources, ttfs):
         source.font = ttf
     return result
@@ -453,7 +452,7 @@ def compileInterpolatableOTFsFromDS(designSpaceDoc, **kwargs):
     if kwargs["inplace"]:
         result = designSpaceDoc
     else:
-        result = copy.deepcopy(designSpaceDoc)
+        result = designSpaceDoc.deepcopyExceptFonts()
 
     for source, otf in zip(result.sources, otfs):
         source.font = otf
@@ -585,7 +584,7 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
     # don't need to worry
     inplace = kwargs.pop("inplace")
     if not inplace:
-        designSpaceDoc = copy.deepcopy(designSpaceDoc)
+        designSpaceDoc = designSpaceDoc.deepcopyExceptFonts()
 
     vfNameToBaseUfo = _compileNeededSources(
         kwargs, designSpaceDoc, variableFontNames, compileInterpolatableTTFsFromDS
@@ -699,7 +698,7 @@ def compileVariableCFF2s(designSpaceDoc, **kwargs):
     # don't need to worry
     inplace = kwargs.pop("inplace")
     if not inplace:
-        designSpaceDoc = copy.deepcopy(designSpaceDoc)
+        designSpaceDoc = designSpaceDoc.deepcopyExceptFonts()
 
     vfNameToBaseUfo = _compileNeededSources(
         kwargs, designSpaceDoc, variableFontNames, compileInterpolatableOTFsFromDS
