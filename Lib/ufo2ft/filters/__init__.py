@@ -85,7 +85,7 @@ def isValidFilter(klass):
     a '__call__' (bound method), with the signature matching the same method
     from the BaseFilter class:
 
-           def __call__(self, font, feaFile, compiler=None)
+           def __call__(self, font, glyphSet=None)
     """
     if not isclass(klass):
         logger.error(f"{klass!r} is not a class")

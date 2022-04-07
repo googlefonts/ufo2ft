@@ -3,7 +3,7 @@ from ufo2ft.constants import (
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
 )
-from ufo2ft.filters import loadFilters
+from ufo2ft.filters import isValidFilter, loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet
@@ -26,8 +26,17 @@ class BasePreProcessor:
     initialization of the default filters.
 
     Custom filters can be applied before or after the default filters.
-    These are specified in the UFO lib.plist under the private key
+    These can be specified in the UFO lib.plist under the private key
     "com.github.googlei18n.ufo2ft.filters".
+    Alterantively the optional ``filters`` parameter can be used. This is a
+    list of filter instances (subclasses of BaseFilter) that overrides
+    those defined in the UFO lib. The list can be empty, meaning no custom
+    filters are run. If ``filters`` contain the special value ``...`` (i.e.
+    the actual ``ellipsis`` singleton, not the str literal '...'), then all
+    the filters from the UFO lib are loaded in its place. This allows to
+    insert additional filters before or after those already defined in the
+    UFO lib, as opposed to discard/replace them which is the default behavior
+    when ``...`` is absent.
     """
 
     def __init__(
@@ -46,11 +55,7 @@ class BasePreProcessor:
             ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
         )
         self.defaultFilters = self.initDefaultFilters(**kwargs)
-        if filters is None:
-            self.preFilters, self.postFilters = loadFilters(ufo)
-        else:
-            self.preFilters = [f for f in filters if f.pre]
-            self.postFilters = [f for f in filters if not f.pre]
+        self.preFilters, self.postFilters = self._load_custom_filters(ufo, filters)
 
     def initDefaultFilters(self, **kwargs):
         return []  # pragma: no cover
@@ -61,6 +66,32 @@ class BasePreProcessor:
         for func in self.preFilters + self.defaultFilters + self.postFilters:
             func(ufo, glyphSet)
         return glyphSet
+
+    @staticmethod
+    def _load_custom_filters(ufo, filters=None):
+        # by default, load the filters from the lib; ellipsis is used as a placeholder
+        # so one can optionally insert additional filters=[f1, ..., f2] either
+        # before or after these, or override them by omitting the ellipsis.
+        if filters is None:
+            filters = [...]
+        preFilters, postFilters = [], []
+        seen_ellipsis = False
+        for f in filters:
+            if f is ...:
+                if seen_ellipsis:
+                    raise ValueError("ellipsis not allowed more than once")
+                pre, post = loadFilters(ufo)
+                preFilters.extend(pre)
+                postFilters.extend(post)
+                seen_ellipsis = True
+            else:
+                if not isValidFilter(type(f)):
+                    raise TypeError(f"Invalid filter: {f!r}")
+                if f.pre:
+                    preFilters.append(f)
+                else:
+                    postFilters.append(f)
+        return preFilters, postFilters
 
 
 def _init_explode_color_layer_glyphs_filter(ufo, filters):
