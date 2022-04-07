@@ -5,14 +5,17 @@ from ufo2ft.constants import (
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
 )
-from ufo2ft.filters import BaseFilter, isValidFilter, loadFilters
+from ufo2ft.filters import isValidFilter, loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet
 
 
 def _load_custom_filters(ufo, filters=None):
-    # type: (Font, Optional[List[Union[Filter, EllipsisType]]]) -> List[Filter]
+    # Args:
+    #   ufo: Font
+    #   filters: Optional[List[Union[Filter, EllipsisType]]])
+    # Returns: List[Filter]
 
     # by default, load the filters from the lib; ellipsis is used as a placeholder
     # so one can optionally insert additional filters=[f1, ..., f2] either

@@ -193,7 +193,10 @@ class FeatureCompiler(BaseFeatureCompiler):
             )
 
     def _load_custom_feature_writers(self, featureWriters=None):
-        # type: (Font, Optional[List[Union[FeatureWriter, EllipsisType]]]) -> List[FeatureWriter]
+        # Args:
+        #   ufo: Font
+        #   filters: Optional[List[Union[FeatureWriter, EllipsisType]]])
+        # Returns: List[FeatureWriter]
 
         # by default, load the feature writers from the lib or the default ones;
         # ellipsis is used as a placeholder so one can optionally insert additional
