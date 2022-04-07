@@ -46,7 +46,7 @@ class BasePreProcessor:
         layerName=None,
         skipExportGlyphs=None,
         filters=None,
-        **kwargs
+        **kwargs,
     ):
         self.ufo = ufo
         self.inplace = inplace
