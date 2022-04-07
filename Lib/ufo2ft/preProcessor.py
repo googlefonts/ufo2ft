@@ -28,7 +28,7 @@ class BasePreProcessor:
     Custom filters can be applied before or after the default filters.
     These can be specified in the UFO lib.plist under the private key
     "com.github.googlei18n.ufo2ft.filters".
-    Alterantively the optional ``filters`` parameter can be used. This is a
+    Alternatively the optional ``filters`` parameter can be used. This is a
     list of filter instances (subclasses of BaseFilter) that overrides
     those defined in the UFO lib. The list can be empty, meaning no custom
     filters are run. If ``filters`` contain the special value ``...`` (i.e.
