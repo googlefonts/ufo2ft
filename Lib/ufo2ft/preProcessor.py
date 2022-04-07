@@ -1,12 +1,5 @@
 import itertools
 
-try:
-    from types import EllipsisType
-except ImportError:
-    EllipsisType = type(Ellipsis)
-
-from typing import Any, List, Optional, Union
-
 from ufo2ft.constants import (
     COLOR_LAYER_MAPPING_KEY,
     COLOR_LAYERS_KEY,
@@ -18,9 +11,9 @@ from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet
 
 
-def _load_custom_filters(
-    ufo: Any, filters: Optional[List[Union[BaseFilter, EllipsisType]]] = None
-) -> List[BaseFilter]:
+def _load_custom_filters(ufo, filters=None):
+    # type: (Font, Optional[List[Union[Filter, EllipsisType]]]) -> List[Filter]
+
     # by default, load the filters from the lib; ellipsis is used as a placeholder
     # so one can optionally insert additional filters=[f1, ..., f2] either
     # before or after these, or override them by omitting the ellipsis.
