@@ -1,12 +1,44 @@
+import itertools
+
+try:
+    from types import EllipsisType
+except ImportError:
+    EllipsisType = type(Ellipsis)
+
+from typing import Any, List, Optional, Union
+
 from ufo2ft.constants import (
     COLOR_LAYER_MAPPING_KEY,
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
 )
-from ufo2ft.filters import isValidFilter, loadFilters
+from ufo2ft.filters import BaseFilter, isValidFilter, loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet
+
+
+def _load_custom_filters(
+    ufo: Any, filters: Optional[List[Union[BaseFilter, EllipsisType]]] = None
+) -> List[BaseFilter]:
+    # by default, load the filters from the lib; ellipsis is used as a placeholder
+    # so one can optionally insert additional filters=[f1, ..., f2] either
+    # before or after these, or override them by omitting the ellipsis.
+    if filters is None:
+        filters = [...]
+    seen_ellipsis = False
+    result = []
+    for f in filters:
+        if f is ...:
+            if seen_ellipsis:
+                raise ValueError("ellipsis not allowed more than once")
+            result.extend(itertools.chain(*loadFilters(ufo)))
+            seen_ellipsis = True
+        else:
+            if not isValidFilter(type(f)):
+                raise TypeError(f"Invalid filter: {f!r}")
+            result.append(f)
+    return result
 
 
 class BasePreProcessor:
@@ -55,7 +87,10 @@ class BasePreProcessor:
             ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
         )
         self.defaultFilters = self.initDefaultFilters(**kwargs)
-        self.preFilters, self.postFilters = self._load_custom_filters(ufo, filters)
+
+        filters = _load_custom_filters(ufo, filters)
+        self.preFilters = [f for f in filters if f.pre]
+        self.postFilters = [f for f in filters if not f.pre]
 
     def initDefaultFilters(self, **kwargs):
         return []  # pragma: no cover
@@ -66,32 +101,6 @@ class BasePreProcessor:
         for func in self.preFilters + self.defaultFilters + self.postFilters:
             func(ufo, glyphSet)
         return glyphSet
-
-    @staticmethod
-    def _load_custom_filters(ufo, filters=None):
-        # by default, load the filters from the lib; ellipsis is used as a placeholder
-        # so one can optionally insert additional filters=[f1, ..., f2] either
-        # before or after these, or override them by omitting the ellipsis.
-        if filters is None:
-            filters = [...]
-        preFilters, postFilters = [], []
-        seen_ellipsis = False
-        for f in filters:
-            if f is ...:
-                if seen_ellipsis:
-                    raise ValueError("ellipsis not allowed more than once")
-                pre, post = loadFilters(ufo)
-                preFilters.extend(pre)
-                postFilters.extend(post)
-                seen_ellipsis = True
-            else:
-                if not isValidFilter(type(f)):
-                    raise TypeError(f"Invalid filter: {f!r}")
-                if f.pre:
-                    preFilters.append(f)
-                else:
-                    postFilters.append(f)
-        return preFilters, postFilters
 
 
 def _init_explode_color_layer_glyphs_filter(ufo, filters):
@@ -291,18 +300,9 @@ class TTFInterpolatablePreProcessor:
             self.defaultFilters.append([])
             _init_explode_color_layer_glyphs_filter(ufo, self.defaultFilters[-1])
 
-        self.preFilters, self.postFilters = [], []
-        if filters is None:
-            for ufo in ufos:
-                pre, post = loadFilters(ufo)
-                self.preFilters.append(pre)
-                self.postFilters.append(post)
-        else:
-            pre = [f for f in filters if f.pre]
-            post = [f for f in filters if not f.pre]
-            for _ in ufos:
-                self.preFilters.append(pre)
-                self.postFilters.append(post)
+        filterses = [_load_custom_filters(ufo, filters) for ufo in ufos]
+        self.preFilters = [[f for f in filters if f.pre] for filters in filterses]
+        self.postFilters = [[f for f in filters if not f.pre] for filters in filterses]
 
     def process(self):
         from cu2qu.ufo import fonts_to_quadratic
