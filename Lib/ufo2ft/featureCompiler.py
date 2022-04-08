@@ -17,6 +17,7 @@ from ufo2ft.featureWriters import (
     KernFeatureWriter,
     MarkFeatureWriter,
     ast,
+    isValidFeatureWriter,
     loadFeatureWriters,
 )
 
@@ -165,10 +166,17 @@ class FeatureCompiler(BaseFeatureCompiler):
               under the key "com.github.googlei18n.ufo2ft.featureWriters"
               (see loadFeatureWriters).
             - if that is not found, the default list of writers will be used:
-              [KernFeatureWriter, MarkFeatureWriter]. This generates "kern"
-              (or "dist" for Indic scripts), "mark" and "mkmk" features.
+              (see FeatureCompiler.defaultFeatureWriters, and the individual
+              feature writer classes for the list of features generated).
             If the featureWriters list is empty, no automatic feature is
             generated and only pre-existing features are compiled.
+            The ``featureWriters`` parameter overrides both the writers from
+            the UFO lib and the default writers list. To extend instead of
+            replace the latter, the list can contain a special value ``...``
+            (i.e. the ``ellipsis`` singleton, not the str literal '...')
+            which gets replaced by either the UFO.lib writers or the default
+            ones; thus one can insert additional writers either before or after
+            these.
         """
         BaseFeatureCompiler.__init__(self, ufo, ttFont, glyphSet)
 
@@ -184,10 +192,41 @@ class FeatureCompiler(BaseFeatureCompiler):
                 stacklevel=2,
             )
 
+    def _load_custom_feature_writers(self, featureWriters=None):
+        # Args:
+        #   ufo: Font
+        #   featureWriters: Optional[List[Union[FeatureWriter, EllipsisType]]])
+        # Returns: List[FeatureWriter]
+
+        # by default, load the feature writers from the lib or the default ones;
+        # ellipsis is used as a placeholder so one can optionally insert additional
+        # featureWriters=[w1, ..., w2] either before or after these, or override
+        # them by omitting the ellipsis.
+        if featureWriters is None:
+            featureWriters = [...]
+        result = []
+        seen_ellipsis = False
+        for writer in featureWriters:
+            if writer is ...:
+                if seen_ellipsis:
+                    raise ValueError("ellipsis not allowed more than once")
+                writers = loadFeatureWriters(self.ufo)
+                if writers is not None:
+                    result.extend(writers)
+                else:
+                    result.extend(self.defaultFeatureWriters)
+                seen_ellipsis = True
+            else:
+                klass = writer if isclass(writer) else type(writer)
+                if not isValidFeatureWriter(klass):
+                    raise TypeError(f"Invalid feature writer: {writer!r}")
+                result.append(writer)
+        return result
+
     def initFeatureWriters(self, featureWriters=None):
         """Initialize feature writer classes as specified in the UFO lib.
-        If none are defined in the UFO, the default feature writers are used:
-        currently, KernFeatureWriter and MarkFeatureWriter.
+        If none are defined in the UFO, the default feature writers are used
+        (see FeatureCompiler.defaultFeatureWriters).
         The 'featureWriters' argument can be used to override these.
         The method sets the `self.featureWriters` attribute with the list of
         writers.
@@ -197,10 +236,7 @@ class FeatureCompiler(BaseFeatureCompiler):
         used in the subsequent feature writers to resolve substitutions from
         glyphs with unicodes to their alternates.
         """
-        if featureWriters is None:
-            featureWriters = loadFeatureWriters(self.ufo)
-            if featureWriters is None:
-                featureWriters = self.defaultFeatureWriters
+        featureWriters = self._load_custom_feature_writers(featureWriters)
 
         gsubWriters = []
         others = []
