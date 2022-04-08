@@ -209,9 +209,9 @@ def getGDEFGlyphClasses(feaLib):
     """Return GDEF GlyphClassDef base/mark/ligature/component glyphs, or
     None if no GDEF table is defined in the feature file.
     """
-    for st in feaLib.statements:
-        if isinstance(st, ast.TableBlock) and st.name == "GDEF":
-            for st in st.statements:
+    for s in feaLib.statements:
+        if isinstance(s, ast.TableBlock) and s.name == "GDEF":
+            for st in s.statements:
                 if isinstance(st, ast.GlyphClassDefStatement):
                     return _GDEFGlyphClasses(
                         frozenset(st.baseGlyphs.glyphSet())

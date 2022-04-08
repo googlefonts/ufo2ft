@@ -116,6 +116,21 @@ class TTFPreProcessorTest:
         # filter2, before overlaps were removed in a post-filter filter1
         assert len(glyphSets0["d"].components) == 0
 
+    def test_custom_filters_in_both_lib_and_argument_with_ellipsis(self, FontClass):
+        from ufo2ft.filters import TransformationsFilter
+
+        ufo = FontClass(getpath("TestFont.ufo"))
+        ufo.lib[FILTERS_KEY] = [
+            {"name": "transformations", "kwargs": {"OffsetX": 10}, "pre": True}
+        ]
+
+        glyphSet = TTFPreProcessor(
+            ufo, filters=[..., TransformationsFilter(OffsetY=-10)]
+        ).process()
+
+        a = glyphSet["a"]
+        assert (a[0][0].x, a[0][0].y) == (ufo["a"][0][0].x + 10, ufo["a"][0][0].y - 10)
+
 
 class TTFInterpolatablePreProcessorTest:
     def test_no_inplace(self, FontClass):
@@ -204,6 +219,34 @@ class TTFInterpolatablePreProcessorTest:
         # A component was shifted to overlap with another in a pre-filter
         # filter2, before overlaps were removed in a post-filter filter1
         assert len(glyphSets[0]["d"].components) == 0
+
+    def test_custom_filters_in_both_lib_and_argument_with_ellipsis(self, FontClass):
+        from ufo2ft.filters import TransformationsFilter
+
+        ufo1 = FontClass(getpath("TestFont.ufo"))
+        ufo1.lib[FILTERS_KEY] = [
+            {"name": "transformations", "kwargs": {"OffsetX": 10}, "pre": True}
+        ]
+
+        ufo2 = FontClass(getpath("TestFont.ufo"))
+        ufo2.lib[FILTERS_KEY] = [
+            {"name": "transformations", "kwargs": {"OffsetX": 20}, "pre": True}
+        ]
+
+        glyphSets = TTFInterpolatablePreProcessor(
+            [ufo1, ufo2], filters=[..., TransformationsFilter(OffsetY=-10)]
+        ).process()
+
+        a1 = glyphSets[0]["a"]
+        assert (a1[0][0].x, a1[0][0].y) == (
+            ufo1["a"][0][0].x + 10,
+            ufo1["a"][0][0].y - 10,
+        )
+        a2 = glyphSets[1]["a"]
+        assert (a2[0][0].x, a2[0][0].y) == (
+            ufo2["a"][0][0].x + 20,
+            ufo2["a"][0][0].y - 10,
+        )
 
 
 class SkipExportGlyphsTest:
