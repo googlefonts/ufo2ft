@@ -153,7 +153,11 @@ class DottedCircleFilter(BaseFilter):
             circle(pen, (cx, cy), littleradius)
 
         glyph.setRightMargin(self.options.sidebearing)
-        font.addGlyph(glyph)
+        try:
+            font.addGlyph(glyph)
+        except AttributeError:
+            font.insertGlyph(glyph)
+
         glyphSet["uni25CC"] = glyph
         return "uni25CC"
 
@@ -169,13 +173,19 @@ class DottedCircleFilter(BaseFilter):
         # the position of the anchor so we can average them.
         all_anchors = {}
         any_added = False
+        anchorclass = None
         for glyph in font:
-            bounds = glyph.getBounds(font)
-            if bounds:
+            width = None
+            try:
+                bounds = glyph.getBounds(font)
                 width = bounds.xMax - bounds.xMin
-            else:
+            except Exception as e:
+                bounds = glyph.bounds
+                width = bounds[2] - bounds[0]
+            if width is None:
                 width = glyph.width
             for anchor in glyph.anchors:
+                anchorclass = anchor.__class__
                 if anchor.name.startswith("_"):
                     all_anchors[anchor.name] = []
                     continue
@@ -202,13 +212,14 @@ class DottedCircleFilter(BaseFilter):
                 anchor_x,
                 anchor_y,
             )
-            dsglyph.appendAnchor(
-                {
-                    "name": anchor,
-                    "x": otRound(anchor_x),
-                    "y": otRound(anchor_y),
-                }
-            )
+            try:
+                newanchor = anchorclass()
+                newanchor.x = otRound(anchor_x)
+                newanchor.y = otRound(anchor_y)
+            except TypeError:
+                newanchor = anchorclass(otRound(anchor_x), otRound(anchor_y))
+            newanchor.name = anchor
+            dsglyph.appendAnchor(newanchor)
             any_added = True
         return any_added
 
