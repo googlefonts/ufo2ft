@@ -1,7 +1,3 @@
-import pytest
-from fontTools.misc.loggingTools import CapturingLogHandler
-
-import ufo2ft.filters
 from ufo2ft.filters.dottedCircleFilter import DottedCircleFilter
 
 

@@ -179,7 +179,7 @@ class DottedCircleFilter(BaseFilter):
             try:
                 bounds = glyph.getBounds(font)
                 width = bounds.xMax - bounds.xMin
-            except Exception as e:
+            except AttributeError:
                 bounds = glyph.bounds
                 width = bounds[2] - bounds[0]
             if width is None:
@@ -244,12 +244,12 @@ class DottedCircleFilter(BaseFilter):
         # ourselves to the baseGlyphs set.
         for st in feaFile.statements:
             if isinstance(st, ast.TableBlock) and st.name == "GDEF":
-                for st in st.statements:
-                    if isinstance(st, ast.GlyphClassDefStatement):
+                for st2 in st.statements:
+                    if isinstance(st2, ast.GlyphClassDefStatement):
                         if (
-                            st.baseGlyphs
-                            and dotted_circle not in st.baseGlyphs.glyphSet()
+                            st2.baseGlyphs
+                            and dotted_circle not in st2.baseGlyphs.glyphSet()
                         ):
-                            st.baseGlyphs.glyphs.append(dotted_circle)
+                            st2.baseGlyphs.glyphs.append(dotted_circle)
         # And then put the modified feature file back into the font
         font.features.text = feaFile.asFea()
