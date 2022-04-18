@@ -2,7 +2,8 @@ import pytest
 from fontTools.misc.loggingTools import CapturingLogHandler
 
 import ufo2ft.filters
-from ufo2ft.filters.dottedCircleFilter import DottedCircleFilter, logger
+from ufo2ft.filters.dottedCircleFilter import DottedCircleFilter
+
 
 def test_dotted_circle_filter(FontClass, datadir):
     ufo_path = datadir.join("DottedCircleTest.ufo")
@@ -11,7 +12,7 @@ def test_dotted_circle_filter(FontClass, datadir):
     philter = DottedCircleFilter()
     modified = philter(font)
     assert "uni25CC" in modified
-    anchors = list(sorted(font["uni25CC"].anchors, key=lambda x:x.name))
+    anchors = list(sorted(font["uni25CC"].anchors, key=lambda x: x.name))
     assert anchors[0].x == 464
     assert anchors[0].y == -17
     assert anchors[0].name == "bottom"
