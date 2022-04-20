@@ -109,18 +109,18 @@ class DottedCircleFilter(BaseFilter):
 
         self.set_context(font, glyphSet)
         added_glyph = False
-        dsglyph = self.check_dotted_circle()
-        if not dsglyph:
-            dsglyph = self.draw_dotted_circle(glyphSet)
+        dotted_circle_glyph = self.check_dotted_circle()
+        if not dotted_circle_glyph:
+            dotted_circle_glyph = self.draw_dotted_circle(glyphSet)
             added_glyph = True
 
-        added_anchors = self.check_and_add_anchors(dsglyph)
+        added_anchors = self.check_and_add_anchors(dotted_circle_glyph)
 
         if added_anchors:
-            self.ensure_base(dsglyph)
+            self.ensure_base(dotted_circle_glyph)
 
         if added_glyph or added_anchors:
-            return [dsglyph.name]
+            return [dotted_circle_glyph.name]
         else:
             return []
 
@@ -157,7 +157,7 @@ class DottedCircleFilter(BaseFilter):
         glyphSet["uni25CC"] = glyph
         return glyph
 
-    def check_and_add_anchors(self, dsglyph):
+    def check_and_add_anchors(self, dotted_circle_glyph):
         """Check that all mark-attached anchors are present on the dotted
         circle glyph, synthesizing a position for any missing anchors."""
         font = self.context.font
@@ -193,7 +193,7 @@ class DottedCircleFilter(BaseFilter):
                 all_anchors.setdefault(anchor.name, []).append((x_percentage, anchor.y))
 
         # Now we move to the dotted circle. What anchors do we have already?
-        dsanchors = set([a.name for a in dsglyph.anchors])
+        dsanchors = set([a.name for a in dotted_circle_glyph.anchors])
         for anchor, positions in all_anchors.items():
             # Skip existing anchors on the dotted-circle, and any anchors
             # which don't have a matching mark glyph (mark-to-lig etc.).
@@ -201,7 +201,7 @@ class DottedCircleFilter(BaseFilter):
                 continue
 
             # And now we're creating a new one
-            anchor_x = dsglyph.width * mean([v[0] for v in positions])
+            anchor_x = dotted_circle_glyph.width * mean([v[0] for v in positions])
             anchor_y = mean([v[1] for v in positions])
             logger.debug(
                 "Adding anchor %s to dotted circle glyph at %i,%i",
@@ -216,7 +216,7 @@ class DottedCircleFilter(BaseFilter):
             except TypeError:
                 newanchor = anchorclass(otRound(anchor_x), otRound(anchor_y))
             newanchor.name = anchor
-            dsglyph.appendAnchor(newanchor)
+            dotted_circle_glyph.appendAnchor(newanchor)
             any_added = True
         return any_added
 
@@ -229,8 +229,8 @@ class DottedCircleFilter(BaseFilter):
     # be a base if it has anchors, and it might not have had any when glyphsLib
     # wrote the GDEF table.
     # So we have to go digging around for a GDEF table and modify it.
-    def ensure_base(self, dsglyph):
-        dotted_circle = dsglyph.name
+    def ensure_base(self, dotted_circle_glyph):
+        dotted_circle = dotted_circle_glyph.name
         font = self.context.font
         feaFile = parseLayoutFeatures(font)
         if ast.findTable(feaFile, "GDEF") is None:
