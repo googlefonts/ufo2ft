@@ -109,28 +109,28 @@ class DottedCircleFilter(BaseFilter):
 
         self.set_context(font, glyphSet)
         added_glyph = False
-        dotted_circle = self.check_dotted_circle()
-        if not dotted_circle:
-            dotted_circle = self.draw_dotted_circle(glyphSet)
+        dsglyph = self.check_dotted_circle()
+        if not dsglyph:
+            dsglyph = self.draw_dotted_circle(glyphSet)
             added_glyph = True
 
-        added_anchors = self.check_and_add_anchors(dotted_circle)
+        added_anchors = self.check_and_add_anchors(dsglyph)
 
         if added_anchors:
-            self.ensure_base(dotted_circle)
+            self.ensure_base(dsglyph)
 
         if added_glyph or added_anchors:
-            return [dotted_circle]
+            return [dsglyph.name]
         else:
             return []
 
     def check_dotted_circle(self):
-        """Check for the presence of a dotted circle glyph and return its name"""
+        """Check for the presence of a dotted circle glyph and return it"""
         font = self.context.font
         dotted_circle = next((g.name for g in font if 0x25CC in g.unicodes), None)
         if dotted_circle:
             logger.debug("Found dotted circle glyph %s", dotted_circle)
-            return dotted_circle
+            return font[dotted_circle]
 
     def draw_dotted_circle(self, glyphSet):
         """Add a new dotted circle glyph, drawing its outlines"""
@@ -153,15 +153,11 @@ class DottedCircleFilter(BaseFilter):
             circle(pen, (cx, cy), littleradius)
 
         glyph.setRightMargin(self.options.sidebearing)
-        try:
-            font.addGlyph(glyph)
-        except AttributeError:
-            font.insertGlyph(glyph)
 
         glyphSet["uni25CC"] = glyph
-        return "uni25CC"
+        return glyph
 
-    def check_and_add_anchors(self, dotted_circle):
+    def check_and_add_anchors(self, dsglyph):
         """Check that all mark-attached anchors are present on the dotted
         circle glyph, synthesizing a position for any missing anchors."""
         font = self.context.font
@@ -197,7 +193,6 @@ class DottedCircleFilter(BaseFilter):
                 all_anchors.setdefault(anchor.name, []).append((x_percentage, anchor.y))
 
         # Now we move to the dotted circle. What anchors do we have already?
-        dsglyph = font[dotted_circle]
         dsanchors = set([a.name for a in dsglyph.anchors])
         for anchor, positions in all_anchors.items():
             # Skip existing anchors on the dotted-circle, and any anchors
@@ -234,7 +229,8 @@ class DottedCircleFilter(BaseFilter):
     # be a base if it has anchors, and it might not have had any when glyphsLib
     # wrote the GDEF table.
     # So we have to go digging around for a GDEF table and modify it.
-    def ensure_base(self, dotted_circle):
+    def ensure_base(self, dsglyph):
+        dotted_circle = dsglyph.name
         font = self.context.font
         feaFile = parseLayoutFeatures(font)
         if ast.findTable(feaFile, "GDEF") is None:

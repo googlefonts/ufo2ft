@@ -6,9 +6,10 @@ def test_dotted_circle_filter(FontClass, datadir):
     font = FontClass(ufo_path)
     assert "uni25CC" not in font
     philter = DottedCircleFilter()
-    modified = philter(font)
+    glyphset = {}
+    modified = philter(font, glyphset)
     assert "uni25CC" in modified
-    anchors = list(sorted(font["uni25CC"].anchors, key=lambda x: x.name))
+    anchors = list(sorted(glyphset["uni25CC"].anchors, key=lambda x: x.name))
     assert anchors[0].x == 464
     assert anchors[0].y == -17
     assert anchors[0].name == "bottom"
@@ -17,5 +18,5 @@ def test_dotted_circle_filter(FontClass, datadir):
     assert anchors[1].y == 546
     assert anchors[1].name == "top"
 
-    assert len(font["uni25CC"]) == 12
-    assert int(font["uni25CC"].width) == 688
+    assert len(glyphset["uni25CC"]) == 12
+    assert int(glyphset["uni25CC"].width) == 688
