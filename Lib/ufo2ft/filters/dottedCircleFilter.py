@@ -178,10 +178,12 @@ class DottedCircleFilter(BaseFilter):
             width = None
             try:
                 bounds = glyph.getBounds(font)
-                width = bounds.xMax - bounds.xMin
+                if bounds:
+                    width = bounds.xMax - bounds.xMin
             except AttributeError:
                 bounds = glyph.bounds
-                width = bounds[2] - bounds[0]
+                if bounds:
+                    width = bounds[2] - bounds[0]
             if width is None:
                 width = glyph.width
             for anchor in glyph.anchors:
