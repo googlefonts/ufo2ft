@@ -201,15 +201,15 @@ def colorGraph(adjacency):
     """
     # Basic implementation
     # https://en.wikipedia.org/wiki/Greedy_coloring
-    color = dict()
+    colors = dict()
     # Sorted for reproducibility, probably not the optimal vertex order
     for node in sorted(adjacency):
         usedNeighbourColors = {
-            color[neighbour] for neighbour in adjacency[node] if neighbour in color
+            colors[neighbour] for neighbour in adjacency[node] if neighbour in colors
         }
-        color[node] = firstAvailable(usedNeighbourColors)
+        colors[node] = firstAvailable(usedNeighbourColors)
     groups = defaultdict(list)
-    for node, color in color.items():
+    for node, color in colors.items():
         groups[color].append(node)
     return list(groups.values())
 

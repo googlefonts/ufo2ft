@@ -78,6 +78,13 @@ class ParseLayoutFeaturesTest:
         assert "change the file name in the include" in caplog.text
 
 
+class DummyFeatureWriter:
+    tableTag = "GPOS"
+
+    def write(self, font, feaFile, compiler=None):
+        pass
+
+
 class FeatureCompilerTest:
     def test_ttFont(self, FontClass):
         ufo = FontClass()
@@ -173,6 +180,24 @@ class FeatureCompilerTest:
         assert len(compiler.featureWriters) == 1
         assert isinstance(compiler.featureWriters[0], KernFeatureWriter)
         assert "GPOS" in ttFont
+
+    def test_loadFeatureWriters_from_both_UFO_lib_and_argument(self, FontClass):
+        ufo = FontClass()
+        ufo.lib[FEATURE_WRITERS_KEY] = [{"class": "KernFeatureWriter"}]
+        compiler = FeatureCompiler(ufo, featureWriters=[..., DummyFeatureWriter])
+
+        assert len(compiler.featureWriters) == 2
+        assert isinstance(compiler.featureWriters[0], KernFeatureWriter)
+        assert isinstance(compiler.featureWriters[1], DummyFeatureWriter)
+
+    def test_loadFeatureWriters_from_both_defaults_and_argument(self, FontClass):
+        ufo = FontClass()
+        compiler = FeatureCompiler(ufo, featureWriters=[DummyFeatureWriter, ...])
+
+        assert len(compiler.featureWriters) == 1 + len(
+            FeatureCompiler.defaultFeatureWriters
+        )
+        assert isinstance(compiler.featureWriters[0], DummyFeatureWriter)
 
     def test_GSUB_writers_run_first(self, FontClass):
         class FooFeatureWriter(BaseFeatureWriter):
