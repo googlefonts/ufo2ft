@@ -137,7 +137,10 @@ class DottedCircleFilter(BaseFilter):
         dotted_circle = next((g.name for g in font if 0x25CC in g.unicodes), None)
         if dotted_circle:
             if dotted_circle not in glyphset:
-                logger.debug("Found dotted circle glyph %s in font but not in glyphset", dotted_circle)
+                logger.debug(
+                    "Found dotted circle glyph %s in font but not in glyphset",
+                    dotted_circle,
+                )
                 return DO_NOTHING
             logger.debug("Found dotted circle glyph %s", dotted_circle)
             return glyphset[dotted_circle]
