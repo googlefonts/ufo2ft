@@ -1,12 +1,40 @@
+import itertools
+
 from ufo2ft.constants import (
     COLOR_LAYER_MAPPING_KEY,
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
 )
-from ufo2ft.filters import loadFilters
+from ufo2ft.filters import isValidFilter, loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet
+
+
+def _load_custom_filters(ufo, filters=None):
+    # Args:
+    #   ufo: Font
+    #   filters: Optional[List[Union[Filter, EllipsisType]]])
+    # Returns: List[Filter]
+
+    # by default, load the filters from the lib; ellipsis is used as a placeholder
+    # so one can optionally insert additional filters=[f1, ..., f2] either
+    # before or after these, or override them by omitting the ellipsis.
+    if filters is None:
+        filters = [...]
+    seen_ellipsis = False
+    result = []
+    for f in filters:
+        if f is ...:
+            if seen_ellipsis:
+                raise ValueError("ellipsis not allowed more than once")
+            result.extend(itertools.chain(*loadFilters(ufo)))
+            seen_ellipsis = True
+        else:
+            if not isValidFilter(type(f)):
+                raise TypeError(f"Invalid filter: {f!r}")
+            result.append(f)
+    return result
 
 
 class BasePreProcessor:
@@ -26,8 +54,17 @@ class BasePreProcessor:
     initialization of the default filters.
 
     Custom filters can be applied before or after the default filters.
-    These are specified in the UFO lib.plist under the private key
+    These can be specified in the UFO lib.plist under the private key
     "com.github.googlei18n.ufo2ft.filters".
+    Alternatively the optional ``filters`` parameter can be used. This is a
+    list of filter instances (subclasses of BaseFilter) that overrides
+    those defined in the UFO lib. The list can be empty, meaning no custom
+    filters are run. If ``filters`` contain the special value ``...`` (i.e.
+    the actual ``ellipsis`` singleton, not the str literal '...'), then all
+    the filters from the UFO lib are loaded in its place. This allows to
+    insert additional filters before or after those already defined in the
+    UFO lib, as opposed to discard/replace them which is the default behavior
+    when ``...`` is absent.
     """
 
     def __init__(
@@ -37,7 +74,7 @@ class BasePreProcessor:
         layerName=None,
         skipExportGlyphs=None,
         filters=None,
-        **kwargs
+        **kwargs,
     ):
         self.ufo = ufo
         self.inplace = inplace
@@ -46,11 +83,10 @@ class BasePreProcessor:
             ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
         )
         self.defaultFilters = self.initDefaultFilters(**kwargs)
-        if filters is None:
-            self.preFilters, self.postFilters = loadFilters(ufo)
-        else:
-            self.preFilters = [f for f in filters if f.pre]
-            self.postFilters = [f for f in filters if not f.pre]
+
+        filters = _load_custom_filters(ufo, filters)
+        self.preFilters = [f for f in filters if f.pre]
+        self.postFilters = [f for f in filters if not f.pre]
 
     def initDefaultFilters(self, **kwargs):
         return []  # pragma: no cover
@@ -260,18 +296,9 @@ class TTFInterpolatablePreProcessor:
             self.defaultFilters.append([])
             _init_explode_color_layer_glyphs_filter(ufo, self.defaultFilters[-1])
 
-        self.preFilters, self.postFilters = [], []
-        if filters is None:
-            for ufo in ufos:
-                pre, post = loadFilters(ufo)
-                self.preFilters.append(pre)
-                self.postFilters.append(post)
-        else:
-            pre = [f for f in filters if f.pre]
-            post = [f for f in filters if not f.pre]
-            for _ in ufos:
-                self.preFilters.append(pre)
-                self.postFilters.append(post)
+        filterses = [_load_custom_filters(ufo, filters) for ufo in ufos]
+        self.preFilters = [[f for f in filters if f.pre] for filters in filterses]
+        self.postFilters = [[f for f in filters if not f.pre] for filters in filterses]
 
     def process(self):
         from cu2qu.ufo import fonts_to_quadratic
