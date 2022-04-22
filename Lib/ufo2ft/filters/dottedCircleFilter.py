@@ -58,6 +58,8 @@ from ufo2ft.util import _GlyphSet, _LazyFontName
 
 logger = logging.getLogger(__name__)
 
+DO_NOTHING = -1  # Sentinel value (not a valid glyph name)
+
 # Length of cubic Bezier handle used when drawing quarter circles.
 # See https://pomax.github.io/bezierinfo/#circles_cubic
 CIRCULAR_SUPERNESS = 0.551784777779014
@@ -110,6 +112,10 @@ class DottedCircleFilter(BaseFilter):
         self.set_context(font, glyphSet)
         added_glyph = False
         dotted_circle_glyph = self.check_dotted_circle()
+
+        if dotted_circle_glyph == DO_NOTHING:
+            return []
+
         if not dotted_circle_glyph:
             dotted_circle_glyph = self.draw_dotted_circle(glyphSet)
             added_glyph = True
@@ -127,10 +133,14 @@ class DottedCircleFilter(BaseFilter):
     def check_dotted_circle(self):
         """Check for the presence of a dotted circle glyph and return it"""
         font = self.context.font
+        glyphset = self.context.glyphSet
         dotted_circle = next((g.name for g in font if 0x25CC in g.unicodes), None)
         if dotted_circle:
+            if dotted_circle not in glyphset:
+                logger.debug("Found dotted circle glyph %s in font but not in glyphset", dotted_circle)
+                return DO_NOTHING
             logger.debug("Found dotted circle glyph %s", dotted_circle)
-            return self.context.glyphSet[dotted_circle]
+            return glyphset[dotted_circle]
 
     def draw_dotted_circle(self, glyphSet):
         """Add a new dotted circle glyph, drawing its outlines"""

@@ -1,4 +1,5 @@
 from ufo2ft.filters.dottedCircleFilter import DottedCircleFilter
+from ufo2ft.util import _GlyphSet
 
 
 def test_dotted_circle_filter(FontClass, datadir):
@@ -6,7 +7,7 @@ def test_dotted_circle_filter(FontClass, datadir):
     font = FontClass(ufo_path)
     assert "uni25CC" not in font
     philter = DottedCircleFilter()
-    glyphset = {}
+    glyphset = _GlyphSet.from_layer(font)
     modified = philter(font, glyphset)
     assert "uni25CC" in modified
     anchors = list(sorted(glyphset["uni25CC"].anchors, key=lambda x: x.name))
