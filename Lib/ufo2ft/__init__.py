@@ -571,7 +571,7 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
     TTFont object. If no variable fonts are defined in the Designspace, returns
     an empty dictionary.
 
-    .. versionadded:: TODO (Jany) version of addition
+    .. versionadded:: 2.28.0
     """
     kwargs = init_kwargs(kwargs, compileVariableTTFs_args)
     optimizeGvar = kwargs.pop("optimizeGvar")
@@ -684,7 +684,7 @@ def compileVariableCFF2s(designSpaceDoc, **kwargs):
     Returns a dictionary that maps each variable font filename to a new variable
     TTFont object.
 
-    .. versionadded:: TODO (Jany) version of addition
+    .. versionadded:: 2.28.0
     """
     kwargs = init_kwargs(kwargs, compileVariableCFF2s_args)
     excludeVariationTables = kwargs.pop("excludeVariationTables")
