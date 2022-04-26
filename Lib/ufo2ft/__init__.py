@@ -8,6 +8,7 @@ from fontTools.designspaceLib.split import splitInterpolable, splitVariableFonts
 from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
 
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, SPARSE_TTF_MASTER_TABLES
+from ufo2ft.errors import InvalidDesignSpaceData
 from ufo2ft.featureCompiler import (
     MTI_FEATURES_PREFIX,
     FeatureCompiler,
@@ -743,7 +744,10 @@ def _compileNeededSources(
             if variableFontNames is not None and vfName not in variableFontNames:
                 # This VF is not needed so we don't need to compile its sources
                 continue
-            vfNameToBaseUfo[vfName] = vfDoc.findDefault().font
+            default_source = vfDoc.findDefault()
+            if default_source is None:
+                raise InvalidDesignSpaceData("No default source.")
+            vfNameToBaseUfo[vfName] = default_source.font
             for source in vfDoc.sources:
                 sourcesToCompile.add(source.name)
 
