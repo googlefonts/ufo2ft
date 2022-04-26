@@ -568,7 +568,8 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
     The rest of the arguments works the same as in the other compile functions.
 
     Returns a dictionary that maps each variable font filename to a new variable
-    TTFont object.
+    TTFont object. If no variable fonts are defined in the Designspace, returns
+    an empty dictionary.
 
     .. versionadded:: TODO (Jany) version of addition
     """
@@ -588,7 +589,6 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
     )
 
     if not vfNameToBaseUfo:
-        logger.warning("No variable fonts to build")
         return {}
 
     logger.info("Building variable TTF fonts: %s", ", ".join(vfNameToBaseUfo))
