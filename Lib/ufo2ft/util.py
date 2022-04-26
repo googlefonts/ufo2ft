@@ -535,14 +535,14 @@ def prune_unknown_kwargs(kwargs, *callables):
 def ensure_all_sources_have_names(doc: DesignSpaceDocument) -> None:
     """Change in-place the given document to make sure that all <source> elements
     have a unique name assigned.
+
+    This may rename sources with a "temp_master.N" name, designspaceLib's default
+    stand-in.
     """
     used_names: Set[str] = set()
-    counter = 1
+    counter = 0
     for source in doc.sources:
-        while (
-            source.name is None
-            or "temp_master" in source.name  # Legacy quirk in designspaceLib
-            or source.name in used_names
-        ):
-            source.name = f"source.{counter}"
+        while source.name is None or source.name in used_names:
+            source.name = f"temp_master.{counter}"
             counter += 1
+        used_names.add(source.name)
