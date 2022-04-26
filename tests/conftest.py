@@ -91,3 +91,36 @@ def designspace(layertestrgufo, layertestbdufo):
     ds.addSource(s3)
 
     return ds
+
+
+@pytest.fixture
+def designspace_v5(FontClass):
+    ds5 = designspaceLib.DesignSpaceDocument.fromfile(
+        "tests/data/DSv5/test_v5_MutatorSans_and_Serif.designspace"
+    )
+
+    sources = {}
+    # Create base UFOs
+    for source in ds5.sources:
+        if source.layerName is not None:
+            continue
+        font = FontClass()
+        for name in ("I", "S", "I.narrow", "S.closed", "a"):
+            font.newGlyph(name)
+        font.lib["public.glyphOrder"] = sorted(font.keys())
+        sources[source.filename] = font
+
+    # Fill in sparse UFOs
+    for source in ds5.sources:
+        if source.layerName is None:
+            continue
+        font = sources[source.filename]
+        layer = font.newLayer(source.layerName)
+        for name in ("I", "S", "I.narrow", "S.closed"):
+            layer.newGlyph(name)
+
+    # Assign UFOs to their attribute
+    for source in ds5.sources:
+        source.font = sources[source.filename]
+
+    return ds5
