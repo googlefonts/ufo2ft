@@ -532,9 +532,6 @@ def compileVariableTTF(designSpaceDoc, **kwargs):
     The rest of the arguments works the same as in the other compile functions.
 
     Returns a new variable TTFont object.
-
-    .. deprecated:: TODO (Jany) version of deprecation
-        use :func:`compileVariableTTFs` instead (since DesignSpace version 5.0)
     """
     kwargs = init_kwargs(kwargs, compileVariableTTF_args)
     fonts = compileVariableTTFs(designSpaceDoc, **kwargs)
