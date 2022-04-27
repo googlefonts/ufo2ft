@@ -7,6 +7,7 @@ from ufo2ft.constants import (
 )
 from ufo2ft.filters import isValidFilter, loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
+from ufo2ft.filters.decomposeTransformedComponents import DecomposeTransformedComponentsFilter
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet
 
@@ -302,11 +303,21 @@ class TTFInterpolatablePreProcessor:
 
     def process(self):
         from cu2qu.ufo import fonts_to_quadratic
+        needs_decomposition = set()
 
         # first apply all custom pre-filters
         for funcs, ufo, glyphSet in zip(self.preFilters, self.ufos, self.glyphSets):
             for func in funcs:
-                func(ufo, glyphSet)
+                if isinstance(func, DecomposeTransformedComponentsFilter):
+                    needs_decomposition |= func(ufo, glyphSet)
+                else:
+                    func(ufo, glyphSet)
+
+        # If we decomposed a glyph in some masters, we must ensure it is decomposed in
+        # all masters. (https://github.com/googlefonts/ufo2ft/issues/507)
+        decompose = DecomposeComponentsFilter(include=needs_decomposition)
+        for ufo, glyphSet in zip(self.ufos, self.glyphSets):
+            decompose(ufo, glyphSet)
 
         # then apply all default filters
         for funcs, ufo, glyphSet in zip(self.defaultFilters, self.ufos, self.glyphSets):
