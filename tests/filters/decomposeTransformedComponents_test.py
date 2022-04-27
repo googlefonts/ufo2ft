@@ -1,6 +1,7 @@
 from ufo2ft.filters.decomposeTransformedComponents import (
     DecomposeTransformedComponentsFilter,
 )
+from ufo2ft.preProcessor import TTFInterpolatablePreProcessor
 
 
 class DecomposeTransformedComponentsFilterTest:
@@ -56,3 +57,39 @@ class DecomposeTransformedComponentsFilterTest:
         # nine.of has no outline and one component, it was not decomposed
         assert len(ufo["nine.of"]) == 0
         assert len(ufo["nine.of"].components) == 1
+
+    def test_decompose_compatibly(self, FontClass):
+        ufo1 = FontClass()
+        c = ufo1.newGlyph("comp")
+        c.width = 300
+        pen = c.getPen()
+        pen.moveTo((0, 0))
+        pen.lineTo((300, 0))
+        pen.lineTo((150, 300))
+        pen.closePath()
+
+        b = ufo1.newGlyph("base")
+        b.width = 300
+        pen = b.getPen()
+        pen.addComponent("comp", (0.5, 0, 0, 0.5, 0, 0))
+
+        ufo2 = FontClass()
+        c = ufo2.newGlyph("comp")
+        c.width = 600
+        pen = c.getPen()
+        pen.moveTo((0, 0))
+        pen.lineTo((600, 0))
+        pen.lineTo((300, 600))
+        pen.closePath()
+
+        b = ufo2.newGlyph("base")
+        b.width = 600
+        pen = b.getPen()
+        pen.addComponent("comp", (1, 0, 0, 1, 0, 0))
+
+        # Because ufo1.base needs decomposing, so should ufo2.base
+        glyphsets = TTFInterpolatablePreProcessor(
+            [ufo1, ufo2], filters=[DecomposeTransformedComponentsFilter(pre=True)]
+        ).process()
+        assert len(glyphsets[0]["base"]) == 1
+        assert len(glyphsets[1]["base"]) == 1
