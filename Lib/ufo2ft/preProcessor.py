@@ -7,7 +7,9 @@ from ufo2ft.constants import (
 )
 from ufo2ft.filters import isValidFilter, loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
-from ufo2ft.filters.decomposeTransformedComponents import DecomposeTransformedComponentsFilter
+from ufo2ft.filters.decomposeTransformedComponents import (
+    DecomposeTransformedComponentsFilter
+)
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet
 
@@ -303,6 +305,7 @@ class TTFInterpolatablePreProcessor:
 
     def process(self):
         from cu2qu.ufo import fonts_to_quadratic
+
         needs_decomposition = set()
 
         # first apply all custom pre-filters
