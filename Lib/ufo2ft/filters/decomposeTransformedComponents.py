@@ -8,20 +8,13 @@ class DecomposeTransformedComponentsFilter(BaseFilter):
     def filter(self, glyph):
         if not glyph.components:
             return False
-        transformedComponents = []
+        needs_decomposition = False
         for component in glyph.components:
             if component.transformation[:4] != Identity[:4]:
-                transformedComponents.append(component)
-        if not transformedComponents:
+                needs_decomposition = True
+                break
+        if not needs_decomposition:
             return False
-        specificComponents = [c.baseGlyph for c in transformedComponents]
-        ufo2ft.util.deepCopyContours(
-            self.context.glyphSet,
-            glyph,
-            glyph,
-            Transform(),
-            specificComponents=specificComponents,
-        )
-        for component in transformedComponents:
-            glyph.removeComponent(component)
+        ufo2ft.util.deepCopyContours(self.context.glyphSet, glyph, glyph, Transform())
+        glyph.clearComponents()
         return True
