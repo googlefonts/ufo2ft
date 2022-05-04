@@ -21,7 +21,7 @@
     <unitsPerEm value="1000"/>
     <created value="Fri Feb 17 17:17:17 2017"/>
     <modified value="Sun Feb 18 18:18:18 2018"/>
-    <xMin value="50"/>
+    <xMin value="-70"/>
     <yMin value="-200"/>
     <xMax value="450"/>
     <yMax value="800"/>
@@ -38,8 +38,8 @@
     <descent value="-200"/>
     <lineGap value="0"/>
     <advanceWidthMax value="500"/>
-    <minLeftSideBearing value="50"/>
-    <minRightSideBearing value="50"/>
+    <minLeftSideBearing value="-70"/>
+    <minRightSideBearing value="-80"/>
     <xMaxExtent value="450"/>
     <caretSlopeRise value="1"/>
     <caretSlopeRun value="0"/>
@@ -112,11 +112,11 @@
 
   <hmtx>
     <mtx name=".notdef" width="500" lsb="50"/>
-    <mtx name="I" width="0" lsb="0"/>
-    <mtx name="I.narrow" width="0" lsb="0"/>
-    <mtx name="S" width="0" lsb="0"/>
-    <mtx name="S.closed" width="0" lsb="0"/>
-    <mtx name="a" width="0" lsb="0"/>
+    <mtx name="I" width="0" lsb="-70"/>
+    <mtx name="I.narrow" width="0" lsb="-70"/>
+    <mtx name="S" width="0" lsb="-70"/>
+    <mtx name="S.closed" width="0" lsb="-70"/>
+    <mtx name="a" width="0" lsb="-70"/>
   </hmtx>
 
   <cmap>
@@ -270,14 +270,44 @@
           900 300 -900 -300 vlineto
         </CharString>
         <CharString name="I">
+          -70 -10 1 blend
+          -20 rmoveto
+          10 10 -10 hlineto
+          140 20 1 blend
+          30 rmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="I.narrow">
+          -70 -10 1 blend
+          -20 rmoveto
+          10 10 -10 hlineto
+          140 20 1 blend
+          30 rmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="S">
+          -70 -10 1 blend
+          -20 rmoveto
+          10 10 -10 hlineto
+          140 20 1 blend
+          30 rmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="S.closed">
+          -70 -10 1 blend
+          -20 rmoveto
+          10 10 -10 hlineto
+          140 20 1 blend
+          30 rmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="a">
+          -70 -10 1 blend
+          -20 rmoveto
+          10 10 -10 hlineto
+          140 20 1 blend
+          30 rmoveto
+          10 10 -10 hlineto
         </CharString>
       </CharStrings>
       <VarStore Format="1">

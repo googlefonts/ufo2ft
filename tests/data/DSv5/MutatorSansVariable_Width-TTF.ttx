@@ -21,7 +21,7 @@
     <unitsPerEm value="1000"/>
     <created value="Fri Feb 17 17:17:17 2017"/>
     <modified value="Sun Feb 18 18:18:18 2018"/>
-    <xMin value="50"/>
+    <xMin value="0"/>
     <yMin value="-200"/>
     <xMax value="450"/>
     <yMax value="800"/>
@@ -38,8 +38,8 @@
     <descent value="-200"/>
     <lineGap value="0"/>
     <advanceWidthMax value="500"/>
-    <minLeftSideBearing value="50"/>
-    <minRightSideBearing value="50"/>
+    <minLeftSideBearing value="0"/>
+    <minRightSideBearing value="-10"/>
     <xMaxExtent value="450"/>
     <caretSlopeRise value="1"/>
     <caretSlopeRun value="0"/>
@@ -166,15 +166,55 @@
       <instructions/>
     </TTGlyph>
 
-    <TTGlyph name="I"/><!-- contains no outline data -->
+    <TTGlyph name="I" xMin="0" yMin="0" xMax="10" yMax="10">
+      <contour>
+        <pt x="0" y="0" on="1"/>
+        <pt x="0" y="10" on="1"/>
+        <pt x="10" y="10" on="1"/>
+        <pt x="10" y="0" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
-    <TTGlyph name="I.narrow"/><!-- contains no outline data -->
+    <TTGlyph name="I.narrow" xMin="0" yMin="0" xMax="10" yMax="10">
+      <contour>
+        <pt x="0" y="0" on="1"/>
+        <pt x="0" y="10" on="1"/>
+        <pt x="10" y="10" on="1"/>
+        <pt x="10" y="0" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
-    <TTGlyph name="S"/><!-- contains no outline data -->
+    <TTGlyph name="S" xMin="0" yMin="0" xMax="10" yMax="10">
+      <contour>
+        <pt x="0" y="0" on="1"/>
+        <pt x="0" y="10" on="1"/>
+        <pt x="10" y="10" on="1"/>
+        <pt x="10" y="0" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
-    <TTGlyph name="S.closed"/><!-- contains no outline data -->
+    <TTGlyph name="S.closed" xMin="0" yMin="0" xMax="10" yMax="10">
+      <contour>
+        <pt x="0" y="0" on="1"/>
+        <pt x="0" y="10" on="1"/>
+        <pt x="10" y="10" on="1"/>
+        <pt x="10" y="0" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
-    <TTGlyph name="a"/><!-- contains no outline data -->
+    <TTGlyph name="a" xMin="0" yMin="0" xMax="10" yMax="10">
+      <contour>
+        <pt x="0" y="0" on="1"/>
+        <pt x="0" y="10" on="1"/>
+        <pt x="10" y="10" on="1"/>
+        <pt x="10" y="0" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
   </glyf>
 
@@ -541,6 +581,36 @@
   <gvar>
     <version value="1"/>
     <reserved value="0"/>
+    <glyphVariations glyph="I">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="20" y="0"/>
+      </tuple>
+    </glyphVariations>
+    <glyphVariations glyph="I.narrow">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="20" y="0"/>
+      </tuple>
+    </glyphVariations>
+    <glyphVariations glyph="S">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="20" y="0"/>
+      </tuple>
+    </glyphVariations>
+    <glyphVariations glyph="S.closed">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="20" y="0"/>
+      </tuple>
+    </glyphVariations>
+    <glyphVariations glyph="a">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="20" y="0"/>
+      </tuple>
+    </glyphVariations>
   </gvar>
 
 </ttFont>

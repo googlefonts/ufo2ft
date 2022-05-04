@@ -21,7 +21,7 @@
     <unitsPerEm value="1000"/>
     <created value="Fri Feb 17 17:17:17 2017"/>
     <modified value="Sun Feb 18 18:18:18 2018"/>
-    <xMin value="50"/>
+    <xMin value="-70"/>
     <yMin value="-200"/>
     <xMax value="450"/>
     <yMax value="800"/>
@@ -38,8 +38,8 @@
     <descent value="-200"/>
     <lineGap value="0"/>
     <advanceWidthMax value="500"/>
-    <minLeftSideBearing value="50"/>
-    <minRightSideBearing value="50"/>
+    <minLeftSideBearing value="-70"/>
+    <minRightSideBearing value="-80"/>
     <xMaxExtent value="450"/>
     <caretSlopeRise value="1"/>
     <caretSlopeRun value="0"/>
@@ -126,11 +126,11 @@
 
   <hmtx>
     <mtx name=".notdef" width="500" lsb="50"/>
-    <mtx name="I" width="0" lsb="0"/>
-    <mtx name="I.narrow" width="0" lsb="0"/>
-    <mtx name="S" width="0" lsb="0"/>
-    <mtx name="S.closed" width="0" lsb="0"/>
-    <mtx name="a" width="0" lsb="0"/>
+    <mtx name="I" width="0" lsb="-70"/>
+    <mtx name="I.narrow" width="0" lsb="-70"/>
+    <mtx name="S" width="0" lsb="-70"/>
+    <mtx name="S.closed" width="0" lsb="-70"/>
+    <mtx name="a" width="0" lsb="-70"/>
   </hmtx>
 
   <cmap>
@@ -166,15 +166,85 @@
       <instructions/>
     </TTGlyph>
 
-    <TTGlyph name="I"/><!-- contains no outline data -->
+    <TTGlyph name="I" xMin="-70" yMin="-20" xMax="80" yMax="30">
+      <contour>
+        <pt x="-70" y="-20" on="1"/>
+        <pt x="-70" y="-10" on="1"/>
+        <pt x="-60" y="-10" on="1"/>
+        <pt x="-60" y="-20" on="1"/>
+      </contour>
+      <contour>
+        <pt x="70" y="20" on="1"/>
+        <pt x="70" y="30" on="1"/>
+        <pt x="80" y="30" on="1"/>
+        <pt x="80" y="20" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
-    <TTGlyph name="I.narrow"/><!-- contains no outline data -->
+    <TTGlyph name="I.narrow" xMin="-70" yMin="-20" xMax="80" yMax="30">
+      <contour>
+        <pt x="-70" y="-20" on="1"/>
+        <pt x="-70" y="-10" on="1"/>
+        <pt x="-60" y="-10" on="1"/>
+        <pt x="-60" y="-20" on="1"/>
+      </contour>
+      <contour>
+        <pt x="70" y="20" on="1"/>
+        <pt x="70" y="30" on="1"/>
+        <pt x="80" y="30" on="1"/>
+        <pt x="80" y="20" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
-    <TTGlyph name="S"/><!-- contains no outline data -->
+    <TTGlyph name="S" xMin="-70" yMin="-20" xMax="80" yMax="30">
+      <contour>
+        <pt x="-70" y="-20" on="1"/>
+        <pt x="-70" y="-10" on="1"/>
+        <pt x="-60" y="-10" on="1"/>
+        <pt x="-60" y="-20" on="1"/>
+      </contour>
+      <contour>
+        <pt x="70" y="20" on="1"/>
+        <pt x="70" y="30" on="1"/>
+        <pt x="80" y="30" on="1"/>
+        <pt x="80" y="20" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
-    <TTGlyph name="S.closed"/><!-- contains no outline data -->
+    <TTGlyph name="S.closed" xMin="-70" yMin="-20" xMax="80" yMax="30">
+      <contour>
+        <pt x="-70" y="-20" on="1"/>
+        <pt x="-70" y="-10" on="1"/>
+        <pt x="-60" y="-10" on="1"/>
+        <pt x="-60" y="-20" on="1"/>
+      </contour>
+      <contour>
+        <pt x="70" y="20" on="1"/>
+        <pt x="70" y="30" on="1"/>
+        <pt x="80" y="30" on="1"/>
+        <pt x="80" y="20" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
-    <TTGlyph name="a"/><!-- contains no outline data -->
+    <TTGlyph name="a" xMin="-70" yMin="-20" xMax="80" yMax="30">
+      <contour>
+        <pt x="-70" y="-20" on="1"/>
+        <pt x="-70" y="-10" on="1"/>
+        <pt x="-60" y="-10" on="1"/>
+        <pt x="-60" y="-20" on="1"/>
+      </contour>
+      <contour>
+        <pt x="70" y="20" on="1"/>
+        <pt x="70" y="30" on="1"/>
+        <pt x="80" y="30" on="1"/>
+        <pt x="80" y="20" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
 
   </glyf>
 
@@ -423,6 +493,41 @@
   <gvar>
     <version value="1"/>
     <reserved value="0"/>
+    <glyphVariations glyph="I">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="-10" y="0"/>
+        <delta pt="4" x="10" y="0"/>
+      </tuple>
+    </glyphVariations>
+    <glyphVariations glyph="I.narrow">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="-10" y="0"/>
+        <delta pt="4" x="10" y="0"/>
+      </tuple>
+    </glyphVariations>
+    <glyphVariations glyph="S">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="-10" y="0"/>
+        <delta pt="4" x="10" y="0"/>
+      </tuple>
+    </glyphVariations>
+    <glyphVariations glyph="S.closed">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="-10" y="0"/>
+        <delta pt="4" x="10" y="0"/>
+      </tuple>
+    </glyphVariations>
+    <glyphVariations glyph="a">
+      <tuple>
+        <coord axis="wdth" value="1.0"/>
+        <delta pt="0" x="-10" y="0"/>
+        <delta pt="4" x="10" y="0"/>
+      </tuple>
+    </glyphVariations>
   </gvar>
 
 </ttFont>
