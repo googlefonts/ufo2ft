@@ -21,7 +21,7 @@
     <unitsPerEm value="1000"/>
     <created value="Fri Feb 17 17:17:17 2017"/>
     <modified value="Sun Feb 18 18:18:18 2018"/>
-    <xMin value="50"/>
+    <xMin value="0"/>
     <yMin value="-200"/>
     <xMax value="450"/>
     <yMax value="800"/>
@@ -38,8 +38,8 @@
     <descent value="-200"/>
     <lineGap value="0"/>
     <advanceWidthMax value="500"/>
-    <minLeftSideBearing value="50"/>
-    <minRightSideBearing value="50"/>
+    <minLeftSideBearing value="0"/>
+    <minRightSideBearing value="-10"/>
     <xMaxExtent value="450"/>
     <caretSlopeRise value="1"/>
     <caretSlopeRun value="0"/>
@@ -384,21 +384,37 @@
           900 300 -900 -300 vlineto
         </CharString>
         <CharString name="I">
+          0 40 10 20 -10 0 14 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="I.narrow">
+          0 40 10 20 -10 0 14 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="S">
+          0 40 10 20 -10 0 14 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="S.closed">
+          0 40 10 20 -10 0 14 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="a">
+          1 vsindex
+          0 10 20 0 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
       </CharStrings>
       <VarStore Format="1">
         <Format value="1"/>
         <VarRegionList>
           <!-- RegionAxisCount=2 -->
-          <!-- RegionCount=6 -->
+          <!-- RegionCount=8 -->
           <Region index="0">
             <VarRegionAxis index="0">
               <StartCoord value="0.0"/>
@@ -471,8 +487,32 @@
               <EndCoord value="1.0"/>
             </VarRegionAxis>
           </Region>
+          <Region index="6">
+            <VarRegionAxis index="0">
+              <StartCoord value="0.0"/>
+              <PeakCoord value="1.0"/>
+              <EndCoord value="1.0"/>
+            </VarRegionAxis>
+            <VarRegionAxis index="1">
+              <StartCoord value="0.0"/>
+              <PeakCoord value="0.0"/>
+              <EndCoord value="0.0"/>
+            </VarRegionAxis>
+          </Region>
+          <Region index="7">
+            <VarRegionAxis index="0">
+              <StartCoord value="0.0"/>
+              <PeakCoord value="1.0"/>
+              <EndCoord value="1.0"/>
+            </VarRegionAxis>
+            <VarRegionAxis index="1">
+              <StartCoord value="0.0"/>
+              <PeakCoord value="1.0"/>
+              <EndCoord value="1.0"/>
+            </VarRegionAxis>
+          </Region>
         </VarRegionList>
-        <!-- VarDataCount=1 -->
+        <!-- VarDataCount=2 -->
         <VarData index="0">
           <!-- ItemCount=0 -->
           <NumShorts value="0"/>
@@ -483,6 +523,14 @@
           <VarRegionIndex index="3" value="3"/>
           <VarRegionIndex index="4" value="4"/>
           <VarRegionIndex index="5" value="5"/>
+        </VarData>
+        <VarData index="1">
+          <!-- ItemCount=0 -->
+          <NumShorts value="0"/>
+          <!-- VarRegionCount=3 -->
+          <VarRegionIndex index="0" value="6"/>
+          <VarRegionIndex index="1" value="2"/>
+          <VarRegionIndex index="2" value="7"/>
         </VarData>
       </VarStore>
     </CFFFont>

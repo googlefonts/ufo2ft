@@ -21,7 +21,7 @@
     <unitsPerEm value="1000"/>
     <created value="Fri Feb 17 17:17:17 2017"/>
     <modified value="Sun Feb 18 18:18:18 2018"/>
-    <xMin value="50"/>
+    <xMin value="0"/>
     <yMin value="-200"/>
     <xMax value="450"/>
     <yMax value="800"/>
@@ -38,8 +38,8 @@
     <descent value="-200"/>
     <lineGap value="0"/>
     <advanceWidthMax value="500"/>
-    <minLeftSideBearing value="50"/>
-    <minRightSideBearing value="50"/>
+    <minLeftSideBearing value="0"/>
+    <minRightSideBearing value="-10"/>
     <xMaxExtent value="450"/>
     <caretSlopeRise value="1"/>
     <caretSlopeRun value="0"/>
@@ -288,14 +288,29 @@
           900 300 -900 -300 vlineto
         </CharString>
         <CharString name="I">
+          0 20 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="I.narrow">
+          0 20 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="S">
+          0 20 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="S.closed">
+          0 20 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
         <CharString name="a">
+          0 20 1 blend
+          hmoveto
+          10 10 -10 hlineto
         </CharString>
       </CharStrings>
       <VarStore Format="1">
