@@ -1399,7 +1399,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                 logger.error("%r has invalid curve format; skipped", name)
                 ttGlyph = Glyph()
             else:
-                ttGlyph = pen.glyph()
+                ttGlyph = pen.glyph(overlapBit=glyph.trueTypeOverlap)
             ttGlyphs[name] = ttGlyph
         return ttGlyphs
 
@@ -1525,6 +1525,7 @@ class StubGlyph:
         self.unicodes = unicodes if unicodes is not None else []
         self.components = []
         self.anchors = []
+        self.trueTypeOverlap = False
         if self.unicodes:
             self.unicode = self.unicodes[0]
         else:
