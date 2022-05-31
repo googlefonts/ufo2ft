@@ -3,9 +3,12 @@ import os
 from enum import IntEnum
 
 from fontTools import varLib
+from fontTools.designspaceLib import DesignSpaceDocument
+from fontTools.designspaceLib.split import splitInterpolable, splitVariableFonts
 from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
 
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, SPARSE_TTF_MASTER_TABLES
+from ufo2ft.errors import InvalidDesignSpaceData
 from ufo2ft.featureCompiler import (
     MTI_FEATURES_PREFIX,
     FeatureCompiler,
@@ -20,7 +23,7 @@ from ufo2ft.preProcessor import (
 )
 from ufo2ft.util import (
     _getDefaultNotdefGlyph,
-    getDefaultMasterFont,
+    ensure_all_sources_have_names,
     init_kwargs,
     prune_unknown_kwargs,
 )
@@ -371,8 +374,7 @@ def compileInterpolatableTTFsFromDS(designSpaceDoc, **kwargs):
     if kwargs["inplace"]:
         result = designSpaceDoc
     else:
-        # TODO try a more efficient copy method that doesn't involve (de)serializing
-        result = designSpaceDoc.__class__.fromstring(designSpaceDoc.tostring())
+        result = designSpaceDoc.deepcopyExceptFonts()
     for source, ttf in zip(result.sources, ttfs):
         source.font = ttf
     return result
@@ -451,8 +453,7 @@ def compileInterpolatableOTFsFromDS(designSpaceDoc, **kwargs):
     if kwargs["inplace"]:
         result = designSpaceDoc
     else:
-        # TODO try a more efficient copy method that doesn't involve (de)serializing
-        result = designSpaceDoc.__class__.fromstring(designSpaceDoc.tostring())
+        result = designSpaceDoc.deepcopyExceptFonts()
 
     for source, otf in zip(result.sources, otfs):
         source.font = otf
@@ -466,7 +467,7 @@ def compileFeatures(
     glyphSet=None,
     featureCompilerClass=None,
     debugFeatureFile=None,
-    **kwargs
+    **kwargs,
 ):
     """Compile OpenType Layout features from `ufo` into FontTools OTL tables.
     If `ttFont` is None, a new TTFont object is created containing the new
@@ -534,40 +535,78 @@ def compileVariableTTF(designSpaceDoc, **kwargs):
     Returns a new variable TTFont object.
     """
     kwargs = init_kwargs(kwargs, compileVariableTTF_args)
-    baseUfo = getDefaultMasterFont(designSpaceDoc)
-
-    excludeVariationTables = kwargs.pop("excludeVariationTables")
-    optimizeGvar = kwargs.pop("optimizeGvar")
-
-    # FIXME: Hack until we get a fontTools config module. Disable GPOS
-    # compaction while building masters because the compaction will be undone
-    # anyway by varLib merge and then done again on the VF
-    gpos_compact_value = os.environ.pop(GPOS_COMPACT_MODE_ENV_KEY, None)
-    try:
-        ttfDesignSpace = compileInterpolatableTTFsFromDS(
-            designSpaceDoc,
-            **{
-                **kwargs,
-                **dict(
-                    useProductionNames=False,  # will rename glyphs after varfont is built
-                    # No need to post-process intermediate fonts.
-                    postProcessorClass=None,
-                ),
-            },
+    fonts = compileVariableTTFs(designSpaceDoc, **kwargs)
+    if len(fonts) != 1:
+        raise ValueError(
+            "Tried to build a DesignSpace version 5 with multiple variable "
+            "fonts using the old ufo2ft API `compileVariableTTF`. "
+            "Use the new API instead `compileVariableTTFs`"
         )
-    finally:
-        if gpos_compact_value is not None:
-            os.environ[GPOS_COMPACT_MODE_ENV_KEY] = gpos_compact_value
+    return next(iter(fonts.values()))
 
-    logger.info("Building variable TTF font")
 
-    varfont = varLib.build(
-        ttfDesignSpace,
+compileVariableTTFs_args = {
+    **compileVariableTTF_args,
+    **dict(variableFontNames=None),
+}
+
+
+def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
+    """Create FontTools TrueType variable fonts for each variable font defined
+    in the given DesignSpaceDocument, using their UFO sources
+    with interpolatable outlines, using fontTools.varLib.build.
+
+    *optimizeGvar*, if set to False, will not perform IUP optimization on the
+      generated 'gvar' table.
+
+    *excludeVariationTables* is a list of sfnt table tags (str) that is passed on
+      to fontTools.varLib.build, to skip building some variation tables.
+
+    *variableFontNames* is an optional list of names of variable fonts
+      to build. If not provided, all variable fonts listed in the given
+      designspace will by built.
+
+    The rest of the arguments works the same as in the other compile functions.
+
+    Returns a dictionary that maps each variable font filename to a new variable
+    TTFont object. If no variable fonts are defined in the Designspace, returns
+    an empty dictionary.
+
+    .. versionadded:: 2.28.0
+    """
+    kwargs = init_kwargs(kwargs, compileVariableTTFs_args)
+    optimizeGvar = kwargs.pop("optimizeGvar")
+    excludeVariationTables = kwargs.pop("excludeVariationTables")
+    variableFontNames = kwargs.pop("variableFontNames")
+
+    # Pop inplace because we'll make a copy at this level so deeper functions
+    # don't need to worry
+    inplace = kwargs.pop("inplace")
+    if not inplace:
+        designSpaceDoc = designSpaceDoc.deepcopyExceptFonts()
+
+    vfNameToBaseUfo = _compileNeededSources(
+        kwargs, designSpaceDoc, variableFontNames, compileInterpolatableTTFsFromDS
+    )
+
+    if not vfNameToBaseUfo:
+        return {}
+
+    logger.info("Building variable TTF fonts: %s", ", ".join(vfNameToBaseUfo))
+
+    vfNameToTTFont = varLib.build_many(
+        designSpaceDoc,
         exclude=excludeVariationTables,
         optimize=optimizeGvar,
-    )[0]
+        skip_vf=lambda vf_name: variableFontNames and vf_name not in variableFontNames,
+    )
 
-    return call_postprocessor(varfont, baseUfo, glyphSet=None, **kwargs)
+    for vfName, varfont in list(vfNameToTTFont.items()):
+        vfNameToTTFont[vfName] = call_postprocessor(
+            varfont, vfNameToBaseUfo[vfName], glyphSet=None, **kwargs
+        )
+
+    return vfNameToTTFont
 
 
 compileVariableCFF2_args = {
@@ -602,46 +641,153 @@ def compileVariableCFF2(designSpaceDoc, **kwargs):
     Returns a new variable TTFont object.
     """
     kwargs = init_kwargs(kwargs, compileVariableCFF2_args)
-    baseUfo = getDefaultMasterFont(designSpaceDoc)
-
-    excludeVariationTables = kwargs.pop("excludeVariationTables")
-
-    # FIXME: Hack until we get a fontTools config module. Disable GPOS
-    # compaction while building masters because the compaction will be undone
-    # anyway by varLib merge and then done again on the VF
-    gpos_compact_value = os.environ.pop(GPOS_COMPACT_MODE_ENV_KEY, None)
-    try:
-        otfDesignSpace = compileInterpolatableOTFsFromDS(
-            designSpaceDoc,
-            **{
-                **kwargs,
-                **dict(
-                    useProductionNames=False,  # will rename glyphs after varfont is built
-                    # No need to post-process intermediate fonts.
-                    postProcessorClass=None,
-                ),
-            },
+    fonts = compileVariableCFF2s(designSpaceDoc, **kwargs)
+    if len(fonts) != 1:
+        raise ValueError(
+            "Tried to build a DesignSpace version 5 with multiple variable "
+            "fonts using the old ufo2ft API `compileVariableCFF2`. "
+            "Use the new API instead `compileVariableCFF2s`"
         )
-    finally:
-        if gpos_compact_value is not None:
-            os.environ[GPOS_COMPACT_MODE_ENV_KEY] = gpos_compact_value
+    return next(iter(fonts.values()))
 
-    logger.info("Building variable CFF2 font")
 
+compileVariableCFF2s_args = {
+    **compileVariableCFF2_args,
+    **dict(variableFontNames=None),
+}
+
+
+def compileVariableCFF2s(designSpaceDoc, **kwargs):
+    """Create FontTools CFF2 variable fonts for each variable font defined
+    in the given DesignSpaceDocument, using their UFO sources
+    with interpolatable outlines, using fontTools.varLib.build.
+
+    *excludeVariationTables* is a list of sfnt table tags (str) that is passed on
+      to fontTools.varLib.build, to skip building some variation tables.
+
+    *optimizeCFF* (int) defines whether the CFF charstrings should be
+      specialized and subroutinized. 1 (default) only enables the specialization;
+      2 (default) does both specialization and subroutinization. The value 0 is supposed
+      to disable both optimizations, however it's currently unused, because fontTools
+      has some issues generating a VF with non-specialized CFF2 charstrings:
+      fonttools/fonttools#1979.
+      NOTE: Subroutinization of variable CFF2 requires the "cffsubr" extra requirement.
+
+    *variableFontNames* is an optional list of filenames of variable fonts
+      to build. If not provided, all variable fonts listed in the given
+      designspace will by built.
+
+    The rest of the arguments works the same as in the other compile functions.
+
+    Returns a dictionary that maps each variable font filename to a new variable
+    TTFont object.
+
+    .. versionadded:: 2.28.0
+    """
+    kwargs = init_kwargs(kwargs, compileVariableCFF2s_args)
+    excludeVariationTables = kwargs.pop("excludeVariationTables")
     optimizeCFF = CFFOptimization(kwargs.pop("optimizeCFF"))
+    variableFontNames = kwargs.pop("variableFontNames")
 
-    varfont = varLib.build(
-        otfDesignSpace,
+    # Pop inplace because we'll make a copy at this level so deeper functions
+    # don't need to worry
+    inplace = kwargs.pop("inplace")
+    if not inplace:
+        designSpaceDoc = designSpaceDoc.deepcopyExceptFonts()
+
+    vfNameToBaseUfo = _compileNeededSources(
+        kwargs, designSpaceDoc, variableFontNames, compileInterpolatableOTFsFromDS
+    )
+
+    if not vfNameToBaseUfo:
+        logger.warning("No variable fonts to build")
+        return {}
+
+    logger.info(f"Building variable CFF2 fonts: {', '.join(vfNameToBaseUfo)}")
+
+    vfNameToTTFont = varLib.build_many(
+        designSpaceDoc,
         exclude=excludeVariationTables,
         # NOTE optimize=False won't change anything until this PR is merged
         # https://github.com/fonttools/fonttools/pull/1979
         optimize=optimizeCFF >= CFFOptimization.SPECIALIZE,
-    )[0]
-
-    return call_postprocessor(
-        varfont,
-        baseUfo,
-        glyphSet=None,
-        **kwargs,
-        optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+        skip_vf=lambda vf_name: variableFontNames and vf_name not in variableFontNames,
     )
+
+    for vfName, varfont in list(vfNameToTTFont.items()):
+        vfNameToTTFont[vfName] = call_postprocessor(
+            varfont,
+            vfNameToBaseUfo[vfName],
+            glyphSet=None,
+            **kwargs,
+            optimizeCFF=optimizeCFF >= CFFOptimization.SUBROUTINIZE,
+        )
+
+    return vfNameToTTFont
+
+
+def _compileNeededSources(
+    kwargs, designSpaceDoc, variableFontNames, compileInterpolatableFunc
+):
+    # We'll need to map <source> elements to TTFonts, to do so make sure that
+    # each <source> has a name.
+    ensure_all_sources_have_names(designSpaceDoc)
+
+    # Go through VFs to build and gather list of needed sources to compile
+    interpolableSubDocs = [
+        subDoc for _location, subDoc in splitInterpolable(designSpaceDoc)
+    ]
+    vfNameToBaseUfo = {}
+    sourcesToCompile = set()
+    for subDoc in interpolableSubDocs:
+        for vfName, vfDoc in splitVariableFonts(subDoc):
+            if variableFontNames is not None and vfName not in variableFontNames:
+                # This VF is not needed so we don't need to compile its sources
+                continue
+            default_source = vfDoc.findDefault()
+            if default_source is None:
+                raise InvalidDesignSpaceData("No default source.")
+            vfNameToBaseUfo[vfName] = default_source.font
+            for source in vfDoc.sources:
+                sourcesToCompile.add(source.name)
+
+    # Match sources to compile to their Descriptor in the original designspace
+    sourcesByName = {}
+    for source in designSpaceDoc.sources:
+        if source.name in sourcesToCompile:
+            sourcesByName[source.name] = source
+
+    # Compile all needed sources in each interpolable subspace to make sure
+    # they're all compatible; that also ensures that sub-vfs within the same
+    # interpolable sub-space are compatible too.
+    for subDoc in interpolableSubDocs:
+        # Only keep the sources that we've identified earlier as need-to-compile
+        subDoc.sources = [s for s in subDoc.sources if s.name in sourcesToCompile]
+        if not subDoc.sources:
+            continue
+
+        # FIXME: Hack until we get a fontTools config module. Disable GPOS
+        # compaction while building masters because the compaction will be undone
+        # anyway by varLib merge and then done again on the VF
+        gpos_compact_value = os.environ.pop(GPOS_COMPACT_MODE_ENV_KEY, None)
+        try:
+            ttfDesignSpace = compileInterpolatableFunc(
+                subDoc,
+                **{
+                    **kwargs,
+                    **dict(
+                        useProductionNames=False,  # will rename glyphs after varfont is built
+                        # No need to post-process intermediate fonts.
+                        postProcessorClass=None,
+                    ),
+                },
+            )
+        finally:
+            if gpos_compact_value is not None:
+                os.environ[GPOS_COMPACT_MODE_ENV_KEY] = gpos_compact_value
+
+        # Stick TTFs back into original big DS
+        for ttfSource in ttfDesignSpace.sources:
+            sourcesByName[ttfSource.name].font = ttfSource.font
+
+    return vfNameToBaseUfo

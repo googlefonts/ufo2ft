@@ -91,3 +91,55 @@ def designspace(layertestrgufo, layertestbdufo):
     ds.addSource(s3)
 
     return ds
+
+
+@pytest.fixture
+def designspace_v5(FontClass):
+    def draw_rectangle(pen, x_offset, y_offset):
+        pen.moveTo((0 + x_offset, 0 + y_offset))
+        pen.lineTo((10 + x_offset, 0 + y_offset))
+        pen.lineTo((10 + x_offset, 10 + y_offset))
+        pen.lineTo((0 + x_offset, 10 + y_offset))
+        pen.closePath()
+
+    def draw_something(glyph, number, is_sans):
+        # Ensure Sans and Serif sources are incompatible to make sure that the
+        # DS5 code treats them separately when using e.g. cu2qu. Use some number
+        # to offset the drawings so we get some variation.
+        if is_sans:
+            draw_rectangle(glyph.getPen(), 10 * number, 0)
+        else:
+            draw_rectangle(glyph.getPen(), -10 * number, -20)
+            draw_rectangle(glyph.getPen(), 10 * number, 20)
+
+    ds5 = designspaceLib.DesignSpaceDocument.fromfile(
+        "tests/data/DSv5/test_v5_MutatorSans_and_Serif.designspace"
+    )
+
+    sources = {}
+    # Create base UFOs
+    for index, source in enumerate(ds5.sources):
+        if source.layerName is not None:
+            continue
+        font = FontClass()
+        for name in ("I", "S", "I.narrow", "S.closed", "a"):
+            glyph = font.newGlyph(name)
+            draw_something(glyph, index, "Serif" not in source.filename)
+        font.lib["public.glyphOrder"] = sorted(font.keys())
+        sources[source.filename] = font
+
+    # Fill in sparse UFOs
+    for index, source in enumerate(ds5.sources):
+        if source.layerName is None:
+            continue
+        font = sources[source.filename]
+        layer = font.newLayer(source.layerName)
+        for name in ("I", "S", "I.narrow", "S.closed"):
+            glyph = layer.newGlyph(name)
+            draw_something(glyph, index, "Serif" not in source.filename)
+
+    # Assign UFOs to their attribute
+    for source in ds5.sources:
+        source.font = sources[source.filename]
+
+    return ds5

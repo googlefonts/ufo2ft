@@ -3,8 +3,10 @@ import logging
 import re
 from copy import deepcopy
 from inspect import currentframe, getfullargspec
+from typing import Set
 
 from fontTools import subset, ttLib, unicodedata
+from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.builder import addOpenTypeFeatures
 from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Identity, Transform
@@ -528,3 +530,19 @@ def prune_unknown_kwargs(kwargs, *callables):
     for func in callables:
         known_args.update(getfullargspec(func).args)
     return {k: v for k, v in kwargs.items() if k in known_args}
+
+
+def ensure_all_sources_have_names(doc: DesignSpaceDocument) -> None:
+    """Change in-place the given document to make sure that all <source> elements
+    have a unique name assigned.
+
+    This may rename sources with a "temp_master.N" name, designspaceLib's default
+    stand-in.
+    """
+    used_names: Set[str] = set()
+    counter = 0
+    for source in doc.sources:
+        while source.name is None or source.name in used_names:
+            source.name = f"temp_master.{counter}"
+            counter += 1
+        used_names.add(source.name)
