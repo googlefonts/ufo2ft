@@ -57,6 +57,10 @@ def call_preprocessor(ufo_or_ufos, *, preProcessorClass, **kwargs):
                 "public.skipExportGlyphs", []
             )
 
+    # Preprocessors expect this parameter under a different name.
+    if "cubicConversionError" in kwargs:
+        kwargs["conversionError"] = kwargs.pop("cubicConversionError")
+
     callables = [preProcessorClass]
     if hasattr(preProcessorClass, "initDefaultFilters"):
         callables.append(preProcessorClass.initDefaultFilters)
