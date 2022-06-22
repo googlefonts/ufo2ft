@@ -39,11 +39,16 @@ class PropagateAnchorsFilter(BaseFilter):
         if not glyph.components:
             return False
         before = len(glyph.anchors)
-        _propagate_glyph_anchors(self.context.glyphSet, glyph, self.context.processed)
+        _propagate_glyph_anchors(
+            self.context.glyphSet,
+            glyph,
+            self.context.processed,
+            self.context.modified,
+        )
         return len(glyph.anchors) > before
 
 
-def _propagate_glyph_anchors(glyphSet, composite, processed):
+def _propagate_glyph_anchors(glyphSet, composite, processed, modified):
     """
     Propagate anchors from base glyphs to a given composite
     glyph, and to all composite glyphs used in between.
@@ -69,7 +74,7 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
                 "in glyph {}".format(component.baseGlyph, composite.name)
             )
         else:
-            _propagate_glyph_anchors(glyphSet, glyph, processed)
+            _propagate_glyph_anchors(glyphSet, glyph, processed, modified)
             if any(a.name.startswith("_") for a in glyph.anchors):
                 mark_components.append(component)
             else:
@@ -109,6 +114,9 @@ def _propagate_glyph_anchors(glyphSet, composite, processed):
         except TypeError:  # pragma: no cover
             # fontParts API
             composite.appendAnchor(name, (x, y))
+
+    if to_add:
+        modified.add(composite.name)
 
 
 def _get_anchor_data(anchor_data, glyphSet, components, anchor_name):
