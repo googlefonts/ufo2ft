@@ -170,7 +170,9 @@ class PropagateAnchorsFilterTest:
     def test_nested_component_glyph(self, font):
         name = "amacrondieresis"
         philter = PropagateAnchorsFilter(include={name})
-        assert philter(font) == {name}
+        # 'amacron' is used as component by 'amacrondieresis' hence it is modified
+        # as well...
+        assert philter(font) == {name, "amacron"}
         assert [(a.name, a.x, a.y) for a in font[name].anchors] == [
             ("bottom", 175, 0),
             ("top", 175, 660),
