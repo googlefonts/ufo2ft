@@ -565,8 +565,12 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
 
     initialMaxComponentDepth = maxComponentDepth
     for component in glyph.components:
+        try:
+            baseGlyph = glyphSet[component.baseGlyph]
+        except KeyError:
+            continue
         componentDepth = getMaxComponentDepth(
-            glyphSet[component.baseGlyph], glyphSet, initialMaxComponentDepth
+            baseGlyph, glyphSet, initialMaxComponentDepth
         )
         maxComponentDepth = max(maxComponentDepth, componentDepth)
 
