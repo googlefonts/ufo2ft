@@ -21,7 +21,7 @@ class DecomposeTransformedComponentsFilterTest:
         pen = c.getPen()
         pen.addComponent("six.lf", (1, 0, 0, 1, 0, 0))
 
-        # nine.lf has one transformed component of a componenent
+        # nine.lf has one transformed component of a component
         b = ufo.newGlyph("nine.lf")
         b.width = 300
         pen = b.getPen()
