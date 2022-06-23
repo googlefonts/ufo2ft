@@ -315,11 +315,13 @@ class TTFInterpolatablePreProcessor:
                     needs_decomposition |= func(ufo, glyphSet)
                 else:
                     func(ufo, glyphSet)
+
         # If we decomposed a glyph in some masters, we must ensure it is decomposed in
         # all masters. (https://github.com/googlefonts/ufo2ft/issues/507)
-        decompose = DecomposeComponentsFilter(include=needs_decomposition)
-        for ufo, glyphSet in zip(self.ufos, self.glyphSets):
-            decompose(ufo, glyphSet)
+        if needs_decomposition:
+            decompose = DecomposeComponentsFilter(include=needs_decomposition)
+            for ufo, glyphSet in zip(self.ufos, self.glyphSets):
+                decompose(ufo, glyphSet)
 
         # then apply all default filters
         for funcs, ufo, glyphSet in zip(self.defaultFilters, self.ufos, self.glyphSets):
