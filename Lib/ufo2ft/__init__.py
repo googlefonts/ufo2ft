@@ -98,6 +98,7 @@ base_args = dict(
     skipExportGlyphs=None,
     debugFeatureFile=None,
     notdefGlyph=None,
+    colrLayerReuse=True,
 )
 
 compileOTF_args = {
@@ -258,6 +259,7 @@ compileInterpolatableTTFs_args = {
         reverseDirection=True,
         flattenComponents=False,
         layerNames=None,
+        colrLayerReuse=False,
     ),
 }
 
@@ -392,6 +394,7 @@ compileInterpolatableOTFs_args = {
         featureCompilerClass=None,
         roundTolerance=None,
         optimizeCFF=CFFOptimization.NONE,
+        colrLayerReuse=False,
     ),
 }
 
@@ -582,6 +585,7 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
     optimizeGvar = kwargs.pop("optimizeGvar")
     excludeVariationTables = kwargs.pop("excludeVariationTables")
     variableFontNames = kwargs.pop("variableFontNames")
+    colrLayerReuse = kwargs.pop("colrLayerReuse")
 
     # Pop inplace because we'll make a copy at this level so deeper functions
     # don't need to worry
@@ -603,6 +607,7 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
         exclude=excludeVariationTables,
         optimize=optimizeGvar,
         skip_vf=lambda vf_name: variableFontNames and vf_name not in variableFontNames,
+        colr_layer_reuse=colrLayerReuse,
     )
 
     for vfName, varfont in list(vfNameToTTFont.items()):
@@ -692,6 +697,7 @@ def compileVariableCFF2s(designSpaceDoc, **kwargs):
     excludeVariationTables = kwargs.pop("excludeVariationTables")
     optimizeCFF = CFFOptimization(kwargs.pop("optimizeCFF"))
     variableFontNames = kwargs.pop("variableFontNames")
+    colrLayerReuse = kwargs.pop("colrLayerReuse")
 
     # Pop inplace because we'll make a copy at this level so deeper functions
     # don't need to worry
@@ -716,6 +722,7 @@ def compileVariableCFF2s(designSpaceDoc, **kwargs):
         # https://github.com/fonttools/fonttools/pull/1979
         optimize=optimizeCFF >= CFFOptimization.SPECIALIZE,
         skip_vf=lambda vf_name: variableFontNames and vf_name not in variableFontNames,
+        colr_layer_reuse=colrLayerReuse,
     )
 
     for vfName, varfont in list(vfNameToTTFont.items()):
