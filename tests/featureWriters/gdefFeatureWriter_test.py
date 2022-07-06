@@ -210,6 +210,25 @@ class GdefFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_floaty_carets(self, testufo):
+        # Some Glyphs sources happen to contain fractional caret positions.
+        # In the Adobe feature file syntax (and binary OpenType GDEF tables),
+        # caret positions must be integers.
+        liga = testufo.newGlyph("li_ga")
+        liga.appendAnchor({"name": "vcaret_1", "x": 0, "y": 200.1111})
+        liga.appendAnchor({"name": "caret_1", "x": 499.9876, "y": 0})
+
+        newFea = self.writeGDEF(testufo)
+        assert str(newFea) == dedent(
+            """\
+            table GDEF {
+                LigatureCaretByPos f_f_i 200 400;
+                LigatureCaretByPos f_i 200;
+                LigatureCaretByPos li_ga 200 500;
+            } GDEF;
+            """
+        )
+
     def test_getOpenTypeCategories_invalid(self, testufo, caplog):
         caplog.set_level(logging.WARNING)
         testufo.lib["public.openTypeCategories"] = {
