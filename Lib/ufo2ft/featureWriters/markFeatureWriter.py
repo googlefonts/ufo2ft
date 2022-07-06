@@ -559,7 +559,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 # We keep the NamedAnchor if the markClass is allowed in the
                 # current lookup.
                 def include(anchor):
-                    return anchor.markClass.name in markClasses
+                    return anchor.markClass.name in markClasses  # noqa: B023
 
                 filteredAttachment = attachment.filter(include)
                 if filteredAttachment:
