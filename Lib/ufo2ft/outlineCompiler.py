@@ -95,7 +95,13 @@ class BaseOutlineCompiler:
     )
 
     def __init__(
-        self, font, glyphSet=None, glyphOrder=None, tables=None, notdefGlyph=None
+        self,
+        font,
+        glyphSet=None,
+        glyphOrder=None,
+        tables=None,
+        notdefGlyph=None,
+        colrLayerReuse=True,
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
@@ -111,6 +117,7 @@ class BaseOutlineCompiler:
         self.unicodeToGlyphNameMapping = self.makeUnicodeToGlyphNameMapping()
         if tables is not None:
             self.tables = tables
+        self.colrLayerReuse = colrLayerReuse
         # cached values defined later on
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
@@ -968,6 +975,7 @@ class BaseOutlineCompiler:
                 layerInfo,
                 glyphMap=glyphMap,
                 clipBoxes=clipBoxes,
+                allowLayerReuse=self.colrLayerReuse,
             )
 
     def setupTable_CPAL(self):

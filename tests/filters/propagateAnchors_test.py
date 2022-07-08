@@ -123,6 +123,35 @@ def font(request, FontClass):
     return font
 
 
+EXPECTED = {
+    # single component glyph
+    "a-cyr": ([("bottom", 175, 0), ("top", 175, 300)], {"a-cyr"}),
+    # two component glyph
+    "adieresis": ([("bottom", 175, 0), ("top", 175, 480)], {"adieresis"}),
+    # one anchor, two component glyph
+    "amacron": ([("top", 176, 481), ("bottom", 175, 0)], {"amacron"}),
+    # three component glyph
+    "adieresismacron": ([("bottom", 175, 0), ("top", 175, 660)], {"adieresismacron"}),
+    # nested component glyph
+    "amacrondieresis": (
+        [("bottom", 175, 0), ("top", 175, 660)],
+        # 'amacron' is used as component by 'amacrondieresis' hence it is modified
+        # as well...
+        {"amacrondieresis", "amacron"},
+    ),
+    # ligature glyph
+    "a_a": (
+        [
+            ("bottom_1", 175, 0),
+            ("bottom_2", 525, 0),
+            ("top_1", 175, 300),
+            ("top_2", 525, 300),
+        ],
+        {"a_a"},
+    ),
+}
+
+
 class PropagateAnchorsFilterTest:
     def test_empty_glyph(self, font):
         philter = PropagateAnchorsFilter(include={"space"})
@@ -132,72 +161,21 @@ class PropagateAnchorsFilterTest:
         philter = PropagateAnchorsFilter(include={"a"})
         assert not philter(font)
 
-    def test_single_component_glyph(self, font):
-        philter = PropagateAnchorsFilter(include={"a-cyr"})
-        assert philter(font) == {"a-cyr"}
-        assert [(a.name, a.x, a.y) for a in font["a-cyr"].anchors] == [
-            ("bottom", 175, 0),
-            ("top", 175, 300),
-        ]
-
-    def test_two_component_glyph(self, font):
-        name = "adieresis"
+    @pytest.mark.parametrize("name", list(EXPECTED))
+    def test_include_one_glyph_at_a_time(self, font, name):
         philter = PropagateAnchorsFilter(include={name})
-        assert philter(font) == {name}
-        assert [(a.name, a.x, a.y) for a in font[name].anchors] == [
-            ("bottom", 175, 0),
-            ("top", 175, 480),
-        ]
+        modified = philter(font)
 
-    def test_one_anchor_two_component_glyph(self, font):
-        name = "amacron"
-        philter = PropagateAnchorsFilter(include={name})
-        assert philter(font) == {name}
-        assert [(a.name, a.x, a.y) for a in font[name].anchors] == [
-            ("top", 176, 481),
-            ("bottom", 175, 0),
-        ]
-
-    def test_three_component_glyph(self, font):
-        name = "adieresismacron"
-        philter = PropagateAnchorsFilter(include={name})
-        assert philter(font) == {name}
-        assert [(a.name, a.x, a.y) for a in font[name].anchors] == [
-            ("bottom", 175, 0),
-            ("top", 175, 660),
-        ]
-
-    def test_nested_component_glyph(self, font):
-        name = "amacrondieresis"
-        philter = PropagateAnchorsFilter(include={name})
-        assert philter(font) == {name}
-        assert [(a.name, a.x, a.y) for a in font[name].anchors] == [
-            ("bottom", 175, 0),
-            ("top", 175, 660),
-        ]
-
-    def test_ligature_glyph(self, font):
-        name = "a_a"
-        philter = PropagateAnchorsFilter(include={name})
-        assert philter(font) == {name}
-        assert [(a.name, a.x, a.y) for a in font[name].anchors] == [
-            ("bottom_1", 175, 0),
-            ("bottom_2", 525, 0),
-            ("top_1", 175, 300),
-            ("top_2", 525, 300),
-        ]
+        expected_anchors, expected_modified = EXPECTED[name]
+        assert modified == expected_modified
+        assert [(a.name, a.x, a.y) for a in font[name].anchors] == expected_anchors
 
     def test_whole_font(self, font):
         philter = PropagateAnchorsFilter()
         modified = philter(font)
-        assert modified == {
-            "a-cyr",
-            "amacron",
-            "adieresis",
-            "adieresismacron",
-            "amacrondieresis",
-            "a_a",
-        }
+        assert modified == set(EXPECTED)
+        for name, (expected_anchors, _) in EXPECTED.items():
+            assert [(a.name, a.x, a.y) for a in font[name].anchors] == expected_anchors
 
     def test_fail_during_anchor_propagation(self, font):
         name = "emacron"

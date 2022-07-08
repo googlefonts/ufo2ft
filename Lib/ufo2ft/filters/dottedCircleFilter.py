@@ -249,7 +249,8 @@ class DottedCircleFilter(BaseFilter):
         if ast.findTable(feaFile, "GDEF") is None:
             # We have no GDEF table. GDEFFeatureWriter will create one
             # using the font's lib.
-            font.lib.setdefault(OPENTYPE_CATEGORIES_KEY, {})[dotted_circle] = "base"
+            if OPENTYPE_CATEGORIES_KEY in font.lib:
+                font.lib[OPENTYPE_CATEGORIES_KEY][dotted_circle] = "base"
             return
         # We have GDEF table, so we need to find the GlyphClassDef, and add
         # ourselves to the baseGlyphs set.
