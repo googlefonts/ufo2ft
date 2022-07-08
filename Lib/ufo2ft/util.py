@@ -546,3 +546,32 @@ def ensure_all_sources_have_names(doc: DesignSpaceDocument) -> None:
             source.name = f"temp_master.{counter}"
             counter += 1
         used_names.add(source.name)
+
+
+def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
+    """Return the height of a composite glyph's tree of components.
+
+    This is equal to the depth of its deepest node, where the depth
+    means the number of edges (component references) from the node
+    to the tree's root.
+
+    For glyphs that contain no components, only contours, this is 0.
+    Composite glyphs have max component depth of 1 or greater.
+    """
+    if not glyph.components:
+        return maxComponentDepth
+
+    maxComponentDepth += 1
+
+    initialMaxComponentDepth = maxComponentDepth
+    for component in glyph.components:
+        try:
+            baseGlyph = glyphSet[component.baseGlyph]
+        except KeyError:
+            continue
+        componentDepth = getMaxComponentDepth(
+            baseGlyph, glyphSet, initialMaxComponentDepth
+        )
+        maxComponentDepth = max(maxComponentDepth, componentDepth)
+
+    return maxComponentDepth
