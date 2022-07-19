@@ -5,7 +5,7 @@ from fontTools import unicodedata
 
 from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection
+from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection, DFLT_SCRIPTS
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -39,9 +39,9 @@ def unicodeBidiType(uv):
 
 class KerningPair:
 
-    __slots__ = ("side1", "side2", "value", "directions", "bidiTypes")
+    __slots__ = ("side1", "side2", "value", "scripts", "directions", "bidiTypes")
 
-    def __init__(self, side1, side2, value, directions=None, bidiTypes=None):
+    def __init__(self, side1, side2, value, scripts=None, directions=None, bidiTypes=None):
         if isinstance(side1, str):
             self.side1 = ast.GlyphName(side1)
         elif isinstance(side1, ast.GlyphClassDefinition):
@@ -67,6 +67,7 @@ class KerningPair:
             raise AssertionError(side2)
 
         self.value = value
+        self.scripts = scripts or set()
         self.directions = directions or set()
         self.bidiTypes = bidiTypes or set()
 
@@ -182,12 +183,13 @@ class KerningPair:
         return self.firstGlyphs | self.secondGlyphs
 
     def __repr__(self):
-        return "<{} {} {} {}{}{}>".format(
+        return "<{} {} {} {}{}{}{}>".format(
             self.__class__.__name__,
             self.side1,
             self.side2,
             self.value,
             " %r" % self.directions if self.directions else "",
+            " %r" % self.scripts if self.scripts else "",
             " %r" % self.bidiTypes if self.bidiTypes else "",
         )
 
@@ -256,7 +258,7 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         lookupGroups = []
         for _, lookupGroup in sorted(lookups.items()):
-            lookupGroups.extend(lookupGroup)
+            lookupGroups.extend(lookupGroup.values())
 
         self._insert(
             feaFile=feaFile,
@@ -390,99 +392,50 @@ class KernFeatureWriter(BaseFeatureWriter):
             enumerated=enumerated,
         )
 
-    def _makeKerningLookup(
-        self, name, pairs, exclude=None, rtl=False, ignoreMarks=True
-    ):
-        assert pairs
-        rules = []
-        for pair in pairs:
-            if exclude is not None and exclude(pair):
-                self.log.debug("pair excluded from '%s' lookup: %r", name, pair)
-                continue
-            rules.append(
-                self._makePairPosRule(
-                    pair, rtl=rtl, quantization=self.options.quantization
-                )
-            )
+    def _makeKerningLookup(self, name, ignoreMarks=True):
+        lookup = ast.LookupBlock(name)
+        if ignoreMarks and self.options.ignoreMarks:
+            lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
+        return lookup
 
-        if rules:
-            lookup = ast.LookupBlock(name)
-            if ignoreMarks and self.options.ignoreMarks:
-                lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
-            lookup.statements.extend(rules)
-            return lookup
+    def _addPairToLookup(self, lookup, pair, rtl=False):
+        lookup.statements.append(
+            self._makePairPosRule(pair, rtl=rtl, quantization=self.options.quantization)
+        )
 
     def _makeKerningLookups(self):
-        cmap = self.makeUnicodeToGlyphNameMapping()
-        if any(unicodeScriptDirection(uv) == "RTL" for uv in cmap):
-            # If there are any characters from globally RTL scripts in the
-            # cmap, we compile a temporary GSUB table to resolve substitutions
-            # and group glyphs by script horizontal direction and bidirectional
-            # type. We then mark each kerning pair with these properties when
-            # any of the glyphs involved in a pair intersects these groups.
-            gsub = self.compileGSUB()
-            dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
-            directions = self._intersectPairs("directions", dirGlyphs)
-            shouldSplit = "RTL" in directions
-            if shouldSplit:
-                bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
-                self._intersectPairs("bidiTypes", bidiGlyphs)
-        else:
-            shouldSplit = False
-
         marks = self.context.gdefClasses.mark
         lookups = {}
-        if shouldSplit:
-            # make one DFLT lookup with script-agnostic characters, and two
-            # LTR/RTL lookups excluding pairs from the opposite group.
-            # We drop kerning pairs with ambiguous direction: i.e. those containing
-            # glyphs from scripts with different overall horizontal direction, or
-            # glyphs with incompatible bidirectional type (e.g. arabic letters vs
-            # arabic numerals).
-            pairs = []
-            for pair in self.context.kerning.pairs:
-                if ("RTL" in pair.directions and "LTR" in pair.directions) or (
-                    "R" in pair.bidiTypes and "L" in pair.bidiTypes
-                ):
-                    self.log.warning(
-                        "skipped kern pair with ambiguous direction: %r", pair
-                    )
-                    continue
-                pairs.append(pair)
-            if not pairs:
-                return lookups
+        cmap = self.makeUnicodeToGlyphNameMapping()
+        gsub = self.compileGSUB()
+        dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
+        directions = self._intersectPairs("directions", dirGlyphs)
 
-            if self.options.ignoreMarks:
-                # If there are pairs with a mix of mark/base then the IgnoreMarks
-                # flag is unnecessary and should not be set
-                basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
-                if basePairs:
-                    self._makeSplitDirectionKernLookups(lookups, basePairs)
-                if markPairs:
-                    self._makeSplitDirectionKernLookups(
-                        lookups, markPairs, ignoreMarks=False, suffix="_marks"
-                    )
-            else:
-                self._makeSplitDirectionKernLookups(lookups, pairs)
+        scriptGlyphs = classifyGlyphs(
+            lambda uv: unicodedata.script_extension(chr(uv)), cmap, gsub
+        )
+        allScripts = self._intersectPairs("scripts", scriptGlyphs)
+        bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
+        self._intersectPairs("bidiTypes", bidiGlyphs)
+        pairs = self.context.kerning.pairs
+
+        glyphScripts = {}
+        for script, glyphs in scriptGlyphs.items():
+            for g in glyphs:
+                glyphScripts.setdefault(g, set()).add(script)
+
+        if self.options.ignoreMarks:
+            basePairs, markPairs = self._splitBaseAndMarkPairs(
+                self.context.kerning.pairs, marks
+            )
+            if basePairs:
+                self._makeSplitScriptKernLookups(lookups, basePairs, glyphScripts)
+            if markPairs:
+                self._makeSplitScriptKernLookups(
+                    lookups, markPairs, glyphScripts, ignoreMarks=False, suffix="_marks"
+                )
         else:
-            # only make a single (implicitly LTR) lookup including all base/base pairs
-            # and a single lookup including all base/mark pairs (if any)
-            pairs = self.context.kerning.pairs
-            if self.options.ignoreMarks:
-                basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
-                lookups["LTR"] = []
-                if basePairs:
-                    lookups["LTR"].append(
-                        self._makeKerningLookup("kern_ltr", basePairs)
-                    )
-                if markPairs:
-                    lookups["LTR"].append(
-                        self._makeKerningLookup(
-                            "kern_ltr_marks", markPairs, ignoreMarks=False
-                        )
-                    )
-            else:
-                lookups["LTR"] = [self._makeKerningLookup("kern_ltr", pairs)]
+            self._makeSplitScriptKernLookups(lookups, pairs, glyphScripts)
         return lookups
 
     def _splitBaseAndMarkPairs(self, pairs, marks):
@@ -497,111 +450,53 @@ class KernFeatureWriter(BaseFeatureWriter):
             basePairs[:] = pairs
         return basePairs, markPairs
 
-    def _makeSplitDirectionKernLookups(
-        self, lookups, pairs, ignoreMarks=True, suffix=""
+    def _makeSplitScriptKernLookups(
+        self, lookups, pairs, glyphScripts, ignoreMarks=True, suffix=""
     ):
-        dfltKern = self._makeKerningLookup(
-            "kern_dflt" + suffix,
-            pairs,
-            exclude=(lambda pair: {"LTR", "RTL"}.intersection(pair.directions)),
-            rtl=False,
-            ignoreMarks=ignoreMarks,
-        )
-        if dfltKern:
-            lookups.setdefault("DFLT", []).append(dfltKern)
-
-        ltrKern = self._makeKerningLookup(
-            "kern_ltr" + suffix,
-            pairs,
-            exclude=(lambda pair: not pair.directions or "RTL" in pair.directions),
-            rtl=False,
-            ignoreMarks=ignoreMarks,
-        )
-        if ltrKern:
-            lookups.setdefault("LTR", []).append(ltrKern)
-
-        rtlKern = self._makeKerningLookup(
-            "kern_rtl" + suffix,
-            pairs,
-            exclude=(lambda pair: not pair.directions or "LTR" in pair.directions),
-            rtl=True,
-            ignoreMarks=ignoreMarks,
-        )
-        if rtlKern:
-            lookups.setdefault("RTL", []).append(rtlKern)
+        for pair in pairs:
+            for script, splitpair in pair.partitionByScript(glyphScripts):
+                key = "kern_" + script + suffix
+                script_lookups = lookups.setdefault(script, {})
+                lookup = script_lookups.get(key)
+                if not lookup:
+                    lookup = self._makeKerningLookup(
+                        key.replace("Zyyy", "Common"),  # For neatness
+                        ignoreMarks=ignoreMarks,
+                    )
+                    script_lookups[key] = lookup
+                self._addPairToLookup(lookup, pair, rtl="RTL" in pair.directions)
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
         if "kern" in self.context.todo:
             kern = ast.FeatureBlock("kern")
-            self._registerKernLookups(kern, lookups)
+            self._registerLookups(kern, lookups)
             if kern.statements:
                 features["kern"] = kern
         if "dist" in self.context.todo:
             dist = ast.FeatureBlock("dist")
-            self._registerDistLookups(dist, lookups)
+            self._registerLookups(dist, lookups)
             if dist.statements:
                 features["dist"] = dist
         return features
 
-    def _registerKernLookups(self, feature, lookups):
-        if "DFLT" in lookups:
-            ast.addLookupReferences(feature, lookups["DFLT"])
-
+    def _registerLookups(self, feature, lookups):
         scriptGroups = self.context.scriptGroups
-        if "dist" in self.context.todo:
-            distScripts = scriptGroups["dist"]
-        else:
-            distScripts = {}
-        kernScripts = scriptGroups.get("kern", {})
-        ltrScripts = kernScripts.get("LTR", [])
-        rtlScripts = kernScripts.get("RTL", [])
+        kernScripts = scriptGroups.get(feature.name, {})
 
-        ltrLookups = lookups.get("LTR")
-        rtlLookups = lookups.get("RTL")
-        if ltrLookups and rtlLookups:
-            if ltrScripts and rtlScripts:
-                for script, langs in ltrScripts:
-                    ast.addLookupReferences(feature, ltrLookups, script, langs)
-                for script, langs in rtlScripts:
-                    ast.addLookupReferences(feature, rtlLookups, script, langs)
-            elif ltrScripts:
-                ast.addLookupReferences(feature, rtlLookups, script="DFLT")
-                for script, langs in ltrScripts:
-                    ast.addLookupReferences(feature, ltrLookups, script, langs)
-            elif rtlScripts:
-                ast.addLookupReferences(feature, ltrLookups, script="DFLT")
-                for script, langs in rtlScripts:
-                    ast.addLookupReferences(feature, rtlLookups, script, langs)
-            else:
-                if not (distScripts.get("LTR") and distScripts.get("RTL")):
-                    raise ValueError(
-                        "cannot use DFLT script for both LTR and RTL kern "
-                        "lookups; add 'languagesystems' to features for at "
-                        "least one LTR or RTL script using the kern feature"
+        # Ensure we have kerning for pure common script runs (e.g. ">1")
+        if feature.name == "kern" and "Zyyy" in lookups:
+            ast.addLookupReferences(feature, lookups["Zyyy"].values(), "DFLT", ["dflt"])
+
+        for script, script_lookups in lookups.items():
+            ot_scripts = unicodedata.ot_tags_from_script(script)
+            for kern_script, langs in kernScripts.get("LTR", []):
+                if kern_script in ot_scripts or script in DFLT_SCRIPTS:
+                    ast.addLookupReferences(
+                        feature, script_lookups.values(), kern_script, langs
                     )
-        elif ltrLookups:
-            if not (rtlScripts or distScripts):
-                ast.addLookupReferences(feature, ltrLookups)
-            else:
-                ast.addLookupReferences(feature, ltrLookups, script="DFLT")
-                for script, langs in ltrScripts:
-                    ast.addLookupReferences(feature, ltrLookups, script, langs)
-        elif rtlLookups:
-            if not (ltrScripts or distScripts):
-                ast.addLookupReferences(feature, rtlLookups)
-            else:
-                ast.addLookupReferences(feature, rtlLookups, script="DFLT")
-                for script, langs in rtlScripts:
-                    ast.addLookupReferences(feature, rtlLookups, script, langs)
-
-    def _registerDistLookups(self, feature, lookups):
-        scripts = self.context.scriptGroups["dist"]
-        ltrLookups = lookups.get("LTR")
-        if ltrLookups:
-            for script, langs in scripts.get("LTR", []):
-                ast.addLookupReferences(feature, ltrLookups, script, langs)
-        rtlLookups = lookups.get("RTL")
-        if rtlLookups:
-            for script, langs in scripts.get("RTL", []):
-                ast.addLookupReferences(feature, rtlLookups, script, langs)
+            for kern_script, langs in kernScripts.get("RTL", []):
+                if kern_script in ot_scripts or script in DFLT_SCRIPTS:
+                    ast.addLookupReferences(
+                        feature, script_lookups.values(), kern_script, langs
+                    )
