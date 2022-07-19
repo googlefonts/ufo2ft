@@ -2,10 +2,18 @@ import logging
 from collections import OrderedDict, namedtuple
 from types import SimpleNamespace
 
+from fontTools.designspaceLib import DesignSpaceDocument
+from fontTools.feaLib.variableScalar import VariableScalar
+
 from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureWriters import ast
-from ufo2ft.util import unicodeScriptExtensions
+from ufo2ft.util import (
+    collapse_varscalar,
+    get_userspace_location,
+    quantize,
+    unicodeScriptExtensions,
+)
 
 INSERT_FEATURE_MARKER = r"\s*# Automatic Code.*"
 
@@ -107,6 +115,7 @@ class BaseFeatureWriter:
             todo=todo,
             insertComments=insertComments,
             existingFeatures=existing,
+            isVariable=isinstance(font, DesignSpaceDocument),
         )
 
         return self.context
@@ -347,6 +356,10 @@ class BaseFeatureWriter:
             set(),
         )
         openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
+        # Handle case where we are a variable feature writer
+        if not openTypeCategories and isinstance(font, DesignSpaceDocument):
+            font = font.sources[0].font
+            openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
 
         for glyphName, category in openTypeCategories.items():
             if category == "unassigned":
@@ -414,6 +427,10 @@ class BaseFeatureWriter:
         feaFile = self.context.feaFile
         single_scripts = set()
 
+        # If we're dealing with a Designspace, look at the default source.
+        if hasattr(font, "findDefault"):
+            font = font.findDefault().font
+
         # First, detect scripts from the codepoints.
         for glyph in font:
             if glyph.name not in glyphSet or glyph.unicodes is None:
@@ -428,3 +445,41 @@ class BaseFeatureWriter:
         single_scripts.update(feaScripts.keys())
 
         return single_scripts
+
+    def _getAnchor(self, glyphName, anchorName, anchor=None):
+        if self.context.isVariable:
+            designspace = self.context.font
+            x_value = VariableScalar()
+            y_value = VariableScalar()
+            found = False
+            for source in designspace.sources:
+                if glyphName not in source.font:
+                    return None
+                glyph = source.font[glyphName]
+                for anchor in glyph.anchors:
+                    if anchor.name == anchorName:
+                        location = get_userspace_location(designspace, source.location)
+                        x_value.add_value(location, anchor.x)
+                        y_value.add_value(location, anchor.y)
+                        found = True
+            if not found:
+                return None
+            x, y = collapse_varscalar(x_value), collapse_varscalar(y_value)
+        else:
+            if anchor is None:
+                if glyphName not in self.context.font:
+                    return None
+                glyph = self.context.font[glyphName]
+                anchors = [
+                    anchor for anchor in glyph.anchors if anchor.name == anchorName
+                ]
+                if not anchors:
+                    return None
+                anchor = anchors[0]
+
+            x = anchor.x
+            y = anchor.y
+            if hasattr(self.options, "quantization"):
+                x = quantize(x, self.options.quantization)
+                y = quantize(y, self.options.quantization)
+        return x, y

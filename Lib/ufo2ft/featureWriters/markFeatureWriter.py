@@ -7,7 +7,7 @@ from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import (
     classifyGlyphs,
-    quantize,
+    otRoundIgnoringVariable,
     unicodeInScripts,
     unicodeScriptExtensions,
 )
@@ -344,8 +344,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     self.log.warning(
                         "duplicate anchor '%s' in glyph '%s'", anchorName, glyphName
                     )
-                x = quantize(anchor.x, self.options.quantization)
-                y = quantize(anchor.y, self.options.quantization)
+                x, y = self._getAnchor(glyphName, anchorName, anchor=anchor)
                 a = self.NamedAnchor(name=anchorName, x=x, y=y)
                 anchorDict[anchorName] = a
             if anchorDict:
