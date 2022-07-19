@@ -4,13 +4,19 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Callable, Optional, Type
 
+from fontTools import varLib
 from fontTools.designspaceLib.split import splitInterpolable, splitVariableFonts
 from fontTools.misc.loggingTools import Timer
 from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
 
 from ufo2ft.constants import MTI_FEATURES_PREFIX
 from ufo2ft.errors import InvalidDesignSpaceData
-from ufo2ft.featureCompiler import FeatureCompiler, MtiFeatureCompiler
+from ufo2ft.featureCompiler import (
+    FeatureCompiler,
+    MtiFeatureCompiler,
+    VariableFeatureCompiler,
+    _featuresCompatible,
+)
 from ufo2ft.postProcessor import PostProcessor
 from ufo2ft.util import (
     _notdefGlyphFallback,
@@ -248,6 +254,14 @@ class BaseInterpolatableCompiler(BaseCompiler):
 
         originalSources = {}
 
+        # If the feature files are compatible between the sources, we can save
+        # time by building a variable feature file right at the end.
+        can_optimize_features = _featuresCompatible(designSpaceDoc)
+        if can_optimize_features:
+            self.logger.info("Features are compatible across masters; building later")
+
+        originalSources = {}
+
         # Compile all needed sources in each interpolable subspace to make sure
         # they're all compatible; that also ensures that sub-vfs within the same
         # interpolable sub-space are compatible too.
@@ -265,6 +279,7 @@ class BaseInterpolatableCompiler(BaseCompiler):
             self.useProductionNames = False
             save_postprocessor = self.postProcessorClass
             self.postProcessorClass = None
+            self.skipFeatureCompilation = can_optimize_features
             try:
                 ttfDesignSpace = self.compile_designspace(subDoc)
             finally:
@@ -275,9 +290,11 @@ class BaseInterpolatableCompiler(BaseCompiler):
 
             # Stick TTFs back into original big DS
             for ttfSource in ttfDesignSpace.sources:
+                if can_optimize_features:
+                    originalSources[ttfSource.name] = sourcesByName[ttfSource.name].font
                 sourcesByName[ttfSource.name].font = ttfSource.font
 
-        return vfNameToBaseUfo, originalSources
+        return vfNameToBaseUfo, can_optimize_features, originalSources
 
     def compile_variable(self, designSpaceDoc):
         if not self.inplace:
@@ -285,6 +302,7 @@ class BaseInterpolatableCompiler(BaseCompiler):
 
         (
             vfNameToBaseUfo,
+            buildVariableFeatures,
             originalSources,
         ) = self._compileNeededSources(designSpaceDoc)
 
@@ -294,13 +312,74 @@ class BaseInterpolatableCompiler(BaseCompiler):
         self.logger.info("Building variable TTF fonts: %s", ", ".join(vfNameToBaseUfo))
 
         excludeVariationTables = self.excludeVariationTables
+        if buildVariableFeatures:
+            # Skip generating feature variations in varLib; we are handling
+            # the feature variations as part of compiling variable features,
+            # which we'll do later, so we don't need to produce them here.
+            excludeVariationTables = set(excludeVariationTables) | {"GSUB"}
 
         with self.timer("merge fonts to variable"):
             vfNameToTTFont = self._merge(designSpaceDoc, excludeVariationTables)
 
+        if buildVariableFeatures:
+            self.compile_all_variable_features(
+                designSpaceDoc, vfNameToTTFont, originalSources
+            )
         for vfName, varfont in list(vfNameToTTFont.items()):
             vfNameToTTFont[vfName] = self.postprocess(
                 varfont, vfNameToBaseUfo[vfName], glyphSet=None
             )
 
         return vfNameToTTFont
+
+    def compile_all_variable_features(
+        self, designSpaceDoc, vfNameToTTFont, originalSources, debugFeatureFile=False
+    ):
+        interpolableSubDocs = [
+            subDoc for _location, subDoc in splitInterpolable(designSpaceDoc)
+        ]
+        for subDoc in interpolableSubDocs:
+            for vfName, vfDoc in splitVariableFonts(subDoc):
+                if vfName not in vfNameToTTFont:
+                    continue
+                ttFont = vfNameToTTFont[vfName]
+                # vfDoc is now full of TTFs, create a UFO-sourced equivalent
+                ufoDoc = vfDoc.deepcopyExceptFonts()
+                for ttfSource, ufoSource in zip(vfDoc.sources, ufoDoc.sources):
+                    ufoSource.font = originalSources[ttfSource.name]
+                self.compile_variable_features(ufoDoc, ttFont)
+
+    def compile_variable_features(self, designSpaceDoc, ttFont):
+        default_ufo = designSpaceDoc.findDefault().font
+
+        # Delete anything from the UFO glyphset which didn't make it into the font.
+        fontglyphs = ttFont.getGlyphOrder()
+        glyphSet = {g.name: g for g in default_ufo if g.name in fontglyphs}
+
+        # Add anything we added to the TTF without telling the UFO
+        if ".notdef" not in glyphSet:
+            glyphSet[".notdef"] = StubGlyph(".notdef", 0, 0, 0, 0)
+
+        featureCompiler = VariableFeatureCompiler(
+            default_ufo, designSpaceDoc, ttFont=ttFont, glyphSet=glyphSet
+        )
+        featureCompiler.compile()
+
+        if self.debugFeatureFile:
+            if hasattr(featureCompiler, "writeFeatures"):
+                featureCompiler.writeFeatures(self.debugFeatureFile)
+
+        # Add back feature variations, as the code above would overwrite them.
+        designSpaceData = varLib.load_designspace(designSpaceDoc)
+        featureTag = designSpaceData.lib.get(
+            varLib.FEAVAR_FEATURETAG_LIB_KEY,
+            "rclt" if designSpaceData.rulesProcessingLast else "rvrn",
+        )
+        if designSpaceData.rules:
+            varLib._add_GSUB_feature_variations(
+                ttFont,
+                designSpaceData.axes,
+                designSpaceData.internal_axis_supports,
+                designSpaceData.rules,
+                featureTag,
+            )

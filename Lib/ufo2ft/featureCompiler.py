@@ -9,6 +9,7 @@ from io import StringIO
 from tempfile import NamedTemporaryFile
 
 from fontTools import mtiLib
+from fontTools.designspaceLib import DesignSpaceDocument, SourceDescriptor
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
 from fontTools.feaLib.parser import Parser
@@ -444,3 +445,25 @@ class VariableFeatureCompiler(FeatureCompiler):
         else:
             # no featureWriters, simply read existing features' text
             self.features = self.ufo.features.text or ""
+
+
+def _featuresCompatible(designSpaceDoc: DesignSpaceDocument) -> bool:
+    """Returns whether the features of the individual source UFOs are the same.
+
+    NOTE: Only compares the feature file text inside the source UFO and does not
+    follow imports. This will suffice as long as no external feature file is
+    using variable syntax and all sources are stored n the same parent folder
+    (so the same includes point to the same files).
+    """
+
+    assert all(hasattr(source.font, "features") for source in designSpaceDoc.sources)
+
+    def transform(f: SourceDescriptor) -> str:
+        # Strip comments
+        text = re.sub("(?m)#.*$", "", f.font.features.text or "")
+        # Strip extraneous whitespace
+        text = re.sub(r"\s+", " ", text)
+        return text
+
+    first = transform(designSpaceDoc.sources[0])
+    return all(transform(s) == first for s in designSpaceDoc.sources[1:])
