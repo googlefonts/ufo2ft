@@ -1,7 +1,5 @@
-from fontTools.misc.fixedTools import otRound
-
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import classifyGlyphs, unicodeScriptDirection
+from ufo2ft.util import classifyGlyphs, unicodeScriptDirection, otRoundIgnoringVariable
 
 
 class CursFeatureWriter(BaseFeatureWriter):
@@ -99,9 +97,9 @@ class CursFeatureWriter(BaseFeatureWriter):
                 if entryAnchor and exitAnchor:
                     break
                 if anchor.name == "entry":
-                    entryAnchor = ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y))
+                    entryAnchor = ast.Anchor(x=otRoundIgnoringVariable(anchor.x), y=otRoundIgnoringVariable(anchor.y))
                 elif anchor.name == "exit":
-                    exitAnchor = ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y))
+                    exitAnchor = ast.Anchor(x=otRoundIgnoringVariable(anchor.x), y=otRoundIgnoringVariable(anchor.y))
 
             # A glyph can have only one of the cursive anchors (e.g. if it
             # attaches on one side only)
