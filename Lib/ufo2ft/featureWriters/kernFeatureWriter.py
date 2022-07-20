@@ -1,11 +1,11 @@
-from types import SimpleNamespace
 import itertools
+from types import SimpleNamespace
 
 from fontTools import unicodedata
 
 from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection, DFLT_SCRIPTS
+from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptDirection
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -422,10 +422,10 @@ class KernFeatureWriter(BaseFeatureWriter):
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
         dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
-        directions = self._intersectPairs("directions", dirGlyphs)
+        self._intersectPairs("directions", dirGlyphs)
 
         scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
-        allScripts = self._intersectPairs("scripts", scriptGlyphs)
+        self._intersectPairs("scripts", scriptGlyphs)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
         self._intersectPairs("bidiTypes", bidiGlyphs)
         pairs = self.context.kerning.pairs
@@ -475,7 +475,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                         ignoreMarks=ignoreMarks,
                     )
                     script_lookups[key] = lookup
-                self._addPairToLookup(lookup, pair, rtl="RTL" in pair.directions)
+                self._addPairToLookup(lookup, splitpair, rtl="RTL" in pair.directions)
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
