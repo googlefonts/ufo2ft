@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 from fontTools import unicodedata
 
-from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
+from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptDirection
 
@@ -82,11 +82,11 @@ class KerningPair:
         allSecondScripts = {}
         for g in self.firstGlyphs:
             if g not in glyphScripts:
-                glyphScripts[g] = set(["Zyyy"])
+                glyphScripts[g] = set([COMMON_SCRIPT])
             allFirstScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
         for g in self.secondGlyphs:
             if g not in glyphScripts:
-                glyphScripts[g] = set(["Zyyy"])
+                glyphScripts[g] = set([COMMON_SCRIPT])
             allSecondScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
 
         # Super common case
@@ -409,7 +409,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         if not self.context.knownScripts:
             # If there are no languagesystems, consider everything common;
             # it'll all end in DFLT/dflt anyway
-            return "Zyyy"
+            return COMMON_SCRIPT
         return [
             x
             for x in unicodedata.script_extension(chr(uv))
@@ -471,7 +471,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 lookup = script_lookups.get(key)
                 if not lookup:
                     lookup = self._makeKerningLookup(
-                        key.replace("Zyyy", "Common"),  # For neatness
+                        key.replace(COMMON_SCRIPT, "Common"),  # For neatness
                         ignoreMarks=ignoreMarks,
                     )
                     script_lookups[key] = lookup
@@ -496,8 +496,10 @@ class KernFeatureWriter(BaseFeatureWriter):
         kernScripts = scriptGroups.get(feature.name, {})
 
         # Ensure we have kerning for pure common script runs (e.g. ">1")
-        if feature.name == "kern" and "Zyyy" in lookups:
-            ast.addLookupReferences(feature, lookups["Zyyy"].values(), "DFLT", ["dflt"])
+        if feature.name == "kern" and COMMON_SCRIPT in lookups:
+            ast.addLookupReferences(
+                feature, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
+            )
 
         for script, script_lookups in lookups.items():
             ot_scripts = unicodedata.ot_tags_from_script(script)
