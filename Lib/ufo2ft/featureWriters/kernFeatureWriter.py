@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import itertools
 
 from fontTools import unicodedata
 
@@ -68,6 +69,83 @@ class KerningPair:
         self.value = value
         self.directions = directions or set()
         self.bidiTypes = bidiTypes or set()
+
+    def partitionByScript(self, glyphScripts):
+        """Split a potentially mixed-script pair into pairs that make sense based
+        on a the dominant script, and yield each combination with its dominant script."""
+
+        # First, partition the pair by their assigned scripts
+        allFirstScripts = {}
+        allSecondScripts = {}
+        for g in self.firstGlyphs:
+            if g not in glyphScripts:
+                glyphScripts[g] = set(["Zyyy"])
+            allFirstScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
+        for g in self.secondGlyphs:
+            if g not in glyphScripts:
+                glyphScripts[g] = set(["Zyyy"])
+            allSecondScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
+
+        # Super common case
+        if (
+            len(allFirstScripts.keys()) == 1
+            and allFirstScripts.keys() == allSecondScripts.keys()
+        ):
+            for script in list(allFirstScripts.keys())[0]:
+                yield script, self
+            return
+
+        # Now let's go through the script combinations
+        for firstScripts, secondScripts in itertools.product(
+            allFirstScripts.keys(), allSecondScripts.keys()
+        ):
+            localPair = KerningPair(
+                sorted(allFirstScripts[firstScripts]),
+                sorted(allSecondScripts[secondScripts]),
+                self.value,
+                scripts=self.scripts,
+                directions=self.directions,
+                bidiTypes=self.bidiTypes,
+            )
+            # Handle very obvious common cases: one script, same on both sides
+            if (
+                len(firstScripts) == 1
+                and len(secondScripts) == 1
+                and firstScripts == secondScripts
+            ):
+                localPair.scripts = set([firstScripts[0]])
+                yield firstScripts[0], localPair
+            # First is single script, second is common
+            elif len(firstScripts) == 1 and set(secondScripts).issubset(DFLT_SCRIPTS):
+                localPair.scripts = set([firstScripts[0]])
+                yield firstScripts[0], localPair
+            # First is common, second is single script
+            elif set(firstScripts).issubset(DFLT_SCRIPTS) and len(secondScripts) == 1:
+                localPair.scripts = set([secondScripts[0]])
+                yield secondScripts[0], localPair
+            # One script and it's different on both sides and it's not common
+            elif len(firstScripts) == 1 and len(secondScripts) == 1:
+                pass
+            else:
+                commonScripts = set(firstScripts) & set(secondScripts)
+                commonFirstGlyphs = set()
+                commonSecondGlyphs = set()
+                for scripts, g in allFirstScripts.items():
+                    if commonScripts.issubset(set(scripts)):
+                        commonFirstGlyphs |= set(g)
+                for scripts, g in allSecondScripts.items():
+                    if commonScripts.issubset(set(scripts)):
+                        commonSecondGlyphs |= set(g)
+                for common in commonScripts:
+                    localPair = KerningPair(
+                        commonFirstGlyphs,
+                        commonSecondGlyphs,
+                        self.value,
+                        directions=self.directions,
+                        bidiTypes=self.bidiTypes,
+                        scripts=set([common]),
+                    )
+                    yield common, localPair
 
     @property
     def firstIsClass(self):
