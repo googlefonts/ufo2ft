@@ -71,25 +71,37 @@ class KerningPair:
 
     @property
     def firstIsClass(self):
-        return isinstance(self.side1, ast.GlyphClassName)
+        return isinstance(self.side1, (ast.GlyphClassName, ast.GlyphClass))
 
     @property
     def secondIsClass(self):
-        return isinstance(self.side2, ast.GlyphClassName)
+        return isinstance(self.side2, (ast.GlyphClassName, ast.GlyphClass))
+
+    @property
+    def firstGlyphs(self):
+        if self.firstIsClass:
+            if isinstance(self.side1, ast.GlyphClassName):
+                classDef1 = self.side1.glyphclass
+            else:
+                classDef1 = self.side1
+            return {g.asFea() for g in classDef1.glyphSet()}
+        else:
+            return {self.side1.asFea()}
+
+    @property
+    def secondGlyphs(self):
+        if self.secondIsClass:
+            if isinstance(self.side2, ast.GlyphClassName):
+                classDef2 = self.side2.glyphclass
+            else:
+                classDef2 = self.side2
+            return {g.asFea() for g in classDef2.glyphSet()}
+        else:
+            return {self.side2.asFea()}
 
     @property
     def glyphs(self):
-        if self.firstIsClass:
-            classDef1 = self.side1.glyphclass
-            glyphs1 = {g.asFea() for g in classDef1.glyphSet()}
-        else:
-            glyphs1 = {self.side1.asFea()}
-        if self.secondIsClass:
-            classDef2 = self.side2.glyphclass
-            glyphs2 = {g.asFea() for g in classDef2.glyphSet()}
-        else:
-            glyphs2 = {self.side2.asFea()}
-        return glyphs1 | glyphs2
+        return self.firstGlyphs | self.secondGlyphs
 
     def __repr__(self):
         return "<{} {} {} {}{}{}>".format(
