@@ -45,6 +45,11 @@ class KerningPair:
             self.side1 = ast.GlyphName(side1)
         elif isinstance(side1, ast.GlyphClassDefinition):
             self.side1 = ast.GlyphClassName(side1)
+        elif isinstance(side1, (list, set)):
+            if len(side1) == 1:
+                self.side1 = ast.GlyphName(list(side1)[0])
+            else:
+                self.side1 = ast.GlyphClass([ast.GlyphName(g) for g in side1])
         else:
             raise AssertionError(side1)
 
@@ -52,6 +57,11 @@ class KerningPair:
             self.side2 = ast.GlyphName(side2)
         elif isinstance(side2, ast.GlyphClassDefinition):
             self.side2 = ast.GlyphClassName(side2)
+        elif isinstance(side2, (list, set)):
+            if len(side2) == 1:
+                self.side2 = ast.GlyphName(list(side2)[0])
+            else:
+                self.side2 = ast.GlyphClass([ast.GlyphName(g) for g in side2])
         else:
             raise AssertionError(side2)
 
