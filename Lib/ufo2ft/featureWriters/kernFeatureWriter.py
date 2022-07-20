@@ -41,7 +41,9 @@ class KerningPair:
 
     __slots__ = ("side1", "side2", "value", "scripts", "directions", "bidiTypes")
 
-    def __init__(self, side1, side2, value, scripts=None, directions=None, bidiTypes=None):
+    def __init__(
+        self, side1, side2, value, scripts=None, directions=None, bidiTypes=None
+    ):
         if isinstance(side1, str):
             self.side1 = ast.GlyphName(side1)
         elif isinstance(side1, ast.GlyphClassDefinition):
@@ -218,7 +220,7 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         feaScripts = ast.getScriptLanguageSystems(feaFile)
         ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaScripts)
-
+        ctx.knownScripts = feaScripts.keys()
         return ctx
 
     def shouldContinue(self):
@@ -403,6 +405,17 @@ class KernFeatureWriter(BaseFeatureWriter):
             self._makePairPosRule(pair, rtl=rtl, quantization=self.options.quantization)
         )
 
+    def knownScriptsPerCodepoint(self, uv):
+        if not self.context.knownScripts:
+            # If there are no languagesystems, consider everything common;
+            # it'll all end in DFLT/dflt anyway
+            return "Zyyy"
+        return [
+            x
+            for x in unicodedata.script_extension(chr(uv))
+            if x in self.context.knownScripts or x in DFLT_SCRIPTS
+        ]
+
     def _makeKerningLookups(self):
         marks = self.context.gdefClasses.mark
         lookups = {}
@@ -411,9 +424,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
         directions = self._intersectPairs("directions", dirGlyphs)
 
-        scriptGlyphs = classifyGlyphs(
-            lambda uv: unicodedata.script_extension(chr(uv)), cmap, gsub
-        )
+        scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
         allScripts = self._intersectPairs("scripts", scriptGlyphs)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
         self._intersectPairs("bidiTypes", bidiGlyphs)
