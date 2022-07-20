@@ -6,6 +6,7 @@ import pytest
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
+from ufo2ft.featureWriters.kernFeatureWriter import KerningPair
 
 from . import FeatureWriterTest
 
@@ -44,6 +45,45 @@ def getPairPosRules(lookup):
 class KernFeatureWriterTest(FeatureWriterTest):
 
     FeatureWriter = KernFeatureWriter
+
+    def test_split_pair(self):
+        glyphScripts = {
+            "V": {"Latn"},
+            "W": {"Latn"},
+            "gba-nko": {"Nkoo"},
+            "period": {"Zyyy"},
+            "comma-ar": {"Arab", "Nkoo", "Syrc", "Thaa", "Rohg", "Yezi"},
+            "lam-ar": {"Arab"},
+        }
+
+        # Mixed script pairs don't go anywhere
+        pair = KerningPair(["V", "W"], ["gba-nko", "W"], -20)
+        split = dict(pair.partitionByScript(glyphScripts))
+        assert len(split) == 1
+        assert str(split["Latn"]) == "<KerningPair [V W] W -20 {'Latn'}>"
+
+        # Everyone gets common-script glyphs, but they get it per-script
+        pair = KerningPair(["V", "gba-nko", "W"], "period", -20)
+        split = dict(pair.partitionByScript(glyphScripts))
+        assert len(split) == 2
+        assert "Latn" in split and "Nkoo" in split
+        assert str(split["Latn"]) == "<KerningPair [V W] period -20 {'Latn'}>"
+        assert str(split["Nkoo"]) == "<KerningPair gba-nko period -20 {'Nkoo'}>"
+
+        # But if both sides are common then the output is common
+        pair = KerningPair("period", "period", -20)
+        split = dict(pair.partitionByScript(glyphScripts))
+        assert len(split) == 1
+        assert "Zyyy" in split
+
+        # Glyphs with more than one script get associated with all of the
+        # relevant scripts in the pair
+        pair = KerningPair(["lam-ar", "gba-nko"], ["comma-ar"], -20)
+        split = dict(pair.partitionByScript(glyphScripts))
+        assert len(split) == 2
+        assert "Arab" in split and "Nkoo" in split
+        assert str(split["Arab"]) == "<KerningPair lam-ar comma-ar -20 {'Arab'}>"
+        assert str(split["Nkoo"]) == "<KerningPair gba-nko comma-ar -20 {'Nkoo'}>"
 
     def test_cleanup_missing_glyphs(self, FontClass):
         groups = {
