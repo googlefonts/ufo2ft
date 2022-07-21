@@ -208,7 +208,11 @@ class FeatureCompilerTest:
                 foo = ast.FeatureBlock("FOO ")
                 foo.statements.append(
                     ast.SingleSubstStatement(
-                        "a", "v", prefix="", suffix="", forceChain=None
+                        [ast.GlyphName("a")],
+                        [ast.GlyphName("v")],
+                        prefix="",
+                        suffix="",
+                        forceChain=None,
                     )
                 )
                 feaFile.statements.append(foo)
