@@ -264,12 +264,12 @@ def closeGlyphsOverGSUB(gsub, glyphs):
 
 def classifyGlyphs(unicodeFunc, cmap, gsub=None):
     """'unicodeFunc' is a callable that takes a Unicode codepoint and
-    returns a string denoting some Unicode property associated with the
-    given character (or None if a character is considered 'neutral').
-    'cmap' is a dictionary mapping Unicode codepoints to glyph names.
-    'gsub' is an (optional) fonttools GSUB table object, used to find all
-    the glyphs that are "reachable" via substitutions from the initial
-    sets of glyphs defined in the cmap.
+    returns a string, or collection of strings, denoting some Unicode
+    property associated with the given character (or None if a character
+    is considered 'neutral'). 'cmap' is a dictionary mapping Unicode
+    codepoints to glyph names. 'gsub' is an (optional) fonttools GSUB
+    table object, used to find all the glyphs that are "reachable" via
+    substitutions from the initial sets of glyphs defined in the cmap.
 
     Returns a dictionary of glyph sets associated with the given Unicode
     properties.
@@ -277,11 +277,14 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
     glyphSets = {}
     neutralGlyphs = set()
     for uv, glyphName in cmap.items():
-        key = unicodeFunc(uv)
-        if key is None:
+        key_or_keys = unicodeFunc(uv)
+        if key_or_keys is None:
             neutralGlyphs.add(glyphName)
+        elif isinstance(key_or_keys, (list, set)):
+            for key in key_or_keys:
+                glyphSets.setdefault(key, set()).add(glyphName)
         else:
-            glyphSets.setdefault(key, set()).add(glyphName)
+            glyphSets.setdefault(key_or_keys, set()).add(glyphName)
 
     if gsub is not None:
         if neutralGlyphs:
