@@ -52,7 +52,7 @@ class KerningPair:
             if len(side1) == 1:
                 self.side1 = ast.GlyphName(list(side1)[0])
             else:
-                self.side1 = ast.GlyphClass([ast.GlyphName(g) for g in side1])
+                self.side1 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side1)])
         else:
             raise AssertionError(side1)
 
@@ -64,7 +64,7 @@ class KerningPair:
             if len(side2) == 1:
                 self.side2 = ast.GlyphName(list(side2)[0])
             else:
-                self.side2 = ast.GlyphClass([ast.GlyphName(g) for g in side2])
+                self.side2 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side2)])
         else:
             raise AssertionError(side2)
 
@@ -75,7 +75,7 @@ class KerningPair:
 
     def partitionByScript(self, glyphScripts):
         """Split a potentially mixed-script pair into pairs that make sense based
-        on a the dominant script, and yield each combination with its dominant script."""
+        on the dominant script, and yield each combination with its dominant script."""
 
         # First, partition the pair by their assigned scripts
         allFirstScripts = {}
@@ -130,6 +130,14 @@ class KerningPair:
             elif len(firstScripts) == 1 and len(secondScripts) == 1:
                 pass
             else:
+                # At this point, we have a pair which has different sets of
+                # scripts on each side, and we have to find commonalities.
+                # For example, the pair
+                #   [A A-cy] {Latn, Cyrl}  --  [T Te-cy Tau] {Latn, Cyrl, Grek}
+                # must be split into
+                #   A -- T
+                #   A-cy -- Te-cy
+                # and the Tau ignored.
                 commonScripts = set(firstScripts) & set(secondScripts)
                 commonFirstGlyphs = set()
                 commonSecondGlyphs = set()

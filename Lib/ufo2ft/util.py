@@ -264,12 +264,12 @@ def closeGlyphsOverGSUB(gsub, glyphs):
 
 def classifyGlyphs(unicodeFunc, cmap, gsub=None):
     """'unicodeFunc' is a callable that takes a Unicode codepoint and
-    returns a string denoting some Unicode property associated with the
-    given character (or None if a character is considered 'neutral').
-    'cmap' is a dictionary mapping Unicode codepoints to glyph names.
-    'gsub' is an (optional) fonttools GSUB table object, used to find all
-    the glyphs that are "reachable" via substitutions from the initial
-    sets of glyphs defined in the cmap.
+    returns a string, or collection of strings, denoting some Unicode
+    property associated with the given character (or None if a character
+    is considered 'neutral'). 'cmap' is a dictionary mapping Unicode
+    codepoints to glyph names. 'gsub' is an (optional) fonttools GSUB
+    table object, used to find all the glyphs that are "reachable" via
+    substitutions from the initial sets of glyphs defined in the cmap.
 
     Returns a dictionary of glyph sets associated with the given Unicode
     properties.
