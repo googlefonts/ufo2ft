@@ -46,7 +46,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
     FeatureWriter = KernFeatureWriter
 
-    def test_split_pair(self):
+    def test_split_pair(self, caplog):
+        caplog.set_level(logging.INFO)
         glyphScripts = {
             "V": {"Latn"},
             "W": {"Latn"},
@@ -61,6 +62,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
         split = dict(pair.partitionByScript(glyphScripts))
         assert len(split) == 1
         assert str(split["Latn"]) == "<KerningPair [V W] W -20 {'Latn'}>"
+        assert (
+            "Mixed script kerning pair <KerningPair [V W] gba-nko -20> ignored"
+            in caplog.text
+        )
 
         # Everyone gets common-script glyphs, but they get it per-script
         pair = KerningPair(["V", "gba-nko", "W"], "period", -20)

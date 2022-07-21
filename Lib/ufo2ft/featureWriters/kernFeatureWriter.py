@@ -1,4 +1,5 @@
 import itertools
+import logging
 from types import SimpleNamespace
 
 from fontTools import unicodedata
@@ -128,6 +129,9 @@ class KerningPair:
                 yield secondScripts[0], localPair
             # One script and it's different on both sides and it's not common
             elif len(firstScripts) == 1 and len(secondScripts) == 1:
+                logging.getLogger("KernFeatureWriter.KerningPair").info(
+                    "Mixed script kerning pair %s ignored" % localPair
+                )
                 pass
             else:
                 # At this point, we have a pair which has different sets of
