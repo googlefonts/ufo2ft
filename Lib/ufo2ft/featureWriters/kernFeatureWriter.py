@@ -129,7 +129,8 @@ class KerningPair:
                 yield secondScripts[0], localPair
             # One script and it's different on both sides and it's not common
             elif len(firstScripts) == 1 and len(secondScripts) == 1:
-                logging.getLogger("KernFeatureWriter.KerningPair").info(
+                logger = ".".join([self.__class__.__module__, self.__class__.__name__])
+                logging.getLogger(logger).info(
                     "Mixed script kerning pair %s ignored" % localPair
                 )
                 pass
