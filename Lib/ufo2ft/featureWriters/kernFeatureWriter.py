@@ -501,23 +501,36 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def _registerLookups(self, feature, lookups):
         scriptGroups = self.context.scriptGroups
-        kernScripts = scriptGroups.get(feature.name, {})
+        scripts = scriptGroups.get(feature.name, {})
 
         # Ensure we have kerning for pure common script runs (e.g. ">1")
         if feature.name == "kern" and COMMON_SCRIPT in lookups:
             ast.addLookupReferences(
                 feature, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
             )
+        if not scripts:
+            return
 
-        for script, script_lookups in lookups.items():
-            ot_scripts = unicodedata.ot_tags_from_script(script)
-            for kern_script, langs in kernScripts.get("LTR", []):
-                if kern_script in ot_scripts or script in DFLT_SCRIPTS:
-                    ast.addLookupReferences(
-                        feature, script_lookups.values(), kern_script, langs
-                    )
-            for kern_script, langs in kernScripts.get("RTL", []):
-                if kern_script in ot_scripts or script in DFLT_SCRIPTS:
-                    ast.addLookupReferences(
-                        feature, script_lookups.values(), kern_script, langs
-                    )
+        # Collapse scripts
+        scripts = scripts.get("LTR", []) + scripts.get("RTL", [])
+        otscript2uniscript = {}
+        for uniscript in lookups.keys():
+            for ot2script in unicodedata.ot_tags_from_script(uniscript):
+                otscript2uniscript[ot2script] = uniscript
+
+        for script, langs in sorted(scripts):
+            if script not in otscript2uniscript:
+                continue
+            uniscript = otscript2uniscript[script]
+            lookups_for_this_script = []
+            if uniscript not in lookups:
+                continue
+            if feature.statements:
+                feature.statements.append(ast.Comment(""))
+            # We have something for this script. First add the default
+            # lookups, then the script-specific ones
+            for dflt_script in DFLT_SCRIPTS:
+                if dflt_script in lookups:
+                    lookups_for_this_script.extend(lookups[dflt_script].values())
+            lookups_for_this_script.extend(lookups[uniscript].values())
+            ast.addLookupReferences(feature, lookups_for_this_script, script, langs)
