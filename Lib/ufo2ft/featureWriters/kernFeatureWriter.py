@@ -31,7 +31,7 @@ SIDE2_PREFIX = "public.kern2."
 #   src/hb-ot-shape-complex-khmer.cc
 # We derived the list of scripts associated to each dist-enabled shaper from
 # `hb_ot_shape_complex_categorize` in src/hb-ot-shape-complex-private.hh
-DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | set(["Khmr", "Mymr"]) | set(USE_SCRIPTS)
+DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | {"Khmr", "Mymr"} | set(USE_SCRIPTS)
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
@@ -106,11 +106,11 @@ class KerningPair:
         allSecondScripts: dict[tuple[str, ...], list[str]] = {}
         for glyph in self.firstGlyphs:
             if glyph not in glyphScripts:
-                glyphScripts[glyph] = set([COMMON_SCRIPT])
+                glyphScripts[glyph] = {COMMON_SCRIPT}
             allFirstScripts.setdefault(tuple(glyphScripts[glyph]), []).append(glyph)
         for glyph in self.secondGlyphs:
             if glyph not in glyphScripts:
-                glyphScripts[glyph] = set([COMMON_SCRIPT])
+                glyphScripts[glyph] = {COMMON_SCRIPT}
             allSecondScripts.setdefault(tuple(glyphScripts[glyph]), []).append(glyph)
 
         # Super common case: both sides are of the same, one script. Nothing to do, emit
@@ -141,15 +141,15 @@ class KerningPair:
                 and len(secondScripts) == 1
                 and firstScripts == secondScripts
             ):
-                localPair.scripts = set([firstScripts[0]])
+                localPair.scripts = {firstScripts[0]}
                 yield firstScripts[0], localPair
             # First is single script, second is common
             elif len(firstScripts) == 1 and set(secondScripts).issubset(DFLT_SCRIPTS):
-                localPair.scripts = set([firstScripts[0]])
+                localPair.scripts = {firstScripts[0]}
                 yield firstScripts[0], localPair
             # First is common, second is single script
             elif set(firstScripts).issubset(DFLT_SCRIPTS) and len(secondScripts) == 1:
-                localPair.scripts = set([secondScripts[0]])
+                localPair.scripts = {secondScripts[0]}
                 yield secondScripts[0], localPair
             # One script and it's different on both sides and it's not common
             elif len(firstScripts) == 1 and len(secondScripts) == 1:
@@ -183,7 +183,7 @@ class KerningPair:
                         self.value,
                         directions=self.directions,
                         bidiTypes=self.bidiTypes,
-                        scripts=set([common]),
+                        scripts={common},
                     )
                     yield common, localPair
 
