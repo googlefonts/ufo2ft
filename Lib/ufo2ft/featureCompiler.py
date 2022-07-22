@@ -24,17 +24,20 @@ from ufo2ft.featureWriters import (
 logger = logging.getLogger(__name__)
 
 
-def parseLayoutFeatures(font):
+def parseLayoutFeatures(font, includeDir=None):
     """Parse OpenType layout features in the UFO and return a
     feaLib.ast.FeatureFile instance.
+
+    includeDir is an optional directory path to search for included
+    feature files, if omitted the font.path is used. If the latter
+    is also not set, the feaLib Lexer uses the current working directory.
     """
     featxt = font.features.text or ""
     if not featxt:
         return ast.FeatureFile()
     buf = StringIO(featxt)
     ufoPath = font.path
-    includeDir = None
-    if ufoPath is not None:
+    if includeDir is None and ufoPath is not None:
         # The UFO v3 specification says "Any include() statements must be relative to
         # the UFO path, not to the features.fea file itself". We set the `name`
         # attribute on the buffer to the actual feature file path, which feaLib will
@@ -44,6 +47,7 @@ def parseLayoutFeatures(font):
         buf.name = os.path.join(ufoPath, "features.fea")
         includeDir = os.path.dirname(ufoPath)
     glyphNames = set(font.keys())
+    includeDir = os.path.normpath(includeDir) if includeDir else None
     try:
         parser = Parser(buf, glyphNames, includeDir=includeDir)
         doc = parser.parse()
@@ -157,7 +161,15 @@ class FeatureCompiler(BaseFeatureCompiler):
         CursFeatureWriter,
     ]
 
-    def __init__(self, ufo, ttFont=None, glyphSet=None, featureWriters=None, **kwargs):
+    def __init__(
+        self,
+        ufo,
+        ttFont=None,
+        glyphSet=None,
+        featureWriters=None,
+        feaIncludeDir=None,
+        **kwargs,
+    ):
         """
         Args:
           featureWriters: a list of BaseFeatureWriter subclasses or
@@ -177,8 +189,13 @@ class FeatureCompiler(BaseFeatureCompiler):
             which gets replaced by either the UFO.lib writers or the default
             ones; thus one can insert additional writers either before or after
             these.
+          feaIncludeDir: a directory to be used as the include directory for
+            the feature file. If None, the include directory is set to the
+            parent directory of the UFO, provided the UFO has a path.
         """
         BaseFeatureCompiler.__init__(self, ufo, ttFont, glyphSet)
+
+        self.feaIncludeDir = feaIncludeDir
 
         self.initFeatureWriters(featureWriters)
 
@@ -259,7 +276,7 @@ class FeatureCompiler(BaseFeatureCompiler):
         in a different way if desired.
         """
         if self.featureWriters:
-            featureFile = parseLayoutFeatures(self.ufo)
+            featureFile = parseLayoutFeatures(self.ufo, self.feaIncludeDir)
 
             for writer in self.featureWriters:
                 writer.write(self.ufo, featureFile, compiler=self)
