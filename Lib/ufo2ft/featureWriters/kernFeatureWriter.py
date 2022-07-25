@@ -1,12 +1,25 @@
+from __future__ import annotations
+
 import itertools
 import logging
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
 
 from fontTools import unicodedata
+from fontTools.feaLib import ast
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
-from ufo2ft.featureWriters import BaseFeatureWriter, ast
+from ufo2ft.featureWriters import BaseFeatureWriter
+from ufo2ft.featureWriters.ast import (
+    addLookupReferences,
+    getScriptLanguageSystems,
+    makeGlyphClassDefinitions,
+    makeLookupFlag,
+)
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptDirection
+
+if TYPE_CHECKING:
+    from typing import Iterator, Literal
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -18,13 +31,13 @@ SIDE2_PREFIX = "public.kern2."
 #   src/hb-ot-shape-complex-khmer.cc
 # We derived the list of scripts associated to each dist-enabled shaper from
 # `hb_ot_shape_complex_categorize` in src/hb-ot-shape-complex-private.hh
-DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | set(["Khmr", "Mymr"]) | set(USE_SCRIPTS)
+DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | {"Khmr", "Mymr"} | set(USE_SCRIPTS)
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
 
 
-def unicodeBidiType(uv):
+def unicodeBidiType(uv: int) -> Literal["R"] | Literal["L"] | None:
     """Return "R" for characters with RTL direction, or "L" for LTR (whether
     'strong' or 'weak'), or None for neutral direction.
     """
@@ -34,8 +47,7 @@ def unicodeBidiType(uv):
         return "R"
     elif bidiType in LTR_BIDI_TYPES:
         return "L"
-    else:
-        return None
+    return None
 
 
 class KerningPair:
@@ -43,8 +55,15 @@ class KerningPair:
     __slots__ = ("side1", "side2", "value", "scripts", "directions", "bidiTypes")
 
     def __init__(
-        self, side1, side2, value, scripts=None, directions=None, bidiTypes=None
+        self,
+        side1: str | ast.GlyphClassDefinition | list[str] | set[str],
+        side2: str | ast.GlyphClassDefinition | list[str] | set[str],
+        value: float,
+        scripts: set[str] | None = None,
+        directions: set[str] | None = None,
+        bidiTypes: set[str] | None = None,
     ):
+        self.side1: ast.GlyphName | ast.GlyphClassName | ast.GlyphClass
         if isinstance(side1, str):
             self.side1 = ast.GlyphName(side1)
         elif isinstance(side1, ast.GlyphClassDefinition):
@@ -57,6 +76,7 @@ class KerningPair:
         else:
             raise AssertionError(side1)
 
+        self.side2: ast.GlyphName | ast.GlyphClassName | ast.GlyphClass
         if isinstance(side2, str):
             self.side2 = ast.GlyphName(side2)
         elif isinstance(side2, ast.GlyphClassDefinition):
@@ -69,28 +89,32 @@ class KerningPair:
         else:
             raise AssertionError(side2)
 
-        self.value = value
-        self.scripts = scripts or set()
-        self.directions = directions or set()
-        self.bidiTypes = bidiTypes or set()
+        self.value: float = value
+        self.scripts: set[str] = scripts or set()
+        self.directions: set[str] = directions or set()
+        self.bidiTypes: set[str] = bidiTypes or set()
 
-    def partitionByScript(self, glyphScripts):
+    # pyright: basic
+    def partitionByScript(
+        self, glyphScripts: dict[str, set[str]]
+    ) -> Iterator[tuple[str, KerningPair]]:
         """Split a potentially mixed-script pair into pairs that make sense based
         on the dominant script, and yield each combination with its dominant script."""
 
         # First, partition the pair by their assigned scripts
-        allFirstScripts = {}
-        allSecondScripts = {}
-        for g in self.firstGlyphs:
-            if g not in glyphScripts:
-                glyphScripts[g] = set([COMMON_SCRIPT])
-            allFirstScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
-        for g in self.secondGlyphs:
-            if g not in glyphScripts:
-                glyphScripts[g] = set([COMMON_SCRIPT])
-            allSecondScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
+        allFirstScripts: dict[tuple[str, ...], list[str]] = {}
+        allSecondScripts: dict[tuple[str, ...], list[str]] = {}
+        for glyph in self.firstGlyphs:
+            if glyph not in glyphScripts:
+                glyphScripts[glyph] = {COMMON_SCRIPT}
+            allFirstScripts.setdefault(tuple(glyphScripts[glyph]), []).append(glyph)
+        for glyph in self.secondGlyphs:
+            if glyph not in glyphScripts:
+                glyphScripts[glyph] = {COMMON_SCRIPT}
+            allSecondScripts.setdefault(tuple(glyphScripts[glyph]), []).append(glyph)
 
-        # Super common case
+        # Super common case: both sides are of the same, one script. Nothing to do, emit
+        # self as is.
         if (
             len(allFirstScripts.keys()) == 1
             and allFirstScripts.keys() == allSecondScripts.keys()
@@ -117,15 +141,15 @@ class KerningPair:
                 and len(secondScripts) == 1
                 and firstScripts == secondScripts
             ):
-                localPair.scripts = set([firstScripts[0]])
+                localPair.scripts = {firstScripts[0]}
                 yield firstScripts[0], localPair
             # First is single script, second is common
             elif len(firstScripts) == 1 and set(secondScripts).issubset(DFLT_SCRIPTS):
-                localPair.scripts = set([firstScripts[0]])
+                localPair.scripts = {firstScripts[0]}
                 yield firstScripts[0], localPair
             # First is common, second is single script
             elif set(firstScripts).issubset(DFLT_SCRIPTS) and len(secondScripts) == 1:
-                localPair.scripts = set([secondScripts[0]])
+                localPair.scripts = {secondScripts[0]}
                 yield secondScripts[0], localPair
             # One script and it's different on both sides and it's not common
             elif len(firstScripts) == 1 and len(secondScripts) == 1:
@@ -146,12 +170,12 @@ class KerningPair:
                 commonScripts = set(firstScripts) & set(secondScripts)
                 commonFirstGlyphs = set()
                 commonSecondGlyphs = set()
-                for scripts, g in allFirstScripts.items():
+                for scripts, glyphs in allFirstScripts.items():
                     if commonScripts.issubset(set(scripts)):
-                        commonFirstGlyphs |= set(g)
-                for scripts, g in allSecondScripts.items():
+                        commonFirstGlyphs |= set(glyphs)
+                for scripts, glyphs in allSecondScripts.items():
                     if commonScripts.issubset(set(scripts)):
-                        commonSecondGlyphs |= set(g)
+                        commonSecondGlyphs |= set(glyphs)
                 for common in commonScripts:
                     localPair = KerningPair(
                         commonFirstGlyphs,
@@ -159,20 +183,20 @@ class KerningPair:
                         self.value,
                         directions=self.directions,
                         bidiTypes=self.bidiTypes,
-                        scripts=set([common]),
+                        scripts={common},
                     )
                     yield common, localPair
 
     @property
-    def firstIsClass(self):
+    def firstIsClass(self) -> bool:
         return isinstance(self.side1, (ast.GlyphClassName, ast.GlyphClass))
 
     @property
-    def secondIsClass(self):
+    def secondIsClass(self) -> bool:
         return isinstance(self.side2, (ast.GlyphClassName, ast.GlyphClass))
 
     @property
-    def firstGlyphs(self):
+    def firstGlyphs(self) -> set[str]:
         if self.firstIsClass:
             if isinstance(self.side1, ast.GlyphClassName):
                 classDef1 = self.side1.glyphclass
@@ -183,7 +207,7 @@ class KerningPair:
             return {self.side1.asFea()}
 
     @property
-    def secondGlyphs(self):
+    def secondGlyphs(self) -> set[str]:
         if self.secondIsClass:
             if isinstance(self.side2, ast.GlyphClassName):
                 classDef2 = self.side2.glyphclass
@@ -194,10 +218,10 @@ class KerningPair:
             return {self.side2.asFea()}
 
     @property
-    def glyphs(self):
+    def glyphs(self) -> set[str]:
         return self.firstGlyphs | self.secondGlyphs
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<{} {} {} {}{}{}{}>".format(
             self.__class__.__name__,
             self.side1,
@@ -231,7 +255,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
 
-        feaScripts = ast.getScriptLanguageSystems(feaFile)
+        feaScripts = getScriptLanguageSystems(feaFile)
         ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaScripts)
         ctx.knownScripts = feaScripts.keys()
         return ctx
@@ -315,10 +339,10 @@ class KernFeatureWriter(BaseFeatureWriter):
     @classmethod
     def getKerningClasses(cls, font, feaFile=None, glyphSet=None):
         side1Groups, side2Groups = cls.getKerningGroups(font, glyphSet)
-        side1Classes = ast.makeGlyphClassDefinitions(
+        side1Classes = makeGlyphClassDefinitions(
             side1Groups, feaFile, stripPrefix="public."
         )
-        side2Classes = ast.makeGlyphClassDefinitions(
+        side2Classes = makeGlyphClassDefinitions(
             side2Groups, feaFile, stripPrefix="public."
         )
         return side1Classes, side2Classes
@@ -410,7 +434,7 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makeKerningLookup(self, name, ignoreMarks=True):
         lookup = ast.LookupBlock(name)
         if ignoreMarks and self.options.ignoreMarks:
-            lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
+            lookup.statements.append(makeLookupFlag("IgnoreMarks"))
         return lookup
 
     def _addPairToLookup(self, lookup, pair, rtl=False):
@@ -510,7 +534,7 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         # Ensure we have kerning for pure common script runs (e.g. ">1")
         if feature.name == "kern" and COMMON_SCRIPT in lookups:
-            ast.addLookupReferences(
+            addLookupReferences(
                 feature, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
             )
         if not scripts:
@@ -538,4 +562,4 @@ class KernFeatureWriter(BaseFeatureWriter):
                 if dflt_script in lookups:
                     lookups_for_this_script.extend(lookups[dflt_script].values())
             lookups_for_this_script.extend(lookups[uniscript].values())
-            ast.addLookupReferences(feature, lookups_for_this_script, script, langs)
+            addLookupReferences(feature, lookups_for_this_script, script, langs)
