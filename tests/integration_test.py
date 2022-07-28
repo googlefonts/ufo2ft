@@ -2,6 +2,7 @@ import difflib
 import io
 import os
 import sys
+from pathlib import Path
 
 import pytest
 from fontTools.pens.boundsPen import BoundsPen
@@ -97,6 +98,17 @@ class IntegrationTest:
         """
         ufo = FontClass(getpath("Bug108.ufo"))
         ttf = compileTTF(ufo)
+        expectTTX(ttf, "Bug108.ttx", tables=self._layoutTables)
+
+    def test_included_features_with_custom_include_dir(self, FontClass, tmp_path):
+        ufo = FontClass(getpath("Bug108.ufo"))
+        features_dir = tmp_path / "features"
+        features_dir.mkdir()
+        (features_dir / "foobarbaz.fea").write_text(
+            Path(getpath("Bug108_included.fea")).read_text()
+        )
+        ufo.features.text = "include(features/foobarbaz.fea);"
+        ttf = compileTTF(ufo, feaIncludeDir=tmp_path)
         expectTTX(ttf, "Bug108.ttx", tables=self._layoutTables)
 
     def test_mti_features(self, FontClass):
