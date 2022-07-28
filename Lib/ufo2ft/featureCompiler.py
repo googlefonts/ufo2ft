@@ -4,6 +4,7 @@ from collections import OrderedDict
 from inspect import isclass
 from io import StringIO
 from tempfile import NamedTemporaryFile
+from fontTools.misc.loggingTools import Timer
 
 from fontTools import mtiLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
@@ -22,6 +23,7 @@ from ufo2ft.featureWriters import (
 )
 
 logger = logging.getLogger(__name__)
+timer = Timer(logging.getLogger("fontmake.timer"), level=logging.INFO)
 
 
 def parseLayoutFeatures(font):
@@ -258,17 +260,18 @@ class FeatureCompiler(BaseFeatureCompiler):
         may override this method to handle the file creation
         in a different way if desired.
         """
-        if self.featureWriters:
-            featureFile = parseLayoutFeatures(self.ufo)
+        with timer("run feature writers"):
+            if self.featureWriters:
+                featureFile = parseLayoutFeatures(self.ufo)
 
-            for writer in self.featureWriters:
-                writer.write(self.ufo, featureFile, compiler=self)
+                for writer in self.featureWriters:
+                    writer.write(self.ufo, featureFile, compiler=self)
 
-            # stringify AST to get correct line numbers in error messages
-            self.features = featureFile.asFea()
-        else:
-            # no featureWriters, simply read existing features' text
-            self.features = self.ufo.features.text or ""
+                # stringify AST to get correct line numbers in error messages
+                self.features = featureFile.asFea()
+            else:
+                # no featureWriters, simply read existing features' text
+                self.features = self.ufo.features.text or ""
 
     def writeFeatures(self, outfile):
         if hasattr(self, "features"):
@@ -291,16 +294,17 @@ class FeatureCompiler(BaseFeatureCompiler):
         # if we generated some automatic features, includes have already been
         # resolved, and we work from a string which does't exist on disk
         path = self.ufo.path if not self.featureWriters else None
-        try:
-            addOpenTypeFeaturesFromString(self.ttFont, self.features, filename=path)
-        except FeatureLibError:
-            if path is None:
-                # if compilation fails, create temporary file for inspection
-                data = self.features.encode("utf-8")
-                with NamedTemporaryFile(delete=False) as tmp:
-                    tmp.write(data)
-                logger.error("Compilation failed! Inspect temporary file: %r", tmp.name)
-            raise
+        with timer("build OpenType features"):
+            try:
+                addOpenTypeFeaturesFromString(self.ttFont, self.features, filename=path)
+            except FeatureLibError:
+                if path is None:
+                    # if compilation fails, create temporary file for inspection
+                    data = self.features.encode("utf-8")
+                    with NamedTemporaryFile(delete=False) as tmp:
+                        tmp.write(data)
+                    logger.error("Compilation failed! Inspect temporary file: %r", tmp.name)
+                raise
 
 
 class MtiFeatureCompiler(BaseFeatureCompiler):
