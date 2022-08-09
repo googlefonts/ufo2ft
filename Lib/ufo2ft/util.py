@@ -5,7 +5,7 @@ import logging
 import re
 from copy import deepcopy
 from inspect import currentframe, getfullargspec
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Hashable
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
@@ -268,10 +268,12 @@ def closeGlyphsOverGSUB(gsub, glyphs):
 
 
 def classifyGlyphs(
-    unicodeFunc: Callable[[int], str | list[str] | set[str] | tuple[str] | bool | None],
+    unicodeFunc: Callable[
+        [int], Hashable | list[Hashable] | set[Hashable] | tuple[Hashable] | None
+    ],
     cmap: dict[int, str],
     gsub: table_G_S_U_B_ | None = None,
-) -> dict[str | bool, set[str]]:
+) -> dict[Hashable, set[str]]:
     """Returns a dictionary of glyph sets associated with the given Unicode
     properties.
 
@@ -284,7 +286,7 @@ def classifyGlyphs(
     substitutions from the initial sets of glyphs defined in the cmap.
     """
 
-    glyphSets: dict[str | bool, set[str]] = {}
+    glyphSets: dict[Hashable, set[str]] = {}
     neutralGlyphs: set[str] = set()
     for uv, glyphName in cmap.items():
         key_or_keys = unicodeFunc(uv)
@@ -293,10 +295,8 @@ def classifyGlyphs(
         elif isinstance(key_or_keys, (list, set, tuple)):
             for key in key_or_keys:
                 glyphSets.setdefault(key, set()).add(glyphName)
-        elif isinstance(key_or_keys, (str, bool)):
-            glyphSets.setdefault(key_or_keys, set()).add(glyphName)
         else:
-            raise TypeError(f"unicodeFunc returned unexpected type {type(key_or_keys)}")
+            glyphSets.setdefault(key_or_keys, set()).add(glyphName)
 
     if gsub is not None:
         if neutralGlyphs:
