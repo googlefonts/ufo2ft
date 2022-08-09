@@ -5,7 +5,7 @@ import logging
 import re
 from copy import deepcopy
 from inspect import currentframe, getfullargspec
-from typing import TYPE_CHECKING, Callable, Hashable
+from typing import TYPE_CHECKING, Callable
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
@@ -285,17 +285,15 @@ def closeGlyphsOverGSUB(gsub, glyphs):
 
 
 def classifyGlyphs(
-    unicodeFunc: Callable[
-        [int], Hashable | list[Hashable] | set[Hashable] | tuple[Hashable] | None
-    ],
+    unicodeFunc: Callable[[int], str | bool | list[str] | set[str] | tuple[str] | None],
     cmap: dict[int, str],
     gsub: table_G_S_U_B_ | None = None,
-) -> dict[Hashable, set[str]]:
+) -> dict[str | bool, set[str]]:
     """Returns a dictionary of glyph sets associated with the given Unicode
     properties.
 
     'unicodeFunc' is a callable that takes a Unicode codepoint and
-    returns a string, or collection of strings, denoting some Unicode
+    returns a string, bool, or collection of strings, denoting some Unicode
     property associated with the given character (or None if a character
     is considered 'neutral'). 'cmap' is a dictionary mapping Unicode
     codepoints to glyph names. 'gsub' is an (optional) fonttools GSUB
@@ -303,7 +301,7 @@ def classifyGlyphs(
     substitutions from the initial sets of glyphs defined in the cmap.
     """
 
-    glyphSets: dict[Hashable, set[str]] = {}
+    glyphSets: dict[str | bool, set[str]] = {}
     neutralGlyphs: set[str] = set()
     for uv, glyphName in cmap.items():
         key_or_keys = unicodeFunc(uv)
