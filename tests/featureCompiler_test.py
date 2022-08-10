@@ -77,6 +77,29 @@ class ParseLayoutFeaturesTest:
         assert len(caplog.records) == 1
         assert "change the file name in the include" in caplog.text
 
+    def test_include_dir(self, FontClass, tmp_path, caplog):
+        features_dir = tmp_path / "features"
+        features_dir.mkdir()
+        (features_dir / "test.fea").write_text(
+            dedent(
+                """\
+                # hello world
+                """
+            ),
+            encoding="utf-8",
+        )
+        ufo = FontClass()
+        ufo.features.text = dedent(
+            """\
+            include(test.fea)
+            """
+        )
+        ufo.save(tmp_path / "Test.ufo")
+
+        fea = parseLayoutFeatures(ufo, features_dir)
+
+        assert "# hello world" in str(fea)
+
 
 class DummyFeatureWriter:
     tableTag = "GPOS"
@@ -208,7 +231,11 @@ class FeatureCompilerTest:
                 foo = ast.FeatureBlock("FOO ")
                 foo.statements.append(
                     ast.SingleSubstStatement(
-                        "a", "v", prefix="", suffix="", forceChain=None
+                        [ast.GlyphName("a")],
+                        [ast.GlyphName("v")],
+                        prefix="",
+                        suffix="",
+                        forceChain=None,
                     )
                 )
                 feaFile.statements.append(foo)
@@ -273,3 +300,46 @@ class FeatureCompilerTest:
         finally:
             if tmpfile is not None:
                 tmpfile.remove(ignore_errors=True)
+
+    def test_setupFeatures_custom_feaIncludeDir(self, FontClass, tmp_path):
+        (tmp_path / "family.fea").write_text(
+            """\
+            feature liga {
+                sub f f by f_f;
+            } liga;
+            """
+        )
+        ufo = FontClass()
+        ufo.newGlyph("a")
+        ufo.newGlyph("v")
+        ufo.newGlyph("f")
+        ufo.newGlyph("f_f")
+        ufo.kerning.update({("a", "v"): -40})
+        ufo.features.text = dedent(
+            """\
+            include(family.fea);
+            """
+        )
+        compiler = FeatureCompiler(ufo, feaIncludeDir=str(tmp_path))
+
+        compiler.setupFeatures()
+
+        assert compiler.features == dedent(
+            """\
+            feature liga {
+                sub f f by f_f;
+            } liga;
+
+
+            lookup kern_Common {
+                lookupflag IgnoreMarks;
+                pos a v -40;
+            } kern_Common;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
+            } kern;
+            """
+        )
