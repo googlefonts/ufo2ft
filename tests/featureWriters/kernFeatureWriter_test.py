@@ -6,6 +6,7 @@ import pytest
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
+from ufo2ft.featureWriters.kernFeatureWriter import KerningPair
 
 from . import FeatureWriterTest
 
@@ -45,6 +46,50 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
     FeatureWriter = KernFeatureWriter
 
+    def test_split_pair(self, caplog):
+        caplog.set_level(logging.INFO)
+        glyphScripts = {
+            "V": {"Latn"},
+            "W": {"Latn"},
+            "gba-nko": {"Nkoo"},
+            "period": {"Zyyy"},
+            "comma-ar": {"Arab", "Nkoo", "Syrc", "Thaa", "Rohg", "Yezi"},
+            "lam-ar": {"Arab"},
+        }
+
+        # Mixed script pairs don't go anywhere
+        pair = KerningPair(["V", "W"], ["gba-nko", "W"], -20)
+        split = dict(pair.partitionByScript(glyphScripts))
+        assert len(split) == 1
+        assert str(split["Latn"]) == "<KerningPair [V W] W -20 {'Latn'}>"
+        assert (
+            "Mixed script kerning pair <KerningPair [V W] gba-nko -20> ignored"
+            in caplog.text
+        )
+
+        # Everyone gets common-script glyphs, but they get it per-script
+        pair = KerningPair(["V", "gba-nko", "W"], "period", -20)
+        split = dict(pair.partitionByScript(glyphScripts))
+        assert len(split) == 2
+        assert "Latn" in split and "Nkoo" in split
+        assert str(split["Latn"]) == "<KerningPair [V W] period -20 {'Latn'}>"
+        assert str(split["Nkoo"]) == "<KerningPair gba-nko period -20 {'Nkoo'}>"
+
+        # But if both sides are common then the output is common
+        pair = KerningPair("period", "period", -20)
+        split = dict(pair.partitionByScript(glyphScripts))
+        assert len(split) == 1
+        assert "Zyyy" in split
+
+        # Glyphs with more than one script get associated with all of the
+        # relevant scripts in the pair
+        pair = KerningPair(["lam-ar", "gba-nko"], ["comma-ar"], -20)
+        split = dict(pair.partitionByScript(glyphScripts))
+        assert len(split) == 2
+        assert "Arab" in split and "Nkoo" in split
+        assert str(split["Arab"]) == "<KerningPair lam-ar comma-ar -20 {'Arab'}>"
+        assert str(split["Nkoo"]) == "<KerningPair gba-nko comma-ar -20 {'Nkoo'}>"
+
     def test_cleanup_missing_glyphs(self, FontClass):
         groups = {
             "public.kern1.A": ["A", "Aacute", "Abreve", "Acircumflex"],
@@ -80,9 +125,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         lookups = getLookups(feaFile)
         assert len(lookups) == 1
-        kern_ltr = lookups[0]
-        assert kern_ltr.name == "kern_ltr"
-        rules = getPairPosRules(kern_ltr)
+        kern_lookup = lookups[0]
+        # We have no codepoints defined for these, so they're considered common
+        assert kern_lookup.name == "kern_Common"
+        rules = getPairPosRules(kern_lookup)
         assert len(rules) == 1
         assert str(rules[0]) == "pos @kern1.A @kern2.B 10;"
 
@@ -98,14 +144,16 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert str(feaFile) == dedent(
             """\
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos four six -55;
                 pos one six -30;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
@@ -116,13 +164,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert str(feaFile) == dedent(
             """\
-            lookup kern_ltr {
+            lookup kern_Common {
                 pos four six -55;
                 pos one six -30;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
@@ -130,7 +180,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
     def test_mark_to_base_kern(self, FontClass):
         font = FontClass()
         for name in ("A", "B", "C"):
-            font.newGlyph(name)
+            font.newGlyph(name).unicode = ord(name)
         font.newGlyph("acutecomb").unicode = 0x0301
         font.kerning.update({("A", "acutecomb"): -55.0, ("B", "C"): -30.0})
 
@@ -146,20 +196,23 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         # default is ignoreMarks=True
         feaFile = self.writeFeatures(font)
+        # Zyyy because no languagesystems defined
         assert str(feaFile) == dedent(
             """
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos B C -30;
-            } kern_ltr;
+            } kern_Common;
 
-            lookup kern_ltr_marks {
+            lookup kern_Common_marks {
                 pos A acutecomb -55;
-            } kern_ltr_marks;
+            } kern_Common_marks;
 
             feature kern {
-                lookup kern_ltr;
-                lookup kern_ltr_marks;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Common_marks;
             } kern;
             """
         )
@@ -167,13 +220,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
         feaFile = self.writeFeatures(font, ignoreMarks=False)
         assert str(feaFile) == dedent(
             """
-            lookup kern_ltr {
+            lookup kern_Common {
                 pos A acutecomb -55;
                 pos B C -30;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
@@ -199,12 +254,14 @@ class KernFeatureWriterTest(FeatureWriterTest):
         feaFile = self.writeFeatures(font)
         assert str(feaFile) == dedent(
             """
-            lookup kern_ltr_marks {
+            lookup kern_Common_marks {
                 pos A acutecomb -55;
-            } kern_ltr_marks;
+            } kern_Common_marks;
 
             feature kern {
-                lookup kern_ltr_marks;
+                script DFLT;
+                language dflt;
+                lookup kern_Common_marks;
             } kern;
             """
         )
@@ -237,13 +294,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
         expected = existing + dedent(
             """
 
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
@@ -279,13 +338,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         expected = dedent(
             """\
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
 
             feature kern {
@@ -302,13 +363,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo, mode="append")
         assert str(generated) == dedent(
             """
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
@@ -336,13 +399,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         expected = dedent(
             """\
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
 
             feature kern {
@@ -385,13 +450,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern;
 
 
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
@@ -402,13 +469,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo, mode="append")
         assert str(generated) == dedent(
             """
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
@@ -445,13 +514,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo, mode="append")
         assert str(generated) == dedent(
             """
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
@@ -475,15 +546,17 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         generated = self.writeFeatures(ufo)
 
-        assert str(generated) == dedent(
+        assert dedent(str(generated)) == dedent(
             """
-            lookup kern_rtl {
+            lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
-            } kern_rtl;
+            } kern_Arab;
 
             feature kern {
-                lookup kern_rtl;
+                script arab;
+                language dflt;
+                lookup kern_Arab;
             } kern;
             """
         )
@@ -667,6 +740,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 sub reh-ar by reh-ar.fina;
                 language URD;
             } fina;
+
+            feature isol {
+                script arab;
+                sub alef-ar by alef-ar.isol;
+            } isol;
             """
         )
 
@@ -674,36 +752,42 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         newFeatures = self.writeFeatures(ufo, ignoreMarks=False)
 
-        assert str(newFeatures) == dedent(
+        assert dedent(str(newFeatures)) == dedent(
             """\
             @kern1.A = [A Aacute];
             @kern1.reh = [reh-ar zain-ar reh-ar.fina];
             @kern2.alef = [alef-ar alef-ar.isol];
 
-            lookup kern_dflt {
-                pos seven four -25;
-            } kern_dflt;
-
-            lookup kern_ltr {
-                enum pos @kern1.A V -40;
-            } kern_ltr;
-
-            lookup kern_rtl {
+            lookup kern_Arab {
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
                 pos @kern1.reh @kern2.alef <-100 0 -100 0>;
-            } kern_rtl;
+            } kern_Arab;
+
+            lookup kern_Latn {
+                enum pos @kern1.A V -40;
+            } kern_Latn;
+
+            lookup kern_Common {
+                pos seven four -25;
+            } kern_Common;
 
             feature kern {
-                lookup kern_dflt;
-                script latn;
+                script DFLT;
                 language dflt;
-                lookup kern_ltr;
-                language TRK;
+                lookup kern_Common;
+
                 script arab;
                 language dflt;
-                lookup kern_rtl;
+                lookup kern_Common;
+                lookup kern_Arab;
                 language URD;
+
+                script latn;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Latn;
+                language TRK;
             } kern;
             """
         )
@@ -764,6 +848,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language URD;
             } fina;
 
+            feature isol {
+                script arab;
+                sub alef-ar by alef-ar.isol;
+            } isol;
+
             @Bases = [A V Aacute alef-ar reh-ar zain-ar lam-ar
                       alef-ar.isol lam-ar.init reh-ar.fina];
             @Marks = [acutecomb fatha-ar];
@@ -777,49 +866,55 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         newFeatures = self.writeFeatures(ufo)
 
-        assert str(newFeatures) == dedent(
+        assert dedent(str(newFeatures)) == dedent(
             """\
             @kern1.A = [A Aacute];
             @kern1.reh = [reh-ar zain-ar reh-ar.fina];
             @kern2.alef = [alef-ar alef-ar.isol];
 
-            lookup kern_dflt {
-                lookupflag IgnoreMarks;
-                pos seven four -25;
-            } kern_dflt;
-
-            lookup kern_ltr {
-                lookupflag IgnoreMarks;
-                enum pos @kern1.A V -40;
-            } kern_ltr;
-
-            lookup kern_ltr_marks {
-                pos V acutecomb 70;
-            } kern_ltr_marks;
-
-            lookup kern_rtl {
+            lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
                 pos @kern1.reh @kern2.alef <-100 0 -100 0>;
-            } kern_rtl;
+            } kern_Arab;
 
-            lookup kern_rtl_marks {
+            lookup kern_Arab_marks {
                 pos reh-ar fatha-ar <80 0 80 0>;
-            } kern_rtl_marks;
+            } kern_Arab_marks;
+
+            lookup kern_Latn {
+                lookupflag IgnoreMarks;
+                enum pos @kern1.A V -40;
+            } kern_Latn;
+
+            lookup kern_Latn_marks {
+                pos V acutecomb 70;
+            } kern_Latn_marks;
+
+            lookup kern_Common {
+                lookupflag IgnoreMarks;
+                pos seven four -25;
+            } kern_Common;
 
             feature kern {
-                lookup kern_dflt;
-                script latn;
+                script DFLT;
                 language dflt;
-                lookup kern_ltr;
-                lookup kern_ltr_marks;
-                language TRK;
+                lookup kern_Common;
+
                 script arab;
                 language dflt;
-                lookup kern_rtl;
-                lookup kern_rtl_marks;
+                lookup kern_Common;
+                lookup kern_Arab;
+                lookup kern_Arab_marks;
                 language URD;
+
+                script latn;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Latn;
+                lookup kern_Latn_marks;
+                language TRK;
             } kern;
             """
         )
@@ -864,6 +959,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 sub reh-ar by reh-ar.fina;
             } fina;
 
+            feature isol {
+                script arab;
+                sub alef-ar by alef-ar.isol;
+            } isol;
+
             @Bases = [alef-ar reh-ar zain-ar lam-ar alef-ar.isol lam-ar.init reh-ar.fina];
             @Marks = [fatha-ar];
             table GDEF {
@@ -876,24 +976,27 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         newFeatures = self.writeFeatures(ufo)
 
-        assert str(newFeatures) == dedent(
+        assert dedent(str(newFeatures)) == dedent(
             """\
             @kern1.reh = [reh-ar zain-ar reh-ar.fina];
             @kern2.alef = [alef-ar alef-ar.isol];
 
-            lookup kern_rtl {
+            lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
                 pos @kern1.reh @kern2.alef <-100 0 -100 0>;
-            } kern_rtl;
+            } kern_Arab;
 
-            lookup kern_rtl_marks {
+            lookup kern_Arab_marks {
                 pos reh-ar fatha-ar <80 0 80 0>;
-            } kern_rtl_marks;
+            } kern_Arab_marks;
 
             feature kern {
-                lookup kern_rtl;
-                lookup kern_rtl_marks;
+                script arab;
+                language dflt;
+                lookup kern_Arab;
+                lookup kern_Arab_marks;
+                language ARA;
             } kern;
             """
         )
@@ -905,25 +1008,27 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
         generated = self.writeFeatures(ufo)
 
-        assert str(generated) == dedent(
+        assert dedent(str(generated)) == dedent(
             """
-            lookup kern_ltr {
+            lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos A V -40;
-            } kern_ltr;
+            } kern_Latn;
 
-            lookup kern_rtl {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos reh-ar alef-ar <-100 0 -100 0>;
-            } kern_rtl;
+            } kern_Common;
 
             feature kern {
                 script DFLT;
                 language dflt;
-                lookup kern_rtl;
+                lookup kern_Common;
+
                 script latn;
                 language dflt;
-                lookup kern_ltr;
+                lookup kern_Common;
+                lookup kern_Latn;
             } kern;
             """
         )
@@ -932,35 +1037,51 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
         generated = self.writeFeatures(ufo)
 
-        assert str(generated) == dedent(
+        assert dedent(str(generated)) == dedent(
             """
-            lookup kern_ltr {
-                lookupflag IgnoreMarks;
-                pos A V -40;
-            } kern_ltr;
-
-            lookup kern_rtl {
+            lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos reh-ar alef-ar <-100 0 -100 0>;
-            } kern_rtl;
+            } kern_Arab;
+
+            lookup kern_Common {
+                lookupflag IgnoreMarks;
+                pos A V -40;
+            } kern_Common;
 
             feature kern {
                 script DFLT;
                 language dflt;
-                lookup kern_ltr;
+                lookup kern_Common;
+
                 script arab;
                 language dflt;
-                lookup kern_rtl;
+                lookup kern_Common;
+                lookup kern_Arab;
             } kern;
             """
         )
 
-    def test_kern_LTR_and_RTL_cannot_use_DFLT(self, FontClass):
+    def test_kern_LTR_and_RTL_no_DFLT(self, FontClass):
         glyphs = {"A": 0x41, "V": 0x56, "reh-ar": 0x631, "alef-ar": 0x627}
         kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
         ufo = makeUFO(FontClass, glyphs, kerning=kerning)
-        with pytest.raises(ValueError, match="cannot use DFLT script"):
-            self.writeFeatures(ufo)
+        generated = self.writeFeatures(ufo)
+        assert "\n" + str(generated) == dedent(
+            """
+            lookup kern_Common {
+                lookupflag IgnoreMarks;
+                pos A V -40;
+                pos reh-ar alef-ar <-100 0 -100 0>;
+            } kern_Common;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
+            } kern;
+            """
+        )
 
     def test_dist_LTR(self, FontClass):
         glyphs = {"aaMatra_kannada": 0x0CBE, "ailength_kannada": 0xCD6}
@@ -981,32 +1102,24 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
         generated = self.writeFeatures(ufo)
 
-        assert str(generated) == dedent(
+        assert dedent(str(generated)) == dedent(
             """\
             @kern1.KND_aaMatra_R = [aaMatra_kannada];
             @kern2.KND_ailength_L = [aaMatra_kannada];
 
-            lookup kern_ltr {
+            lookup kern_Knda {
                 lookupflag IgnoreMarks;
                 pos @kern1.KND_aaMatra_R @kern2.KND_ailength_L 34;
-            } kern_ltr;
-
-            feature kern {
-                script DFLT;
-                language dflt;
-                lookup kern_ltr;
-                script latn;
-                language dflt;
-                lookup kern_ltr;
-            } kern;
+            } kern_Knda;
 
             feature dist {
-                script knda;
-                language dflt;
-                lookup kern_ltr;
                 script knd2;
                 language dflt;
-                lookup kern_ltr;
+                lookup kern_Knda;
+
+                script knda;
+                language dflt;
+                lookup kern_Knda;
             } dist;
             """
         )
@@ -1026,24 +1139,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert str(generated) == dedent(
             """
-            lookup kern_rtl {
+            lookup kern_Khar {
                 lookupflag IgnoreMarks;
                 pos u10A1E u10A06 <117 0 117 0>;
-            } kern_rtl;
-
-            feature kern {
-                script DFLT;
-                language dflt;
-                lookup kern_rtl;
-                script arab;
-                language dflt;
-                lookup kern_rtl;
-            } kern;
+            } kern_Khar;
 
             feature dist {
                 script khar;
                 language dflt;
-                lookup kern_rtl;
+                lookup kern_Khar;
             } dist;
             """
         )
@@ -1075,38 +1179,38 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
         generated = self.writeFeatures(ufo)
 
-        assert str(generated) == dedent(
+        assert dedent(str(generated)) == dedent(
             """\
             @kern1.KND_aaMatra_R = [aaMatra_kannada];
             @kern2.KND_ailength_L = [aaMatra_kannada];
 
-            lookup kern_ltr {
-                lookupflag IgnoreMarks;
-                pos @kern1.KND_aaMatra_R @kern2.KND_ailength_L 34;
-            } kern_ltr;
-
-            lookup kern_rtl {
+            lookup kern_Khar {
                 lookupflag IgnoreMarks;
                 pos u10A1E u10A06 <117 0 117 0>;
-            } kern_rtl;
+            } kern_Khar;
+
+            lookup kern_Knda {
+                lookupflag IgnoreMarks;
+                pos @kern1.KND_aaMatra_R @kern2.KND_ailength_L 34;
+            } kern_Knda;
 
             feature dist {
-                script knda;
-                language dflt;
-                lookup kern_ltr;
-                script knd2;
-                language dflt;
-                lookup kern_ltr;
                 script khar;
                 language dflt;
-                lookup kern_rtl;
+                lookup kern_Khar;
+
+                script knd2;
+                language dflt;
+                lookup kern_Knda;
+
+                script knda;
+                language dflt;
+                lookup kern_Knda;
             } dist;
             """
         )
 
-    def test_skip_ambiguous_direction_pair(self, FontClass, caplog):
-        caplog.set_level(logging.ERROR)
-
+    def test_ambiguous_direction_pair(self, FontClass, caplog):
         ufo = FontClass()
         ufo.newGlyph("A").unicode = 0x41
         ufo.newGlyph("one").unicode = 0x31
@@ -1135,9 +1239,42 @@ class KernFeatureWriterTest(FeatureWriterTest):
         with caplog.at_level(logging.WARNING, logger=logger):
             generated = self.writeFeatures(ufo)
 
-        assert not generated
-        assert len(caplog.records) == 5
-        assert "skipped kern pair with ambiguous direction" in caplog.text
+        assert dedent(str(generated)) == dedent(
+            """
+            lookup kern_Arab {
+                lookupflag IgnoreMarks;
+                pos bar bar 1;
+                pos reh-ar one-ar 4;
+            } kern_Arab;
+
+            lookup kern_Latn {
+                lookupflag IgnoreMarks;
+                pos bar A 2;
+                pos bar bar 1;
+            } kern_Latn;
+
+            lookup kern_Common {
+                lookupflag IgnoreMarks;
+                pos yod-hb one 5;
+            } kern_Common;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
+
+                script arab;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Arab;
+
+                script latn;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Latn;
+            } kern;
+        """
+        )
 
     def test_kern_RTL_and_DFLT_numbers(self, FontClass):
         glyphs = {"four": 0x34, "seven": 0x37, "bet-hb": 0x5D1, "yod-hb": 0x5D9}
@@ -1152,21 +1289,27 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
         generated = self.writeFeatures(ufo)
 
-        assert str(generated) == dedent(
+        assert dedent(str(generated)) == dedent(
             """
-            lookup kern_dflt {
-                lookupflag IgnoreMarks;
-                pos seven four -25;
-            } kern_dflt;
-
-            lookup kern_rtl {
+            lookup kern_Hebr {
                 lookupflag IgnoreMarks;
                 pos yod-hb bet-hb <-100 0 -100 0>;
-            } kern_rtl;
+            } kern_Hebr;
+
+            lookup kern_Common {
+                lookupflag IgnoreMarks;
+                pos seven four -25;
+            } kern_Common;
 
             feature kern {
-                lookup kern_dflt;
-                lookup kern_rtl;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
+
+                script hebr;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Hebr;
             } kern;
             """
         )
@@ -1182,14 +1325,16 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert str(feaFile) == dedent(
             """\
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos four six -55;
                 pos one six -25;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
