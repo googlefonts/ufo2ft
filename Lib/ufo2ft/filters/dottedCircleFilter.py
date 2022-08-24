@@ -182,7 +182,6 @@ class DottedCircleFilter(BaseFilter):
         # the position of the anchor so we can average them.
         all_anchors = {}
         any_added = False
-        anchorclass = None
         for glyph in font:
             width = None
             try:
@@ -196,7 +195,6 @@ class DottedCircleFilter(BaseFilter):
             if width is None:
                 width = glyph.width
             for anchor in glyph.anchors:
-                anchorclass = anchor.__class__
                 if anchor.name.startswith("_"):
                     all_anchors[anchor.name] = []
                     continue
@@ -222,14 +220,9 @@ class DottedCircleFilter(BaseFilter):
                 anchor_x,
                 anchor_y,
             )
-            try:
-                newanchor = anchorclass()
-                newanchor.x = otRound(anchor_x)
-                newanchor.y = otRound(anchor_y)
-            except TypeError:
-                newanchor = anchorclass(otRound(anchor_x), otRound(anchor_y))
-            newanchor.name = anchor
-            dotted_circle_glyph.appendAnchor(newanchor)
+            dotted_circle_glyph.appendAnchor(
+                {"x": otRound(anchor_x), "y": otRound(anchor_y), "name": anchor}
+            )
             any_added = True
         return any_added
 
