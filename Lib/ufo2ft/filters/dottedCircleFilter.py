@@ -48,13 +48,12 @@ import math
 from statistics import mean
 
 from fontTools.misc.fixedTools import otRound
-from ufoLib2.objects import Glyph
 
 from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.filters import BaseFilter
-from ufo2ft.util import _GlyphSet, _LazyFontName
+from ufo2ft.util import _getNewGlyphFactory, _GlyphSet, _LazyFontName, _setGlyphMargin
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +148,9 @@ class DottedCircleFilter(BaseFilter):
         """Add a new dotted circle glyph, drawing its outlines"""
         font = self.context.font
         logger.debug("Adding dotted circle glyph")
-        glyph = Glyph(name="uni25CC", unicodes=[0x25CC])
+
+        proto = font.layers.defaultLayer.instantiateGlyphObject()
+        glyph = _getNewGlyphFactory(proto)(name="uni25CC", unicodes=[0x25CC])
         pen = glyph.getPen()
 
         bigradius = (font.info.xHeight - 2 * self.options.margin) / 2
@@ -165,7 +166,7 @@ class DottedCircleFilter(BaseFilter):
             cy = middleY + bigradius * math.sin(angle)
             circle(pen, (cx, cy), littleradius)
 
-        glyph.setRightMargin(self.options.sidebearing)
+        _setGlyphMargin(glyph, "right", self.options.sidebearing)
 
         glyphSet["uni25CC"] = glyph
         return glyph
@@ -182,7 +183,6 @@ class DottedCircleFilter(BaseFilter):
         # the position of the anchor so we can average them.
         all_anchors = {}
         any_added = False
-        anchorclass = None
         for glyph in font:
             width = None
             try:
@@ -196,7 +196,6 @@ class DottedCircleFilter(BaseFilter):
             if width is None:
                 width = glyph.width
             for anchor in glyph.anchors:
-                anchorclass = anchor.__class__
                 if anchor.name.startswith("_"):
                     all_anchors[anchor.name] = []
                     continue
@@ -222,14 +221,9 @@ class DottedCircleFilter(BaseFilter):
                 anchor_x,
                 anchor_y,
             )
-            try:
-                newanchor = anchorclass()
-                newanchor.x = otRound(anchor_x)
-                newanchor.y = otRound(anchor_y)
-            except TypeError:
-                newanchor = anchorclass(otRound(anchor_x), otRound(anchor_y))
-            newanchor.name = anchor
-            dotted_circle_glyph.appendAnchor(newanchor)
+            dotted_circle_glyph.appendAnchor(
+                {"x": otRound(anchor_x), "y": otRound(anchor_y), "name": anchor}
+            )
             any_added = True
         return any_added
 
