@@ -32,3 +32,4 @@ def test_dotted_circle_filter(FontClass, datadir):
 
     assert len(dotted_circle) == 12
     assert int(dotted_circle.width) == 688
+    assert dotted_circle.unicodes == [0x25CC]
