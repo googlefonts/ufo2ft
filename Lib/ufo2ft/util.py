@@ -103,16 +103,18 @@ def _getNewGlyphFactory(glyph):
     cls = glyph.__class__
     if "name" in getfullargspec(cls.__init__).args:
 
-        def newGlyph(name):
-            return cls(name=name)
+        def newGlyph(name, **kwargs):
+            return cls(name=name, **kwargs)
 
     else:
 
-        def newGlyph(name):
+        def newGlyph(name, **kwargs):
             # use instantiateGlyphObject() to keep any custom sub-element classes
             # https://github.com/googlefonts/ufo2ft/issues/363
             g2 = glyph.layer.instantiateGlyphObject()
             g2.name = name
+            for k, v in kwargs.items():
+                setattr(g2, k, v)
             return g2
 
     return newGlyph
@@ -139,6 +141,21 @@ def _copyGlyph(glyph, glyphFactory=None, reverseContour=False):
     glyph.drawPoints(pointPen)
 
     return copy
+
+
+def _setGlyphMargin(glyph, side, margin):
+    # defcon.Glyph has @property setters for the margins, whereas ufoLib2.Glyph
+    # has regular instance methods
+    assert side in {"left", "right", "top", "bottom"}
+    if hasattr(glyph, f"set{side.title()}Margin"):  # ufoLib2
+        getattr(glyph, f"set{side.title()}Margin")(margin)
+        assert getattr(glyph, f"get{side.title()}Margin")() == margin
+    elif hasattr(glyph, f"{side}Margin"):  # defcon
+        descriptor = getattr(type(glyph), f"{side}Margin")
+        descriptor.__set__(glyph, margin)
+        assert descriptor.__get__(glyph) == margin
+    else:
+        raise NotImplementedError(f"Unsupported Glyph class: {type(glyph)!r}")
 
 
 def deepCopyContours(
