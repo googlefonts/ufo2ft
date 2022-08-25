@@ -23,7 +23,7 @@ from ufo2ft.featureWriters import (
 )
 
 logger = logging.getLogger(__name__)
-timer = Timer(logging.getLogger("fontmake.timer"), level=logging.INFO)
+timer = Timer(logging.getLogger("ufo2ft.timer"), level=logging.DEBUG)
 
 
 def parseLayoutFeatures(font, includeDir=None):
