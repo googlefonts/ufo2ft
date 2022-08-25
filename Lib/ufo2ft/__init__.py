@@ -104,6 +104,7 @@ base_args = dict(
     debugFeatureFile=None,
     notdefGlyph=None,
     colrLayerReuse=True,
+    feaIncludeDir=None,
 )
 
 compileOTF_args = {
