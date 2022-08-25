@@ -12,6 +12,7 @@ logger = logging.getLogger("ufo2ft.filters")
 # can selectively configure
 timing_logger = logging.getLogger("ufo2ft.timer")
 
+
 class BaseFilter:
 
     # tuple of strings listing the names of required positional arguments

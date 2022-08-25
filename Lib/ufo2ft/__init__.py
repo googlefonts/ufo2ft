@@ -5,8 +5,8 @@ from enum import IntEnum
 from fontTools import varLib
 from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.designspaceLib.split import splitInterpolable, splitVariableFonts
-from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
 from fontTools.misc.loggingTools import Timer
+from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
 
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, SPARSE_TTF_MASTER_TABLES
 from ufo2ft.errors import InvalidDesignSpaceData

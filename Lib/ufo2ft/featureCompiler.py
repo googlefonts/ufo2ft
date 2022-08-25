@@ -4,12 +4,12 @@ from collections import OrderedDict
 from inspect import isclass
 from io import StringIO
 from tempfile import NamedTemporaryFile
-from fontTools.misc.loggingTools import Timer
 
 from fontTools import mtiLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
 from fontTools.feaLib.parser import Parser
+from fontTools.misc.loggingTools import Timer
 
 from ufo2ft.constants import MTI_FEATURES_PREFIX
 from ufo2ft.featureWriters import (
@@ -320,7 +320,9 @@ class FeatureCompiler(BaseFeatureCompiler):
                     data = self.features.encode("utf-8")
                     with NamedTemporaryFile(delete=False) as tmp:
                         tmp.write(data)
-                    logger.error("Compilation failed! Inspect temporary file: %r", tmp.name)
+                    logger.error(
+                        "Compilation failed! Inspect temporary file: %r", tmp.name
+                    )
                 raise
 
 
