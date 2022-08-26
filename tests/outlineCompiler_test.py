@@ -1084,7 +1084,6 @@ def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
         for tag in master_ttfs[1].keys()
         if tag not in ("GlyphOrder", "cvt ", "fpgm", "prep")
     ]
-    # raise NotImplementedError(f"{SPARSE_TTF_MASTER_TABLES} issuperset {sparse_tables}")
     assert SPARSE_TTF_MASTER_TABLES.issuperset(sparse_tables)
 
     # sentinel value used by varLib to ignore the post table for this sparse
