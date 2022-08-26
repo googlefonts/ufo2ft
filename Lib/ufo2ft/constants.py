@@ -40,12 +40,6 @@ UNICODE_VARIATION_SEQUENCES_KEY = "public.unicodeVariationSequences"
 
 COMMON_SCRIPT = "Zyyy"
 
-TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"
-TRUETYPE_ROUND_KEY = "public.truetype.roundOffsetToGrid"
-TRUETYPE_METRICS_KEY = "public.truetype.useMyMetrics"
-TRUETYPE_OVERLAP_KEY = "public.truetype.overlap"
-OBJECT_LIBS_KEY = "public.objectLibs"
-
 INDIC_SCRIPTS = [
     "Beng",  # Bengali
     "Cham",  # Cham
