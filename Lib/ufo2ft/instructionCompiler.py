@@ -183,7 +183,6 @@ class InstructionCompiler:
                 # to always set the ROUND_XY_TO_GRID flag, so we only
                 # unset it if explicitly done so in the lib
                 if component_lib.get(TRUETYPE_ROUND_KEY, True):
-                    logger.info("    ROUND_XY_TO_GRID")
                     c.flags |= ROUND_XY_TO_GRID
                 else:
                     c.flags &= ~ROUND_XY_TO_GRID
