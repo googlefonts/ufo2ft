@@ -40,7 +40,6 @@ from ufo2ft.fontInfoData import (
     intListToNum,
     normalizeStringForPostscript,
 )
-from ufo2ft.instructionCompiler import InstructionCompiler
 from ufo2ft.util import (
     _copyGlyph,
     calcCodePageRanges,
@@ -1389,7 +1388,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         topDict.FontBBox = self.fontBoundingBox
 
 
-class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
+class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines."""
 
     sfntVersion = "\000\001\000\000"
@@ -1408,7 +1407,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
                 logger.error("%r has invalid curve format; skipped", name)
                 ttGlyph = Glyph()
             else:
-                ttGlyph = pen.glyph(componentFlags=0x0)
+                ttGlyph = pen.glyph()
             ttGlyphs[name] = ttGlyph
         return ttGlyphs
 
@@ -1465,10 +1464,6 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
         self.setupTable_glyf()
         if self.ufo.info.openTypeGaspRangeRecords:
             self.setupTable_gasp()
-        self.setupTable_cvt()
-        self.setupTable_fpgm()
-        self.setupTable_prep()
-        self.update_maxp()
 
     def setupTable_glyf(self):
         """Make the glyf table."""
@@ -1482,20 +1477,10 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
 
         hmtx = self.otf.get("hmtx")
         ttGlyphs = self.getCompiledGlyphs()
-        # Sort the glyphs so that simple glyphs are compiled first, and composite
-        # glyphs are compiled later. Otherwise the glyph hashes may not be ready
-        # to calculate when a base glyph of a composite glyph is not in the font yet.
-        compilation_order = [
-            name
-            for _, name in sorted(
-                [(ttGlyphs[name].isComposite(), name) for name in self.glyphOrder]
-            )
-        ]
-        for name in compilation_order:
+        for name in self.glyphOrder:
             ttGlyph = ttGlyphs[name]
             if ttGlyph.isComposite() and hmtx is not None and self.autoUseMyMetrics:
                 self.autoUseMyMetrics(ttGlyph, name, hmtx)
-            self.compileGlyphInstructions(ttGlyph, name)
             glyf[name] = ttGlyph
 
     @staticmethod
