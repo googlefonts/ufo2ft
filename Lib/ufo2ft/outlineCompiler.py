@@ -44,6 +44,7 @@ from ufo2ft.instructionCompiler import InstructionCompiler
 from ufo2ft.util import (
     _copyGlyph,
     calcCodePageRanges,
+    getMaxComponentDepth,
     makeOfficialGlyphOrder,
     makeUnicodeToGlyphNameMapping,
 )
@@ -122,6 +123,7 @@ class BaseOutlineCompiler:
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
         self._compiledGlyphs = None
+        self._maxComponentDepths = None
 
     def compile(self):
         """
@@ -1430,6 +1432,23 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
             glyphBoxes[glyphName] = bounds
         return glyphBoxes
 
+    def getMaxComponentDepths(self):
+        """Collect glyphs max components depths.
+
+        Return a dictionary of non zero max components depth keyed by glyph names.
+        The max component depth of composite glyphs is 1 or more.
+        Simple glyphs are not keyed.
+        """
+        if self._maxComponentDepths:
+            return self._maxComponentDepths
+        maxComponentDepths = dict()
+        for name, glyph in self.allGlyphs.items():
+            depth = getMaxComponentDepth(glyph, self.allGlyphs)
+            if depth > 0:
+                maxComponentDepths[name] = depth
+        self._maxComponentDepths = maxComponentDepths
+        return self._maxComponentDepths
+
     def setupTable_maxp(self):
         """Make the maxp table."""
         if "maxp" not in self.tables:
@@ -1448,6 +1467,9 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
         maxp.maxComponentElements = max(
             len(g.components) for g in self.allGlyphs.values()
         )
+        maxComponentDepths = self.getMaxComponentDepths()
+        if maxComponentDepths:
+            maxp.maxComponentDepth = max(maxComponentDepths)
 
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
@@ -1485,10 +1507,11 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
         # Sort the glyphs so that simple glyphs are compiled first, and composite
         # glyphs are compiled later. Otherwise the glyph hashes may not be ready
         # to calculate when a base glyph of a composite glyph is not in the font yet.
+        maxComponentDepths = self.getMaxComponentDepths()
         compilation_order = [
             name
             for _, name in sorted(
-                [(ttGlyphs[name].isComposite(), name) for name in self.glyphOrder]
+                [(maxComponentDepths.get(name, 0), name) for name in self.glyphOrder]
             )
         ]
         for name in compilation_order:
