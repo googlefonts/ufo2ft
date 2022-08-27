@@ -43,6 +43,12 @@ def quadufo(FontClass):
 
 
 @pytest.fixture
+def nestedcomponentsufo(FontClass):
+    font = FontClass(getpath("NestedComponents-Regular.ufo"))
+    return font
+
+
+@pytest.fixture
 def use_my_metrics_ufo(FontClass):
     return FontClass(getpath("UseMyMetrics.ufo"))
 
@@ -94,6 +100,14 @@ class OutlineTTFCompilerTest:
         assert compiler.glyphBoundingBoxes["space"] is None
         # float coordinates are rounded, so is the bbox
         assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
+
+    def test_getMaxComponentDepths(self, nestedcomponentsufo):
+        compiler = OutlineTTFCompiler(nestedcomponentsufo)
+        assert "a" not in compiler.getMaxComponentDepths()
+        assert "b" not in compiler.getMaxComponentDepths()
+        assert compiler.getMaxComponentDepths()["c"] == 1
+        assert compiler.getMaxComponentDepths()["d"] == 1
+        assert compiler.getMaxComponentDepths()["e"] == 2
 
     def test_autoUseMyMetrics(self, use_my_metrics_ufo):
         compiler = OutlineTTFCompiler(use_my_metrics_ufo)
