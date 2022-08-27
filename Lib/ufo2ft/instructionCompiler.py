@@ -99,6 +99,7 @@ class InstructionCompiler:
             self._compile_tt_glyph_program(glyph, ttGlyph, ttdata)
         if ttGlyph.isComposite():
             # Remove empty glyph programs from composite glyphs
+            # for the WE_HAVE_INSTRUCTIONS flag.
             if hasattr(ttGlyph, "program") and not ttGlyph.program:
                 logger.debug(f"Removing empty program from composite glyph '{name}'")
                 delattr(ttGlyph, "program")
