@@ -96,7 +96,7 @@ class InstructionCompilerTest:
         ttglyph = quadfont["glyf"]["a"]
 
         ic = get_instruction_compiler(quaduforeversed, quadfont)
-        result = ic._check_glyph_hash(glyph=glyph, ttglyph=ttglyph, glyph_hash=ufo_hash)
+        result = ic._check_glyph_hash(glyph.name, ttglyph, ufo_hash)
         assert result
 
     def test_check_glyph_hash_missing(self, quaduforeversed, quadfont):
@@ -104,9 +104,9 @@ class InstructionCompilerTest:
 
         ic = get_instruction_compiler(quaduforeversed, quadfont)
         result = ic._check_glyph_hash(
-            glyph=glyph,
-            ttglyph=quadfont["glyf"]["a"],
-            glyph_hash=None,
+            glyph.name,
+            quadfont["glyf"]["a"],
+            None,
         )
         assert not result
 
@@ -120,9 +120,9 @@ class InstructionCompilerTest:
 
         ic = get_instruction_compiler(testufo, quadfont)
         result = ic._check_glyph_hash(
-            glyph=glyph,
-            ttglyph=ttglyph,
-            glyph_hash=ufo_hash,
+            glyph.name,
+            ttglyph,
+            ufo_hash,
         )
         assert not result
 
@@ -136,9 +136,9 @@ class InstructionCompilerTest:
 
         ic = get_instruction_compiler(testufo, quadfont)
         result = ic._check_glyph_hash(
-            glyph=glyph,
-            ttglyph=ttglyph,
-            glyph_hash=ufo_hash,
+            glyph.name,
+            ttglyph,
+            ufo_hash,
         )
         assert not result
 
@@ -153,9 +153,9 @@ class InstructionCompilerTest:
 
         ic = get_instruction_compiler(quaduforeversed, quadfont)
         result = ic._check_glyph_hash(
-            glyph=glyph,
-            ttglyph=ttglyph,
-            glyph_hash=ufo_hash,
+            glyph.name,
+            ttglyph,
+            ufo_hash,
         )
         assert not result
 
