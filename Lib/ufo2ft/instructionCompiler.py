@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import array
 import logging
+from typing import TYPE_CHECKING, Literal, Optional
 
 from fontTools import ttLib
 from fontTools.pens.hashPointPen import HashPointPen
@@ -18,46 +21,49 @@ from ufo2ft.constants import (
     TRUETYPE_ROUND_KEY,
 )
 
+if TYPE_CHECKING:
+    from defcon import Font, Glyph
+    from fontTools.ttLib.tables._g_l_y_f import Glyph as TTGlyph
+
+
 logger = logging.getLogger(__name__)
 
 
 class InstructionCompiler:
-    def _check_glyph_hash(self, glyph, ttglyph, glyph_hash):
+    def __init__(
+        self, ufo: Optional[Font] = None, otf: Optional[ttLib.TTFont] = None
+    ) -> None:
+        self.ufo = ufo
+        self.otf = otf
+        self.autoUseMyMetrics = False
+
+    def _check_glyph_hash(
+        self, glyphName: str, ttglyph: TTGlyph, glyph_hash: Optional[str]
+    ) -> bool:
         """Check if the supplied glyph hash from the ufo matches the current outlines."""
         if glyph_hash is None:
             # The glyph hash is required
             logger.error(
-                f"Glyph hash missing, glyph '{glyph.name}' will have "
+                f"Glyph hash missing, glyph '{glyphName}' will have "
                 "no instructions in font."
-            )
-            return False
-
-        # Check the glyph hash from the UFO lib against the current UFO glyph
-        hash_pen = HashPointPen(glyph.width, self.ufo)
-        glyph.drawPoints(hash_pen)
-
-        if glyph_hash != hash_pen.hash:
-            logger.error(
-                f"The current glyph '{glyph.name}' does not match the stored hash. "
-                "Ignoring TrueType instructions for this glyph."
             )
             return False
 
         # Check the glyph hash against the TTGlyph that is being built
 
-        ttwidth = self.otf["hmtx"][glyph.name][0]
+        ttwidth = self.otf["hmtx"][glyphName][0]
         hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet())
         ttglyph.drawPoints(hash_pen, self.otf["glyf"])
 
         if glyph_hash != hash_pen.hash:
             logger.error(
-                f"The stored hash for glyph '{glyph.name}' does not match the TrueType "
+                f"The stored hash for glyph '{glyphName}' does not match the TrueType "
                 "output glyph. Glyph will have no instructions in the font."
             )
             return False
         return True
 
-    def _check_tt_data_format(self, ttdata, name):
+    def _check_tt_data_format(self, ttdata: dict, name: str) -> None:
         """Make sure we understand the format version, currently only version 1
         is supported."""
         formatVersion = ttdata.get("formatVersion", None)
@@ -71,8 +77,13 @@ class InstructionCompiler:
                 f"Unknown formatVersion {formatVersion} for instructions in {name}."
             )
 
-    def _compile_program(self, key, table_tag):
+    def _compile_program(
+        self,
+        key: Literal["controlValueProgram", "fontProgram"],
+        table_tag: Literal["prep", "fpgm"],
+    ) -> None:
         """Compile the program for prep or fpgm."""
+        assert key in ("controlValueProgram", "fontProgram")
         assert table_tag in ("prep", "fpgm")
         ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata:
@@ -93,7 +104,7 @@ class InstructionCompiler:
             table.program = ttLib.tables.ttProgram.Program()
             table.program.fromAssembly(asm)
 
-    def compileGlyphInstructions(self, ttGlyph, name):
+    def compileGlyphInstructions(self, ttGlyph, name) -> None:
         """Compile the glyph instructions from the UFO glyph `name` to bytecode
         and add it to `ttGlyph`."""
         if name not in self.ufo:
@@ -109,16 +120,14 @@ class InstructionCompiler:
         if ttdata is not None:
             self._compile_tt_glyph_program(glyph, ttGlyph, ttdata)
         if ttGlyph.isComposite():
-            # Remove empty glyph programs from composite glyphs
-            if hasattr(ttGlyph, "program") and not ttGlyph.program:
-                logger.debug(f"Removing empty program from composite glyph '{name}'")
-                delattr(ttGlyph, "program")
             self._set_composite_flags(glyph, ttGlyph)
 
-    def _compile_tt_glyph_program(self, glyph, ttglyph, ttdata):
+    def _compile_tt_glyph_program(
+        self, glyph: Glyph, ttglyph: TTGlyph, ttdata: dict
+    ) -> None:
         self._check_tt_data_format(ttdata, f"glyph '{glyph.name}'")
         glyph_hash = ttdata.get("id", None)
-        if not self._check_glyph_hash(glyph, ttglyph, glyph_hash):
+        if not self._check_glyph_hash(glyph.name, ttglyph, glyph_hash):
             return
 
         # Compile the glyph program
@@ -139,7 +148,7 @@ class InstructionCompiler:
         ttglyph.program = ttLib.tables.ttProgram.Program()
         ttglyph.program.fromAssembly(asm)
 
-    def _set_composite_flags(self, glyph, ttglyph):
+    def _set_composite_flags(self, glyph: Glyph, ttglyph: TTGlyph) -> None:
         # Set component flags
 
         if len(ttglyph.components) != len(glyph.components):
@@ -183,7 +192,6 @@ class InstructionCompiler:
                 # to always set the ROUND_XY_TO_GRID flag, so we only
                 # unset it if explicitly done so in the lib
                 if component_lib.get(TRUETYPE_ROUND_KEY, True):
-                    logger.info("    ROUND_XY_TO_GRID")
                     c.flags |= ROUND_XY_TO_GRID
                 else:
                     c.flags &= ~ROUND_XY_TO_GRID
@@ -210,7 +218,7 @@ class InstructionCompiler:
                 else:
                     c.flags &= ~OVERLAP_COMPOUND
 
-    def update_maxp(self):
+    def update_maxp(self) -> None:
         """Update the maxp table with relevant values from the UFO and compiled
         font.
         """
@@ -238,7 +246,7 @@ class InstructionCompiler:
         ]
         maxp.maxSizeOfInstructions = max(sizes, default=0)
 
-    def setupTable_cvt(self):
+    def setupTable_cvt(self) -> None:
         """Make the cvt table."""
         cvts = []
         ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
@@ -260,8 +268,8 @@ class InstructionCompiler:
             self.otf["cvt "] = cvt = newTable("cvt ")
             cvt.values = array.array("h", cvts)
 
-    def setupTable_fpgm(self):
+    def setupTable_fpgm(self) -> None:
         self._compile_program("fontProgram", "fpgm")
 
-    def setupTable_prep(self):
+    def setupTable_prep(self) -> None:
         self._compile_program("controlValueProgram", "prep")
