@@ -22,36 +22,25 @@ logger = logging.getLogger(__name__)
 
 
 class InstructionCompiler:
-    def _check_glyph_hash(self, glyph, ttglyph, glyph_hash):
+    def _check_glyph_hash(self, glyphName, ttglyph, glyph_hash):
         """Check if the supplied glyph hash from the ufo matches the current outlines."""
         if glyph_hash is None:
             # The glyph hash is required
             logger.error(
-                f"Glyph hash missing, glyph '{glyph.name}' will have "
+                f"Glyph hash missing, glyph '{glyphName}' will have "
                 "no instructions in font."
-            )
-            return False
-
-        # Check the glyph hash from the UFO lib against the current UFO glyph
-        hash_pen = HashPointPen(glyph.width, self.ufo)
-        glyph.drawPoints(hash_pen)
-
-        if glyph_hash != hash_pen.hash:
-            logger.error(
-                f"The current glyph '{glyph.name}' does not match the stored hash. "
-                "Ignoring TrueType instructions for this glyph."
             )
             return False
 
         # Check the glyph hash against the TTGlyph that is being built
 
-        ttwidth = self.otf["hmtx"][glyph.name][0]
+        ttwidth = self.otf["hmtx"][glyphName][0]
         hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet())
         ttglyph.drawPoints(hash_pen, self.otf["glyf"])
 
         if glyph_hash != hash_pen.hash:
             logger.error(
-                f"The stored hash for glyph '{glyph.name}' does not match the TrueType "
+                f"The stored hash for glyph '{glyphName}' does not match the TrueType "
                 "output glyph. Glyph will have no instructions in the font."
             )
             return False
@@ -109,16 +98,12 @@ class InstructionCompiler:
         if ttdata is not None:
             self._compile_tt_glyph_program(glyph, ttGlyph, ttdata)
         if ttGlyph.isComposite():
-            # Remove empty glyph programs from composite glyphs
-            if hasattr(ttGlyph, "program") and not ttGlyph.program:
-                logger.debug(f"Removing empty program from composite glyph '{name}'")
-                delattr(ttGlyph, "program")
             self._set_composite_flags(glyph, ttGlyph)
 
     def _compile_tt_glyph_program(self, glyph, ttglyph, ttdata):
         self._check_tt_data_format(ttdata, f"glyph '{glyph.name}'")
         glyph_hash = ttdata.get("id", None)
-        if not self._check_glyph_hash(glyph, ttglyph, glyph_hash):
+        if not self._check_glyph_hash(glyph.name, ttglyph, glyph_hash):
             return
 
         # Compile the glyph program
@@ -183,7 +168,6 @@ class InstructionCompiler:
                 # to always set the ROUND_XY_TO_GRID flag, so we only
                 # unset it if explicitly done so in the lib
                 if component_lib.get(TRUETYPE_ROUND_KEY, True):
-                    logger.info("    ROUND_XY_TO_GRID")
                     c.flags |= ROUND_XY_TO_GRID
                 else:
                     c.flags &= ~ROUND_XY_TO_GRID
