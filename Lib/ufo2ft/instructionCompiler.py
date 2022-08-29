@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import array
 import logging
+from typing import TYPE_CHECKING, Literal, Optional
 
 from fontTools import ttLib
 from fontTools.pens.hashPointPen import HashPointPen
@@ -18,16 +21,25 @@ from ufo2ft.constants import (
     TRUETYPE_ROUND_KEY,
 )
 
+if TYPE_CHECKING:
+    from defcon import Font, Glyph
+    from fontTools.ttLib.tables._g_l_y_f import Glyph as TTGlyph
+
+
 logger = logging.getLogger(__name__)
 
 
 class InstructionCompiler:
-    def __init__(self, ufo=None, otf=None):
+    def __init__(
+        self, ufo: Optional[Font] = None, otf: Optional[ttLib.TTFont] = None
+    ) -> None:
         self.ufo = ufo
         self.otf = otf
         self.autoUseMyMetrics = False
 
-    def _check_glyph_hash(self, glyphName, ttglyph, glyph_hash):
+    def _check_glyph_hash(
+        self, glyphName: str, ttglyph: TTGlyph, glyph_hash: Optional[str]
+    ) -> bool:
         """Check if the supplied glyph hash from the ufo matches the current outlines."""
         if glyph_hash is None:
             # The glyph hash is required
@@ -51,7 +63,7 @@ class InstructionCompiler:
             return False
         return True
 
-    def _check_tt_data_format(self, ttdata, name):
+    def _check_tt_data_format(self, ttdata: dict, name: str) -> None:
         """Make sure we understand the format version, currently only version 1
         is supported."""
         formatVersion = ttdata.get("formatVersion", None)
@@ -65,8 +77,13 @@ class InstructionCompiler:
                 f"Unknown formatVersion {formatVersion} for instructions in {name}."
             )
 
-    def _compile_program(self, key, table_tag):
+    def _compile_program(
+        self,
+        key: Literal["controlValueProgram", "fontProgram"],
+        table_tag: Literal["prep", "fpgm"],
+    ) -> None:
         """Compile the program for prep or fpgm."""
+        assert key in ("controlValueProgram", "fontProgram")
         assert table_tag in ("prep", "fpgm")
         ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
         if ttdata:
@@ -87,7 +104,7 @@ class InstructionCompiler:
             table.program = ttLib.tables.ttProgram.Program()
             table.program.fromAssembly(asm)
 
-    def compileGlyphInstructions(self, ttGlyph, name):
+    def compileGlyphInstructions(self, ttGlyph, name) -> None:
         """Compile the glyph instructions from the UFO glyph `name` to bytecode
         and add it to `ttGlyph`."""
         if name not in self.ufo:
@@ -105,7 +122,9 @@ class InstructionCompiler:
         if ttGlyph.isComposite():
             self._set_composite_flags(glyph, ttGlyph)
 
-    def _compile_tt_glyph_program(self, glyph, ttglyph, ttdata):
+    def _compile_tt_glyph_program(
+        self, glyph: Glyph, ttglyph: TTGlyph, ttdata: dict
+    ) -> None:
         self._check_tt_data_format(ttdata, f"glyph '{glyph.name}'")
         glyph_hash = ttdata.get("id", None)
         if not self._check_glyph_hash(glyph.name, ttglyph, glyph_hash):
@@ -129,7 +148,7 @@ class InstructionCompiler:
         ttglyph.program = ttLib.tables.ttProgram.Program()
         ttglyph.program.fromAssembly(asm)
 
-    def _set_composite_flags(self, glyph, ttglyph):
+    def _set_composite_flags(self, glyph: Glyph, ttglyph: TTGlyph) -> None:
         # Set component flags
 
         if len(ttglyph.components) != len(glyph.components):
@@ -199,7 +218,7 @@ class InstructionCompiler:
                 else:
                     c.flags &= ~OVERLAP_COMPOUND
 
-    def update_maxp(self):
+    def update_maxp(self) -> None:
         """Update the maxp table with relevant values from the UFO and compiled
         font.
         """
@@ -227,7 +246,7 @@ class InstructionCompiler:
         ]
         maxp.maxSizeOfInstructions = max(sizes, default=0)
 
-    def setupTable_cvt(self):
+    def setupTable_cvt(self) -> None:
         """Make the cvt table."""
         cvts = []
         ttdata = self.ufo.lib.get(TRUETYPE_INSTRUCTIONS_KEY, None)
@@ -249,8 +268,8 @@ class InstructionCompiler:
             self.otf["cvt "] = cvt = newTable("cvt ")
             cvt.values = array.array("h", cvts)
 
-    def setupTable_fpgm(self):
+    def setupTable_fpgm(self) -> None:
         self._compile_program("fontProgram", "fpgm")
 
-    def setupTable_prep(self):
+    def setupTable_prep(self) -> None:
         self._compile_program("controlValueProgram", "prep")
