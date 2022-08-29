@@ -1,5 +1,5 @@
 SPARSE_TTF_MASTER_TABLES = frozenset(
-    ["glyf", "head", "hmtx", "loca", "maxp", "post", "vmtx"]
+    ["glyf", "head", "hmtx", "loca", "maxp", "post", "vmtx", "cvt ", "fpgm", "prep"]
 )
 SPARSE_OTF_MASTER_TABLES = frozenset(["CFF ", "VORG", "head", "hmtx", "maxp", "vmtx"])
 
