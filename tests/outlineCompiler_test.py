@@ -43,6 +43,12 @@ def quadufo(FontClass):
 
 
 @pytest.fixture
+def nestedcomponentsufo(FontClass):
+    font = FontClass(getpath("NestedComponents-Regular.ufo"))
+    return font
+
+
+@pytest.fixture
 def use_my_metrics_ufo(FontClass):
     return FontClass(getpath("UseMyMetrics.ufo"))
 
@@ -94,6 +100,14 @@ class OutlineTTFCompilerTest:
         assert compiler.glyphBoundingBoxes["space"] is None
         # float coordinates are rounded, so is the bbox
         assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
+
+    def test_getMaxComponentDepths(self, nestedcomponentsufo):
+        compiler = OutlineTTFCompiler(nestedcomponentsufo)
+        assert "a" not in compiler.getMaxComponentDepths()
+        assert "b" not in compiler.getMaxComponentDepths()
+        assert compiler.getMaxComponentDepths()["c"] == 1
+        assert compiler.getMaxComponentDepths()["d"] == 1
+        assert compiler.getMaxComponentDepths()["e"] == 2
 
     def test_autoUseMyMetrics(self, use_my_metrics_ufo):
         compiler = OutlineTTFCompiler(use_my_metrics_ufo)
@@ -1046,11 +1060,7 @@ def test_custom_layer_compilation_interpolatable(layertestrgufo, layertestbdufo)
         "edotabove",
     ]
 
-    sparse_tables = [
-        tag
-        for tag in master_ttfs[1].keys()
-        if tag not in ("GlyphOrder", "cvt ", "fpgm", "prep")
-    ]
+    sparse_tables = [tag for tag in master_ttfs[1].keys() if tag != "GlyphOrder"]
     assert SPARSE_TTF_MASTER_TABLES.issuperset(sparse_tables)
 
 
@@ -1079,12 +1089,7 @@ def test_custom_layer_compilation_interpolatable_from_ds(designspace, inplace):
         "edotabove",
     ]
 
-    sparse_tables = [
-        tag
-        for tag in master_ttfs[1].keys()
-        if tag not in ("GlyphOrder", "cvt ", "fpgm", "prep")
-    ]
-    # raise NotImplementedError(f"{SPARSE_TTF_MASTER_TABLES} issuperset {sparse_tables}")
+    sparse_tables = [tag for tag in master_ttfs[1].keys() if tag != "GlyphOrder"]
     assert SPARSE_TTF_MASTER_TABLES.issuperset(sparse_tables)
 
     # sentinel value used by varLib to ignore the post table for this sparse
