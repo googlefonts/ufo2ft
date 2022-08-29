@@ -165,15 +165,25 @@ class InstructionCompiler:
         use_my_metrics_comp = None
 
         for i, c in enumerate(ttglyph.components):
+
+            # Set OVERLAP_COMPOUND on the first component only
+            if i == 0 and TRUETYPE_OVERLAP_KEY in glyph.lib:
+                if glyph.lib.get(TRUETYPE_OVERLAP_KEY, False):
+                    c.flags |= OVERLAP_COMPOUND
+                else:
+                    c.flags &= ~OVERLAP_COMPOUND
+
+            # Check if we have information about the current component in the glyph lib
             ufo_component_id = glyph.components[i].identifier
             if ufo_component_id is None:
-                # No information about component flags is stored in the UFO,
-                # use heuristics.
+                # No information about component flags is stored in the UFO.
+                # We don’t modify the flags. Two flags have already been set elsewhere:
+                # - ROUND_XY_TO_GRID is set in TTGlyphPointPen.glyph() called from
+                #                    OutlineTTFCompiler.compileGlyphs()
+                # - USE_MY_METRICS   is set in OutlineTTFCompiler.setupTable_glyf()
+                continue
 
-                # https://github.com/googlefonts/ufo2ft/pull/425 recommends
-                # to always set the ROUND_XY_TO_GRID flag
-                c.flags |= ROUND_XY_TO_GRID
-            elif (
+            if (
                 OBJECT_LIBS_KEY in glyph.lib
                 and ufo_component_id in glyph.lib[OBJECT_LIBS_KEY]
                 and (
@@ -184,35 +194,34 @@ class InstructionCompiler:
             ):
                 component_lib = glyph.lib[OBJECT_LIBS_KEY][ufo_component_id]
 
+                # ROUND_XY_TO_GRID
+
                 # https://github.com/googlefonts/ufo2ft/pull/425 recommends
                 # to always set the ROUND_XY_TO_GRID flag, so we only
                 # unset it if explicitly done so in the lib
-                if component_lib.get(TRUETYPE_ROUND_KEY, True):
-                    c.flags |= ROUND_XY_TO_GRID
-                else:
+                if not component_lib.get(TRUETYPE_ROUND_KEY, True):
                     c.flags &= ~ROUND_XY_TO_GRID
 
-                if not self.autoUseMyMetrics and component_lib.get(
-                    TRUETYPE_METRICS_KEY, False
-                ):
-                    c.flags &= ~USE_MY_METRICS
-                    if use_my_metrics_comp:
+                # USE_MY_METRICS
+
+                if self.autoUseMyMetrics:
+                    # Leave the existing USE_MY_METRICS flag alone
+                    continue
+
+                if component_lib.get(TRUETYPE_METRICS_KEY, False):
+                    if use_my_metrics_comp is None:
+                        c.flags |= USE_MY_METRICS
+                        use_my_metrics_comp = ufo_component_id
+                    else:
                         logger.warning(
-                            "Ignoring USE_MY_METRICS flag on component "
+                            f"Ignoring USE_MY_METRICS flag on component {i}, "
                             f"'{ufo_component_id}' because it has been set on "
                             f"component '{use_my_metrics_comp}' already "
                             f"in glyph {glyph.name}."
                         )
-                    else:
-                        c.flags |= USE_MY_METRICS
-                        use_my_metrics_comp = ufo_component_id
-
-            if i == 0 and TRUETYPE_OVERLAP_KEY in glyph.lib:
-                # Set OVERLAP_COMPOUND on the first component only
-                if glyph.lib.get(TRUETYPE_OVERLAP_KEY, False):
-                    c.flags |= OVERLAP_COMPOUND
+                        c.flags &= ~USE_MY_METRICS
                 else:
-                    c.flags &= ~OVERLAP_COMPOUND
+                    c.flags &= ~USE_MY_METRICS
 
     def update_maxp(self) -> None:
         """Update the maxp table with relevant values from the UFO and compiled
