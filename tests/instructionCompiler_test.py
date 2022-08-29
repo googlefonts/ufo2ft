@@ -96,7 +96,7 @@ class InstructionCompilerTest:
         ttglyph = quadfont["glyf"]["a"]
 
         ic = get_instruction_compiler(quaduforeversed, quadfont)
-        result = ic._check_glyph_hash(glyph=glyph, ttglyph=ttglyph, glyph_hash=ufo_hash)
+        result = ic._check_glyph_hash(glyph.name, ttglyph, ufo_hash)
         assert result
 
     def test_check_glyph_hash_missing(self, quaduforeversed, quadfont):
@@ -104,9 +104,9 @@ class InstructionCompilerTest:
 
         ic = get_instruction_compiler(quaduforeversed, quadfont)
         result = ic._check_glyph_hash(
-            glyph=glyph,
-            ttglyph=quadfont["glyf"]["a"],
-            glyph_hash=None,
+            glyph.name,
+            quadfont["glyf"]["a"],
+            None,
         )
         assert not result
 
@@ -120,9 +120,9 @@ class InstructionCompilerTest:
 
         ic = get_instruction_compiler(testufo, quadfont)
         result = ic._check_glyph_hash(
-            glyph=glyph,
-            ttglyph=ttglyph,
-            glyph_hash=ufo_hash,
+            glyph.name,
+            ttglyph,
+            ufo_hash,
         )
         assert not result
 
@@ -136,9 +136,9 @@ class InstructionCompilerTest:
 
         ic = get_instruction_compiler(testufo, quadfont)
         result = ic._check_glyph_hash(
-            glyph=glyph,
-            ttglyph=ttglyph,
-            glyph_hash=ufo_hash,
+            glyph.name,
+            ttglyph,
+            ufo_hash,
         )
         assert not result
 
@@ -153,9 +153,9 @@ class InstructionCompilerTest:
 
         ic = get_instruction_compiler(quaduforeversed, quadfont)
         result = ic._check_glyph_hash(
-            glyph=glyph,
-            ttglyph=ttglyph,
-            glyph_hash=ufo_hash,
+            glyph.name,
+            ttglyph,
+            ufo_hash,
         )
         assert not result
 
@@ -319,9 +319,7 @@ class InstructionCompilerTest:
     def test_compile_tt_glyph_program_no_asm(self, quaduforeversed, quadfont, caplog):
         # UFO glyph contains "public.truetype.instructions" lib key, but no
         # assembly code entry
-        ic = InstructionCompiler()
-        ic.ufo = quaduforeversed
-        ic.otf = quadfont
+        ic = InstructionCompiler(quaduforeversed, quadfont)
 
         assert not ic.otf["glyf"]["a"].isComposite()
 
@@ -441,7 +439,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags_no_ttdata(self, quadufo, quadfont):
         name = "h"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         ttglyph = quadfont["glyf"][name]
@@ -462,7 +459,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags_compound(self, quadufo, quadfont):
         name = "k"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
@@ -481,7 +477,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags_no_compound(self, quadufo, quadfont):
         name = "k"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
@@ -499,7 +494,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags(self, quadufo, quadfont):
         name = "h"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
@@ -534,7 +528,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags_metrics_first_only(self, quadufo, quadfont):
         name = "h"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
@@ -563,9 +556,7 @@ class InstructionCompilerTest:
     # update_maxp
 
     def test_update_maxp_no_ttdata(self, quaduforeversed, quadfont):
-        ic = InstructionCompiler()
-        ic.otf = quadfont
-        ic.ufo = quaduforeversed
+        ic = InstructionCompiler(quaduforeversed, quadfont)
 
         ic.update_maxp()
         expect_maxp(ic.otf)
@@ -593,9 +584,7 @@ class InstructionCompilerTest:
     # setupTable_cvt
 
     def test_setupTable_cvt(self, quaduforeversed, quadfont):
-        ic = InstructionCompiler()
-        ic.otf = quadfont
-        ic.ufo = quaduforeversed
+        ic = InstructionCompiler(quaduforeversed, quadfont)
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValue": {
@@ -609,9 +598,7 @@ class InstructionCompilerTest:
         assert list(ic.otf["cvt "].values) == [0, 500, 750, -250]
 
     def test_setupTable_cvt_empty(self, quaduforeversed, quadfont):
-        ic = InstructionCompiler()
-        ic.otf = quadfont
-        ic.ufo = quaduforeversed
+        ic = InstructionCompiler(quaduforeversed, quadfont)
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValue": {},
@@ -620,9 +607,7 @@ class InstructionCompilerTest:
         assert "cvt " not in ic.otf
 
     def test_setupTable_cvt_none(self, quaduforeversed, quadfont):
-        ic = InstructionCompiler()
-        ic.otf = quadfont
-        ic.ufo = quaduforeversed
+        ic = InstructionCompiler(quaduforeversed, quadfont)
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValue": None,
@@ -631,9 +616,7 @@ class InstructionCompilerTest:
         assert "cvt " not in ic.otf
 
     def test_setupTable_cvt_missing(self, quaduforeversed, quadfont):
-        ic = InstructionCompiler()
-        ic.otf = quadfont
-        ic.ufo = quaduforeversed
+        ic = InstructionCompiler(quaduforeversed, quadfont)
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
         }
@@ -641,9 +624,7 @@ class InstructionCompilerTest:
         assert "cvt " not in ic.otf
 
     def test_setupTable_cvt_no_ttdata(self, quaduforeversed, quadfont):
-        ic = InstructionCompiler()
-        ic.otf = quadfont
-        ic.ufo = quaduforeversed
+        ic = InstructionCompiler(quaduforeversed, quadfont)
         ic.setupTable_cvt()
         assert "cvt " not in ic.otf
 
@@ -651,18 +632,14 @@ class InstructionCompilerTest:
 
     def test_setupTable_fpgm_no_ttdata(self, quadufo):
         # UFO contains no "public.truetype.instructions" lib key
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.setupTable_fpgm()
         assert "fpgm" not in ic.otf
 
     def test_setupTable_fpgm_no_program(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are not there. (They are optional)
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
         }
@@ -672,9 +649,7 @@ class InstructionCompilerTest:
     def test_setupTable_fpgm_none(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are None.
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "fontProgram": None,
@@ -685,9 +660,7 @@ class InstructionCompilerTest:
     def test_setupTable_fpgm_empty(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are empty.
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "fontProgram": "",
@@ -698,9 +671,7 @@ class InstructionCompilerTest:
     def test_setupTable_fpgm(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, and the font and
         # control value programs are present.
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "fontProgram": "PUSHB[]\n0\nFDEF[]\nPOP[]\nENDF[]",
@@ -716,18 +687,14 @@ class InstructionCompilerTest:
 
     def test_setupTable_prep_no_ttdata(self, quadufo):
         # UFO contains no "public.truetype.instructions" lib key
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.setupTable_prep()
         assert "prep" not in ic.otf
 
     def test_setupTable_prep_no_program(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are not there. (They are optional)
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
         }
@@ -737,9 +704,7 @@ class InstructionCompilerTest:
     def test_setupTable_prep_none(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are None.
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": None,
@@ -750,9 +715,7 @@ class InstructionCompilerTest:
     def test_setupTable_prep_empty(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, but the font and
         # control value programs are empty.
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": "",
@@ -763,9 +726,7 @@ class InstructionCompilerTest:
     def test_setupTable_prep(self, quadufo):
         # UFO contains the "public.truetype.instructions" lib key, and the font and
         # control value programs are present.
-        ic = InstructionCompiler()
-        ic.ufo = quadufo
-        ic.otf = TTFont()
+        ic = InstructionCompiler(quadufo, TTFont())
         ic.ufo.lib[TRUETYPE_INSTRUCTIONS_KEY] = {
             "formatVersion": "1",
             "controlValueProgram": "PUSHW[]\n511\nSCANCTRL[]",
