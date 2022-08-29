@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import array
 import logging
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Optional
 
 from fontTools import ttLib
 from fontTools.pens.hashPointPen import HashPointPen
@@ -77,11 +77,7 @@ class InstructionCompiler:
                 f"Unknown formatVersion {formatVersion} for instructions in {name}."
             )
 
-    def _compile_program(
-        self,
-        key: Literal["controlValueProgram", "fontProgram"],
-        table_tag: Literal["prep", "fpgm"],
-    ) -> None:
+    def _compile_program(self, key: str, table_tag: str) -> None:
         """Compile the program for prep or fpgm."""
         assert key in ("controlValueProgram", "fontProgram")
         assert table_tag in ("prep", "fpgm")
