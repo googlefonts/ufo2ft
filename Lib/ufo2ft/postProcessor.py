@@ -98,6 +98,8 @@ class PostProcessor:
           is True and CFF or CFF2 table is present. Choose between "cffsubr" or
           "compreffor". By default "cffsubr" is used for both CFF 1 and CFF 2.
           NOTE: compreffor currently doesn't support input fonts with CFF2 table.
+
+
         """
         if self._get_cff_version(self.otf):
             self.process_cff(
