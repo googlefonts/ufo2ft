@@ -25,6 +25,7 @@ class InstructionCompiler:
     def __init__(self, ufo=None, otf=None):
         self.ufo = ufo
         self.otf = otf
+        self.autoUseMyMetrics = False
 
     def _check_glyph_hash(self, glyphName, ttglyph, glyph_hash):
         """Check if the supplied glyph hash from the ufo matches the current outlines."""

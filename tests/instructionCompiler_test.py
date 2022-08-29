@@ -439,7 +439,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags_no_ttdata(self, quadufo, quadfont):
         name = "h"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         ttglyph = quadfont["glyf"][name]
@@ -460,7 +459,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags_compound(self, quadufo, quadfont):
         name = "k"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
@@ -479,7 +477,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags_no_compound(self, quadufo, quadfont):
         name = "k"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
@@ -497,7 +494,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags(self, quadufo, quadfont):
         name = "h"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
@@ -532,7 +528,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags_metrics_first_only(self, quadufo, quadfont):
         name = "h"  # Name of the composite glyph
         ic = InstructionCompiler()
-        ic.autoUseMyMetrics = False
 
         glyph = quadufo[name]
         glyph.components[0].identifier = "component0"
