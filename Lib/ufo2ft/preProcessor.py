@@ -267,7 +267,7 @@ class TTFInterpolatablePreProcessor:
         skipExportGlyphs=None,
         filters=None,
     ):
-        from cu2qu.ufo import DEFAULT_MAX_ERR
+        from fontTools.cu2qu.ufo import DEFAULT_MAX_ERR
 
         self.ufos = ufos
         self.inplace = inplace
