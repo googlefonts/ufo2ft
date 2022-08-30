@@ -304,7 +304,7 @@ class TTFInterpolatablePreProcessor:
         self.postFilters = [[f for f in filters if not f.pre] for filters in filterses]
 
     def process(self):
-        from cu2qu.ufo import fonts_to_quadratic
+        from fontTools.cu2qu.ufo import fonts_to_quadratic
 
         needs_decomposition = set()
 
