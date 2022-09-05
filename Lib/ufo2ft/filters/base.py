@@ -5,7 +5,12 @@ from fontTools.misc.loggingTools import Timer
 
 from ufo2ft.util import _GlyphSet, _LazyFontName, getMaxComponentDepth
 
-logger = logging.getLogger(__name__)
+# reuse the "ufo2ft.filters" logger
+logger = logging.getLogger("ufo2ft.filters")
+
+# library-level logger specialized for timing info which apps like fontmake
+# can selectively configure
+timing_logger = logging.getLogger("ufo2ft.timer")
 
 
 class BaseFilter:
@@ -204,7 +209,7 @@ class BaseFilter:
 
         num = len(modified)
         if num > 0:
-            logger.debug(
+            timing_logger.debug(
                 "Took %.3fs to run %s on %d glyph%s",
                 t,
                 self.name,
