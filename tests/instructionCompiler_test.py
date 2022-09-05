@@ -584,38 +584,6 @@ class InstructionCompilerTest:
         assert not ttglyph.components[0].flags & USE_MY_METRICS
         assert not ttglyph.components[1].flags & USE_MY_METRICS
 
-    def test_set_composite_flags_metrics_both(self, quadufo, quadfont):
-        name = "h"  # Name of the composite glyph
-        ic = InstructionCompiler()
-
-        glyph = quadufo[name]
-        glyph.components[0].identifier = "component0"
-        glyph.components[1].identifier = "component1"
-        glyph.lib = {
-            "public.objectLibs": {
-                "component0": {
-                    "public.truetype.useMyMetrics": False,
-                },
-                "component1": {
-                    "public.truetype.useMyMetrics": False,
-                },
-            },
-        }
-        ttglyph = quadfont["glyf"][name]
-
-        # Simulate autoUseMyMetrics setting the flag
-        ttglyph.components[0].flags |= USE_MY_METRICS
-        ttglyph.components[1].flags |= USE_MY_METRICS
-
-        ic._set_composite_flags(
-            glyph=glyph,
-            ttglyph=ttglyph,
-        )
-
-        # Flag on both components should have been unset
-        assert not ttglyph.components[0].flags & USE_MY_METRICS
-        assert not ttglyph.components[1].flags & USE_MY_METRICS
-
     def test_set_composite_flags_metrics_first_only_after_auto(self, quadufo, quadfont):
         name = "g"  # Name of the composite glyph
         ic = InstructionCompiler()
