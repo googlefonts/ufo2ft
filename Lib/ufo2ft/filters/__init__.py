@@ -68,10 +68,10 @@ def loadFilters(ufo):
             logger.exception("Failed to load filter: %s", pformat(filterDict))
             continue
         filterObj = filterClass(
+            *filterDict.get("args", []),
             include=filterDict.get("include"),
             exclude=filterDict.get("exclude"),
             pre=filterDict.get("pre", False),
-            *filterDict.get("args", []),
             **filterDict.get("kwargs", {}),
         )
         if filterObj.pre:
