@@ -331,13 +331,15 @@ class FeatureCompilerTest:
             } liga;
 
 
-            lookup kern_ltr {
+            lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos a v -40;
-            } kern_ltr;
+            } kern_Common;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
             } kern;
             """
         )
