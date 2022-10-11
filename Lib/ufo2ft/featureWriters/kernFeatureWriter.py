@@ -1,15 +1,10 @@
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
 
 from fontTools import unicodedata
-from fontTools.feaLib import ast
 
 from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection
-
-if TYPE_CHECKING:
-    from typing import Iterator, Literal
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -27,7 +22,7 @@ RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
 
 
-def unicodeBidiType(uv: int) -> Literal["R"] | Literal["L"] | None:
+def unicodeBidiType(uv):
     """Return "R" for characters with RTL direction, or "L" for LTR (whether
     'strong' or 'weak'), or None for neutral direction.
     """
@@ -37,7 +32,8 @@ def unicodeBidiType(uv: int) -> Literal["R"] | Literal["L"] | None:
         return "R"
     elif bidiType in LTR_BIDI_TYPES:
         return "L"
-    return None
+    else:
+        return None
 
 
 class KerningPair:
@@ -52,7 +48,6 @@ class KerningPair:
         else:
             raise AssertionError(side1)
 
-        self.side2: ast.GlyphName | ast.GlyphClassName | ast.GlyphClass
         if isinstance(side2, str):
             self.side2 = ast.GlyphName(side2)
         elif isinstance(side2, ast.GlyphClassDefinition):
@@ -119,7 +114,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
 
-        feaScripts = getScriptLanguageSystems(feaFile)
+        feaScripts = ast.getScriptLanguageSystems(feaFile)
         ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaScripts)
 
         return ctx
@@ -203,10 +198,10 @@ class KernFeatureWriter(BaseFeatureWriter):
     @classmethod
     def getKerningClasses(cls, font, feaFile=None, glyphSet=None):
         side1Groups, side2Groups = cls.getKerningGroups(font, glyphSet)
-        side1Classes = makeGlyphClassDefinitions(
+        side1Classes = ast.makeGlyphClassDefinitions(
             side1Groups, feaFile, stripPrefix="public."
         )
-        side2Classes = makeGlyphClassDefinitions(
+        side2Classes = ast.makeGlyphClassDefinitions(
             side2Groups, feaFile, stripPrefix="public."
         )
         return side1Classes, side2Classes
