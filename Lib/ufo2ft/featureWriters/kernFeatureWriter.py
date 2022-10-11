@@ -16,7 +16,7 @@ SIDE2_PREFIX = "public.kern2."
 #   src/hb-ot-shape-complex-khmer.cc
 # We derived the list of scripts associated to each dist-enabled shaper from
 # `hb_ot_shape_complex_categorize` in src/hb-ot-shape-complex-private.hh
-DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | {"Khmr", "Mymr"} | set(USE_SCRIPTS)
+DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | set(["Khmr", "Mymr"]) | set(USE_SCRIPTS)
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
