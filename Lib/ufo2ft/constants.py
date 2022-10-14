@@ -38,8 +38,6 @@ OPENTYPE_META_KEY = "public.openTypeMeta"
 
 UNICODE_VARIATION_SEQUENCES_KEY = "public.unicodeVariationSequences"
 
-COMMON_SCRIPT = "Zyyy"
-
 INDIC_SCRIPTS = [
     "Beng",  # Bengali
     "Cham",  # Cham
