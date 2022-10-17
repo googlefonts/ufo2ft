@@ -24,8 +24,6 @@ class FlattenComponentsFilter(BaseFilter):
             flattened_tuples = _flattenComponent(
                 self.context.glyphSet, comp, found_in=glyph
             )
-            if not flattened_tuples:
-                continue
             if flattened_tuples[0] != (comp.baseGlyph, comp.transformation):
                 flattened = True
             glyph.removeComponent(comp)
@@ -39,11 +37,10 @@ class FlattenComponentsFilter(BaseFilter):
 def _flattenComponent(glyphSet, component, found_in):
     """Returns a list of tuples (baseGlyph, transform) of nested component."""
     if component.baseGlyph not in glyphSet:
-        logger.warning(
+        raise ValueError(
             "Could not find component '%s' used in '%s'"
             % (component.baseGlyph, found_in.name)
         )
-        return []
 
     glyph = glyphSet[component.baseGlyph]
     # Any contour will cause components to be decomposed
