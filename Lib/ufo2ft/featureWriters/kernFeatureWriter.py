@@ -450,17 +450,6 @@ class KernFeatureWriter(BaseFeatureWriter):
             self._makePairPosRule(pair, rtl=rtl, quantization=self.options.quantization)
         )
 
-    def knownScriptsPerCodepoint(self, uv):
-        if not self.context.knownScripts:
-            # If there are no languagesystems, consider everything common;
-            # it'll all end in DFLT/dflt anyway
-            return COMMON_SCRIPT
-        return [
-            x
-            for x in unicodedata.script_extension(chr(uv))
-            if x in self.context.knownScripts or x in DFLT_SCRIPTS
-        ]
-
     def _makeKerningLookups(self):
         marks = self.context.gdefClasses.mark
         lookups = {}
@@ -469,7 +458,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
         self._intersectPairs("directions", dirGlyphs)
 
-        scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
+        scriptGlyphs = classifyGlyphs(script_extensions_for_codepoint, cmap, gsub)
         self._intersectPairs("scripts", scriptGlyphs)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
         self._intersectPairs("bidiTypes", bidiGlyphs)
@@ -554,6 +543,10 @@ class KernFeatureWriter(BaseFeatureWriter):
         for uniscript in lookups.keys():
             for ot2script in unicodedata.ot_tags_from_script(uniscript):
                 otscript2uniscript[ot2script] = uniscript
+                if ot2script != "DFLT" and not any(
+                    script == ot2script for script, _ in scripts
+                ):
+                    scripts.append((ot2script, ["dflt"]))
 
         for script, langs in sorted(scripts):
             if script not in otscript2uniscript:
@@ -571,3 +564,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                     lookups_for_this_script.extend(lookups[dflt_script].values())
             lookups_for_this_script.extend(lookups[uniscript].values())
             addLookupReferences(feature, lookups_for_this_script, script, langs)
+
+
+def script_extensions_for_codepoint(uv: int) -> set[str]:
+    return unicodedata.script_extension(chr(uv))
