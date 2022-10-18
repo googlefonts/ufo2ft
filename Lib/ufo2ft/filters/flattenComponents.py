@@ -38,8 +38,7 @@ def _flattenComponent(glyphSet, component, found_in):
     """Returns a list of tuples (baseGlyph, transform) of nested component."""
     if component.baseGlyph not in glyphSet:
         raise ValueError(
-            "Could not find component '%s' used in '%s'"
-            % (component.baseGlyph, found_in.name)
+            f"Could not find component '{component.baseGlyph}' used in '{found_in.name}'"
         )
 
     glyph = glyphSet[component.baseGlyph]
