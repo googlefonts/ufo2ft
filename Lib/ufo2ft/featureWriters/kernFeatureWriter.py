@@ -355,6 +355,10 @@ class KernFeatureWriter(BaseFeatureWriter):
             allGlyphs = set(font.keys())
         kerning = font.kerning
 
+        # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
+        # class, class to glyph, and finally class to class. This makes "kerning
+        # exceptions" work, where more specific glyph pair values override less
+        # specific class kerning.
         pairsByFlags = {}
         for (side1, side2) in kerning:
             # filter out pairs that reference missing groups or glyphs
