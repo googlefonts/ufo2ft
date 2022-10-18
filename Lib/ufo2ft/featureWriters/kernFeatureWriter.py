@@ -19,7 +19,7 @@ from ufo2ft.featureWriters.ast import (
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptDirection
 
 if TYPE_CHECKING:
-    from typing import Iterator, Literal
+    from typing import Any, Iterator, Literal, Mapping
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -348,7 +348,12 @@ class KernFeatureWriter(BaseFeatureWriter):
         return side1Classes, side2Classes
 
     @staticmethod
-    def getKerningPairs(font, side1Classes, side2Classes, glyphSet=None):
+    def getKerningPairs(
+        font: Any,
+        side1Classes: Mapping[str, ast.GlyphClassDefinition],
+        side2Classes: Mapping[str, ast.GlyphClassDefinition],
+        glyphSet: dict[str, Any] | None = None,
+    ) -> list[KerningPair]:
         if glyphSet:
             allGlyphs = set(glyphSet.keys())
         else:
@@ -359,7 +364,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         # class, class to glyph, and finally class to class. This makes "kerning
         # exceptions" work, where more specific glyph pair values override less
         # specific class kerning.
-        pairsByFlags = {}
+        pairsByFlags: dict[tuple[bool, bool], set[tuple[str, str]]] = {}
         for (side1, side2) in kerning:
             # filter out pairs that reference missing groups or glyphs
             if side1 not in side1Classes and side1 not in allGlyphs:
@@ -369,7 +374,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             flags = (side1 in side1Classes, side2 in side2Classes)
             pairsByFlags.setdefault(flags, set()).add((side1, side2))
 
-        result = []
+        result: list[KerningPair] = []
         for flags, pairs in sorted(pairsByFlags.items()):
             for side1, side2 in sorted(pairs):
                 value = kerning[side1, side2]
