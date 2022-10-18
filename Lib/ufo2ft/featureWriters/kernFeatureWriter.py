@@ -94,7 +94,6 @@ class KerningPair:
         self.directions: set[str] = directions or set()
         self.bidiTypes: set[str] = bidiTypes or set()
 
-    # pyright: basic
     def partitionByScript(
         self, glyphScripts: dict[str, set[str]]
     ) -> Iterator[tuple[str, KerningPair]]:
