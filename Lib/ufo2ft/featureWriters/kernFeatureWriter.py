@@ -62,7 +62,7 @@ class KerningPair:
         scripts: set[str] | None = None,
         directions: set[str] | None = None,
         bidiTypes: set[str] | None = None,
-    ):
+    ) -> None:
         self.side1: ast.GlyphName | ast.GlyphClassName | ast.GlyphClass
         if isinstance(side1, str):
             self.side1 = ast.GlyphName(side1)
