@@ -10,7 +10,7 @@ from ufo2ft.featureWriters import loadFeatureWriterFromString, logger
 try:
     import ufoLib2
 
-    loader = ufoLib2.Font
+    loader = ufoLib2.Font.open
 except ImportError:
     import defcon
 
