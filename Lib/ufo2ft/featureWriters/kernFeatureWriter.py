@@ -56,8 +56,18 @@ class KerningPair:
 
     def __init__(
         self,
-        side1: str | ast.GlyphClassDefinition | list[str] | set[str],
-        side2: str | ast.GlyphClassDefinition | list[str] | set[str],
+        side1: str
+        | ast.GlyphClassDefinition
+        | ast.GlyphClass
+        | ast.GlyphClassName
+        | list[str]
+        | set[str],
+        side2: str
+        | ast.GlyphClassDefinition
+        | ast.GlyphClass
+        | ast.GlyphClassName
+        | list[str]
+        | set[str],
         value: float,
         scripts: set[str] | None = None,
         directions: set[str] | None = None,
@@ -68,6 +78,8 @@ class KerningPair:
             self.side1 = ast.GlyphName(side1)
         elif isinstance(side1, ast.GlyphClassDefinition):
             self.side1 = ast.GlyphClassName(side1)
+        elif isinstance(side1, (ast.GlyphClass, ast.GlyphClassName)):
+            self.side1 = side1
         elif isinstance(side1, (list, set)):
             if len(side1) == 1:
                 self.side1 = ast.GlyphName(list(side1)[0])
@@ -81,6 +93,8 @@ class KerningPair:
             self.side2 = ast.GlyphName(side2)
         elif isinstance(side2, ast.GlyphClassDefinition):
             self.side2 = ast.GlyphClassName(side2)
+        elif isinstance(side2, (ast.GlyphClass, ast.GlyphClassName)):
+            self.side2 = side2
         elif isinstance(side2, (list, set)):
             if len(side2) == 1:
                 self.side2 = ast.GlyphName(list(side2)[0])
@@ -93,6 +107,34 @@ class KerningPair:
         self.scripts: set[str] = scripts or set()
         self.directions: set[str] = directions or set()
         self.bidiTypes: set[str] = bidiTypes or set()
+
+    def __lt__(self, other: KerningPair) -> bool:
+        if not isinstance(other, KerningPair):
+            return NotImplemented
+
+        # NOTE: Comparing classes relies on their glyph names being sorted in
+        # __init__.
+        selfTuple = (
+            self.firstIsClass,
+            self.secondIsClass,
+            self.side1.glyph
+            if isinstance(self.side1, ast.GlyphName)
+            else self.side1.glyphSet()[0].glyph,
+            self.side2.glyph
+            if isinstance(self.side2, ast.GlyphName)
+            else self.side2.glyphSet()[0].glyph,
+        )
+        otherTuple = (
+            other.firstIsClass,
+            other.secondIsClass,
+            other.side1.glyph
+            if isinstance(other.side1, ast.GlyphName)
+            else other.side1.glyphSet()[0].glyph,
+            other.side2.glyph
+            if isinstance(other.side2, ast.GlyphName)
+            else other.side2.glyphSet()[0].glyph,
+        )
+        return selfTuple < otherTuple
 
     def partitionByScript(
         self, glyphScripts: dict[str, set[str]]
