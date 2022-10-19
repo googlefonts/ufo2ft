@@ -5,6 +5,7 @@ from enum import IntEnum
 from fontTools import varLib
 from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.designspaceLib.split import splitInterpolable, splitVariableFonts
+from fontTools.misc.loggingTools import Timer
 from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
 
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, SPARSE_TTF_MASTER_TABLES
@@ -35,6 +36,7 @@ except ImportError:
 
 
 logger = logging.getLogger(__name__)
+timer = Timer(logging.getLogger("ufo2ft.timer"), level=logging.DEBUG)
 
 
 class CFFOptimization(IntEnum):
@@ -43,6 +45,7 @@ class CFFOptimization(IntEnum):
     SUBROUTINIZE = 2
 
 
+@timer("preprocess UFO")
 def call_preprocessor(ufo_or_ufos, *, preProcessorClass, **kwargs):
     logger.info("Pre-processing glyphs")
     if kwargs["skipExportGlyphs"] is None:
@@ -70,6 +73,7 @@ def call_preprocessor(ufo_or_ufos, *, preProcessorClass, **kwargs):
     return preProcessor.process()
 
 
+@timer("compile a basic TTF")
 def call_outline_compiler(ufo, glyphSet, *, outlineCompilerClass, **kwargs):
     kwargs = prune_unknown_kwargs(kwargs, outlineCompilerClass)
     outlineCompiler = outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
@@ -77,10 +81,11 @@ def call_outline_compiler(ufo, glyphSet, *, outlineCompilerClass, **kwargs):
 
 
 def call_postprocessor(otf, ufo, glyphSet, *, postProcessorClass, **kwargs):
-    if postProcessorClass is not None:
-        postProcessor = postProcessorClass(otf, ufo, glyphSet=glyphSet)
-        kwargs = prune_unknown_kwargs(kwargs, postProcessor.process)
-        otf = postProcessor.process(**kwargs)
+    with timer("postprocess TTF"):
+        if postProcessorClass is not None:
+            postProcessor = postProcessorClass(otf, ufo, glyphSet=glyphSet)
+            kwargs = prune_unknown_kwargs(kwargs, postProcessor.process)
+            otf = postProcessor.process(**kwargs)
     return otf
 
 
@@ -603,13 +608,15 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
 
     logger.info("Building variable TTF fonts: %s", ", ".join(vfNameToBaseUfo))
 
-    vfNameToTTFont = varLib.build_many(
-        designSpaceDoc,
-        exclude=excludeVariationTables,
-        optimize=optimizeGvar,
-        skip_vf=lambda vf_name: variableFontNames and vf_name not in variableFontNames,
-        colr_layer_reuse=colrLayerReuse,
-    )
+    with timer("merge fonts to variable"):
+        vfNameToTTFont = varLib.build_many(
+            designSpaceDoc,
+            exclude=excludeVariationTables,
+            optimize=optimizeGvar,
+            skip_vf=lambda vf_name: variableFontNames
+            and vf_name not in variableFontNames,
+            colr_layer_reuse=colrLayerReuse,
+        )
 
     for vfName, varfont in list(vfNameToTTFont.items()):
         vfNameToTTFont[vfName] = call_postprocessor(
