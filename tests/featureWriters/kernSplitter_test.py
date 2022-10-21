@@ -1,5 +1,6 @@
 from typing import Any
 
+import py
 from fontTools.designspaceLib import DesignSpaceDocument
 
 from ufo2ft.featureCompiler import parseLayoutFeatures
@@ -11,9 +12,11 @@ from ufo2ft.featureWriters.kernSplitter import getAndSplitKerningData
 from ufo2ft.util import classifyGlyphs
 
 
-def test_splitting_kerning_data(FontClass: Any) -> None:
-    ds = DesignSpaceDocument.fromfile("Test.designspace")
-    ufo = FontClass("Test-Regular.ufo")
+def test_splitting_kerning_data(datadir: py.path.local, FontClass: Any) -> None:
+    testdata_dir = datadir.join("Mystery")
+    ds = DesignSpaceDocument.fromfile(testdata_dir.join("Mystery.designspace"))
+    ufo = FontClass(testdata_dir.join("Mystery-Regular.ufo"))
+
     kern_writer = KernFeatureWriter()
     feaFile = parseLayoutFeatures(ufo)
     kern_writer.setContext(ufo, feaFile)
