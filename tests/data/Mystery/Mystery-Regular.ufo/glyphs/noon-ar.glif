@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="noon-ar" format="2">
+  <advance width="618"/>
+  <unicode hex="0646"/>
+  <anchor x="307" y="-168" name="bottom"/>
+  <anchor x="307" y="-178" name="mark_bottom"/>
+  <anchor x="308" y="590" name="mark_top"/>
+  <anchor x="307" y="-122" name="ring"/>
+  <anchor x="308" y="533" name="top"/>
+  <outline>
+  </outline>
+</glyph>

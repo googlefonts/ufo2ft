@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="iotadasiaperispomeni.ss16" format="2">
+  <advance width="244"/>
+  <anchor x="122" y="0" name="bottom"/>
+  <anchor x="160" y="0" name="ogonek"/>
+  <anchor x="122" y="1034" name="top"/>
+  <outline>
+  </outline>
+</glyph>

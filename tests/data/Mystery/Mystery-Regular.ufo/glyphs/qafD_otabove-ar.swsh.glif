@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="qafDotabove-ar.swsh" format="2">
+  <advance width="1543"/>
+  <anchor x="831" y="-296" name="bottom"/>
+  <anchor x="831" y="-306" name="mark_bottom"/>
+  <anchor x="1297" y="590" name="mark_top"/>
+  <anchor x="1297" y="561" name="top"/>
+  <outline>
+  </outline>
+</glyph>

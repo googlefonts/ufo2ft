@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="meemDotbelow-ar.medi.conn-m-2.conn-mf-1.harakat" format="2">
+  <advance width="427"/>
+  <anchor x="247" y="-326" name="bottom"/>
+  <anchor x="247" y="-141" name="mark_bottom"/>
+  <anchor x="115" y="390" name="mark_top"/>
+  <anchor x="115" y="124" name="top"/>
+  <outline>
+  </outline>
+</glyph>

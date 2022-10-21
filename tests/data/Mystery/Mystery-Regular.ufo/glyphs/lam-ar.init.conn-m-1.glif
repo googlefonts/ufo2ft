@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lam-ar.init.conn-m-1" format="2">
+  <advance width="128"/>
+  <anchor x="12" y="-96" name="bottom"/>
+  <anchor x="12" y="-106" name="mark_bottom"/>
+  <anchor x="-84" y="756" name="mark_top"/>
+  <anchor x="-83" y="340" name="stroke"/>
+  <anchor x="-84" y="746" name="top"/>
+  <outline>
+  </outline>
+</glyph>

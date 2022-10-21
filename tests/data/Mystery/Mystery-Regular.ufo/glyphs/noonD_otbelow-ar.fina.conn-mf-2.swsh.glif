@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="noonDotbelow-ar.fina.conn-mf-2.swsh" format="2">
+  <advance width="1390"/>
+  <anchor x="748" y="-379" name="bottom"/>
+  <anchor x="748" y="-194" name="mark_bottom"/>
+  <anchor x="749" y="590" name="mark_top"/>
+  <anchor x="748" y="-122" name="ring"/>
+  <anchor x="749" y="317" name="top"/>
+  <outline>
+  </outline>
+</glyph>

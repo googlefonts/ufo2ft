@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Macute" format="2">
+  <advance width="915"/>
+  <unicode hex="1E3E"/>
+  <anchor x="457" y="0" name="bottom"/>
+  <anchor x="457" y="882" name="top"/>
+  <outline>
+  </outline>
+</glyph>

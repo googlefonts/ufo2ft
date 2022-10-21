@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="pdotaccent.sc" format="2">
+  <advance width="513"/>
+  <anchor x="126" y="0" name="bottom"/>
+  <anchor x="34" y="638" name="tonos"/>
+  <anchor x="234" y="722" name="top"/>
+  <outline>
+  </outline>
+</glyph>

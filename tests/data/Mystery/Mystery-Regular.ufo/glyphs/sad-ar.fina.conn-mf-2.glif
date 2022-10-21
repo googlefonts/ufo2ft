@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="sad-ar.fina.conn-mf-2" format="2">
+  <advance width="1167"/>
+  <anchor x="684" y="-113" name="bottom"/>
+  <anchor x="1098" y="0" name="entry"/>
+  <anchor x="1098" y="0" name="exit"/>
+  <anchor x="684" y="-123" name="mark_bottom"/>
+  <anchor x="914" y="590" name="mark_top"/>
+  <anchor x="914" y="433" name="top"/>
+  <outline>
+  </outline>
+</glyph>

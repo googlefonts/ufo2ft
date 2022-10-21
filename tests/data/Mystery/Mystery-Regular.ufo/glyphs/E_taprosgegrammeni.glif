@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etaprosgegrammeni" format="2">
+  <advance width="952"/>
+  <unicode hex="1FCC"/>
+  <anchor x="354" y="0" name="bottom_1"/>
+  <anchor x="830" y="0" name="bottom_2"/>
+  <anchor x="618" y="0" name="exit"/>
+  <anchor x="868" y="0" name="ogonek"/>
+  <anchor x="354" y="517" name="stroke"/>
+  <anchor x="31" y="800" name="tonos"/>
+  <anchor x="354" y="700" name="top_1"/>
+  <anchor x="830" y="480" name="top_2"/>
+  <anchor x="18" y="700" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="commaabovecomb" format="2">
+  <unicode hex="0313"/>
+  <anchor x="43" y="478" name="_top"/>
+  <anchor x="43" y="800" name="top"/>
+  <anchor x="-29" y="478" name="entry"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>caroncomb.alt</string>
+        </dict>
+      </array>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>189</integer>
+    </dict>
+  </lib>
+</glyph>

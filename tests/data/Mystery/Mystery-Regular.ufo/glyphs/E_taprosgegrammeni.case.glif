@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etaprosgegrammeni.case" format="2">
+  <advance width="988"/>
+  <anchor x="354" y="0" name="bottom_1"/>
+  <anchor x="849" y="0" name="bottom_2"/>
+  <anchor x="618" y="0" name="exit"/>
+  <anchor x="887" y="0" name="ogonek"/>
+  <anchor x="354" y="517" name="stroke"/>
+  <anchor x="31" y="800" name="tonos_1"/>
+  <anchor x="749" y="800" name="tonos_2"/>
+  <anchor x="354" y="700" name="top_1"/>
+  <anchor x="849" y="881" name="top_2"/>
+  <anchor x="18" y="700" name="topleft_1"/>
+  <anchor x="726" y="700" name="topleft_2"/>
+  <outline>
+  </outline>
+</glyph>

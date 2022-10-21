@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kashida-ar" format="2">
+  <advance width="252"/>
+  <unicode hex="0640"/>
+  <anchor x="130" y="-46" name="bottom"/>
+  <anchor x="130" y="-90" name="mark_bottom"/>
+  <anchor x="130" y="590" name="mark_top"/>
+  <anchor x="130" y="175" name="top"/>
+  <outline>
+  </outline>
+</glyph>

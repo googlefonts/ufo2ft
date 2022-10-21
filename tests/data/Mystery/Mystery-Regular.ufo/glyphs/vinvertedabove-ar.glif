@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="vinvertedabove-ar" format="2">
+  <unicode hex="065B"/>
+  <anchor x="151" y="277" name="_top"/>
+  <anchor x="151" y="280" name="bottom"/>
+  <anchor x="151" y="465" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>302</integer>
+    </dict>
+  </lib>
+</glyph>

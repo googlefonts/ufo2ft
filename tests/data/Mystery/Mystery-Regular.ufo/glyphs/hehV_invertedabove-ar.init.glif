@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hehVinvertedabove-ar.init" format="2">
+  <advance width="652"/>
+  <anchor x="211" y="-46" name="bottom"/>
+  <anchor x="578" y="0" name="entry"/>
+  <anchor x="211" y="-90" name="mark_bottom"/>
+  <anchor x="375" y="600" name="mark_top"/>
+  <anchor x="375" y="721" name="top"/>
+  <outline>
+  </outline>
+</glyph>

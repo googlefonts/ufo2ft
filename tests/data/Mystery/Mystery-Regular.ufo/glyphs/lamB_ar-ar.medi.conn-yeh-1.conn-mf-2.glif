@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lamBar-ar.medi.conn-yeh-1.conn-mf-2" format="2">
+  <advance width="502"/>
+  <anchor x="329" y="-46" name="bottom"/>
+  <anchor x="329" y="-90" name="mark_bottom"/>
+  <anchor x="363" y="759" name="mark_top"/>
+  <anchor x="361" y="500" name="stroke"/>
+  <anchor x="363" y="749" name="top"/>
+  <outline>
+  </outline>
+</glyph>

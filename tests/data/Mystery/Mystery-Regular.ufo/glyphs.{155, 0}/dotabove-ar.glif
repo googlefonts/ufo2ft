@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dotabove-ar" format="2">
+  <unicode hex="FBB2"/>
+  <anchor x="96" y="457" name="_top"/>
+  <anchor x="96" y="787" name="mark_top"/>
+  <anchor x="96" y="797" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Mark</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>191</integer>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>arabic</string>
+      <key>com.schriftgestaltung.Glyphs.subCategory</key>
+      <string>Nonspacing</string>
+    </dict>
+  </lib>
+</glyph>

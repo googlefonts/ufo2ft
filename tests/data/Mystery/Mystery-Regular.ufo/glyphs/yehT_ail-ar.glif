@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="yehTail-ar" format="2">
+  <advance width="773"/>
+  <unicode hex="06CD"/>
+  <anchor x="351" y="-218" name="bottom"/>
+  <anchor x="133" y="164" name="entry"/>
+  <anchor x="133" y="164" name="exit"/>
+  <anchor x="351" y="-228" name="mark_bottom"/>
+  <anchor x="275" y="590" name="mark_top"/>
+  <anchor x="275" y="290" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>anchor</key>
+          <string>#exit</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>_part.yehTail-stroke-ar.comp</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

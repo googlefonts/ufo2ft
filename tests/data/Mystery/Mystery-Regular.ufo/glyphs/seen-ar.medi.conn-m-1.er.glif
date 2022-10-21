@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="seen-ar.medi.conn-m-1.er" format="2">
+  <advance width="1190"/>
+  <anchor x="480" y="-58" name="bottom"/>
+  <anchor x="480" y="-90" name="mark_bottom"/>
+  <anchor x="463" y="590" name="mark_top"/>
+  <anchor x="463" y="348" name="top"/>
+  <anchor x="463" y="348" name="topthreedots"/>
+  <outline>
+  </outline>
+</glyph>

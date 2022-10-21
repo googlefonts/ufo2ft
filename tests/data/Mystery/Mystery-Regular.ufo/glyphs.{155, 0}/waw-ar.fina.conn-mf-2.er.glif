@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="waw-ar.fina.conn-mf-2.er" format="2">
+  <advance width="1144"/>
+  <anchor x="217" y="-280" name="bottom"/>
+  <anchor x="217" y="-290" name="mark_bottom"/>
+  <anchor x="250" y="593" name="mark_top"/>
+  <anchor x="120" y="-42" name="ring"/>
+  <anchor x="282" y="-47" name="stroke"/>
+  <anchor x="250" y="457" name="top"/>
+  <outline>
+  </outline>
+</glyph>

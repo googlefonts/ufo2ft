@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="i.sups.caps" format="2">
+  <advance width="159"/>
+  <anchor x="1" y="1087" name="_top"/>
+  <anchor x="1" y="1084" name="bottom"/>
+  <anchor x="1" y="1084" name="ogonek"/>
+  <anchor x="1" y="1087" name="top"/>
+  <outline>
+  </outline>
+</glyph>

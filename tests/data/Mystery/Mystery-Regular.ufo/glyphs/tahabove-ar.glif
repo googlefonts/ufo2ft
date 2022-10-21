@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tahabove-ar" format="2">
+  <unicode hex="0615"/>
+  <anchor x="158" y="480" name="_top"/>
+  <anchor x="158" y="727" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>307</integer>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gaf-ar.medi.dotColl.ui" format="2">
+  <advance width="513"/>
+  <anchor x="252" y="707" name="_top"/>
+  <anchor x="189" y="-46" name="bottom"/>
+  <anchor x="189" y="-90" name="mark_bottom"/>
+  <anchor x="139" y="775" name="mark_top"/>
+  <anchor x="306" y="556" name="ring"/>
+  <anchor x="139" y="765" name="top"/>
+  <outline>
+  </outline>
+</glyph>

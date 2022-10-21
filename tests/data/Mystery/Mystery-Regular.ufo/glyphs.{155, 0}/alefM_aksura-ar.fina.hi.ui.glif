@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alefMaksura-ar.fina.hi.ui" format="2">
+  <advance width="716"/>
+  <anchor x="320" y="-119" name="bottom"/>
+  <anchor x="68" y="270" name="exit"/>
+  <anchor x="320" y="-129" name="mark_bottom"/>
+  <anchor x="133" y="593" name="mark_top"/>
+  <anchor x="133" y="314" name="top"/>
+  <outline>
+  </outline>
+</glyph>

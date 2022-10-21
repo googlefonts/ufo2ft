@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="qafDotabove-ar.medi.el" format="2">
+  <advance width="793"/>
+  <anchor x="543" y="-56" name="bottom"/>
+  <anchor x="543" y="-90" name="mark_bottom"/>
+  <anchor x="556" y="590" name="mark_top"/>
+  <anchor x="556" y="583" name="top"/>
+  <outline>
+  </outline>
+</glyph>

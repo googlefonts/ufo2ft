@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Omacronacute" format="2">
+  <advance width="755"/>
+  <unicode hex="1E52"/>
+  <anchor x="377" y="0" name="bottom"/>
+  <anchor x="381" y="350" name="center"/>
+  <anchor x="598" y="630" name="exit"/>
+  <anchor x="458" y="0" name="ogonek"/>
+  <anchor x="72" y="796" name="tonos"/>
+  <anchor x="378" y="1034" name="top"/>
+  <anchor x="27" y="700" name="topleft"/>
+  <anchor x="743" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

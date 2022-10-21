@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="heh-ar.medi.er" format="2">
+  <advance width="916"/>
+  <anchor x="269" y="-250" name="bottom"/>
+  <anchor x="269" y="-260" name="mark_bottom"/>
+  <anchor x="270" y="593" name="mark_top"/>
+  <anchor x="270" y="478" name="top"/>
+  <outline>
+  </outline>
+</glyph>

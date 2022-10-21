@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="egrave.sups" format="2">
+  <advance width="291"/>
+  <anchor x="153" y="707" name="_top"/>
+  <anchor x="160" y="420" name="bottom"/>
+  <anchor x="255" y="435" name="ogonek"/>
+  <anchor x="153" y="707" name="top"/>
+  <outline>
+  </outline>
+</glyph>

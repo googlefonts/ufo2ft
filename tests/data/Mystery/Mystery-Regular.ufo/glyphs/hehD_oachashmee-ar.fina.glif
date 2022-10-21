@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hehDoachashmee-ar.fina" format="2">
+  <advance width="735"/>
+  <unicode hex="FBAB"/>
+  <anchor x="271" y="-46" name="bottom"/>
+  <anchor x="638" y="0" name="entry"/>
+  <anchor x="638" y="0" name="exit"/>
+  <anchor x="271" y="-90" name="mark_bottom"/>
+  <anchor x="435" y="600" name="mark_top"/>
+  <anchor x="435" y="533" name="top"/>
+  <outline>
+  </outline>
+</glyph>

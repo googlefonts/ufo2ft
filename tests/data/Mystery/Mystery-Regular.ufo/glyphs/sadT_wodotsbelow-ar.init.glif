@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="sadTwodotsbelow-ar.init" format="2">
+  <advance width="751"/>
+  <anchor x="298" y="-307" name="bottom"/>
+  <anchor x="703" y="0" name="entry"/>
+  <anchor x="298" y="-123" name="mark_bottom"/>
+  <anchor x="521" y="590" name="mark_top"/>
+  <anchor x="521" y="427" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotshorizontalbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

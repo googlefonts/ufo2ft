@@ -1,0 +1,255 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<designspace format="5.0">
+  <axes>
+    <axis tag="wght" name="Weight" minimum="1" maximum="900" default="400">
+      <map input="1" output="7"/>
+      <map input="100" output="19"/>
+      <map input="200" output="34"/>
+      <map input="300" output="55"/>
+      <map input="400" output="76"/>
+      <map input="500" output="98"/>
+      <map input="700" output="128"/>
+      <map input="800" output="163"/>
+      <map input="900" output="220"/>
+    </axis>
+    <axis tag="SWWD" name="Swash Width" minimum="0" maximum="100" default="0"/>
+  </axes>
+  <rules>
+    <rule name="BRACKET.100.220">
+      <conditionset>
+        <condition name="Weight" minimum="100" maximum="220"/>
+      </conditionset>
+      <sub name="peso" with="peso.BRACKET.100"/>
+    </rule>
+    <rule name="BRACKET.120.220">
+      <conditionset>
+        <condition name="Weight" minimum="120" maximum="220"/>
+      </conditionset>
+      <sub name="cedi" with="cedi.BRACKET.120"/>
+      <sub name="cent" with="cent.BRACKET.120"/>
+      <sub name="dollar" with="dollar.BRACKET.120"/>
+      <sub name="naira" with="naira.BRACKET.120"/>
+      <sub name="won" with="won.BRACKET.120"/>
+    </rule>
+    <rule name="BRACKET.150.220">
+      <conditionset>
+        <condition name="Weight" minimum="150" maximum="220"/>
+      </conditionset>
+      <sub name="Oslash" with="Oslash.BRACKET.150"/>
+      <sub name="Oslashacute" with="Oslashacute.BRACKET.150"/>
+      <sub name="oslash" with="oslash.BRACKET.150"/>
+      <sub name="oslash.sc" with="oslash.sc.BRACKET.150"/>
+      <sub name="oslashacute" with="oslashacute.BRACKET.150"/>
+      <sub name="oslashacute.sc" with="oslashacute.sc.BRACKET.150"/>
+      <sub name="slashlongcomb" with="slashlongcomb.BRACKET.150"/>
+      <sub name="slashlongcomb.sc" with="slashlongcomb.sc.BRACKET.150"/>
+      <sub name="slashshortcomb" with="slashshortcomb.BRACKET.150"/>
+    </rule>
+    <rule name="BRACKET.155.220">
+      <conditionset>
+        <condition name="Weight" minimum="155" maximum="220"/>
+      </conditionset>
+      <sub name="Bstroke" with="Bstroke.BRACKET.155"/>
+      <sub name="guarani" with="guarani.BRACKET.155"/>
+    </rule>
+  </rules>
+  <sources>
+    <source filename="Mystery-Hairline.ufo" name="Mystery Hairline" familyname="Mystery" stylename="Hairline">
+      <location>
+        <dimension name="Weight" xvalue="7"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </source>
+    <source filename="Mystery-Regular.ufo" name="Mystery Regular" familyname="Mystery" stylename="Regular">
+      <lib copy="1"/>
+      <groups copy="1"/>
+      <features copy="1"/>
+      <info copy="1"/>
+      <location>
+        <dimension name="Weight" xvalue="76"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </source>
+    <source filename="Mystery-Regular.ufo" name="Mystery Regular {125, 0}" layer="{125, 0}">
+      <location>
+        <dimension name="Weight" xvalue="125"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </source>
+    <source filename="Mystery-Regular.ufo" name="Mystery Regular {155, 0}" layer="{155, 0}">
+      <location>
+        <dimension name="Weight" xvalue="155"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </source>
+    <source filename="Mystery-Black.ufo" name="Mystery Black" familyname="Mystery" stylename="Black">
+      <location>
+        <dimension name="Weight" xvalue="220"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </source>
+    <source filename="Mystery-HairlineSwash.ufo" name="Mystery Hairline Swash" familyname="Mystery" stylename="Hairline Swash">
+      <location>
+        <dimension name="Weight" xvalue="7"/>
+        <dimension name="Swash Width" xvalue="100"/>
+      </location>
+    </source>
+    <source filename="Mystery-RegularSwash.ufo" name="Mystery Regular Swash" familyname="Mystery" stylename="Regular Swash">
+      <location>
+        <dimension name="Weight" xvalue="76"/>
+        <dimension name="Swash Width" xvalue="100"/>
+      </location>
+    </source>
+    <source filename="Mystery-RegularSwash.ufo" name="Mystery Regular Swash {125, 100}" layer="{125, 100}">
+      <location>
+        <dimension name="Weight" xvalue="125"/>
+        <dimension name="Swash Width" xvalue="100"/>
+      </location>
+    </source>
+    <source filename="Mystery-RegularSwash.ufo" name="Mystery Regular Swash {155, 100}" layer="{155, 100}">
+      <location>
+        <dimension name="Weight" xvalue="155"/>
+        <dimension name="Swash Width" xvalue="100"/>
+      </location>
+    </source>
+    <source filename="Mystery-BlackSwash.ufo" name="Mystery Black Swash" familyname="Mystery" stylename="Black Swash">
+      <location>
+        <dimension name="Weight" xvalue="220"/>
+        <dimension name="Swash Width" xvalue="100"/>
+      </location>
+    </source>
+  </sources>
+  <instances>
+    <instance name="Mystery Hairline" familyname="Mystery" stylename="Hairline" filename="../instance_ufo/Mystery-Hairline.ufo" stylemapfamilyname="Mystery Hairline" stylemapstylename="regular">
+      <location>
+        <dimension name="Weight" xvalue="7"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </instance>
+    <instance name="Mystery Thin" familyname="Mystery" stylename="Thin" filename="../instance_ufo/Mystery-Thin.ufo" stylemapfamilyname="Mystery Thin" stylemapstylename="regular">
+      <location>
+        <dimension name="Weight" xvalue="19"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </instance>
+    <instance name="Mystery ExtraLight" familyname="Mystery" stylename="ExtraLight" filename="../instance_ufo/Mystery-ExtraLight.ufo" stylemapfamilyname="Mystery ExtraLight" stylemapstylename="regular">
+      <location>
+        <dimension name="Weight" xvalue="34"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </instance>
+    <instance name="Mystery Light" familyname="Mystery" stylename="Light" filename="../instance_ufo/Mystery-Light.ufo" stylemapfamilyname="Mystery Light" stylemapstylename="regular">
+      <location>
+        <dimension name="Weight" xvalue="55"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </instance>
+    <instance name="Mystery Regular" familyname="Mystery" stylename="Regular" filename="../instance_ufo/Mystery-Regular.ufo" stylemapfamilyname="Mystery" stylemapstylename="regular">
+      <location>
+        <dimension name="Weight" xvalue="76"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </instance>
+    <instance name="Mystery Medium" familyname="Mystery" stylename="Medium" filename="../instance_ufo/Mystery-Medium.ufo" stylemapfamilyname="Mystery Medium" stylemapstylename="regular">
+      <location>
+        <dimension name="Weight" xvalue="98"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </instance>
+    <instance name="Mystery Bold" familyname="Mystery" stylename="Bold" filename="../instance_ufo/Mystery-Bold.ufo" stylemapfamilyname="Mystery Bold" stylemapstylename="regular">
+      <location>
+        <dimension name="Weight" xvalue="128"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </instance>
+    <instance name="Mystery ExtraBold" familyname="Mystery" stylename="ExtraBold" filename="../instance_ufo/Mystery-ExtraBold.ufo" stylemapfamilyname="Mystery ExtraBold" stylemapstylename="regular">
+      <location>
+        <dimension name="Weight" xvalue="163"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </instance>
+    <instance name="Mystery Black" familyname="Mystery" stylename="Black" filename="../instance_ufo/Mystery-Black.ufo" stylemapfamilyname="Mystery Black" stylemapstylename="regular">
+      <location>
+        <dimension name="Weight" xvalue="220"/>
+        <dimension name="Swash Width" xvalue="0"/>
+      </location>
+    </instance>
+  </instances>
+  <lib>
+    <dict>
+      <key>GSDimensionPlugin.Dimensions</key>
+      <dict>
+        <key>3E7589AA-8194-470F-8E2F-13C1C581BE24</key>
+        <dict>
+          <key>HH</key>
+          <integer>91</integer>
+          <key>HV</key>
+          <string>93</string>
+          <key>OH</key>
+          <integer>91</integer>
+          <key>OV</key>
+          <integer>93</integer>
+          <key>arAlef</key>
+          <integer>86</integer>
+          <key>arBar</key>
+          <integer>92</integer>
+          <key>nV</key>
+          <integer>90</integer>
+          <key>oH</key>
+          <integer>88</integer>
+        </dict>
+        <key>4E6F1D76-CF39-4449-9239-DE310961C1DD</key>
+        <dict>
+          <key>HH</key>
+          <string>6</string>
+          <key>HV</key>
+          <string>6</string>
+          <key>nV</key>
+          <string>5</string>
+          <key>oH</key>
+          <string>5</string>
+        </dict>
+        <key>BFFFD157-90D3-4B85-B99D-9A2F366F03CA</key>
+        <dict>
+          <key>HH</key>
+          <integer>215</integer>
+          <key>HV</key>
+          <string>93</string>
+          <key>nV</key>
+          <integer>220</integer>
+          <key>oH</key>
+          <integer>210</integer>
+        </dict>
+        <key>C4872ECA-A3A9-40AB-960A-1DB2202F16DE</key>
+        <dict>
+          <key>HH</key>
+          <integer>18</integer>
+          <key>HV</key>
+          <integer>19</integer>
+          <key>nV</key>
+          <integer>17</integer>
+          <key>oH</key>
+          <integer>16</integer>
+        </dict>
+        <key>FA91A8E1-7324-47F6-AE85-AED49CFCD01C</key>
+        <dict>
+          <key>HH</key>
+          <string>8</string>
+          <key>HV</key>
+          <string>8</string>
+          <key>oH</key>
+          <string>7</string>
+          <key>oV</key>
+          <string>7</string>
+        </dict>
+      </dict>
+      <key>GSDontShowVersionAlert</key>
+      <integer>1</integer>
+      <key>public.skipExportGlyphs</key>
+      <array>
+        <string>_part.upstroke_hah-ar.comp</string>
+        <string>distance-ar.comp.swsh</string>
+      </array>
+    </dict>
+  </lib>
+</designspace>

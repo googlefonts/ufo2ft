@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dadDotbelow-ar.init.conn-m-1" format="2">
+  <advance width="829"/>
+  <anchor x="378" y="-308" name="bottom"/>
+  <anchor x="783" y="0" name="entry"/>
+  <anchor x="378" y="-123" name="mark_bottom"/>
+  <anchor x="604" y="590" name="mark_top"/>
+  <anchor x="604" y="594" name="top"/>
+  <outline>
+  </outline>
+</glyph>

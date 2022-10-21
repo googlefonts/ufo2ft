@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="khah-ar.medi.conn-hah-2" format="2">
+  <advance width="196"/>
+  <anchor x="153" y="-60" name="bottom"/>
+  <anchor x="69" y="339" name="entry"/>
+  <anchor x="153" y="-90" name="mark_bottom"/>
+  <anchor x="110" y="590" name="mark_top"/>
+  <anchor x="110" y="612" name="top"/>
+  <outline>
+  </outline>
+</glyph>

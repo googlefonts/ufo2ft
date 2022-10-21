@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="twodotshorizontalabove-ar" format="2">
+  <unicode hex="FBB4"/>
+  <anchor x="180" y="564" name="_center"/>
+  <anchor x="180" y="492" name="_top"/>
+  <anchor x="180" y="757" name="mark_top"/>
+  <anchor x="180" y="767" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Mark</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>363</integer>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>arabic</string>
+      <key>com.schriftgestaltung.Glyphs.subCategory</key>
+      <string>Nonspacing</string>
+    </dict>
+  </lib>
+</glyph>

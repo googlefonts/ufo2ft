@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ii-cy.sc" format="2">
+  <advance width="612"/>
+  <anchor x="575" y="537" name="apostrophe"/>
+  <anchor x="307" y="0" name="bottom"/>
+  <anchor x="307" y="538" name="top"/>
+  <anchor x="44" y="538" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Alphapsiliperispomeniprosgegrammeni" format="2">
+  <advance width="971"/>
+  <unicode hex="1F8E"/>
+  <anchor x="394" y="0" name="bottom_1"/>
+  <anchor x="849" y="0" name="bottom_2"/>
+  <anchor x="678" y="0" name="ogonek_1"/>
+  <anchor x="887" y="0" name="ogonek_2"/>
+  <anchor x="214" y="800" name="tonos"/>
+  <anchor x="392" y="700" name="top_1"/>
+  <anchor x="849" y="480" name="top_2"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Alphaprosgegrammeni</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>psiliperispomeni</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

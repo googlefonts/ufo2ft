@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Xdotaccent" format="2">
+  <advance width="652"/>
+  <unicode hex="1E8A"/>
+  <anchor x="326" y="0" name="bottom"/>
+  <anchor x="564" y="0" name="exit"/>
+  <anchor x="326" y="884" name="top"/>
+  <outline>
+  </outline>
+</glyph>

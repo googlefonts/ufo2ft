@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fdotaccent.sc" format="2">
+  <advance width="457"/>
+  <anchor x="129" y="0" name="bottom"/>
+  <anchor x="230" y="722" name="top"/>
+  <outline>
+  </outline>
+</glyph>

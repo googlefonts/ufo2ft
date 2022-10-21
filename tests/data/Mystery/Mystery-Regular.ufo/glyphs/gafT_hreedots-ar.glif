@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gafThreedots-ar" format="2">
+  <advance width="906"/>
+  <unicode hex="06B4"/>
+  <anchor x="341" y="-46" name="bottom"/>
+  <anchor x="341" y="-90" name="mark_bottom"/>
+  <anchor x="621" y="718" name="mark_top"/>
+  <anchor x="683" y="558" name="ring"/>
+  <anchor x="550" y="1197" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

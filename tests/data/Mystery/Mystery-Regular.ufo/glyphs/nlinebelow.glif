@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="nlinebelow" format="2">
+  <advance width="536"/>
+  <unicode hex="1E49"/>
+  <anchor x="37" y="480" name="apostrophe"/>
+  <anchor x="268" y="-202" name="bottom"/>
+  <anchor x="268" y="480" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etapsilivaria" format="2">
+  <advance width="1038"/>
+  <unicode hex="1F2A"/>
+  <anchor x="684" y="0" name="bottom"/>
+  <anchor x="948" y="0" name="exit"/>
+  <anchor x="684" y="517" name="stroke"/>
+  <anchor x="183" y="800" name="tonos"/>
+  <anchor x="684" y="700" name="top"/>
+  <anchor x="348" y="700" name="topleft"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Eta</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>anchor</key>
+          <string>tonos</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>psilivaria</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

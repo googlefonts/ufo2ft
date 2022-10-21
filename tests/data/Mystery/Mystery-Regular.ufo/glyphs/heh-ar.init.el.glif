@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="heh-ar.init.el" format="2">
+  <advance width="1002"/>
+  <anchor x="561" y="-46" name="bottom"/>
+  <anchor x="928" y="0" name="entry"/>
+  <anchor x="561" y="-90" name="mark_bottom"/>
+  <anchor x="725" y="600" name="mark_top"/>
+  <anchor x="725" y="533" name="top"/>
+  <outline>
+  </outline>
+</glyph>

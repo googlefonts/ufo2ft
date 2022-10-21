@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="t" format="2">
+  <advance width="372"/>
+  <unicode hex="0074"/>
+  <anchor x="211" y="0" name="bottom"/>
+  <anchor x="188" y="239" name="center"/>
+  <anchor x="158" y="608" name="top"/>
+  <anchor x="196" y="480" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

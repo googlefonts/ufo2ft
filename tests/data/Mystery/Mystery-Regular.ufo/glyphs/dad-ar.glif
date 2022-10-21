@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dad-ar" format="2">
+  <advance width="1142"/>
+  <unicode hex="0636"/>
+  <anchor x="684" y="-113" name="bottom"/>
+  <anchor x="1098" y="0" name="entry"/>
+  <anchor x="684" y="-123" name="mark_bottom"/>
+  <anchor x="914" y="590" name="mark_top"/>
+  <anchor x="914" y="600" name="top"/>
+  <outline>
+  </outline>
+</glyph>

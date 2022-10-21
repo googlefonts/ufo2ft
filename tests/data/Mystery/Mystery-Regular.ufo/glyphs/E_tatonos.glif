@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etatonos" format="2">
+  <advance width="886"/>
+  <unicode hex="0389"/>
+  <anchor x="532" y="0" name="bottom"/>
+  <anchor x="796" y="0" name="exit"/>
+  <anchor x="532" y="517" name="stroke"/>
+  <anchor x="209" y="800" name="tonos"/>
+  <anchor x="532" y="700" name="top"/>
+  <anchor x="196" y="700" name="topleft"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Eta</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>tonos.case</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

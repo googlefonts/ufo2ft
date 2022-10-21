@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dammainverted-ar" format="2">
+  <unicode hex="0657"/>
+  <anchor x="156" y="306" name="_top"/>
+  <anchor x="154" y="301" name="bottom"/>
+  <anchor x="156" y="528" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>312</integer>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hookabovecomb" format="2">
+  <unicode hex="0309"/>
+  <anchor x="155" y="486" name="_top"/>
+  <anchor x="155" y="771" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>309</integer>
+    </dict>
+  </lib>
+</glyph>

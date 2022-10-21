@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="yehTail-ar.fina.hi" format="2">
+  <advance width="716"/>
+  <anchor x="351" y="-218" name="bottom"/>
+  <anchor x="133" y="164" name="entry"/>
+  <anchor x="133" y="164" name="exit"/>
+  <anchor x="351" y="-228" name="mark_bottom"/>
+  <anchor x="275" y="590" name="mark_top"/>
+  <anchor x="275" y="290" name="top"/>
+  <outline>
+  </outline>
+</glyph>

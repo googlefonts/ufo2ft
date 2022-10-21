@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lamThreedotsbelow-ar.medi.el" format="2">
+  <advance width="633"/>
+  <anchor x="482" y="-374" name="bottom"/>
+  <anchor x="482" y="-90" name="mark_bottom"/>
+  <anchor x="489" y="750" name="mark_top"/>
+  <anchor x="491" y="340" name="stroke"/>
+  <anchor x="489" y="740" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsdownbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

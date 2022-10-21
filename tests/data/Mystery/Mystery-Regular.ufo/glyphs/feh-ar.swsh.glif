@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="feh-ar.swsh" format="2">
+  <advance width="1344"/>
+  <anchor x="739" y="-61" name="bottom"/>
+  <anchor x="739" y="-90" name="mark_bottom"/>
+  <anchor x="1104" y="590" name="mark_top"/>
+  <anchor x="1104" y="703" name="top"/>
+  <outline>
+  </outline>
+</glyph>

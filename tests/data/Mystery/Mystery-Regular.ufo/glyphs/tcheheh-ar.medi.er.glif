@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tcheheh-ar.medi.er" format="2">
+  <advance width="907"/>
+  <anchor x="188" y="-393" name="bottom"/>
+  <anchor x="188" y="-90" name="mark_bottom"/>
+  <anchor x="173" y="590" name="mark_top"/>
+  <anchor x="173" y="406" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>fourdotsbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

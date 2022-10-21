@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Upsilondasiaoxia" format="2">
+  <advance width="997"/>
+  <unicode hex="1F5D"/>
+  <anchor x="668" y="0" name="bottom"/>
+  <anchor x="668" y="273" name="stroke"/>
+  <anchor x="342" y="800" name="tonos"/>
+  <anchor x="174" y="800" name="top"/>
+  <anchor x="970" y="700" name="topright"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Upsilon</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>dasiaoxia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

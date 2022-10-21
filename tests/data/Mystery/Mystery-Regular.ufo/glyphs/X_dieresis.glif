@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Xdieresis" format="2">
+  <advance width="652"/>
+  <unicode hex="1E8C"/>
+  <anchor x="326" y="0" name="bottom"/>
+  <anchor x="564" y="0" name="exit"/>
+  <anchor x="326" y="881" name="top"/>
+  <outline>
+  </outline>
+</glyph>

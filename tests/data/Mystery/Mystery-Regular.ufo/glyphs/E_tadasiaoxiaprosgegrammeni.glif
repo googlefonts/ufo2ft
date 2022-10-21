@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etadasiaoxiaprosgegrammeni" format="2">
+  <advance width="1264"/>
+  <unicode hex="1F9D"/>
+  <anchor x="666" y="0" name="bottom_1"/>
+  <anchor x="1142" y="0" name="bottom_2"/>
+  <anchor x="930" y="0" name="exit"/>
+  <anchor x="1180" y="0" name="ogonek"/>
+  <anchor x="666" y="517" name="stroke"/>
+  <anchor x="343" y="800" name="tonos"/>
+  <anchor x="666" y="700" name="top_1"/>
+  <anchor x="1142" y="480" name="top_2"/>
+  <anchor x="330" y="700" name="topleft"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Etaprosgegrammeni</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>dasiaoxia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

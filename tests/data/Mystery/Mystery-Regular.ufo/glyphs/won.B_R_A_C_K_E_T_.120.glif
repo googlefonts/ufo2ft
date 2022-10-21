@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="won.BRACKET.120" format="2">
+  <advance width="1099"/>
+  <anchor x="539" y="0" name="bottom"/>
+  <anchor x="539" y="700" name="top"/>
+  <anchor x="1007" y="700" name="topright"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs._originalLayerName</key>
+      <string>[120]</string>
+    </dict>
+  </lib>
+</glyph>

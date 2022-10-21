@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ainTwodotsverticalabove-ar.medi.el" format="2">
+  <advance width="850"/>
+  <anchor x="602" y="-22" name="bottom"/>
+  <anchor x="602" y="-90" name="mark_bottom"/>
+  <anchor x="603" y="590" name="mark_top"/>
+  <anchor x="603" y="828" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>anchor</key>
+          <string>top</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotsverticalabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

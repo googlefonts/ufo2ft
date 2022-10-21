@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="peheh-ar.ss16" format="2">
+  <advance width="931"/>
+  <anchor x="407" y="-76" name="bottom"/>
+  <anchor x="407" y="-90" name="mark_bottom"/>
+  <anchor x="692" y="590" name="mark_top"/>
+  <anchor x="692" y="921" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>fourdotsabove-ar.ui-100-100-80</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

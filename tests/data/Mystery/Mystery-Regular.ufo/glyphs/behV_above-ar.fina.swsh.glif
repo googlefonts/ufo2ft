@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="behVabove-ar.fina.swsh" format="2">
+  <advance width="1199"/>
+  <anchor x="656" y="-74" name="bottom"/>
+  <anchor x="656" y="-90" name="mark_bottom"/>
+  <anchor x="657" y="590" name="mark_top"/>
+  <anchor x="657" y="-29" name="ring"/>
+  <anchor x="657" y="353" name="top"/>
+  <outline>
+  </outline>
+</glyph>

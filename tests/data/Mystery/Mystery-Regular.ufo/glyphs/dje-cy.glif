@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dje-cy" format="2">
+  <advance width="532"/>
+  <unicode hex="0452"/>
+  <anchor x="268" y="0" name="bottom"/>
+  <anchor x="268" y="239" name="center"/>
+  <anchor x="177" y="637" name="stroke"/>
+  <anchor x="117" y="750" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>anchor</key>
+          <string>stroke</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>strokeshortcomb</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

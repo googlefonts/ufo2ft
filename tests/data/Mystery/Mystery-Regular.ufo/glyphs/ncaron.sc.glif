@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ncaron.sc" format="2">
+  <advance width="610"/>
+  <anchor x="36" y="537" name="apostrophe"/>
+  <anchor x="303" y="0" name="bottom"/>
+  <anchor x="304" y="713" name="top"/>
+  <anchor x="567" y="538" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

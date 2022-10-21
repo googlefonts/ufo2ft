@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Omegaprosgegrammeni.case" format="2">
+  <advance width="1051"/>
+  <anchor x="912" y="0" name="bottom"/>
+  <anchor x="950" y="0" name="ogonek"/>
+  <anchor x="65" y="796" name="tonos_1"/>
+  <anchor x="812" y="800" name="tonos_2"/>
+  <anchor x="912" y="881" name="top"/>
+  <anchor x="789" y="700" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

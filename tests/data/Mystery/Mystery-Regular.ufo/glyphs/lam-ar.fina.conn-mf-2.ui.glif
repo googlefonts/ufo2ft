@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lam-ar.fina.conn-mf-2.ui" format="2">
+  <advance width="646"/>
+  <anchor x="294" y="-153" name="bottom"/>
+  <anchor x="294" y="-163" name="mark_bottom"/>
+  <anchor x="294" y="626" name="mark_top"/>
+  <anchor x="503" y="340" name="stroke"/>
+  <anchor x="504" y="704" name="top"/>
+  <outline>
+  </outline>
+</glyph>

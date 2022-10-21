@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="sad-ar.medi.lohi" format="2">
+  <advance width="784"/>
+  <anchor x="309" y="-113" name="bottom"/>
+  <anchor x="714" y="0" name="entry"/>
+  <anchor x="714" y="0" name="exit"/>
+  <anchor x="309" y="-123" name="mark_bottom"/>
+  <anchor x="534" y="590" name="mark_top"/>
+  <anchor x="534" y="427" name="top"/>
+  <outline>
+  </outline>
+</glyph>

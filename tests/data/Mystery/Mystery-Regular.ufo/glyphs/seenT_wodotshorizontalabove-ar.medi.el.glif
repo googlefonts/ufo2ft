@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="seenTwodotshorizontalabove-ar.medi.el" format="2">
+  <advance width="1133"/>
+  <anchor x="725" y="-60" name="bottom"/>
+  <anchor x="725" y="-90" name="mark_bottom"/>
+  <anchor x="739" y="590" name="mark_top"/>
+  <anchor x="739" y="762" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotsverticalabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

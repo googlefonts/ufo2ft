@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ypogegrammenicomb" format="2">
+  <unicode hex="0345"/>
+  <anchor x="87" y="0" name="_bottom"/>
+  <anchor x="87" y="-256" name="bottom"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>248</integer>
+    </dict>
+  </lib>
+</glyph>

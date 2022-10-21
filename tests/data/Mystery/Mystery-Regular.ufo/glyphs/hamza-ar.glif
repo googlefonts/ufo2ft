@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hamza-ar" format="2">
+  <advance width="459"/>
+  <unicode hex="0621"/>
+  <anchor x="239" y="-46" name="bottom"/>
+  <anchor x="239" y="-90" name="mark_bottom"/>
+  <anchor x="246" y="590" name="mark_top"/>
+  <anchor x="246" y="367" name="top"/>
+  <outline>
+  </outline>
+</glyph>

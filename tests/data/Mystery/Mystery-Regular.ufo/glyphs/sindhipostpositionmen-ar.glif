@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="sindhipostpositionmen-ar" format="2">
+  <advance width="531"/>
+  <unicode hex="06FE"/>
+  <anchor x="309" y="-307" name="bottom"/>
+  <anchor x="309" y="-92" name="mark_bottom"/>
+  <anchor x="293" y="590" name="mark_top"/>
+  <anchor x="293" y="391" name="top"/>
+  <outline>
+  </outline>
+</glyph>

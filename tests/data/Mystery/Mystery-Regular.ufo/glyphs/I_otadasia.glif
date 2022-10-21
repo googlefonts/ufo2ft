@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Iotadasia" format="2">
+  <advance width="465"/>
+  <unicode hex="1F39"/>
+  <anchor x="326" y="0" name="bottom"/>
+  <anchor x="364" y="0" name="ogonek"/>
+  <anchor x="226" y="800" name="tonos"/>
+  <anchor x="121" y="800" name="top"/>
+  <anchor x="203" y="700" name="topleft"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Iota</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>dasia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

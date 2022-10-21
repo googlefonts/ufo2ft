@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fehDotless-ar.medi.conn-mf-2" format="2">
+  <advance width="475"/>
+  <anchor x="223" y="-56" name="bottom"/>
+  <anchor x="223" y="-90" name="mark_bottom"/>
+  <anchor x="236" y="590" name="mark_top"/>
+  <anchor x="236" y="416" name="top"/>
+  <outline>
+  </outline>
+</glyph>

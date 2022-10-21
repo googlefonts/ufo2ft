@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="wasla-ar" format="2">
+  <anchor x="159" y="480" name="_top"/>
+  <anchor x="159" y="676" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>307</integer>
+    </dict>
+  </lib>
+</glyph>

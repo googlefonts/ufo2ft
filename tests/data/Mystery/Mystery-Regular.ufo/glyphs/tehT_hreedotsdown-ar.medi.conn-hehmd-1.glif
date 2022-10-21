@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tehThreedotsdown-ar.medi.conn-hehmd-1" format="2">
+  <advance width="229"/>
+  <anchor x="95" y="-60" name="bottom"/>
+  <anchor x="95" y="-90" name="mark_bottom"/>
+  <anchor x="-18" y="590" name="mark_top"/>
+  <anchor x="110" y="16" name="ring"/>
+  <anchor x="-18" y="831" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsdownabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

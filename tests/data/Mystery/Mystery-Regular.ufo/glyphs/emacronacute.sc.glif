@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="emacronacute.sc" format="2">
+  <advance width="481"/>
+  <anchor x="258" y="0" name="bottom"/>
+  <anchor x="425" y="0" name="ogonek"/>
+  <anchor x="31" y="638" name="tonos"/>
+  <anchor x="250" y="872" name="top"/>
+  <anchor x="34" y="538" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

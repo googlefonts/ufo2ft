@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="yehHamzaabove-ar.medi.conn-y-1.conn-mf-2" format="2">
+  <advance width="329"/>
+  <anchor x="205" y="-60" name="bottom"/>
+  <anchor x="-169" y="157" name="exit"/>
+  <anchor x="205" y="-90" name="mark_bottom"/>
+  <anchor x="70" y="590" name="mark_top"/>
+  <anchor x="220" y="7" name="ring"/>
+  <anchor x="70" y="657" name="top"/>
+  <outline>
+  </outline>
+</glyph>

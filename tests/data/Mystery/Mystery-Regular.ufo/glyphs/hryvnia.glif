@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hryvnia" format="2">
+  <advance width="704"/>
+  <unicode hex="20B4"/>
+  <anchor x="364" y="0" name="bottom"/>
+  <anchor x="332" y="700" name="top"/>
+  <anchor x="101" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="T" format="2">
+  <advance width="627"/>
+  <unicode hex="0054"/>
+  <anchor x="314" y="0" name="bottom"/>
+  <anchor x="314" y="350" name="center"/>
+  <anchor x="313" y="319" name="stroke"/>
+  <anchor x="314" y="700" name="top"/>
+  <anchor x="620" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

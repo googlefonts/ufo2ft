@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="z.sc" format="2">
+  <advance width="527"/>
+  <anchor x="263" y="0" name="bottom"/>
+  <anchor x="261" y="259" name="stroke"/>
+  <anchor x="263" y="538" name="top"/>
+  <anchor x="469" y="538" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

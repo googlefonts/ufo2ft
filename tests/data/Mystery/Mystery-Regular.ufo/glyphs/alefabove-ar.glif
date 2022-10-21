@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alefabove-ar" format="2">
+  <unicode hex="0670"/>
+  <anchor x="78" y="345" name="_top"/>
+  <anchor x="78" y="525" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>156</integer>
+    </dict>
+  </lib>
+</glyph>

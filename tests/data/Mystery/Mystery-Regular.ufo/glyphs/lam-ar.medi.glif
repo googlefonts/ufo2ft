@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lam-ar.medi" format="2">
+  <advance width="293"/>
+  <unicode hex="FEE0"/>
+  <anchor x="142" y="-58" name="bottom"/>
+  <anchor x="142" y="-90" name="mark_bottom"/>
+  <anchor x="149" y="750" name="mark_top"/>
+  <anchor x="151" y="340" name="stroke"/>
+  <anchor x="149" y="740" name="top"/>
+  <outline>
+  </outline>
+</glyph>

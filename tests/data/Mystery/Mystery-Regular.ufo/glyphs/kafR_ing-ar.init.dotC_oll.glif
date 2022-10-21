@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kafRing-ar.init.dotColl" format="2">
+  <advance width="560"/>
+  <anchor x="216" y="-46" name="bottom"/>
+  <anchor x="23" y="0" name="exit"/>
+  <anchor x="216" y="-90" name="mark_bottom"/>
+  <anchor x="279" y="717" name="mark_top"/>
+  <anchor x="333" y="557" name="ring"/>
+  <anchor x="279" y="707" name="top"/>
+  <outline>
+  </outline>
+</glyph>

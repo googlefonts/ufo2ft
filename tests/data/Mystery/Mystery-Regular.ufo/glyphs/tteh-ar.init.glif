@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tteh-ar.init" format="2">
+  <advance width="267"/>
+  <unicode hex="FB68"/>
+  <anchor x="109" y="-60" name="bottom"/>
+  <anchor x="109" y="-90" name="mark_bottom"/>
+  <anchor x="137" y="590" name="mark_top"/>
+  <anchor x="123" y="0" name="ring"/>
+  <anchor x="137" y="625" name="top"/>
+  <outline>
+  </outline>
+</glyph>

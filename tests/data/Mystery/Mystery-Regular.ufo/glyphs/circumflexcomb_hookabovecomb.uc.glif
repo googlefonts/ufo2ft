@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="circumflexcomb_hookabovecomb.uc" format="2">
+  <anchor x="217" y="478" name="_top"/>
+  <anchor x="218" y="668" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>473</integer>
+    </dict>
+  </lib>
+</glyph>

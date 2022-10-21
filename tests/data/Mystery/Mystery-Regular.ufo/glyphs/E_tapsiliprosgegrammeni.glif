@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etapsiliprosgegrammeni" format="2">
+  <advance width="1124"/>
+  <unicode hex="1F98"/>
+  <anchor x="526" y="0" name="bottom_1"/>
+  <anchor x="1002" y="0" name="bottom_2"/>
+  <anchor x="790" y="0" name="exit"/>
+  <anchor x="1040" y="0" name="ogonek"/>
+  <anchor x="526" y="517" name="stroke"/>
+  <anchor x="203" y="800" name="tonos"/>
+  <anchor x="526" y="700" name="top_1"/>
+  <anchor x="1002" y="480" name="top_2"/>
+  <anchor x="190" y="700" name="topleft"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Etaprosgegrammeni</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>psili</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

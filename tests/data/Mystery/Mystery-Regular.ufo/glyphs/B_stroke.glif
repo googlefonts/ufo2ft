@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Bstroke" format="2">
+  <advance width="616"/>
+  <unicode hex="0243"/>
+  <anchor x="160.437" y="178" name="_center"/>
+  <anchor x="302" y="0" name="bottom"/>
+  <anchor x="283" y="700" name="top"/>
+  <outline>
+  </outline>
+</glyph>

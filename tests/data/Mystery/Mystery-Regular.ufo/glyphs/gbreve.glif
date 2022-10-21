@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gbreve" format="2">
+  <advance width="544"/>
+  <unicode hex="011F"/>
+  <anchor x="259" y="-211" name="bottom"/>
+  <anchor x="264" y="638" name="top"/>
+  <anchor x="506" y="481" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

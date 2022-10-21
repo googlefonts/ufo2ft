@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="behThreedotshorizontalbelow-ar.medi.conn-hehmd-1.er" format="2">
+  <advance width="619"/>
+  <anchor x="157" y="-255" name="bottom"/>
+  <anchor x="157" y="-90" name="mark_bottom"/>
+  <anchor x="44" y="590" name="mark_top"/>
+  <anchor x="172" y="16" name="ring"/>
+  <anchor x="44" y="413" name="top"/>
+  <outline>
+  </outline>
+</glyph>

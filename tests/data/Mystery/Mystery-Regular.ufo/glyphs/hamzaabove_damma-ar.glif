@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hamzaabove_damma-ar" format="2">
+  <anchor x="145" y="481" name="_top"/>
+  <anchor x="145" y="950" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>hamzaabove-ar</string>
+        </dict>
+      </array>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>280</integer>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="seenThreedotsbelow-ar.fina.conn-mf-2.swsh" format="2">
+  <advance width="1873"/>
+  <anchor x="1482" y="-374" name="bottom"/>
+  <anchor x="1482" y="-90" name="mark_bottom"/>
+  <anchor x="1488" y="590" name="mark_top"/>
+  <anchor x="1488" y="346" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsdownbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

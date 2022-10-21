@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="yehThreedotsbelow-ar" format="2">
+  <advance width="723"/>
+  <unicode hex="06D1"/>
+  <anchor x="301" y="-534" name="bottom"/>
+  <anchor x="83" y="164" name="exit"/>
+  <anchor x="301" y="-228" name="mark_bottom"/>
+  <anchor x="225" y="590" name="mark_top"/>
+  <anchor x="225" y="290" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsdownbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

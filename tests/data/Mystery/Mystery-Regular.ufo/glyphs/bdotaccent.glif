@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="bdotaccent" format="2">
+  <advance width="534"/>
+  <unicode hex="1E03"/>
+  <anchor x="239" y="0" name="bottom"/>
+  <anchor x="116" y="934" name="top"/>
+  <outline>
+  </outline>
+</glyph>

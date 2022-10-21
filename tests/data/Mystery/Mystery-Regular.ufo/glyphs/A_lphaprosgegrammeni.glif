@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Alphaprosgegrammeni" format="2">
+  <advance width="912"/>
+  <unicode hex="1FBC"/>
+  <anchor x="335" y="0" name="bottom_1"/>
+  <anchor x="790" y="0" name="bottom_2"/>
+  <anchor x="619" y="0" name="ogonek_1"/>
+  <anchor x="828" y="0" name="ogonek_2"/>
+  <anchor x="155" y="800" name="tonos"/>
+  <anchor x="333" y="700" name="top_1"/>
+  <anchor x="790" y="480" name="top_2"/>
+  <outline>
+  </outline>
+</glyph>

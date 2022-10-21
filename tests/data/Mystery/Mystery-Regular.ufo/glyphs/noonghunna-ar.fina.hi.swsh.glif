@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="noonghunna-ar.fina.hi.swsh" format="2">
+  <advance width="1315"/>
+  <anchor x="746" y="-184" name="bottom"/>
+  <anchor x="746" y="-194" name="mark_bottom"/>
+  <anchor x="747" y="590" name="mark_top"/>
+  <anchor x="746" y="-122" name="ring"/>
+  <anchor x="747" y="150" name="top"/>
+  <outline>
+  </outline>
+</glyph>

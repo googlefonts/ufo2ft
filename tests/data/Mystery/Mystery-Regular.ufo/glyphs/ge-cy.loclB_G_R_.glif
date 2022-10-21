@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ge-cy.loclBGR" format="2">
+  <advance width="440"/>
+  <anchor x="228.0" y="0.0" name="bottom"/>
+  <anchor x="213.0" y="480.0" name="top"/>
+  <anchor x="28.0" y="478.0" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

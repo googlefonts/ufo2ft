@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="jeh-ar.fina.er" format="2">
+  <advance width="417"/>
+  <anchor x="166" y="-260" name="bottom"/>
+  <anchor x="146" y="-270" name="mark_bottom"/>
+  <anchor x="241" y="590" name="mark_top"/>
+  <anchor x="285" y="-140" name="reh"/>
+  <anchor x="273" y="-140" name="ring"/>
+  <anchor x="224" y="-35" name="stroke"/>
+  <anchor x="242" y="729" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>reh-ar.fina.er</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

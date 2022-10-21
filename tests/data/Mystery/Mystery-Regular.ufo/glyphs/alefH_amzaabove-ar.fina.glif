@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alefHamzaabove-ar.fina" format="2">
+  <advance width="265"/>
+  <unicode hex="FE84"/>
+  <anchor x="132" y="-60" name="bottom"/>
+  <anchor x="132" y="-90" name="mark_bottom"/>
+  <anchor x="112" y="619" name="mark_top"/>
+  <anchor x="112" y="845" name="top"/>
+  <outline>
+  </outline>
+</glyph>

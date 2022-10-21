@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gueh-ar.init.dotColl" format="2">
+  <advance width="560"/>
+  <anchor x="216" y="-378" name="bottom"/>
+  <anchor x="23" y="0" name="exit"/>
+  <anchor x="216" y="-90" name="mark_bottom"/>
+  <anchor x="279" y="717" name="mark_top"/>
+  <anchor x="333" y="557" name="ring"/>
+  <anchor x="208" y="797" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotsverticalbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

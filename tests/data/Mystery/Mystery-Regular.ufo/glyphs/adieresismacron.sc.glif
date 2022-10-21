@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="adieresismacron.sc" format="2">
+  <advance width="596"/>
+  <anchor x="299" y="0" name="bottom"/>
+  <anchor x="554" y="0" name="ogonek"/>
+  <anchor x="129" y="638" name="tonos"/>
+  <anchor x="299" y="871" name="top"/>
+  <outline>
+  </outline>
+</glyph>

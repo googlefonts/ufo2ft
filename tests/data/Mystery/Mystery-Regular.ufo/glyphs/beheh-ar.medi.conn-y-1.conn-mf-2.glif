@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="beheh-ar.medi.conn-y-1.conn-mf-2" format="2">
+  <advance width="375"/>
+  <anchor x="206" y="-393" name="bottom"/>
+  <anchor x="-169" y="157" name="exit"/>
+  <anchor x="206" y="-90" name="mark_bottom"/>
+  <anchor x="98" y="590" name="mark_top"/>
+  <anchor x="275" y="0" name="ring"/>
+  <anchor x="98" y="421" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>fourdotsbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Scarondotaccent.ss16" format="2">
+  <advance width="583"/>
+  <anchor x="281" y="0" name="bottom"/>
+  <anchor x="305" y="875" name="top"/>
+  <anchor x="545" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gueh-ar.medi.el.swsh" format="2">
+  <advance width="1672"/>
+  <anchor x="956" y="-378" name="bottom"/>
+  <anchor x="1515" y="0" name="entry"/>
+  <anchor x="1515" y="0" name="exit"/>
+  <anchor x="956" y="-90" name="mark_bottom"/>
+  <anchor x="574" y="652" name="mark_top"/>
+  <anchor x="705" y="518" name="ring"/>
+  <anchor x="472" y="717" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotsverticalbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

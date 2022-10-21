@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Kcaron" format="2">
+  <advance width="620"/>
+  <unicode hex="01E8"/>
+  <anchor x="298" y="0" name="bottom"/>
+  <anchor x="298" y="875" name="top"/>
+  <outline>
+  </outline>
+</glyph>

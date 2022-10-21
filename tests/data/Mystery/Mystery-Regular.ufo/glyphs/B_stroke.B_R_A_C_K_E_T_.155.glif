@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Bstroke.BRACKET.155" format="2">
+  <advance width="616"/>
+  <anchor x="87.269" y="178" name="_center"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs._originalLayerName</key>
+      <string>[155]</string>
+    </dict>
+  </lib>
+</glyph>

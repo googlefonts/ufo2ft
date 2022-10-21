@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fehDotbelow-ar.fina" format="2">
+  <advance width="904"/>
+  <anchor x="657" y="-251" name="bottom"/>
+  <anchor x="657" y="-90" name="mark_bottom"/>
+  <anchor x="670" y="590" name="mark_top"/>
+  <anchor x="670" y="589" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>2</integer>
+          <key>name</key>
+          <string>dotbelow-ar</string>
+        </dict>
+      </array>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Letter</string>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>arabic</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lamDotabove-ar.init.conn-yeh-1" format="2">
+  <advance width="265"/>
+  <anchor x="144" y="-132" name="bottom"/>
+  <anchor x="144" y="-142" name="mark_bottom"/>
+  <anchor x="119" y="668" name="mark_top"/>
+  <anchor x="113" y="470" name="stroke"/>
+  <anchor x="119" y="825" name="top"/>
+  <outline>
+  </outline>
+</glyph>

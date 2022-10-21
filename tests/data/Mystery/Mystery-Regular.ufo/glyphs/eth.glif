@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="eth" format="2">
+  <advance width="528"/>
+  <unicode hex="00F0"/>
+  <anchor x="380" y="637" name="_stroke"/>
+  <anchor x="266" y="0" name="bottom"/>
+  <anchor x="264" y="240" name="center"/>
+  <anchor x="392" y="456" name="horn"/>
+  <anchor x="474" y="10" name="ogonek"/>
+  <anchor x="266" y="481" name="top"/>
+  <anchor x="507" y="479" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

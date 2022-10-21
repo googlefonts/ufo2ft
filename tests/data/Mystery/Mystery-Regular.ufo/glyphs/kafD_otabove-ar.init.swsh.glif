@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kafDotabove-ar.init.swsh" format="2">
+  <advance width="1313"/>
+  <anchor x="636" y="-46" name="bottom"/>
+  <anchor x="1185" y="0" name="entry"/>
+  <anchor x="636" y="-90" name="mark_bottom"/>
+  <anchor x="254" y="652" name="mark_top"/>
+  <anchor x="385" y="518" name="ring"/>
+  <anchor x="254" y="809" name="top"/>
+  <outline>
+  </outline>
+</glyph>

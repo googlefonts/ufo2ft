@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="omegadasiaperispomeni" format="2">
+  <advance width="640"/>
+  <unicode hex="1F67"/>
+  <anchor x="319" y="0" name="bottom"/>
+  <anchor x="319" y="1032" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gafThreedots-ar.fina.swsh" format="2">
+  <advance width="1802"/>
+  <anchor x="1106" y="-46" name="bottom"/>
+  <anchor x="1665" y="0" name="entry"/>
+  <anchor x="1665" y="0" name="exit"/>
+  <anchor x="1106" y="-90" name="mark_bottom"/>
+  <anchor x="724" y="652" name="mark_top"/>
+  <anchor x="855" y="518" name="ring"/>
+  <anchor x="622" y="1116" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

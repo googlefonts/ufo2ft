@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="keheh-ar.medi.conn-mf-2.el" format="2">
+  <advance width="856"/>
+  <anchor x="574" y="-46" name="bottom"/>
+  <anchor x="574" y="-90" name="mark_bottom"/>
+  <anchor x="636" y="718" name="mark_top"/>
+  <anchor x="690" y="557" name="ring"/>
+  <anchor x="636" y="708" name="top"/>
+  <outline>
+  </outline>
+</glyph>

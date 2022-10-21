@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="omega.sc" format="2">
+  <advance width="659"/>
+  <anchor x="329" y="0" name="bottom"/>
+  <anchor x="55" y="638" name="tonos"/>
+  <anchor x="331" y="538" name="top"/>
+  <anchor x="21" y="478" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

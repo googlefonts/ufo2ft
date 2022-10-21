@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="candraBinducomb" format="2">
+  <unicode hex="0310"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>brevecomb</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>dotaccentcomb</string>
+        </dict>
+      </array>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>395</integer>
+    </dict>
+  </lib>
+</glyph>

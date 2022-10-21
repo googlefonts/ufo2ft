@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="yehTail-ar.fina.conn-y-2.swsh" format="2">
+  <advance width="1460"/>
+  <anchor x="656" y="-178" name="bottom"/>
+  <anchor x="1291" y="157" name="entry_1"/>
+  <anchor x="153" y="-94" name="entry_2"/>
+  <anchor x="153" y="-94" name="exit"/>
+  <anchor x="656" y="-188" name="mark_bottom"/>
+  <anchor x="618" y="590" name="mark_top"/>
+  <anchor x="618" y="50" name="top"/>
+  <outline>
+  </outline>
+</glyph>

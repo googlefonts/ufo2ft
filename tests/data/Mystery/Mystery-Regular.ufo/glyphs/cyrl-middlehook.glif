@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="cyrl-middlehook" format="2">
+  <advance width="180"/>
+  <anchor x="89" y="0" name="_bottom"/>
+  <outline>
+  </outline>
+</glyph>

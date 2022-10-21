@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Edotbelow.ss16" format="2">
+  <advance width="588"/>
+  <anchor x="306" y="-181" name="bottom"/>
+  <anchor x="513" y="0" name="ogonek"/>
+  <anchor x="31" y="800" name="tonos"/>
+  <anchor x="306" y="700" name="top"/>
+  <anchor x="18" y="700" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

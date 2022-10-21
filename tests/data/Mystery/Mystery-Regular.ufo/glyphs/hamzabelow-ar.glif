@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hamzabelow-ar" format="2">
+  <unicode hex="0655"/>
+  <anchor x="158" y="80" name="_bottom"/>
+  <anchor x="158" y="-121" name="bottom"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>269</integer>
+    </dict>
+  </lib>
+</glyph>

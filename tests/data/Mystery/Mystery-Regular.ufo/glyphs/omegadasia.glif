@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="omegadasia" format="2">
+  <advance width="640"/>
+  <unicode hex="1F61"/>
+  <anchor x="319" y="0" name="bottom"/>
+  <anchor x="319" y="800" name="top"/>
+  <outline>
+  </outline>
+</glyph>

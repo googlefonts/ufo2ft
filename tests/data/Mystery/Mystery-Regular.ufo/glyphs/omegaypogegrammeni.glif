@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="omegaypogegrammeni" format="2">
+  <advance width="640"/>
+  <unicode hex="1FF3"/>
+  <anchor x="319" y="-256" name="bottom"/>
+  <anchor x="319" y="478" name="top"/>
+  <outline>
+  </outline>
+</glyph>

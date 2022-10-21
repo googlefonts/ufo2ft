@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="sheenDotbelow-ar.medi.conn-y-1.conn-mf-2" format="2">
+  <advance width="810"/>
+  <anchor x="420" y="-253" name="bottom"/>
+  <anchor x="-169" y="157" name="exit"/>
+  <anchor x="420" y="-90" name="mark_bottom"/>
+  <anchor x="425" y="590" name="mark_top"/>
+  <anchor x="425" y="348" name="top"/>
+  <anchor x="425" y="747" name="topthreedots"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>anchor</key>
+          <string>topthreedots</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupabove-ar</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>2</integer>
+          <key>name</key>
+          <string>dotbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

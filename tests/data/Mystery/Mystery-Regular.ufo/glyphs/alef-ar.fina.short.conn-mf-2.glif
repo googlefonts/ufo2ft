@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alef-ar.fina.short.conn-mf-2" format="2">
+  <advance width="254"/>
+  <anchor x="132" y="-60" name="bottom"/>
+  <anchor x="132" y="-90" name="mark_bottom"/>
+  <anchor x="112" y="619" name="mark_top"/>
+  <anchor x="112" y="609" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="noonVabove-ar.medi.conn-hehmd-1.er" format="2">
+  <advance width="557"/>
+  <anchor x="95" y="-60" name="bottom"/>
+  <anchor x="95" y="-90" name="mark_bottom"/>
+  <anchor x="-18" y="590" name="mark_top"/>
+  <anchor x="110" y="16" name="ring"/>
+  <anchor x="-18" y="768" name="top"/>
+  <outline>
+  </outline>
+</glyph>

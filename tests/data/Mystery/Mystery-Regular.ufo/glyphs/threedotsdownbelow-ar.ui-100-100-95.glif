@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="threedotsdownbelow-ar.ui-100-100-95" format="2">
+  <anchor x="193" y="-59" name="_bottom"/>
+  <anchor x="192" y="-204" name="_center"/>
+  <anchor x="193" y="-375" name="bottom"/>
+  <anchor x="193" y="-385" name="mark_bottom"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Mark</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>385</integer>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>arabic</string>
+      <key>com.schriftgestaltung.Glyphs.subCategory</key>
+      <string>Nonspacing</string>
+    </dict>
+  </lib>
+</glyph>

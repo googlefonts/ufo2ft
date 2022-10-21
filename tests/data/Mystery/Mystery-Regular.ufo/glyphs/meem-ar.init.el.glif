@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="meem-ar.init.el" format="2">
+  <advance width="854"/>
+  <anchor x="627" y="-76" name="bottom"/>
+  <anchor x="627" y="-140" name="mark_bottom"/>
+  <anchor x="628" y="590" name="mark_top"/>
+  <anchor x="628" y="401" name="top"/>
+  <outline>
+  </outline>
+</glyph>

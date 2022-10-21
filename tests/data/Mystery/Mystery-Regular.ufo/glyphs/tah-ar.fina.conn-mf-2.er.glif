@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tah-ar.fina.conn-mf-2.er" format="2">
+  <advance width="1296"/>
+  <anchor x="183" y="-46" name="bottom"/>
+  <anchor x="591" y="0" name="entry"/>
+  <anchor x="591" y="0" name="exit"/>
+  <anchor x="183" y="-90" name="mark_bottom"/>
+  <anchor x="414" y="590" name="mark_top"/>
+  <anchor x="414" y="433" name="top"/>
+  <anchor x="433" y="433" name="topthreedots"/>
+  <outline>
+  </outline>
+</glyph>

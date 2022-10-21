@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lam-ar.init.short.conn-hah-1.ui" format="2">
+  <advance width="472"/>
+  <anchor x="180" y="1" name="bottom"/>
+  <anchor x="-126" y="339" name="exit"/>
+  <anchor x="180" y="-90" name="mark_bottom"/>
+  <anchor x="181" y="701" name="mark_top"/>
+  <anchor x="181" y="503" name="stroke"/>
+  <anchor x="181" y="691" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dammatan-ar" format="2">
+  <unicode hex="064C"/>
+  <anchor x="177" y="478" name="_top"/>
+  <anchor x="177" y="700" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>337</integer>
+    </dict>
+  </lib>
+</glyph>

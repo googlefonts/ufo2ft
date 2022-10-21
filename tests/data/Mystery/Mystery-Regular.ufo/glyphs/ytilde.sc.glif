@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ytilde.sc" format="2">
+  <advance width="552"/>
+  <anchor x="276" y="0" name="bottom"/>
+  <anchor x="278" y="230" name="stroke"/>
+  <anchor x="19" y="638" name="tonos"/>
+  <anchor x="279" y="710" name="top"/>
+  <anchor x="516" y="538" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

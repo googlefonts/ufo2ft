@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="caroncomb.narrow" format="2">
+  <anchor x="189" y="478" name="_top"/>
+  <anchor x="190" y="653" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>378</integer>
+    </dict>
+  </lib>
+</glyph>

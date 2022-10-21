@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="wavyHamzaAbove-ar" format="2">
+  <advance width="331"/>
+  <anchor x="195" y="272" name="_top"/>
+  <anchor x="195" y="508" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Mark</string>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>arabic</string>
+    </dict>
+  </lib>
+</glyph>

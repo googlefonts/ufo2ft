@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kgreenlandic" format="2">
+  <advance width="484"/>
+  <unicode hex="0138"/>
+  <anchor x="238" y="0" name="bottom"/>
+  <anchor x="248" y="480" name="top"/>
+  <outline>
+  </outline>
+</glyph>

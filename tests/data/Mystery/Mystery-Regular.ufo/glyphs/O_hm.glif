@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Ohm" format="2">
+  <advance width="771"/>
+  <unicode hex="2126"/>
+  <anchor x="65" y="796" name="tonos"/>
+  <outline>
+  </outline>
+</glyph>

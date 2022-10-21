@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etapsili" format="2">
+  <advance width="880"/>
+  <unicode hex="1F28"/>
+  <anchor x="526" y="0" name="bottom"/>
+  <anchor x="790" y="0" name="exit"/>
+  <anchor x="526" y="517" name="stroke"/>
+  <anchor x="203" y="800" name="tonos"/>
+  <anchor x="85" y="800" name="top"/>
+  <anchor x="190" y="700" name="topleft"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Eta</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>psili</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alefWavyhamzabelow-ar" format="2">
+  <advance width="230"/>
+  <unicode hex="0673"/>
+  <anchor x="116" y="-276" name="bottom"/>
+  <anchor x="116" y="-90" name="mark_bottom"/>
+  <anchor x="116" y="680" name="mark_top"/>
+  <anchor x="116" y="670" name="top"/>
+  <outline>
+  </outline>
+</glyph>

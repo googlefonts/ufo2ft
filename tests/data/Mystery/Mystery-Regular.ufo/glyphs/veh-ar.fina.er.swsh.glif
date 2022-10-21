@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="veh-ar.fina.er.swsh" format="2">
+  <advance width="1706"/>
+  <anchor x="1104" y="-74" name="bottom"/>
+  <anchor x="1104" y="-90" name="mark_bottom"/>
+  <anchor x="1126" y="590" name="mark_top"/>
+  <anchor x="1126" y="821" name="top"/>
+  <outline>
+  </outline>
+</glyph>

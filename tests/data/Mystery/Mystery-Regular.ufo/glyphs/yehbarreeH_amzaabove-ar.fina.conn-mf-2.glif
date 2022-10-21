@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="yehbarreeHamzaabove-ar.fina.conn-mf-2" format="2">
+  <advance width="432"/>
+  <anchor x="185" y="-268" name="bottom"/>
+  <anchor x="185" y="-278" name="mark_bottom"/>
+  <anchor x="187" y="590" name="mark_top"/>
+  <anchor x="187" y="368" name="top"/>
+  <outline>
+  </outline>
+</glyph>

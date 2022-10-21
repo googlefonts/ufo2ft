@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="etapsilioxiaypogegrammeni" format="2">
+  <advance width="532"/>
+  <unicode hex="1F94"/>
+  <anchor x="38" y="480" name="apostrophe"/>
+  <anchor x="119" y="-256" name="bottom"/>
+  <anchor x="267" y="800" name="top"/>
+  <outline>
+  </outline>
+</glyph>

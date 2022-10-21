@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hahTwodotshorizontalabove-ar.fina.conn-mf-2.er" format="2">
+  <advance width="1266"/>
+  <anchor x="301" y="-330" name="bottom"/>
+  <anchor x="305" y="-52" name="center"/>
+  <anchor x="301" y="-340" name="mark_bottom"/>
+  <anchor x="215" y="590" name="mark_top"/>
+  <anchor x="215" y="733" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>anchor</key>
+          <string>top</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotshorizontalabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

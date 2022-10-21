@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="highhamzaYeh-ar.fina.er" format="2">
+  <advance width="1067"/>
+  <anchor x="308" y="-217" name="bottom"/>
+  <anchor x="84" y="164" name="exit"/>
+  <anchor x="308" y="-227" name="mark_bottom"/>
+  <anchor x="225" y="590" name="mark_top"/>
+  <anchor x="225" y="526" name="top"/>
+  <outline>
+  </outline>
+</glyph>

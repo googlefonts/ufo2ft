@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tehRing-ar.medi.conn-y-1.conn-mf-2.er" format="2">
+  <advance width="995"/>
+  <anchor x="205" y="-60" name="bottom"/>
+  <anchor x="-169" y="157" name="exit"/>
+  <anchor x="205" y="-90" name="mark_bottom"/>
+  <anchor x="70" y="590" name="mark_top"/>
+  <anchor x="220" y="7" name="ring"/>
+  <anchor x="70" y="696" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>ring-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

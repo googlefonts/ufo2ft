@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="yehVabove-ar.medi.conn-hehmd-1.conn-mf-2.er" format="2">
+  <advance width="957"/>
+  <anchor x="112" y="-254" name="bottom"/>
+  <anchor x="112" y="-90" name="mark_bottom"/>
+  <anchor x="10" y="590" name="mark_top"/>
+  <anchor x="181" y="0" name="ring"/>
+  <anchor x="10" y="601" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>anchor</key>
+          <string>top</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>vabove-ar</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>2</integer>
+          <key>name</key>
+          <string>twodotshorizontalbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="strokeshortcomb.sc" format="2">
+  <anchor x="171" y="264" name="_stroke"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>353</integer>
+    </dict>
+  </lib>
+</glyph>

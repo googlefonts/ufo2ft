@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="behDotless-ar.init.conn-hah-1" format="2">
+  <advance width="444"/>
+  <anchor x="261" y="7" name="bottom"/>
+  <anchor x="-190" y="413" name="exit"/>
+  <anchor x="261" y="-90" name="mark_bottom"/>
+  <anchor x="203" y="652" name="mark_top"/>
+  <anchor x="220" y="85" name="ring"/>
+  <anchor x="203" y="631" name="top"/>
+  <outline>
+  </outline>
+</glyph>

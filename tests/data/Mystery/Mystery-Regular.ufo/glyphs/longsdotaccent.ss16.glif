@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="longsdotaccent.ss16" format="2">
+  <advance width="257"/>
+  <anchor x="126" y="0" name="bottom"/>
+  <anchor x="212" y="934" name="top"/>
+  <outline>
+  </outline>
+</glyph>

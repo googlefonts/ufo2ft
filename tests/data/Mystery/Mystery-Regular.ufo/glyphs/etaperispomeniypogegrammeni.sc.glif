@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="etaperispomeniypogegrammeni.sc" format="2">
+  <advance width="851"/>
+  <anchor x="300" y="0" name="bottom_1"/>
+  <anchor x="727" y="0" name="bottom_2"/>
+  <anchor x="518" y="0" name="exit"/>
+  <anchor x="766" y="0" name="ogonek"/>
+  <anchor x="300" y="403" name="stroke"/>
+  <anchor x="21" y="638" name="tonos_1"/>
+  <anchor x="632" y="638" name="tonos_2"/>
+  <anchor x="300" y="538" name="top_1"/>
+  <anchor x="727" y="719" name="top_2"/>
+  <anchor x="34" y="538" name="topleft_1"/>
+  <anchor x="630" y="538" name="topleft_2"/>
+  <outline>
+  </outline>
+</glyph>

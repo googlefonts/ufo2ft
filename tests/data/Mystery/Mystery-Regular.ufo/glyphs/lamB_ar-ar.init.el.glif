@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lamBar-ar.init.el" format="2">
+  <advance width="602"/>
+  <anchor x="266" y="-86" name="bottom"/>
+  <anchor x="266" y="-130" name="mark_bottom"/>
+  <anchor x="488" y="756" name="mark_top"/>
+  <anchor x="471" y="340" name="stroke"/>
+  <anchor x="488" y="746" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Rdotaccent" format="2">
+  <advance width="620"/>
+  <unicode hex="1E58"/>
+  <anchor x="297" y="0" name="bottom"/>
+  <anchor x="261" y="884" name="top"/>
+  <outline>
+  </outline>
+</glyph>

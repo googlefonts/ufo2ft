@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="omegaoxia" format="2">
+  <advance width="640"/>
+  <unicode hex="1F7D"/>
+  <anchor x="319" y="0" name="bottom"/>
+  <anchor x="318" y="758" name="top"/>
+  <outline>
+  </outline>
+</glyph>

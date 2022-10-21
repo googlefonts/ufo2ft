@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="glottalstopmod" format="2">
+  <advance width="309"/>
+  <unicode hex="02C0"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>hookabovecomb</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

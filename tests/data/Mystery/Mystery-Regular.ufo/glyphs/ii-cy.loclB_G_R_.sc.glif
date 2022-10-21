@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ii-cy.loclBGR.sc" format="2">
+  <advance width="610"/>
+  <anchor x="574.0" y="537.0" name="apostrophe"/>
+  <anchor x="307.0" y="0.0" name="bottom"/>
+  <anchor x="307.0" y="538.0" name="top"/>
+  <anchor x="43.0" y="538.0" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="g.sc" format="2">
+  <advance width="582"/>
+  <anchor x="301" y="0" name="bottom"/>
+  <anchor x="301" y="546" name="top"/>
+  <anchor x="532" y="546" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

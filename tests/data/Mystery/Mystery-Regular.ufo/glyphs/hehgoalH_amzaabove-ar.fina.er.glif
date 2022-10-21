@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hehgoalHamzaabove-ar.fina.er" format="2">
+  <advance width="847"/>
+  <anchor x="87" y="-69" name="bottom"/>
+  <anchor x="87" y="-90" name="mark_bottom"/>
+  <anchor x="209" y="590" name="mark_top"/>
+  <anchor x="209" y="639" name="top"/>
+  <outline>
+  </outline>
+</glyph>

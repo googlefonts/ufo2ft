@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="uHamzaabove-ar.fina.er" format="2">
+  <advance width="827"/>
+  <anchor x="160" y="-280" name="bottom"/>
+  <anchor x="160" y="-290" name="mark_bottom"/>
+  <anchor x="219" y="590" name="mark_top"/>
+  <anchor x="111" y="-55" name="ring"/>
+  <anchor x="268" y="-63" name="stroke"/>
+  <anchor x="219" y="863" name="top"/>
+  <outline>
+  </outline>
+</glyph>

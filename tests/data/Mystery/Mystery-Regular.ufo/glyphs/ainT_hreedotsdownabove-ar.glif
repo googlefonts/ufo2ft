@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ainThreedotsdownabove-ar" format="2">
+  <advance width="483"/>
+  <unicode hex="075E"/>
+  <anchor x="280" y="-374" name="bottom"/>
+  <anchor x="302" y="-97" name="center"/>
+  <anchor x="280" y="-384" name="mark_bottom"/>
+  <anchor x="284" y="590" name="mark_top"/>
+  <anchor x="284" y="870" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsdownabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

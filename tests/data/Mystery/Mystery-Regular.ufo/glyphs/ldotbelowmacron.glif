@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ldotbelowmacron" format="2">
+  <advance width="289"/>
+  <unicode hex="1E39"/>
+  <anchor x="170" y="-181" name="bottom"/>
+  <anchor x="113" y="343" name="center"/>
+  <anchor x="158" y="478" name="exit"/>
+  <anchor x="112.5" y="347.0" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>ldotbelow</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>macroncomb</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

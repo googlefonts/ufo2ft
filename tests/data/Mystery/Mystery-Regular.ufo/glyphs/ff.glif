@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ff" format="2">
+  <advance width="662"/>
+  <anchor x="166" y="0" name="bottom"/>
+  <anchor x="287" y="801" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Letter</string>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>latin</string>
+      <key>com.schriftgestaltung.Glyphs.subCategory</key>
+      <string>Ligature</string>
+    </dict>
+  </lib>
+</glyph>

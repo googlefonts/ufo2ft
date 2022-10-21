@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gaf-ar.fina.conn-mf-2.swsh" format="2">
+  <advance width="1734"/>
+  <anchor x="1106" y="-46" name="bottom"/>
+  <anchor x="1665" y="0" name="entry"/>
+  <anchor x="1665" y="0" name="exit"/>
+  <anchor x="1106" y="-90" name="mark_bottom"/>
+  <anchor x="724" y="652" name="mark_top"/>
+  <anchor x="855" y="518" name="ring"/>
+  <anchor x="622" y="717" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="sheen-ar.init.conn-m-1" format="2">
+  <advance width="817"/>
+  <anchor x="479" y="-58" name="bottom"/>
+  <anchor x="479" y="-90" name="mark_bottom"/>
+  <anchor x="464" y="590" name="mark_top"/>
+  <anchor x="464" y="348" name="top"/>
+  <anchor x="464" y="747" name="topthreedots"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>anchor</key>
+          <string>topthreedots</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kehehThreedotsupbelow-ar.init.dotColl.swsh" format="2">
+  <advance width="1293"/>
+  <anchor x="616" y="-379" name="bottom"/>
+  <anchor x="1165" y="0" name="entry"/>
+  <anchor x="616" y="-90" name="mark_bottom"/>
+  <anchor x="234" y="652" name="mark_top"/>
+  <anchor x="365" y="518" name="ring"/>
+  <anchor x="234" y="642" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

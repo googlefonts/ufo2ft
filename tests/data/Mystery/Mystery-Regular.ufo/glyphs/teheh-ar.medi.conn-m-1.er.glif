@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="teheh-ar.medi.conn-m-1.er" format="2">
+  <advance width="707"/>
+  <anchor x="184" y="-78" name="bottom"/>
+  <anchor x="184" y="-90" name="mark_bottom"/>
+  <anchor x="118" y="590" name="mark_top"/>
+  <anchor x="286" y="0" name="ring"/>
+  <anchor x="118" y="806" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>fourdotsabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

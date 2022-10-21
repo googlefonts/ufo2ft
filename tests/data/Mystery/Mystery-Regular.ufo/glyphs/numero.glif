@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="numero" format="2">
+  <advance width="1002"/>
+  <unicode hex="2116"/>
+  <anchor x="354" y="0" name="bottom"/>
+  <anchor x="354" y="700" name="top"/>
+  <anchor x="691" y="700" name="topright"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>N</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>zero.numr</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="napostrophe" format="2">
+  <advance width="536"/>
+  <unicode hex="0149"/>
+  <anchor x="37" y="480" name="apostrophe"/>
+  <anchor x="268" y="0" name="bottom"/>
+  <anchor x="268" y="480" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>quoteright</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

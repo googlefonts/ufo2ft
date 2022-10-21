@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fehThreedotsbelow-ar.fina.conn-mf-2.er" format="2">
+  <advance width="1500"/>
+  <anchor x="657" y="-372" name="bottom"/>
+  <anchor x="657" y="-90" name="mark_bottom"/>
+  <anchor x="670" y="590" name="mark_top"/>
+  <anchor x="670" y="422" name="top"/>
+  <outline>
+  </outline>
+</glyph>

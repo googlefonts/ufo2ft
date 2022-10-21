@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tugrik" format="2">
+  <advance width="713"/>
+  <unicode hex="20AE"/>
+  <anchor x="361" y="0" name="bottom"/>
+  <anchor x="361" y="350" name="center"/>
+  <anchor x="360" y="319" name="stroke"/>
+  <anchor x="361" y="700" name="top"/>
+  <anchor x="667" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

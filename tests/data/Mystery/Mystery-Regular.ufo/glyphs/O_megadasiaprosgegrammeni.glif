@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Omegadasiaprosgegrammeni" format="2">
+  <advance width="1176"/>
+  <unicode hex="1FA9"/>
+  <anchor x="1054" y="0" name="bottom"/>
+  <anchor x="1092" y="0" name="ogonek"/>
+  <anchor x="226" y="796" name="tonos"/>
+  <anchor x="121" y="796" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Omegaprosgegrammeni</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>dasia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

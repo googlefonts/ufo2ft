@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="rehTwodotsverticalabove-ar.fina.er" format="2">
+  <advance width="747"/>
+  <anchor x="167" y="-260" name="bottom"/>
+  <anchor x="147" y="-270" name="mark_bottom"/>
+  <anchor x="242" y="590" name="mark_top"/>
+  <anchor x="286" y="-140" name="reh"/>
+  <anchor x="274" y="-140" name="ring"/>
+  <anchor x="225" y="-35" name="stroke"/>
+  <anchor x="242" y="744" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotsverticalabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

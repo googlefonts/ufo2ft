@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Eth" format="2">
+  <advance width="719"/>
+  <unicode hex="00D0"/>
+  <anchor x="329" y="0" name="bottom"/>
+  <anchor x="360" y="350" name="center"/>
+  <anchor x="173" y="334" name="stroke"/>
+  <anchor x="330" y="700" name="top"/>
+  <anchor x="692" y="700" name="topright"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>anchor</key>
+          <string>stroke</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>strokeshortcomb</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

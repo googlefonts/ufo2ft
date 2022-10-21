@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ecedillabreve" format="2">
+  <advance width="507"/>
+  <unicode hex="1E1D"/>
+  <anchor x="314" y="-204" name="bottom"/>
+  <anchor x="429" y="23" name="ogonek"/>
+  <anchor x="263" y="638" name="top"/>
+  <outline>
+  </outline>
+</glyph>

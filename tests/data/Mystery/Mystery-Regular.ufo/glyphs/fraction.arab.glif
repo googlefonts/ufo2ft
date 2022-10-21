@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fraction.arab" format="2">
+  <advance width="151"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Number</string>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>arabic</string>
+    </dict>
+  </lib>
+</glyph>

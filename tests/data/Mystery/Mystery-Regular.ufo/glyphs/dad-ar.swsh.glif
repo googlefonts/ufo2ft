@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dad-ar.swsh" format="2">
+  <advance width="1870"/>
+  <anchor x="1424" y="-113" name="bottom"/>
+  <anchor x="1826" y="0" name="entry"/>
+  <anchor x="491" y="-247" name="mark_bottom"/>
+  <anchor x="1642" y="590" name="mark_top"/>
+  <anchor x="1642" y="600" name="top"/>
+  <outline>
+  </outline>
+</glyph>

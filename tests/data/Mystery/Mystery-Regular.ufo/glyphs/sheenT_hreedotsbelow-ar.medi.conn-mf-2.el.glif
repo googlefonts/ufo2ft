@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="sheenThreedotsbelow-ar.medi.conn-mf-2.el" format="2">
+  <advance width="1123"/>
+  <anchor x="725" y="-376" name="bottom"/>
+  <anchor x="725" y="-90" name="mark_bottom"/>
+  <anchor x="739" y="590" name="mark_top"/>
+  <anchor x="739" y="747" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Hdieresis" format="2">
+  <advance width="708"/>
+  <unicode hex="1E26"/>
+  <anchor x="354" y="0" name="bottom"/>
+  <anchor x="618" y="0" name="exit"/>
+  <anchor x="354" y="517" name="stroke"/>
+  <anchor x="31" y="800" name="tonos"/>
+  <anchor x="354" y="881" name="top"/>
+  <anchor x="18" y="700" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

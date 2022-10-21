@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ecircumflexdotbelow" format="2">
+  <advance width="507"/>
+  <unicode hex="1EC7"/>
+  <anchor x="274" y="-181" name="bottom"/>
+  <anchor x="430" y="23" name="ogonek"/>
+  <anchor x="261" y="659" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>e</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>dotbelowcomb</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>2</integer>
+          <key>name</key>
+          <string>circumflexcomb</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

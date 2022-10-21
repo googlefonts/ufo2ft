@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="twodotsverticalcenter-ar" format="2">
+  <anchor x="101" y="257" name="_center"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>201</integer>
+    </dict>
+  </lib>
+</glyph>

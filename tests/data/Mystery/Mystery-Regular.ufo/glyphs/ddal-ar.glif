@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ddal-ar" format="2">
+  <advance width="443"/>
+  <unicode hex="0688"/>
+  <anchor x="192" y="-60" name="bottom"/>
+  <anchor x="192" y="-90" name="mark_bottom"/>
+  <anchor x="253" y="590" name="mark_top"/>
+  <anchor x="195" y="-9" name="ring"/>
+  <anchor x="253" y="727" name="top"/>
+  <outline>
+  </outline>
+</glyph>

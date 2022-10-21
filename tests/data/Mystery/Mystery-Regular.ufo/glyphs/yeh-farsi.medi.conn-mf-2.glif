@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="yeh-farsi.medi.conn-mf-2" format="2">
+  <advance width="298"/>
+  <anchor x="112" y="-254" name="bottom"/>
+  <anchor x="112" y="-90" name="mark_bottom"/>
+  <anchor x="151" y="590" name="mark_top"/>
+  <anchor x="80" y="0" name="ring"/>
+  <anchor x="151" y="350" name="top"/>
+  <outline>
+  </outline>
+</glyph>

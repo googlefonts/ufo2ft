@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Vtilde" format="2">
+  <advance width="684"/>
+  <unicode hex="1E7C"/>
+  <anchor x="343" y="0" name="bottom"/>
+  <anchor x="343" y="872" name="top"/>
+  <outline>
+  </outline>
+</glyph>

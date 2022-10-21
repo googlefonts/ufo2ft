@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="madda-ar" format="2">
+  <unicode hex="0653"/>
+  <anchor x="174" y="324" name="_top"/>
+  <anchor x="174" y="446" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>348</integer>
+    </dict>
+  </lib>
+</glyph>

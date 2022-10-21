@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="naira" format="2">
+  <advance width="808"/>
+  <unicode hex="20A6"/>
+  <anchor x="404" y="0" name="bottom"/>
+  <anchor x="404" y="700" name="top"/>
+  <anchor x="741" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="AEmacron" format="2">
+  <advance width="961"/>
+  <unicode hex="01E2"/>
+  <anchor x="513" y="0" name="bottom"/>
+  <anchor x="884" y="0" name="ogonek"/>
+  <anchor x="568" y="852" name="top"/>
+  <outline>
+  </outline>
+</glyph>

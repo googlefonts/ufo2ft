@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tchehDotabove-ar.medi.conn-hah-2.el" format="2">
+  <advance width="486"/>
+  <anchor x="443" y="-376" name="bottom"/>
+  <anchor x="359" y="339" name="entry"/>
+  <anchor x="443" y="-90" name="mark_bottom"/>
+  <anchor x="400" y="590" name="mark_top"/>
+  <anchor x="400" y="612" name="top"/>
+  <outline>
+  </outline>
+</glyph>

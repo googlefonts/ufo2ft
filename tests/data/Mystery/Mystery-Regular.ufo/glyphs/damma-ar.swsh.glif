@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="damma-ar.swsh" format="2">
+  <anchor x="146" y="480" name="_top"/>
+  <anchor x="146" y="753" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>284</integer>
+    </dict>
+  </lib>
+</glyph>

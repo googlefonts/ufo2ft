@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alefMaksura-ar.fina.conn-y-2.ui" format="2">
+  <advance width="705"/>
+  <anchor x="346" y="-123" name="bottom"/>
+  <anchor x="537" y="193" name="entry"/>
+  <anchor x="68" y="266" name="exit"/>
+  <anchor x="346" y="-133" name="mark_bottom"/>
+  <anchor x="134" y="593" name="mark_top"/>
+  <anchor x="134" y="310" name="top"/>
+  <outline>
+  </outline>
+</glyph>

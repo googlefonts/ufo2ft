@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="afghani-ar" format="2">
+  <advance width="479"/>
+  <unicode hex="060B"/>
+  <anchor x="219" y="-249" name="bottom"/>
+  <anchor x="219" y="-90" name="mark_bottom"/>
+  <anchor x="241" y="590" name="mark_top"/>
+  <anchor x="241" y="710" name="top"/>
+  <outline>
+  </outline>
+</glyph>

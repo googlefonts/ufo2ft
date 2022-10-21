@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="seen-ar" format="2">
+  <advance width="1113"/>
+  <unicode hex="0633"/>
+  <anchor x="755" y="-58" name="bottom"/>
+  <anchor x="755" y="-90" name="mark_bottom"/>
+  <anchor x="760" y="590" name="mark_top"/>
+  <anchor x="760" y="346" name="top"/>
+  <outline>
+  </outline>
+</glyph>

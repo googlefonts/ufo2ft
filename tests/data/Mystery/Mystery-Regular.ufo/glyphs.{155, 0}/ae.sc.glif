@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ae.sc" format="2">
+  <advance width="788"/>
+  <anchor x="451" y="0" name="bottom"/>
+  <anchor x="716" y="0" name="ogonek"/>
+  <anchor x="458" y="546" name="top"/>
+  <outline>
+  </outline>
+</glyph>

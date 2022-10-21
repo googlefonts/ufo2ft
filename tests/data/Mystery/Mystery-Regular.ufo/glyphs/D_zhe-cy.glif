@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Dzhe-cy" format="2">
+  <advance width="704"/>
+  <unicode hex="040F"/>
+  <anchor x="353" y="0" name="bottom"/>
+  <anchor x="614" y="0" name="exit"/>
+  <outline>
+  </outline>
+</glyph>

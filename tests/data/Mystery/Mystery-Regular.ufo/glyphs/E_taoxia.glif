@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etaoxia" format="2">
+  <advance width="863"/>
+  <unicode hex="1FCB"/>
+  <anchor x="509" y="0" name="bottom"/>
+  <anchor x="773" y="0" name="exit"/>
+  <anchor x="509" y="517" name="stroke"/>
+  <anchor x="186" y="800" name="tonos"/>
+  <anchor x="113" y="760" name="top"/>
+  <anchor x="173" y="700" name="topleft"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Eta</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>oxia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

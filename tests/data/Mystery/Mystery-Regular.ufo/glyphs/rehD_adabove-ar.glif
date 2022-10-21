@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="rehDadabove-ar" format="2">
+  <unicode hex="0613"/>
+  <anchor x="205" y="414" name="_top"/>
+  <anchor x="205" y="691" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>410</integer>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ng-ar.fina.conn-mf-2.er" format="2">
+  <advance width="1496"/>
+  <anchor x="370" y="-58" name="bottom"/>
+  <anchor x="370" y="-90" name="mark_bottom"/>
+  <anchor x="361" y="678" name="mark_top"/>
+  <anchor x="361" y="1017" name="top"/>
+  <outline>
+  </outline>
+</glyph>

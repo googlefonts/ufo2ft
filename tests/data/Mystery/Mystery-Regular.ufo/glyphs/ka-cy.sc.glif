@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ka-cy.sc" format="2">
+  <advance width="566"/>
+  <anchor x="265" y="0" name="bottom"/>
+  <anchor x="510" y="0" name="exit"/>
+  <anchor x="266" y="538" name="top"/>
+  <outline>
+  </outline>
+</glyph>

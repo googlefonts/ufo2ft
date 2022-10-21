@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Omicronoxia" format="2">
+  <advance width="868"/>
+  <unicode hex="1FF9"/>
+  <anchor x="491" y="0" name="bottom"/>
+  <anchor x="495" y="350" name="center"/>
+  <anchor x="712" y="630" name="exit"/>
+  <anchor x="572" y="0" name="ogonek"/>
+  <anchor x="186" y="796" name="tonos"/>
+  <anchor x="113" y="756" name="top"/>
+  <anchor x="141" y="700" name="topleft"/>
+  <anchor x="857" y="700" name="topright"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Omicron</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>oxia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hehgoal-ar.medi.el" format="2">
+  <advance width="889"/>
+  <anchor x="584" y="-246" name="bottom"/>
+  <anchor x="584" y="-256" name="mark_bottom"/>
+  <anchor x="503" y="590" name="mark_top"/>
+  <anchor x="503" y="340" name="top"/>
+  <outline>
+  </outline>
+</glyph>

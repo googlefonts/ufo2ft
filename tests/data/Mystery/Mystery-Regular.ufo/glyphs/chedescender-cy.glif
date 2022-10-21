@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="chedescender-cy" format="2">
+  <advance width="536"/>
+  <unicode hex="04B7"/>
+  <anchor x="428" y="0" name="entry"/>
+  <anchor x="428" y="0" name="exit"/>
+  <outline>
+  </outline>
+</glyph>

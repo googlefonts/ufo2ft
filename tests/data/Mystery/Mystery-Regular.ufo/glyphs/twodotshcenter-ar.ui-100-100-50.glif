@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="twodotshcenter-ar.ui-100-100-50" format="2">
+  <advance width="363"/>
+  <anchor x="180" y="258" name="_center"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Mark</string>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>arabic</string>
+    </dict>
+  </lib>
+</glyph>

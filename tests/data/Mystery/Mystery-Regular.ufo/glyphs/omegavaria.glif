@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="omegavaria" format="2">
+  <advance width="640"/>
+  <unicode hex="1F7C"/>
+  <anchor x="319" y="0" name="bottom"/>
+  <anchor x="319" y="758" name="top"/>
+  <outline>
+  </outline>
+</glyph>

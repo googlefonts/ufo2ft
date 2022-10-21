@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Rhodasia" format="2">
+  <advance width="792"/>
+  <unicode hex="1FEC"/>
+  <anchor x="321" y="0" name="bottom"/>
+  <anchor x="226" y="800" name="tonos"/>
+  <anchor x="121" y="800" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Rho</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>dasia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

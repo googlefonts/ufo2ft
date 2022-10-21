@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kasratan-ar.swsh" format="2">
+  <anchor x="158" y="0" name="_bottom"/>
+  <anchor x="158" y="-215" name="bottom"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>315</integer>
+    </dict>
+  </lib>
+</glyph>

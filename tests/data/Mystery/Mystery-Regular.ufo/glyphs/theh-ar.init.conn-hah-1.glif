@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="theh-ar.init.conn-hah-1" format="2">
+  <advance width="499"/>
+  <anchor x="292" y="-7" name="bottom"/>
+  <anchor x="-127" y="339" name="exit"/>
+  <anchor x="292" y="-90" name="mark_bottom"/>
+  <anchor x="266" y="590" name="mark_top"/>
+  <anchor x="273" y="100" name="ring"/>
+  <anchor x="266" y="955" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

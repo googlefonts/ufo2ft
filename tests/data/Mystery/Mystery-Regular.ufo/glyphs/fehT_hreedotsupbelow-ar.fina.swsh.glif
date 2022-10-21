@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fehThreedotsupbelow-ar.fina.swsh" format="2">
+  <advance width="1360"/>
+  <anchor x="1104" y="-407" name="bottom"/>
+  <anchor x="1104" y="-90" name="mark_bottom"/>
+  <anchor x="1126" y="590" name="mark_top"/>
+  <anchor x="1126" y="422" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="f_i" format="2">
+  <advance width="600"/>
+  <anchor x="166" y="0" name="bottom_1"/>
+  <anchor x="478" y="0" name="bottom_2"/>
+  <anchor x="516" y="0" name="ogonek"/>
+  <anchor x="260" y="750" name="top_1"/>
+  <anchor x="478" y="664" name="top_2"/>
+  <outline>
+  </outline>
+</glyph>

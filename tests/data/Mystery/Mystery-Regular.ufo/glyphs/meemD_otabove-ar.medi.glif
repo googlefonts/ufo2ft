@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="meemDotabove-ar.medi" format="2">
+  <advance width="549"/>
+  <anchor x="252" y="-74" name="bottom"/>
+  <anchor x="252" y="-90" name="mark_bottom"/>
+  <anchor x="276" y="590" name="mark_top"/>
+  <anchor x="276" y="567" name="top"/>
+  <outline>
+  </outline>
+</glyph>

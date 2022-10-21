@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kaf-ar.swsh" format="2">
+  <advance width="1361"/>
+  <anchor x="754" y="-58" name="bottom"/>
+  <anchor x="754" y="-90" name="mark_bottom"/>
+  <anchor x="725" y="678" name="mark_top"/>
+  <anchor x="725" y="618" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="horncomb" format="2">
+  <unicode hex="031B"/>
+  <anchor x="50" y="499" name="entry"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>190</integer>
+    </dict>
+  </lib>
+</glyph>

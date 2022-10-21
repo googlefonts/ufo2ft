@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Udblgrave" format="2">
+  <advance width="678"/>
+  <unicode hex="0214"/>
+  <anchor x="340" y="0" name="bottom"/>
+  <anchor x="595" y="630" name="exit"/>
+  <anchor x="421" y="0" name="ogonek"/>
+  <anchor x="339" y="888" name="top"/>
+  <anchor x="660" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

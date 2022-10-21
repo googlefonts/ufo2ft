@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Alphaprosgegrammeni.case" format="2">
+  <advance width="948"/>
+  <anchor x="335" y="0" name="bottom_1"/>
+  <anchor x="809" y="0" name="bottom_2"/>
+  <anchor x="619" y="0" name="ogonek_1"/>
+  <anchor x="847" y="0" name="ogonek_2"/>
+  <anchor x="155" y="800" name="tonos_1"/>
+  <anchor x="709" y="800" name="tonos_2"/>
+  <anchor x="333" y="700" name="top_1"/>
+  <anchor x="809" y="881" name="top_2"/>
+  <anchor x="686" y="700" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

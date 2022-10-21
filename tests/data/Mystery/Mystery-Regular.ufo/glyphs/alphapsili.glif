@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alphapsili" format="2">
+  <advance width="554"/>
+  <unicode hex="1F00"/>
+  <anchor x="270" y="0" name="bottom"/>
+  <anchor x="284" y="798" name="top"/>
+  <outline>
+  </outline>
+</glyph>

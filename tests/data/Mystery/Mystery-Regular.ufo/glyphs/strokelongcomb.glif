@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="strokelongcomb" format="2">
+  <unicode hex="0336"/>
+  <anchor x="409" y="264" name="_stroke"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>819</integer>
+    </dict>
+  </lib>
+</glyph>

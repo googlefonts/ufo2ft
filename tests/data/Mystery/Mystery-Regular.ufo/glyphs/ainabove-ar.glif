@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ainabove-ar" format="2">
+  <unicode hex="0611"/>
+  <anchor x="151" y="435" name="_top"/>
+  <anchor x="151" y="628" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>300</integer>
+    </dict>
+  </lib>
+</glyph>

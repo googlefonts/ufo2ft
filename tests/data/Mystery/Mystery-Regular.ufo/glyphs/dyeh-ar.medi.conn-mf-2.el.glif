@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dyeh-ar.medi.conn-mf-2.el" format="2">
+  <advance width="875"/>
+  <anchor x="498" y="-392" name="bottom"/>
+  <anchor x="498" y="-90" name="mark_bottom"/>
+  <anchor x="496" y="590" name="mark_top"/>
+  <anchor x="496" y="406" name="top"/>
+  <outline>
+  </outline>
+</glyph>

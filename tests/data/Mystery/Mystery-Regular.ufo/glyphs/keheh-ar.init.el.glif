@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="keheh-ar.init.el" format="2">
+  <advance width="920"/>
+  <anchor x="373" y="-86" name="bottom"/>
+  <anchor x="368" y="0" name="exit"/>
+  <anchor x="373" y="-120" name="mark_bottom"/>
+  <anchor x="636" y="717" name="mark_top"/>
+  <anchor x="689" y="557" name="ring"/>
+  <anchor x="636" y="707" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="omegaypogegrammeni.sc" format="2">
+  <advance width="907"/>
+  <anchor x="329" y="0" name="bottom_1"/>
+  <anchor x="783" y="0" name="bottom_2"/>
+  <anchor x="822" y="0" name="ogonek"/>
+  <anchor x="55" y="638" name="tonos_1"/>
+  <anchor x="688" y="638" name="tonos_2"/>
+  <anchor x="331" y="538" name="top_1"/>
+  <anchor x="783" y="719" name="top_2"/>
+  <anchor x="21" y="478" name="topleft_1"/>
+  <anchor x="686" y="538" name="topleft_2"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fatha-ar" format="2">
+  <unicode hex="064E"/>
+  <anchor x="180" y="490" name="_top"/>
+  <anchor x="140" y="597" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>320</integer>
+    </dict>
+  </lib>
+</glyph>

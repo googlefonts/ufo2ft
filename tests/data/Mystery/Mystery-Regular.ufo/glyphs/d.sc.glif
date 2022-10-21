@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="d.sc" format="2">
+  <advance width="598"/>
+  <anchor x="269" y="0" name="bottom"/>
+  <anchor x="290" y="269" name="center"/>
+  <anchor x="147" y="261" name="stroke"/>
+  <anchor x="270" y="538" name="top"/>
+  <anchor x="546" y="538" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

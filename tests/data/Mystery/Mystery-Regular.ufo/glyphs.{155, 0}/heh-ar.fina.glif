@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="heh-ar.fina" format="2">
+  <advance width="541"/>
+  <unicode hex="FEEA"/>
+  <anchor x="249" y="-8" name="bottom"/>
+  <anchor x="249" y="-90" name="mark_bottom"/>
+  <anchor x="264" y="593" name="mark_top"/>
+  <anchor x="264" y="530" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lslash.sc" format="2">
+  <advance width="479"/>
+  <anchor x="264" y="0" name="bottom"/>
+  <anchor x="155" y="269" name="center"/>
+  <anchor x="180" y="538" name="top"/>
+  <anchor x="204" y="369" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

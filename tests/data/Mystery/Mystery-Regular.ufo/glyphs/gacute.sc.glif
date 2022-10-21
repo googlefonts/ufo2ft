@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gacute.sc" format="2">
+  <advance width="587"/>
+  <anchor x="300" y="0" name="bottom"/>
+  <anchor x="299" y="720" name="top"/>
+  <anchor x="522" y="538" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

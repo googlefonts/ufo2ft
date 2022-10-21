@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="te-cy.sc" format="2">
+  <advance width="523"/>
+  <anchor x="262" y="0" name="bottom"/>
+  <anchor x="262" y="269" name="center"/>
+  <anchor x="262" y="239" name="stroke"/>
+  <anchor x="262" y="538" name="top"/>
+  <anchor x="494" y="538" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kaf-ar.init" format="2">
+  <advance width="520"/>
+  <unicode hex="FEDB"/>
+  <anchor x="173" y="-46" name="bottom"/>
+  <anchor x="-32" y="0" name="exit"/>
+  <anchor x="173" y="-90" name="mark_bottom"/>
+  <anchor x="236" y="717" name="mark_top"/>
+  <anchor x="289" y="557" name="ring"/>
+  <anchor x="236" y="707" name="top"/>
+  <outline>
+  </outline>
+</glyph>

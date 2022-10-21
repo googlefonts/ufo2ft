@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="sadThreedots-ar.fina.conn-mf-2.swsh" format="2">
+  <advance width="1895"/>
+  <anchor x="1424" y="-113" name="bottom"/>
+  <anchor x="1826" y="0" name="entry"/>
+  <anchor x="1826" y="0" name="exit"/>
+  <anchor x="491" y="-247" name="mark_bottom"/>
+  <anchor x="1642" y="590" name="mark_top"/>
+  <anchor x="1642" y="832" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

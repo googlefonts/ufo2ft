@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="wacute.sc" format="2">
+  <advance width="836"/>
+  <anchor x="417" y="0" name="bottom"/>
+  <anchor x="418" y="720" name="top"/>
+  <anchor x="794" y="538" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

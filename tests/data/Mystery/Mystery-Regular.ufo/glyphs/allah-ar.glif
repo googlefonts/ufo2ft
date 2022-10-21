@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="allah-ar" format="2">
+  <advance width="1269"/>
+  <unicode hex="FDF2"/>
+  <anchor x="1155" y="-60" name="bottom_1"/>
+  <anchor x="903" y="-46" name="bottom_2"/>
+  <anchor x="626" y="-58" name="bottom_3"/>
+  <anchor x="230" y="-8" name="bottom_4"/>
+  <anchor x="1155" y="-90" name="mark_bottom_1"/>
+  <anchor x="903" y="-90" name="mark_bottom_2"/>
+  <anchor x="626" y="-90" name="mark_bottom_3"/>
+  <anchor x="230" y="-90" name="mark_bottom_4"/>
+  <anchor x="1155" y="680" name="mark_top_1"/>
+  <anchor x="925" y="756" name="mark_top_2"/>
+  <anchor x="633" y="668" name="mark_top_3"/>
+  <anchor x="227" y="590" name="mark_top_4"/>
+  <anchor x="908" y="340" name="stroke_1"/>
+  <anchor x="635" y="340" name="stroke_2"/>
+  <anchor x="1155" y="670" name="top_1"/>
+  <anchor x="925" y="746" name="top_2"/>
+  <anchor x="633" y="658" name="top_3"/>
+  <anchor x="227" y="472" name="top_4"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>4</integer>
+          <key>name</key>
+          <string>shadda_alefabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

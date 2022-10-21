@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="beeh-ar.fina" format="2">
+  <advance width="870"/>
+  <unicode hex="FB53"/>
+  <anchor x="401" y="-392" name="bottom"/>
+  <anchor x="401" y="-90" name="mark_bottom"/>
+  <anchor x="401" y="590" name="mark_top"/>
+  <anchor x="367" y="-9" name="ring"/>
+  <anchor x="401" y="316" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotsverticalbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

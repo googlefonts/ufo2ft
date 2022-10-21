@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gaf-ar.fina.ui" format="2">
+  <advance width="878"/>
+  <anchor x="617" y="722" name="_top"/>
+  <anchor x="380" y="-46" name="bottom"/>
+  <anchor x="380" y="-90" name="mark_bottom"/>
+  <anchor x="504" y="775" name="mark_top"/>
+  <anchor x="679" y="558" name="ring"/>
+  <anchor x="504" y="765" name="top"/>
+  <outline>
+  </outline>
+</glyph>

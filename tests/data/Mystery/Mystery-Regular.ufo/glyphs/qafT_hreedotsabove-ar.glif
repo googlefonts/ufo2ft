@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="qafThreedotsabove-ar" format="2">
+  <advance width="804"/>
+  <unicode hex="06A8"/>
+  <anchor x="381" y="-293" name="bottom"/>
+  <anchor x="381" y="-303" name="mark_bottom"/>
+  <anchor x="557" y="590" name="mark_top"/>
+  <anchor x="557" y="793" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

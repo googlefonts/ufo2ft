@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="noonghunnaabove-ar" format="2">
+  <unicode hex="0658"/>
+  <anchor x="149" y="285" name="_top"/>
+  <anchor x="149" y="463" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>297</integer>
+    </dict>
+  </lib>
+</glyph>

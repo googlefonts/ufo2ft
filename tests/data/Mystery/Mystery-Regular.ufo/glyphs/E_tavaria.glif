@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etavaria" format="2">
+  <advance width="913"/>
+  <unicode hex="1FCA"/>
+  <anchor x="559" y="0" name="bottom"/>
+  <anchor x="823" y="0" name="exit"/>
+  <anchor x="559" y="517" name="stroke"/>
+  <anchor x="236" y="800" name="tonos"/>
+  <anchor x="138" y="760" name="top"/>
+  <anchor x="223" y="700" name="topleft"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Eta</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>varia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

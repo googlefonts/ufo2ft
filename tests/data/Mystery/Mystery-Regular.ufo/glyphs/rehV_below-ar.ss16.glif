@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="rehVbelow-ar.ss16" format="2">
+  <advance width="372"/>
+  <anchor x="167" y="-260" name="bottom"/>
+  <anchor x="147" y="-270" name="mark_bottom"/>
+  <anchor x="242" y="590" name="mark_top"/>
+  <anchor x="245" y="-420" name="reh"/>
+  <anchor x="274" y="-140" name="ring"/>
+  <anchor x="225" y="-35" name="stroke"/>
+  <anchor x="242" y="330" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>anchor</key>
+          <string>reh</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>vbelow-ar.ui-100-100-80</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

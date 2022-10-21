@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="etavaria" format="2">
+  <advance width="532"/>
+  <unicode hex="1F74"/>
+  <anchor x="38" y="480" name="apostrophe"/>
+  <anchor x="119" y="0" name="bottom"/>
+  <anchor x="267" y="758" name="top"/>
+  <outline>
+  </outline>
+</glyph>

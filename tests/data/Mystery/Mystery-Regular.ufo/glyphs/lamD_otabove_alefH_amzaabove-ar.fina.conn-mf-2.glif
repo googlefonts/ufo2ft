@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lamDotabove_alefHamzaabove-ar.fina.conn-mf-2" format="2">
+  <advance width="571"/>
+  <anchor x="428" y="-56" name="bottom_1"/>
+  <anchor x="157" y="-56" name="bottom_2"/>
+  <anchor x="438" y="573" name="stroke"/>
+  <anchor x="438" y="806" name="top_1"/>
+  <anchor x="144" y="814" name="top_2"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>anchor</key>
+          <string>top_2</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>hamzaabove-ar</string>
+        </dict>
+        <dict>
+          <key>anchor</key>
+          <string>top_1</string>
+          <key>index</key>
+          <integer>2</integer>
+          <key>name</key>
+          <string>dotabove-ar</string>
+        </dict>
+      </array>
+      <key>com.schriftgestaltung.Glyphs.subCategory</key>
+      <string>Ligature</string>
+    </dict>
+  </lib>
+</glyph>

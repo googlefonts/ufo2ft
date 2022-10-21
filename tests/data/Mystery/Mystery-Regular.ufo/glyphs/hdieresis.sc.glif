@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hdieresis.sc" format="2">
+  <advance width="603"/>
+  <anchor x="300" y="0" name="bottom"/>
+  <anchor x="518" y="0" name="exit"/>
+  <anchor x="300" y="403" name="stroke"/>
+  <anchor x="21" y="638" name="tonos"/>
+  <anchor x="300" y="719" name="top"/>
+  <anchor x="34" y="538" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

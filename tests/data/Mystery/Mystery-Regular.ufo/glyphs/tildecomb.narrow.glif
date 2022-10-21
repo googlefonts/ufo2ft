@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tildecomb.narrow" format="2">
+  <anchor x="198" y="478" name="_top"/>
+  <anchor x="198" y="650" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>394</integer>
+    </dict>
+  </lib>
+</glyph>

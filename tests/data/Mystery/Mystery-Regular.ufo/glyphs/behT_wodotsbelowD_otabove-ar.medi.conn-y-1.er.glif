@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="behTwodotsbelowDotabove-ar.medi.conn-y-1.er" format="2">
+  <advance width="677"/>
+  <anchor x="165" y="-254" name="bottom"/>
+  <anchor x="-169" y="157" name="exit"/>
+  <anchor x="165" y="-90" name="mark_bottom"/>
+  <anchor x="70" y="590" name="mark_top"/>
+  <anchor x="220" y="16" name="ring"/>
+  <anchor x="70" y="588" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotshorizontalbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="slashlongcomb.sc.BRACKET.150" format="2">
+  <anchor x="301" y="350" name="_center"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs._originalLayerName</key>
+      <string>[150]</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>607</integer>
+    </dict>
+  </lib>
+</glyph>

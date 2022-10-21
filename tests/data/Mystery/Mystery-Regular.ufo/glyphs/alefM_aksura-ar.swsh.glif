@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alefMaksura-ar.swsh" format="2">
+  <advance width="1478"/>
+  <anchor x="583" y="-178" name="bottom"/>
+  <anchor x="79" y="-95" name="exit"/>
+  <anchor x="583" y="-188" name="mark_bottom"/>
+  <anchor x="545" y="590" name="mark_top"/>
+  <anchor x="545" y="50" name="top"/>
+  <outline>
+  </outline>
+</glyph>

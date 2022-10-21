@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lamThreedotsbelow-ar.init.conn-hah-1" format="2">
+  <advance width="472"/>
+  <anchor x="180" y="-315" name="bottom"/>
+  <anchor x="-126" y="339" name="exit"/>
+  <anchor x="180" y="-90" name="mark_bottom"/>
+  <anchor x="181" y="838" name="mark_top"/>
+  <anchor x="181" y="503" name="stroke"/>
+  <anchor x="181" y="828" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsdownbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

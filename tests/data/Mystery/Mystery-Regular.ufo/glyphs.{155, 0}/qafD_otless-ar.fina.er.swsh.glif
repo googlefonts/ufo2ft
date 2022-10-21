@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="qafDotless-ar.fina.er.swsh" format="2">
+  <advance width="1935"/>
+  <anchor x="787" y="-309" name="bottom"/>
+  <anchor x="787" y="-319" name="mark_bottom"/>
+  <anchor x="1279" y="593" name="mark_top"/>
+  <anchor x="1279" y="458" name="top"/>
+  <outline>
+  </outline>
+</glyph>

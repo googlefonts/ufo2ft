@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fourdotsbelow-ar" format="2">
+  <unicode hex="FBBB"/>
+  <anchor x="171" y="-59" name="_bottom"/>
+  <anchor x="171" y="-392" name="bottom"/>
+  <anchor x="171" y="-402" name="mark_bottom"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Mark</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>343</integer>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>arabic</string>
+      <key>com.schriftgestaltung.Glyphs.subCategory</key>
+      <string>Nonspacing</string>
+    </dict>
+  </lib>
+</glyph>

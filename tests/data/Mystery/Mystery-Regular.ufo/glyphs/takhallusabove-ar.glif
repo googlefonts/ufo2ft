@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="takhallusabove-ar" format="2">
+  <unicode hex="0614"/>
+  <anchor x="144" y="470" name="_top"/>
+  <anchor x="144" y="594" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>288</integer>
+    </dict>
+  </lib>
+</glyph>

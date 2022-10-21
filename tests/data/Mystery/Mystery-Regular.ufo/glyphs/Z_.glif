@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Z" format="2">
+  <advance width="640"/>
+  <unicode hex="005A"/>
+  <anchor x="321" y="0" name="bottom"/>
+  <anchor x="325" y="345" name="stroke"/>
+  <anchor x="321" y="700" name="top"/>
+  <anchor x="611" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

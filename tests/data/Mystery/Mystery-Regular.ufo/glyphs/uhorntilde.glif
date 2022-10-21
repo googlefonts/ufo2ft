@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="uhorntilde" format="2">
+  <advance width="597"/>
+  <unicode hex="1EEF"/>
+  <anchor x="258" y="0" name="bottom"/>
+  <anchor x="457" y="410" name="entry"/>
+  <anchor x="457" y="410" name="exit"/>
+  <anchor x="457" y="0" name="ogonek"/>
+  <anchor x="270" y="652" name="top"/>
+  <anchor x="519" y="480" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

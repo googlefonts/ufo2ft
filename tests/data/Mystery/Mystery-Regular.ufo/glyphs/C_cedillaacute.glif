@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Ccedillaacute" format="2">
+  <advance width="624"/>
+  <unicode hex="1E08"/>
+  <anchor x="390" y="-204" name="bottom"/>
+  <anchor x="364" y="882" name="top"/>
+  <anchor x="558" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

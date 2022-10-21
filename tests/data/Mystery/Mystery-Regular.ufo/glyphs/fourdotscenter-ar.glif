@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fourdotscenter-ar" format="2">
+  <anchor x="174" y="233" name="_center"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>343</integer>
+    </dict>
+  </lib>
+</glyph>

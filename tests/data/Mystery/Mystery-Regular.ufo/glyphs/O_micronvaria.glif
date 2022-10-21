@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Omicronvaria" format="2">
+  <advance width="918"/>
+  <unicode hex="1FF8"/>
+  <anchor x="541" y="0" name="bottom"/>
+  <anchor x="545" y="350" name="center"/>
+  <anchor x="762" y="630" name="exit"/>
+  <anchor x="622" y="0" name="ogonek"/>
+  <anchor x="236" y="796" name="tonos"/>
+  <anchor x="138" y="756" name="top"/>
+  <anchor x="191" y="700" name="topleft"/>
+  <anchor x="907" y="700" name="topright"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Omicron</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>varia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

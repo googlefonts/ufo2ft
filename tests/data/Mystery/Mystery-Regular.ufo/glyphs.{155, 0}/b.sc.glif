@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="b.sc" format="2">
+  <advance width="558"/>
+  <anchor x="274" y="0" name="bottom"/>
+  <anchor x="274" y="546" name="top"/>
+  <outline>
+  </outline>
+</glyph>

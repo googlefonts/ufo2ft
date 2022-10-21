@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="noon-ar.init.conn-hah-1" format="2">
+  <advance width="499"/>
+  <anchor x="292" y="-7" name="bottom"/>
+  <anchor x="-127" y="339" name="exit"/>
+  <anchor x="292" y="-90" name="mark_bottom"/>
+  <anchor x="266" y="590" name="mark_top"/>
+  <anchor x="273" y="100" name="ring"/>
+  <anchor x="266" y="723" name="top"/>
+  <outline>
+  </outline>
+</glyph>

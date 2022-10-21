@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Otildeacute.ss16" format="2">
+  <advance width="755"/>
+  <anchor x="377" y="0" name="bottom"/>
+  <anchor x="381" y="350" name="center"/>
+  <anchor x="598" y="630" name="exit"/>
+  <anchor x="458" y="0" name="ogonek"/>
+  <anchor x="72" y="796" name="tonos"/>
+  <anchor x="378" y="872" name="top"/>
+  <anchor x="27" y="700" name="topleft"/>
+  <anchor x="743" y="700" name="topright"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>O</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>tildecomb_acutecomb.uc.ui</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

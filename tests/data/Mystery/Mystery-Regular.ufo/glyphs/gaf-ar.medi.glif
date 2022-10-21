@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gaf-ar.medi" format="2">
+  <advance width="507"/>
+  <unicode hex="FB95"/>
+  <anchor x="174" y="-46" name="bottom"/>
+  <anchor x="174" y="-90" name="mark_bottom"/>
+  <anchor x="236" y="718" name="mark_top"/>
+  <anchor x="290" y="557" name="ring"/>
+  <anchor x="165" y="798" name="top"/>
+  <outline>
+  </outline>
+</glyph>

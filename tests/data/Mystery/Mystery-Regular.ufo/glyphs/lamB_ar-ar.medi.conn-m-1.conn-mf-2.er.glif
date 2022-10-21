@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lamBar-ar.medi.conn-m-1.conn-mf-2.er" format="2">
+  <advance width="919"/>
+  <anchor x="204" y="-32" name="bottom"/>
+  <anchor x="204" y="-90" name="mark_bottom"/>
+  <anchor x="196" y="790" name="mark_top"/>
+  <anchor x="196" y="483" name="stroke"/>
+  <anchor x="196" y="780" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>lam-ar.medi.conn-m-1.conn-mf-2.er</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>lamBar-stroke-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

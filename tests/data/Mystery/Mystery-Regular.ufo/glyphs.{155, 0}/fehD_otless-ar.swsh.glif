@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fehDotless-ar.swsh" format="2">
+  <advance width="1417"/>
+  <anchor x="765" y="-56" name="bottom"/>
+  <anchor x="765" y="-90" name="mark_bottom"/>
+  <anchor x="1142" y="621" name="mark_top"/>
+  <anchor x="1142" y="611" name="top"/>
+  <outline>
+  </outline>
+</glyph>

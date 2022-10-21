@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="behThreedotsupbelow-ar.init.ss16" format="2">
+  <advance width="267"/>
+  <anchor x="109" y="-393" name="bottom"/>
+  <anchor x="109" y="-90" name="mark_bottom"/>
+  <anchor x="137" y="590" name="mark_top"/>
+  <anchor x="123" y="0" name="ring"/>
+  <anchor x="137" y="378" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupbelow-ar.ui-100-100-90</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

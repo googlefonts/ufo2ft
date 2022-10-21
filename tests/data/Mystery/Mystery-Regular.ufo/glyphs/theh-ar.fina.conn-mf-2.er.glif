@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="theh-ar.fina.conn-mf-2.er" format="2">
+  <advance width="1543"/>
+  <anchor x="401" y="-60" name="bottom"/>
+  <anchor x="401" y="-90" name="mark_bottom"/>
+  <anchor x="401" y="590" name="mark_top"/>
+  <anchor x="367" y="-9" name="ring"/>
+  <anchor x="401" y="715" name="top"/>
+  <outline>
+  </outline>
+</glyph>

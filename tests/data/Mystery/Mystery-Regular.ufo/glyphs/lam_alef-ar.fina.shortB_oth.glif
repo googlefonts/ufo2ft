@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lam_alef-ar.fina.shortBoth" format="2">
+  <advance width="591"/>
+  <anchor x="428" y="-56" name="bottom_1"/>
+  <anchor x="157" y="-56" name="bottom_2"/>
+  <anchor x="438" y="573" name="stroke"/>
+  <anchor x="438" y="639" name="top_1"/>
+  <anchor x="144" y="578" name="top_2"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.subCategory</key>
+      <string>Ligature</string>
+    </dict>
+  </lib>
+</glyph>

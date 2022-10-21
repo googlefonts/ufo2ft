@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="yehVabove-ar.swsh" format="2">
+  <advance width="1478"/>
+  <anchor x="583" y="-178" name="bottom"/>
+  <anchor x="79" y="-95" name="exit"/>
+  <anchor x="583" y="-188" name="mark_bottom"/>
+  <anchor x="545" y="590" name="mark_top"/>
+  <anchor x="545" y="238" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>anchor</key>
+          <string>top</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>vabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

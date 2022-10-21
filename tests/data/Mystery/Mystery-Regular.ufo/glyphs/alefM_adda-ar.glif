@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alefMadda-ar" format="2">
+  <advance width="229"/>
+  <unicode hex="0622"/>
+  <anchor x="116" y="-60" name="bottom"/>
+  <anchor x="116" y="-90" name="mark_bottom"/>
+  <anchor x="116" y="616" name="mark_top"/>
+  <anchor x="116" y="728" name="top"/>
+  <outline>
+  </outline>
+</glyph>

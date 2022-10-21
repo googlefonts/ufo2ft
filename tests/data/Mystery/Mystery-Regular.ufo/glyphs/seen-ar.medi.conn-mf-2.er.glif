@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="seen-ar.medi.conn-mf-2.er" format="2">
+  <advance width="1453"/>
+  <anchor x="375" y="-60" name="bottom"/>
+  <anchor x="375" y="-90" name="mark_bottom"/>
+  <anchor x="389" y="590" name="mark_top"/>
+  <anchor x="389" y="348" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.category</key>
+      <string>Letter</string>
+      <key>com.schriftgestaltung.Glyphs.script</key>
+      <string>arabic</string>
+    </dict>
+  </lib>
+</glyph>

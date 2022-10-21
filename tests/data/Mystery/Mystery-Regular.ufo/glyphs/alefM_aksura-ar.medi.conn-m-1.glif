@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alefMaksura-ar.medi.conn-m-1" format="2">
+  <advance width="372"/>
+  <anchor x="184" y="-78" name="bottom"/>
+  <anchor x="184" y="-90" name="mark_bottom"/>
+  <anchor x="118" y="590" name="mark_top"/>
+  <anchor x="286" y="0" name="ring"/>
+  <anchor x="118" y="421" name="top"/>
+  <outline>
+  </outline>
+</glyph>

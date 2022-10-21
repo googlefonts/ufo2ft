@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="behVinvertedbelow-ar.init.conn-yeh-1" format="2">
+  <advance width="274"/>
+  <anchor x="144" y="-370" name="bottom"/>
+  <anchor x="144" y="-186" name="mark_bottom"/>
+  <anchor x="105" y="590" name="mark_top"/>
+  <anchor x="116" y="138" name="ring"/>
+  <anchor x="105" y="477" name="top"/>
+  <outline>
+  </outline>
+</glyph>

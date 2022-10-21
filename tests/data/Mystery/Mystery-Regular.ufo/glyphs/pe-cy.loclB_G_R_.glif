@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="pe-cy.loclBGR" format="2">
+  <advance width="536"/>
+  <anchor x="37" y="480" name="apostrophe"/>
+  <anchor x="268" y="0" name="bottom"/>
+  <anchor x="268" y="480" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kadescender-cy.sc" format="2">
+  <advance width="618"/>
+  <anchor x="265" y="0" name="bottom"/>
+  <anchor x="510" y="0" name="entry"/>
+  <anchor x="510" y="0" name="exit"/>
+  <anchor x="266" y="538" name="top"/>
+  <outline>
+  </outline>
+</glyph>

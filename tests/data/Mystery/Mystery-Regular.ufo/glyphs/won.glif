@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="won" format="2">
+  <advance width="1112"/>
+  <unicode hex="20A9"/>
+  <anchor x="545" y="0" name="bottom"/>
+  <anchor x="545" y="700" name="top"/>
+  <anchor x="1007" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

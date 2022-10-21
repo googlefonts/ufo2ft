@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lamThreedotsabove-ar.medi.conn-y-1.conn-mf-2.er" format="2">
+  <advance width="946"/>
+  <anchor x="125" y="-32" name="bottom"/>
+  <anchor x="-169" y="157" name="exit"/>
+  <anchor x="125" y="-90" name="mark_bottom"/>
+  <anchor x="118" y="660" name="mark_top"/>
+  <anchor x="117" y="483" name="stroke"/>
+  <anchor x="118" y="1049" name="top"/>
+  <outline>
+  </outline>
+</glyph>

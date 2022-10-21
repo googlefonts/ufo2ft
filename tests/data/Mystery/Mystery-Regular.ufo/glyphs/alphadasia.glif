@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alphadasia" format="2">
+  <advance width="554"/>
+  <unicode hex="1F01"/>
+  <anchor x="270" y="0" name="bottom"/>
+  <anchor x="284" y="800" name="top"/>
+  <outline>
+  </outline>
+</glyph>

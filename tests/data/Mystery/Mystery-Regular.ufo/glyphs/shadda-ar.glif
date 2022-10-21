@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="shadda-ar" format="2">
+  <unicode hex="0651"/>
+  <anchor x="156" y="480" name="_top"/>
+  <anchor x="156" y="658" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>316</integer>
+    </dict>
+  </lib>
+</glyph>

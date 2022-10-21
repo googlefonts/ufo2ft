@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lacute.sc" format="2">
+  <advance width="454"/>
+  <anchor x="239" y="0" name="bottom"/>
+  <anchor x="130" y="269" name="center"/>
+  <anchor x="155" y="720" name="top"/>
+  <anchor x="179" y="369" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

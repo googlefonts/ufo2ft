@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kehehThreedotsabove-ar.medi.conn-yeh-1.conn-mf-2.er" format="2">
+  <advance width="1253"/>
+  <anchor x="261" y="-46" name="bottom"/>
+  <anchor x="261" y="-90" name="mark_bottom"/>
+  <anchor x="329" y="718" name="mark_top"/>
+  <anchor x="391" y="557" name="ring"/>
+  <anchor x="329" y="1107" name="top"/>
+  <outline>
+  </outline>
+</glyph>

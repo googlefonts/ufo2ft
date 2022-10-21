@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ghain-ar.medi" format="2">
+  <advance width="490"/>
+  <unicode hex="FED0"/>
+  <anchor x="242" y="-22" name="bottom"/>
+  <anchor x="242" y="-90" name="mark_bottom"/>
+  <anchor x="243" y="590" name="mark_top"/>
+  <anchor x="243" y="581" name="top"/>
+  <outline>
+  </outline>
+</glyph>

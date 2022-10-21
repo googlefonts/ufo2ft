@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="acutebelowcomb" format="2">
+  <unicode hex="0317"/>
+  <anchor x="119" y="0" name="_bottom"/>
+  <anchor x="119" y="-195" name="bottom"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>acutecomb</string>
+        </dict>
+      </array>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>320</integer>
+    </dict>
+  </lib>
+</glyph>

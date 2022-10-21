@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="noonTahabove-ar.fina.er" format="2">
+  <advance width="1011"/>
+  <anchor x="310" y="-184" name="bottom"/>
+  <anchor x="310" y="-194" name="mark_bottom"/>
+  <anchor x="311" y="590" name="mark_top"/>
+  <anchor x="310" y="-122" name="ring"/>
+  <anchor x="311" y="772" name="top"/>
+  <outline>
+  </outline>
+</glyph>

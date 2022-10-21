@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Tse-cy" format="2">
+  <advance width="722"/>
+  <unicode hex="0426"/>
+  <anchor x="353" y="0" name="bottom"/>
+  <anchor x="614" y="0" name="entry"/>
+  <anchor x="614" y="0" name="exit"/>
+  <outline>
+  </outline>
+</glyph>

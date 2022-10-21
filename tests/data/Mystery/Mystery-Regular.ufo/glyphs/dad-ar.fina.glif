@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dad-ar.fina" format="2">
+  <advance width="1168"/>
+  <unicode hex="FEBE"/>
+  <anchor x="684" y="-113" name="bottom"/>
+  <anchor x="1098" y="0" name="entry"/>
+  <anchor x="1098" y="0" name="exit"/>
+  <anchor x="684" y="-123" name="mark_bottom"/>
+  <anchor x="914" y="590" name="mark_top"/>
+  <anchor x="914" y="600" name="top"/>
+  <outline>
+  </outline>
+</glyph>

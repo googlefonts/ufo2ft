@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Etapsilioxiaprosgegrammeni" format="2">
+  <advance width="1259"/>
+  <unicode hex="1F9C"/>
+  <anchor x="661" y="0" name="bottom_1"/>
+  <anchor x="1137" y="0" name="bottom_2"/>
+  <anchor x="925" y="0" name="exit"/>
+  <anchor x="1175" y="0" name="ogonek"/>
+  <anchor x="661" y="517" name="stroke"/>
+  <anchor x="338" y="800" name="tonos"/>
+  <anchor x="661" y="700" name="top_1"/>
+  <anchor x="1137" y="480" name="top_2"/>
+  <anchor x="325" y="700" name="topleft"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>Etaprosgegrammeni</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>psilioxia</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

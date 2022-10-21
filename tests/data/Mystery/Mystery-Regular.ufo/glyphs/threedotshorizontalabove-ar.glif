@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="threedotshorizontalabove-ar" format="2">
+  <anchor x="221" y="-59" name="_bottom"/>
+  <anchor x="221" y="-254" name="bottom"/>
+  <anchor x="221" y="-264" name="mark_bottom"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>445</integer>
+    </dict>
+  </lib>
+</glyph>

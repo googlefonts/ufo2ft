@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Kadescender-cy" format="2">
+  <advance width="655"/>
+  <unicode hex="049A"/>
+  <anchor x="296" y="0" name="bottom"/>
+  <anchor x="547" y="0" name="entry"/>
+  <anchor x="547" y="0" name="exit"/>
+  <anchor x="295" y="700" name="top"/>
+  <outline>
+  </outline>
+</glyph>

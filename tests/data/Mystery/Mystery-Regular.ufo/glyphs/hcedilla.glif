@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="hcedilla" format="2">
+  <advance width="536"/>
+  <unicode hex="1E29"/>
+  <anchor x="312" y="-204" name="bottom"/>
+  <anchor x="272" y="239" name="center"/>
+  <anchor x="177" y="637" name="stroke"/>
+  <anchor x="117" y="750" name="top"/>
+  <outline>
+  </outline>
+</glyph>

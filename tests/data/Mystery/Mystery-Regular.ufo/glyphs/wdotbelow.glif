@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="wdotbelow" format="2">
+  <advance width="793"/>
+  <unicode hex="1E89"/>
+  <anchor x="392" y="-181" name="bottom"/>
+  <anchor x="392" y="480" name="top"/>
+  <anchor x="782" y="478" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

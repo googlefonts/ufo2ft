@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dcaron" format="2">
+  <advance width="638"/>
+  <unicode hex="010F"/>
+  <anchor x="264" y="0" name="bottom"/>
+  <anchor x="213" y="1" name="cedilla"/>
+  <anchor x="268" y="239" name="center"/>
+  <anchor x="454" y="478" name="entry"/>
+  <anchor x="454" y="478" name="exit"/>
+  <anchor x="360" y="637" name="stroke"/>
+  <anchor x="415" y="750" name="top"/>
+  <outline>
+  </outline>
+</glyph>

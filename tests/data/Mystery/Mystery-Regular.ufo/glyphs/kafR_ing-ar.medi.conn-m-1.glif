@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kafRing-ar.medi.conn-m-1" format="2">
+  <advance width="383"/>
+  <anchor x="63" y="-46" name="bottom"/>
+  <anchor x="63" y="-90" name="mark_bottom"/>
+  <anchor x="126" y="718" name="mark_top"/>
+  <anchor x="180" y="556" name="ring"/>
+  <anchor x="126" y="708" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Wdotaccent" format="2">
+  <advance width="975"/>
+  <unicode hex="1E86"/>
+  <anchor x="488" y="0" name="bottom"/>
+  <anchor x="488" y="884" name="top"/>
+  <anchor x="949" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

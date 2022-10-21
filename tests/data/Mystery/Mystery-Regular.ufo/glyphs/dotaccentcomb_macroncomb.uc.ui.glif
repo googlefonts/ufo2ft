@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dotaccentcomb_macroncomb.uc.ui" format="2">
+  <anchor x="214" y="478" name="_top"/>
+  <anchor x="214" y="660" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>430</integer>
+    </dict>
+  </lib>
+</glyph>

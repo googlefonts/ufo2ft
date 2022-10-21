@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alphaypogegrammeni.sc" format="2">
+  <advance width="844"/>
+  <anchor x="299" y="0" name="bottom_1"/>
+  <anchor x="720" y="0" name="bottom_2"/>
+  <anchor x="554" y="0" name="ogonek_1"/>
+  <anchor x="759" y="0" name="ogonek_2"/>
+  <anchor x="129" y="638" name="tonos_1"/>
+  <anchor x="625" y="638" name="tonos_2"/>
+  <anchor x="299" y="538" name="top_1"/>
+  <anchor x="720" y="719" name="top_2"/>
+  <anchor x="623" y="538" name="topleft"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fathatan-ar" format="2">
+  <unicode hex="064B"/>
+  <anchor x="175" y="490" name="_top"/>
+  <anchor x="145" y="667" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>320</integer>
+    </dict>
+  </lib>
+</glyph>

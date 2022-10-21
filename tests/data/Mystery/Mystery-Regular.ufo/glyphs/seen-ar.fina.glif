@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="seen-ar.fina" format="2">
+  <advance width="1154"/>
+  <unicode hex="FEB2"/>
+  <anchor x="755" y="-58" name="bottom"/>
+  <anchor x="755" y="-90" name="mark_bottom"/>
+  <anchor x="761" y="590" name="mark_top"/>
+  <anchor x="761" y="346" name="top"/>
+  <outline>
+  </outline>
+</glyph>

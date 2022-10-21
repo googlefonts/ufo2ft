@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dasiaoxia" format="2">
+  <advance width="389"/>
+  <unicode hex="1FDE"/>
+  <anchor x="343" y="700" name="_tonos"/>
+  <anchor x="174" y="380" name="_top"/>
+  <anchor x="174" y="700" name="top"/>
+  <outline>
+  </outline>
+</glyph>

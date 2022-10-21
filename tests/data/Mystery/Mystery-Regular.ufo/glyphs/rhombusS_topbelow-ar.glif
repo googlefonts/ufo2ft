@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="rhombusStopbelow-ar" format="2">
+  <unicode hex="06EA"/>
+  <anchor x="148" y="0" name="_bottom"/>
+  <anchor x="148" y="-230" name="bottom"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>295</integer>
+    </dict>
+  </lib>
+</glyph>

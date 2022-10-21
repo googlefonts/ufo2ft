@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tchehDotabove-ar.init.el" format="2">
+  <advance width="865"/>
+  <anchor x="551" y="-329" name="bottom"/>
+  <anchor x="551" y="-70" name="mark_bottom"/>
+  <anchor x="487" y="590" name="mark_top"/>
+  <anchor x="487" y="604" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ainvertedbreve" format="2">
+  <advance width="479"/>
+  <unicode hex="0203"/>
+  <anchor x="233" y="0" name="bottom"/>
+  <anchor x="403" y="0" name="ogonek"/>
+  <anchor x="228" y="667" name="top"/>
+  <outline>
+  </outline>
+</glyph>

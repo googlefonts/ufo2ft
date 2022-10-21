@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="rehHahabove-ar" format="2">
+  <unicode hex="0612"/>
+  <anchor x="165" y="417" name="_top"/>
+  <anchor x="165" y="634" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>329</integer>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="omegaperispomeni" format="2">
+  <advance width="640"/>
+  <unicode hex="1FF6"/>
+  <anchor x="319" y="0" name="bottom"/>
+  <anchor x="319" y="478" name="top"/>
+  <outline>
+  </outline>
+</glyph>

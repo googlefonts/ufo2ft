@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="fehTwodotsbelow-ar.medi.conn-mf-2.er" format="2">
+  <advance width="1072"/>
+  <anchor x="223" y="-250" name="bottom"/>
+  <anchor x="223" y="-90" name="mark_bottom"/>
+  <anchor x="236" y="590" name="mark_top"/>
+  <anchor x="236" y="416" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>twodotshorizontalbelow-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

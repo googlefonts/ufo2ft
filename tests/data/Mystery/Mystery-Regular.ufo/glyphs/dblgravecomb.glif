@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dblgravecomb" format="2">
+  <unicode hex="030F"/>
+  <anchor x="278" y="478" name="_top"/>
+  <anchor x="278" y="666" name="top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>491</integer>
+    </dict>
+  </lib>
+</glyph>

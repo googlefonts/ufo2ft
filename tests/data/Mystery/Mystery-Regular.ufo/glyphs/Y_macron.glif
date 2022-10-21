@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Ymacron" format="2">
+  <advance width="657"/>
+  <unicode hex="0232"/>
+  <anchor x="328" y="0" name="bottom"/>
+  <anchor x="328" y="273" name="stroke"/>
+  <anchor x="2" y="800" name="tonos"/>
+  <anchor x="328" y="852" name="top"/>
+  <anchor x="630" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

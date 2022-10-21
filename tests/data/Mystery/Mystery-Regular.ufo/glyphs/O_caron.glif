@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Ocaron" format="2">
+  <advance width="755"/>
+  <unicode hex="01D1"/>
+  <anchor x="378" y="0" name="bottom"/>
+  <anchor x="382" y="350" name="center"/>
+  <anchor x="599" y="630" name="exit"/>
+  <anchor x="459" y="0" name="ogonek"/>
+  <anchor x="73" y="796" name="tonos"/>
+  <anchor x="379" y="875" name="top"/>
+  <anchor x="28" y="700" name="topleft"/>
+  <anchor x="744" y="700" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

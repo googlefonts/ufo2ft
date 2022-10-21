@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="psilioxia" format="2">
+  <advance width="382"/>
+  <unicode hex="1FCE"/>
+  <anchor x="338" y="700" name="_tonos"/>
+  <anchor x="171" y="378" name="_top"/>
+  <anchor x="171" y="700" name="top"/>
+  <outline>
+  </outline>
+</glyph>

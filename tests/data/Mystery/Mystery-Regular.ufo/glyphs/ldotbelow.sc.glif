@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ldotbelow.sc" format="2">
+  <advance width="454"/>
+  <anchor x="239" y="-181" name="bottom"/>
+  <anchor x="130" y="269" name="center"/>
+  <anchor x="155" y="538" name="top"/>
+  <anchor x="179" y="369" name="topright"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="zah-ar.medi.conn-mf-2" format="2">
+  <advance width="612"/>
+  <anchor x="134" y="-46" name="bottom"/>
+  <anchor x="543" y="0" name="entry"/>
+  <anchor x="543" y="0" name="exit"/>
+  <anchor x="134" y="-90" name="mark_bottom"/>
+  <anchor x="366" y="590" name="mark_top"/>
+  <anchor x="366" y="600" name="top"/>
+  <anchor x="393" y="432" name="topthreedots"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="psiliperispomeni.ui" format="2">
+  <advance width="373"/>
+  <anchor x="214" y="700" name="_tonos"/>
+  <anchor x="136" y="378" name="_top"/>
+  <anchor x="136" y="882" name="top"/>
+  <outline>
+  </outline>
+</glyph>

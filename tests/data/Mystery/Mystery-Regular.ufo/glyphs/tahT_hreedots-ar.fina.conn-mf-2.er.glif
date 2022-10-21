@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tahThreedots-ar.fina.conn-mf-2.er" format="2">
+  <advance width="1296"/>
+  <anchor x="183" y="-46" name="bottom"/>
+  <anchor x="591" y="0" name="entry"/>
+  <anchor x="591" y="0" name="exit"/>
+  <anchor x="183" y="-90" name="mark_bottom"/>
+  <anchor x="414" y="590" name="mark_top"/>
+  <anchor x="414" y="433" name="top"/>
+  <anchor x="433" y="832" name="topthreedots"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>anchor</key>
+          <string>topthreedots</string>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>threedotsupabove-ar</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>

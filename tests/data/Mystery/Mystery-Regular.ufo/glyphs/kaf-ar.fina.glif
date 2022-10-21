@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="kaf-ar.fina" format="2">
+  <advance width="842"/>
+  <unicode hex="FEDA"/>
+  <anchor x="370" y="-58" name="bottom"/>
+  <anchor x="370" y="-90" name="mark_bottom"/>
+  <anchor x="361" y="678" name="mark_top"/>
+  <anchor x="361" y="618" name="top"/>
+  <outline>
+  </outline>
+</glyph>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="seenFourdotsabove-ar.fina.conn-mf-2.er" format="2">
+  <advance width="1825"/>
+  <anchor x="755" y="-58" name="bottom"/>
+  <anchor x="755" y="-90" name="mark_bottom"/>
+  <anchor x="761" y="590" name="mark_top"/>
+  <anchor x="761" y="731" name="top"/>
+  <outline>
+  </outline>
+</glyph>

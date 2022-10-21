@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="sdotaccent.sc" format="2">
+  <advance width="480"/>
+  <anchor x="224" y="2" name="bottom"/>
+  <anchor x="243" y="722" name="top"/>
+  <anchor x="425" y="539" name="topright"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ComponentInfo</key>
+      <array>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>0</integer>
+          <key>name</key>
+          <string>s.sc</string>
+        </dict>
+        <dict>
+          <key>alignment</key>
+          <integer>-1</integer>
+          <key>index</key>
+          <integer>1</integer>
+          <key>name</key>
+          <string>dotaccentcomb</string>
+        </dict>
+      </array>
+    </dict>
+  </lib>
+</glyph>
