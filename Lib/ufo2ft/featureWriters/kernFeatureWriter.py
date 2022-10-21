@@ -35,6 +35,7 @@ DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | {"Khmr", "Mymr"} | set(USE_SCRIPTS)
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
+COMMON_SCRIPTS_SET = {COMMON_SCRIPT}
 
 
 def unicodeBidiType(uv: int) -> Literal["R"] | Literal["L"] | None:
@@ -142,91 +143,58 @@ class KerningPair:
         """Split a potentially mixed-script pair into pairs that make sense based
         on the dominant script, and yield each combination with its dominant script."""
 
-        # First, partition the pair by their assigned scripts
-        allFirstScripts: dict[tuple[str, ...], list[str]] = {}
-        allSecondScripts: dict[tuple[str, ...], list[str]] = {}
+        # First, partition the pair by their assigned scripts. Glyphs can have
+        # multiple scripts assigned to them (legitimately, e.g. U+0951
+        # DEVANAGARI STRESS SIGN UDATTA, or for random reasons like having both
+        # `sub h by h.sc` and `sub Etaprosgegrammeni by h.sc;`). We duplicate
+        # the glyph name into each script bucket because each script gets its
+        # own lookup and group membership is exclusive per lookup.
+        side1Scripts: dict[str, list[str]] = {}
+        side2Scripts: dict[str, list[str]] = {}
         for glyph in self.firstGlyphs:
-            if glyph not in glyphScripts:
-                glyphScripts[glyph] = {COMMON_SCRIPT}
-            allFirstScripts.setdefault(tuple(glyphScripts[glyph]), []).append(glyph)
+            for script in glyphScripts.get(glyph, COMMON_SCRIPTS_SET):
+                side1Scripts.setdefault(script, []).append(glyph)
         for glyph in self.secondGlyphs:
-            if glyph not in glyphScripts:
-                glyphScripts[glyph] = {COMMON_SCRIPT}
-            allSecondScripts.setdefault(tuple(glyphScripts[glyph]), []).append(glyph)
+            for script in glyphScripts.get(glyph, COMMON_SCRIPTS_SET):
+                side2Scripts.setdefault(script, []).append(glyph)
 
         # Super common case: both sides are of the same, one script. Nothing to do, emit
         # self as is.
-        if (
-            len(allFirstScripts.keys()) == 1
-            and allFirstScripts.keys() == allSecondScripts.keys()
-        ):
-            for script in list(allFirstScripts.keys())[0]:
-                yield script, self
+        if len(side1Scripts.keys()) == 1 and side1Scripts.keys() == side2Scripts.keys():
+            (onlyScript,) = side1Scripts.keys()
+            yield onlyScript, self
             return
 
         # Now let's go through the script combinations
-        for firstScripts, secondScripts in itertools.product(
-            allFirstScripts.keys(), allSecondScripts.keys()
+        for firstScript, secondScript in itertools.product(
+            side1Scripts.keys(), side2Scripts.keys()
         ):
             localPair = KerningPair(
-                sorted(allFirstScripts[firstScripts]),
-                sorted(allSecondScripts[secondScripts]),
+                sorted(side1Scripts[firstScript]),
+                sorted(side2Scripts[secondScript]),
                 self.value,
                 scripts=self.scripts,
                 directions=self.directions,
                 bidiTypes=self.bidiTypes,
             )
             # Handle very obvious common cases: one script, same on both sides
-            if (
-                len(firstScripts) == 1
-                and len(secondScripts) == 1
-                and firstScripts == secondScripts
-            ):
-                localPair.scripts = {firstScripts[0]}
-                yield firstScripts[0], localPair
+            if firstScript == secondScript:
+                localPair.scripts = {firstScript}
+                yield firstScript, localPair
             # First is single script, second is common
-            elif len(firstScripts) == 1 and set(secondScripts).issubset(DFLT_SCRIPTS):
-                localPair.scripts = {firstScripts[0]}
-                yield firstScripts[0], localPair
+            elif secondScript in DFLT_SCRIPTS:
+                localPair.scripts = {firstScript}
+                yield firstScript, localPair
             # First is common, second is single script
-            elif set(firstScripts).issubset(DFLT_SCRIPTS) and len(secondScripts) == 1:
-                localPair.scripts = {secondScripts[0]}
-                yield secondScripts[0], localPair
+            elif firstScript in DFLT_SCRIPTS:
+                localPair.scripts = {secondScript}
+                yield secondScript, localPair
             # One script and it's different on both sides and it's not common
-            elif len(firstScripts) == 1 and len(secondScripts) == 1:
+            else:
                 logger = ".".join([self.__class__.__module__, self.__class__.__name__])
                 logging.getLogger(logger).info(
                     "Mixed script kerning pair %s ignored" % localPair
                 )
-                pass
-            else:
-                # At this point, we have a pair which has different sets of
-                # scripts on each side, and we have to find commonalities.
-                # For example, the pair
-                #   [A A-cy] {Latn, Cyrl}  --  [T Te-cy Tau] {Latn, Cyrl, Grek}
-                # must be split into
-                #   A -- T
-                #   A-cy -- Te-cy
-                # and the Tau ignored.
-                commonScripts = set(firstScripts) & set(secondScripts)
-                commonFirstGlyphs = set()
-                commonSecondGlyphs = set()
-                for scripts, glyphs in allFirstScripts.items():
-                    if commonScripts.issubset(set(scripts)):
-                        commonFirstGlyphs |= set(glyphs)
-                for scripts, glyphs in allSecondScripts.items():
-                    if commonScripts.issubset(set(scripts)):
-                        commonSecondGlyphs |= set(glyphs)
-                for common in commonScripts:
-                    localPair = KerningPair(
-                        commonFirstGlyphs,
-                        commonSecondGlyphs,
-                        self.value,
-                        directions=self.directions,
-                        bidiTypes=self.bidiTypes,
-                        scripts={common},
-                    )
-                    yield common, localPair
 
     @property
     def firstIsClass(self) -> bool:
