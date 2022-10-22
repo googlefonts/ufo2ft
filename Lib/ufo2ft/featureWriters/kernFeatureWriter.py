@@ -82,10 +82,7 @@ class KerningPair:
         elif isinstance(side1, (ast.GlyphClass, ast.GlyphClassName)):
             self.side1 = side1
         elif isinstance(side1, (list, set)):
-            if len(side1) == 1:
-                self.side1 = ast.GlyphName(list(side1)[0])
-            else:
-                self.side1 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side1)])
+            self.side1 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side1)])
         else:
             raise AssertionError(side1)
 
@@ -97,10 +94,7 @@ class KerningPair:
         elif isinstance(side2, (ast.GlyphClass, ast.GlyphClassName)):
             self.side2 = side2
         elif isinstance(side2, (list, set)):
-            if len(side2) == 1:
-                self.side2 = ast.GlyphName(list(side2)[0])
-            else:
-                self.side2 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side2)])
+            self.side2 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side2)])
         else:
             raise AssertionError(side2)
 
@@ -166,17 +160,27 @@ class KerningPair:
             return
 
         # Now let's go through the script combinations
-        for firstScript, secondScript in itertools.product(
-            side1Scripts.keys(), side2Scripts.keys()
-        ):
+        for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
+            # Preserve the type (glyph or class) of each side.
+            if self.firstIsClass:
+                localSide1: str | list[str] = sorted(side1Scripts[firstScript])
+            else:
+                assert len(side1Scripts[firstScript]) == 1
+                localSide1 = side1Scripts[firstScript][0]
+            if self.secondIsClass:
+                localSide2: str | list[str] = sorted(side2Scripts[secondScript])
+            else:
+                assert len(side2Scripts[secondScript]) == 1
+                localSide2 = side2Scripts[secondScript][0]
             localPair = KerningPair(
-                sorted(side1Scripts[firstScript]),
-                sorted(side2Scripts[secondScript]),
+                localSide1,
+                localSide2,
                 self.value,
                 scripts=self.scripts,
                 directions=self.directions,
                 bidiTypes=self.bidiTypes,
             )
+
             # Handle very obvious common cases: one script, same on both sides
             if firstScript == secondScript:
                 localPair.scripts = {firstScript}
