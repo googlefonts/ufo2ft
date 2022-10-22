@@ -1,4 +1,3 @@
-import imp
 from typing import Any
 
 import py
