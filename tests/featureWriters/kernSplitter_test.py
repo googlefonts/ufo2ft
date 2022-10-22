@@ -1,3 +1,4 @@
+import pprint
 from typing import Any
 
 import py
@@ -6,10 +7,12 @@ from fontTools.designspaceLib import DesignSpaceDocument
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters.kernFeatureWriter import (
     KernFeatureWriter,
-    KerningPair,
     script_extensions_for_codepoint,
 )
-from ufo2ft.featureWriters.kernSplitter import getAndSplitKerningData
+from ufo2ft.featureWriters.kernSplitter import (
+    get_and_split_kerning_data,
+    getAndSplitKerningData,
+)
 from ufo2ft.util import classifyGlyphs
 
 
@@ -41,10 +44,32 @@ def test_splitting_kerning_data(datadir: py.path.local, FontClass: Any) -> None:
     kern_data = getAndSplitKerningData(
         kerning, side1Classes, side2Classes, glyphSet, glyphScripts
     )
-    import pprint
 
     with open("kerndata.txt", "w") as f:
         pprint.pprint(kern_data, stream=f)
+
+
+def test_split_kerning_groups(datadir: py.path.local, FontClass: Any) -> None:
+    testdata_dir = datadir.join("Mystery")
+    ufo = FontClass(testdata_dir.join("Mystery-Regular.ufo"))
+
+    kern_writer = KernFeatureWriter()
+    feaFile = parseLayoutFeatures(ufo)
+    kern_writer.setContext(ufo, feaFile)
+    cmap = kern_writer.makeUnicodeToGlyphNameMapping()
+    gsub = kern_writer.compileGSUB()
+    scriptGlyphs = classifyGlyphs(script_extensions_for_codepoint, cmap, gsub)
+    glyphScripts: dict[str, set[str]] = {}
+    for script, glyphs in scriptGlyphs.items():
+        for g in glyphs:
+            glyphScripts.setdefault(g, set()).add(script)
+
+    pairs_by_script = get_and_split_kerning_data(
+        ufo.kerning, ufo.groups, ufo.keys(), glyphScripts
+    )
+
+    with open("splitgroups.txt", "w") as f:
+        pprint.pprint(pairs_by_script, stream=f)
 
 
 def test_weird_split() -> None:
@@ -213,13 +238,10 @@ def test_weird_split() -> None:
         "Vtilde": {"Latn"},
         "yeru-cy.sc": {"Cyrl"},
     }
+    kerning = {("public.kern1.V", "public.kern2.H.sc"): -20}
 
-    print()
-    pair = KerningPair(groups["public.kern1.V"], groups["public.kern2.H.sc"], -20)
-    print(pair)
-    for script, split_pair in pair.partitionByScript(glyphScripts):
-        print(script, split_pair)
-
-    # from pprint import pprint
-
-    # pprint(kern_data)
+    pairs_by_script = get_and_split_kerning_data(
+        kerning, groups, glyphScripts.keys(), glyphScripts
+    )
+    with open("test.txt", "w") as f:
+        pprint.pprint(pairs_by_script, stream=f)
