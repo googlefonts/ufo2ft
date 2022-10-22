@@ -16,6 +16,7 @@ def getAndSplitKerningData(
     glyphSet: set[str],
     glyphScripts: dict[str, set[str]],
 ) -> dict[str, list[KerningPair]]:
+    all_pairs: list[KerningPair] = []
     kerning_per_script: dict[str, list[KerningPair]] = {}
     for (side1, side2), value in kerning.items():
         firstIsClass, secondIsClass = (side1 in side1Classes, side2 in side2Classes)
@@ -33,9 +34,22 @@ def getAndSplitKerningData(
             side2 = side2Classes[side2]
 
         pair = KerningPair(side1, side2, value)
+        all_pairs.append(pair)
         # Split pairs into per-script buckets.
         for script, split_pair in pair.partitionByScript(glyphScripts):
             kerning_per_script.setdefault(script, []).append(split_pair)
+
+    # Sanity check before splitting. Remove for production.
+    try:
+        ensure_unique_group_membership(all_pairs)
+    except Exception as e:
+        raise Exception(f"Before splitting: {e}")
+    # Sanity check after splitting. Remove for production.
+    for script, pairs in kerning_per_script.items():
+        try:
+            ensure_unique_group_membership(pairs)
+        except Exception as e:
+            raise Exception(f"In {script}: {e}")
 
     # Ensure that kern1 classes in class-to-class pairs are disjoint after
     # splitting, to ensure that subtable coverage (kern1 coverage) within a
@@ -76,6 +90,13 @@ def getAndSplitKerningData(
 
         pairs[:] = new_pairs
 
+    # Sanity check after disjointing. Remove for production.
+    for script, pairs in kerning_per_script.items():
+        try:
+            ensure_unique_group_membership(pairs)
+        except Exception as e:
+            raise Exception(f"In {script}: {e}")
+
     # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
     # class, class to glyph, and finally class to class. This makes "kerning
     # exceptions" work, where more specific glyph pair values override less
@@ -84,3 +105,34 @@ def getAndSplitKerningData(
         pairs.sort()
 
     return kerning_per_script
+
+
+def ensure_unique_group_membership(pairs: list[KerningPair]) -> None:
+    """Raises an exception when a glyph is found to belong to multiple groups per
+    side.
+
+    Group memebership must be exclusive per side per lookup (script bucket).
+    """
+
+    kern1_membership: dict[str, set[str]] = {}
+    kern2_membership: dict[str, set[str]] = {}
+
+    for pair in pairs:
+        if pair.firstIsClass:
+            kern1 = {name.glyph for name in pair.side1.glyphSet()}
+            for name in kern1:
+                if name not in kern1_membership:
+                    kern1_membership[name] = kern1
+                elif (membership := kern1_membership[name]) != kern1:
+                    raise Exception(
+                        f"Glyph {name} in multiple kern1 groups, originally in {membership} but now also in {kern1}"
+                    )
+        if pair.secondIsClass:
+            kern2 = {name.glyph for name in pair.side2.glyphSet()}
+            for name in kern2:
+                if name not in kern2_membership:
+                    kern2_membership[name] = kern2
+                elif (membership := kern2_membership[name]) != kern2:
+                    raise Exception(
+                        f"Glyph {name} in multiple kern2 groups, originally in {membership} but now also in {kern2}"
+                    )
