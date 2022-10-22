@@ -271,6 +271,21 @@ class KernFeatureWriter(BaseFeatureWriter):
         feaScripts = getScriptLanguageSystems(feaFile)
         ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaScripts)
         ctx.knownScripts = feaScripts.keys()
+
+        cmap = self.makeUnicodeToGlyphNameMapping()
+        gsub = self.compileGSUB()
+        dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
+        self._intersectPairs("directions", dirGlyphs)
+        scriptGlyphs = classifyGlyphs(script_extensions_for_codepoint, cmap, gsub)
+        self._intersectPairs("scripts", scriptGlyphs)
+        bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
+        self._intersectPairs("bidiTypes", bidiGlyphs)
+        glyphScripts = {}
+        for script, glyphs in scriptGlyphs.items():
+            for g in glyphs:
+                glyphScripts.setdefault(g, set()).add(script)
+        ctx.glyphScripts = glyphScripts
+
         return ctx
 
     def shouldContinue(self):
@@ -465,28 +480,12 @@ class KernFeatureWriter(BaseFeatureWriter):
         )
 
     def _makeKerningLookups(self):
-        marks = self.context.gdefClasses.mark
-        lookups = {}
-        cmap = self.makeUnicodeToGlyphNameMapping()
-        gsub = self.compileGSUB()
-        dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
-        self._intersectPairs("directions", dirGlyphs)
-
-        scriptGlyphs = classifyGlyphs(script_extensions_for_codepoint, cmap, gsub)
-        self._intersectPairs("scripts", scriptGlyphs)
-        bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
-        self._intersectPairs("bidiTypes", bidiGlyphs)
+        lookups: dict[str, dict[str, ast.LookupBlock]] = {}
+        glyphScripts = self.context.glyphScripts
         pairs = self.context.kerning.pairs
-
-        glyphScripts = {}
-        for script, glyphs in scriptGlyphs.items():
-            for g in glyphs:
-                glyphScripts.setdefault(g, set()).add(script)
-
         if self.options.ignoreMarks:
-            basePairs, markPairs = self._splitBaseAndMarkPairs(
-                self.context.kerning.pairs, marks
-            )
+            marks = self.context.gdefClasses.mark
+            basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
             if basePairs:
                 self._makeSplitScriptKernLookups(lookups, basePairs, glyphScripts)
             if markPairs:
