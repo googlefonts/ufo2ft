@@ -468,17 +468,6 @@ class KernFeatureWriter(BaseFeatureWriter):
             enumerated=enumerated,
         )
 
-    def _makeKerningLookup(self, name, ignoreMarks=True):
-        lookup = ast.LookupBlock(name)
-        if ignoreMarks and self.options.ignoreMarks:
-            lookup.statements.append(makeLookupFlag("IgnoreMarks"))
-        return lookup
-
-    def _addPairToLookup(self, lookup, pair, rtl=False):
-        lookup.statements.append(
-            self._makePairPosRule(pair, rtl=rtl, quantization=self.options.quantization)
-        )
-
     def _makeKerningLookups(self):
         lookups: dict[str, dict[str, ast.LookupBlock]] = {}
         glyphScripts = self.context.glyphScripts
@@ -511,18 +500,22 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makeSplitScriptKernLookups(
         self, lookups, pairs, glyphScripts, ignoreMarks=True, suffix=""
     ):
+        quantization = self.options.quantization
         for pair in pairs:
             for script, splitpair in pair.partitionByScript(glyphScripts):
                 key = "kern_" + script + suffix
                 script_lookups = lookups.setdefault(script, {})
                 lookup = script_lookups.get(key)
                 if not lookup:
-                    lookup = self._makeKerningLookup(
-                        key.replace(COMMON_SCRIPT, "Common"),  # For neatness
-                        ignoreMarks=ignoreMarks,
-                    )
+                    # For neatness:
+                    lookup_name = key.replace(COMMON_SCRIPT, "Common")
+                    lookup = ast.LookupBlock(lookup_name)
+                    if ignoreMarks:
+                        lookup.statements.append(makeLookupFlag("IgnoreMarks"))
                     script_lookups[key] = lookup
-                self._addPairToLookup(lookup, splitpair, rtl="RTL" in pair.directions)
+                is_rtl = "RTL" in pair.directions
+                rule = self._makePairPosRule(splitpair, is_rtl, quantization)
+                lookup.statements.append(rule)
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
