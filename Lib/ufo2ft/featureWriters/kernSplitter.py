@@ -9,7 +9,8 @@ from typing import Iterator, Literal, Mapping
 from fontTools import unicodedata
 from fontTools.misc.classifyTools import classify
 
-from ufo2ft.util import DFLT_SCRIPTS
+from ufo2ft.util import DFLT_SCRIPTS, quantize
+from .ast import addLookupReferences
 
 from .ast import ast
 from .kernFeatureWriter import (
@@ -202,6 +203,18 @@ class Pair:
     def second_is_class(self) -> bool:
         return isinstance(self.side2, set)
 
+    @property
+    def glyphs(self) -> Iterator[str]:
+        # Use isinstance instead of our properties because type checkers.
+        if isinstance(self.side1, set):
+            yield from self.side1
+        else:
+            yield self.side1
+        if isinstance(self.side2, set):
+            yield from self.side2
+        else:
+            yield self.side2
+
 
 # TODO: take marks set and filter into base and marks pairs
 def get_and_split_kerning_data(
@@ -341,15 +354,26 @@ def ensure_unique_group_membership2(pairs: list[Pair]) -> None:
 
 
 def make_lookups(
-    all_pairs: dict[str, list[Pair]]
+    all_pairs: Mapping[str, list[Pair]],
+    bidi_types: Mapping[str, set[str]],
+    quantization: int = 1,
 ) -> dict[str, dict[str, ast.LookupBlock]]:
     lookups: dict[str, dict[str, ast.LookupBlock]] = {}
     for script, pairs in all_pairs.items():
         lookup = ast.LookupBlock(f"kern_{script}")
         # if ignoreMarks and self.options.ignoreMarks:
         #     lookup.statements.append(makeLookupFlag("IgnoreMarks"))
+        script_is_rtl = unicodedata.script_horizontal_direction(script) == "RTL"
         for pair in pairs:
-            lookup.statements.append()
+            # Numbers are always shaped LTR even in RTL scripts:
+            if script_is_rtl:
+                pair_is_rtl = not any(
+                    bidi_types.get(name) == "L" for name in pair.glyphs
+                )
+            else:
+                pair_is_rtl = False
+            rule = make_pair_pos_rule(pair, script_is_rtl and pair_is_rtl, quantization)
+            lookup.statements.append(rule)
         lookups[script] = lookup
     return lookups
 
@@ -359,19 +383,24 @@ def make_pair_pos_rule(
 ) -> ast.PairPosStatement:
     enumerated = pair.first_is_class ^ pair.second_is_class
     value = quantize(pair.value, quantization)
-    if rtl and "L" in pair.bidiTypes:
-        # numbers are always shaped LTR even in RTL scripts
-        rtl = False
     valuerecord = ast.ValueRecord(
         xPlacement=value if rtl else None,
         yPlacement=0 if rtl else None,
         xAdvance=value,
         yAdvance=0 if rtl else None,
     )
+    if pair.first_is_class:
+        glyphs1 = ast.GlyphClass(ast.GlyphName(name) for name in sorted(pair.side1))
+    else:
+        glyphs1 = ast.GlyphName(pair.side1)
+    if pair.second_is_class:
+        glyphs2 = ast.GlyphClass(ast.GlyphName(name) for name in sorted(pair.side2))
+    else:
+        glyphs2 = ast.GlyphName(pair.side2)
     return ast.PairPosStatement(
-        glyphs1=pair.side1,
+        glyphs1=glyphs1,
         valuerecord1=valuerecord,
-        glyphs2=pair.side2,
+        glyphs2=glyphs2,
         valuerecord2=None,
         enumerated=enumerated,
     )
@@ -379,7 +408,7 @@ def make_pair_pos_rule(
 
 def make_feature_blocks(
     features: ast.FeatureFile,
-    lookups: dict[str, dict[str, ast.LookupBlock]],
+    lookups: dict[str, ast.LookupBlock],
     make_kern: bool = True,
     make_dist: bool = True,
 ) -> dict[str, ast.FeatureBlock]:
@@ -396,33 +425,34 @@ def make_feature_blocks(
 
 
 def make_feature_block(
-    features: ast.FeatureFile,
+    block: ast.FeatureBlock,
     name: Literal["kern"] | Literal["dist"],
-    lookups: dict[str, dict[str, ast.LookupBlock]],
+    lookups: dict[str, ast.LookupBlock],
 ) -> ast.FeatureBlock:
     block = ast.FeatureBlock(name)
 
     # Ensure we have kerning for pure common script runs (e.g. ">1")
     if name == "kern" and COMMON_SCRIPT in lookups:
-        ast.addLookupReferences(
-            features, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
-        )
+        addLookupReferences(block, [lookups[COMMON_SCRIPT]], "DFLT", ["dflt"])
 
     if name == "kern":
-        scripts_to_reference = lookups.keys() - DIST_ENABLED_SCRIPTS
+        scripts_to_reference = lookups.keys() - DIST_ENABLED_SCRIPTS - DFLT_SCRIPTS
     else:
-        scripts_to_reference = DIST_ENABLED_SCRIPTS.intersection(lookups.keys())
-    lookups_for_this_script: list[ast.LookupBlock] = []
+        scripts_to_reference = (
+            DIST_ENABLED_SCRIPTS.intersection(lookups.keys()) - DFLT_SCRIPTS
+        )
     for script in scripts_to_reference:
-        ot_tag = unicodedata.ot_tags_from_script(script)
-        if features.statements:
-            features.statements.append(ast.Comment(""))
+        lookups_for_this_script: list[ast.LookupBlock] = []
+        ot_tags = unicodedata.ot_tags_from_script(script)
+        if block.statements:
+            block.statements.append(ast.Comment(""))
         # We have something for this script. First add the default
         # lookups, then the script-specific ones
         for dflt_script in DFLT_SCRIPTS:
             if dflt_script in lookups:
-                lookups_for_this_script.extend(lookups[dflt_script].values())
-        lookups_for_this_script.extend(lookups[script].values())
-        ast.addLookupReferences(features, lookups_for_this_script, ot_tag, ["dflt"])
+                lookups_for_this_script.append(lookups[dflt_script])
+        lookups_for_this_script.append(lookups[script])
+        for ot_tag in ot_tags:
+            addLookupReferences(block, lookups_for_this_script, ot_tag, ["dflt"])
 
     return block

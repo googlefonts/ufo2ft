@@ -8,10 +8,13 @@ from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters.kernFeatureWriter import (
     KernFeatureWriter,
     script_extensions_for_codepoint,
+    unicodeBidiType,
 )
 from ufo2ft.featureWriters.kernSplitter import (
     get_and_split_kerning_data,
     getAndSplitKerningData,
+    make_feature_blocks,
+    make_lookups,
 )
 from ufo2ft.util import classifyGlyphs
 
@@ -51,6 +54,7 @@ def test_splitting_kerning_data(datadir: py.path.local, FontClass: Any) -> None:
 
 def test_split_kerning_groups(datadir: py.path.local, FontClass: Any) -> None:
     testdata_dir = datadir.join("Mystery")
+    ds = DesignSpaceDocument.fromfile(testdata_dir.join("Mystery.designspace"))
     ufo = FontClass(testdata_dir.join("Mystery-Regular.ufo"))
 
     kern_writer = KernFeatureWriter()
@@ -63,13 +67,31 @@ def test_split_kerning_groups(datadir: py.path.local, FontClass: Any) -> None:
     for script, glyphs in scriptGlyphs.items():
         for g in glyphs:
             glyphScripts.setdefault(g, set()).add(script)
+    for rule in ds.rules:
+        for source, target in rule.subs:
+            if source in glyphScripts:
+                glyphScripts.setdefault(target, set()).update(glyphScripts[source])
+    bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
+    glyphBidis: dict[str, set[str]] = {}
+    for script, glyphs in bidiGlyphs.items():
+        for g in glyphs:
+            glyphBidis.setdefault(g, set()).add(script)
+    for rule in ds.rules:
+        for source, target in rule.subs:
+            if source in glyphBidis:
+                glyphBidis.setdefault(target, set()).update(glyphBidis[source])
 
     pairs_by_script = get_and_split_kerning_data(
         ufo.kerning, ufo.groups, ufo.keys(), glyphScripts
     )
+    lookups = make_lookups(pairs_by_script, glyphBidis, quantization=1)
+    feature_blocks = make_feature_blocks(
+        feaFile, lookups, make_kern=True, make_dist=True
+    )
 
-    with open("splitgroups.txt", "w") as f:
-        pprint.pprint(pairs_by_script, stream=f)
+    with open("debug.fea", "w") as f:
+        for block in feature_blocks.values():
+            f.write(block.asFea())
 
 
 def test_weird_split() -> None:
