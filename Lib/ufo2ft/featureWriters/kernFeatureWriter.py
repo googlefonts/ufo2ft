@@ -132,7 +132,7 @@ class KerningPair:
         return selfTuple < otherTuple
 
     def partitionByScript(
-        self, glyphScripts: dict[str, set[str]]
+        self, glyphScripts: Mapping[str, set[str]]
     ) -> Iterator[tuple[str, KerningPair]]:
         """Split a potentially mixed-script pair into pairs that make sense based
         on the dominant script, and yield each combination with its dominant script."""
