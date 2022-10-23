@@ -188,6 +188,7 @@ class Pair:
         return self_tuple < other_tuple
 
 
+# TODO: take marks set and filter into base and marks pairs
 def get_and_split_kerning_data(
     kerning: Mapping[tuple[str, str], float],
     groups: Mapping[str, list[str]],
@@ -231,6 +232,7 @@ def get_and_split_kerning_data(
     return kerning_per_script
 
 
+# TODO: generate new @class definitions from the split groups in use
 def split_kerning_groups(
     groups: Mapping[str, list[str]], glyph_scripts: Mapping[str, set[str]]
 ) -> tuple[dict[str, set[str]], dict[str, dict[str, set[str]]]]:
@@ -270,14 +272,12 @@ def split_kerning_pair(
         second_scripts = glyph_scripts.get(second, COMMON_SCRIPTS_SET)
 
     for first_script, second_script in itertools.product(first_scripts, second_scripts):
+        split_first: str | set[str] = first
         if first_is_class:
-            split_first: str | set[str] = groups_by_script[first_script][first]
-        else:
-            split_first = first
+            split_first = groups_by_script[first_script][first]
+        split_second: str | set[str] = second
         if second_is_class:
-            split_second: str | set[str] = groups_by_script[second_script][second]
-        else:
-            split_second = second
+            split_second = groups_by_script[second_script][second]
         split_pair = Pair(split_first, split_second, value)
 
         if first_script == second_script:
