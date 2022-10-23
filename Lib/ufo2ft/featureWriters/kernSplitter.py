@@ -1,16 +1,23 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from itertools import groupby
 import itertools
 import logging
-from typing import Iterator, Mapping
+from dataclasses import dataclass
+from itertools import groupby
+from typing import Iterator, Literal, Mapping
 
+from fontTools import unicodedata
 from fontTools.misc.classifyTools import classify
+
 from ufo2ft.util import DFLT_SCRIPTS
 
 from .ast import ast
-from .kernFeatureWriter import COMMON_SCRIPTS_SET, KerningPair
+from .kernFeatureWriter import (
+    COMMON_SCRIPT,
+    COMMON_SCRIPTS_SET,
+    DIST_ENABLED_SCRIPTS,
+    KerningPair,
+)
 
 
 def getAndSplitKerningData(
@@ -160,10 +167,10 @@ class Pair:
             return NotImplemented
 
         self_first_kern1_glyph = (
-            self.side1 if isinstance(self.side1, str) else sorted(self.side1)[0]
+            self.side1 if not self.first_is_class else sorted(self.side1)[0]
         )
         self_first_kern2_glyph = (
-            self.side2 if isinstance(self.side2, str) else sorted(self.side2)[0]
+            self.side2 if not self.second_is_class else sorted(self.side2)[0]
         )
         self_tuple = (
             isinstance(self.side1, set),
@@ -173,10 +180,10 @@ class Pair:
             self.value,
         )
         other_first_kern1_glyph = (
-            other.side1 if isinstance(other.side1, str) else sorted(other.side1)[0]
+            other.side1 if not other.first_is_class else sorted(other.side1)[0]
         )
         other_first_kern2_glyph = (
-            other.side2 if isinstance(other.side2, str) else sorted(other.side2)[0]
+            other.side2 if not other.second_is_class else sorted(other.side2)[0]
         )
         other_tuple = (
             isinstance(other.side1, set),
@@ -186,6 +193,14 @@ class Pair:
             other.value,
         )
         return self_tuple < other_tuple
+
+    @property
+    def first_is_class(self) -> bool:
+        return isinstance(self.side1, set)
+
+    @property
+    def second_is_class(self) -> bool:
+        return isinstance(self.side2, set)
 
 
 # TODO: take marks set and filter into base and marks pairs
@@ -323,3 +338,91 @@ def ensure_unique_group_membership2(pairs: list[Pair]) -> None:
                         f"Glyph {name} in multiple kern2 groups, originally "
                         f"in {membership} but now also in {kern2}"
                     )
+
+
+def make_lookups(
+    all_pairs: dict[str, list[Pair]]
+) -> dict[str, dict[str, ast.LookupBlock]]:
+    lookups: dict[str, dict[str, ast.LookupBlock]] = {}
+    for script, pairs in all_pairs.items():
+        lookup = ast.LookupBlock(f"kern_{script}")
+        # if ignoreMarks and self.options.ignoreMarks:
+        #     lookup.statements.append(makeLookupFlag("IgnoreMarks"))
+        for pair in pairs:
+            lookup.statements.append()
+        lookups[script] = lookup
+    return lookups
+
+
+def make_pair_pos_rule(
+    pair: Pair, rtl: bool = False, quantization: int = 1
+) -> ast.PairPosStatement:
+    enumerated = pair.first_is_class ^ pair.second_is_class
+    value = quantize(pair.value, quantization)
+    if rtl and "L" in pair.bidiTypes:
+        # numbers are always shaped LTR even in RTL scripts
+        rtl = False
+    valuerecord = ast.ValueRecord(
+        xPlacement=value if rtl else None,
+        yPlacement=0 if rtl else None,
+        xAdvance=value,
+        yAdvance=0 if rtl else None,
+    )
+    return ast.PairPosStatement(
+        glyphs1=pair.side1,
+        valuerecord1=valuerecord,
+        glyphs2=pair.side2,
+        valuerecord2=None,
+        enumerated=enumerated,
+    )
+
+
+def make_feature_blocks(
+    features: ast.FeatureFile,
+    lookups: dict[str, dict[str, ast.LookupBlock]],
+    make_kern: bool = True,
+    make_dist: bool = True,
+) -> dict[str, ast.FeatureBlock]:
+    feature_blocks: dict[str, ast.FeatureBlock] = {}
+    if make_kern:
+        kern = make_feature_block(features, "kern", lookups)
+        if kern.statements:
+            feature_blocks["kern"] = kern
+    if make_dist:
+        dist = make_feature_block(features, "dist", lookups)
+        if dist.statements:
+            feature_blocks["dist"] = dist
+    return feature_blocks
+
+
+def make_feature_block(
+    features: ast.FeatureFile,
+    name: Literal["kern"] | Literal["dist"],
+    lookups: dict[str, dict[str, ast.LookupBlock]],
+) -> ast.FeatureBlock:
+    block = ast.FeatureBlock(name)
+
+    # Ensure we have kerning for pure common script runs (e.g. ">1")
+    if name == "kern" and COMMON_SCRIPT in lookups:
+        ast.addLookupReferences(
+            features, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
+        )
+
+    if name == "kern":
+        scripts_to_reference = lookups.keys() - DIST_ENABLED_SCRIPTS
+    else:
+        scripts_to_reference = DIST_ENABLED_SCRIPTS.intersection(lookups.keys())
+    lookups_for_this_script: list[ast.LookupBlock] = []
+    for script in scripts_to_reference:
+        ot_tag = unicodedata.ot_tags_from_script(script)
+        if features.statements:
+            features.statements.append(ast.Comment(""))
+        # We have something for this script. First add the default
+        # lookups, then the script-specific ones
+        for dflt_script in DFLT_SCRIPTS:
+            if dflt_script in lookups:
+                lookups_for_this_script.extend(lookups[dflt_script].values())
+        lookups_for_this_script.extend(lookups[script].values())
+        ast.addLookupReferences(features, lookups_for_this_script, ot_tag, ["dflt"])
+
+    return block
