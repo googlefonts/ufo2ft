@@ -498,8 +498,13 @@ class KernFeatureWriter(BaseFeatureWriter):
         return basePairs, markPairs
 
     def _makeSplitScriptKernLookups(
-        self, lookups, pairs, glyphScripts, ignoreMarks=True, suffix=""
-    ):
+        self,
+        lookups: dict[str, ast.LookupBlock],
+        pairs: list[KerningPair],
+        glyphScripts: Mapping[str, set[str]],
+        ignoreMarks: bool = True,
+        suffix: str = "",
+    ) -> None:
         quantization = self.options.quantization
         for pair in pairs:
             for script, splitpair in pair.partitionByScript(glyphScripts):
