@@ -468,7 +468,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             enumerated=enumerated,
         )
 
-    def _makeKerningLookups(self):
+    def _makeKerningLookups(self) -> dict[str, dict[str, ast.LookupBlock]]:
         lookups: dict[str, dict[str, ast.LookupBlock]] = {}
         glyphScripts = self.context.glyphScripts
         pairs = self.context.kerning.pairs
