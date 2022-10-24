@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from fontTools import unicodedata
 from fontTools.feaLib import ast
+from fontTools.misc.classifyTools import classify
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter
@@ -499,30 +500,47 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def _makeSplitScriptKernLookups(
         self,
-        lookups: dict[str, ast.LookupBlock],
+        lookups: dict[str, dict[str, ast.LookupBlock]],
         pairs: list[KerningPair],
         glyphScripts: Mapping[str, set[str]],
         ignoreMarks: bool = True,
         suffix: str = "",
     ) -> None:
-        quantization = self.options.quantization
+        # Split kerning into per-script buckets, so we can post-process them
+        # before continuing.
+        kerning_per_script: dict[str, list[KerningPair]] = {}
         for pair in pairs:
-            for script, splitpair in pair.partitionByScript(glyphScripts):
-                key = "kern_" + script + suffix
-                script_lookups = lookups.setdefault(script, {})
-                lookup = script_lookups.get(key)
-                if not lookup:
-                    # For neatness:
-                    lookup_name = key.replace(COMMON_SCRIPT, "Common")
-                    lookup = ast.LookupBlock(lookup_name)
-                    if ignoreMarks:
-                        lookup.statements.append(makeLookupFlag("IgnoreMarks"))
-                    script_lookups[key] = lookup
+            for script, split_pair in pair.partitionByScript(glyphScripts):
+                kerning_per_script.setdefault(script, []).append(split_pair)
+
+        make_kern1_disjoint(kerning_per_script)
+
+        # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
+        # class, class to glyph, and finally class to class. This makes "kerning
+        # exceptions" work, where more specific glyph pair values override less
+        # specific class kerning.
+        for script, pairs in kerning_per_script.items():
+            pairs.sort()
+
+        quantization = self.options.quantization
+        for script, pairs in kerning_per_script.items():
+            key = f"kern_{script}{suffix}"
+            script_lookups = lookups.setdefault(script, {})
+            lookup = script_lookups.get(key)
+            if not lookup:
+                # For neatness:
+                lookup_name = key.replace(COMMON_SCRIPT, "Common")
+                lookup = ast.LookupBlock(lookup_name)
+                if ignoreMarks:
+                    lookup.statements.append(makeLookupFlag("IgnoreMarks"))
+                script_lookups[key] = lookup
+            for pair in pairs:
+                # TODO: Derive direction from script and remove .directions attribute?
                 script_is_rtl = "RTL" in pair.directions
                 # Numbers are always shaped LTR even in RTL scripts:
                 pair_is_rtl = "L" not in pair.bidiTypes
                 rtl = script_is_rtl and pair_is_rtl
-                rule = self._makePairPosRule(splitpair, rtl, quantization)
+                rule = self._makePairPosRule(pair, rtl, quantization)
                 lookup.statements.append(rule)
 
     def _makeFeatureBlocks(self, lookups):
@@ -582,3 +600,46 @@ class KernFeatureWriter(BaseFeatureWriter):
 
 def script_extensions_for_codepoint(uv: int) -> set[str]:
     return unicodedata.script_extension(chr(uv))
+
+
+def make_kern1_disjoint(kerning_per_script: dict[str, list[KerningPair]]) -> None:
+    # XXX: Is this even necessary? UFO/Glyphs.app groups are always disjoint per side.
+
+    # Ensure that kern1 classes in class-to-class pairs are disjoint after
+    # splitting, to ensure that subtable coverage (kern1 coverage) within a
+    # lookup is disjoint. Shapers only consider the first subtable to cover a
+    # kern1 class and kerning will be lost in subsequent subtables. See
+    # https://github.com/fonttools/fonttools/issues/2793.
+    for pairs in kerning_per_script.values():
+        new_pairs: list[KerningPair] = []
+
+        pairs_to_split: list[KerningPair] = []
+        kern1_classes: list[list[str]] = []
+        for pair in pairs:
+            # We only care about class-to-class pairs, leave rest as is.
+            if not (pair.firstIsClass and pair.secondIsClass):
+                new_pairs.append(pair)
+                continue
+            kern1_class = [name.glyph for name in pair.side1.glyphSet()]
+            kern1_classes.append(kern1_class)
+            pairs_to_split.append(pair)
+
+        mapping: dict[str, set[str]]
+        _, mapping = classify(kern1_classes)
+        for pair in pairs_to_split:
+            smaller_kern1s = [mapping[name.glyph] for name in pair.side1.glyphSet()]
+            smaller_kern1s.sort()  # groupby expects sorted input.
+            for smaller_kern1, _ in itertools.groupby(smaller_kern1s):
+                assert not isinstance(pair.side2, ast.GlyphName)
+                new_pairs.append(
+                    KerningPair(
+                        smaller_kern1,
+                        pair.side2,
+                        pair.value,
+                        pair.scripts,
+                        pair.directions,
+                        pair.bidiTypes,
+                    )
+                )
+
+        pairs[:] = new_pairs
