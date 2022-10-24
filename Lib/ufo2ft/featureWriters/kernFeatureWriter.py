@@ -272,6 +272,9 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaScripts)
         ctx.knownScripts = feaScripts.keys()
 
+        # TODO: Also include substitution information from Designspace rules to
+        # correctly the scripts of variable substitution glyphs, maybe add
+        # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
         dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
