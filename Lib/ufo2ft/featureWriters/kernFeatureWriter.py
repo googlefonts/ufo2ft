@@ -454,9 +454,6 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makePairPosRule(pair, rtl=False, quantization=1):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
         value = quantize(pair.value, quantization)
-        if rtl and "L" in pair.bidiTypes:
-            # numbers are always shaped LTR even in RTL scripts
-            rtl = False
         valuerecord = ast.ValueRecord(
             xPlacement=value if rtl else None,
             yPlacement=0 if rtl else None,
@@ -521,8 +518,11 @@ class KernFeatureWriter(BaseFeatureWriter):
                     if ignoreMarks:
                         lookup.statements.append(makeLookupFlag("IgnoreMarks"))
                     script_lookups[key] = lookup
-                is_rtl = "RTL" in pair.directions
-                rule = self._makePairPosRule(splitpair, is_rtl, quantization)
+                script_is_rtl = "RTL" in pair.directions
+                # Numbers are always shaped LTR even in RTL scripts:
+                pair_is_rtl = "L" not in pair.bidiTypes
+                rtl = script_is_rtl and pair_is_rtl
+                rule = self._makePairPosRule(splitpair, rtl, quantization)
                 lookup.statements.append(rule)
 
     def _makeFeatureBlocks(self, lookups):
