@@ -14,6 +14,7 @@ from ufo2ft.featureWriters import BaseFeatureWriter
 from ufo2ft.featureWriters.ast import (
     addLookupReferences,
     getScriptLanguageSystems,
+    makeGlyphClassDefinition,
     makeGlyphClassDefinitions,
     makeLookupFlag,
 )
@@ -321,8 +322,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         feaFile = self.context.feaFile
 
         # first add the glyph class definitions
-        side1Classes = self.context.kerning.side1Classes
-        side2Classes = self.context.kerning.side2Classes
+        side1Classes = self.context.kerning.newClass1Defs
+        side2Classes = self.context.kerning.newClass2Defs
         newClassDefs = []
         for classes in (side1Classes, side2Classes):
             newClassDefs.extend([c for _, c in sorted(classes.items())])
@@ -508,11 +509,40 @@ class KernFeatureWriter(BaseFeatureWriter):
     ) -> None:
         # Split kerning into per-script buckets, so we can post-process them
         # before continuing.
+        # newKern1: dict[str, ast.GlyphClassDefinition] = {}
+        newClass1Defs: dict[str, ast.GlyphClassDefinition] = {}
+        newClass2Defs: dict[str, ast.GlyphClassDefinition] = {}
         kerning_per_script: dict[str, list[KerningPair]] = {}
         for pair in pairs:
             for script, split_pair in pair.partitionByScript(glyphScripts):
                 kerning_per_script.setdefault(script, []).append(split_pair)
+                # capture_split_groups(
+                #     pair, split_pair, script, newClass1Defs, newClass2Defs
+                # )
+                if pair.firstIsClass:
+                    assert isinstance(pair.side1, ast.GlyphClassName)
+                    group_name_stem = pair.side1.glyphclass.name.replace("kern1.", "")
+                    new_group_name = f"kern1.{script}.{group_name_stem}"
+                    classDef = makeGlyphClassDefinition(
+                        new_group_name,
+                        sorted(name.glyph for name in split_pair.side1.glyphSet()),
+                    )
+                    split_pair.side1 = ast.GlyphClassName(classDef)
+                    newClass1Defs[new_group_name] = classDef
+                if pair.secondIsClass:
+                    assert isinstance(pair.side2, ast.GlyphClassName)
+                    group_name_stem = pair.side2.glyphclass.name.replace("kern2.", "")
+                    new_group_name = f"kern2.{script}.{group_name_stem}"
+                    classDef = makeGlyphClassDefinition(
+                        new_group_name,
+                        sorted(name.glyph for name in split_pair.side2.glyphSet()),
+                    )
+                    split_pair.side2 = ast.GlyphClassName(classDef)
+                    newClass2Defs[new_group_name] = classDef
+        self.context.kerning.newClass1Defs = newClass1Defs
+        self.context.kerning.newClass2Defs = newClass2Defs
 
+        # XXX: this partly undoes the newClassNDefs work above.
         make_kern1_disjoint(kerning_per_script)
 
         # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
