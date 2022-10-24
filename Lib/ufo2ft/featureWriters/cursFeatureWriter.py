@@ -19,6 +19,8 @@ class CursFeatureWriter(BaseFeatureWriter):
 
     tableTag = "GPOS"
     features = frozenset(["curs"])
+    entry = "entry"
+    exit = "exit"
 
     def _makeCursiveFeature(self):
         cmap = self.makeUnicodeToGlyphNameMapping()
@@ -97,9 +99,9 @@ class CursFeatureWriter(BaseFeatureWriter):
             for anchor in glyph.anchors:
                 if entryAnchor and exitAnchor:
                     break
-                if anchor.name == "entry":
+                if anchor.name == self.entry:
                     entryAnchor = ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y))
-                elif anchor.name == "exit":
+                elif anchor.name == self.exit:
                     exitAnchor = ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y))
 
             # A glyph can have only one of the cursive anchors (e.g. if it
