@@ -7,6 +7,7 @@ from fontTools.designspaceLib import DesignSpaceDocument
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters.kernFeatureWriter import (
     KernFeatureWriter,
+    KerningPair,
     script_extensions_for_codepoint,
     unicodeBidiType,
 )
@@ -267,3 +268,39 @@ def test_weird_split() -> None:
     )
     with open("test.txt", "w") as f:
         pprint.pprint(pairs_by_script, stream=f)
+
+
+def test_weird_split1() -> None:
+    groups = {
+        "public.kern1.first": "a h.sc".split(),
+        "public.kern2.second": "b".split(),
+    }
+    glyphScripts = {
+        "a": {"Latn"},
+        "b": {"Latn"},
+        "h.sc": {"Latn", "Zyyy"},
+    }
+    kerning = {("public.kern1.first", "public.kern2.second"): -20}
+
+    pairs_by_script = get_and_split_kerning_data(
+        kerning, groups, glyphScripts.keys(), glyphScripts
+    )
+    with open("test.txt", "w") as f:
+        pprint.pprint(pairs_by_script, stream=f)
+
+
+def test_weird_split2() -> None:
+    # TODO: impl equality testing for KerningPair
+    pair = KerningPair(["a", "something"], ["b"], 20, scripts={"Latn"})
+    glyphScripts = {
+        "a": {"Latn"},
+        "b": {"Latn"},
+        "something": {"Latn", "Zyyy"},
+    }
+    results = [
+        (script, split_pair)
+        for script, split_pair in pair.partitionByScript(glyphScripts)
+    ]
+    assert results == [
+        ("Latn", KerningPair(["a", "something"], ["b"], 20, scripts={"Latn"}))
+    ]

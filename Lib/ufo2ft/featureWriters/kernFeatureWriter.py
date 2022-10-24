@@ -154,6 +154,33 @@ class KerningPair:
             for script in glyphScripts.get(glyph, COMMON_SCRIPTS_SET):
                 side2Scripts.setdefault(script, []).append(glyph)
 
+        # TODO: check members of either side, Zyyy, if they are part of a
+        # different group and then drop them from Zyyy to ensure that each
+        # lookup gets disjoint groups. I.e. if a glyph has Latn and Zyyy, the
+        # separate Zyyy doesn't matter when we drop a participating pair into
+        # Latn and would actually mess up the invariant of disjoint kern groups.
+        # TODO: MAKE EFFICIENT
+        if COMMON_SCRIPT in side1Scripts:
+            common_glyphs = side1Scripts[COMMON_SCRIPT]
+            for script, members in side1Scripts.items():
+                if script == COMMON_SCRIPT:
+                    continue
+                for name in members:
+                    if name in common_glyphs:
+                        common_glyphs.remove(name)
+            if not side1Scripts[COMMON_SCRIPT]:
+                del side1Scripts[COMMON_SCRIPT]
+        if COMMON_SCRIPT in side2Scripts:
+            common_glyphs = side2Scripts[COMMON_SCRIPT]
+            for script, members in side2Scripts.items():
+                if script == COMMON_SCRIPT:
+                    continue
+                for name in members:
+                    if name in common_glyphs:
+                        common_glyphs.remove(name)
+            if not side2Scripts[COMMON_SCRIPT]:
+                del side2Scripts[COMMON_SCRIPT]
+
         # Super common case: both sides are of the same, one script. Nothing to do, emit
         # self as is.
         if len(side1Scripts.keys()) == 1 and side1Scripts.keys() == side2Scripts.keys():
