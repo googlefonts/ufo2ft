@@ -381,3 +381,41 @@ def test_weird_split7() -> None:
         ("Latn", KerningPair(["a"], ["period"], 20, scripts={"Latn"})),
         ("Odia", KerningPair(["danda"], ["period"], 20, scripts={"Odia"})),
     ]
+
+
+def test_weird_split8() -> None:
+    pairs = [
+        KerningPair(["A-cy", "increment"], "Che-cy", 20, scripts={"Cyrl", "Zyyy"}),
+        KerningPair(["A-cy", "increment"], "backslash", 20, scripts={"Cyrl", "Zyyy"}),
+    ]
+    glyphScripts = {
+        "A-cy": {"Cyrl"},
+        "Che-cy": {"Cyrl"},
+        "increment": {"Zyyy"},
+        "backslash": {"Zyyy"},
+    }
+    results = [
+        (script, split_pair)
+        for pair in pairs
+        for script, split_pair in pair.partitionByScript(glyphScripts)
+    ]
+    results.sort()
+    assert results == [
+        ("Cyrl", KerningPair(["A-cy", "increment"], "Che-cy", 20, scripts={"Cyrl"})),
+        ("Cyrl", KerningPair(["A-cy", "increment"], "backslash", 20, scripts={"Cyrl"})),
+        ("Zyyy", KerningPair(["increment"], "backslash", 20, scripts={"Zyyy"})),
+    ]
+
+
+def test_weird_split9(datadir: py.path.local, FontClass: Any) -> None:
+    testdata_dir = datadir.join("Mystery")
+    ufo = FontClass(testdata_dir.join("Mystery-Regular.ufo"))
+    ufo.kerning = {
+        (f, s): v for (f, s), v in ufo.kerning.items() if f == "public.kern1.A"
+    }
+
+    kern_writer = KernFeatureWriter()
+    feaFile = parseLayoutFeatures(ufo)
+    kern_writer.setContext(ufo, feaFile)
+    _ = kern_writer._makeKerningLookups()
+    kerning_per_script = kern_writer.context.kerning.kerning_per_script
