@@ -154,11 +154,8 @@ class KerningPair:
             for script in glyphScripts.get(glyph, COMMON_SCRIPTS_SET):
                 side2Scripts.setdefault(script, []).append(glyph)
 
-        # TODO: check members of either side, Zyyy, if they are part of a
-        # different group and then drop them from Zyyy to ensure that each
-        # lookup gets disjoint groups. I.e. if a glyph has Latn and Zyyy, the
-        # separate Zyyy doesn't matter when we drop a participating pair into
-        # Latn and would actually mess up the invariant of disjoint kern groups.
+        # TODO: Remove Zyyy stuff only if it part of the same script we're
+        # splitting for, instead of if it's part of any script
         # TODO: MAKE EFFICIENT
         if COMMON_SCRIPT in side1Scripts:
             common_glyphs = side1Scripts[COMMON_SCRIPT]
