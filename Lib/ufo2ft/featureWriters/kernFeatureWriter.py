@@ -133,6 +133,38 @@ class KerningPair:
         )
         return selfTuple < otherTuple
 
+    def __eq__(self, other: KerningPair) -> bool:
+        if other.__class__ is not self.__class__:
+            return False
+
+        return (
+            self.firstIsClass,
+            self.secondIsClass,
+            self.side1.glyph
+            if isinstance(self.side1, ast.GlyphName)
+            else self.side1.glyphSet()[0].glyph,
+            self.side2.glyph
+            if isinstance(self.side2, ast.GlyphName)
+            else self.side2.glyphSet()[0].glyph,
+            self.value,
+            self.scripts,
+            self.directions,
+            self.bidiTypes,
+        ) == (
+            other.firstIsClass,
+            other.secondIsClass,
+            other.side1.glyph
+            if isinstance(other.side1, ast.GlyphName)
+            else other.side1.glyphSet()[0].glyph,
+            other.side2.glyph
+            if isinstance(other.side2, ast.GlyphName)
+            else other.side2.glyphSet()[0].glyph,
+            other.value,
+            other.scripts,
+            other.directions,
+            other.bidiTypes,
+        )
+
     def partitionByScript(
         self, glyphScripts: Mapping[str, set[str]]
     ) -> Iterator[tuple[str, KerningPair]]:
