@@ -177,59 +177,84 @@ class KerningPair:
         # `sub h by h.sc` and `sub Etaprosgegrammeni by h.sc;`). We duplicate
         # the glyph name into each script bucket because each script gets its
         # own lookup and group membership is exclusive per lookup.
-        side1Scripts: dict[str, list[str]] = {}
-        side2Scripts: dict[str, list[str]] = {}
+        side1Scripts: dict[str, set[str]] = {}
+        side2Scripts: dict[str, set[str]] = {}
         for glyph in self.firstGlyphs:
             for script in glyphScripts.get(glyph, COMMON_SCRIPTS_SET):
-                side1Scripts.setdefault(script, []).append(glyph)
+                side1Scripts.setdefault(script, set()).add(glyph)
         for glyph in self.secondGlyphs:
             for script in glyphScripts.get(glyph, COMMON_SCRIPTS_SET):
-                side2Scripts.setdefault(script, []).append(glyph)
+                side2Scripts.setdefault(script, set()).add(glyph)
 
-        # TODO: Remove Zyyy stuff only if it part of the same script we're
-        # splitting for, instead of if it's part of any script
-        # TODO: MAKE EFFICIENT
-        if COMMON_SCRIPT in side1Scripts:
-            common_glyphs = side1Scripts[COMMON_SCRIPT]
-            for script, members in side1Scripts.items():
-                if script == COMMON_SCRIPT:
-                    continue
-                for name in members:
-                    if name in common_glyphs:
-                        common_glyphs.remove(name)
-            if not side1Scripts[COMMON_SCRIPT]:
-                del side1Scripts[COMMON_SCRIPT]
-        if COMMON_SCRIPT in side2Scripts:
-            common_glyphs = side2Scripts[COMMON_SCRIPT]
-            for script, members in side2Scripts.items():
-                if script == COMMON_SCRIPT:
-                    continue
-                for name in members:
-                    if name in common_glyphs:
-                        common_glyphs.remove(name)
-            if not side2Scripts[COMMON_SCRIPT]:
-                del side2Scripts[COMMON_SCRIPT]
+        # 0. UFO and Glyphs.app sources require that kerning groups are disjoint
+        #    per side, which we also assume here.
+        # 1. Kerning groups must be disjoint within each pair positioning lookup
+        #    (specifically for class-to-class subtables, glyph-to-glyph doesn't
+        #    matter here because it has no classes), but can overlap in whatever
+        #    way across all pair positioning lookups.
+        # 2. Implicit scripts like Zyyy and Zinh take on the explicit script of
+        #    the pair (e.g. Latn) and can land in the same lookup as the
+        #    explicit script.
+        #
+        # Example: a Latn,Latn and Latn,Zyyy and Zyyy,Latn pair all end up in
+        # the same Latn lookup and a Zyyy,Zyyy pair ends up in the Zyyy lookup.
+        #
+        # Put all common glyphs into all explicit script buckets that they are
+        # kerned against.
+        #
+        # Example: a pair of `([a, period] [b]: ...)` would have the side1
+        # scripts Latn and Zyyy and side2 script Latn. We add period to the Latn
+        # script bucket on side1, the code below then sees Latn = {a, period} on
+        # side1 and Latn = {b} on side2 and emits that; Zyyy on side1 is ignored
+        # because side2 doesn't have it. Effectively, the pair remains unsplit.
+        #
+        # NOTE: This logic avoids a problem when blindly emitting the product of
+        # the scripts of each side and emitting the split groups of explicit and
+        # implicit script pairings; I.e. if a glyph for some reason has the
+        # scripts Latn and Zyyy associated with it, it is going to be emitted
+        # once as part of the Latn group and once of the Zyyy groups, violating
+        # the disjointness invariant above.
+        for common_script in DFLT_SCRIPTS:
+            if common_script in side1Scripts:
+                common_glyphs = side1Scripts[common_script]
+                for other_script in side2Scripts:  # NOTE: Must look at other side!
+                    side1Scripts.setdefault(other_script, set()).update(common_glyphs)
+            if common_script in side2Scripts:
+                common_glyphs = side2Scripts[common_script]
+                for other_script in side1Scripts:  # NOTE: Must look at other side!
+                    side2Scripts.setdefault(other_script, set()).update(common_glyphs)
 
         # Super common case: both sides are of the same, one script. Nothing to do, emit
         # self as is.
+        # TODO: remove this special casing?
         if len(side1Scripts.keys()) == 1 and side1Scripts.keys() == side2Scripts.keys():
             (onlyScript,) = side1Scripts.keys()
             yield onlyScript, self
             return
 
-        # Now let's go through the script combinations
-        for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
+        # TODO: Do we want to warn the user about dropped mixed split pairs
+        # (e.g. accidental Latn against Grek)? Kerning groups might be set up by
+        # glyph shape rather than script semantics, in which case it is expected
+        # that some entries are going to be dropped. Other users might be
+        # scratching their heads why their specific pair doesn't work? Or this
+        # would be untestable because we just implement shaping rules? The
+        # design application seems like a better place for this kind of check...
+        shared_scripts = side1Scripts.keys() & side2Scripts
+        for script in shared_scripts:
+            firstGlyphs = side1Scripts[script]
+            secondGlyphs = side2Scripts[script]
+
             # Preserve the type (glyph or class) of each side.
             if self.firstIsClass:
-                localSide1: str | list[str] = sorted(side1Scripts[firstScript])
+                localSide1: str | list[str] = sorted(firstGlyphs)
             else:
-                assert len(side1Scripts[firstScript]) == 1
-                localSide1 = side1Scripts[firstScript][0]
+                assert len(firstGlyphs) == 1
+                (localSide1,) = firstGlyphs
             if self.secondIsClass:
-                localSide2: str | list[str] = sorted(side2Scripts[secondScript])
+                localSide2: str | list[str] = sorted(secondGlyphs)
             else:
-                assert len(side2Scripts[secondScript]) == 1
-                localSide2 = side2Scripts[secondScript][0]
+                assert len(secondGlyphs) == 1
+                (localSide2,) = secondGlyphs
             localPair = KerningPair(
                 localSide1,
                 localSide2,
@@ -239,24 +264,8 @@ class KerningPair:
                 bidiTypes=self.bidiTypes,
             )
 
-            # Handle very obvious common cases: one script, same on both sides
-            if firstScript == secondScript:
-                localPair.scripts = {firstScript}
-                yield firstScript, localPair
-            # First is single script, second is common
-            elif secondScript in DFLT_SCRIPTS:
-                localPair.scripts = {firstScript}
-                yield firstScript, localPair
-            # First is common, second is single script
-            elif firstScript in DFLT_SCRIPTS:
-                localPair.scripts = {secondScript}
-                yield secondScript, localPair
-            # One script and it's different on both sides and it's not common
-            else:
-                logger = ".".join([self.__class__.__module__, self.__class__.__name__])
-                logging.getLogger(logger).info(
-                    "Mixed script kerning pair %s ignored" % localPair
-                )
+            localPair.scripts = {script}
+            yield script, localPair
 
     @property
     def firstIsClass(self) -> bool:
@@ -449,6 +458,8 @@ class KernFeatureWriter(BaseFeatureWriter):
             allGlyphs = set(font.keys())
         kerning = font.kerning
 
+        # XXX: stop sorting here, we split later
+
         # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
         # class, class to glyph, and finally class to class. This makes "kerning
         # exceptions" work, where more specific glyph pair values override less
@@ -508,6 +519,8 @@ class KernFeatureWriter(BaseFeatureWriter):
             )
         return scriptGroups
 
+    # TODO: make this a method on KerningPair and do the quantization earlier,
+    # so we can drop the parameter
     @staticmethod
     def _makePairPosRule(pair, rtl=False, quantization=1):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
@@ -715,8 +728,11 @@ def make_kern1_disjoint(kerning_per_script: dict[str, list[KerningPair]]) -> Non
         for pair in pairs_to_split:
             smaller_kern1s = [mapping[name.glyph] for name in pair.side1.glyphSet()]
             smaller_kern1s.sort()  # groupby expects sorted input.
+            aaa = 0
             for smaller_kern1, _ in itertools.groupby(smaller_kern1s):
                 assert not isinstance(pair.side2, ast.GlyphName)
+                assert aaa < 1
+                aaa += 1
                 new_pairs.append(
                     KerningPair(
                         smaller_kern1,
@@ -729,3 +745,45 @@ def make_kern1_disjoint(kerning_per_script: dict[str, list[KerningPair]]) -> Non
                 )
 
         pairs[:] = new_pairs
+
+
+# def reassign_kerning_groups(
+#     kerning_per_script: dict[str, list[KerningPair]]
+# ) -> tuple[ast.GlyphClassDefinition, ast.GlyphClassDefinition]:
+#     kern1_membership: dict[str, set[str]] = {}
+#     kern2_membership: dict[str, set[str]] = {}
+
+#     newClass1Defs = {}
+#     newClass2Defs = {}
+
+#     for script, pairs in kerning_per_script.items():
+#         for pair in pairs:
+#             if pair.firstIsClass:
+#                 kern1 = {name.glyph for name in pair.side1.glyphSet()}
+#                 for name in kern1:
+#                     if name not in kern1_membership:
+#                         kern1_membership[name] = kern1
+#                     elif (membership := kern1_membership[name]) != kern1:
+#                         raise Exception(
+#                             f"Glyph {name} in multiple kern1 groups, originally in {membership} but now also in {kern1}"
+#                         )
+#             if pair.secondIsClass:
+#                 kern2 = {name.glyph for name in pair.side2.glyphSet()}
+#                 for name in kern2:
+#                     if name not in kern2_membership:
+#                         kern2_membership[name] = kern2
+#                     elif (membership := kern2_membership[name]) != kern2:
+#                         raise Exception(
+#                             f"Glyph {name} in multiple kern2 groups, originally in {membership} but now also in {kern2}"
+#                         )
+
+
+# def capture_split_groups(
+#     pair: KerningPair,
+#     split_pair: KerningPair,
+#     script: str,
+#     newClass1Defs: dict[str, ast.GlyphClassDefinition],
+#     newClass2Defs: dict[str, ast.GlyphClassDefinition],
+# ) -> None:
+#     if pair.firstIsClass:
+#         pass

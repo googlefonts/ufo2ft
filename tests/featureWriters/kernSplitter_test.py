@@ -290,7 +290,6 @@ def test_weird_split1() -> None:
 
 
 def test_weird_split2() -> None:
-    # TODO: impl equality testing for KerningPair
     pair = KerningPair(["a", "something"], ["b"], 20, scripts={"Latn"})
     glyphScripts = {
         "a": {"Latn"},
@@ -303,4 +302,82 @@ def test_weird_split2() -> None:
     ]
     assert results == [
         ("Latn", KerningPair(["a", "something"], ["b"], 20, scripts={"Latn"}))
+    ]
+
+
+def test_weird_split3() -> None:
+    pair = KerningPair(["a"], ["parenright"], 20, scripts={"Latn"})
+    glyphScripts = {
+        "a": {"Latn"},
+        "parenright": {"Arab", "Zyyy"},
+    }
+    results = [
+        (script, split_pair)
+        for script, split_pair in pair.partitionByScript(glyphScripts)
+    ]
+    assert results == [
+        ("Latn", KerningPair(["a"], ["parenright"], 20, scripts={"Latn"}))
+    ]
+
+
+def test_weird_split4() -> None:
+    pair = KerningPair(["a"], ["b"], 20, scripts={"Zyyy"})
+    glyphScripts = {
+        "a": {"Zyyy"},
+        "b": {"Zyyy"},
+    }
+    results = [
+        (script, split_pair)
+        for script, split_pair in pair.partitionByScript(glyphScripts)
+    ]
+    assert results == [("Zyyy", KerningPair(["a"], ["b"], 20, scripts={"Zyyy"}))]
+
+
+def test_weird_split5() -> None:
+    pair = KerningPair(["a"], ["period"], 20, scripts={"Latn"})
+    glyphScripts = {
+        "a": {"Latn"},
+        "period": {"Zyyy"},
+    }
+    results = [
+        (script, split_pair)
+        for script, split_pair in pair.partitionByScript(glyphScripts)
+    ]
+    assert results == [("Latn", KerningPair(["a"], ["period"], 20, scripts={"Latn"}))]
+
+
+def test_weird_split6() -> None:
+    pair = KerningPair(["period"], ["a"], 20, scripts={"Latn"})
+    glyphScripts = {
+        "a": {"Latn"},
+        "period": {"Zyyy"},
+    }
+    results = [
+        (script, split_pair)
+        for script, split_pair in pair.partitionByScript(glyphScripts)
+    ]
+    assert results == [("Latn", KerningPair(["period"], ["a"], 20, scripts={"Latn"}))]
+
+
+def test_weird_split7() -> None:
+    pair = KerningPair(
+        ["a", "delta", "danda"], ["a-cy", "arabic", "period"], 20, scripts={"Latn"}
+    )
+    glyphScripts = {
+        "a": {"Latn"},
+        "delta": {"Grek"},
+        "danda": {"Odia"},
+        "a-cy": {"Cyrl"},
+        "arabic": {"Arab"},
+        "period": {"Zyyy"},
+    }
+    results = [
+        (script, split_pair)
+        for script, split_pair in pair.partitionByScript(glyphScripts)
+    ]
+    results.sort(key=lambda k: k[0])
+    assert results == [
+        ("Grek", KerningPair(["delta"], ["period"], 20, scripts={"Grek"})),
+        ("Latn", KerningPair(["a"], ["period"], 20, scripts={"Latn"})),
+        ("Odia", KerningPair(["danda"], ["period"], 20, scripts={"Odia"})),
     ]
