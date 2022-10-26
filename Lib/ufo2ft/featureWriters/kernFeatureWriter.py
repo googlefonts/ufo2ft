@@ -360,8 +360,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         feaFile = self.context.feaFile
 
         # first add the glyph class definitions
-        side1Classes = self.context.kerning.newClass1Defs
-        side2Classes = self.context.kerning.newClass2Defs
+        side1Classes = self.context.kerning.side1Classes
+        side2Classes = self.context.kerning.side2Classes
         newClassDefs = []
         for classes in (side1Classes, side2Classes):
             newClassDefs.extend([c for _, c in sorted(classes.items())])
@@ -549,58 +549,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         ignoreMarks: bool = True,
         suffix: str = "",
     ) -> None:
-        # Split kerning into per-script buckets, so we can post-process them
-        # before continuing.
-        # newKern1: dict[str, ast.GlyphClassDefinition] = {}
-        newClass1Defs: dict[str, ast.GlyphClassDefinition] = {}
-        newClass2Defs: dict[str, ast.GlyphClassDefinition] = {}
-        kerning_per_script: dict[str, list[KerningPair]] = {}
-        for pair in pairs:
-            for script, split_pair in pair.partitionByScript(glyphScripts):
-                kerning_per_script.setdefault(script, []).append(split_pair)
-                # capture_split_groups(
-                #     pair, split_pair, script, newClass1Defs, newClass2Defs
-                # )
-                if pair.firstIsClass:
-                    assert isinstance(pair.side1, ast.GlyphClassName)
-                    group_name_stem = pair.side1.glyphclass.name.replace("kern1.", "")
-                    new_group_name = f"kern1.{script}.{group_name_stem}"
-                    classDef = makeGlyphClassDefinition(
-                        new_group_name,
-                        sorted(name.glyph for name in split_pair.side1.glyphSet()),
-                    )
-                    split_pair.side1 = ast.GlyphClassName(classDef)
-                    newClass1Defs[new_group_name] = classDef
-                if pair.secondIsClass:
-                    assert isinstance(pair.side2, ast.GlyphClassName)
-                    group_name_stem = pair.side2.glyphclass.name.replace("kern2.", "")
-                    new_group_name = f"kern2.{script}.{group_name_stem}"
-                    classDef = makeGlyphClassDefinition(
-                        new_group_name,
-                        sorted(name.glyph for name in split_pair.side2.glyphSet()),
-                    )
-                    split_pair.side2 = ast.GlyphClassName(classDef)
-                    newClass2Defs[new_group_name] = classDef
-        self.context.kerning.newClass1Defs = newClass1Defs
-        self.context.kerning.newClass2Defs = newClass2Defs
-
-        make_kerning_classes_disjoint(kerning_per_script)
-
-        # TODO: Remove for production.
-        for script, pairs in kerning_per_script.items():
-            try:
-                ensure_unique_group_membership(pairs)
-            except Exception as e:
-                raise Exception(f"After disjointment, in {script}: {e}")
-
-        # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
-        # class, class to glyph, and finally class to class. This makes "kerning
-        # exceptions" work, where more specific glyph pair values override less
-        # specific class kerning.
-        for script, pairs in kerning_per_script.items():
-            pairs.sort()
-
         quantization = self.options.quantization
+        kerning_per_script = split_kerning(pairs, glyphScripts)
         for script, pairs in kerning_per_script.items():
             key = f"kern_{script}{suffix}"
             script_lookups = lookups.setdefault(script, {})
@@ -680,41 +630,66 @@ def script_extensions_for_codepoint(uv: int) -> set[str]:
     return unicodedata.script_extension(chr(uv))
 
 
-def ensure_unique_group_membership(pairs: list[KerningPair]) -> None:
-    """Raises an exception when a glyph is found to belong to multiple groups per
-    side.
-
-    Group membership must be exclusive per side per lookup (script bucket).
-    """
-
-    kern1_membership: dict[str, set[str]] = {}
-    kern2_membership: dict[str, set[str]] = {}
-
+def split_kerning(
+    pairs: list[KerningPair], glyphScripts: Mapping[str, set[str]]
+) -> dict[str, list[KerningPair]]:
+    # Split kerning into per-script buckets, so we can post-process them before
+    # continuing.
+    kerning_per_script: dict[str, list[KerningPair]] = {}
     for pair in pairs:
-        if pair.firstIsClass:
-            kern1 = {name.glyph for name in pair.side1.glyphSet()}
-            for name in kern1:
-                if name not in kern1_membership:
-                    kern1_membership[name] = kern1
-                elif kern1_membership[name] != kern1:
-                    membership = kern1_membership[name]
+        for script, split_pair in pair.partitionByScript(glyphScripts):
+            kerning_per_script.setdefault(script, []).append(split_pair)
+
+    make_kerning_classes_disjoint(kerning_per_script)
+
+    # Sanity checking. TODO: Remove once the splitting algorithm is guaranteed
+    # to produce non-overlapping kerning classes.
+    for script, pairs in kerning_per_script.items():
+        try:
+            ensure_unique_group_membership(pairs)
+        except Exception as e:
+            raise Exception(f"After disjointment, in {script}: {e}")
+
+    # Remove duplicates. TODO: Remove this, too, eventually. Gah!
+    for pairs in kerning_per_script.values():
+        unique_pairs: dict[
+            tuple[tuple[str, ...], tuple[str, ...], float], KerningPair
+        ] = {}
+        for pair in pairs:
+            pair_key = (
+                tuple(pair.firstGlyphs),
+                tuple(pair.secondGlyphs),
+                pair.value,
+            )
+            if pair_key not in unique_pairs:
+                unique_pairs[pair_key] = pair
+            else:
+                known_pair = unique_pairs[pair_key]
+                if (pair.scripts, pair.directions, pair.bidiTypes) != (
+                    known_pair.scripts,
+                    known_pair.directions,
+                    known_pair.bidiTypes,
+                ):
                     raise Exception(
-                        f"Glyph {name} in multiple kern1 groups, originally "
-                        f"in {membership} but now also in {kern1} according "
-                        f"to pair {pair}"
+                        f"Duplicate pair {pair} with different scripts, directions or bidiTypes."
                     )
-        if pair.secondIsClass:
-            kern2 = {name.glyph for name in pair.side2.glyphSet()}
-            for name in kern2:
-                if name not in kern2_membership:
-                    kern2_membership[name] = kern2
-                elif kern2_membership[name] != kern2:
-                    membership = kern2_membership[name]
-                    raise Exception(
-                        f"Glyph {name} in multiple kern2 groups, originally "
-                        f"in {membership} but now also in {kern2} according "
-                        f"to pair {pair}"
-                    )
+        pairs[:] = unique_pairs.values()
+
+    # TODO: Fuse mixed implicit and explicit script groups within lookups back
+    # together if possible or be smart enough to not break them apart in the
+    # first place.
+
+    # TODO: Convert literal glyph classes back into kerning group names, for
+    # debuggability and probably space savings.
+
+    # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
+    # class, class to glyph, and finally class to class. This makes "kerning
+    # exceptions" work, where more specific glyph pair values override less
+    # specific class kerning.
+    for script, pairs in kerning_per_script.items():
+        pairs.sort()
+
+    return kerning_per_script
 
 
 def make_kerning_classes_disjoint(
@@ -735,6 +710,8 @@ def make_kerning_classes_disjoint(
         kern2_classes: list[list[str]] = []
         for pair in pairs:
             # We only care about class-to-class pairs, leave rest as is.
+            # TODO: should we, actually? The kerning sanity checker will check
+            # any group.
             if not (pair.firstIsClass and pair.secondIsClass):
                 new_pairs.append(pair)
                 continue
@@ -787,3 +764,40 @@ def make_kerning_classes_disjoint(
                 )
 
         pairs[:] = new_pairs
+
+
+def ensure_unique_group_membership(pairs: list[KerningPair]) -> None:
+    """Raises an exception when a glyph is found to belong to multiple groups per
+    side.
+
+    Group membership must be exclusive per side per lookup (script bucket).
+    """
+
+    kern1_membership: dict[str, set[str]] = {}
+    kern2_membership: dict[str, set[str]] = {}
+
+    for pair in pairs:
+        if pair.firstIsClass:
+            kern1 = {name.glyph for name in pair.side1.glyphSet()}
+            for name in kern1:
+                if name not in kern1_membership:
+                    kern1_membership[name] = kern1
+                elif kern1_membership[name] != kern1:
+                    membership = kern1_membership[name]
+                    raise Exception(
+                        f"Glyph {name} in multiple kern1 groups, originally "
+                        f"in {membership} but now also in {kern1} according "
+                        f"to pair {pair}"
+                    )
+        if pair.secondIsClass:
+            kern2 = {name.glyph for name in pair.side2.glyphSet()}
+            for name in kern2:
+                if name not in kern2_membership:
+                    kern2_membership[name] = kern2
+                elif kern2_membership[name] != kern2:
+                    membership = kern2_membership[name]
+                    raise Exception(
+                        f"Glyph {name} in multiple kern2 groups, originally "
+                        f"in {membership} but now also in {kern2} according "
+                        f"to pair {pair}"
+                    )
