@@ -174,9 +174,14 @@ class KerningPair:
         # First, partition the pair by their assigned scripts. Glyphs can have
         # multiple scripts assigned to them (legitimately, e.g. U+0951
         # DEVANAGARI STRESS SIGN UDATTA, or for random reasons like having both
-        # `sub h by h.sc` and `sub Etaprosgegrammeni by h.sc;`). We duplicate
-        # the glyph name into each script bucket because each script gets its
-        # own lookup and group membership is exclusive per lookup.
+        # `sub h by h.sc` and `sub Etaprosgegrammeni by h.sc;`). Usually, we
+        # will emit pairs where both sides have the same script and no splitting
+        # is necessary. The only mixed script pairs we emit are implicit (e.g.
+        # Zyyy) against explicit (e.g. Latn) scripts. A glyph can be part of
+        # both for weird reasons, so we could be emitting a glyph as part of a
+        # split implicit and as part of a split explicit group, which would
+        # create unwanted group overlap within the same lookup. This code relies
+        # on a disjointer running as a second pass.
         side1Scripts: dict[str, set[str]] = {}
         side2Scripts: dict[str, set[str]] = {}
         for glyph in self.firstGlyphs:
@@ -186,48 +191,6 @@ class KerningPair:
             for script in glyphScripts.get(glyph, COMMON_SCRIPTS_SET):
                 side2Scripts.setdefault(script, set()).add(glyph)
 
-        # 0. UFO and Glyphs.app sources require that kerning groups are disjoint
-        #    per side, which we also assume here.
-        # 1. Kerning groups must be disjoint within each pair positioning lookup
-        #    (specifically for class-to-class subtables, glyph-to-glyph doesn't
-        #    matter here because it has no classes), but can overlap in whatever
-        #    way across all pair positioning lookups.
-        # 2. Implicit scripts like Zyyy and Zinh take on the explicit script of
-        #    the pair (e.g. Latn) and can land in the same lookup as the
-        #    explicit script.
-        #
-        # Example: a Latn,Latn and Latn,Zyyy and Zyyy,Latn pair all end up in
-        # the same Latn lookup and a Zyyy,Zyyy pair ends up in the Zyyy lookup.
-        #
-        # Put all common glyphs into all explicit script buckets that they are
-        # kerned against.
-        #
-        # Example: a pair of `([a, period] [b]: ...)` would have the side1
-        # scripts Latn and Zyyy and side2 script Latn. We add period to the Latn
-        # script bucket on side1, the code below then sees Latn = {a, period} on
-        # side1 and Latn = {b} on side2 and emits that; Zyyy on side1 is ignored
-        # because side2 doesn't have it. Effectively, the pair remains unsplit.
-        #
-        # NOTE: This logic avoids a problem when blindly emitting the product of
-        # the scripts of each side and emitting the split groups of explicit and
-        # implicit script pairings; I.e. if a glyph for some reason has the
-        # scripts Latn and Zyyy associated with it, it is going to be emitted
-        # once as part of the Latn group and once of the Zyyy groups, violating
-        # the disjointness invariant above.
-
-        # TODO: help, we're generating different script buckets depending on
-        # what's on the other side, so we're undermining our determinism and may
-        # create overlapping kerning groups in the same lookup...
-        for common_script in DFLT_SCRIPTS:
-            if common_script in side1Scripts:
-                common_glyphs = side1Scripts[common_script]
-                for other_script in side2Scripts:  # NOTE: Must look at other side!
-                    side1Scripts.setdefault(other_script, set()).update(common_glyphs)
-            if common_script in side2Scripts:
-                common_glyphs = side2Scripts[common_script]
-                for other_script in side1Scripts:  # NOTE: Must look at other side!
-                    side2Scripts.setdefault(other_script, set()).update(common_glyphs)
-
         # Super common case: both sides are of the same, one script. Nothing to do, emit
         # self as is.
         # TODO: remove this special casing?
@@ -236,29 +199,19 @@ class KerningPair:
             yield onlyScript, self
             return
 
-        # TODO: Do we want to warn the user about dropped mixed split pairs
-        # (e.g. accidental Latn against Grek)? Kerning groups might be set up by
-        # glyph shape rather than script semantics, in which case it is expected
-        # that some entries are going to be dropped. Other users might be
-        # scratching their heads why their specific pair doesn't work? Or this
-        # would be untestable because we just implement shaping rules? The
-        # design application seems like a better place for this kind of check...
-        shared_scripts = side1Scripts.keys() & side2Scripts
-        for script in shared_scripts:
-            firstGlyphs = side1Scripts[script]
-            secondGlyphs = side2Scripts[script]
-
+        # Now let's go through the script combinations
+        for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
             # Preserve the type (glyph or class) of each side.
             if self.firstIsClass:
-                localSide1: str | list[str] = sorted(firstGlyphs)
+                localSide1: str | list[str] = sorted(side1Scripts[firstScript])
             else:
-                assert len(firstGlyphs) == 1
-                (localSide1,) = firstGlyphs
+                assert len(side1Scripts[firstScript]) == 1
+                (localSide1,) = side1Scripts[firstScript]
             if self.secondIsClass:
-                localSide2: str | list[str] = sorted(secondGlyphs)
+                localSide2: str | list[str] = sorted(side2Scripts[secondScript])
             else:
-                assert len(secondGlyphs) == 1
-                (localSide2,) = secondGlyphs
+                assert len(side2Scripts[secondScript]) == 1
+                (localSide2,) = side2Scripts[secondScript]
             localPair = KerningPair(
                 localSide1,
                 localSide2,
@@ -268,8 +221,24 @@ class KerningPair:
                 bidiTypes=self.bidiTypes,
             )
 
-            localPair.scripts = {script}
-            yield script, localPair
+            # Handle very obvious common cases: one script, same on both sides
+            if firstScript == secondScript:
+                localPair.scripts = {firstScript}
+                yield firstScript, localPair
+            # First is single script, second is common
+            elif secondScript in DFLT_SCRIPTS:
+                localPair.scripts = {firstScript}
+                yield firstScript, localPair
+            # First is common, second is single script
+            elif firstScript in DFLT_SCRIPTS:
+                localPair.scripts = {secondScript}
+                yield secondScript, localPair
+            # One script and it's different on both sides and it's not common
+            else:
+                logger = ".".join([self.__class__.__module__, self.__class__.__name__])
+                logging.getLogger(logger).info(
+                    "Mixed script kerning pair %s ignored" % localPair
+                )
 
     @property
     def firstIsClass(self) -> bool:
@@ -615,12 +584,14 @@ class KernFeatureWriter(BaseFeatureWriter):
         self.context.kerning.newClass1Defs = newClass1Defs
         self.context.kerning.newClass2Defs = newClass2Defs
 
+        make_kerning_classes_disjoint(kerning_per_script)
+
         # TODO: Remove for production.
         for script, pairs in kerning_per_script.items():
             try:
                 ensure_unique_group_membership(pairs)
             except Exception as e:
-                raise Exception(f"After kerning group splitting, in {script}: {e}")
+                raise Exception(f"After disjointment, in {script}: {e}")
 
         # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
         # class, class to glyph, and finally class to class. This makes "kerning
@@ -744,3 +715,75 @@ def ensure_unique_group_membership(pairs: list[KerningPair]) -> None:
                         f"in {membership} but now also in {kern2} according "
                         f"to pair {pair}"
                     )
+
+
+def make_kerning_classes_disjoint(
+    kerning_per_script: dict[str, list[KerningPair]]
+) -> None:
+    # Ensure that kern1 and kern2 classes in class-to-class pairs are disjoint
+    # after splitting, to ensure that subtable coverage (kern1 coverage) within
+    # a lookup is disjoint and so is kern2 grouping, to give fontTools no reason
+    # to introduce a subtable break. Shapers also only consider the first
+    # subtable to cover a kern1 class and kerning will be lost in subsequent
+    # subtables. See https://github.com/fonttools/fonttools/issues/2793.
+    for pairs in kerning_per_script.values():
+        new_pairs: list[KerningPair] = []
+
+        pairs_to_split_kern1: list[KerningPair] = []
+        pairs_to_split_kern2: list[KerningPair] = []
+        kern1_classes: list[list[str]] = []
+        kern2_classes: list[list[str]] = []
+        for pair in pairs:
+            # We only care about class-to-class pairs, leave rest as is.
+            if not (pair.firstIsClass and pair.secondIsClass):
+                new_pairs.append(pair)
+                continue
+            kern1_class = [name.glyph for name in pair.side1.glyphSet()]
+            kern1_classes.append(kern1_class)
+            kern2_class = [name.glyph for name in pair.side2.glyphSet()]
+            kern2_classes.append(kern2_class)
+            pairs_to_split_kern1.append(pair)
+
+        mapping_kern1: dict[str, set[str]]
+        _, mapping_kern1 = classify(kern1_classes)
+        for pair in pairs_to_split_kern1:
+            # TODO: Try using frozensets here so we can drop groupby?
+            smaller_kern1s = [
+                mapping_kern1[name.glyph] for name in pair.side1.glyphSet()
+            ]
+            smaller_kern1s.sort()  # groupby expects sorted input.
+            for smaller_kern1, _ in itertools.groupby(smaller_kern1s):
+                assert not isinstance(pair.side2, ast.GlyphName)
+                pairs_to_split_kern2.append(
+                    KerningPair(
+                        smaller_kern1,
+                        pair.side2,
+                        pair.value,
+                        pair.scripts,
+                        pair.directions,
+                        pair.bidiTypes,
+                    )
+                )
+
+        mapping_kern2: dict[str, set[str]]
+        _, mapping_kern2 = classify(kern2_classes)
+        for pair in pairs_to_split_kern2:
+            # TODO: Try using frozensets here so we can drop groupby?
+            smaller_kern2s = [
+                mapping_kern2[name.glyph] for name in pair.side2.glyphSet()
+            ]
+            smaller_kern2s.sort()  # groupby expects sorted input.
+            for smaller_kern2, _ in itertools.groupby(smaller_kern2s):
+                assert not isinstance(pair.side1, ast.GlyphName)
+                new_pairs.append(
+                    KerningPair(
+                        pair.side1,
+                        smaller_kern2,
+                        pair.value,
+                        pair.scripts,
+                        pair.directions,
+                        pair.bidiTypes,
+                    )
+                )
+
+        pairs[:] = new_pairs
