@@ -620,7 +620,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             try:
                 ensure_unique_group_membership(pairs)
             except Exception as e:
-                raise Exception(f"In {script}: {e}")
+                raise Exception(f"After kerning group splitting, in {script}: {e}")
 
         # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
         # class, class to glyph, and finally class to class. This makes "kerning
@@ -729,7 +729,8 @@ def ensure_unique_group_membership(pairs: list[KerningPair]) -> None:
                     membership = kern1_membership[name]
                     raise Exception(
                         f"Glyph {name} in multiple kern1 groups, originally "
-                        f"in {membership} but now also in {kern1}"
+                        f"in {membership} but now also in {kern1} according "
+                        f"to pair {pair}"
                     )
         if pair.secondIsClass:
             kern2 = {name.glyph for name in pair.side2.glyphSet()}
@@ -740,5 +741,6 @@ def ensure_unique_group_membership(pairs: list[KerningPair]) -> None:
                     membership = kern2_membership[name]
                     raise Exception(
                         f"Glyph {name} in multiple kern2 groups, originally "
-                        f"in {membership} but now also in {kern2}"
+                        f"in {membership} but now also in {kern2} according "
+                        f"to pair {pair}"
                     )
