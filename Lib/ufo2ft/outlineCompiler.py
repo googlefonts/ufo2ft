@@ -789,7 +789,6 @@ class BaseOutlineCompiler:
         extents = []
         if mtxTable is not None:
             for glyphName in self.glyphOrder:
-                glyph = self.allGlyphs[glyphName]
                 advance, firstSideBearing = mtxTable[glyphName]
                 advances.append(advance)
                 bounds = self.glyphBoundingBoxes[glyphName]
