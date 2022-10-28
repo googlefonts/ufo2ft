@@ -4,6 +4,7 @@ import re
 from io import BytesIO
 
 from fontTools.ttLib import TTFont
+from fontTools.ttLib.standardGlyphOrder import standardGlyphOrder
 
 from ufo2ft.constants import (
     GLYPHS_DONT_USE_PRODUCTION_NAMES,
@@ -41,13 +42,7 @@ class PostProcessor:
         self.ufo = ufo
         self.glyphSet = glyphSet if glyphSet is not None else ufo
 
-        # FIXME: Stop reloading all incoming fonts here. It ensures that 1) we
-        # get the final binary layout, which canonicalizes data for us and 2)
-        # can easily rename glyphs later. The former point should be fixed, as
-        # reloading is expensive and it is within reason for the compiler to
-        # spit out something that can be used without reloading.
-        # https://github.com/googlefonts/ufo2ft/issues/485
-        self.otf = _reloadFont(otf)
+        self.otf = otf
 
         self._postscriptNames = ufo.lib.get("public.postscriptNames")
 
@@ -155,6 +150,12 @@ class PostProcessor:
 
             if useProductionNames:
                 logger.info("Renaming glyphs to final production names")
+                # We need to reload the font *before* renaming glyphs, since various
+                # tables may have been build/loaded using the original glyph names.
+                # After reloading, we can immediately set a new glyph order and update
+                # the tables (post or CFF) that stores the new postcript names; any
+                # other tables that get loaded subsequently will use the new glyph names.
+                self.otf = _reloadFont(self.otf)
                 self._rename_glyphs_from_ufo()
 
         else:
@@ -163,7 +164,11 @@ class PostProcessor:
                     "Dropping glyph names from CFF 1.0 is currently unsupported"
                 )
             else:
+                # To drop glyph names from TTF or CFF2, we must reload the font *after*
+                # setting the post format to 3.0, since other tables may still use
+                # the old glyph names.
                 self.set_post_table_format(self.otf, 3.0)
+                self.otf = _reloadFont(self.otf)
 
     def _rename_glyphs_from_ufo(self):
         """Rename glyphs using ufo.lib.public.postscriptNames in UFO."""
@@ -172,16 +177,17 @@ class PostProcessor:
 
     @staticmethod
     def rename_glyphs(otf, rename_map):
-        otf.setGlyphOrder([rename_map.get(n, n) for n in otf.getGlyphOrder()])
+        newGlyphOrder = [rename_map.get(n, n) for n in otf.getGlyphOrder()]
+        otf.setGlyphOrder(newGlyphOrder)
 
-        # we need to compile format 2 'post' table so that the 'extraNames'
-        # attribute is updated with the list of the names outside the
-        # standard Macintosh glyph order; otherwise, if one dumps the font
-        # to TTX directly before compiling first, the post table will not
-        # contain the extraNames.
         if "post" in otf and otf["post"].formatType == 2.0:
-            otf["post"].extraNames = []
-            otf["post"].compile(otf)
+            # annoyingly we need to update extraNames to match the new glyph order,
+            # otherwise, if dumping the font to TTX directly before compiling first,
+            # the post table will not contain the extraNames...
+            otf["post"].extraNames = [
+                g for g in newGlyphOrder if g not in standardGlyphOrder
+            ]
+            otf["post"].mapping = {}
 
         cff_tag = "CFF " if "CFF " in otf else "CFF2" if "CFF2" in otf else None
         if cff_tag == "CFF " or (cff_tag == "CFF2" and otf.isLoaded(cff_tag)):
@@ -277,11 +283,16 @@ class PostProcessor:
             raise NotImplementedError(formatType)
 
         post = otf.get("post")
-        if post and post.formatType != formatType:
-            logger.info("Setting post.formatType = %s", formatType)
-            post.formatType = formatType
+        if post:
+            if post.formatType != formatType:
+                logger.info("Setting post.formatType = %s", formatType)
+                post.formatType = formatType
+            # we want to update extraNames list even if formatType is the same
+            # so we don't have to reload the font
             if formatType == 2.0:
-                post.extraNames = []
+                post.extraNames = [
+                    g for g in otf.getGlyphOrder() if g not in standardGlyphOrder
+                ]
                 post.mapping = {}
             else:
                 for attr in ("extraNames", "mapping"):
