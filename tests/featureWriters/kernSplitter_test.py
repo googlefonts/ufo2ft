@@ -136,7 +136,35 @@ def test_split_multi_explicit_and_implicit_script() -> None:
     }
     kerning_per_script = split_kerning(pairs, glyphScripts)
     assert kerning_per_script == {
-        # TODO
+        "Latn": [
+            KerningPair("a", "a", 1, scripts={"Latn"}),
+            KerningPair("a", "b", 2, scripts={"Latn"}),
+            KerningPair("a", "something", 3, scripts={"Latn"}),
+            KerningPair("b", "a", 4, scripts={"Latn"}),
+            KerningPair("b", "b", 5, scripts={"Latn"}),
+            KerningPair("b", "something", 6, scripts={"Latn"}),
+            KerningPair("something", "a", 7, scripts={"Latn"}),
+            KerningPair("something", "b", 8, scripts={"Latn"}),
+            KerningPair("something", "something", 9, scripts={"Latn"}),
+            KerningPair("a", ["b", "something"], 12, scripts={"Latn"}),
+            KerningPair("a", ["something"], 12, scripts={"Latn"}),
+            KerningPair("something", ["b", "something"], 13, scripts={"Latn"}),
+            KerningPair("something", ["something"], 13, scripts={"Latn"}),
+            KerningPair(["a", "something"], "b", 10, scripts={"Latn"}),
+            KerningPair(["a", "something"], "something", 11, scripts={"Latn"}),
+            KerningPair(["something"], "b", 10, scripts={"Latn"}),
+            KerningPair(["something"], "something", 11, scripts={"Latn"}),
+            KerningPair(["a"], ["b"], 14, scripts={"Latn"}),
+            KerningPair(["a"], ["something"], 14, scripts={"Latn"}),
+            KerningPair(["something"], ["b"], 14, scripts={"Latn"}),
+            KerningPair(["something"], ["something"], 14, scripts={"Latn"}),
+        ],
+        "Zyyy": [
+            KerningPair("something", "something", 9, scripts={"Zyyy"}),
+            KerningPair("something", ["something"], 13, scripts={"Zyyy"}),
+            KerningPair(["something"], "something", 11, scripts={"Zyyy"}),
+            KerningPair(["something"], ["something"], 14, scripts={"Zyyy"}),
+        ],
     }
 
 
@@ -226,6 +254,7 @@ def test_weird_split8() -> None:
         "Cyrl": [
             KerningPair(["A-cy"], "Che-cy", 20, scripts={"Cyrl"}),
             KerningPair(["A-cy"], "backslash", 20, scripts={"Cyrl"}),
+            KerningPair(["increment"], "Che-cy", 20, scripts={"Cyrl"}),
         ],
         "Zyyy": [
             KerningPair(["increment"], "backslash", 20, scripts={"Zyyy"}),

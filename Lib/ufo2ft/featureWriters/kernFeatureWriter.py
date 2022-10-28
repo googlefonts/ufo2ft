@@ -64,13 +64,15 @@ class KerningPair:
         | ast.GlyphClass
         | ast.GlyphClassName
         | list[str]
-        | set[str],
+        | set[str]
+        | tuple[str],
         side2: str
         | ast.GlyphClassDefinition
         | ast.GlyphClass
         | ast.GlyphClassName
         | list[str]
-        | set[str],
+        | set[str]
+        | tuple[str],
         value: float,
         scripts: set[str] | None = None,
         directions: set[str] | None = None,
@@ -83,7 +85,7 @@ class KerningPair:
             self.side1 = ast.GlyphClassName(side1)
         elif isinstance(side1, (ast.GlyphClass, ast.GlyphClassName)):
             self.side1 = side1
-        elif isinstance(side1, (list, set)):
+        elif isinstance(side1, (list, set, tuple)):
             self.side1 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side1)])
         else:
             raise AssertionError(side1)
@@ -95,7 +97,7 @@ class KerningPair:
             self.side2 = ast.GlyphClassName(side2)
         elif isinstance(side2, (ast.GlyphClass, ast.GlyphClassName)):
             self.side2 = side2
-        elif isinstance(side2, (list, set)):
+        elif isinstance(side2, (list, set, tuple)):
             self.side2 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side2)])
         else:
             raise AssertionError(side2)
@@ -646,7 +648,7 @@ def split_kerning(
     # to produce non-overlapping kerning classes.
     for script, pairs in kerning_per_script.items():
         try:
-            ensure_unique_group_membership(pairs)
+            ensure_unique_class_class_membership(pairs)
         except Exception as e:
             raise Exception(f"After disjointment, in {script}: {e}")
 
@@ -724,9 +726,11 @@ def make_kerning_classes_disjoint(
         mapping_kern1: dict[str, set[str]]
         _, mapping_kern1 = classify(kern1_classes)
         for pair in pairs_to_split_kern1:
-            # TODO: Try using frozensets here so we can drop groupby?
+            # TODO: Try using (frozen)sets here so we can drop groupby?
+            # TODO: sorting here will sort again in KerningPair
             smaller_kern1s = [
-                mapping_kern1[name.glyph] for name in pair.side1.glyphSet()
+                tuple(sorted(mapping_kern1[name.glyph]))
+                for name in pair.side1.glyphSet()
             ]
             smaller_kern1s.sort()  # groupby expects sorted input.
             for smaller_kern1, _ in itertools.groupby(smaller_kern1s):
@@ -745,9 +749,11 @@ def make_kerning_classes_disjoint(
         mapping_kern2: dict[str, set[str]]
         _, mapping_kern2 = classify(kern2_classes)
         for pair in pairs_to_split_kern2:
-            # TODO: Try using frozensets here so we can drop groupby?
+            # TODO: Try using (frozen)sets here so we can drop groupby?
+            # TODO: sorting here will sort again in KerningPair
             smaller_kern2s = [
-                mapping_kern2[name.glyph] for name in pair.side2.glyphSet()
+                tuple(sorted(mapping_kern2[name.glyph]))
+                for name in pair.side2.glyphSet()
             ]
             smaller_kern2s.sort()  # groupby expects sorted input.
             for smaller_kern2, _ in itertools.groupby(smaller_kern2s):
@@ -766,38 +772,41 @@ def make_kerning_classes_disjoint(
         pairs[:] = new_pairs
 
 
-def ensure_unique_group_membership(pairs: list[KerningPair]) -> None:
-    """Raises an exception when a glyph is found to belong to multiple groups per
-    side.
+def ensure_unique_class_class_membership(pairs: list[KerningPair]) -> None:
+    """Raises an exception when a glyph is found to belong to multiple classes
+    per side, but only for class-to-class pairs.
 
     Group membership must be exclusive per side per lookup (script bucket).
+    Glyph-to-glyph or glyph-to-class or class-to-glyph pairs are ignored because
+    they are unrolled to glyph-to-glyph pairs and those don't matter for class
+    kerning.
     """
 
     kern1_membership: dict[str, set[str]] = {}
     kern2_membership: dict[str, set[str]] = {}
 
     for pair in pairs:
-        if pair.firstIsClass:
-            kern1 = {name.glyph for name in pair.side1.glyphSet()}
-            for name in kern1:
-                if name not in kern1_membership:
-                    kern1_membership[name] = kern1
-                elif kern1_membership[name] != kern1:
-                    membership = kern1_membership[name]
-                    raise Exception(
-                        f"Glyph {name} in multiple kern1 groups, originally "
-                        f"in {membership} but now also in {kern1} according "
-                        f"to pair {pair}"
-                    )
-        if pair.secondIsClass:
-            kern2 = {name.glyph for name in pair.side2.glyphSet()}
-            for name in kern2:
-                if name not in kern2_membership:
-                    kern2_membership[name] = kern2
-                elif kern2_membership[name] != kern2:
-                    membership = kern2_membership[name]
-                    raise Exception(
-                        f"Glyph {name} in multiple kern2 groups, originally "
-                        f"in {membership} but now also in {kern2} according "
-                        f"to pair {pair}"
-                    )
+        if not (pair.firstIsClass and pair.secondIsClass):
+            continue
+        kern1 = {name.glyph for name in pair.side1.glyphSet()}
+        for name in kern1:
+            if name not in kern1_membership:
+                kern1_membership[name] = kern1
+            elif kern1_membership[name] != kern1:
+                membership = kern1_membership[name]
+                raise Exception(
+                    f"Glyph {name} in multiple kern1 groups, originally "
+                    f"in {membership} but now also in {kern1} according "
+                    f"to pair {pair}"
+                )
+        kern2 = {name.glyph for name in pair.side2.glyphSet()}
+        for name in kern2:
+            if name not in kern2_membership:
+                kern2_membership[name] = kern2
+            elif kern2_membership[name] != kern2:
+                membership = kern2_membership[name]
+                raise Exception(
+                    f"Glyph {name} in multiple kern2 groups, originally "
+                    f"in {membership} but now also in {kern2} according "
+                    f"to pair {pair}"
+                )
