@@ -21,6 +21,7 @@ setup(
     maintainer_email="cosimo@anthrotype.com",
     description="A bridge between UFOs and FontTools.",
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     url="https://github.com/googlefonts/ufo2ft",
     package_dir={"": "Lib"},
     packages=find_packages("Lib"),
