@@ -187,10 +187,18 @@ class KerningPair:
         side1Scripts: dict[str, set[str]] = {}
         side2Scripts: dict[str, set[str]] = {}
         for glyph in self.firstGlyphs:
-            for script in glyphScripts.get(glyph, COMMON_SCRIPTS_SET):
+            scripts = glyphScripts.get(glyph, COMMON_SCRIPTS_SET)
+            # If a glyph is both common *and* another script,
+            # treat it as common.
+            if scripts & COMMON_SCRIPTS_SET:
+                scripts = scripts & COMMON_SCRIPTS_SET
+            for script in scripts:
                 side1Scripts.setdefault(script, set()).add(glyph)
         for glyph in self.secondGlyphs:
-            for script in glyphScripts.get(glyph, COMMON_SCRIPTS_SET):
+            scripts = glyphScripts.get(glyph, COMMON_SCRIPTS_SET)
+            if scripts & COMMON_SCRIPTS_SET:
+                scripts = scripts & COMMON_SCRIPTS_SET
+            for script in scripts:
                 side2Scripts.setdefault(script, set()).add(glyph)
 
         # Super common case: both sides are of the same, one script. Nothing to do, emit
