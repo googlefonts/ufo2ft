@@ -595,45 +595,50 @@ class KernFeatureWriter(BaseFeatureWriter):
                 features["dist"] = dist
         return features
 
-    def _registerLookups(self, feature, lookups):
-        scriptGroups = self.context.scriptGroups
-        scripts = scriptGroups.get(feature.name, {})
-
+    def _registerLookups(
+        self, feature: ast.FeatureBlock, lookups: dict[str, dict[str, ast.LookupBlock]]
+    ) -> None:
         # Ensure we have kerning for pure common script runs (e.g. ">1")
         if feature.name == "kern" and COMMON_SCRIPT in lookups:
             addLookupReferences(
                 feature, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
             )
-        if not scripts:
-            return
 
-        # Collapse scripts
-        scripts = scripts.get("LTR", []) + scripts.get("RTL", [])
-        otscript2uniscript = {}
+        # Feature blocks use script tags to distinguish what to run for a
+        # Unicode script.
+        #
+        # "Script tags generally correspond to a Unicode script. However, the
+        # associations between them may not always be one-to-one, and the
+        # OpenType script tags are not guaranteed to be the same as Unicode
+        # Script property-value aliases or ISO 15924 script IDs."
+        #
+        # E.g. {"latn": "Latn", "telu": "Telu", "tel2": "Telu"}
+        otscript2uniscript: dict[str, str] = {}
         for uniscript in lookups.keys():
+            # Skip DFLT script because we always take care of it above for
+            # `kern`. It never occurs in `dist`.
+            if uniscript in DFLT_SCRIPTS:
+                continue
             for ot2script in unicodedata.ot_tags_from_script(uniscript):
+                assert ot2script not in otscript2uniscript
                 otscript2uniscript[ot2script] = uniscript
-                if ot2script != "DFLT" and not any(
-                    script == ot2script for script, _ in scripts
-                ):
-                    scripts.append((ot2script, ["dflt"]))
 
-        for script, langs in sorted(scripts):
-            if script not in otscript2uniscript:
-                continue
-            uniscript = otscript2uniscript[script]
-            lookups_for_this_script = []
-            if uniscript not in lookups:
-                continue
+        for ot2script, uniscript in sorted(otscript2uniscript.items()):
+            # Insert line breaks between statements for niceness :).
             if feature.statements:
                 feature.statements.append(ast.Comment(""))
             # We have something for this script. First add the default
             # lookups, then the script-specific ones
+            lookups_for_this_script = []
             for dflt_script in DFLT_SCRIPTS:
                 if dflt_script in lookups:
                     lookups_for_this_script.extend(lookups[dflt_script].values())
             lookups_for_this_script.extend(lookups[uniscript].values())
-            addLookupReferences(feature, lookups_for_this_script, script, langs)
+            # NOTE: We always use the `dflt` language because there is no
+            # language-specific kerning to be derived from UFO (kerning.plist)
+            # sources and we are independent of what's going on in the rest of
+            # the features.fea file.
+            addLookupReferences(feature, lookups_for_this_script, ot2script, ["dflt"])
 
 
 def script_extensions_for_codepoint(uv: int) -> set[str]:
