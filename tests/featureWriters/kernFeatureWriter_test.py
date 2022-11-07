@@ -558,40 +558,9 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Arab;
             } kern;
+
             """
         )
-
-    def test__groupScriptsByTagAndDirection(self, FontClass):
-        font = FontClass()
-        font.features.text = dedent(
-            """
-            languagesystem DFLT dflt;
-            languagesystem latn dflt;
-            languagesystem latn TRK;
-            languagesystem arab dflt;
-            languagesystem arab URD;
-            languagesystem deva dflt;
-            languagesystem dev2 dflt;
-            languagesystem math dflt;
-            """
-        )
-
-        feaFile = parseLayoutFeatures(font)
-        scripts = ast.getScriptLanguageSystems(feaFile)
-        scriptGroups = KernFeatureWriter._groupScriptsByTagAndDirection(scripts)
-
-        assert "kern" in scriptGroups
-        assert list(scriptGroups["kern"]["LTR"]) == [
-            ("latn", ["dflt", "TRK "]),
-            ("math", ["dflt"]),
-        ]
-        assert list(scriptGroups["kern"]["RTL"]) == [("arab", ["dflt", "URD "])]
-
-        assert "dist" in scriptGroups
-        assert list(scriptGroups["dist"]["LTR"]) == [
-            ("deva", ["dflt"]),
-            ("dev2", ["dflt"]),
-        ]
 
     def test_getKerningClasses(self, FontClass):
         font = FontClass()

@@ -321,7 +321,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
 
         feaScripts = getScriptLanguageSystems(feaFile)
-        ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaScripts)
         ctx.knownScripts = feaScripts.keys()
 
         # TODO: Also include substitution information from Designspace rules to
@@ -347,13 +346,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         if not self.context.kerning.pairs:
             self.log.debug("No kerning data; skipped")
             return False
-
-        if "dist" in self.context.todo and "dist" not in self.context.scriptGroups:
-            self.log.debug(
-                "No dist-enabled scripts defined in languagesystem "
-                "statements; dist feature will not be generated"
-            )
-            self.context.todo.remove("dist")
 
         return super().shouldContinue()
 
@@ -483,27 +475,6 @@ class KernFeatureWriter(BaseFeatureWriter):
                     allKeys.add(key)
         return allKeys
 
-    @staticmethod
-    def _groupScriptsByTagAndDirection(feaScripts):
-        # Read scripts/languages defined in feaFile's 'languagesystem'
-        # statements and group them by the feature tag (kern or dist)
-        # they are associated with, and the global script's horizontal
-        # direction (DFLT is excluded)
-        scriptGroups = {}
-        for scriptCode, scriptLangSys in feaScripts.items():
-            if scriptCode:
-                direction = unicodedata.script_horizontal_direction(scriptCode)
-            else:
-                direction = "LTR"
-            if scriptCode in DIST_ENABLED_SCRIPTS:
-                tag = "dist"
-            else:
-                tag = "kern"
-            scriptGroups.setdefault(tag, {}).setdefault(direction, []).extend(
-                scriptLangSys
-            )
-        return scriptGroups
-
     # TODO: make this a method on KerningPair and do the quantization earlier,
     # so we can drop the parameter
     @staticmethod
@@ -600,8 +571,9 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _registerLookups(
         self, feature: ast.FeatureBlock, lookups: dict[str, dict[str, ast.LookupBlock]]
     ) -> None:
+        is_kern_block = feature.name == "kern"
         # Ensure we have kerning for pure common script runs (e.g. ">1")
-        if feature.name == "kern" and COMMON_SCRIPT in lookups:
+        if is_kern_block and COMMON_SCRIPT in lookups:
             addLookupReferences(
                 feature, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
             )
@@ -621,6 +593,12 @@ class KernFeatureWriter(BaseFeatureWriter):
             # `kern`. It never occurs in `dist`.
             if uniscript in DFLT_SCRIPTS:
                 continue
+            if is_kern_block:
+                if uniscript in DIST_ENABLED_SCRIPTS:
+                    continue
+            else:
+                if uniscript not in DIST_ENABLED_SCRIPTS:
+                    continue
             for ot2script in unicodedata.ot_tags_from_script(uniscript):
                 assert ot2script not in otscript2uniscript
                 otscript2uniscript[ot2script] = uniscript
