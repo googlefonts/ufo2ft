@@ -317,7 +317,9 @@ class KernFeatureWriter(BaseFeatureWriter):
     def setContext(self, font, feaFile, compiler=None):
         ctx = super().setContext(font, feaFile, compiler=compiler)
         ctx.gdefClasses = self.getGDEFGlyphClasses()
-        ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
+        ctx.kerning = self.getKerningData(
+            font, self.options.quantization, feaFile, self.getOrderedGlyphSet()
+        )
 
         feaScripts = getScriptLanguageSystems(feaFile)
         ctx.knownScripts = feaScripts.keys()
@@ -382,9 +384,11 @@ class KernFeatureWriter(BaseFeatureWriter):
         return True
 
     @classmethod
-    def getKerningData(cls, font, feaFile=None, glyphSet=None):
+    def getKerningData(cls, font, quantization, feaFile=None, glyphSet=None):
         side1Classes, side2Classes = cls.getKerningClasses(font, feaFile, glyphSet)
-        pairs = cls.getKerningPairs(font, side1Classes, side2Classes, glyphSet)
+        pairs = cls.getKerningPairs(
+            font, side1Classes, side2Classes, quantization, glyphSet
+        )
         return SimpleNamespace(
             side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
         )
@@ -426,6 +430,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         font: Any,
         side1Classes: Mapping[str, ast.GlyphClassDefinition],
         side2Classes: Mapping[str, ast.GlyphClassDefinition],
+        quantization: int,
         glyphSet: dict[str, Any] | None = None,
     ) -> list[KerningPair]:
         if glyphSet:
@@ -451,6 +456,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 side1 = side1Classes[side1]
             if secondIsClass:
                 side2 = side2Classes[side2]
+            value = quantize(value, quantization)
             result.append(KerningPair(side1, side2, value))
 
         return result
@@ -464,16 +470,13 @@ class KernFeatureWriter(BaseFeatureWriter):
                     allKeys.add(key)
         return allKeys
 
-    # TODO: make this a method on KerningPair and do the quantization earlier,
-    # so we can drop the parameter
     @staticmethod
-    def _makePairPosRule(pair, rtl=False, quantization=1):
+    def _makePairPosRule(pair, rtl=False):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
-        value = quantize(pair.value, quantization)
         valuerecord = ast.ValueRecord(
-            xPlacement=value if rtl else None,
+            xPlacement=pair.value if rtl else None,
             yPlacement=0 if rtl else None,
-            xAdvance=value,
+            xAdvance=pair.value,
             yAdvance=0 if rtl else None,
         )
         return ast.PairPosStatement(
@@ -524,7 +527,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         ignoreMarks: bool,
         suffix: str = "",
     ) -> None:
-        quantization = self.options.quantization
         kerning_per_script = split_kerning(pairs, glyphScripts)
         for script, pairs in kerning_per_script.items():
             key = f"kern_{script}{suffix}"
@@ -543,7 +545,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 # Numbers are always shaped LTR even in RTL scripts:
                 pair_is_rtl = "L" not in pair.bidiTypes
                 rtl = script_is_rtl and pair_is_rtl
-                rule = self._makePairPosRule(pair, rtl, quantization)
+                rule = self._makePairPosRule(pair, rtl)
                 lookup.statements.append(rule)
 
     def _makeFeatureBlocks(self, lookups):
