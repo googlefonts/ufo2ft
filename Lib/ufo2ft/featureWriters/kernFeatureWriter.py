@@ -499,17 +499,20 @@ class KernFeatureWriter(BaseFeatureWriter):
         lookups: dict[str, dict[str, ast.LookupBlock]] = {}
         glyphScripts = self.context.glyphScripts
         pairs = self.context.kerning.pairs
-        if self.options.ignoreMarks:
+        ignoreMarks: bool = self.options.ignoreMarks
+        if ignoreMarks:
             marks = self.context.gdefClasses.mark
             basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
             if basePairs:
-                self._makeSplitScriptKernLookups(lookups, basePairs, glyphScripts)
+                self._makeSplitScriptKernLookups(
+                    lookups, basePairs, glyphScripts, ignoreMarks
+                )
             if markPairs:
                 self._makeSplitScriptKernLookups(
                     lookups, markPairs, glyphScripts, ignoreMarks=False, suffix="_marks"
                 )
         else:
-            self._makeSplitScriptKernLookups(lookups, pairs, glyphScripts)
+            self._makeSplitScriptKernLookups(lookups, pairs, glyphScripts, ignoreMarks)
         return lookups
 
     def _splitBaseAndMarkPairs(self, pairs, marks):
@@ -529,7 +532,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         lookups: dict[str, dict[str, ast.LookupBlock]],
         pairs: list[KerningPair],
         glyphScripts: Mapping[str, set[str]],
-        ignoreMarks: bool = True,
+        ignoreMarks: bool,
         suffix: str = "",
     ) -> None:
         quantization = self.options.quantization
