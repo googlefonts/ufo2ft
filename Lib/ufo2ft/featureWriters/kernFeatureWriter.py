@@ -429,40 +429,30 @@ class KernFeatureWriter(BaseFeatureWriter):
         glyphSet: dict[str, Any] | None = None,
     ) -> list[KerningPair]:
         if glyphSet:
-            allGlyphs = set(glyphSet.keys())
+            allGlyphs = glyphSet.keys()
         else:
-            allGlyphs = set(font.keys())
-        kerning = font.kerning
+            allGlyphs = font.keys()
 
-        # XXX: stop sorting here, we split later
-
-        # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
-        # class, class to glyph, and finally class to class. This makes "kerning
-        # exceptions" work, where more specific glyph pair values override less
-        # specific class kerning.
-        pairsByFlags: dict[tuple[bool, bool], set[tuple[str, str]]] = {}
-        for (side1, side2) in kerning:
-            # filter out pairs that reference missing groups or glyphs
-            if side1 not in side1Classes and side1 not in allGlyphs:
-                continue
-            if side2 not in side2Classes and side2 not in allGlyphs:
-                continue
-            flags = (side1 in side1Classes, side2 in side2Classes)
-            pairsByFlags.setdefault(flags, set()).add((side1, side2))
-
+        kerning: Mapping[tuple[str, str], float] = font.kerning
         result: list[KerningPair] = []
-        for flags, pairs in sorted(pairsByFlags.items()):
-            for side1, side2 in sorted(pairs):
-                value = kerning[side1, side2]
-                if all(flags) and value == 0:
-                    # ignore zero-valued class kern pairs
-                    continue
-                firstIsClass, secondIsClass = flags
-                if firstIsClass:
-                    side1 = side1Classes[side1]
-                if secondIsClass:
-                    side2 = side2Classes[side2]
-                result.append(KerningPair(side1, side2, value))
+        for (side1, side2), value in kerning.items():
+            firstIsClass, secondIsClass = (side1 in side1Classes, side2 in side2Classes)
+            # Filter out pairs that reference missing groups or glyphs.
+            if not firstIsClass and side1 not in allGlyphs:
+                continue
+            if not secondIsClass and side2 not in allGlyphs:
+                continue
+            # Ignore zero-valued class kern pairs. They are the most general
+            # kerns, so they don't override anything else like glyph kerns would
+            # and zero is the default.
+            if firstIsClass and secondIsClass and value == 0:
+                continue
+            if firstIsClass:
+                side1 = side1Classes[side1]
+            if secondIsClass:
+                side2 = side2Classes[side2]
+            result.append(KerningPair(side1, side2, value))
+
         return result
 
     def _intersectPairs(self, attribute, glyphSets):

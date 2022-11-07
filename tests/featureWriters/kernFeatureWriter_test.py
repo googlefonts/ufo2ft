@@ -636,6 +636,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert "@public.kern2.bar" not in side2Classes
         assert side2Classes["public.kern2.bar&"].name == "kern2.bar"
 
+    # XXX: Remove? Integration tests cover this already
     def test_getKerningPairs(self, FontClass):
         font = FontClass()
         for i in range(65, 65 + 8):  # A..H
@@ -662,6 +663,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         s1c, s2c = KernFeatureWriter.getKerningClasses(font)
         pairs = KernFeatureWriter.getKerningPairs(font, s1c, s2c)
+        pairs.sort()
         assert len(pairs) == 5
 
         assert "G H -5" in repr(pairs[0])
@@ -676,13 +678,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert (pairs[2].firstIsClass, pairs[2].secondIsClass) == (True, False)
         assert pairs[2].glyphs == {"A", "B", "D"}
 
-        assert "@kern1.baz @kern2.bar -10" in repr(pairs[3])
-        assert (pairs[3].firstIsClass, pairs[3].secondIsClass) == (True, True)
-        assert pairs[3].glyphs == {"C", "D", "E", "F"}
-
-        assert "@kern1.foo @kern2.bar 10" in repr(pairs[4])
+        assert "@kern1.baz @kern2.bar -10" in repr(pairs[4])
         assert (pairs[4].firstIsClass, pairs[4].secondIsClass) == (True, True)
-        assert pairs[4].glyphs == {"A", "B", "C", "D"}
+        assert pairs[4].glyphs == {"C", "D", "E", "F"}
+
+        assert "@kern1.foo @kern2.bar 10" in repr(pairs[3])
+        assert (pairs[3].firstIsClass, pairs[3].secondIsClass) == (True, True)
+        assert pairs[3].glyphs == {"A", "B", "C", "D"}
 
     def test_kern_LTR_and_RTL(self, FontClass):
         glyphs = {
