@@ -407,7 +407,7 @@
     <ScriptList>
       <!-- ScriptCount=1 -->
       <ScriptRecord index="0">
-        <ScriptTag value="DFLT"/>
+        <ScriptTag value="latn"/>
         <Script>
           <DefaultLangSys>
             <ReqFeatureIndex value="65535"/>
