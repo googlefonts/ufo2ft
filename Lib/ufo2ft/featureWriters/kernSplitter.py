@@ -54,20 +54,20 @@ def getAndSplitKerningData(
     try:
         ensure_unique_group_membership(all_pairs)
     except Exception as e:
-        raise Exception(f"Before splitting: {e}")
+        raise Exception(f"Before splitting: {e}") from e
     # Sanity check after splitting. Remove for production.
     for script, pairs in kerning_per_script.items():
         try:
             ensure_unique_group_membership(pairs)
         except Exception as e:
-            raise Exception(f"In {script}: {e}")
+            raise Exception(f"In {script}: {e}") from e
 
     # Ensure that kern1 classes in class-to-class pairs are disjoint after
     # splitting, to ensure that subtable coverage (kern1 coverage) within a
     # lookup is disjoint. Shapers only consider the first subtable to cover a
     # kern1 class and kerning will be lost in subsequent subtables. See
     # https://github.com/fonttools/fonttools/issues/2793.
-    for script, pairs in kerning_per_script.items():
+    for pairs in kerning_per_script.values():
         new_pairs: list[KerningPair] = []
 
         pairs_to_split: list[KerningPair] = []
@@ -106,13 +106,13 @@ def getAndSplitKerningData(
         try:
             ensure_unique_group_membership(pairs)
         except Exception as e:
-            raise Exception(f"In {script}: {e}")
+            raise Exception(f"In {script}: {e}") from e
 
     # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
     # class, class to glyph, and finally class to class. This makes "kerning
     # exceptions" work, where more specific glyph pair values override less
     # specific class kerning.
-    for script, pairs in kerning_per_script.items():
+    for pairs in kerning_per_script.values():
         pairs.sort()
 
     return kerning_per_script
@@ -136,7 +136,8 @@ def ensure_unique_group_membership(pairs: list[KerningPair]) -> None:
                     kern1_membership[name] = kern1
                 elif (membership := kern1_membership[name]) != kern1:
                     raise Exception(
-                        f"Glyph {name} in multiple kern1 groups, originally in {membership} but now also in {kern1}"
+                        f"Glyph {name} in multiple kern1 groups, originally in "
+                        f"{membership} but now also in {kern1}"
                     )
         if pair.secondIsClass:
             kern2 = {name.glyph for name in pair.side2.glyphSet()}
@@ -145,7 +146,8 @@ def ensure_unique_group_membership(pairs: list[KerningPair]) -> None:
                     kern2_membership[name] = kern2
                 elif (membership := kern2_membership[name]) != kern2:
                     raise Exception(
-                        f"Glyph {name} in multiple kern2 groups, originally in {membership} but now also in {kern2}"
+                        f"Glyph {name} in multiple kern2 groups, originally in "
+                        f"{membership} but now also in {kern2}"
                     )
 
 
@@ -247,13 +249,13 @@ def get_and_split_kerning_data(
         try:
             ensure_unique_group_membership2(pairs)
         except Exception as e:
-            raise Exception(f"In {script}: {e}")
+            raise Exception(f"In {script}: {e}") from e
 
     # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
     # class, class to glyph, and finally class to class. This makes "kerning
     # exceptions" work, where more specific glyph pair values override less
     # specific class kerning.
-    for script, pairs in kerning_per_script.items():
+    for pairs in kerning_per_script.values():
         pairs.sort()
 
     return kerning_per_script

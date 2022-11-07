@@ -14,7 +14,6 @@ from ufo2ft.featureWriters import BaseFeatureWriter
 from ufo2ft.featureWriters.ast import (
     addLookupReferences,
     getScriptLanguageSystems,
-    makeGlyphClassDefinition,
     makeGlyphClassDefinitions,
     makeLookupFlag,
 )
@@ -646,7 +645,7 @@ def split_kerning(
         try:
             ensure_unique_class_class_membership(pairs)
         except Exception as e:
-            raise Exception(f"After disjointment, in {script}: {e}")
+            raise Exception(f"After disjointment, in {script}: {e}") from e
 
     # Remove duplicates. TODO: Remove this, too, eventually. Gah!
     for pairs in kerning_per_script.values():
@@ -669,7 +668,8 @@ def split_kerning(
                     known_pair.bidiTypes,
                 ):
                     raise Exception(
-                        f"Duplicate pair {pair} with different scripts, directions or bidiTypes."
+                        f"Duplicate pair {pair} with different scripts, directions "
+                        "or bidiTypes."
                     )
         pairs[:] = unique_pairs.values()
 
@@ -684,7 +684,7 @@ def split_kerning(
     # class, class to glyph, and finally class to class. This makes "kerning
     # exceptions" work, where more specific glyph pair values override less
     # specific class kerning.
-    for script, pairs in kerning_per_script.items():
+    for pairs in kerning_per_script.values():
         pairs.sort()
 
     return kerning_per_script
