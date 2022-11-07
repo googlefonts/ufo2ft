@@ -61,9 +61,9 @@ class KernFeatureWriterTest(FeatureWriterTest):
         pair = KerningPair(["V", "W"], ["gba-nko", "W"], -20)
         split = dict(pair.partitionByScript(glyphScripts))
         assert len(split) == 1
-        assert str(split["Latn"]) == "<KerningPair [V W] W -20 {'Latn'}>"
+        assert str(split["Latn"]) == "<KerningPair [V W] [W] -20 {'Latn'}>"
         assert (
-            "Mixed script kerning pair <KerningPair [V W] gba-nko -20> ignored"
+            "Mixed script kerning pair <KerningPair [V W] [gba-nko] -20> ignored"
             in caplog.text
         )
 
@@ -73,7 +73,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert len(split) == 2
         assert "Latn" in split and "Nkoo" in split
         assert str(split["Latn"]) == "<KerningPair [V W] period -20 {'Latn'}>"
-        assert str(split["Nkoo"]) == "<KerningPair gba-nko period -20 {'Nkoo'}>"
+        assert str(split["Nkoo"]) == "<KerningPair [gba-nko] period -20 {'Nkoo'}>"
 
         # But if both sides are common then the output is common
         pair = KerningPair("period", "period", -20)
@@ -87,8 +87,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
         split = dict(pair.partitionByScript(glyphScripts))
         assert len(split) == 2
         assert "Arab" in split and "Nkoo" in split
-        assert str(split["Arab"]) == "<KerningPair lam-ar comma-ar -20 {'Arab'}>"
-        assert str(split["Nkoo"]) == "<KerningPair gba-nko comma-ar -20 {'Nkoo'}>"
+        assert str(split["Arab"]) == "<KerningPair [lam-ar] [comma-ar] -20 {'Arab'}>"
+        assert str(split["Nkoo"]) == "<KerningPair [gba-nko] [comma-ar] -20 {'Nkoo'}>"
 
     def test_cleanup_missing_glyphs(self, FontClass):
         groups = {
@@ -130,7 +130,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert kern_lookup.name == "kern_Common"
         rules = getPairPosRules(kern_lookup)
         assert len(rules) == 1
-        assert str(rules[0]) == "pos @kern1.A @kern2.B 10;"
+        assert str(rules[0]) == "pos [A Aacute Acircumflex] [B E F] 10;"
 
     def test_ignoreMarks(self, FontClass):
         font = FontClass()
@@ -196,23 +196,22 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         # default is ignoreMarks=True
         feaFile = self.writeFeatures(font)
-        # Zyyy because no languagesystems defined
         assert str(feaFile) == dedent(
             """
-            lookup kern_Common {
+            lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos B C -30;
-            } kern_Common;
+            } kern_Latn;
 
-            lookup kern_Common_marks {
+            lookup kern_Latn_marks {
                 pos A acutecomb -55;
-            } kern_Common_marks;
+            } kern_Latn_marks;
 
             feature kern {
-                script DFLT;
+                script latn;
                 language dflt;
-                lookup kern_Common;
-                lookup kern_Common_marks;
+                lookup kern_Latn;
+                lookup kern_Latn_marks;
             } kern;
             """
         )
@@ -220,15 +219,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
         feaFile = self.writeFeatures(font, ignoreMarks=False)
         assert str(feaFile) == dedent(
             """
-            lookup kern_Common {
+            lookup kern_Latn {
                 pos A acutecomb -55;
                 pos B C -30;
-            } kern_Common;
+            } kern_Latn;
 
             feature kern {
-                script DFLT;
+                script latn;
                 language dflt;
-                lookup kern_Common;
+                lookup kern_Latn;
             } kern;
             """
         )
@@ -529,8 +528,16 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
     def test_arabic_numerals(self, FontClass):
         """Test that arabic numerals (with bidi type AN) are kerned LTR.
-        https://github.com/googlei18n/ufo2ft/issues/198
-        https://github.com/googlei18n/ufo2ft/pull/200
+
+        See:
+
+        * https://github.com/googlei18n/ufo2ft/issues/198
+        * https://github.com/googlei18n/ufo2ft/pull/200
+
+        Additionally, some Arabic numerals are used in more than one script. The
+        simple and stupid approach is to register lookups for all of them,
+        regardless of whether the designer intended the font to support these,
+        because how do you know?
         """
         ufo = FontClass()
         for name, code in [("four-ar", 0x664), ("seven-ar", 0x667)]:
@@ -553,12 +560,31 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 pos four-ar seven-ar -30;
             } kern_Arab;
 
+            lookup kern_Thaa {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+            } kern_Thaa;
+
+            lookup kern_Yezi {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+            } kern_Yezi;
+
             feature kern {
                 script arab;
                 language dflt;
                 lookup kern_Arab;
+
+                script thaa;
+                language dflt;
+                lookup kern_Thaa;
             } kern;
 
+            feature dist {
+                script yezi;
+                language dflt;
+                lookup kern_Yezi;
+            } dist;
             """
         )
 
@@ -730,12 +756,20 @@ class KernFeatureWriterTest(FeatureWriterTest):
             lookup kern_Arab {
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
-                pos @kern1.reh @kern2.alef <-100 0 -100 0>;
+                pos [reh-ar reh-ar.fina zain-ar] [alef-ar alef-ar.isol] <-100 0 -100 0>;
             } kern_Arab;
 
             lookup kern_Latn {
                 enum pos @kern1.A V -40;
             } kern_Latn;
+
+            lookup kern_Thaa {
+                pos four-ar seven-ar -30;
+            } kern_Thaa;
+
+            lookup kern_Yezi {
+                pos four-ar seven-ar -30;
+            } kern_Yezi;
 
             lookup kern_Common {
                 pos seven four -25;
@@ -750,14 +784,24 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Common;
                 lookup kern_Arab;
-                language URD;
 
                 script latn;
                 language dflt;
                 lookup kern_Common;
                 lookup kern_Latn;
-                language TRK;
+
+                script thaa;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Thaa;
             } kern;
+
+            feature dist {
+                script yezi;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Yezi;
+            } dist;
             """
         )
 
@@ -845,7 +889,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
-                pos @kern1.reh @kern2.alef <-100 0 -100 0>;
+                pos [reh-ar reh-ar.fina zain-ar] [alef-ar alef-ar.isol] <-100 0 -100 0>;
             } kern_Arab;
 
             lookup kern_Arab_marks {
@@ -860,6 +904,16 @@ class KernFeatureWriterTest(FeatureWriterTest):
             lookup kern_Latn_marks {
                 pos V acutecomb 70;
             } kern_Latn_marks;
+
+            lookup kern_Thaa {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+            } kern_Thaa;
+
+            lookup kern_Yezi {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+            } kern_Yezi;
 
             lookup kern_Common {
                 lookupflag IgnoreMarks;
@@ -876,15 +930,25 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 lookup kern_Common;
                 lookup kern_Arab;
                 lookup kern_Arab_marks;
-                language URD;
 
                 script latn;
                 language dflt;
                 lookup kern_Common;
                 lookup kern_Latn;
                 lookup kern_Latn_marks;
-                language TRK;
+
+                script thaa;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Thaa;
             } kern;
+
+            feature dist {
+                script yezi;
+                language dflt;
+                lookup kern_Common;
+                lookup kern_Yezi;
+            } dist;
             """
         )
 
@@ -953,7 +1017,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
-                pos @kern1.reh @kern2.alef <-100 0 -100 0>;
+                pos [reh-ar reh-ar.fina zain-ar] [alef-ar alef-ar.isol] <-100 0 -100 0>;
             } kern_Arab;
 
             lookup kern_Arab_marks {
@@ -965,11 +1029,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Arab;
                 lookup kern_Arab_marks;
-                language ARA;
             } kern;
             """
         )
 
+    # XXX: Remove?
     def test_kern_LTR_and_RTL_one_uses_DFLT(self, FontClass):
         glyphs = {"A": 0x41, "V": 0x56, "reh-ar": 0x631, "alef-ar": 0x627}
         kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
@@ -979,24 +1043,23 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert dedent(str(generated)) == dedent(
             """
+            lookup kern_Arab {
+                lookupflag IgnoreMarks;
+                pos reh-ar alef-ar <-100 0 -100 0>;
+            } kern_Arab;
+
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos A V -40;
             } kern_Latn;
 
-            lookup kern_Common {
-                lookupflag IgnoreMarks;
-                pos reh-ar alef-ar <-100 0 -100 0>;
-            } kern_Common;
-
             feature kern {
-                script DFLT;
+                script arab;
                 language dflt;
-                lookup kern_Common;
+                lookup kern_Arab;
 
                 script latn;
                 language dflt;
-                lookup kern_Common;
                 lookup kern_Latn;
             } kern;
             """
@@ -1013,20 +1076,19 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 pos reh-ar alef-ar <-100 0 -100 0>;
             } kern_Arab;
 
-            lookup kern_Common {
+            lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos A V -40;
-            } kern_Common;
+            } kern_Latn;
 
             feature kern {
-                script DFLT;
-                language dflt;
-                lookup kern_Common;
-
                 script arab;
                 language dflt;
-                lookup kern_Common;
                 lookup kern_Arab;
+
+                script latn;
+                language dflt;
+                lookup kern_Latn;
             } kern;
             """
         )
@@ -1036,18 +1098,26 @@ class KernFeatureWriterTest(FeatureWriterTest):
         kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
         ufo = makeUFO(FontClass, glyphs, kerning=kerning)
         generated = self.writeFeatures(ufo)
-        assert "\n" + str(generated) == dedent(
-            """
-            lookup kern_Common {
+        assert dedent(str(generated)) == dedent(
+            """\
+            lookup kern_Arab {
+                lookupflag IgnoreMarks;
+                pos reh-ar alef-ar <-100 0 -100 0>;
+            } kern_Arab;
+
+            lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos A V -40;
-                pos reh-ar alef-ar <-100 0 -100 0>;
-            } kern_Common;
+            } kern_Latn;
 
             feature kern {
-                script DFLT;
+                script arab;
                 language dflt;
-                lookup kern_Common;
+                lookup kern_Arab;
+
+                script latn;
+                language dflt;
+                lookup kern_Latn;
             } kern;
             """
         )
@@ -1078,7 +1148,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Knda {
                 lookupflag IgnoreMarks;
-                pos @kern1.KND_aaMatra_R @kern2.KND_ailength_L 34;
+                pos [aaMatra_kannada] [aaMatra_kannada] 34;
             } kern_Knda;
 
             feature dist {
@@ -1160,7 +1230,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Knda {
                 lookupflag IgnoreMarks;
-                pos @kern1.KND_aaMatra_R @kern2.KND_ailength_L 34;
+                pos [aaMatra_kannada] [aaMatra_kannada] 34;
             } kern_Knda;
 
             feature dist {
@@ -1208,6 +1278,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
         with caplog.at_level(logging.WARNING, logger=logger):
             generated = self.writeFeatures(ufo)
 
+        # GPOS lookups are independent of the globally declared language
+        # systems.
         assert dedent(str(generated)) == dedent(
             """
             lookup kern_Arab {
@@ -1216,30 +1288,28 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 pos reh-ar one-ar 4;
             } kern_Arab;
 
+            lookup kern_Hebr {
+                lookupflag IgnoreMarks;
+                pos yod-hb one 5;
+            } kern_Hebr;
+
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos bar A 2;
                 pos bar bar 1;
             } kern_Latn;
 
-            lookup kern_Common {
-                lookupflag IgnoreMarks;
-                pos yod-hb one 5;
-            } kern_Common;
-
             feature kern {
-                script DFLT;
-                language dflt;
-                lookup kern_Common;
-
                 script arab;
                 language dflt;
-                lookup kern_Common;
                 lookup kern_Arab;
+
+                script hebr;
+                language dflt;
+                lookup kern_Hebr;
 
                 script latn;
                 language dflt;
-                lookup kern_Common;
                 lookup kern_Latn;
             } kern;
         """
