@@ -10,9 +10,8 @@ from fontTools import unicodedata
 from fontTools.misc.classifyTools import classify
 
 from ufo2ft.util import DFLT_SCRIPTS, quantize
-from .ast import addLookupReferences
 
-from .ast import ast
+from .ast import addLookupReferences, ast
 from .kernFeatureWriter import (
     COMMON_SCRIPT,
     COMMON_SCRIPTS_SET,
