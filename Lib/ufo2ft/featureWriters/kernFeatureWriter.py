@@ -708,14 +708,12 @@ def make_kerning_classes_disjoint(
         mapping_kern1: dict[str, set[str]]
         _, mapping_kern1 = classify(kern1_classes)
         for pair in pairs_to_split_kern1:
-            # TODO: Try using (frozen)sets here so we can drop groupby?
             # TODO: sorting here will sort again in KerningPair
-            smaller_kern1s = [
+            smaller_kern1s = {
                 tuple(sorted(mapping_kern1[name.glyph]))
                 for name in pair.side1.glyphSet()
-            ]
-            smaller_kern1s.sort()  # groupby expects sorted input.
-            for smaller_kern1, _ in itertools.groupby(smaller_kern1s):
+            }
+            for smaller_kern1 in smaller_kern1s:
                 assert not isinstance(pair.side2, ast.GlyphName)
                 pairs_to_split_kern2.append(
                     KerningPair(
@@ -730,14 +728,12 @@ def make_kerning_classes_disjoint(
         mapping_kern2: dict[str, set[str]]
         _, mapping_kern2 = classify(kern2_classes)
         for pair in pairs_to_split_kern2:
-            # TODO: Try using (frozen)sets here so we can drop groupby?
             # TODO: sorting here will sort again in KerningPair
-            smaller_kern2s = [
+            smaller_kern2s = {
                 tuple(sorted(mapping_kern2[name.glyph]))
                 for name in pair.side2.glyphSet()
-            ]
-            smaller_kern2s.sort()  # groupby expects sorted input.
-            for smaller_kern2, _ in itertools.groupby(smaller_kern2s):
+            }
+            for smaller_kern2 in smaller_kern2s:
                 assert not isinstance(pair.side1, ast.GlyphName)
                 new_pairs.append(
                     KerningPair(
