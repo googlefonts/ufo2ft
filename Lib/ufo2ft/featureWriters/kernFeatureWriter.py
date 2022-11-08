@@ -628,33 +628,14 @@ def split_kerning(
         for script, split_pair in pair.partitionByScript(glyphScripts):
             kerning_per_script.setdefault(script, []).append(split_pair)
 
-    # Sanity checking to ensure we don't produce overlapping groups in a lookup.
+    # Sanity checking to ensure we don't produce overlapping groups or
+    # duplicates in a lookup. Remove once reasonably sure we never do this.
     for script, pairs in kerning_per_script.items():
         try:
             ensure_unique_class_class_membership(pairs)
+            ensure_no_duplicates(pairs)
         except Exception as e:
             raise Exception(f"In {script}: {e}") from e
-
-    # Remove duplicates. TODO: Remove this, too, eventually. Gah!
-    for pairs in kerning_per_script.values():
-        unique_pairs: dict[
-            tuple[str | tuple[str, ...], str | tuple[str, ...], float], KerningPair
-        ] = {}
-        for pair in pairs:
-            pair_key = pair.uniqueness_key
-            if pair_key not in unique_pairs:
-                unique_pairs[pair_key] = pair
-            else:
-                known_pair = unique_pairs[pair_key]
-                if (pair.scripts, pair.bidiTypes) != (
-                    known_pair.scripts,
-                    known_pair.bidiTypes,
-                ):
-                    raise Exception(
-                        f"Duplicate pair {pair} with different scripts, directions "
-                        "or bidiTypes."
-                    )
-        pairs[:] = unique_pairs.values()
 
     # TODO: Convert literal glyph classes back into kerning group names, for
     # debuggability and probably space savings.
@@ -704,3 +685,14 @@ def ensure_unique_class_class_membership(pairs: list[KerningPair]) -> None:
                         f"in {membership} but now also in {kern2} according "
                         f"to pair {pair}"
                     )
+
+
+def ensure_no_duplicates(pairs: list[KerningPair]) -> None:
+    unique_pairs: set[tuple[str | tuple[str, ...], str | tuple[str, ...], float]]
+    unique_pairs = set()
+    for pair in pairs:
+        pair_key = pair.uniqueness_key
+        if pair_key not in unique_pairs:
+            unique_pairs.add(pair_key)
+        else:
+            raise Exception(f"Duplicate pair {pair}")
