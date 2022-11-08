@@ -672,12 +672,9 @@ def split_kerning(
 
 def ensure_unique_class_class_membership(pairs: list[KerningPair]) -> None:
     """Raises an exception when a glyph is found to belong to multiple classes
-    per side, but only for class-to-class pairs.
+    per side.
 
     Group membership must be exclusive per side per lookup (script bucket).
-    Glyph-to-glyph or glyph-to-class or class-to-glyph pairs are ignored because
-    they are unrolled to glyph-to-glyph pairs and those don't matter for class
-    kerning.
     """
 
     kern1_membership: dict[str, set[str]] = {}
