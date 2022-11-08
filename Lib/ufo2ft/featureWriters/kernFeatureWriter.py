@@ -115,20 +115,20 @@ class KerningPair:
             self.secondIsClass,
             self.side1.glyph
             if isinstance(self.side1, ast.GlyphName)
-            else self.side1.glyphSet()[0].glyph,
+            else sorted(glyph.glyph for glyph in self.side1.glyphSet())[0],
             self.side2.glyph
             if isinstance(self.side2, ast.GlyphName)
-            else self.side2.glyphSet()[0].glyph,
+            else sorted(glyph.glyph for glyph in self.side2.glyphSet())[0],
         )
         otherTuple = (
             other.firstIsClass,
             other.secondIsClass,
             other.side1.glyph
             if isinstance(other.side1, ast.GlyphName)
-            else other.side1.glyphSet()[0].glyph,
+            else sorted(glyph.glyph for glyph in other.side1.glyphSet())[0],
             other.side2.glyph
             if isinstance(other.side2, ast.GlyphName)
-            else other.side2.glyphSet()[0].glyph,
+            else sorted(glyph.glyph for glyph in other.side2.glyphSet())[0],
         )
         return selfTuple < otherTuple
 
