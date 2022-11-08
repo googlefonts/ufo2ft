@@ -26,8 +26,8 @@ from ufo2ft.util import (
     _getDefaultNotdefGlyph,
     ensure_all_sources_have_names,
     init_kwargs,
-    prune_unknown_kwargs,
     location_to_string,
+    prune_unknown_kwargs,
 )
 
 try:
