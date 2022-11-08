@@ -54,7 +54,7 @@ def unicodeBidiType(uv: int) -> Literal["R"] | Literal["L"] | None:
 
 class KerningPair:
 
-    __slots__ = ("side1", "side2", "value", "scripts", "directions", "bidiTypes")
+    __slots__ = ("side1", "side2", "value", "scripts", "bidiTypes")
 
     def __init__(
         self,
@@ -74,7 +74,6 @@ class KerningPair:
         | tuple[str],
         value: float,
         scripts: set[str] | None = None,
-        directions: set[str] | None = None,
         bidiTypes: set[str] | None = None,
     ) -> None:
         self.side1: ast.GlyphName | ast.GlyphClassName | ast.GlyphClass
@@ -103,7 +102,6 @@ class KerningPair:
 
         self.value: float = value
         self.scripts: set[str] = scripts or set()
-        self.directions: set[str] = directions or set()
         self.bidiTypes: set[str] = bidiTypes or set()
 
     def __lt__(self, other: KerningPair) -> bool:
@@ -149,7 +147,6 @@ class KerningPair:
             else {glyph.glyph for glyph in self.side2.glyphSet()},
             self.value,
             self.scripts,
-            self.directions,
             self.bidiTypes,
         ) == (
             other.firstIsClass,
@@ -162,7 +159,6 @@ class KerningPair:
             else {glyph.glyph for glyph in other.side2.glyphSet()},
             other.value,
             other.scripts,
-            other.directions,
             other.bidiTypes,
         )
 
@@ -228,7 +224,6 @@ class KerningPair:
                 localSide2,
                 self.value,
                 scripts=self.scripts,
-                directions=self.directions,
                 bidiTypes=self.bidiTypes,
             )
 
@@ -286,12 +281,11 @@ class KerningPair:
         return self.firstGlyphs | self.secondGlyphs
 
     def __repr__(self) -> str:
-        return "<{} {} {} {}{}{}{}>".format(
+        return "<{} {} {} {}{}{}>".format(
             self.__class__.__name__,
             self.side1,
             self.side2,
             self.value,
-            " %r" % self.directions if self.directions else "",
             " %r" % self.scripts if self.scripts else "",
             " %r" % self.bidiTypes if self.bidiTypes else "",
         )
@@ -311,7 +305,11 @@ class KerningPair:
             self.value,
         )
 
-    def make_pair_pos_rule(self, rtl: bool = False) -> ast.PairPosStatement:
+    def make_pair_pos_rule(self, script: str) -> ast.PairPosStatement:
+        script_is_rtl = unicodedata.script_horizontal_direction(script) == "RTL"
+        # Numbers are always shaped LTR even in RTL scripts:
+        pair_is_rtl = "L" not in self.bidiTypes
+        rtl = script_is_rtl and pair_is_rtl
         enumerated = self.firstIsClass ^ self.secondIsClass
         valuerecord = ast.ValueRecord(
             xPlacement=self.value if rtl else None,
@@ -360,8 +358,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
-        dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
-        self._intersectPairs("directions", dirGlyphs)
         scriptGlyphs = classifyGlyphs(script_extensions_for_codepoint, cmap, gsub)
         self._intersectPairs("scripts", scriptGlyphs)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
@@ -554,12 +550,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                     lookup.statements.append(makeLookupFlag("IgnoreMarks"))
                 script_lookups[key] = lookup
             for pair in pairs:
-                # TODO: Derive direction from script and remove .directions attribute?
-                script_is_rtl = "RTL" in pair.directions
-                # Numbers are always shaped LTR even in RTL scripts:
-                pair_is_rtl = "L" not in pair.bidiTypes
-                rtl = script_is_rtl and pair_is_rtl
-                rule = pair.make_pair_pos_rule(rtl)
+                rule = pair.make_pair_pos_rule(script)
                 lookup.statements.append(rule)
 
     def _makeFeatureBlocks(self, lookups):
@@ -664,9 +655,8 @@ def split_kerning(
                 unique_pairs[pair_key] = pair
             else:
                 known_pair = unique_pairs[pair_key]
-                if (pair.scripts, pair.directions, pair.bidiTypes) != (
+                if (pair.scripts, pair.bidiTypes) != (
                     known_pair.scripts,
-                    known_pair.directions,
                     known_pair.bidiTypes,
                 ):
                     raise Exception(
@@ -739,7 +729,6 @@ def make_kerning_classes_disjoint(
                         pair.side2,
                         pair.value,
                         pair.scripts,
-                        pair.directions,
                         pair.bidiTypes,
                     )
                 )
@@ -762,7 +751,6 @@ def make_kerning_classes_disjoint(
                         smaller_kern2,
                         pair.value,
                         pair.scripts,
-                        pair.directions,
                         pair.bidiTypes,
                     )
                 )
