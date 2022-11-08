@@ -107,27 +107,17 @@ class KerningPair:
         if not isinstance(other, KerningPair):
             return NotImplemented
 
-        # NOTE: Comparing classes relies on their glyph names being sorted in
-        # __init__.
         selfTuple = (
             self.firstIsClass,
             self.secondIsClass,
-            self.side1.glyph
-            if isinstance(self.side1, ast.GlyphName)
-            else sorted(glyph.glyph for glyph in self.side1.glyphSet())[0],
-            self.side2.glyph
-            if isinstance(self.side2, ast.GlyphName)
-            else sorted(glyph.glyph for glyph in self.side2.glyphSet())[0],
+            sorted(self.firstGlyphs),
+            sorted(self.secondGlyphs),
         )
         otherTuple = (
             other.firstIsClass,
             other.secondIsClass,
-            other.side1.glyph
-            if isinstance(other.side1, ast.GlyphName)
-            else sorted(glyph.glyph for glyph in other.side1.glyphSet())[0],
-            other.side2.glyph
-            if isinstance(other.side2, ast.GlyphName)
-            else sorted(glyph.glyph for glyph in other.side2.glyphSet())[0],
+            sorted(other.firstGlyphs),
+            sorted(other.secondGlyphs),
         )
         return selfTuple < otherTuple
 
@@ -138,24 +128,16 @@ class KerningPair:
         return (
             self.firstIsClass,
             self.secondIsClass,
-            self.side1.glyph
-            if isinstance(self.side1, ast.GlyphName)
-            else {glyph.glyph for glyph in self.side1.glyphSet()},
-            self.side2.glyph
-            if isinstance(self.side2, ast.GlyphName)
-            else {glyph.glyph for glyph in self.side2.glyphSet()},
+            sorted(self.firstGlyphs),
+            sorted(self.secondGlyphs),
             self.value,
             self.scripts,
             self.bidiTypes,
         ) == (
             other.firstIsClass,
             other.secondIsClass,
-            other.side1.glyph
-            if isinstance(other.side1, ast.GlyphName)
-            else {glyph.glyph for glyph in other.side1.glyphSet()},
-            other.side2.glyph
-            if isinstance(other.side2, ast.GlyphName)
-            else {glyph.glyph for glyph in other.side2.glyphSet()},
+            sorted(other.firstGlyphs),
+            sorted(other.secondGlyphs),
             other.value,
             other.scripts,
             other.bidiTypes,
