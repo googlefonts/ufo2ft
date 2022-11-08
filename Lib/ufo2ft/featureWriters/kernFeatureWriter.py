@@ -311,6 +311,22 @@ class KerningPair:
             self.value,
         )
 
+    def make_pair_pos_rule(self, rtl: bool = False) -> ast.PairPosStatement:
+        enumerated = self.firstIsClass ^ self.secondIsClass
+        valuerecord = ast.ValueRecord(
+            xPlacement=self.value if rtl else None,
+            yPlacement=0 if rtl else None,
+            xAdvance=self.value,
+            yAdvance=0 if rtl else None,
+        )
+        return ast.PairPosStatement(
+            glyphs1=self.side1,
+            valuerecord1=valuerecord,
+            glyphs2=self.side2,
+            valuerecord2=None,
+            enumerated=enumerated,
+        )
+
 
 class KernFeatureWriter(BaseFeatureWriter):
     """Generates a kerning feature based on groups and rules contained
@@ -485,23 +501,6 @@ class KernFeatureWriter(BaseFeatureWriter):
                     allKeys.add(key)
         return allKeys
 
-    @staticmethod
-    def _makePairPosRule(pair, rtl=False):
-        enumerated = pair.firstIsClass ^ pair.secondIsClass
-        valuerecord = ast.ValueRecord(
-            xPlacement=pair.value if rtl else None,
-            yPlacement=0 if rtl else None,
-            xAdvance=pair.value,
-            yAdvance=0 if rtl else None,
-        )
-        return ast.PairPosStatement(
-            glyphs1=pair.side1,
-            valuerecord1=valuerecord,
-            glyphs2=pair.side2,
-            valuerecord2=None,
-            enumerated=enumerated,
-        )
-
     def _makeKerningLookups(self) -> dict[str, dict[str, ast.LookupBlock]]:
         lookups: dict[str, dict[str, ast.LookupBlock]] = {}
         glyphScripts = self.context.glyphScripts
@@ -560,7 +559,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 # Numbers are always shaped LTR even in RTL scripts:
                 pair_is_rtl = "L" not in pair.bidiTypes
                 rtl = script_is_rtl and pair_is_rtl
-                rule = self._makePairPosRule(pair, rtl)
+                rule = pair.make_pair_pos_rule(rtl)
                 lookup.statements.append(rule)
 
     def _makeFeatureBlocks(self, lookups):
