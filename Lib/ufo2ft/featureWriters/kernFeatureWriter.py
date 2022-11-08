@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 from fontTools import unicodedata
 from fontTools.feaLib import ast
-from fontTools.misc.classifyTools import classify
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter
@@ -17,7 +16,7 @@ from ufo2ft.featureWriters.ast import (
     makeGlyphClassDefinitions,
     makeLookupFlag,
 )
-from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptDirection
+from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize
 
 if TYPE_CHECKING:
     from typing import Any, Iterator, Literal, Mapping
