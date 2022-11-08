@@ -183,10 +183,10 @@ class KerningPair:
         side2Scripts: dict[str, set[str]] = {}
         for glyph in self.firstGlyphs:
             scripts = glyphScripts.get(glyph, COMMON_SCRIPTS_SET)
-            # If a glyph is both common *and* another script, treat it as common. This
-            # ensures that a pair appears to the shaper exactly once (as long as every
-            # script sees at most 2 lookups, the common one and the script-specific
-            # one).
+            # If a glyph is both common *and* another script, treat it as
+            # common. This ensures that a pair appears to the shaper exactly
+            # once (as long as every script sees at most 2 lookups (disregarding
+            # mark lookups), the common one and the script-specific one.
             if scripts & COMMON_SCRIPTS_SET:
                 scripts = scripts & COMMON_SCRIPTS_SET
             for script in scripts:
