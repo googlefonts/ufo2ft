@@ -665,10 +665,6 @@ def split_kerning(
                     )
         pairs[:] = unique_pairs.values()
 
-    # TODO: Fuse mixed implicit and explicit script groups within lookups back
-    # together if possible or be smart enough to not break them apart in the
-    # first place.
-
     # TODO: Convert literal glyph classes back into kerning group names, for
     # debuggability and probably space savings.
 
@@ -700,8 +696,6 @@ def make_kerning_classes_disjoint(
         kern2_classes: list[list[str]] = []
         for pair in pairs:
             # We only care about class-to-class pairs, leave rest as is.
-            # TODO: should we, actually? The kerning sanity checker will check
-            # any group.
             if not (pair.firstIsClass and pair.secondIsClass):
                 new_pairs.append(pair)
                 continue
