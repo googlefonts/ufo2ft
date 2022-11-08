@@ -604,7 +604,10 @@ def split_kerning(
     pairs: list[KerningPair], glyphScripts: Mapping[str, set[str]]
 ) -> dict[str, list[KerningPair]]:
     # Split kerning into per-script buckets, so we can post-process them before
-    # continuing.
+    # continuing. NOTE: this replaces class names (`@kern1.something`) with
+    # class literals (`[a b c]`). There is no space saving to be had by trying
+    # to assign them names again, because names don't exist at the OpenType
+    # level.
     kerning_per_script: dict[str, list[KerningPair]] = {}
     for pair in pairs:
         for script, split_pair in pair.partitionByScript(glyphScripts):
@@ -618,9 +621,6 @@ def split_kerning(
             ensure_no_duplicates(pairs)
         except Exception as e:
             raise Exception(f"In {script}: {e}") from e
-
-    # TODO: Convert literal glyph classes back into kerning group names, for
-    # debuggability and probably space savings.
 
     # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
     # class, class to glyph, and finally class to class. This makes "kerning
