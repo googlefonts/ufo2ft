@@ -296,6 +296,21 @@ class KerningPair:
             " %r" % self.bidiTypes if self.bidiTypes else "",
         )
 
+    @property
+    def uniqueness_key(
+        self,
+    ) -> tuple[str | tuple[str, ...], str | tuple[str, ...], float]:
+        """Returns a key for deduplication."""
+        return (
+            self.side1.glyph
+            if isinstance(self.side1, ast.GlyphName)
+            else tuple(self.firstGlyphs),
+            self.side2.glyph
+            if isinstance(self.side2, ast.GlyphName)
+            else tuple(self.secondGlyphs),
+            self.value,
+        )
+
 
 class KernFeatureWriter(BaseFeatureWriter):
     """Generates a kerning feature based on groups and rules contained
@@ -459,7 +474,6 @@ class KernFeatureWriter(BaseFeatureWriter):
             value = quantize(value, quantization)
             result.append(KerningPair(side1, side2, value))
 
-        result.sort()
         return result
 
     def _intersectPairs(self, attribute, glyphSets):
@@ -643,14 +657,10 @@ def split_kerning(
     # Remove duplicates. TODO: Remove this, too, eventually. Gah!
     for pairs in kerning_per_script.values():
         unique_pairs: dict[
-            tuple[tuple[str, ...], tuple[str, ...], float], KerningPair
+            tuple[str | tuple[str, ...], str | tuple[str, ...], float], KerningPair
         ] = {}
         for pair in pairs:
-            pair_key = (
-                tuple(pair.firstGlyphs),
-                tuple(pair.secondGlyphs),
-                pair.value,
-            )
+            pair_key = pair.uniqueness_key
             if pair_key not in unique_pairs:
                 unique_pairs[pair_key] = pair
             else:

@@ -663,6 +663,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         s1c, s2c = KernFeatureWriter.getKerningClasses(font)
         pairs = KernFeatureWriter.getKerningPairs(font, s1c, s2c, quantization=1)
+        pairs.sort()
         assert len(pairs) == 5
 
         assert "G H -5" in repr(pairs[0])
@@ -684,6 +685,50 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert "@kern1.foo @kern2.bar 10" in repr(pairs[3])
         assert (pairs[3].firstIsClass, pairs[3].secondIsClass) == (True, True)
         assert pairs[3].glyphs == {"A", "B", "C", "D"}
+
+    def test_kern_uniqueness(self, FontClass):
+        glyphs = {
+            ".notdef": None,
+            "questiondown": 0xBF,
+            "y": 0x79,
+        }
+        groups = {
+            "public.kern1.questiondown": ["questiondown"],
+            "public.kern2.y": ["y"],
+        }
+        kerning = {
+            ("public.kern1.questiondown", "public.kern2.y"): 15,
+            ("public.kern1.questiondown", "y"): 35,
+            ("questiondown", "public.kern2.y"): -35,
+            ("questiondown", "y"): 35,
+        }
+        ufo = makeUFO(FontClass, glyphs, groups, kerning)
+
+        newFeatures = self.writeFeatures(ufo)
+
+        # The final kerning value for questiondown, y is 35 and all variants
+        # must be present. Ensures the uniqueness filter doesn't filter things
+        # out.
+        assert dedent(str(newFeatures)) == dedent(
+            """\
+            @kern1.questiondown = [questiondown];
+            @kern2.y = [y];
+
+            lookup kern_Latn {
+                lookupflag IgnoreMarks;
+                pos questiondown y 35;
+                enum pos questiondown [y] -35;
+                enum pos [questiondown] y 35;
+                pos [questiondown] [y] 15;
+            } kern_Latn;
+
+            feature kern {
+                script latn;
+                language dflt;
+                lookup kern_Latn;
+            } kern;
+            """
+        )
 
     def test_kern_LTR_and_RTL(self, FontClass):
         glyphs = {
