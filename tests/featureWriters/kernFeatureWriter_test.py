@@ -663,7 +663,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         s1c, s2c = KernFeatureWriter.getKerningClasses(font)
         pairs = KernFeatureWriter.getKerningPairs(font, s1c, s2c, quantization=1)
-        pairs.sort()
         assert len(pairs) == 5
 
         assert "G H -5" in repr(pairs[0])

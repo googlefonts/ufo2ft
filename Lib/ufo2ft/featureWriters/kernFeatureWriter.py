@@ -459,6 +459,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             value = quantize(value, quantization)
             result.append(KerningPair(side1, side2, value))
 
+        result.sort()
         return result
 
     def _intersectPairs(self, attribute, glyphSets):
