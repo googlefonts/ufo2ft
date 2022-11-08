@@ -806,7 +806,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Arab;
 
             lookup kern_Latn {
-                enum pos @kern1.A V -40;
+                enum pos [A Aacute] V -40;
             } kern_Latn;
 
             lookup kern_Thaa {
@@ -944,7 +944,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
-                enum pos @kern1.A V -40;
+                enum pos [A Aacute] V -40;
             } kern_Latn;
 
             lookup kern_Latn_marks {
