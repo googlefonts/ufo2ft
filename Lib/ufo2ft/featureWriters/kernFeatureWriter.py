@@ -17,6 +17,7 @@ from ufo2ft.featureWriters.ast import (
     makeLookupFlag,
 )
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize
+from ufo2ft.errors import Error
 
 if TYPE_CHECKING:
     from typing import Any, Iterator, Literal, Mapping
@@ -620,7 +621,7 @@ def split_kerning(
             ensure_unique_class_class_membership(pairs)
             ensure_no_duplicates(pairs)
         except Exception as e:
-            raise Exception(f"In {script}: {e}") from e
+            raise Error(f"In {script}: {e}") from e
 
     # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
     # class, class to glyph, and finally class to class. This makes "kerning
