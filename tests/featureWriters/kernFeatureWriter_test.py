@@ -856,8 +856,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
             "four-ar": 0x664,
             "seven-ar": 0x667,
             "fatha-ar": 0x64E,
-            # # we also add glyphs without unicode codepoint, but linked to
-            # # an encoded 'character' glyph by some GSUB rule
+            # we also add glyphs without unicode codepoint, but linked to
+            # an encoded 'character' glyph by some GSUB rule
             "alef-ar.isol": None,
             "lam-ar.init": None,
             "reh-ar.fina": None,
@@ -1061,72 +1061,14 @@ class KernFeatureWriterTest(FeatureWriterTest):
             """
         )
 
-    # XXX: Remove?
-    def test_kern_LTR_and_RTL_one_uses_DFLT(self, FontClass):
+    def test_kern_independent_of_languagesystem(self, FontClass):
         glyphs = {"A": 0x41, "V": 0x56, "reh-ar": 0x631, "alef-ar": 0x627}
         kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
-        features = "languagesystem latn dflt;"
-        ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
-        generated = self.writeFeatures(ufo)
-
-        assert dedent(str(generated)) == dedent(
-            """
-            lookup kern_Arab {
-                lookupflag IgnoreMarks;
-                pos reh-ar alef-ar <-100 0 -100 0>;
-            } kern_Arab;
-
-            lookup kern_Latn {
-                lookupflag IgnoreMarks;
-                pos A V -40;
-            } kern_Latn;
-
-            feature kern {
-                script arab;
-                language dflt;
-                lookup kern_Arab;
-
-                script latn;
-                language dflt;
-                lookup kern_Latn;
-            } kern;
-            """
-        )
-
-        features = dedent("languagesystem arab dflt;")
-        ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
-        generated = self.writeFeatures(ufo)
-
-        assert dedent(str(generated)) == dedent(
-            """
-            lookup kern_Arab {
-                lookupflag IgnoreMarks;
-                pos reh-ar alef-ar <-100 0 -100 0>;
-            } kern_Arab;
-
-            lookup kern_Latn {
-                lookupflag IgnoreMarks;
-                pos A V -40;
-            } kern_Latn;
-
-            feature kern {
-                script arab;
-                language dflt;
-                lookup kern_Arab;
-
-                script latn;
-                language dflt;
-                lookup kern_Latn;
-            } kern;
-            """
-        )
-
-    def test_kern_LTR_and_RTL_no_DFLT(self, FontClass):
-        glyphs = {"A": 0x41, "V": 0x56, "reh-ar": 0x631, "alef-ar": 0x627}
-        kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
+        # No languagesystems decalred.
         ufo = makeUFO(FontClass, glyphs, kerning=kerning)
         generated = self.writeFeatures(ufo)
-        assert dedent(str(generated)) == dedent(
+
+        expectation = dedent(
             """\
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
@@ -1149,6 +1091,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern;
             """
         )
+        assert dedent(str(generated)) == expectation
+
+        features = dedent("languagesystem arab dflt;")
+        ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
+        generated = self.writeFeatures(ufo)
+
+        assert dedent(str(generated)).lstrip("\n") == expectation
 
     def test_dist_LTR(self, FontClass):
         glyphs = {"aaMatra_kannada": 0x0CBE, "ailength_kannada": 0xCD6}
