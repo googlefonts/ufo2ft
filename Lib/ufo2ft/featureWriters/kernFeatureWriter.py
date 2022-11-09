@@ -476,15 +476,15 @@ class KernFeatureWriter(BaseFeatureWriter):
             marks = self.context.gdefClasses.mark
             basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
             if basePairs:
-                self._makeSplitScriptKernLookups(
+                make_split_script_kern_lookups(
                     lookups, basePairs, glyphScripts, ignoreMarks
                 )
             if markPairs:
-                self._makeSplitScriptKernLookups(
+                make_split_script_kern_lookups(
                     lookups, markPairs, glyphScripts, ignoreMarks=False, suffix="_marks"
                 )
         else:
-            self._makeSplitScriptKernLookups(lookups, pairs, glyphScripts, ignoreMarks)
+            make_split_script_kern_lookups(lookups, pairs, glyphScripts, ignoreMarks)
         return lookups
 
     def _splitBaseAndMarkPairs(self, pairs, marks):
@@ -498,30 +498,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         else:
             basePairs[:] = pairs
         return basePairs, markPairs
-
-    def _makeSplitScriptKernLookups(
-        self,
-        lookups: dict[str, dict[str, ast.LookupBlock]],
-        pairs: list[KerningPair],
-        glyphScripts: Mapping[str, set[str]],
-        ignoreMarks: bool,
-        suffix: str = "",
-    ) -> None:
-        kerning_per_script = split_kerning(pairs, glyphScripts)
-        for script, pairs in kerning_per_script.items():
-            key = f"kern_{script}{suffix}"
-            script_lookups = lookups.setdefault(script, {})
-            lookup = script_lookups.get(key)
-            if not lookup:
-                # For neatness:
-                lookup_name = key.replace(COMMON_SCRIPT, "Common")
-                lookup = ast.LookupBlock(lookup_name)
-                if ignoreMarks:
-                    lookup.statements.append(makeLookupFlag("IgnoreMarks"))
-                script_lookups[key] = lookup
-            for pair in pairs:
-                rule = pair.make_pair_pos_rule(script)
-                lookup.statements.append(rule)
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
@@ -592,6 +568,30 @@ class KernFeatureWriter(BaseFeatureWriter):
 
 def script_extensions_for_codepoint(uv: int) -> set[str]:
     return unicodedata.script_extension(chr(uv))
+
+
+def make_split_script_kern_lookups(
+    lookups: dict[str, dict[str, ast.LookupBlock]],
+    pairs: list[KerningPair],
+    glyphScripts: Mapping[str, set[str]],
+    ignoreMarks: bool,
+    suffix: str = "",
+) -> None:
+    kerning_per_script = split_kerning(pairs, glyphScripts)
+    for script, pairs in kerning_per_script.items():
+        key = f"kern_{script}{suffix}"
+        script_lookups = lookups.setdefault(script, {})
+        lookup = script_lookups.get(key)
+        if not lookup:
+            # For neatness:
+            lookup_name = key.replace(COMMON_SCRIPT, "Common")
+            lookup = ast.LookupBlock(lookup_name)
+            if ignoreMarks:
+                lookup.statements.append(makeLookupFlag("IgnoreMarks"))
+            script_lookups[key] = lookup
+        for pair in pairs:
+            rule = pair.make_pair_pos_rule(script)
+            lookup.statements.append(rule)
 
 
 def split_kerning(
