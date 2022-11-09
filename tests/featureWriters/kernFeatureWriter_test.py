@@ -1462,38 +1462,70 @@ def test_split_multi_explicit_and_implicit_script() -> None:
     }
 
 
-def test_weird_split7() -> None:
-    pairs = [
-        KerningPair(
-            ["a", "delta", "danda"], ["a-cy", "arabic", "period"], 20, scripts={"Latn"}
-        ),
-        KerningPair(
-            ["a-cy", "arabic", "period"], ["a", "delta", "danda"], 20, scripts={"Latn"}
-        ),
-    ]
-    glyphScripts = {
-        "a": {"Latn"},
-        "delta": {"Grek"},
-        "danda": {"Odia"},
-        "a-cy": {"Cyrl"},
-        "arabic": {"Arab"},
-        "period": {"Zyyy"},
+def test_kern_split_and_drop(FontClass):
+    glyphs = {
+        "a": ord("a"),
+        "alpha": ord("α"),
+        "a-orya": 0x0B05,
+        "a-cy": 0x0430,
+        "alef-ar": 0x627,
+        "period": ord("."),
     }
-    kerning_per_script = split_kerning(pairs, glyphScripts)
-    assert kerning_per_script == {
-        "Grek": [
-            KerningPair(["delta"], ["period"], 20, scripts={"Grek"}),
-            KerningPair(["period"], ["delta"], 20, scripts={"Grek"}),
-        ],
-        "Latn": [
-            KerningPair(["a"], ["period"], 20, scripts={"Latn"}),
-            KerningPair(["period"], ["a"], 20, scripts={"Latn"}),
-        ],
-        "Odia": [
-            KerningPair(["danda"], ["period"], 20, scripts={"Odia"}),
-            KerningPair(["period"], ["danda"], 20, scripts={"Odia"}),
-        ],
+    groups = {
+        "public.kern1.foo": ["a", "alpha", "a-orya"],
+        "public.kern2.foo": ["a", "alpha", "a-orya"],
+        "public.kern1.bar": ["a-cy", "alef-ar", "period"],
+        "public.kern2.bar": ["a-cy", "alef-ar", "period"],
     }
+    kerning = {
+        ("public.kern1.foo", "public.kern2.bar"): 20,
+        ("public.kern1.bar", "public.kern2.foo"): 20,
+    }
+
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        lookup kern_Grek {
+            lookupflag IgnoreMarks;
+            pos [alpha] [period] 20;
+            pos [period] [alpha] 20;
+        } kern_Grek;
+
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos [a] [period] 20;
+            pos [period] [a] 20;
+        } kern_Latn;
+
+        lookup kern_Orya {
+            lookupflag IgnoreMarks;
+            pos [a-orya] [period] 20;
+            pos [period] [a-orya] 20;
+        } kern_Orya;
+
+        feature kern {
+            script grek;
+            language dflt;
+            lookup kern_Grek;
+
+            script latn;
+            language dflt;
+            lookup kern_Latn;
+        } kern;
+
+        feature dist {
+            script ory2;
+            language dflt;
+            lookup kern_Orya;
+
+            script orya;
+            language dflt;
+            lookup kern_Orya;
+        } dist;
+        """
+    )
 
 
 if __name__ == "__main__":
