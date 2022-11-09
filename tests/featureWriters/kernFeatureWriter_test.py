@@ -117,11 +117,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         writer.write(ufo, feaFile)
 
         classDefs = getClassDefs(feaFile)
-        assert len(classDefs) == 2
-        assert classDefs[0].name == "kern1.A"
-        assert classDefs[1].name == "kern2.B"
-        assert getGlyphs(classDefs[0]) == ["A", "Aacute", "Acircumflex"]
-        assert getGlyphs(classDefs[1]) == ["B", "E", "F"]
+        assert len(classDefs) == 0
 
         lookups = getLookups(feaFile)
         assert len(lookups) == 1
@@ -711,9 +707,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # out.
         assert dedent(str(newFeatures)) == dedent(
             """\
-            @kern1.questiondown = [questiondown];
-            @kern2.y = [y];
-
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos questiondown y 35;
@@ -794,11 +787,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         newFeatures = self.writeFeatures(ufo, ignoreMarks=False)
 
         assert dedent(str(newFeatures)) == dedent(
-            """\
-            @kern1.A = [A Aacute];
-            @kern1.reh = [reh-ar zain-ar reh-ar.fina];
-            @kern2.alef = [alef-ar alef-ar.isol];
-
+            """
             lookup kern_Arab {
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
@@ -925,12 +914,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         newFeatures = self.writeFeatures(ufo)
 
-        assert dedent(str(newFeatures)) == dedent(
+        assert dedent(str(newFeatures)).lstrip("\n") == dedent(
             """\
-            @kern1.A = [A Aacute];
-            @kern1.reh = [reh-ar zain-ar reh-ar.fina];
-            @kern2.alef = [alef-ar alef-ar.isol];
-
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
@@ -1055,11 +1040,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         newFeatures = self.writeFeatures(ufo)
 
-        assert dedent(str(newFeatures)) == dedent(
+        assert dedent(str(newFeatures)).lstrip("\n") == dedent(
             """\
-            @kern1.reh = [reh-ar zain-ar reh-ar.fina];
-            @kern2.alef = [alef-ar alef-ar.isol];
-
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
@@ -1188,10 +1170,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert dedent(str(generated)) == dedent(
-            """\
-            @kern1.KND_aaMatra_R = [aaMatra_kannada];
-            @kern2.KND_ailength_L = [aaMatra_kannada];
-
+            """
             lookup kern_Knda {
                 lookupflag IgnoreMarks;
                 pos [aaMatra_kannada] [aaMatra_kannada] 34;
@@ -1264,11 +1243,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
         ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
         generated = self.writeFeatures(ufo)
 
-        assert dedent(str(generated)) == dedent(
+        assert dedent(str(generated)).lstrip("\n") == dedent(
             """\
-            @kern1.KND_aaMatra_R = [aaMatra_kannada];
-            @kern2.KND_ailength_L = [aaMatra_kannada];
-
             lookup kern_Khar {
                 lookupflag IgnoreMarks;
                 pos u10A1E u10A06 <117 0 117 0>;
