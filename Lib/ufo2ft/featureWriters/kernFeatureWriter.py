@@ -9,6 +9,7 @@ from fontTools import unicodedata
 from fontTools.feaLib import ast
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
+from ufo2ft.errors import Error
 from ufo2ft.featureWriters import BaseFeatureWriter
 from ufo2ft.featureWriters.ast import (
     addLookupReferences,
@@ -17,7 +18,6 @@ from ufo2ft.featureWriters.ast import (
     makeLookupFlag,
 )
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize
-from ufo2ft.errors import Error
 
 if TYPE_CHECKING:
     from typing import Any, Iterator, Literal, Mapping
