@@ -1350,116 +1350,95 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
 
-def test_split_multi_glyph_class() -> None:
-    pairs = [
-        # Glyph-to-glyph
-        KerningPair("a", "a", 1, scripts={"Latn"}),
-        KerningPair("a", "b", 2, scripts={"Latn"}),
-        KerningPair("a", "something", 3, scripts={"Latn"}),
-        KerningPair("b", "a", 4, scripts={"Latn"}),
-        KerningPair("b", "b", 5, scripts={"Latn"}),
-        KerningPair("b", "something", 6, scripts={"Latn"}),
-        KerningPair("something", "a", 7, scripts={"Latn"}),
-        KerningPair("something", "b", 8, scripts={"Latn"}),
-        KerningPair("something", "something", 9, scripts={"Zyyy"}),
+def test_kern_split_multi_glyph_class(FontClass):
+    glyphs = {
+        "a": ord("a"),
+        "b": ord("b"),
+        "period": ord("."),
+    }
+    groups = {
+        "public.kern1.foo": ["a", "period"],
+        "public.kern2.foo": ["b", "period"],
+    }
+    kerning = {
+        ("a", "a"): 1,
+        ("a", "b"): 2,
+        ("a", "period"): 3,
+        ("b", "a"): 4,
+        ("b", "b"): 5,
+        ("b", "period"): 6,
+        ("period", "a"): 7,
+        ("period", "b"): 8,
+        ("period", "period"): 9,
         # Class-to-glyph
-        KerningPair(["a", "something"], "b", 10, scripts={"Latn"}),
-        KerningPair(["a", "something"], "something", 11, scripts={"Latn"}),
+        ("public.kern1.foo", "b"): 10,
+        ("public.kern1.foo", "period"): 11,
         # Glyph-to-class
-        KerningPair("a", ["b", "something"], 12, scripts={"Latn"}),
-        KerningPair("something", ["b", "something"], 13, scripts={"Latn"}),
+        ("a", "public.kern2.foo"): 12,
+        ("period", "public.kern2.foo"): 13,
         # Class-to-class
-        KerningPair(["a", "something"], ["b", "something"], 14, scripts={"Latn"}),
-    ]
-    glyphScripts = {
-        "a": {"Latn"},
-        "b": {"Latn"},
-        "something": {"Zyyy"},
+        ("public.kern1.foo", "public.kern2.foo"): 14,
     }
-    kerning_per_script = split_kerning(pairs, glyphScripts)
-    assert kerning_per_script == {
-        "Latn": [
-            KerningPair("a", "a", 1, scripts={"Latn"}),
-            KerningPair("a", "b", 2, scripts={"Latn"}),
-            KerningPair("a", "something", 3, scripts={"Latn"}),
-            KerningPair("b", "a", 4, scripts={"Latn"}),
-            KerningPair("b", "b", 5, scripts={"Latn"}),
-            KerningPair("b", "something", 6, scripts={"Latn"}),
-            KerningPair("something", "a", 7, scripts={"Latn"}),
-            KerningPair("something", "b", 8, scripts={"Latn"}),
-            KerningPair("a", ["b"], 12, scripts={"Latn"}),
-            KerningPair("a", ["something"], 12, scripts={"Latn"}),
-            KerningPair("something", ["b"], 13, scripts={"Latn"}),
-            KerningPair(["a"], "b", 10, scripts={"Latn"}),
-            KerningPair(["a"], "something", 11, scripts={"Latn"}),
-            KerningPair(["something"], "b", 10, scripts={"Latn"}),
-            KerningPair(["a"], ["b"], 14, scripts={"Latn"}),
-            KerningPair(["a"], ["something"], 14, scripts={"Latn"}),
-            KerningPair(["something"], ["b"], 14, scripts={"Latn"}),
-        ],
-        "Zyyy": [
-            KerningPair("something", "something", 9, scripts={"Zyyy"}),
-            KerningPair("something", ["something"], 13, scripts={"Zyyy"}),
-            KerningPair(["something"], "something", 11, scripts={"Zyyy"}),
-            KerningPair(["something"], ["something"], 14, scripts={"Zyyy"}),
-        ],
-    }
+    expectation = dedent(
+        """\
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos a a 1;
+            pos a b 2;
+            pos a period 3;
+            pos b a 4;
+            pos b b 5;
+            pos b period 6;
+            pos period a 7;
+            pos period b 8;
+            enum pos a [b] 12;
+            enum pos a [period] 12;
+            enum pos period [b] 13;
+            enum pos [a] b 10;
+            enum pos [a] period 11;
+            enum pos [period] b 10;
+            pos [a] [b] 14;
+            pos [a] [period] 14;
+            pos [period] [b] 14;
+        } kern_Latn;
 
+        lookup kern_Common {
+            lookupflag IgnoreMarks;
+            pos period period 9;
+            enum pos period [period] 13;
+            enum pos [period] period 11;
+            pos [period] [period] 14;
+        } kern_Common;
 
-def test_split_multi_explicit_and_implicit_script() -> None:
-    pairs = [
-        # Glyph-to-glyph
-        KerningPair("a", "a", 1, scripts={"Latn"}),
-        KerningPair("a", "b", 2, scripts={"Latn"}),
-        KerningPair("a", "something", 3, scripts={"Latn"}),
-        KerningPair("b", "a", 4, scripts={"Latn"}),
-        KerningPair("b", "b", 5, scripts={"Latn"}),
-        KerningPair("b", "something", 6, scripts={"Latn"}),
-        KerningPair("something", "a", 7, scripts={"Latn"}),
-        KerningPair("something", "b", 8, scripts={"Latn"}),
-        KerningPair("something", "something", 9, scripts={"Zyyy"}),
-        # Class-to-glyph
-        KerningPair(["a", "something"], "b", 10, scripts={"Latn"}),
-        KerningPair(["a", "something"], "something", 11, scripts={"Latn"}),
-        # Glyph-to-class
-        KerningPair("a", ["b", "something"], 12, scripts={"Latn"}),
-        KerningPair("something", ["b", "something"], 13, scripts={"Latn"}),
-        # Class-to-class
-        KerningPair(["a", "something"], ["b", "something"], 14, scripts={"Latn"}),
-    ]
-    glyphScripts = {
-        "a": {"Latn"},
-        "b": {"Latn"},
-        "something": {"Latn", "Zyyy"},
-    }
-    kerning_per_script = split_kerning(pairs, glyphScripts)
-    assert kerning_per_script == {
-        "Latn": [
-            KerningPair("a", "a", 1, scripts={"Latn"}),
-            KerningPair("a", "b", 2, scripts={"Latn"}),
-            KerningPair("a", "something", 3, scripts={"Latn"}),
-            KerningPair("b", "a", 4, scripts={"Latn"}),
-            KerningPair("b", "b", 5, scripts={"Latn"}),
-            KerningPair("b", "something", 6, scripts={"Latn"}),
-            KerningPair("something", "a", 7, scripts={"Latn"}),
-            KerningPair("something", "b", 8, scripts={"Latn"}),
-            KerningPair("a", ["b"], 12, scripts={"Latn"}),
-            KerningPair("a", ["something"], 12, scripts={"Latn"}),
-            KerningPair("something", ["b"], 13, scripts={"Latn"}),
-            KerningPair(["a"], "b", 10, scripts={"Latn"}),
-            KerningPair(["a"], "something", 11, scripts={"Latn"}),
-            KerningPair(["something"], "b", 10, scripts={"Latn"}),
-            KerningPair(["a"], ["b"], 14, scripts={"Latn"}),
-            KerningPair(["a"], ["something"], 14, scripts={"Latn"}),
-            KerningPair(["something"], ["b"], 14, scripts={"Latn"}),
-        ],
-        "Zyyy": [
-            KerningPair("something", "something", 9, scripts={"Zyyy"}),
-            KerningPair("something", ["something"], 13, scripts={"Zyyy"}),
-            KerningPair(["something"], "something", 11, scripts={"Zyyy"}),
-            KerningPair(["something"], ["something"], 14, scripts={"Zyyy"}),
-        ],
-    }
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Common;
+
+            script latn;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Latn;
+        } kern;
+        """
+    )
+
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)).lstrip("\n") == expectation
+
+    features = dedent(
+        """
+        feature ss01 {
+            sub a by period; # Make period be both Latn and Zyyy.
+        } ss01;
+        """
+    )
+    ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)).lstrip("\n") == expectation
 
 
 def test_kern_split_and_drop(FontClass):
