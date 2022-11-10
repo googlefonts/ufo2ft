@@ -516,8 +516,8 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _registerLookups(
         self, feature: ast.FeatureBlock, lookups: dict[str, dict[str, ast.LookupBlock]]
     ) -> None:
-        is_kern_block = feature.name == "kern"
         # Ensure we have kerning for pure common script runs (e.g. ">1")
+        is_kern_block = feature.name == "kern"
         if is_kern_block and COMMON_SCRIPT in lookups:
             addLookupReferences(
                 feature, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
