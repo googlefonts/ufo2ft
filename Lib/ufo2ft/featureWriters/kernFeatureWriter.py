@@ -57,48 +57,18 @@ class KerningPair:
 
     def __init__(
         self,
-        side1: str
-        | ast.GlyphClassDefinition
-        | ast.GlyphClass
-        | ast.GlyphClassName
-        | list[str]
-        | set[str]
-        | tuple[str],
-        side2: str
-        | ast.GlyphClassDefinition
-        | ast.GlyphClass
-        | ast.GlyphClassName
-        | list[str]
-        | set[str]
-        | tuple[str],
+        side1: str | set[str],  # XXX: use sorted tuple instead?
+        side2: str | set[str],  # XXX: use sorted tuple instead?
         value: float,
         scripts: set[str],
         bidiTypes: set[str],
     ) -> None:
-        self.side1: ast.GlyphName | ast.GlyphClassName | ast.GlyphClass
-        if isinstance(side1, str):
-            self.side1 = ast.GlyphName(side1)
-        elif isinstance(side1, ast.GlyphClassDefinition):
-            self.side1 = ast.GlyphClassName(side1)
-        elif isinstance(side1, (ast.GlyphClass, ast.GlyphClassName)):
-            self.side1 = side1
-        elif isinstance(side1, (list, set, tuple)):
-            self.side1 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side1)])
-        else:
-            raise AssertionError(side1)
-
-        self.side2: ast.GlyphName | ast.GlyphClassName | ast.GlyphClass
-        if isinstance(side2, str):
-            self.side2 = ast.GlyphName(side2)
-        elif isinstance(side2, ast.GlyphClassDefinition):
-            self.side2 = ast.GlyphClassName(side2)
-        elif isinstance(side2, (ast.GlyphClass, ast.GlyphClassName)):
-            self.side2 = side2
-        elif isinstance(side2, (list, set, tuple)):
-            self.side2 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side2)])
-        else:
-            raise AssertionError(side2)
-
+        if not isinstance(side1, (str, set)):
+            raise TypeError(type(side1))
+        if not isinstance(side2, (str, set)):
+            raise TypeError(type(side2))
+        self.side1 = side1
+        self.side2 = side2
         self.value: float = value
         self.scripts: set[str] = scripts
         self.bidiTypes: set[str] = bidiTypes
@@ -186,84 +156,75 @@ class KerningPair:
         for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
             # Preserve the type (glyph or class) of each side.
             if self.firstIsClass:
-                localSide1: str | list[str] = sorted(side1Scripts[firstScript])
+                localSide1: str | set[str] = side1Scripts[firstScript]
             else:
                 assert len(side1Scripts[firstScript]) == 1
                 (localSide1,) = side1Scripts[firstScript]
             if self.secondIsClass:
-                localSide2: str | list[str] = sorted(side2Scripts[secondScript])
+                localSide2: str | set[str] = side2Scripts[secondScript]
             else:
                 assert len(side2Scripts[secondScript]) == 1
                 (localSide2,) = side2Scripts[secondScript]
-            localPair = KerningPair(
-                localSide1,
-                localSide2,
-                self.value,
-                scripts=self.scripts,
-                bidiTypes=self.bidiTypes,
-            )
 
             # Handle very obvious common cases: one script, same on both sides
-            if firstScript == secondScript:
-                localPair.scripts = {firstScript}
-                yield firstScript, localPair
-            # First is single script, second is common
-            elif secondScript in DFLT_SCRIPTS:
-                localPair.scripts = {firstScript}
-                yield firstScript, localPair
+            if firstScript == secondScript or secondScript in DFLT_SCRIPTS:
+                localScript = firstScript
             # First is common, second is single script
             elif firstScript in DFLT_SCRIPTS:
-                localPair.scripts = {secondScript}
-                yield secondScript, localPair
+                localScript = secondScript
             # One script and it's different on both sides and it's not common
             else:
                 logger = ".".join([self.__class__.__module__, self.__class__.__name__])
                 logging.getLogger(logger).info(
-                    "Mixed script kerning pair %s ignored" % localPair
+                    "Mixed script kerning pair %s, %s: %s ignored",
+                    sorted(localSide1),
+                    sorted(localSide2),
+                    self.value,
                 )
+                continue
+
+            yield localScript, KerningPair(
+                localSide1,
+                localSide2,
+                self.value,
+                scripts={localScript},
+                bidiTypes=self.bidiTypes,
+            )
 
     @property
     def firstIsClass(self) -> bool:
-        return isinstance(self.side1, (ast.GlyphClassName, ast.GlyphClass))
+        return isinstance(self.side1, set)
 
     @property
     def secondIsClass(self) -> bool:
-        return isinstance(self.side2, (ast.GlyphClassName, ast.GlyphClass))
+        return isinstance(self.side2, set)
 
     @property
     def firstGlyphs(self) -> set[str]:
-        if self.firstIsClass:
-            if isinstance(self.side1, ast.GlyphClassName):
-                classDef1 = self.side1.glyphclass
-            else:
-                classDef1 = self.side1
-            return {g.asFea() for g in classDef1.glyphSet()}
+        if isinstance(self.side1, set):
+            return self.side1
         else:
-            return {self.side1.asFea()}
+            return {self.side1}
 
     @property
     def secondGlyphs(self) -> set[str]:
-        if self.secondIsClass:
-            if isinstance(self.side2, ast.GlyphClassName):
-                classDef2 = self.side2.glyphclass
-            else:
-                classDef2 = self.side2
-            return {g.asFea() for g in classDef2.glyphSet()}
+        if isinstance(self.side2, set):
+            return self.side2
         else:
-            return {self.side2.asFea()}
+            return {self.side2}
 
     @property
     def glyphs(self) -> set[str]:
         return self.firstGlyphs | self.secondGlyphs
 
     def __repr__(self) -> str:
-        return "<{} {} {} {}{}{}>".format(
+        return "<{} {} {} {} {} {}>".format(
             self.__class__.__name__,
-            self.side1,
-            self.side2,
+            self.side1 if isinstance(self.side1, str) else tuple(sorted(self.side1)),
+            self.side2 if isinstance(self.side2, str) else tuple(sorted(self.side2)),
             self.value,
-            " %r" % self.scripts if self.scripts else "",
-            " %r" % self.bidiTypes if self.bidiTypes else "",
+            self.scripts,
+            self.bidiTypes,
         )
 
     @property
@@ -272,12 +233,8 @@ class KerningPair:
     ) -> tuple[str | tuple[str, ...], str | tuple[str, ...], float]:
         """Returns a key for deduplication."""
         return (
-            self.side1.glyph
-            if isinstance(self.side1, ast.GlyphName)
-            else tuple(self.firstGlyphs),
-            self.side2.glyph
-            if isinstance(self.side2, ast.GlyphName)
-            else tuple(self.secondGlyphs),
+            self.side1 if isinstance(self.side1, str) else tuple(sorted(self.side1)),
+            self.side2 if isinstance(self.side2, str) else tuple(sorted(self.side2)),
             self.value,
         )
 
@@ -293,10 +250,19 @@ class KerningPair:
             xAdvance=self.value,
             yAdvance=0 if rtl else None,
         )
+        # XXX: Do this elsewhere where we can cache the result?
+        if isinstance(self.side1, str):
+            side1 = ast.GlyphName(self.side1)
+        else:
+            side1 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(self.side1)])
+        if isinstance(self.side2, str):
+            side2 = ast.GlyphName(self.side2)
+        else:
+            side2 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(self.side2)])
         return ast.PairPosStatement(
-            glyphs1=self.side1,
+            glyphs1=side1,
             valuerecord1=valuerecord,
-            glyphs2=self.side2,
+            glyphs2=side2,
             valuerecord2=None,
             enumerated=enumerated,
         )
@@ -342,7 +308,6 @@ class KernFeatureWriter(BaseFeatureWriter):
             self.options.quantization,
             scriptGlyphs,  # type: ignore
             bidiGlyphs,  # type: ignore
-            feaFile,
             self.getOrderedGlyphSet(),
         )
 
@@ -388,34 +353,31 @@ class KernFeatureWriter(BaseFeatureWriter):
         quantization: int,
         scriptGlyphs: Mapping[str, set[str]],
         bidiGlyphs: Mapping[str, set[str]],
-        feaFile: ast.FeatureFile | None = None,
-        glyphSet: dict[str, Any] | None = None,
+        glyphSet: dict[str, Any],
     ) -> SimpleNamespace:
-        side1Classes, side2Classes = cls.getKerningClasses(font, feaFile, glyphSet)
+        side1Groups, side2Groups = cls.getKerningGroups(font, glyphSet)
         pairs = cls.getKerningPairs(
             font,
-            side1Classes,
-            side2Classes,
+            side1Groups,
+            side2Groups,
             quantization,
             scriptGlyphs,
             bidiGlyphs,
             glyphSet,
         )
         return SimpleNamespace(
-            side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
+            side1Groups=side1Groups, side2Groups=side2Groups, pairs=pairs
         )
 
     @staticmethod
-    def getKerningGroups(font, glyphSet=None):
-        if glyphSet:
-            allGlyphs = set(glyphSet.keys())
-        else:
-            allGlyphs = set(font.keys())
-        side1Groups = {}
-        side2Groups = {}
+    def getKerningGroups(
+        font, glyphSet
+    ) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+        side1Groups: dict[str, set[str]] = {}
+        side2Groups: dict[str, set[str]] = {}
         for name, members in font.groups.items():
             # prune non-existent or skipped glyphs
-            members = [g for g in members if g in allGlyphs]
+            members = {g for g in members if g in glyphSet}
             if not members:
                 # skip empty groups
                 continue
@@ -426,40 +388,24 @@ class KernFeatureWriter(BaseFeatureWriter):
                 side2Groups[name] = members
         return side1Groups, side2Groups
 
-    @classmethod
-    def getKerningClasses(cls, font, feaFile=None, glyphSet=None):
-        side1Groups, side2Groups = cls.getKerningGroups(font, glyphSet)
-        side1Classes = makeGlyphClassDefinitions(
-            side1Groups, feaFile, stripPrefix="public."
-        )
-        side2Classes = makeGlyphClassDefinitions(
-            side2Groups, feaFile, stripPrefix="public."
-        )
-        return side1Classes, side2Classes
-
     @staticmethod
     def getKerningPairs(
         font: Any,
-        side1Classes: Mapping[str, ast.GlyphClassDefinition],
-        side2Classes: Mapping[str, ast.GlyphClassDefinition],
+        side1Groups: Mapping[str, set[str]],
+        side2Groups: Mapping[str, set[str]],
         quantization: int,
         scriptGlyphs: Mapping[str, set[str]],
         bidiGlyphs: Mapping[str, set[str]],
-        glyphSet: dict[str, Any] | None = None,
+        glyphSet: Mapping[str, Any],
     ) -> list[KerningPair]:
-        if glyphSet:
-            allGlyphs = glyphSet.keys()
-        else:
-            allGlyphs = font.keys()
-
         kerning: Mapping[tuple[str, str], float] = font.kerning
         result: list[KerningPair] = []
         for (side1, side2), value in kerning.items():
-            firstIsClass, secondIsClass = (side1 in side1Classes, side2 in side2Classes)
+            firstIsClass, secondIsClass = (side1 in side1Groups, side2 in side2Groups)
             # Filter out pairs that reference missing groups or glyphs.
-            if not firstIsClass and side1 not in allGlyphs:
+            if not firstIsClass and side1 not in glyphSet:
                 continue
-            if not secondIsClass and side2 not in allGlyphs:
+            if not secondIsClass and side2 not in glyphSet:
                 continue
             # Ignore zero-valued class kern pairs. They are the most general
             # kerns, so they don't override anything else like glyph kerns would
@@ -469,13 +415,13 @@ class KernFeatureWriter(BaseFeatureWriter):
 
             pair_glyphs = set()
             if firstIsClass:
-                side1 = side1Classes[side1]
-                pair_glyphs.add(side1.glyphSet())
+                side1 = side1Groups[side1]
+                pair_glyphs.update(side1)
             else:
                 pair_glyphs.add(side1)
             if secondIsClass:
-                side2 = side2Classes[side2]
-                pair_glyphs.add(side2.glyphSet())
+                side2 = side2Groups[side2]
+                pair_glyphs.update(side2)
             else:
                 pair_glyphs.add(side2)
 
@@ -657,7 +603,7 @@ def ensure_unique_class_class_membership(pairs: list[KerningPair]) -> None:
 
     for pair in pairs:
         if pair.firstIsClass:
-            kern1 = {name.glyph for name in pair.side1.glyphSet()}
+            kern1 = pair.firstGlyphs
             for name in kern1:
                 if name not in kern1_membership:
                     kern1_membership[name] = kern1
@@ -669,7 +615,7 @@ def ensure_unique_class_class_membership(pairs: list[KerningPair]) -> None:
                         f"to pair {pair}"
                     )
         if pair.secondIsClass:
-            kern2 = {name.glyph for name in pair.side2.glyphSet()}
+            kern2 = pair.secondGlyphs
             for name in kern2:
                 if name not in kern2_membership:
                     kern2_membership[name] = kern2
