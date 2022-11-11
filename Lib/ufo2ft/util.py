@@ -294,11 +294,14 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
     glyphSets = {}
     neutralGlyphs = set()
     for uv, glyphName in cmap.items():
-        key = unicodeFunc(uv)
-        if key is None:
+        key_or_keys = unicodeFunc(uv)
+        if key_or_keys is None:
             neutralGlyphs.add(glyphName)
+        elif isinstance(key_or_keys, (list, set)):
+            for key in key_or_keys:
+                glyphSets.setdefault(key, set()).add(glyphName)
         else:
-            glyphSets.setdefault(key, set()).add(glyphName)
+            glyphSets.setdefault(key_or_keys, set()).add(glyphName)
 
     if gsub is not None:
         if neutralGlyphs:
