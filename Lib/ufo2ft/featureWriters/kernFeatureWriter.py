@@ -11,11 +11,7 @@ from fontTools.feaLib import ast
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.errors import Error
 from ufo2ft.featureWriters import BaseFeatureWriter
-from ufo2ft.featureWriters.ast import (
-    addLookupReferences,
-    makeGlyphClassDefinitions,
-    makeLookupFlag,
-)
+from ufo2ft.featureWriters.ast import addLookupReferences, makeLookupFlag
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize
 
 if TYPE_CHECKING:
@@ -377,6 +373,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         side2Groups: dict[str, set[str]] = {}
         for name, members in font.groups.items():
             # prune non-existent or skipped glyphs
+            # XXX: use sorted tuple instead?
             members = {g for g in members if g in glyphSet}
             if not members:
                 # skip empty groups
