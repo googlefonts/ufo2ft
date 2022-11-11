@@ -237,6 +237,7 @@ class KerningPair:
     def make_pair_pos_rule(self, script: str) -> ast.PairPosStatement:
         script_is_rtl = unicodedata.script_horizontal_direction(script) == "RTL"
         # Numbers are always shaped LTR even in RTL scripts:
+        assert not self.bidiTypes.issuperset(BAD_BIDIS)
         pair_is_rtl = "L" not in self.bidiTypes
         rtl = script_is_rtl and pair_is_rtl
         enumerated = self.firstIsClass ^ self.secondIsClass
