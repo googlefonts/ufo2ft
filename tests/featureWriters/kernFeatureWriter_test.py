@@ -6,7 +6,6 @@ import pytest
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
-from ufo2ft.featureWriters.kernFeatureWriter import KerningPair, split_kerning
 
 from . import FeatureWriterTest
 
