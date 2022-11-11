@@ -1408,7 +1408,8 @@ def test_kern_split_and_drop_mixed(caplog, FontClass):
         """
     )
     assert (
-        "Mixed script kerning pair ['V', 'W'], ['gba-nko']: -20 ignored" in caplog.text
+        "Skipping kerning pair <('V', 'W') ('W', 'gba-nko') -20> with mixed script (Latn, Nkoo)"
+        in caplog.text
     )
 
 
@@ -1597,8 +1598,8 @@ def test_kern_mixed_bidis(caplog, FontClass):
         } dist;
         """
     )
-    assert "Mixed BiDi types in kerning pair alef-ar, one-ar: 7" in caplog.text
-    assert "Mixed BiDi types in kerning pair one-ar, alef-ar: 8" in caplog.text
+    assert "<alef-ar one-ar 7> with ambiguous direction" in caplog.text
+    assert "<one-ar alef-ar 8> with ambiguous direction" in caplog.text
 
 
 if __name__ == "__main__":

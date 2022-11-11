@@ -178,12 +178,12 @@ class KerningPair:
             else:
                 logger = ".".join([self.__class__.__module__, self.__class__.__name__])
                 logging.getLogger(logger).info(
-                    "Mixed script (%s, %s) kerning pair %s, %s: %s ignored",
-                    firstScript,
-                    secondScript,
+                    "Skipping kerning pair <%s %s %s> with mixed script (%s, %s)",
                     self.displayFirst,
                     self.displaySecond,
                     self.value,
+                    firstScript,
+                    secondScript,
                 )
                 continue
 
@@ -194,7 +194,7 @@ class KerningPair:
             if bidiTypes.issuperset(BAD_BIDIS):
                 logger = ".".join([self.__class__.__module__, self.__class__.__name__])
                 logging.getLogger(logger).info(
-                    "Mixed BiDi types in kerning pair %s, %s: %s, skipping",
+                    "Skipping kerning pair <%s %s %s> with ambiguous direction",
                     self.displayFirst,
                     self.displaySecond,
                     self.value,
