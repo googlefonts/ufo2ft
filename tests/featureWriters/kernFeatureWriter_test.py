@@ -46,50 +46,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
     FeatureWriter = KernFeatureWriter
 
-    def test_split_pair(self, caplog):
-        caplog.set_level(logging.INFO)
-        glyphScripts = {
-            "V": {"Latn"},
-            "W": {"Latn"},
-            "gba-nko": {"Nkoo"},
-            "period": {"Zyyy"},
-            "comma-ar": {"Arab", "Nkoo", "Syrc", "Thaa", "Rohg", "Yezi"},
-            "lam-ar": {"Arab"},
-        }
-
-        # Mixed script pairs don't go anywhere
-        pair = KerningPair(["V", "W"], ["gba-nko", "W"], -20)
-        split = dict(pair.partitionByScript(glyphScripts))
-        assert len(split) == 1
-        assert str(split["Latn"]) == "<KerningPair [V W] [W] -20 {'Latn'}>"
-        assert (
-            "Mixed script kerning pair <KerningPair [V W] [gba-nko] -20> ignored"
-            in caplog.text
-        )
-
-        # Everyone gets common-script glyphs, but they get it per-script
-        pair = KerningPair(["V", "gba-nko", "W"], "period", -20)
-        split = dict(pair.partitionByScript(glyphScripts))
-        assert len(split) == 2
-        assert "Latn" in split and "Nkoo" in split
-        assert str(split["Latn"]) == "<KerningPair [V W] period -20 {'Latn'}>"
-        assert str(split["Nkoo"]) == "<KerningPair [gba-nko] period -20 {'Nkoo'}>"
-
-        # But if both sides are common then the output is common
-        pair = KerningPair("period", "period", -20)
-        split = dict(pair.partitionByScript(glyphScripts))
-        assert len(split) == 1
-        assert "Zyyy" in split
-
-        # Glyphs with more than one script get associated with all of the
-        # relevant scripts in the pair
-        pair = KerningPair(["lam-ar", "gba-nko"], ["comma-ar"], -20)
-        split = dict(pair.partitionByScript(glyphScripts))
-        assert len(split) == 2
-        assert "Arab" in split and "Nkoo" in split
-        assert str(split["Arab"]) == "<KerningPair [lam-ar] [comma-ar] -20 {'Arab'}>"
-        assert str(split["Nkoo"]) == "<KerningPair [gba-nko] [comma-ar] -20 {'Nkoo'}>"
-
     def test_cleanup_missing_glyphs(self, FontClass):
         groups = {
             "public.kern1.A": ["A", "Aacute", "Abreve", "Acircumflex"],
@@ -1505,6 +1461,129 @@ def test_kern_split_and_drop(FontClass):
             language dflt;
             lookup kern_Orya;
         } dist;
+        """
+    )
+
+
+def test_kern_split_and_drop_mixed(caplog, FontClass):
+    """Test that mixed script pairs don't go anywhere."""
+    glyphs = {"V": ord("V"), "W": ord("W"), "gba-nko": 0x07DC}
+    groups = {"public.kern1.foo": ["V", "W"], "public.kern2.foo": ["gba-nko", "W"]}
+    kerning = {("public.kern1.foo", "public.kern2.foo"): -20}
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+    with caplog.at_level(logging.INFO):
+        newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos [V W] [W] -20;
+        } kern_Latn;
+
+        feature kern {
+            script latn;
+            language dflt;
+            lookup kern_Latn;
+        } kern;
+        """
+    )
+    assert (
+        "Mixed script kerning pair <KerningPair [V W] [gba-nko] -20> ignored"
+        in caplog.text
+    )
+
+
+def test_kern_split_and_mix_common(FontClass):
+    """Test that that everyone gets common-script glyphs, but they get it
+    per-script."""
+    glyphs = {"V": ord("V"), "W": ord("W"), "gba-nko": 0x07DC, "period": ord(".")}
+    groups = {"public.kern1.foo": ["V", "gba-nko", "W"]}
+    kerning = {("public.kern1.foo", "period"): -20}
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            enum pos [V W] period -20;
+        } kern_Latn;
+
+        lookup kern_Nkoo {
+            lookupflag IgnoreMarks;
+            enum pos [gba-nko] period <-20 0 -20 0>;
+        } kern_Nkoo;
+
+        feature kern {
+            script latn;
+            language dflt;
+            lookup kern_Latn;
+
+            script nko;
+            language dflt;
+            lookup kern_Nkoo;
+        } kern;
+        """
+    )
+
+
+def test_kern_keep_common(FontClass):
+    """Test that if both sides are common, the output is common."""
+    glyphs = {"period": ord(".")}
+    kerning = {("period", "period"): -20}
+    ufo = makeUFO(FontClass, glyphs, None, kerning)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        lookup kern_Common {
+            lookupflag IgnoreMarks;
+            pos period period -20;
+        } kern_Common;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Common;
+        } kern;
+        """
+    )
+
+
+def test_kern_multi_script(FontClass):
+    """Test that Glyphs with more than one script get associated with all of the
+    relevant scripts in the pair."""
+    glyphs = {"gba-nko": 0x07DC, "comma-ar": 0x060C, "lam-ar": 0x0644}
+    groups = {
+        "public.kern1.foo": ["lam-ar", "gba-nko"],
+        "public.kern2.foo": ["comma-ar"],
+    }
+    kerning = {("public.kern1.foo", "public.kern2.foo"): -20}
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        lookup kern_Arab {
+            lookupflag IgnoreMarks;
+            pos [lam-ar] [comma-ar] <-20 0 -20 0>;
+        } kern_Arab;
+
+        lookup kern_Nkoo {
+            lookupflag IgnoreMarks;
+            pos [gba-nko] [comma-ar] <-20 0 -20 0>;
+        } kern_Nkoo;
+
+        feature kern {
+            script arab;
+            language dflt;
+            lookup kern_Arab;
+
+            script nko;
+            language dflt;
+            lookup kern_Nkoo;
+        } kern;
         """
     )
 
