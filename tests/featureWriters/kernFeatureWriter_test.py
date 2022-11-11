@@ -632,55 +632,55 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert "@public.kern2.bar" not in side2Classes
         assert side2Classes["public.kern2.bar&"].name == "kern2.bar"
 
-    # XXX: Remove? Integration tests cover this already
-    def test_getKerningPairs(self, FontClass):
-        font = FontClass()
-        for i in range(65, 65 + 8):  # A..H
-            font.newGlyph(chr(i))
-        font.groups.update(
-            {
-                "public.kern1.foo": ["A", "B"],
-                "public.kern2.bar": ["C", "D"],
-                "public.kern1.baz": ["E", "F"],
-                "public.kern2.nul": ["G", "H"],
-            }
+    def test_skip_zero_class_kerns(self, FontClass):
+        glyphs = {
+            "A": ord("A"),
+            "B": ord("B"),
+            "C": ord("C"),
+            "D": ord("D"),
+            "E": ord("E"),
+            "F": ord("F"),
+            "G": ord("G"),
+            "H": ord("H"),
+        }
+        groups = {
+            "public.kern1.foo": ["A", "B"],
+            "public.kern2.bar": ["C", "D"],
+            "public.kern1.baz": ["E", "F"],
+            "public.kern2.nul": ["G", "H"],
+        }
+        kerning = {
+            ("public.kern1.foo", "public.kern2.bar"): 10,
+            ("public.kern1.baz", "public.kern2.bar"): -10,
+            ("public.kern1.foo", "D"): 15,
+            ("A", "public.kern2.bar"): 5,
+            ("G", "H"): -5,
+            # class-class zero-value pairs are skipped
+            ("public.kern1.foo", "public.kern2.nul"): 0,
+        }
+        expectation = dedent(
+            """\
+            lookup kern_Latn {
+                lookupflag IgnoreMarks;
+                pos G H -5;
+                enum pos A [C D] 5;
+                enum pos [A B] D 15;
+                pos [A B] [C D] 10;
+                pos [E F] [C D] -10;
+            } kern_Latn;
+
+            feature kern {
+                script latn;
+                language dflt;
+                lookup kern_Latn;
+            } kern;
+            """
         )
-        font.kerning.update(
-            {
-                ("public.kern1.foo", "public.kern2.bar"): 10,
-                ("public.kern1.baz", "public.kern2.bar"): -10,
-                ("public.kern1.foo", "D"): 15,
-                ("A", "public.kern2.bar"): 5,
-                ("G", "H"): -5,
-                # class-class zero-value pairs are skipped
-                ("public.kern1.foo", "public.kern2.nul"): 0,
-            }
-        )
 
-        s1c, s2c = KernFeatureWriter.getKerningClasses(font)
-        pairs = KernFeatureWriter.getKerningPairs(font, s1c, s2c, quantization=1)
-        pairs.sort()
-        assert len(pairs) == 5
+        ufo = makeUFO(FontClass, glyphs, groups, kerning)
+        newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
 
-        assert "G H -5" in repr(pairs[0])
-        assert (pairs[0].firstIsClass, pairs[0].secondIsClass) == (False, False)
-        assert pairs[0].glyphs == {"G", "H"}
-
-        assert "A @kern2.bar 5" in repr(pairs[1])
-        assert (pairs[1].firstIsClass, pairs[1].secondIsClass) == (False, True)
-        assert pairs[1].glyphs == {"A", "C", "D"}
-
-        assert "@kern1.foo D 15" in repr(pairs[2])
-        assert (pairs[2].firstIsClass, pairs[2].secondIsClass) == (True, False)
-        assert pairs[2].glyphs == {"A", "B", "D"}
-
-        assert "@kern1.baz @kern2.bar -10" in repr(pairs[4])
-        assert (pairs[4].firstIsClass, pairs[4].secondIsClass) == (True, True)
-        assert pairs[4].glyphs == {"C", "D", "E", "F"}
-
-        assert "@kern1.foo @kern2.bar 10" in repr(pairs[3])
-        assert (pairs[3].firstIsClass, pairs[3].secondIsClass) == (True, True)
-        assert pairs[3].glyphs == {"A", "B", "C", "D"}
+        assert dedent(str(newFeatures)).lstrip("\n") == expectation
 
     def test_kern_uniqueness(self, FontClass):
         glyphs = {
