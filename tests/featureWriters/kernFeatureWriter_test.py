@@ -1152,45 +1152,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
             """
         )
 
-        logger = "ufo2ft.featureWriters.kernFeatureWriter.KernFeatureWriter"
-        with caplog.at_level(logging.WARNING, logger=logger):
+        with caplog.at_level(logging.INFO):
             generated = self.writeFeatures(ufo)
 
-        # GPOS lookups are independent of the globally declared language
-        # systems.
-        assert dedent(str(generated)) == dedent(
-            """
-            lookup kern_Arab {
-                lookupflag IgnoreMarks;
-                pos bar bar 1;
-                pos reh-ar one-ar 4;
-            } kern_Arab;
-
-            lookup kern_Hebr {
-                lookupflag IgnoreMarks;
-                pos yod-hb one 5;
-            } kern_Hebr;
-
-            lookup kern_Latn {
-                lookupflag IgnoreMarks;
-                pos bar A 2;
-                pos bar bar 1;
-            } kern_Latn;
-
-            feature kern {
-                script arab;
-                language dflt;
-                lookup kern_Arab;
-
-                script hebr;
-                language dflt;
-                lookup kern_Hebr;
-
-                script latn;
-                language dflt;
-                lookup kern_Latn;
-            } kern;
-        """
+        assert not generated
+        assert (
+            len([r for r in caplog.records if "with ambiguous direction" in r.message])
+            == 5
         )
 
     def test_kern_RTL_and_DFLT_numbers(self, FontClass):
