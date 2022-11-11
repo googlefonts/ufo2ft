@@ -72,8 +72,8 @@ class KerningPair:
         | set[str]
         | tuple[str],
         value: float,
-        scripts: set[str] | None = None,
-        bidiTypes: set[str] | None = None,
+        scripts: set[str],
+        bidiTypes: set[str],
     ) -> None:
         self.side1: ast.GlyphName | ast.GlyphClassName | ast.GlyphClass
         if isinstance(side1, str):
@@ -322,9 +322,6 @@ class KernFeatureWriter(BaseFeatureWriter):
     def setContext(self, font, feaFile, compiler=None):
         ctx = super().setContext(font, feaFile, compiler=compiler)
         ctx.gdefClasses = self.getGDEFGlyphClasses()
-        ctx.kerning = self.getKerningData(
-            font, self.options.quantization, feaFile, self.getOrderedGlyphSet()
-        )
 
         # TODO: Also include substitution information from Designspace rules to
         # correctly the scripts of variable substitution glyphs, maybe add
@@ -332,14 +329,22 @@ class KernFeatureWriter(BaseFeatureWriter):
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
         scriptGlyphs = classifyGlyphs(script_extensions_for_codepoint, cmap, gsub)
-        self._intersectPairs("scripts", scriptGlyphs)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
-        self._intersectPairs("bidiTypes", bidiGlyphs)
+
         glyphScripts = {}
         for script, glyphs in scriptGlyphs.items():
             for g in glyphs:
                 glyphScripts.setdefault(g, set()).add(script)
         ctx.glyphScripts = glyphScripts
+
+        ctx.kerning = self.getKerningData(
+            font,
+            self.options.quantization,
+            scriptGlyphs,  # type: ignore
+            bidiGlyphs,  # type: ignore
+            feaFile,
+            self.getOrderedGlyphSet(),
+        )
 
         return ctx
 
@@ -377,10 +382,24 @@ class KernFeatureWriter(BaseFeatureWriter):
         return True
 
     @classmethod
-    def getKerningData(cls, font, quantization, feaFile=None, glyphSet=None):
+    def getKerningData(
+        cls,
+        font: Any,
+        quantization: int,
+        scriptGlyphs: Mapping[str, set[str]],
+        bidiGlyphs: Mapping[str, set[str]],
+        feaFile: ast.FeatureFile | None = None,
+        glyphSet: dict[str, Any] | None = None,
+    ) -> SimpleNamespace:
         side1Classes, side2Classes = cls.getKerningClasses(font, feaFile, glyphSet)
         pairs = cls.getKerningPairs(
-            font, side1Classes, side2Classes, quantization, glyphSet
+            font,
+            side1Classes,
+            side2Classes,
+            quantization,
+            scriptGlyphs,
+            bidiGlyphs,
+            glyphSet,
         )
         return SimpleNamespace(
             side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
@@ -424,6 +443,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         side1Classes: Mapping[str, ast.GlyphClassDefinition],
         side2Classes: Mapping[str, ast.GlyphClassDefinition],
         quantization: int,
+        scriptGlyphs: Mapping[str, set[str]],
+        bidiGlyphs: Mapping[str, set[str]],
         glyphSet: dict[str, Any] | None = None,
     ) -> list[KerningPair]:
         if glyphSet:
@@ -445,23 +466,31 @@ class KernFeatureWriter(BaseFeatureWriter):
             # and zero is the default.
             if firstIsClass and secondIsClass and value == 0:
                 continue
+
+            pair_glyphs = set()
             if firstIsClass:
                 side1 = side1Classes[side1]
+                pair_glyphs.add(side1.glyphSet())
+            else:
+                pair_glyphs.add(side1)
             if secondIsClass:
                 side2 = side2Classes[side2]
+                pair_glyphs.add(side2.glyphSet())
+            else:
+                pair_glyphs.add(side2)
+
             value = quantize(value, quantization)
-            result.append(KerningPair(side1, side2, value))
+            scripts = set()
+            for key, glyphs in scriptGlyphs.items():
+                if not pair_glyphs.isdisjoint(glyphs):
+                    scripts.add(key)
+            bidiTypes = set()
+            for key, glyphs in bidiGlyphs.items():
+                if not pair_glyphs.isdisjoint(glyphs):
+                    bidiTypes.add(key)
+            result.append(KerningPair(side1, side2, value, scripts, bidiTypes))
 
         return result
-
-    def _intersectPairs(self, attribute, glyphSets):
-        allKeys = set()
-        for pair in self.context.kerning.pairs:
-            for key, glyphs in glyphSets.items():
-                if not pair.glyphs.isdisjoint(glyphs):
-                    getattr(pair, attribute).add(key)
-                    allKeys.add(key)
-        return allKeys
 
     def _makeKerningLookups(self) -> dict[str, dict[str, ast.LookupBlock]]:
         lookups: dict[str, dict[str, ast.LookupBlock]] = {}
