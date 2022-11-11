@@ -327,9 +327,6 @@ class KernFeatureWriter(BaseFeatureWriter):
             font, self.options.quantization, feaFile, self.getOrderedGlyphSet()
         )
 
-        feaScripts = getScriptLanguageSystems(feaFile)
-        ctx.knownScripts = feaScripts.keys()
-
         # TODO: Also include substitution information from Designspace rules to
         # correctly the scripts of variable substitution glyphs, maybe add
         # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
