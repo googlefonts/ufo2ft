@@ -484,7 +484,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             make_split_script_kern_lookups(lookups, pairs, glyphScripts, ignoreMarks)
         return lookups
 
-    def _splitBaseAndMarkPairs(self, pairs, marks):
+    def _splitBaseAndMarkPairs(pairs, marks):
         basePairs, markPairs = [], []
         if marks:
             for pair in pairs:
