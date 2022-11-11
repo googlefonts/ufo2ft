@@ -32,6 +32,7 @@ DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | {"Khmr", "Mymr"} | set(USE_SCRIPTS)
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
 COMMON_SCRIPTS_SET = {COMMON_SCRIPT}
+BAD_BIDIS = {"R", "L"}
 
 
 def unicodeBidiType(uv: int) -> Literal["R"] | Literal["L"] | None:
@@ -110,7 +111,7 @@ class KerningPair:
         )
 
     def partitionByScript(
-        self, glyphScripts: Mapping[str, set[str]]
+        self, glyphScripts: Mapping[str, set[str]], bidiGlyphs: dict[str, set[str]]
     ) -> Iterator[tuple[str, KerningPair]]:
         """Split a potentially mixed-script pair into pairs that make sense based
         on the dominant script, and yield each combination with its dominant script."""
@@ -151,16 +152,21 @@ class KerningPair:
         # (e.g. run kerning-validator on Mystery.ufo).
         for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
             # Preserve the type (glyph or class) of each side.
+            localGlyphs: set[str] = set()
             if self.firstIsClass:
                 localSide1: str | set[str] = side1Scripts[firstScript]
+                localGlyphs.update(localSide1)
             else:
                 assert len(side1Scripts[firstScript]) == 1
                 (localSide1,) = side1Scripts[firstScript]
+                localGlyphs.add(localSide1)
             if self.secondIsClass:
                 localSide2: str | set[str] = side2Scripts[secondScript]
+                localGlyphs.update(localSide2)
             else:
                 assert len(side2Scripts[secondScript]) == 1
                 (localSide2,) = side2Scripts[secondScript]
+                localGlyphs.add(localSide2)
 
             # Handle very obvious common cases: one script, same on both sides
             if firstScript == secondScript or secondScript in DFLT_SCRIPTS:
@@ -172,9 +178,25 @@ class KerningPair:
             else:
                 logger = ".".join([self.__class__.__module__, self.__class__.__name__])
                 logging.getLogger(logger).info(
-                    "Mixed script kerning pair %s, %s: %s ignored",
-                    sorted(localSide1),
-                    sorted(localSide2),
+                    "Mixed script (%s, %s) kerning pair %s, %s: %s ignored",
+                    firstScript,
+                    secondScript,
+                    self.displayFirst,
+                    self.displaySecond,
+                    self.value,
+                )
+                continue
+
+            bidiTypes = set()
+            for key, glyphs in bidiGlyphs.items():
+                if not localGlyphs.isdisjoint(glyphs):
+                    bidiTypes.add(key)
+            if bidiTypes.issuperset(BAD_BIDIS):
+                logger = ".".join([self.__class__.__module__, self.__class__.__name__])
+                logging.getLogger(logger).info(
+                    "Mixed BiDi types in kerning pair %s, %s: %s, skipping",
+                    self.displayFirst,
+                    self.displaySecond,
                     self.value,
                 )
                 continue
@@ -184,7 +206,7 @@ class KerningPair:
                 localSide2,
                 self.value,
                 scripts={localScript},
-                bidiTypes=self.bidiTypes,
+                bidiTypes=bidiTypes,
             )
 
     @property
@@ -213,11 +235,19 @@ class KerningPair:
     def glyphs(self) -> set[str]:
         return self.firstGlyphs | self.secondGlyphs
 
+    @property
+    def displayFirst(self) -> str | tuple[str, ...]:
+        return self.side1 if isinstance(self.side1, str) else tuple(sorted(self.side1))
+
+    @property
+    def displaySecond(self) -> str | tuple[str, ...]:
+        return self.side2 if isinstance(self.side2, str) else tuple(sorted(self.side2))
+
     def __repr__(self) -> str:
         return "<{} {} {} {} {} {}>".format(
             self.__class__.__name__,
-            self.side1 if isinstance(self.side1, str) else tuple(sorted(self.side1)),
-            self.side2 if isinstance(self.side2, str) else tuple(sorted(self.side2)),
+            self.displayFirst,
+            self.displaySecond,
             self.value,
             self.scripts,
             self.bidiTypes,
@@ -228,11 +258,7 @@ class KerningPair:
         self,
     ) -> tuple[str | tuple[str, ...], str | tuple[str, ...], float]:
         """Returns a key for deduplication."""
-        return (
-            self.side1 if isinstance(self.side1, str) else tuple(sorted(self.side1)),
-            self.side2 if isinstance(self.side2, str) else tuple(sorted(self.side2)),
-            self.value,
-        )
+        return (self.displayFirst, self.displaySecond, self.value)
 
     def make_pair_pos_rule(self, script: str) -> ast.PairPosStatement:
         script_is_rtl = unicodedata.script_horizontal_direction(script) == "RTL"
@@ -293,6 +319,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         gsub = self.compileGSUB()
         scriptGlyphs = classifyGlyphs(script_extensions_for_codepoint, cmap, gsub)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
+        ctx.bidiGlyphs = bidiGlyphs
 
         glyphScripts = {}
         for script, glyphs in scriptGlyphs.items():
@@ -441,19 +468,27 @@ class KernFeatureWriter(BaseFeatureWriter):
         glyphScripts = self.context.glyphScripts
         pairs = self.context.kerning.pairs
         ignoreMarks: bool = self.options.ignoreMarks
+        bidiGlyphs: dict[str, set[str]] = self.context.bidiGlyphs
         if ignoreMarks:
             marks = self.context.gdefClasses.mark
             basePairs, markPairs = self._splitBaseAndMarkPairs(pairs, marks)
             if basePairs:
                 make_split_script_kern_lookups(
-                    lookups, basePairs, glyphScripts, ignoreMarks
+                    lookups, basePairs, glyphScripts, bidiGlyphs, ignoreMarks
                 )
             if markPairs:
                 make_split_script_kern_lookups(
-                    lookups, markPairs, glyphScripts, ignoreMarks=False, suffix="_marks"
+                    lookups,
+                    markPairs,
+                    glyphScripts,
+                    bidiGlyphs,
+                    ignoreMarks=False,
+                    suffix="_marks",
                 )
         else:
-            make_split_script_kern_lookups(lookups, pairs, glyphScripts, ignoreMarks)
+            make_split_script_kern_lookups(
+                lookups, pairs, glyphScripts, bidiGlyphs, ignoreMarks
+            )
         return lookups
 
     @staticmethod
@@ -537,10 +572,11 @@ def make_split_script_kern_lookups(
     lookups: dict[str, dict[str, ast.LookupBlock]],
     pairs: list[KerningPair],
     glyphScripts: Mapping[str, set[str]],
+    bidiGlyphs: dict[str, set[str]],
     ignoreMarks: bool,
     suffix: str = "",
 ) -> None:
-    kerning_per_script = split_kerning(pairs, glyphScripts)
+    kerning_per_script = split_kerning(pairs, glyphScripts, bidiGlyphs)
     for script, pairs in kerning_per_script.items():
         key = f"kern_{script}{suffix}"
         script_lookups = lookups.setdefault(script, {})
@@ -558,7 +594,9 @@ def make_split_script_kern_lookups(
 
 
 def split_kerning(
-    pairs: list[KerningPair], glyphScripts: Mapping[str, set[str]]
+    pairs: list[KerningPair],
+    glyphScripts: Mapping[str, set[str]],
+    bidiGlyphs: dict[str, set[str]],
 ) -> dict[str, list[KerningPair]]:
     # Split kerning into per-script buckets, so we can post-process them before
     # continuing. NOTE: this replaces class names (`@kern1.something`) with
@@ -567,7 +605,7 @@ def split_kerning(
     # level.
     kerning_per_script: dict[str, list[KerningPair]] = {}
     for pair in pairs:
-        for script, split_pair in pair.partitionByScript(glyphScripts):
+        for script, split_pair in pair.partitionByScript(glyphScripts, bidiGlyphs):
             kerning_per_script.setdefault(script, []).append(split_pair)
 
     # Sanity checking to ensure we don't produce overlapping groups or

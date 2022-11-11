@@ -1502,7 +1502,7 @@ def test_kern_keep_common(FontClass):
 
 
 def test_kern_multi_script(FontClass):
-    """Test that Glyphs with more than one script get associated with all of the
+    """Test that glyphs with more than one script get associated with all of the
     relevant scripts in the pair."""
     glyphs = {"gba-nko": 0x07DC, "comma-ar": 0x060C, "lam-ar": 0x0644}
     groups = {
@@ -1538,7 +1538,7 @@ def test_kern_multi_script(FontClass):
     )
 
 
-def test_kern_mixed_bidis(FontClass):
+def test_kern_mixed_bidis(caplog, FontClass):
     """Test that BiDi types for pairs are respected."""
     glyphs = {
         "a": ord("a"),
@@ -1548,6 +1548,8 @@ def test_kern_mixed_bidis(FontClass):
         "one-ar": 0x0661,
     }
     kerning = {
+        # Undetermined: LTR
+        ("comma", "comma"): -1,
         # LTR
         ("a", "a"): 1,
         ("a", "comma"): 2,
@@ -1563,12 +1565,72 @@ def test_kern_mixed_bidis(FontClass):
         ("one-ar", "one-ar"): 9,
     }
     ufo = makeUFO(FontClass, glyphs, None, kerning)
-    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+    with caplog.at_level(logging.INFO):
+        newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
 
     assert dedent(str(newFeatures)) == dedent(
-        """TODO
+        """\
+        lookup kern_Arab {
+            lookupflag IgnoreMarks;
+            pos alef-ar alef-ar <4 0 4 0>;
+            pos alef-ar comma-ar <5 0 5 0>;
+            pos comma-ar alef-ar <6 0 6 0>;
+            pos one-ar one-ar 9;
+        } kern_Arab;
+
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos a a 1;
+            pos a comma 2;
+            pos comma a 3;
+        } kern_Latn;
+
+        lookup kern_Thaa {
+            lookupflag IgnoreMarks;
+            pos one-ar one-ar 9;
+        } kern_Thaa;
+
+        lookup kern_Yezi {
+            lookupflag IgnoreMarks;
+            pos one-ar one-ar 9;
+        } kern_Yezi;
+
+        lookup kern_Common {
+            lookupflag IgnoreMarks;
+            pos comma comma -1;
+        } kern_Common;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Common;
+
+            script arab;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Arab;
+
+            script latn;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Latn;
+
+            script thaa;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Thaa;
+        } kern;
+
+        feature dist {
+            script yezi;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Yezi;
+        } dist;
         """
     )
+    assert "Mixed BiDi types in kerning pair alef-ar, one-ar: 7" in caplog.text
+    assert "Mixed BiDi types in kerning pair one-ar, alef-ar: 8" in caplog.text
 
 
 if __name__ == "__main__":
