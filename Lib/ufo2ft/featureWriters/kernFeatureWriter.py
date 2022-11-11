@@ -100,8 +100,8 @@ class KerningPair:
             raise AssertionError(side2)
 
         self.value: float = value
-        self.scripts: set[str] = scripts or set()
-        self.bidiTypes: set[str] = bidiTypes or set()
+        self.scripts: set[str] = scripts
+        self.bidiTypes: set[str] = bidiTypes
 
     def __lt__(self, other: KerningPair) -> bool:
         if not isinstance(other, KerningPair):
