@@ -1538,6 +1538,39 @@ def test_kern_multi_script(FontClass):
     )
 
 
+def test_kern_mixed_bidis(FontClass):
+    """Test that BiDi types for pairs are respected."""
+    glyphs = {
+        "a": ord("a"),
+        "comma": ord(","),
+        "alef-ar": 0x0627,
+        "comma-ar": 0x060C,
+        "one-ar": 0x0661,
+    }
+    kerning = {
+        # LTR
+        ("a", "a"): 1,
+        ("a", "comma"): 2,
+        ("comma", "a"): 3,
+        # RTL
+        ("alef-ar", "alef-ar"): 4,
+        ("alef-ar", "comma-ar"): 5,
+        ("comma-ar", "alef-ar"): 6,
+        # Mixed: should be dropped
+        ("alef-ar", "one-ar"): 7,
+        ("one-ar", "alef-ar"): 8,
+        # LTR despite being an RTL script
+        ("one-ar", "one-ar"): 9,
+    }
+    ufo = makeUFO(FontClass, glyphs, None, kerning)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """TODO
+        """
+    )
+
+
 if __name__ == "__main__":
     import sys
 
