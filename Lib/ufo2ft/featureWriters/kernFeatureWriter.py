@@ -13,7 +13,6 @@ from ufo2ft.errors import Error
 from ufo2ft.featureWriters import BaseFeatureWriter
 from ufo2ft.featureWriters.ast import (
     addLookupReferences,
-    getScriptLanguageSystems,
     makeGlyphClassDefinitions,
     makeLookupFlag,
 )
