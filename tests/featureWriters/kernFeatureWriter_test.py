@@ -1428,6 +1428,8 @@ def test_kern_split_multi_glyph_class(FontClass):
 
     assert dedent(str(newFeatures)).lstrip("\n") == expectation
 
+    # Making a common glyph implicitly have an explicit script assigned (GSUB
+    # closure) will still keep it in the common section.
     features = dedent(
         """
         feature ss01 {
