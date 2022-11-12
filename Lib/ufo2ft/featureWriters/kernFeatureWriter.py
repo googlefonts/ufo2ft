@@ -455,6 +455,8 @@ class KernFeatureWriter(BaseFeatureWriter):
             for key, glyphs in scriptGlyphs.items():
                 if not pair_glyphs.isdisjoint(glyphs):
                     scripts.add(key)
+            # XXX: Do we need to do BiDi types here when they only really matter
+            # for splitting?
             bidiTypes = set()
             for key, glyphs in bidiGlyphs.items():
                 if not pair_glyphs.isdisjoint(glyphs):
