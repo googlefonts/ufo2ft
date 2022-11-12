@@ -54,21 +54,25 @@ class KerningPair:
 
     def __init__(
         self,
-        side1: str | set[str],  # XXX: use sorted tuple instead?
-        side2: str | set[str],  # XXX: use sorted tuple instead?
+        side1: str | tuple[str, ...],
+        side2: str | tuple[str, ...],
         value: float,
-        scripts: set[str],
-        bidiTypes: set[str],
+        scripts: frozenset[str],
+        bidiTypes: frozenset[str],
     ) -> None:
-        if not isinstance(side1, (str, set)):
+        if not isinstance(side1, (str, tuple)):
             raise TypeError(type(side1))
-        if not isinstance(side2, (str, set)):
+        if not isinstance(side2, (str, tuple)):
             raise TypeError(type(side2))
+        if not isinstance(scripts, frozenset):
+            raise TypeError(type(scripts))
+        if not isinstance(bidiTypes, frozenset):
+            raise TypeError(type(bidiTypes))
         self.side1 = side1
         self.side2 = side2
-        self.value: float = value
-        self.scripts: set[str] = scripts
-        self.bidiTypes: set[str] = bidiTypes
+        self.value = value
+        self.scripts = scripts
+        self.bidiTypes = bidiTypes
 
     def __lt__(self, other: KerningPair) -> bool:
         if not isinstance(other, KerningPair):
