@@ -4,6 +4,7 @@ import itertools
 import logging
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
+from dataclasses import dataclass
 
 from fontTools import unicodedata
 from fontTools.feaLib import ast
@@ -48,63 +49,28 @@ def unicodeBidiType(uv: int) -> Literal["R"] | Literal["L"] | None:
     return None
 
 
+@dataclass(frozen=True, order=False)
 class KerningPair:
-
     __slots__ = ("side1", "side2", "value", "scripts", "bidiTypes")
 
-    def __init__(
-        self,
-        side1: str | tuple[str, ...],
-        side2: str | tuple[str, ...],
-        value: float,
-        scripts: frozenset[str],
-        bidiTypes: frozenset[str],
-    ) -> None:
-        if not isinstance(side1, (str, tuple)):
-            raise TypeError(type(side1))
-        if not isinstance(side2, (str, tuple)):
-            raise TypeError(type(side2))
-        if not isinstance(scripts, frozenset):
-            raise TypeError(type(scripts))
-        if not isinstance(bidiTypes, frozenset):
-            raise TypeError(type(bidiTypes))
-        self.side1 = side1
-        self.side2 = side2
-        self.value = value
-        self.scripts = scripts
-        self.bidiTypes = bidiTypes
+    side1: str | tuple[str, ...]
+    side2: str | tuple[str, ...]
+    value: float
+    scripts: frozenset[str]
+    bidiTypes: frozenset[str]
 
     def __lt__(self, other: KerningPair) -> bool:
         if not isinstance(other, KerningPair):
             return NotImplemented
 
-        # NOTE: Since comparisons terminate early, this is never going to
-        # compare a str to a tuple.
+        # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
+        # class, class to glyph, and finally class to class. This makes "kerning
+        # exceptions" work, where more specific glyph pair values override less
+        # specific class kerning. NOTE: Since comparisons terminate early, this
+        # is never going to compare a str to a tuple.
         selfTuple = (self.firstIsClass, self.secondIsClass, self.side1, self.side2)
         otherTuple = (other.firstIsClass, other.secondIsClass, other.side1, other.side2)
         return selfTuple < otherTuple
-
-    def __eq__(self, other: KerningPair) -> bool:
-        if other.__class__ is not self.__class__:
-            return False
-
-        return (
-            self.firstIsClass,
-            self.secondIsClass,
-            self.side1,
-            self.side2,
-            self.value,
-            self.scripts,
-            self.bidiTypes,
-        ) == (
-            other.firstIsClass,
-            other.secondIsClass,
-            other.side1,
-            other.side2,
-            other.value,
-            other.scripts,
-            other.bidiTypes,
-        )
 
     @property
     def firstIsClass(self) -> bool:
@@ -131,16 +97,6 @@ class KerningPair:
     @property
     def glyphs(self) -> tuple[str, ...]:
         return (*self.firstGlyphs, *self.secondGlyphs)
-
-    def __repr__(self) -> str:
-        return "<{} {} {} {} {} {}>".format(
-            self.__class__.__name__,
-            self.side1,
-            self.side2,
-            self.value,
-            self.scripts,
-            self.bidiTypes,
-        )
 
     @property
     def uniqueness_key(
@@ -513,10 +469,6 @@ def split_kerning(
         except Exception as e:
             raise Error(f"In {script}: {e}") from e
 
-    # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
-    # class, class to glyph, and finally class to class. This makes "kerning
-    # exceptions" work, where more specific glyph pair values override less
-    # specific class kerning.
     for pairs in kerning_per_script.values():
         pairs.sort()
 
