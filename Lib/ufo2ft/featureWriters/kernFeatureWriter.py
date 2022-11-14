@@ -267,11 +267,11 @@ class KerningPair:
         if isinstance(self.side1, str):
             side1 = ast.GlyphName(self.side1)
         else:
-            side1 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(self.side1)])
+            side1 = ast.GlyphClass([ast.GlyphName(g) for g in self.side1])
         if isinstance(self.side2, str):
             side2 = ast.GlyphName(self.side2)
         else:
-            side2 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(self.side2)])
+            side2 = ast.GlyphClass([ast.GlyphName(g) for g in self.side2])
         return ast.PairPosStatement(
             glyphs1=side1,
             valuerecord1=valuerecord,
