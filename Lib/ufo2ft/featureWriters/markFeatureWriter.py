@@ -300,6 +300,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.anchorLists = self._getAnchorLists()
         ctx.anchorPairs = self._getAnchorPairs()
+        ctx.feaScripts = set(ast.getScriptLanguageSystems(feaFile).keys())
 
     def shouldContinue(self):
         if not self.context.anchorPairs:
@@ -852,8 +853,17 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return features
 
     def _getAbvmGlyphs(self):
+        scriptsUsingAbvm = self.scriptsUsingAbvm
+        if self.context.feaScripts:
+            # https://github.com/googlefonts/ufo2ft/issues/579 Some characters
+            # can be used in multiple scripts and some of these scripts might
+            # need an abvm feature and some might not, so we filter-out the
+            # abvm scripts that the font does not intend to support.
+            scriptsUsingAbvm = scriptsUsingAbvm & self.context.feaScripts
+        if not scriptsUsingAbvm:
+            return set()
         cmap = self.makeUnicodeToGlyphNameMapping()
-        unicodeIsAbvm = partial(unicodeInScripts, scripts=self.scriptsUsingAbvm)
+        unicodeIsAbvm = partial(unicodeInScripts, scripts=scriptsUsingAbvm)
         if any(unicodeIsAbvm(uv) for uv in cmap):
             # If there are any characters from Indic/USE/Khmer scripts in the cmap, we
             # compile a temporary GSUB table to resolve substitutions and get
