@@ -122,8 +122,12 @@ class BaseFeatureWriter:
     def write(self, font, feaFile, compiler=None):
         """Write features and class definitions for this font to a feaLib
         FeatureFile object.
-        Returns True if feature file was modified, False if no new features
-        were generated.
+
+        The main entry point for the FeatureCompiler to any of the
+        FeatureWriters.
+
+        Returns True if feature file was modified, False if no new features were
+        generated.
         """
         self.setContext(font, feaFile, compiler=compiler)
         try:
