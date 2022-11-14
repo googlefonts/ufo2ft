@@ -78,18 +78,10 @@ class KerningPair:
         if not isinstance(other, KerningPair):
             return NotImplemented
 
-        selfTuple = (
-            self.firstIsClass,
-            self.secondIsClass,
-            sorted(self.firstGlyphs),
-            sorted(self.secondGlyphs),
-        )
-        otherTuple = (
-            other.firstIsClass,
-            other.secondIsClass,
-            sorted(other.firstGlyphs),
-            sorted(other.secondGlyphs),
-        )
+        # NOTE: Since comparisons terminate early, this is never going to
+        # compare a str to a tuple.
+        selfTuple = (self.firstIsClass, self.secondIsClass, self.side1, self.side2)
+        otherTuple = (other.firstIsClass, other.secondIsClass, other.side1, other.side2)
         return selfTuple < otherTuple
 
     def __eq__(self, other: KerningPair) -> bool:
@@ -99,16 +91,16 @@ class KerningPair:
         return (
             self.firstIsClass,
             self.secondIsClass,
-            sorted(self.firstGlyphs),
-            sorted(self.secondGlyphs),
+            self.side1,
+            self.side2,
             self.value,
             self.scripts,
             self.bidiTypes,
         ) == (
             other.firstIsClass,
             other.secondIsClass,
-            sorted(other.firstGlyphs),
-            sorted(other.secondGlyphs),
+            other.side1,
+            other.side2,
             other.value,
             other.scripts,
             other.bidiTypes,
@@ -157,15 +149,17 @@ class KerningPair:
         for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
             # Preserve the type (glyph or class) of each side.
             localGlyphs: set[str] = set()
+            localSide1: str | tuple[str, ...]
+            localSide2: str | tuple[str, ...]
             if self.firstIsClass:
-                localSide1: str | set[str] = side1Scripts[firstScript]
+                localSide1 = tuple(sorted(side1Scripts[firstScript]))
                 localGlyphs.update(localSide1)
             else:
                 assert len(side1Scripts[firstScript]) == 1
                 (localSide1,) = side1Scripts[firstScript]
                 localGlyphs.add(localSide1)
             if self.secondIsClass:
-                localSide2: str | set[str] = side2Scripts[secondScript]
+                localSide2 = tuple(sorted(side2Scripts[secondScript]))
                 localGlyphs.update(localSide2)
             else:
                 assert len(side2Scripts[secondScript]) == 1
@@ -183,8 +177,8 @@ class KerningPair:
                 logger = ".".join([self.__class__.__module__, self.__class__.__name__])
                 logging.getLogger(logger).info(
                     "Skipping kerning pair <%s %s %s> with mixed script (%s, %s)",
-                    self.displayFirst,
-                    self.displaySecond,
+                    self.side1,
+                    self.side2,
                     self.value,
                     firstScript,
                     secondScript,
@@ -199,8 +193,8 @@ class KerningPair:
                 logger = ".".join([self.__class__.__module__, self.__class__.__name__])
                 logging.getLogger(logger).info(
                     "Skipping kerning pair <%s %s %s> with ambiguous direction",
-                    self.displayFirst,
-                    self.displaySecond,
+                    self.side1,
+                    self.side2,
                     self.value,
                 )
                 continue
@@ -209,49 +203,41 @@ class KerningPair:
                 localSide1,
                 localSide2,
                 self.value,
-                scripts={localScript},
-                bidiTypes=bidiTypes,
+                scripts=frozenset((localScript,)),
+                bidiTypes=frozenset(bidiTypes),
             )
 
     @property
     def firstIsClass(self) -> bool:
-        return isinstance(self.side1, set)
+        return isinstance(self.side1, tuple)
 
     @property
     def secondIsClass(self) -> bool:
-        return isinstance(self.side2, set)
+        return isinstance(self.side2, tuple)
 
     @property
-    def firstGlyphs(self) -> set[str]:
-        if isinstance(self.side1, set):
+    def firstGlyphs(self) -> tuple[str, ...]:
+        if isinstance(self.side1, tuple):
             return self.side1
         else:
-            return {self.side1}
+            return (self.side1,)
 
     @property
-    def secondGlyphs(self) -> set[str]:
-        if isinstance(self.side2, set):
+    def secondGlyphs(self) -> tuple[str, ...]:
+        if isinstance(self.side2, tuple):
             return self.side2
         else:
-            return {self.side2}
+            return (self.side2,)
 
     @property
-    def glyphs(self) -> set[str]:
-        return self.firstGlyphs | self.secondGlyphs
-
-    @property
-    def displayFirst(self) -> str | tuple[str, ...]:
-        return self.side1 if isinstance(self.side1, str) else tuple(sorted(self.side1))
-
-    @property
-    def displaySecond(self) -> str | tuple[str, ...]:
-        return self.side2 if isinstance(self.side2, str) else tuple(sorted(self.side2))
+    def glyphs(self) -> tuple[str, ...]:
+        return (*self.firstGlyphs, *self.secondGlyphs)
 
     def __repr__(self) -> str:
         return "<{} {} {} {} {} {}>".format(
             self.__class__.__name__,
-            self.displayFirst,
-            self.displaySecond,
+            self.side1,
+            self.side2,
             self.value,
             self.scripts,
             self.bidiTypes,
@@ -262,7 +248,7 @@ class KerningPair:
         self,
     ) -> tuple[str | tuple[str, ...], str | tuple[str, ...], float]:
         """Returns a key for deduplication."""
-        return (self.displayFirst, self.displaySecond, self.value)
+        return (self.side1, self.side2, self.value)
 
     def make_pair_pos_rule(self, script: str) -> ast.PairPosStatement:
         script_is_rtl = unicodedata.script_horizontal_direction(script) == "RTL"
@@ -400,9 +386,9 @@ class KernFeatureWriter(BaseFeatureWriter):
     @staticmethod
     def getKerningGroups(
         font, glyphSet
-    ) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
-        side1Groups: dict[str, set[str]] = {}
-        side2Groups: dict[str, set[str]] = {}
+    ) -> tuple[dict[str, tuple[str, ...]], dict[str, tuple[str, ...]]]:
+        side1Groups: dict[str, tuple[str, ...]] = {}
+        side2Groups: dict[str, tuple[str, ...]] = {}
         for name, members in font.groups.items():
             # prune non-existent or skipped glyphs
             # XXX: use sorted tuple instead?
@@ -412,16 +398,16 @@ class KernFeatureWriter(BaseFeatureWriter):
                 continue
             # skip groups without UFO3 public.kern{1,2} prefix
             if name.startswith(SIDE1_PREFIX):
-                side1Groups[name] = members
+                side1Groups[name] = tuple(sorted(members))
             elif name.startswith(SIDE2_PREFIX):
-                side2Groups[name] = members
+                side2Groups[name] = tuple(sorted(members))
         return side1Groups, side2Groups
 
     @staticmethod
     def getKerningPairs(
         font: Any,
-        side1Groups: Mapping[str, set[str]],
-        side2Groups: Mapping[str, set[str]],
+        side1Groups: Mapping[str, tuple[str, ...]],
+        side2Groups: Mapping[str, tuple[str, ...]],
         quantization: int,
         scriptGlyphs: Mapping[str, set[str]],
         bidiGlyphs: Mapping[str, set[str]],
@@ -465,7 +451,11 @@ class KernFeatureWriter(BaseFeatureWriter):
             for key, glyphs in bidiGlyphs.items():
                 if not pair_glyphs.isdisjoint(glyphs):
                     bidiTypes.add(key)
-            result.append(KerningPair(side1, side2, value, scripts, bidiTypes))
+            result.append(
+                KerningPair(
+                    side1, side2, value, frozenset(scripts), frozenset(bidiTypes)
+                )
+            )
 
         return result
 
@@ -645,7 +635,7 @@ def ensure_unique_class_class_membership(pairs: list[KerningPair]) -> None:
 
     for pair in pairs:
         if pair.firstIsClass:
-            kern1 = pair.firstGlyphs
+            kern1 = set(pair.firstGlyphs)
             for name in kern1:
                 if name not in kern1_membership:
                     kern1_membership[name] = kern1
@@ -657,7 +647,7 @@ def ensure_unique_class_class_membership(pairs: list[KerningPair]) -> None:
                         f"to pair {pair}"
                     )
         if pair.secondIsClass:
-            kern2 = pair.secondGlyphs
+            kern2 = set(pair.secondGlyphs)
             for name in kern2:
                 if name not in kern2_membership:
                     kern2_membership[name] = kern2
