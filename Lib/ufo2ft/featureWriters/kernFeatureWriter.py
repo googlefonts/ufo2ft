@@ -53,12 +53,11 @@ def unicodeBidiType(uv: int) -> Literal["R"] | Literal["L"] | None:
 
 @dataclass(frozen=True, order=False)
 class KerningPair:
-    __slots__ = ("side1", "side2", "value", "scripts")
+    __slots__ = ("side1", "side2", "value")
 
     side1: str | tuple[str, ...]
     side2: str | tuple[str, ...]
     value: float
-    scripts: frozenset[str]
 
     def __lt__(self, other: KerningPair) -> bool:
         if not isinstance(other, KerningPair):
@@ -98,13 +97,6 @@ class KerningPair:
     @property
     def glyphs(self) -> tuple[str, ...]:
         return (*self.firstGlyphs, *self.secondGlyphs)
-
-    @property
-    def uniqueness_key(
-        self,
-    ) -> tuple[str | tuple[str, ...], str | tuple[str, ...], float]:
-        """Returns a key for deduplication."""
-        return (self.side1, self.side2, self.value)
 
 
 class KernFeatureWriter(BaseFeatureWriter):
@@ -146,7 +138,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.kerning = self.getKerningData(
             font,
             self.options.quantization,
-            scriptGlyphs,  # type: ignore
             self.getOrderedGlyphSet(),
         )
 
@@ -190,7 +181,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         cls,
         font: Any,
         quantization: int,
-        scriptGlyphs: Mapping[str, set[str]],
         glyphSet: dict[str, Any],
     ) -> SimpleNamespace:
         side1Groups, side2Groups = cls.getKerningGroups(font, glyphSet)
@@ -199,7 +189,6 @@ class KernFeatureWriter(BaseFeatureWriter):
             side1Groups,
             side2Groups,
             quantization,
-            scriptGlyphs,
             glyphSet,
         )
         return SimpleNamespace(
@@ -231,7 +220,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         side1Groups: Mapping[str, tuple[str, ...]],
         side2Groups: Mapping[str, tuple[str, ...]],
         quantization: int,
-        scriptGlyphs: Mapping[str, set[str]],
         glyphSet: Mapping[str, Any],
     ) -> list[KerningPair]:
         kerning: Mapping[tuple[str, str], float] = font.kerning
@@ -262,11 +250,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 pair_glyphs.add(side2)
 
             value = quantize(value, quantization)
-            scripts = set()
-            for key, glyphs in scriptGlyphs.items():
-                if not pair_glyphs.isdisjoint(glyphs):
-                    scripts.add(key)
-            result.append(KerningPair(side1, side2, value, frozenset(scripts)))
+            result.append(KerningPair(side1, side2, value))
 
         return result
 
@@ -567,7 +551,6 @@ def partition_by_script(
             localSide1,
             localSide2,
             pair.value,
-            scripts=frozenset((localScript,)),
         )
 
 
@@ -609,11 +592,10 @@ def ensure_unique_class_class_membership(pairs: list[KerningPair]) -> None:
 
 
 def ensure_no_duplicates(pairs: list[KerningPair]) -> None:
-    unique_pairs: set[tuple[str | tuple[str, ...], str | tuple[str, ...], float]]
+    unique_pairs: set[KerningPair]
     unique_pairs = set()
     for pair in pairs:
-        pair_key = pair.uniqueness_key
-        if pair_key not in unique_pairs:
-            unique_pairs.add(pair_key)
+        if pair not in unique_pairs:
+            unique_pairs.add(pair)
         else:
             raise Exception(f"Duplicate pair {pair}")
