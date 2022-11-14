@@ -216,7 +216,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         side2Groups: dict[str, tuple[str, ...]] = {}
         for name, members in font.groups.items():
             # prune non-existent or skipped glyphs
-            # XXX: use sorted tuple instead?
             members = {g for g in members if g in glyphSet}
             if not members:
                 # skip empty groups
