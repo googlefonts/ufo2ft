@@ -297,7 +297,7 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
         key_or_keys = unicodeFunc(uv)
         if key_or_keys is None:
             neutralGlyphs.add(glyphName)
-        elif isinstance(key_or_keys, (list, set)):
+        elif isinstance(key_or_keys, (list, set, tuple)):
             for key in key_or_keys:
                 glyphSets.setdefault(key, set()).add(glyphName)
         else:
