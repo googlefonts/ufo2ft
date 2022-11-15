@@ -233,8 +233,24 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
 
-        feaScripts = ast.getScriptLanguageSystems(feaFile)
-        ctx.knownScripts = feaScripts.keys()
+        # TODO: Also include substitution information from Designspace rules to
+        # correctly the scripts of variable substitution glyphs, maybe add
+        # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
+        cmap = self.makeUnicodeToGlyphNameMapping()
+        gsub = self.compileGSUB()
+        dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
+        self._intersectPairs("directions", dirGlyphs)
+        scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
+        self._intersectPairs("scripts", scriptGlyphs)
+        bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
+        self._intersectPairs("bidiTypes", bidiGlyphs)
+
+        glyphScripts = {}
+        for script, glyphs in scriptGlyphs.items():
+            for g in glyphs:
+                glyphScripts.setdefault(g, set()).add(script)
+        ctx.glyphScripts = glyphScripts
+
         return ctx
 
     def shouldContinue(self):
@@ -397,21 +413,8 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makeKerningLookups(self):
         marks = self.context.gdefClasses.mark
         lookups = {}
-        cmap = self.makeUnicodeToGlyphNameMapping()
-        gsub = self.compileGSUB()
-        dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
-        self._intersectPairs("directions", dirGlyphs)
-
-        scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
-        self._intersectPairs("scripts", scriptGlyphs)
-        bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
-        self._intersectPairs("bidiTypes", bidiGlyphs)
         pairs = self.context.kerning.pairs
-
-        glyphScripts = {}
-        for script, glyphs in scriptGlyphs.items():
-            for g in glyphs:
-                glyphScripts.setdefault(g, set()).add(script)
+        glyphScripts = self.context.glyphScripts
 
         if self.options.ignoreMarks:
             basePairs, markPairs = self._splitBaseAndMarkPairs(
