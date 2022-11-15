@@ -1163,7 +1163,7 @@ def test_kern_split_and_drop_mixed(caplog, FontClass):
         """
     )
     assert (
-        "Skipping kerning pair <@kern1.foo @kern2.foo -20> with mixed script (Latn, Nkoo)"
+        "Skipping kerning pair <('V', 'W') ('W', 'gba-nko') -20> with mixed script (Latn, Nkoo)"
         in caplog.text
     )
 
