@@ -588,6 +588,47 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert dedent(str(newFeatures)).lstrip("\n") == expectation
 
+    def test_kern_uniqueness(self, FontClass):
+        glyphs = {
+            ".notdef": None,
+            "questiondown": 0xBF,
+            "y": 0x79,
+        }
+        groups = {
+            "public.kern1.questiondown": ["questiondown"],
+            "public.kern2.y": ["y"],
+        }
+        kerning = {
+            ("public.kern1.questiondown", "public.kern2.y"): 15,
+            ("public.kern1.questiondown", "y"): 35,
+            ("questiondown", "public.kern2.y"): -35,
+            ("questiondown", "y"): 35,
+        }
+        ufo = makeUFO(FontClass, glyphs, groups, kerning)
+
+        newFeatures = self.writeFeatures(ufo)
+
+        # The final kerning value for questiondown, y is 35 and all variants
+        # must be present. Ensures the uniqueness filter doesn't filter things
+        # out.
+        assert dedent(str(newFeatures)) == dedent(
+            """\
+            lookup kern_Latn {
+                lookupflag IgnoreMarks;
+                pos questiondown y 35;
+                enum pos questiondown [y] -35;
+                enum pos [questiondown] y 35;
+                pos [questiondown] [y] 15;
+            } kern_Latn;
+
+            feature kern {
+                script latn;
+                language dflt;
+                lookup kern_Latn;
+            } kern;
+            """
+        )
+
     def test_kern_LTR_and_RTL(self, FontClass):
         glyphs = {
             ".notdef": None,
@@ -926,6 +967,44 @@ class KernFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_kern_independent_of_languagesystem(self, FontClass):
+        glyphs = {"A": 0x41, "V": 0x56, "reh-ar": 0x631, "alef-ar": 0x627}
+        kerning = {("A", "V"): -40, ("reh-ar", "alef-ar"): -100}
+        # No languagesystems decalred.
+        ufo = makeUFO(FontClass, glyphs, kerning=kerning)
+        generated = self.writeFeatures(ufo)
+
+        expectation = dedent(
+            """\
+            lookup kern_Arab {
+                lookupflag IgnoreMarks;
+                pos reh-ar alef-ar <-100 0 -100 0>;
+            } kern_Arab;
+
+            lookup kern_Latn {
+                lookupflag IgnoreMarks;
+                pos A V -40;
+            } kern_Latn;
+
+            feature kern {
+                script arab;
+                language dflt;
+                lookup kern_Arab;
+
+                script latn;
+                language dflt;
+                lookup kern_Latn;
+            } kern;
+            """
+        )
+        assert dedent(str(generated)) == expectation
+
+        features = dedent("languagesystem arab dflt;")
+        ufo = makeUFO(FontClass, glyphs, kerning=kerning, features=features)
+        generated = self.writeFeatures(ufo)
+
+        assert dedent(str(generated)).lstrip("\n") == expectation
+
     def test_dist_LTR(self, FontClass):
         glyphs = {"aaMatra_kannada": 0x0CBE, "ailength_kannada": 0xCD6}
         groups = {
@@ -1145,6 +1224,165 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
 
+def test_kern_split_multi_glyph_class(FontClass):
+    glyphs = {
+        "a": ord("a"),
+        "b": ord("b"),
+        "period": ord("."),
+    }
+    groups = {
+        "public.kern1.foo": ["a", "period"],
+        "public.kern2.foo": ["b", "period"],
+    }
+    kerning = {
+        ("a", "a"): 1,
+        ("a", "b"): 2,
+        ("a", "period"): 3,
+        ("b", "a"): 4,
+        ("b", "b"): 5,
+        ("b", "period"): 6,
+        ("period", "a"): 7,
+        ("period", "b"): 8,
+        ("period", "period"): 9,
+        # Class-to-glyph
+        ("public.kern1.foo", "b"): 10,
+        ("public.kern1.foo", "period"): 11,
+        # Glyph-to-class
+        ("a", "public.kern2.foo"): 12,
+        ("period", "public.kern2.foo"): 13,
+        # Class-to-class
+        ("public.kern1.foo", "public.kern2.foo"): 14,
+    }
+    expectation = dedent(
+        """\
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos a a 1;
+            pos a b 2;
+            pos a period 3;
+            pos b a 4;
+            pos b b 5;
+            pos b period 6;
+            pos period a 7;
+            pos period b 8;
+            enum pos a [b] 12;
+            enum pos a [period] 12;
+            enum pos period [b] 13;
+            enum pos [a] b 10;
+            enum pos [a] period 11;
+            enum pos [period] b 10;
+            pos [a] [b] 14;
+            pos [a] [period] 14;
+            pos [period] [b] 14;
+        } kern_Latn;
+
+        lookup kern_Common {
+            lookupflag IgnoreMarks;
+            pos period period 9;
+            enum pos period [period] 13;
+            enum pos [period] period 11;
+            pos [period] [period] 14;
+        } kern_Common;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Common;
+
+            script latn;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Latn;
+        } kern;
+        """
+    )
+
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)).lstrip("\n") == expectation
+
+    # Making a common glyph implicitly have an explicit script assigned (GSUB
+    # closure) will still keep it in the common section.
+    features = dedent(
+        """
+        feature ss01 {
+            sub a by period; # Make period be both Latn and Zyyy.
+        } ss01;
+        """
+    )
+    ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)).lstrip("\n") == expectation
+
+
+def test_kern_split_and_drop(FontClass):
+    glyphs = {
+        "a": ord("a"),
+        "alpha": ord("α"),
+        "a-orya": 0x0B05,
+        "a-cy": 0x0430,
+        "alef-ar": 0x627,
+        "period": ord("."),
+    }
+    groups = {
+        "public.kern1.foo": ["a", "alpha", "a-orya"],
+        "public.kern2.foo": ["a", "alpha", "a-orya"],
+        "public.kern1.bar": ["a-cy", "alef-ar", "period"],
+        "public.kern2.bar": ["a-cy", "alef-ar", "period"],
+    }
+    kerning = {
+        ("public.kern1.foo", "public.kern2.bar"): 20,
+        ("public.kern1.bar", "public.kern2.foo"): 20,
+    }
+
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        lookup kern_Grek {
+            lookupflag IgnoreMarks;
+            pos [alpha] [period] 20;
+            pos [period] [alpha] 20;
+        } kern_Grek;
+
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos [a] [period] 20;
+            pos [period] [a] 20;
+        } kern_Latn;
+
+        lookup kern_Orya {
+            lookupflag IgnoreMarks;
+            pos [a-orya] [period] 20;
+            pos [period] [a-orya] 20;
+        } kern_Orya;
+
+        feature kern {
+            script grek;
+            language dflt;
+            lookup kern_Grek;
+
+            script latn;
+            language dflt;
+            lookup kern_Latn;
+        } kern;
+
+        feature dist {
+            script ory2;
+            language dflt;
+            lookup kern_Orya;
+
+            script orya;
+            language dflt;
+            lookup kern_Orya;
+        } dist;
+        """
+    )
+
+
 def test_kern_split_and_drop_mixed(caplog, FontClass):
     """Test that mixed script pairs don't go anywhere."""
     glyphs = {"V": ord("V"), "W": ord("W"), "gba-nko": 0x07DC}
@@ -1266,6 +1504,101 @@ def test_kern_multi_script(FontClass):
         } kern;
         """
     )
+
+
+def test_kern_mixed_bidis(caplog, FontClass):
+    """Test that BiDi types for pairs are respected."""
+    glyphs = {
+        "a": ord("a"),
+        "comma": ord(","),
+        "alef-ar": 0x0627,
+        "comma-ar": 0x060C,
+        "one-ar": 0x0661,
+    }
+    kerning = {
+        # Undetermined: LTR
+        ("comma", "comma"): -1,
+        # LTR
+        ("a", "a"): 1,
+        ("a", "comma"): 2,
+        ("comma", "a"): 3,
+        # RTL
+        ("alef-ar", "alef-ar"): 4,
+        ("alef-ar", "comma-ar"): 5,
+        ("comma-ar", "alef-ar"): 6,
+        # Mixed: should be dropped
+        ("alef-ar", "one-ar"): 7,
+        ("one-ar", "alef-ar"): 8,
+        # LTR despite being an RTL script
+        ("one-ar", "one-ar"): 9,
+    }
+    ufo = makeUFO(FontClass, glyphs, None, kerning)
+    with caplog.at_level(logging.INFO):
+        newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        lookup kern_Arab {
+            lookupflag IgnoreMarks;
+            pos alef-ar alef-ar <4 0 4 0>;
+            pos alef-ar comma-ar <5 0 5 0>;
+            pos comma-ar alef-ar <6 0 6 0>;
+            pos one-ar one-ar 9;
+        } kern_Arab;
+
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos a a 1;
+            pos a comma 2;
+            pos comma a 3;
+        } kern_Latn;
+
+        lookup kern_Thaa {
+            lookupflag IgnoreMarks;
+            pos one-ar one-ar 9;
+        } kern_Thaa;
+
+        lookup kern_Yezi {
+            lookupflag IgnoreMarks;
+            pos one-ar one-ar 9;
+        } kern_Yezi;
+
+        lookup kern_Common {
+            lookupflag IgnoreMarks;
+            pos comma comma -1;
+        } kern_Common;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Common;
+
+            script arab;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Arab;
+
+            script latn;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Latn;
+
+            script thaa;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Thaa;
+        } kern;
+
+        feature dist {
+            script yezi;
+            language dflt;
+            lookup kern_Common;
+            lookup kern_Yezi;
+        } dist;
+        """
+    )
+    assert "<alef-ar one-ar 7> with ambiguous direction" in caplog.text
+    assert "<one-ar alef-ar 8> with ambiguous direction" in caplog.text
 
 
 if __name__ == "__main__":
