@@ -46,9 +46,9 @@ def unicodeBidiType(uv):
 
 class KerningPair:
 
-    __slots__ = ("side1", "side2", "value", "scripts", "bidiTypes")
+    __slots__ = ("side1", "side2", "value")
 
-    def __init__(self, side1, side2, value, scripts=None, bidiTypes=None):
+    def __init__(self, side1, side2, value):
         if isinstance(side1, str):
             self.side1 = ast.GlyphName(side1)
         elif isinstance(side1, ast.GlyphClassDefinition):
@@ -74,8 +74,6 @@ class KerningPair:
             raise AssertionError(side2)
 
         self.value = value
-        self.scripts = scripts or set()
-        self.bidiTypes = bidiTypes or set()
 
     def __lt__(self, other: KerningPair) -> bool:
         if not isinstance(other, KerningPair):
@@ -131,13 +129,11 @@ class KerningPair:
         return self.firstGlyphs | self.secondGlyphs
 
     def __repr__(self):
-        return "<{} {} {} {}{}{}>".format(
+        return "<{} {} {} {}>".format(
             self.__class__.__name__,
             self.side1,
             self.side2,
             self.value,
-            " %r" % self.scripts if self.scripts else "",
-            " %r" % self.bidiTypes if self.bidiTypes else "",
         )
 
 
@@ -502,8 +498,6 @@ def partitionByScript(pair, glyphScripts):
             sorted(allFirstScripts[firstScripts]),
             sorted(allSecondScripts[secondScripts]),
             pair.value,
-            scripts=pair.scripts,
-            bidiTypes=pair.bidiTypes,
         )
         # Handle very obvious common cases: one script, same on both sides
         if (
@@ -511,15 +505,12 @@ def partitionByScript(pair, glyphScripts):
             and len(secondScripts) == 1
             and firstScripts == secondScripts
         ):
-            localPair.scripts = set([firstScripts[0]])
             yield firstScripts[0], localPair
         # First is single script, second is common
         elif len(firstScripts) == 1 and set(secondScripts).issubset(DFLT_SCRIPTS):
-            localPair.scripts = set([firstScripts[0]])
             yield firstScripts[0], localPair
         # First is common, second is single script
         elif set(firstScripts).issubset(DFLT_SCRIPTS) and len(secondScripts) == 1:
-            localPair.scripts = set([secondScripts[0]])
             yield secondScripts[0], localPair
         # One script and it's different on both sides and it's not common
         elif len(firstScripts) == 1 and len(secondScripts) == 1:
@@ -548,10 +539,6 @@ def partitionByScript(pair, glyphScripts):
                     commonSecondGlyphs |= set(g)
             for common in commonScripts:
                 localPair = KerningPair(
-                    commonFirstGlyphs,
-                    commonSecondGlyphs,
-                    pair.value,
-                    bidiTypes=pair.bidiTypes,
-                    scripts=set([common]),
+                    commonFirstGlyphs, commonSecondGlyphs, pair.value
                 )
                 yield common, localPair
