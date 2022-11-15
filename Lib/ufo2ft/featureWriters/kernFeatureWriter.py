@@ -237,17 +237,10 @@ class KernFeatureWriter(BaseFeatureWriter):
             if firstIsClass and secondIsClass and value == 0:
                 continue
 
-            pair_glyphs = set()
             if firstIsClass:
                 side1 = side1Groups[side1]
-                pair_glyphs.update(side1)
-            else:
-                pair_glyphs.add(side1)
             if secondIsClass:
                 side2 = side2Groups[side2]
-                pair_glyphs.update(side2)
-            else:
-                pair_glyphs.add(side2)
 
             value = quantize(value, quantization)
             result.append(KerningPair(side1, side2, value))
