@@ -231,7 +231,8 @@ class KernFeatureWriter(BaseFeatureWriter):
     def setContext(self, font, feaFile, compiler=None):
         ctx = super().setContext(font, feaFile, compiler=compiler)
         ctx.gdefClasses = self.getGDEFGlyphClasses()
-        ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
+        ctx.glyphSet = self.getOrderedGlyphSet()
+        ctx.kerning = self.getKerningData()
 
         # TODO: Also include substitution information from Designspace rules to
         # correctly the scripts of variable substitution glyphs, maybe add
@@ -293,20 +294,16 @@ class KernFeatureWriter(BaseFeatureWriter):
         )
         return True
 
-    @classmethod
-    def getKerningData(cls, font, feaFile=None, glyphSet=None):
-        side1Classes, side2Classes = cls.getKerningClasses(font, feaFile, glyphSet)
-        pairs = cls.getKerningPairs(font, side1Classes, side2Classes, glyphSet)
+    def getKerningData(self):
+        side1Classes, side2Classes = self.getKerningClasses()
+        pairs = self.getKerningPairs(side1Classes, side2Classes)
         return SimpleNamespace(
             side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
         )
 
-    @staticmethod
-    def getKerningGroups(font, glyphSet=None):
-        if glyphSet:
-            allGlyphs = set(glyphSet.keys())
-        else:
-            allGlyphs = set(font.keys())
+    def getKerningGroups(self):
+        font = self.context.font
+        allGlyphs = self.context.glyphSet
         side1Groups = {}
         side2Groups = {}
         for name, members in font.groups.items():
@@ -322,9 +319,9 @@ class KernFeatureWriter(BaseFeatureWriter):
                 side2Groups[name] = members
         return side1Groups, side2Groups
 
-    @classmethod
-    def getKerningClasses(cls, font, feaFile=None, glyphSet=None):
-        side1Groups, side2Groups = cls.getKerningGroups(font, glyphSet)
+    def getKerningClasses(self):
+        side1Groups, side2Groups = self.getKerningGroups()
+        feaFile = self.context.feaFile
         side1Classes = ast.makeGlyphClassDefinitions(
             side1Groups, feaFile, stripPrefix="public."
         )
@@ -333,13 +330,11 @@ class KernFeatureWriter(BaseFeatureWriter):
         )
         return side1Classes, side2Classes
 
-    @staticmethod
-    def getKerningPairs(font, side1Classes, side2Classes, glyphSet=None):
-        if glyphSet:
-            allGlyphs = set(glyphSet.keys())
-        else:
-            allGlyphs = set(font.keys())
+    def getKerningPairs(self, side1Classes, side2Classes):
+        allGlyphs = self.context.glyphSet
+        font = self.context.font
         kerning = font.kerning
+        quantization = self.options.quantization
 
         pairsByFlags = {}
         for (side1, side2) in kerning:
@@ -363,6 +358,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                     side1 = side1Classes[side1]
                 if secondIsClass:
                     side2 = side2Classes[side2]
+                value = quantize(value, quantization)
                 result.append(KerningPair(side1, side2, value))
         return result
 
@@ -376,16 +372,15 @@ class KernFeatureWriter(BaseFeatureWriter):
         return allKeys
 
     @staticmethod
-    def _makePairPosRule(pair, rtl=False, quantization=1):
+    def _makePairPosRule(pair, rtl=False):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
-        value = quantize(pair.value, quantization)
         if rtl and "L" in pair.bidiTypes:
             # numbers are always shaped LTR even in RTL scripts
             rtl = False
         valuerecord = ast.ValueRecord(
-            xPlacement=value if rtl else None,
+            xPlacement=pair.value if rtl else None,
             yPlacement=0 if rtl else None,
-            xAdvance=value,
+            xAdvance=pair.value,
             yAdvance=0 if rtl else None,
         )
         return ast.PairPosStatement(
@@ -403,9 +398,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         return lookup
 
     def _addPairToLookup(self, lookup, pair, rtl=False):
-        lookup.statements.append(
-            self._makePairPosRule(pair, rtl=rtl, quantization=self.options.quantization)
-        )
+        lookup.statements.append(self._makePairPosRule(pair, rtl=rtl))
 
     def knownScriptsPerCodepoint(self, uv):
         return unicodedata.script_extension(chr(uv))
