@@ -2,6 +2,7 @@ import logging
 from textwrap import dedent
 
 import pytest
+
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast

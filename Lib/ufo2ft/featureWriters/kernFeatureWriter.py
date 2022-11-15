@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 from fontTools import unicodedata
 from fontTools.unicodedata import script_horizontal_direction
+
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize
