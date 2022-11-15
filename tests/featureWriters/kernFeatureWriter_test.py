@@ -5,7 +5,6 @@ import pytest
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
-from ufo2ft.featureWriters.kernFeatureWriter import KerningPair
 
 from . import FeatureWriterTest
 
@@ -147,7 +146,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         # default is ignoreMarks=True
         feaFile = self.writeFeatures(font)
-        # Zyyy because no languagesystems defined
         assert str(feaFile) == dedent(
             """
             lookup kern_Latn {
@@ -480,8 +478,16 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
     def test_arabic_numerals(self, FontClass):
         """Test that arabic numerals (with bidi type AN) are kerned LTR.
-        https://github.com/googlei18n/ufo2ft/issues/198
-        https://github.com/googlei18n/ufo2ft/pull/200
+
+        See:
+
+        * https://github.com/googlei18n/ufo2ft/issues/198
+        * https://github.com/googlei18n/ufo2ft/pull/200
+
+        Additionally, some Arabic numerals are used in more than one script. The
+        simple and stupid approach is to register lookups for all of them,
+        regardless of whether the designer intended the font to support these,
+        because how do you know?
         """
         ufo = FontClass()
         for name, code in [("four-ar", 0x664), ("seven-ar", 0x667)]:
@@ -715,8 +721,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
             "four-ar": 0x664,
             "seven-ar": 0x667,
             "fatha-ar": 0x64E,
-            # # we also add glyphs without unicode codepoint, but linked to
-            # # an encoded 'character' glyph by some GSUB rule
+            # we also add glyphs without unicode codepoint, but linked to
+            # an encoded 'character' glyph by some GSUB rule
             "alef-ar.isol": None,
             "lam-ar.init": None,
             "reh-ar.fina": None,
