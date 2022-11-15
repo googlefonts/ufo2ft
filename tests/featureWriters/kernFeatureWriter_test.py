@@ -2,7 +2,6 @@ import logging
 from textwrap import dedent
 
 import pytest
-
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
@@ -86,7 +85,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert kern_lookup.name == "kern_Common"
         rules = getPairPosRules(kern_lookup)
         assert len(rules) == 1
-        assert str(rules[0]) == "pos @kern1.A @kern2.B 10;"
+        assert str(rules[0]) == "pos [A Aacute Acircumflex] [B E F] 10;"
 
     def test_ignoreMarks(self, FontClass):
         font = FontClass()
@@ -573,10 +572,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos G H -5;
-                enum pos A @kern2.bar 5;
-                enum pos @kern1.foo D 15;
-                pos @kern1.foo @kern2.bar 10;
-                pos @kern1.baz @kern2.bar -10;
+                enum pos A [C D] 5;
+                enum pos [A B] D 15;
+                pos [A B] [C D] 10;
+                pos [E F] [C D] -10;
             } kern_Latn;
 
             feature kern {
@@ -664,11 +663,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
             lookup kern_Arab {
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
-                pos @kern1.reh @kern2.alef <-100 0 -100 0>;
+                pos [reh-ar reh-ar.fina zain-ar] [alef-ar alef-ar.isol] <-100 0 -100 0>;
             } kern_Arab;
 
             lookup kern_Latn {
-                enum pos @kern1.A V -40;
+                enum pos [A Aacute] V -40;
             } kern_Latn;
 
             lookup kern_Thaa {
@@ -797,7 +796,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
-                pos @kern1.reh @kern2.alef <-100 0 -100 0>;
+                pos [reh-ar reh-ar.fina zain-ar] [alef-ar alef-ar.isol] <-100 0 -100 0>;
             } kern_Arab;
 
             lookup kern_Arab_marks {
@@ -806,7 +805,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
-                enum pos @kern1.A V -40;
+                enum pos [A Aacute] V -40;
             } kern_Latn;
 
             lookup kern_Latn_marks {
@@ -925,7 +924,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
-                pos @kern1.reh @kern2.alef <-100 0 -100 0>;
+                pos [reh-ar reh-ar.fina zain-ar] [alef-ar alef-ar.isol] <-100 0 -100 0>;
             } kern_Arab;
 
             lookup kern_Arab_marks {
@@ -967,7 +966,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Knda {
                 lookupflag IgnoreMarks;
-                pos @kern1.KND_aaMatra_R @kern2.KND_ailength_L 34;
+                pos aaMatra_kannada aaMatra_kannada 34;
             } kern_Knda;
 
             feature dist {
@@ -1049,7 +1048,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Knda {
                 lookupflag IgnoreMarks;
-                pos @kern1.KND_aaMatra_R @kern2.KND_ailength_L 34;
+                pos aaMatra_kannada aaMatra_kannada 34;
             } kern_Knda;
 
             feature dist {
@@ -1193,7 +1192,7 @@ def test_kern_split_and_drop_mixed(caplog, FontClass):
         """
     )
     assert (
-        "Mixed script kerning pair <KerningPair [V W] gba-nko -20> ignored"
+        "Skipping kerning pair <@kern1.foo @kern2.foo -20> with mixed script (Latn, Nkoo)"
         in caplog.text
     )
 

@@ -6,10 +6,9 @@ from types import SimpleNamespace
 
 from fontTools import unicodedata
 from fontTools.unicodedata import script_horizontal_direction
-
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptDirection
+from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,6 +27,7 @@ DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | set(["Khmr", "Mymr"]) | set(USE_SCRI
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
 BAD_BIDIS = {"R", "L"}
+COMMON_SCRIPTS_SET = {COMMON_SCRIPT}
 
 
 def unicodeBidiType(uv):
@@ -467,76 +467,82 @@ def partitionByScript(pair, glyphScripts):
     """Split a potentially mixed-script pair into pairs that make sense based
     on the dominant script, and yield each combination with its dominant script."""
 
-    # First, partition the pair by their assigned scripts
-    allFirstScripts = {}
-    allSecondScripts = {}
-    for g in pair.firstGlyphs:
-        if g not in glyphScripts:
-            glyphScripts[g] = set([COMMON_SCRIPT])
-        allFirstScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
-    for g in pair.secondGlyphs:
-        if g not in glyphScripts:
-            glyphScripts[g] = set([COMMON_SCRIPT])
-        allSecondScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
+    # First, partition the pair by their assigned scripts. Glyphs can have
+    # multiple scripts assigned to them (legitimately, e.g. U+0951 DEVANAGARI
+    # STRESS SIGN UDATTA, or for random reasons like having both `sub h by h.sc`
+    # and `sub Etaprosgegrammeni by h.sc;`). Usually, we will emit pairs where
+    # both sides have the same script and no splitting is necessary. The only
+    # mixed script pairs we emit are implicit (e.g. Zyyy) against explicit (e.g.
+    # Latn) scripts. A glyph can be part of both for weird reasons, so we always
+    # treat any glyph with an implicit script as a purely implicit glyph. This
+    # avoids creating overlapping groups with the multi-script glyph in a
+    # lookup.
+    side1Scripts: dict[str, set[str]] = {}
+    side2Scripts: dict[str, set[str]] = {}
+    for glyph in pair.firstGlyphs:
+        scripts = glyphScripts.get(glyph, COMMON_SCRIPTS_SET)
+        # If a glyph is both common *and* another script, treat it as common.
+        # This ensures that a pair appears to the shaper exactly once (as long
+        # as every script sees at most 2 lookups (disregarding mark lookups),
+        # the common one and the script-specific one.
+        if scripts & COMMON_SCRIPTS_SET:
+            scripts = scripts & COMMON_SCRIPTS_SET
+        for script in scripts:
+            side1Scripts.setdefault(script, set()).add(glyph)
+    for glyph in pair.secondGlyphs:
+        scripts = glyphScripts.get(glyph, COMMON_SCRIPTS_SET)
+        if scripts & COMMON_SCRIPTS_SET:
+            scripts = scripts & COMMON_SCRIPTS_SET
+        for script in scripts:
+            side2Scripts.setdefault(script, set()).add(glyph)
 
-    # Super common case
-    if (
-        len(allFirstScripts.keys()) == 1
-        and allFirstScripts.keys() == allSecondScripts.keys()
-    ):
-        for script in list(allFirstScripts.keys())[0]:
-            yield script, pair
-        return
+    # NOTE: Always split a pair, turning class names (`@kern1.something`) into
+    # class literals (`[a b c]`), even if both sides have matching scripts.
+    # Because turning all classes into literals makes some kerning work,
+    # emitting some as-is instead results in a mixture of literal and named
+    # glyph classes, which for some reason drops a lot of kerning (check with
+    # kerning-validator). There is no space saving to be had by trying to assign
+    # them names again, because names don't exist at the OpenType level.
+    for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
+        # Preserve the type (glyph or class) of each side.
+        localGlyphs: set[str] = set()
+        localSide1: str | list[str]
+        localSide2: str | list[str]
+        if pair.firstIsClass:
+            localSide1 = sorted(side1Scripts[firstScript])
+            localGlyphs.update(localSide1)
+        else:
+            assert len(side1Scripts[firstScript]) == 1
+            (localSide1,) = side1Scripts[firstScript]
+            localGlyphs.add(localSide1)
+        if pair.secondIsClass:
+            localSide2 = sorted(side2Scripts[secondScript])
+            localGlyphs.update(localSide2)
+        else:
+            assert len(side2Scripts[secondScript]) == 1
+            (localSide2,) = side2Scripts[secondScript]
+            localGlyphs.add(localSide2)
 
-    # Now let's go through the script combinations
-    for firstScripts, secondScripts in itertools.product(
-        allFirstScripts.keys(), allSecondScripts.keys()
-    ):
-        localPair = KerningPair(
-            sorted(allFirstScripts[firstScripts]),
-            sorted(allSecondScripts[secondScripts]),
+        # Handle very obvious common cases: one script, same on both sides
+        if firstScript == secondScript or secondScript in DFLT_SCRIPTS:
+            localScript = firstScript
+        # First is common, second is single script
+        elif firstScript in DFLT_SCRIPTS:
+            localScript = secondScript
+        # One script and it's different on both sides and it's not common
+        else:
+            LOGGER.info(
+                "Skipping kerning pair <%s %s %s> with mixed script (%s, %s)",
+                pair.side1,
+                pair.side2,
+                pair.value,
+                firstScript,
+                secondScript,
+            )
+            continue
+
+        yield localScript, KerningPair(
+            localSide1,
+            localSide2,
             pair.value,
         )
-        # Handle very obvious common cases: one script, same on both sides
-        if (
-            len(firstScripts) == 1
-            and len(secondScripts) == 1
-            and firstScripts == secondScripts
-        ):
-            yield firstScripts[0], localPair
-        # First is single script, second is common
-        elif len(firstScripts) == 1 and set(secondScripts).issubset(DFLT_SCRIPTS):
-            yield firstScripts[0], localPair
-        # First is common, second is single script
-        elif set(firstScripts).issubset(DFLT_SCRIPTS) and len(secondScripts) == 1:
-            yield secondScripts[0], localPair
-        # One script and it's different on both sides and it's not common
-        elif len(firstScripts) == 1 and len(secondScripts) == 1:
-            logger = ".".join([pair.__class__.__module__, pair.__class__.__name__])
-            logging.getLogger(logger).info(
-                "Mixed script kerning pair %s ignored" % localPair
-            )
-            pass
-        else:
-            # At this point, we have a pair which has different sets of
-            # scripts on each side, and we have to find commonalities.
-            # For example, the pair
-            #   [A A-cy] {Latn, Cyrl}  --  [T Te-cy Tau] {Latn, Cyrl, Grek}
-            # must be split into
-            #   A -- T
-            #   A-cy -- Te-cy
-            # and the Tau ignored.
-            commonScripts = set(firstScripts) & set(secondScripts)
-            commonFirstGlyphs = set()
-            commonSecondGlyphs = set()
-            for scripts, g in allFirstScripts.items():
-                if commonScripts.issubset(set(scripts)):
-                    commonFirstGlyphs |= set(g)
-            for scripts, g in allSecondScripts.items():
-                if commonScripts.issubset(set(scripts)):
-                    commonSecondGlyphs |= set(g)
-            for common in commonScripts:
-                localPair = KerningPair(
-                    commonFirstGlyphs, commonSecondGlyphs, pair.value
-                )
-                yield common, localPair
