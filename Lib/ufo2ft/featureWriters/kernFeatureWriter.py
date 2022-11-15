@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import logging
+from dataclasses import dataclass
 from types import SimpleNamespace
 
 from fontTools import unicodedata
@@ -44,91 +45,52 @@ def unicodeBidiType(uv):
         return None
 
 
+@dataclass(frozen=True, order=False)
 class KerningPair:
-
     __slots__ = ("side1", "side2", "value")
 
-    def __init__(self, side1, side2, value):
-        if isinstance(side1, str):
-            self.side1 = ast.GlyphName(side1)
-        elif isinstance(side1, ast.GlyphClassDefinition):
-            self.side1 = ast.GlyphClassName(side1)
-        elif isinstance(side1, (list, set)):
-            self.side1 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side1)])
-        else:
-            raise AssertionError(side1)
-
-        if isinstance(side2, str):
-            self.side2 = ast.GlyphName(side2)
-        elif isinstance(side2, ast.GlyphClassDefinition):
-            self.side2 = ast.GlyphClassName(side2)
-        elif isinstance(side2, (list, set)):
-            self.side2 = ast.GlyphClass([ast.GlyphName(g) for g in sorted(side2)])
-        else:
-            raise AssertionError(side2)
-
-        self.value = value
+    side1: str | tuple[str, ...]
+    side2: str | tuple[str, ...]
+    value: float
 
     def __lt__(self, other: KerningPair) -> bool:
         if not isinstance(other, KerningPair):
             return NotImplemented
 
-        selfTuple = (
-            self.firstIsClass,
-            self.secondIsClass,
-            tuple(sorted(self.firstGlyphs)),
-            tuple(sorted(self.secondGlyphs)),
-        )
-        otherTuple = (
-            other.firstIsClass,
-            other.secondIsClass,
-            tuple(sorted(other.firstGlyphs)),
-            tuple(sorted(other.secondGlyphs)),
-        )
-
+        # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
+        # class, class to glyph, and finally class to class. This makes "kerning
+        # exceptions" work, where more specific glyph pair values override less
+        # specific class kerning. NOTE: Since comparisons terminate early, this
+        # is never going to compare a str to a tuple.
+        selfTuple = (self.firstIsClass, self.secondIsClass, self.side1, self.side2)
+        otherTuple = (other.firstIsClass, other.secondIsClass, other.side1, other.side2)
         return selfTuple < otherTuple
 
     @property
-    def firstIsClass(self):
-        return isinstance(self.side1, (ast.GlyphClassName, ast.GlyphClass))
+    def firstIsClass(self) -> bool:
+        return isinstance(self.side1, tuple)
 
     @property
-    def secondIsClass(self):
-        return isinstance(self.side2, (ast.GlyphClassName, ast.GlyphClass))
+    def secondIsClass(self) -> bool:
+        return isinstance(self.side2, tuple)
 
     @property
-    def firstGlyphs(self):
-        if self.firstIsClass:
-            if isinstance(self.side1, ast.GlyphClassName):
-                classDef1 = self.side1.glyphclass
-            else:
-                classDef1 = self.side1
-            return {g.asFea() for g in classDef1.glyphSet()}
+    def firstGlyphs(self) -> tuple[str, ...]:
+        if isinstance(self.side1, tuple):
+            return self.side1
         else:
-            return {self.side1.asFea()}
+            return (self.side1,)
 
     @property
-    def secondGlyphs(self):
-        if self.secondIsClass:
-            if isinstance(self.side2, ast.GlyphClassName):
-                classDef2 = self.side2.glyphclass
-            else:
-                classDef2 = self.side2
-            return {g.asFea() for g in classDef2.glyphSet()}
+    def secondGlyphs(self) -> tuple[str, ...]:
+        if isinstance(self.side2, tuple):
+            return self.side2
         else:
-            return {self.side2.asFea()}
+            return (self.side2,)
 
     @property
-    def glyphs(self):
-        return self.firstGlyphs | self.secondGlyphs
-
-    def __repr__(self):
-        return "<{} {} {} {}>".format(
-            self.__class__.__name__,
-            self.side1,
-            self.side2,
-            self.value,
-        )
+    def glyphs(self) -> tuple[str, ...]:
+        return (*self.firstGlyphs, *self.secondGlyphs)
 
 
 class KernFeatureWriter(BaseFeatureWriter):
@@ -206,7 +168,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         return True
 
     def getKerningData(self):
-        side1Classes, side2Classes = self.getKerningClasses()
+        side1Classes, side2Classes = self.getKerningGroups()
         pairs = self.getKerningPairs(side1Classes, side2Classes)
         return SimpleNamespace(
             side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
@@ -219,27 +181,16 @@ class KernFeatureWriter(BaseFeatureWriter):
         side2Groups = {}
         for name, members in font.groups.items():
             # prune non-existent or skipped glyphs
-            members = [g for g in members if g in allGlyphs]
+            members = {g for g in members if g in allGlyphs}
             if not members:
                 # skip empty groups
                 continue
             # skip groups without UFO3 public.kern{1,2} prefix
             if name.startswith(SIDE1_PREFIX):
-                side1Groups[name] = members
+                side1Groups[name] = tuple(sorted(members))
             elif name.startswith(SIDE2_PREFIX):
-                side2Groups[name] = members
+                side2Groups[name] = tuple(sorted(members))
         return side1Groups, side2Groups
-
-    def getKerningClasses(self):
-        side1Groups, side2Groups = self.getKerningGroups()
-        feaFile = self.context.feaFile
-        side1Classes = ast.makeGlyphClassDefinitions(
-            side1Groups, feaFile, stripPrefix="public."
-        )
-        side2Classes = ast.makeGlyphClassDefinitions(
-            side2Groups, feaFile, stripPrefix="public."
-        )
-        return side1Classes, side2Classes
 
     def getKerningPairs(self, side1Classes, side2Classes):
         glyphSet = self.context.glyphSet
@@ -279,10 +230,18 @@ class KernFeatureWriter(BaseFeatureWriter):
             xAdvance=pair.value,
             yAdvance=0 if rtl else None,
         )
+        if isinstance(pair.side1, str):
+            side1 = ast.GlyphName(pair.side1)
+        else:
+            side1 = ast.GlyphClass([ast.GlyphName(g) for g in pair.side1])
+        if isinstance(pair.side2, str):
+            side2 = ast.GlyphName(pair.side2)
+        else:
+            side2 = ast.GlyphClass([ast.GlyphName(g) for g in pair.side2])
         return ast.PairPosStatement(
-            glyphs1=pair.side1,
+            glyphs1=side1,
             valuerecord1=valuerecord,
-            glyphs2=pair.side2,
+            glyphs2=side2,
             valuerecord2=None,
             enumerated=enumerated,
         )
@@ -493,17 +452,17 @@ def partitionByScript(pair, glyphScripts):
     for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
         # Preserve the type (glyph or class) of each side.
         localGlyphs: set[str] = set()
-        localSide1: str | list[str]
-        localSide2: str | list[str]
+        localSide1: str | tuple[str, ...]
+        localSide2: str | tuple[str, ...]
         if pair.firstIsClass:
-            localSide1 = sorted(side1Scripts[firstScript])
+            localSide1 = tuple(sorted(side1Scripts[firstScript]))
             localGlyphs.update(localSide1)
         else:
             assert len(side1Scripts[firstScript]) == 1
             (localSide1,) = side1Scripts[firstScript]
             localGlyphs.add(localSide1)
         if pair.secondIsClass:
-            localSide2 = sorted(side2Scripts[secondScript])
+            localSide2 = tuple(sorted(side2Scripts[secondScript]))
             localGlyphs.update(localSide2)
         else:
             assert len(side2Scripts[secondScript]) == 1
