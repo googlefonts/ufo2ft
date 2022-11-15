@@ -313,20 +313,19 @@ class KernFeatureWriter(BaseFeatureWriter):
         marks = self.context.gdefClasses.mark
         lookups = {}
         pairs = self.context.kerning.pairs
-        glyphScripts = self.context.glyphScripts
 
         if self.options.ignoreMarks:
             basePairs, markPairs = self._splitBaseAndMarkPairs(
                 self.context.kerning.pairs, marks
             )
             if basePairs:
-                self._makeSplitScriptKernLookups(lookups, basePairs, glyphScripts)
+                self._makeSplitScriptKernLookups(lookups, basePairs)
             if markPairs:
                 self._makeSplitScriptKernLookups(
-                    lookups, markPairs, glyphScripts, ignoreMarks=False, suffix="_marks"
+                    lookups, markPairs, ignoreMarks=False, suffix="_marks"
                 )
         else:
-            self._makeSplitScriptKernLookups(lookups, pairs, glyphScripts)
+            self._makeSplitScriptKernLookups(lookups, pairs)
         return lookups
 
     def _splitBaseAndMarkPairs(self, pairs, marks):
@@ -341,10 +340,9 @@ class KernFeatureWriter(BaseFeatureWriter):
             basePairs[:] = pairs
         return basePairs, markPairs
 
-    def _makeSplitScriptKernLookups(
-        self, lookups, pairs, glyphScripts, ignoreMarks=True, suffix=""
-    ):
+    def _makeSplitScriptKernLookups(self, lookups, pairs, ignoreMarks=True, suffix=""):
         bidiGlyphs = self.context.bidiGlyphs
+        glyphScripts = self.context.glyphScripts
         kerningPerScript = splitKerning(pairs, glyphScripts)
         for script, pairs in kerningPerScript.items():
             scriptLookups = lookups.setdefault(script, {})
