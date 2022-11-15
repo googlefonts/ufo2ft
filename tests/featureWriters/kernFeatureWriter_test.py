@@ -966,7 +966,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Knda {
                 lookupflag IgnoreMarks;
-                pos aaMatra_kannada aaMatra_kannada 34;
+                pos [aaMatra_kannada] [aaMatra_kannada] 34;
             } kern_Knda;
 
             feature dist {
@@ -1048,7 +1048,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Knda {
                 lookupflag IgnoreMarks;
-                pos aaMatra_kannada aaMatra_kannada 34;
+                pos [aaMatra_kannada] [aaMatra_kannada] 34;
             } kern_Knda;
 
             feature dist {
@@ -1181,7 +1181,7 @@ def test_kern_split_and_drop_mixed(caplog, FontClass):
 
         lookup kern_Latn {
             lookupflag IgnoreMarks;
-            enum pos [V W] W -20;
+            pos [V W] [W] -20;
         } kern_Latn;
 
         feature kern {
@@ -1217,7 +1217,7 @@ def test_kern_split_and_mix_common(FontClass):
 
         lookup kern_Nkoo {
             lookupflag IgnoreMarks;
-            pos gba-nko period <-20 0 -20 0>;
+            enum pos [gba-nko] period <-20 0 -20 0>;
         } kern_Nkoo;
 
         feature kern {
@@ -1275,12 +1275,12 @@ def test_kern_multi_script(FontClass):
 
         lookup kern_Arab {
             lookupflag IgnoreMarks;
-            pos lam-ar comma-ar <-20 0 -20 0>;
+            pos [lam-ar] [comma-ar] <-20 0 -20 0>;
         } kern_Arab;
 
         lookup kern_Nkoo {
             lookupflag IgnoreMarks;
-            pos gba-nko comma-ar <-20 0 -20 0>;
+            pos [gba-nko] [comma-ar] <-20 0 -20 0>;
         } kern_Nkoo;
 
         feature kern {
