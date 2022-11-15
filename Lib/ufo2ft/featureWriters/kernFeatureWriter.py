@@ -5,6 +5,7 @@ import logging
 from types import SimpleNamespace
 
 from fontTools import unicodedata
+from fontTools.unicodedata import script_horizontal_direction
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
@@ -42,11 +43,9 @@ def unicodeBidiType(uv):
 
 class KerningPair:
 
-    __slots__ = ("side1", "side2", "value", "scripts", "directions", "bidiTypes")
+    __slots__ = ("side1", "side2", "value", "scripts", "bidiTypes")
 
-    def __init__(
-        self, side1, side2, value, scripts=None, directions=None, bidiTypes=None
-    ):
+    def __init__(self, side1, side2, value, scripts=None, bidiTypes=None):
         if isinstance(side1, str):
             self.side1 = ast.GlyphName(side1)
         elif isinstance(side1, ast.GlyphClassDefinition):
@@ -73,7 +72,6 @@ class KerningPair:
 
         self.value = value
         self.scripts = scripts or set()
-        self.directions = directions or set()
         self.bidiTypes = bidiTypes or set()
 
     def partitionByScript(self, glyphScripts):
@@ -110,7 +108,6 @@ class KerningPair:
                 sorted(allSecondScripts[secondScripts]),
                 self.value,
                 scripts=self.scripts,
-                directions=self.directions,
                 bidiTypes=self.bidiTypes,
             )
             # Handle very obvious common cases: one script, same on both sides
@@ -159,7 +156,6 @@ class KerningPair:
                         commonFirstGlyphs,
                         commonSecondGlyphs,
                         self.value,
-                        directions=self.directions,
                         bidiTypes=self.bidiTypes,
                         scripts=set([common]),
                     )
@@ -200,12 +196,11 @@ class KerningPair:
         return self.firstGlyphs | self.secondGlyphs
 
     def __repr__(self):
-        return "<{} {} {} {}{}{}{}>".format(
+        return "<{} {} {} {}{}{}>".format(
             self.__class__.__name__,
             self.side1,
             self.side2,
             self.value,
-            " %r" % self.directions if self.directions else "",
             " %r" % self.scripts if self.scripts else "",
             " %r" % self.bidiTypes if self.bidiTypes else "",
         )
@@ -239,8 +234,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
-        dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
-        self._intersectPairs("directions", dirGlyphs)
         scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
         self._intersectPairs("scripts", scriptGlyphs)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
@@ -443,7 +436,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                         ignoreMarks=ignoreMarks,
                     )
                     script_lookups[key] = lookup
-                script_is_rtl = "RTL" in splitpair.directions
+                script_is_rtl = script_horizontal_direction(script, "LTR") == "RTL"
                 # Numbers are always shaped LTR even in RTL scripts:
                 pair_is_rtl = "L" not in splitpair.bidiTypes
                 rule = self._makePairPosRule(
