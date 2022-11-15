@@ -436,12 +436,10 @@ class KernFeatureWriter(BaseFeatureWriter):
                         ignoreMarks=ignoreMarks,
                     )
                     script_lookups[key] = lookup
-                script_is_rtl = script_horizontal_direction(script, "LTR") == "RTL"
+                scriptIsRtl = script_horizontal_direction(script, "LTR") == "RTL"
                 # Numbers are always shaped LTR even in RTL scripts:
-                pair_is_rtl = "L" not in splitpair.bidiTypes
-                rule = self._makePairPosRule(
-                    splitpair, rtl=script_is_rtl and pair_is_rtl
-                )
+                pairIsRtl = "L" not in splitpair.bidiTypes
+                rule = self._makePairPosRule(splitpair, rtl=scriptIsRtl and pairIsRtl)
                 lookup.statements.append(rule)
 
     def _makeFeatureBlocks(self, lookups):
