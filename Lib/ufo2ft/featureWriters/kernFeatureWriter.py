@@ -193,20 +193,13 @@ class KernFeatureWriter(BaseFeatureWriter):
         # extend feature file with the new generated statements
         feaFile = self.context.feaFile
 
-        # first add the glyph class definitions
-        side1Classes = self.context.kerning.side1Classes
-        side2Classes = self.context.kerning.side2Classes
-        newClassDefs = []
-        for classes in (side1Classes, side2Classes):
-            newClassDefs.extend([c for _, c in sorted(classes.items())])
-
         lookupGroups = []
         for _, lookupGroup in sorted(lookups.items()):
             lookupGroups.extend(lookupGroup.values())
 
+        # NOTE: We don't write classDefs because we literalise all classes.
         self._insert(
             feaFile=feaFile,
-            classDefs=newClassDefs,
             lookups=lookupGroups,
             features=[features[tag] for tag in ["kern", "dist"] if tag in features],
         )
