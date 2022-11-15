@@ -223,8 +223,8 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         return result
 
-    @staticmethod
-    def _makePairPosRule(pair, rtl=False):
+    @classmethod
+    def _makePairPosRule(cls, pair, ast_cache, rtl=False):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
         valuerecord = ast.ValueRecord(
             xPlacement=pair.value if rtl else None,
@@ -232,21 +232,29 @@ class KernFeatureWriter(BaseFeatureWriter):
             xAdvance=pair.value,
             yAdvance=0 if rtl else None,
         )
-        if isinstance(pair.side1, str):
-            side1 = ast.GlyphName(pair.side1)
-        else:
-            side1 = ast.GlyphClass([ast.GlyphName(g) for g in pair.side1])
-        if isinstance(pair.side2, str):
-            side2 = ast.GlyphName(pair.side2)
-        else:
-            side2 = ast.GlyphClass([ast.GlyphName(g) for g in pair.side2])
         return ast.PairPosStatement(
-            glyphs1=side1,
+            glyphs1=cls._convertToFeaAst(pair.side1, ast_cache),
             valuerecord1=valuerecord,
-            glyphs2=side2,
+            glyphs2=cls._convertToFeaAst(pair.side2, ast_cache),
             valuerecord2=None,
             enumerated=enumerated,
         )
+
+    @staticmethod
+    def _convertToFeaAst(
+        side: str | tuple[str, ...],
+        ast_cache: dict[str | tuple[str, ...], ast.GlyphName | ast.GlyphClass],
+    ) -> ast.GlyphName | ast.GlyphClass:
+        """Cache the conversion of a pair name or literal class to the Fea AST,
+        because we'll see the same literal classes over and over."""
+        if side in ast_cache:
+            return ast_cache[side]
+        if isinstance(side, str):
+            side_ast = ast.GlyphName(side)
+        else:
+            side_ast = ast.GlyphClass([ast.GlyphName(g) for g in side])
+        ast_cache[side] = side_ast
+        return side_ast
 
     def _makeKerningLookup(self, name, ignoreMarks=True):
         lookup = ast.LookupBlock(name)
@@ -305,6 +313,10 @@ class KernFeatureWriter(BaseFeatureWriter):
                 )
                 scriptLookups[key] = lookup
 
+            # For each script, keep a name-or-class-to-fea-name-or-class cache
+            # around, because we expect to see the same literal classes over and
+            # over.
+            ast_cache = {}
             for pair in pairs:
                 bidiTypes = {
                     direction
@@ -322,7 +334,9 @@ class KernFeatureWriter(BaseFeatureWriter):
                 scriptIsRtl = script_horizontal_direction(script, "LTR") == "RTL"
                 # Numbers are always shaped LTR even in RTL scripts:
                 pairIsRtl = "L" not in bidiTypes
-                rule = self._makePairPosRule(pair, rtl=scriptIsRtl and pairIsRtl)
+                rule = self._makePairPosRule(
+                    pair, ast_cache, rtl=scriptIsRtl and pairIsRtl
+                )
                 lookup.statements.append(rule)
 
         # Clean out empty lookups.
