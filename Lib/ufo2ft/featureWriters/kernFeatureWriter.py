@@ -11,6 +11,8 @@ from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptDirection
 
+LOGGER = logging.getLogger(__name__)
+
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
 
@@ -25,6 +27,7 @@ DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | set(["Khmr", "Mymr"]) | set(USE_SCRI
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
+BAD_BIDIS = {"R", "L"}
 
 
 def unicodeBidiType(uv):
@@ -74,92 +77,24 @@ class KerningPair:
         self.scripts = scripts or set()
         self.bidiTypes = bidiTypes or set()
 
-    def partitionByScript(self, glyphScripts):
-        """Split a potentially mixed-script pair into pairs that make sense based
-        on the dominant script, and yield each combination with its dominant script."""
+    def __lt__(self, other: KerningPair) -> bool:
+        if not isinstance(other, KerningPair):
+            return NotImplemented
 
-        # First, partition the pair by their assigned scripts
-        allFirstScripts = {}
-        allSecondScripts = {}
-        for g in self.firstGlyphs:
-            if g not in glyphScripts:
-                glyphScripts[g] = set([COMMON_SCRIPT])
-            allFirstScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
-        for g in self.secondGlyphs:
-            if g not in glyphScripts:
-                glyphScripts[g] = set([COMMON_SCRIPT])
-            allSecondScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
+        selfTuple = (
+            self.firstIsClass,
+            self.secondIsClass,
+            tuple(sorted(self.firstGlyphs)),
+            tuple(sorted(self.secondGlyphs)),
+        )
+        otherTuple = (
+            other.firstIsClass,
+            other.secondIsClass,
+            tuple(sorted(other.firstGlyphs)),
+            tuple(sorted(other.secondGlyphs)),
+        )
 
-        # Super common case
-        if (
-            len(allFirstScripts.keys()) == 1
-            and allFirstScripts.keys() == allSecondScripts.keys()
-        ):
-            for script in list(allFirstScripts.keys())[0]:
-                yield script, self
-            return
-
-        # Now let's go through the script combinations
-        for firstScripts, secondScripts in itertools.product(
-            allFirstScripts.keys(), allSecondScripts.keys()
-        ):
-            localPair = KerningPair(
-                sorted(allFirstScripts[firstScripts]),
-                sorted(allSecondScripts[secondScripts]),
-                self.value,
-                scripts=self.scripts,
-                bidiTypes=self.bidiTypes,
-            )
-            # Handle very obvious common cases: one script, same on both sides
-            if (
-                len(firstScripts) == 1
-                and len(secondScripts) == 1
-                and firstScripts == secondScripts
-            ):
-                localPair.scripts = set([firstScripts[0]])
-                yield firstScripts[0], localPair
-            # First is single script, second is common
-            elif len(firstScripts) == 1 and set(secondScripts).issubset(DFLT_SCRIPTS):
-                localPair.scripts = set([firstScripts[0]])
-                yield firstScripts[0], localPair
-            # First is common, second is single script
-            elif set(firstScripts).issubset(DFLT_SCRIPTS) and len(secondScripts) == 1:
-                localPair.scripts = set([secondScripts[0]])
-                yield secondScripts[0], localPair
-            # One script and it's different on both sides and it's not common
-            elif len(firstScripts) == 1 and len(secondScripts) == 1:
-                logger = ".".join([self.__class__.__module__, self.__class__.__name__])
-                logging.getLogger(logger).info(
-                    "Mixed script kerning pair %s ignored" % localPair
-                )
-                pass
-            else:
-                # At this point, we have a pair which has different sets of
-                # scripts on each side, and we have to find commonalities.
-                # For example, the pair
-                #   [A A-cy] {Latn, Cyrl}  --  [T Te-cy Tau] {Latn, Cyrl, Grek}
-                # must be split into
-                #   A -- T
-                #   A-cy -- Te-cy
-                # and the Tau ignored.
-                commonScripts = set(firstScripts) & set(secondScripts)
-                commonFirstGlyphs = set()
-                commonSecondGlyphs = set()
-                for scripts, g in allFirstScripts.items():
-                    if commonScripts.issubset(set(scripts)):
-                        commonFirstGlyphs |= set(g)
-                for scripts, g in allSecondScripts.items():
-                    if commonScripts.issubset(set(scripts)):
-                        commonSecondGlyphs |= set(g)
-                for common in commonScripts:
-                    localPair = KerningPair(
-                        commonFirstGlyphs,
-                        commonSecondGlyphs,
-                        self.value,
-                        bidiTypes=self.bidiTypes,
-                        scripts=set([common]),
-                    )
-                    yield common, localPair
+        return selfTuple < otherTuple
 
     @property
     def firstIsClass(self):
@@ -227,7 +162,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx = super().setContext(font, feaFile, compiler=compiler)
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.glyphSet = self.getOrderedGlyphSet()
-        ctx.kerning = self.getKerningData()
 
         # TODO: Also include substitution information from Designspace rules to
         # correctly the scripts of variable substitution glyphs, maybe add
@@ -235,15 +169,16 @@ class KernFeatureWriter(BaseFeatureWriter):
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
         scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
-        self._intersectPairs("scripts", scriptGlyphs)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
-        self._intersectPairs("bidiTypes", bidiGlyphs)
+        ctx.bidiGlyphs = bidiGlyphs
 
         glyphScripts = {}
         for script, glyphs in scriptGlyphs.items():
             for g in glyphs:
                 glyphScripts.setdefault(g, set()).add(script)
         ctx.glyphScripts = glyphScripts
+
+        ctx.kerning = self.getKerningData()
 
         return ctx
 
@@ -324,45 +259,33 @@ class KernFeatureWriter(BaseFeatureWriter):
         return side1Classes, side2Classes
 
     def getKerningPairs(self, side1Classes, side2Classes):
-        allGlyphs = self.context.glyphSet
+        glyphSet = self.context.glyphSet
         font = self.context.font
         kerning = font.kerning
         quantization = self.options.quantization
 
-        pairsByFlags = {}
-        for (side1, side2) in kerning:
-            # filter out pairs that reference missing groups or glyphs
-            if side1 not in side1Classes and side1 not in allGlyphs:
-                continue
-            if side2 not in side2Classes and side2 not in allGlyphs:
-                continue
-            flags = (side1 in side1Classes, side2 in side2Classes)
-            pairsByFlags.setdefault(flags, set()).add((side1, side2))
-
+        kerning = font.kerning
         result = []
-        for flags, pairs in sorted(pairsByFlags.items()):
-            for side1, side2 in sorted(pairs):
-                value = kerning[side1, side2]
-                if all(flags) and value == 0:
-                    # ignore zero-valued class kern pairs
-                    continue
-                firstIsClass, secondIsClass = flags
-                if firstIsClass:
-                    side1 = side1Classes[side1]
-                if secondIsClass:
-                    side2 = side2Classes[side2]
-                value = quantize(value, quantization)
-                result.append(KerningPair(side1, side2, value))
-        return result
+        for (side1, side2), value in kerning.items():
+            firstIsClass, secondIsClass = (side1 in side1Classes, side2 in side2Classes)
+            # Filter out pairs that reference missing groups or glyphs.
+            if not firstIsClass and side1 not in glyphSet:
+                continue
+            if not secondIsClass and side2 not in glyphSet:
+                continue
+            # Ignore zero-valued class kern pairs. They are the most general
+            # kerns, so they don't override anything else like glyph kerns would
+            # and zero is the default.
+            if firstIsClass and secondIsClass and value == 0:
+                continue
+            if firstIsClass:
+                side1 = side1Classes[side1]
+            if secondIsClass:
+                side2 = side2Classes[side2]
+            value = quantize(value, quantization)
+            result.append(KerningPair(side1, side2, value))
 
-    def _intersectPairs(self, attribute, glyphSets):
-        allKeys = set()
-        for pair in self.context.kerning.pairs:
-            for key, glyphs in glyphSets.items():
-                if not pair.glyphs.isdisjoint(glyphs):
-                    getattr(pair, attribute).add(key)
-                    allKeys.add(key)
-        return allKeys
+        return result
 
     @staticmethod
     def _makePairPosRule(pair, rtl=False):
@@ -425,22 +348,52 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makeSplitScriptKernLookups(
         self, lookups, pairs, glyphScripts, ignoreMarks=True, suffix=""
     ):
-        for pair in pairs:
-            for script, splitpair in pair.partitionByScript(glyphScripts):
-                key = "kern_" + script + suffix
-                script_lookups = lookups.setdefault(script, {})
-                lookup = script_lookups.get(key)
-                if not lookup:
-                    lookup = self._makeKerningLookup(
-                        key.replace(COMMON_SCRIPT, "Common"),  # For neatness
-                        ignoreMarks=ignoreMarks,
+        bidiGlyphs = self.context.bidiGlyphs
+        kerningPerScript = splitKerning(pairs, glyphScripts)
+        for script, pairs in kerningPerScript.items():
+            scriptLookups = lookups.setdefault(script, {})
+
+            key = f"kern_{script}{suffix}"
+            lookup = scriptLookups.get(key)
+            if not lookup:
+                # For neatness:
+                lookup = self._makeKerningLookup(
+                    key.replace(COMMON_SCRIPT, "Common"),  # For neatness
+                    ignoreMarks=ignoreMarks,
+                )
+                scriptLookups[key] = lookup
+
+            for pair in pairs:
+                bidiTypes = {
+                    direction
+                    for direction, glyphs in bidiGlyphs.items()
+                    if not set(pair.glyphs).isdisjoint(glyphs)
+                }
+                if bidiTypes.issuperset(BAD_BIDIS):
+                    LOGGER.info(
+                        "Skipping kerning pair <%s %s %s> with ambiguous direction",
+                        pair.side1,
+                        pair.side2,
+                        pair.value,
                     )
-                    script_lookups[key] = lookup
+                    continue
                 scriptIsRtl = script_horizontal_direction(script, "LTR") == "RTL"
                 # Numbers are always shaped LTR even in RTL scripts:
-                pairIsRtl = "L" not in splitpair.bidiTypes
-                rule = self._makePairPosRule(splitpair, rtl=scriptIsRtl and pairIsRtl)
+                pairIsRtl = "L" not in bidiTypes
+                rule = self._makePairPosRule(pair, rtl=scriptIsRtl and pairIsRtl)
                 lookup.statements.append(rule)
+
+        # Clean out empty lookups.
+        for script, scriptLookups in list(lookups.items()):
+            for lookup_name, lookup in list(scriptLookups.items()):
+                if not any(
+                    stmt
+                    for stmt in lookup.statements
+                    if not isinstance(stmt, ast.LookupFlagStatement)
+                ):
+                    del scriptLookups[lookup_name]
+            if not scriptLookups:
+                del lookups[script]
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
@@ -500,3 +453,105 @@ class KernFeatureWriter(BaseFeatureWriter):
                 # sources and we are independent of what's going on in the rest of
                 # the features.fea file.
                 ast.addLookupReferences(feature, lookupsForThisScript, tag, ["dflt"])
+
+
+def splitKerning(pairs, glyphScripts):
+    # Split kerning into per-script buckets, so we can post-process them before
+    # continuing.
+    kerningPerScript = {}
+    for pair in pairs:
+        for script, splitPair in partitionByScript(pair, glyphScripts):
+            kerningPerScript.setdefault(script, []).append(splitPair)
+
+    for pairs in kerningPerScript.values():
+        pairs.sort()
+
+    return kerningPerScript
+
+
+def partitionByScript(pair, glyphScripts):
+    """Split a potentially mixed-script pair into pairs that make sense based
+    on the dominant script, and yield each combination with its dominant script."""
+
+    # First, partition the pair by their assigned scripts
+    allFirstScripts = {}
+    allSecondScripts = {}
+    for g in pair.firstGlyphs:
+        if g not in glyphScripts:
+            glyphScripts[g] = set([COMMON_SCRIPT])
+        allFirstScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
+    for g in pair.secondGlyphs:
+        if g not in glyphScripts:
+            glyphScripts[g] = set([COMMON_SCRIPT])
+        allSecondScripts.setdefault(tuple(glyphScripts[g]), []).append(g)
+
+    # Super common case
+    if (
+        len(allFirstScripts.keys()) == 1
+        and allFirstScripts.keys() == allSecondScripts.keys()
+    ):
+        for script in list(allFirstScripts.keys())[0]:
+            yield script, pair
+        return
+
+    # Now let's go through the script combinations
+    for firstScripts, secondScripts in itertools.product(
+        allFirstScripts.keys(), allSecondScripts.keys()
+    ):
+        localPair = KerningPair(
+            sorted(allFirstScripts[firstScripts]),
+            sorted(allSecondScripts[secondScripts]),
+            pair.value,
+            scripts=pair.scripts,
+            bidiTypes=pair.bidiTypes,
+        )
+        # Handle very obvious common cases: one script, same on both sides
+        if (
+            len(firstScripts) == 1
+            and len(secondScripts) == 1
+            and firstScripts == secondScripts
+        ):
+            localPair.scripts = set([firstScripts[0]])
+            yield firstScripts[0], localPair
+        # First is single script, second is common
+        elif len(firstScripts) == 1 and set(secondScripts).issubset(DFLT_SCRIPTS):
+            localPair.scripts = set([firstScripts[0]])
+            yield firstScripts[0], localPair
+        # First is common, second is single script
+        elif set(firstScripts).issubset(DFLT_SCRIPTS) and len(secondScripts) == 1:
+            localPair.scripts = set([secondScripts[0]])
+            yield secondScripts[0], localPair
+        # One script and it's different on both sides and it's not common
+        elif len(firstScripts) == 1 and len(secondScripts) == 1:
+            logger = ".".join([pair.__class__.__module__, pair.__class__.__name__])
+            logging.getLogger(logger).info(
+                "Mixed script kerning pair %s ignored" % localPair
+            )
+            pass
+        else:
+            # At this point, we have a pair which has different sets of
+            # scripts on each side, and we have to find commonalities.
+            # For example, the pair
+            #   [A A-cy] {Latn, Cyrl}  --  [T Te-cy Tau] {Latn, Cyrl, Grek}
+            # must be split into
+            #   A -- T
+            #   A-cy -- Te-cy
+            # and the Tau ignored.
+            commonScripts = set(firstScripts) & set(secondScripts)
+            commonFirstGlyphs = set()
+            commonSecondGlyphs = set()
+            for scripts, g in allFirstScripts.items():
+                if commonScripts.issubset(set(scripts)):
+                    commonFirstGlyphs |= set(g)
+            for scripts, g in allSecondScripts.items():
+                if commonScripts.issubset(set(scripts)):
+                    commonSecondGlyphs |= set(g)
+            for common in commonScripts:
+                localPair = KerningPair(
+                    commonFirstGlyphs,
+                    commonSecondGlyphs,
+                    pair.value,
+                    bidiTypes=pair.bidiTypes,
+                    scripts=set([common]),
+                )
+                yield common, localPair
