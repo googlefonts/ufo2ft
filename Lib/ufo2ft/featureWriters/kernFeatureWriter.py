@@ -374,9 +374,6 @@ class KernFeatureWriter(BaseFeatureWriter):
     @staticmethod
     def _makePairPosRule(pair, rtl=False):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
-        if rtl and "L" in pair.bidiTypes:
-            # numbers are always shaped LTR even in RTL scripts
-            rtl = False
         valuerecord = ast.ValueRecord(
             xPlacement=pair.value if rtl else None,
             yPlacement=0 if rtl else None,
@@ -396,9 +393,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         if ignoreMarks and self.options.ignoreMarks:
             lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
         return lookup
-
-    def _addPairToLookup(self, lookup, pair, rtl=False):
-        lookup.statements.append(self._makePairPosRule(pair, rtl=rtl))
 
     def knownScriptsPerCodepoint(self, uv):
         return unicodedata.script_extension(chr(uv))
@@ -449,7 +443,13 @@ class KernFeatureWriter(BaseFeatureWriter):
                         ignoreMarks=ignoreMarks,
                     )
                     script_lookups[key] = lookup
-                self._addPairToLookup(lookup, splitpair, rtl="RTL" in pair.directions)
+                script_is_rtl = "RTL" in splitpair.directions
+                # Numbers are always shaped LTR even in RTL scripts:
+                pair_is_rtl = "L" not in splitpair.bidiTypes
+                rule = self._makePairPosRule(
+                    splitpair, rtl=script_is_rtl and pair_is_rtl
+                )
+                lookup.statements.append(rule)
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
