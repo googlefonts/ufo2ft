@@ -4,6 +4,7 @@ import itertools
 import logging
 from dataclasses import dataclass
 from types import SimpleNamespace
+from typing import Iterator, Mapping
 
 from fontTools import unicodedata
 from fontTools.unicodedata import script_horizontal_direction
@@ -410,7 +411,10 @@ def splitKerning(pairs, glyphScripts):
     return kerningPerScript
 
 
-def partitionByScript(pair, glyphScripts):
+def partitionByScript(
+    pair: KerningPair,
+    glyphScripts: Mapping[str, set[str]],
+) -> Iterator[tuple[str, KerningPair]]:
     """Split a potentially mixed-script pair into pairs that make sense based
     on the dominant script, and yield each combination with its dominant script."""
 
