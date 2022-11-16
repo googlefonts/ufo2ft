@@ -3,6 +3,7 @@ import re
 from collections import OrderedDict, defaultdict
 from functools import partial
 
+from fontTools import unicodedata
 from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
@@ -823,13 +824,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
         )
         ctx.markToMarkAttachments = self._makeMarkToMarkAttachments()
 
-        abvmGlyphs = self._getAbvmGlyphs()
+        abvmGlyphs, notAbvmGlyphs = self._getAbvmGlyphs()
 
         def isAbvm(glyphName):
             return glyphName in abvmGlyphs
 
         def isNotAbvm(glyphName):
-            return glyphName not in abvmGlyphs
+            return glyphName in notAbvmGlyphs
 
         features = {}
         todo = ctx.todo
@@ -853,6 +854,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return features
 
     def _getAbvmGlyphs(self):
+        glyphSet = set(self.getOrderedGlyphSet().keys())
         scriptsUsingAbvm = self.scriptsUsingAbvm
         if self.context.feaScripts:
             # https://github.com/googlefonts/ufo2ft/issues/579 Some characters
@@ -861,9 +863,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
             # abvm scripts that the font does not intend to support.
             scriptsUsingAbvm = scriptsUsingAbvm & self.context.feaScripts
         if not scriptsUsingAbvm:
-            return set()
+            return set(), glyphSet
         cmap = self.makeUnicodeToGlyphNameMapping()
         unicodeIsAbvm = partial(unicodeInScripts, scripts=scriptsUsingAbvm)
+
+        def unicodeIsNotAbvm(uv):
+            return bool(unicodedata.script_extension(chr(uv)) - self.scriptsUsingAbvm)
+
         if any(unicodeIsAbvm(uv) for uv in cmap):
             # If there are any characters from Indic/USE/Khmer scripts in the cmap, we
             # compile a temporary GSUB table to resolve substitutions and get
@@ -872,9 +878,18 @@ class MarkFeatureWriter(BaseFeatureWriter):
             glyphGroups = classifyGlyphs(unicodeIsAbvm, cmap, gsub)
             # the 'glyphGroups' dict is keyed by the return value of the
             # classifying include, so here 'True' means all the Indic/USE/Khmer glyphs
-            return glyphGroups.get(True, set())
+            abvmGlyphs = glyphGroups.get(True, set())
+
+            # If a character can be used in Indic/USE/Khmer scripts as well as
+            # other scripts, we want to return it in both 'abvmGlyphs' (done
+            # above) and 'notAbvmGlyphs' (done below) sets.
+            glyphGroups = classifyGlyphs(unicodeIsNotAbvm, cmap, gsub)
+            notAbvmGlyphs = glyphGroups.get(True, set())
+            # Since cmap might not cover all glyphs, we union with the glyph set.
+            notAbvmGlyphs |= glyphSet - abvmGlyphs
+            return abvmGlyphs, notAbvmGlyphs
         else:
-            return set()
+            return set(), glyphSet
 
     def _write(self):
         self._pruneUnusedAnchors()

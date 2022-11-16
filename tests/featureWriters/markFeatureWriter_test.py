@@ -887,6 +887,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } blwm_mark2base;
 
             } blwm;
+
+            feature mark {
+                lookup mark2base {
+                    pos base kashida-ar
+                        <anchor 100 -100> mark @MC_bottom
+                        <anchor 100 100> mark @MC_top;
+                } mark2base;
+
+            } mark;
             """  # noqa: B950
         )
 
