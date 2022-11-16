@@ -29,7 +29,7 @@ DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | set(["Khmr", "Mymr"]) | set(USE_SCRI
 
 RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
-BAD_BIDIS = {"R", "L"}
+AMBIGUOUS_BIDIS = {"R", "L"}
 COMMON_SCRIPTS_SET = {COMMON_SCRIPT}
 
 
@@ -323,7 +323,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                     for direction, glyphs in bidiGlyphs.items()
                     if not set(pair.glyphs).isdisjoint(glyphs)
                 }
-                if bidiTypes.issuperset(BAD_BIDIS):
+                if bidiTypes.issuperset(AMBIGUOUS_BIDIS):
                     LOGGER.info(
                         "Skipping kerning pair <%s %s %s> with ambiguous direction",
                         pair.side1,
