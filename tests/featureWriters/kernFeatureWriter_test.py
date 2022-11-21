@@ -485,27 +485,59 @@ class KernFeatureWriterTest(FeatureWriterTest):
         * https://github.com/googlei18n/ufo2ft/issues/198
         * https://github.com/googlei18n/ufo2ft/pull/200
 
-        Additionally, some Arabic numerals are used in more than one script. The
-        simple and stupid approach is to register lookups for all of them,
-        regardless of whether the designer intended the font to support these,
-        because how do you know?
+        Additionally, some Arabic numerals are used in more than one script. One
+        approach is to look at other glyphs with distinct script associations
+        and consider the font to be supporting those.
         """
         ufo = FontClass()
         for name, code in [("four-ar", 0x664), ("seven-ar", 0x667)]:
             glyph = ufo.newGlyph(name)
             glyph.unicode = code
         ufo.kerning.update({("four-ar", "seven-ar"): -30})
-        ufo.features.text = dedent(
-            """
-            languagesystem DFLT dflt;
-            languagesystem arab dflt;
-            """
-        )
 
         generated = self.writeFeatures(ufo)
 
-        assert dedent(str(generated)) == dedent(
+        assert (
+            dedent(str(generated))
+            == dedent(
+                """
+            lookup kern_Common {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+            } kern_Common;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Common;
+            } kern;
             """
+            ).lstrip("\n")
+        )
+
+        ufo.newGlyph("alef-ar").unicode = 0x627
+        generated = self.writeFeatures(ufo)
+
+        assert dedent(str(generated)) == dedent(
+            """\
+            lookup kern_Arab {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+            } kern_Arab;
+
+            feature kern {
+                script arab;
+                language dflt;
+                lookup kern_Arab;
+            } kern;
+            """
+        )
+
+        ufo.newGlyph("haa-thaa").unicode = 0x780
+        generated = self.writeFeatures(ufo)
+
+        assert dedent(str(generated)) == dedent(
+            """\
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
@@ -516,11 +548,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 pos four-ar seven-ar -30;
             } kern_Thaa;
 
-            lookup kern_Yezi {
-                lookupflag IgnoreMarks;
-                pos four-ar seven-ar -30;
-            } kern_Yezi;
-
             feature kern {
                 script arab;
                 language dflt;
@@ -530,12 +557,24 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Thaa;
             } kern;
+            """
+        )
 
-            feature dist {
-                script yezi;
+        del ufo["alef-ar"]
+        generated = self.writeFeatures(ufo)
+
+        assert dedent(str(generated)) == dedent(
+            """\
+            lookup kern_Thaa {
+                lookupflag IgnoreMarks;
+                pos four-ar seven-ar -30;
+            } kern_Thaa;
+
+            feature kern {
+                script thaa;
                 language dflt;
-                lookup kern_Yezi;
-            } dist;
+                lookup kern_Thaa;
+            } kern;
             """
         )
 
@@ -705,14 +744,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 enum pos [A Aacute] V -40;
             } kern_Latn;
 
-            lookup kern_Thaa {
-                pos four-ar seven-ar -30;
-            } kern_Thaa;
-
-            lookup kern_Yezi {
-                pos four-ar seven-ar -30;
-            } kern_Yezi;
-
             lookup kern_Common {
                 pos seven four -25;
             } kern_Common;
@@ -731,19 +762,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Common;
                 lookup kern_Latn;
-
-                script thaa;
-                language dflt;
-                lookup kern_Common;
-                lookup kern_Thaa;
             } kern;
-
-            feature dist {
-                script yezi;
-                language dflt;
-                lookup kern_Common;
-                lookup kern_Yezi;
-            } dist;
             """
         )
 
@@ -843,16 +862,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 pos V acutecomb 70;
             } kern_Latn_marks;
 
-            lookup kern_Thaa {
-                lookupflag IgnoreMarks;
-                pos four-ar seven-ar -30;
-            } kern_Thaa;
-
-            lookup kern_Yezi {
-                lookupflag IgnoreMarks;
-                pos four-ar seven-ar -30;
-            } kern_Yezi;
-
             lookup kern_Common {
                 lookupflag IgnoreMarks;
                 pos seven four -25;
@@ -874,19 +883,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 lookup kern_Common;
                 lookup kern_Latn;
                 lookup kern_Latn_marks;
-
-                script thaa;
-                language dflt;
-                lookup kern_Common;
-                lookup kern_Thaa;
             } kern;
-
-            feature dist {
-                script yezi;
-                language dflt;
-                lookup kern_Common;
-                lookup kern_Yezi;
-            } dist;
             """
         )
 
@@ -1554,16 +1551,6 @@ def test_kern_mixed_bidis(caplog, FontClass):
             pos comma a 3;
         } kern_Latn;
 
-        lookup kern_Thaa {
-            lookupflag IgnoreMarks;
-            pos one-ar one-ar 9;
-        } kern_Thaa;
-
-        lookup kern_Yezi {
-            lookupflag IgnoreMarks;
-            pos one-ar one-ar 9;
-        } kern_Yezi;
-
         lookup kern_Common {
             lookupflag IgnoreMarks;
             pos comma comma -1;
@@ -1583,19 +1570,7 @@ def test_kern_mixed_bidis(caplog, FontClass):
             language dflt;
             lookup kern_Common;
             lookup kern_Latn;
-
-            script thaa;
-            language dflt;
-            lookup kern_Common;
-            lookup kern_Thaa;
         } kern;
-
-        feature dist {
-            script yezi;
-            language dflt;
-            lookup kern_Common;
-            lookup kern_Yezi;
-        } dist;
         """
     )
     assert "<alef-ar one-ar 7> with ambiguous direction" in caplog.text

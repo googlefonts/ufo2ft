@@ -122,6 +122,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
+        ctx.knownScripts = self._determineFontScripts()
         scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
         ctx.bidiGlyphs = bidiGlyphs
@@ -223,6 +224,26 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         return result
 
+    def _determineFontScripts(self):
+        """Returns a set of scripts the font is determined to support.
+
+        This is done by looking at all defined codepoints in a font and
+        remembering the script of any of the codepoints if it is associated with
+        just one script. This would remember the script of U+0780 THAANA LETTER
+        HAA (Thaa) but not U+061F ARABIC QUESTION MARK (multiple scripts).
+        """
+        font = self.context.font
+        glyphSet = self.context.glyphSet
+        single_scripts = set()
+        for glyph in font:
+            if glyph.name not in glyphSet or glyph.unicodes is None:
+                continue
+            for codepoint in glyph.unicodes:
+                scripts = unicodedata.script_extension(chr(codepoint))
+                if len(scripts) == 1:
+                    single_scripts.update(scripts)
+        return single_scripts
+
     @classmethod
     def _makePairPosRule(cls, pair, ast_cache, rtl=False):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
@@ -263,7 +284,16 @@ class KernFeatureWriter(BaseFeatureWriter):
         return lookup
 
     def knownScriptsPerCodepoint(self, uv):
-        return unicodedata.script_extension(chr(uv))
+        if not self.context.knownScripts:
+            # If there are no languagesystems, consider everything common;
+            # it'll all end in DFLT/dflt anyway
+            return COMMON_SCRIPT
+        else:
+            return {
+                x
+                for x in unicodedata.script_extension(chr(uv))
+                if x in self.context.knownScripts or x in DFLT_SCRIPTS
+            }
 
     def _makeKerningLookups(self):
         marks = self.context.gdefClasses.mark
