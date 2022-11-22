@@ -122,8 +122,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
-        feaScripts = ast.getScriptLanguageSystems(feaFile)
-        ctx.knownScripts = self._determineFontScripts(feaScripts)
+        ctx.knownScripts = self.guessFontScripts()
         scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
         bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
         ctx.bidiGlyphs = bidiGlyphs
@@ -224,35 +223,6 @@ class KernFeatureWriter(BaseFeatureWriter):
             result.append(KerningPair(side1, side2, value))
 
         return result
-
-    def _determineFontScripts(self, feaScripts):
-        """Returns a set of scripts the font is determined to support.
-
-        This is done by:
-
-        1. Looking at all defined codepoints in a font and remembering the
-           script of any of the codepoints if it is associated with just one
-           script. This would remember the script of U+0780 THAANA LETTER HAA
-           (Thaa) but not U+061F ARABIC QUESTION MARK (multiple scripts).
-        2. Adding explicitly declared `languagesystem` scripts on top.
-        """
-        font = self.context.font
-        glyphSet = self.context.glyphSet
-        single_scripts = set()
-
-        # First, detect scripts from the codepoints.
-        for glyph in font:
-            if glyph.name not in glyphSet or glyph.unicodes is None:
-                continue
-            for codepoint in glyph.unicodes:
-                scripts = unicodedata.script_extension(chr(codepoint))
-                if len(scripts) == 1:
-                    single_scripts.update(scripts)
-
-        # Then, add explicitly declared languagesystems on top.
-        single_scripts.update(feaScripts.keys())
-
-        return single_scripts
 
     @classmethod
     def _makePairPosRule(cls, pair, ast_cache, rtl=False):
