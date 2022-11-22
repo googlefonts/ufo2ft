@@ -533,11 +533,14 @@ class KernFeatureWriterTest(FeatureWriterTest):
             """
         )
 
-        ufo.newGlyph("haa-thaa").unicode = 0x780
+        ufo.features.text = """
+            languagesystem DFLT dflt;
+            languagesystem Thaa dflt;
+        """
         generated = self.writeFeatures(ufo)
 
         assert dedent(str(generated)) == dedent(
-            """\
+            """
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
@@ -564,7 +567,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert dedent(str(generated)) == dedent(
-            """\
+            """
             lookup kern_Thaa {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
