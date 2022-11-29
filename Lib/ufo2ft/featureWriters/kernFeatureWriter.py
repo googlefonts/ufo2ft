@@ -265,8 +265,9 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def knownScriptsPerCodepoint(self, uv):
         if not self.context.knownScripts:
-            # If there are no languagesystems, consider everything common;
-            # it'll all end in DFLT/dflt anyway
+            # If there are no languagesystems and nothing to derive from Unicode
+            # codepoints, consider everything common; it'll all end in DFLT/dflt
+            # anyway.
             return COMMON_SCRIPT
         else:
             return {
