@@ -118,7 +118,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.glyphSet = self.getOrderedGlyphSet()
 
         # TODO: Also include substitution information from Designspace rules to
-        # correctly the scripts of variable substitution glyphs, maybe add
+        # correctly set the scripts of variable substitution glyphs, maybe add
         # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
