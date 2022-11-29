@@ -318,7 +318,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             if not lookup:
                 # For neatness:
                 lookup = self._makeKerningLookup(
-                    key.replace(COMMON_SCRIPT, "Common"),  # For neatness
+                    key.replace(COMMON_SCRIPT, "Common"),
                     ignoreMarks=ignoreMarks,
                 )
                 scriptLookups[key] = lookup
