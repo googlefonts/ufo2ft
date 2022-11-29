@@ -1318,7 +1318,7 @@ def test_kern_split_multi_glyph_class(FontClass):
     assert dedent(str(newFeatures)).lstrip("\n") == expectation
 
 
-def test_kern_split_and_drop(FontClass):
+def test_kern_split_and_drop(FontClass, caplog):
     glyphs = {
         "a": ord("a"),
         "alpha": ord("α"),
@@ -1339,7 +1339,8 @@ def test_kern_split_and_drop(FontClass):
     }
 
     ufo = makeUFO(FontClass, glyphs, groups, kerning)
-    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+    with caplog.at_level(logging.INFO):
+        newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
 
     assert dedent(str(newFeatures)) == dedent(
         """\
@@ -1382,6 +1383,22 @@ def test_kern_split_and_drop(FontClass):
         } dist;
         """
     )
+
+    msgs = sorted(msg[-30:] for msg in caplog.messages)
+    assert msgs == [
+        "with mixed script (Arab, Grek)",
+        "with mixed script (Arab, Latn)",
+        "with mixed script (Arab, Orya)",
+        "with mixed script (Cyrl, Grek)",
+        "with mixed script (Cyrl, Latn)",
+        "with mixed script (Cyrl, Orya)",
+        "with mixed script (Grek, Arab)",
+        "with mixed script (Grek, Cyrl)",
+        "with mixed script (Latn, Arab)",
+        "with mixed script (Latn, Cyrl)",
+        "with mixed script (Orya, Arab)",
+        "with mixed script (Orya, Cyrl)",
+    ]
 
 
 def test_kern_split_and_drop_mixed(caplog, FontClass):
