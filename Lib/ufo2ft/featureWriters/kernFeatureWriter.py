@@ -159,11 +159,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         feaFile = self.context.feaFile
 
         # first add the glyph class definitions
-        side1Classes = self.context.kerning.side1Classes
-        side2Classes = self.context.kerning.side2Classes
-        newClassDefs = []
-        for classes in (side1Classes, side2Classes):
-            newClassDefs.extend([c for _, c in sorted(classes.items())])
+        classDefs = self.context.kerning.classDefs
+        newClassDefs = [c for _, c in sorted(classDefs.items())]
 
         lookupGroups = []
         for _, lookupGroup in sorted(lookups.items()):
@@ -241,7 +238,7 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         return result
 
-    def _makePairPosRule(self, pair, script, astCache1, astCache2, rtl=False):
+    def _makePairPosRule(self, pair, side1Classes, side2Classes, rtl=False):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
         valuerecord = ast.ValueRecord(
             xPlacement=pair.value if rtl else None,
@@ -249,60 +246,23 @@ class KernFeatureWriter(BaseFeatureWriter):
             xAdvance=pair.value,
             yAdvance=0 if rtl else None,
         )
+
+        if pair.firstIsClass:
+            glyphs1 = ast.GlyphClassName(side1Classes[pair.side1])
+        else:
+            glyphs1 = ast.GlyphName(pair.side1)
+        if pair.secondIsClass:
+            glyphs2 = ast.GlyphClassName(side2Classes[pair.side2])
+        else:
+            glyphs2 = ast.GlyphName(pair.side2)
+
         return ast.PairPosStatement(
-            glyphs1=self._convertToFeaAst(
-                pair.side1, True, script, self.context, astCache1
-            ),
+            glyphs1=glyphs1,
             valuerecord1=valuerecord,
-            glyphs2=self._convertToFeaAst(
-                pair.side2, False, script, self.context, astCache2
-            ),
+            glyphs2=glyphs2,
             valuerecord2=None,
             enumerated=enumerated,
         )
-
-    @staticmethod
-    def _convertToFeaAst(
-        side: str | tuple[str, ...],
-        isFirst: bool,
-        script: str,
-        context: SimpleNamespace,
-        astCache: dict[str | tuple[str, ...], ast.GlyphName | ast.GlyphClass],
-    ) -> ast.GlyphName | ast.GlyphClass:
-        """Cache the conversion of a pair name or literal class to the Fea AST,
-        because we'll see the same literal classes over and over."""
-        if side in astCache:
-            return astCache[side]
-
-        if isinstance(side, str):
-            sideAst = ast.GlyphName(side)
-        else:
-            if isFirst:
-                classPrefix = "kern1"
-                membership = context.side1Membership
-                classDefs = context.kerning.side1Classes
-            else:
-                classPrefix = "kern2"
-                membership = context.side2Membership
-                classDefs = context.kerning.side2Classes
-            firstGlyph = next(iter(side))
-            originalGroupName = membership[firstGlyph]
-            className = f"{classPrefix}.{script}.{originalGroupName}"
-            # A class like `[a period]` will be split into `[a]` and `[period]`
-            # within the same per-script lookup. Guard against silent
-            # overwriting. We expect at most two splits, into explicit and
-            # implicit script glyph classes.
-            if className in classDefs:
-                className += ".1"
-                assert (
-                    className not in classDefs
-                ), f"group {originalGroupName} unexpectedly split into more than two parts."
-            classDef = ast.makeGlyphClassDefinition(className, side)
-            classDefs[className] = classDef
-            sideAst = ast.GlyphClassName(classDef)
-
-        astCache[side] = sideAst
-        return sideAst
 
     def _makeKerningLookup(self, name, ignoreMarks=True):
         lookup = ast.LookupBlock(name)
@@ -358,6 +318,12 @@ class KernFeatureWriter(BaseFeatureWriter):
         bidiGlyphs = self.context.bidiGlyphs
         glyphScripts = self.context.glyphScripts
         kerningPerScript = splitKerning(pairs, glyphScripts)
+
+        classDefs, side1Classes, side2Classes = makeAllGlyphClassDefinitions(
+            kerningPerScript, self.context, self.context.feaFile
+        )
+        self.context.kerning.classDefs = classDefs
+
         for script, pairs in kerningPerScript.items():
             scriptLookups = lookups.setdefault(script, {})
 
@@ -370,12 +336,6 @@ class KernFeatureWriter(BaseFeatureWriter):
                     ignoreMarks=ignoreMarks,
                 )
                 scriptLookups[key] = lookup
-
-            # For each script, keep a per-side
-            # name-or-class-to-fea-name-or-class cache around, because we expect
-            # to see the same literal classes over and over.
-            astCache1 = {}
-            astCache2 = {}
             for pair in pairs:
                 bidiTypes = {
                     direction
@@ -392,9 +352,9 @@ class KernFeatureWriter(BaseFeatureWriter):
                     continue
                 scriptIsRtl = script_horizontal_direction(script, "LTR") == "RTL"
                 # Numbers are always shaped LTR even in RTL scripts:
-                pairIsRtl = "L" not in bidiTypes
+                pairIsRtl = scriptIsRtl and "L" not in bidiTypes
                 rule = self._makePairPosRule(
-                    pair, script, astCache1, astCache2, rtl=scriptIsRtl and pairIsRtl
+                    pair, side1Classes, side2Classes, pairIsRtl
                 )
                 lookup.statements.append(rule)
 
@@ -561,3 +521,81 @@ def partitionByScript(
             localSide2,
             pair.value,
         )
+
+
+def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
+    side1Classes = {}
+    side2Classes = {}
+    side1Membership = context.side1Membership
+    side2Membership = context.side2Membership
+
+    classDefs = {}
+    if feaFile is not None:
+        classNames = {cdef.name for cdef in ast.iterClassDefinitions(feaFile)}
+    else:
+        classNames = set()
+
+    # Generate common class names first so that common classes are correctly
+    # named in other lookups.
+    if COMMON_SCRIPT in kerningPerScript:
+        common_pairs = kerningPerScript[COMMON_SCRIPT]
+        for pair in common_pairs:
+            if pair.firstIsClass and pair.side1 not in side1Classes:
+                addClassDefinition(
+                    "kern1",
+                    pair.side1,
+                    side1Classes,
+                    side1Membership,
+                    classDefs,
+                    classNames,
+                    "Common",
+                )
+            if pair.secondIsClass and pair.side2 not in side2Classes:
+                addClassDefinition(
+                    "kern2",
+                    pair.side2,
+                    side2Classes,
+                    side2Membership,
+                    classDefs,
+                    classNames,
+                    "Common",
+                )
+
+    for script, pairs in kerningPerScript.items():
+        if script == COMMON_SCRIPT:
+            continue
+        for pair in pairs:
+            if pair.firstIsClass and pair.side1 not in side1Classes:
+                addClassDefinition(
+                    "kern1",
+                    pair.side1,
+                    side1Classes,
+                    side1Membership,
+                    classDefs,
+                    classNames,
+                    script,
+                )
+            if pair.secondIsClass and pair.side2 not in side2Classes:
+                addClassDefinition(
+                    "kern2",
+                    pair.side2,
+                    side2Classes,
+                    side2Membership,
+                    classDefs,
+                    classNames,
+                    script,
+                )
+
+    return classDefs, side1Classes, side2Classes
+
+
+def addClassDefinition(
+    prefix, group, classes, originalMembership, classDefs, classNames, script
+):
+    firstGlyph = next(iter(group))
+    originalGroupName = originalMembership[firstGlyph]
+    groupName = f"{prefix}.{script}.{originalGroupName}"
+    className = ast.makeFeaClassName(groupName, classNames)
+    classNames.add(className)
+    classDef = ast.makeGlyphClassDefinition(className, group)
+    classes[group] = classDefs[className] = classDef
