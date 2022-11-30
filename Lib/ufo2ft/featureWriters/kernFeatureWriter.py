@@ -10,7 +10,6 @@ from fontTools import unicodedata
 from fontTools.unicodedata import script_horizontal_direction
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
-from ufo2ft.errors import Error
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize
 
@@ -295,11 +294,9 @@ class KernFeatureWriter(BaseFeatureWriter):
             # implicit script glyph classes.
             if className in classDefs:
                 className += ".1"
-                if className in classDefs:
-                    raise Error(
-                        f"Internal KernFeatureWriter error: group {originalGroupName} "
-                        "unexpectedly split into more than two parts."
-                    )
+                assert (
+                    className not in classDefs
+                ), f"group {originalGroupName} unexpectedly split into more than two parts."
             classDef = ast.makeGlyphClassDefinition(className, side)
             classDefs[className] = classDef
             sideAst = ast.GlyphClassName(classDef)
