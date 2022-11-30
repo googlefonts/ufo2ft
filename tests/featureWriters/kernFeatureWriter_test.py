@@ -72,7 +72,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
         writer.write(ufo, feaFile)
 
         classDefs = getClassDefs(feaFile)
-        assert len(classDefs) == 0
+        assert len(classDefs) == 2
+        assert classDefs[0].name == "kern1.Zyyy.A"
+        assert classDefs[1].name == "kern2.Zyyy.B"
+        assert getGlyphs(classDefs[0]) == ["A", "Aacute", "Acircumflex"]
+        assert getGlyphs(classDefs[1]) == ["B", "E", "F"]
 
         lookups = getLookups(feaFile)
         assert len(lookups) == 1
@@ -81,7 +85,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert kern_lookup.name == "kern_Common"
         rules = getPairPosRules(kern_lookup)
         assert len(rules) == 1
-        assert str(rules[0]) == "pos [A Aacute Acircumflex] [B E F] 10;"
+        assert str(rules[0]) == "pos @kern1.Zyyy.A @kern2.Zyyy.B 10;"
 
     def test_ignoreMarks(self, FontClass):
         font = FontClass()
@@ -609,13 +613,17 @@ class KernFeatureWriterTest(FeatureWriterTest):
         }
         expectation = dedent(
             """\
+            @kern1.Latn.baz = [E F];
+            @kern1.Latn.foo = [A B];
+            @kern2.Latn.bar = [C D];
+
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos G H -5;
-                enum pos A [C D] 5;
-                enum pos [A B] D 15;
-                pos [A B] [C D] 10;
-                pos [E F] [C D] -10;
+                enum pos A @kern2.Latn.bar 5;
+                enum pos @kern1.Latn.foo D 15;
+                pos @kern1.Latn.foo @kern2.Latn.bar 10;
+                pos @kern1.Latn.baz @kern2.Latn.bar -10;
             } kern_Latn;
 
             feature kern {
@@ -656,12 +664,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # out.
         assert dedent(str(newFeatures)) == dedent(
             """\
+            @kern1.Latn.questiondown = [questiondown];
+            @kern2.Latn.y = [y];
+
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos questiondown y 35;
-                enum pos questiondown [y] -35;
-                enum pos [questiondown] y 35;
-                pos [questiondown] [y] 15;
+                enum pos questiondown @kern2.Latn.y -35;
+                enum pos @kern1.Latn.questiondown y 35;
+                pos @kern1.Latn.questiondown @kern2.Latn.y 15;
             } kern_Latn;
 
             feature kern {
@@ -736,15 +747,19 @@ class KernFeatureWriterTest(FeatureWriterTest):
         newFeatures = self.writeFeatures(ufo, ignoreMarks=False)
 
         assert dedent(str(newFeatures)) == dedent(
-            """
+            """\
+            @kern1.Arab.reh = [reh-ar reh-ar.fina zain-ar];
+            @kern1.Latn.A = [A Aacute];
+            @kern2.Arab.alef = [alef-ar alef-ar.isol];
+
             lookup kern_Arab {
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
-                pos [reh-ar reh-ar.fina zain-ar] [alef-ar alef-ar.isol] <-100 0 -100 0>;
+                pos @kern1.Arab.reh @kern2.Arab.alef <-100 0 -100 0>;
             } kern_Arab;
 
             lookup kern_Latn {
-                enum pos [A Aacute] V -40;
+                enum pos @kern1.Latn.A V -40;
             } kern_Latn;
 
             lookup kern_Common {
@@ -845,11 +860,15 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert dedent(str(newFeatures)).lstrip("\n") == dedent(
             """\
+            @kern1.Arab.reh = [reh-ar reh-ar.fina zain-ar];
+            @kern1.Latn.A = [A Aacute];
+            @kern2.Arab.alef = [alef-ar alef-ar.isol];
+
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
-                pos [reh-ar reh-ar.fina zain-ar] [alef-ar alef-ar.isol] <-100 0 -100 0>;
+                pos @kern1.Arab.reh @kern2.Arab.alef <-100 0 -100 0>;
             } kern_Arab;
 
             lookup kern_Arab_marks {
@@ -858,7 +877,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
-                enum pos [A Aacute] V -40;
+                enum pos @kern1.Latn.A V -40;
             } kern_Latn;
 
             lookup kern_Latn_marks {
@@ -949,10 +968,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert dedent(str(newFeatures)).lstrip("\n") == dedent(
             """\
+            @kern1.Arab.reh = [reh-ar reh-ar.fina zain-ar];
+            @kern2.Arab.alef = [alef-ar alef-ar.isol];
+
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos reh-ar.fina lam-ar.init <-80 0 -80 0>;
-                pos [reh-ar reh-ar.fina zain-ar] [alef-ar alef-ar.isol] <-100 0 -100 0>;
+                pos @kern1.Arab.reh @kern2.Arab.alef <-100 0 -100 0>;
             } kern_Arab;
 
             lookup kern_Arab_marks {
@@ -1026,10 +1048,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert dedent(str(generated)) == dedent(
-            """
+            """\
+            @kern1.Knda.KND_aaMatra_R = [aaMatra_kannada];
+            @kern2.Knda.KND_ailength_L = [aaMatra_kannada];
+
             lookup kern_Knda {
                 lookupflag IgnoreMarks;
-                pos [aaMatra_kannada] [aaMatra_kannada] 34;
+                pos @kern1.Knda.KND_aaMatra_R @kern2.Knda.KND_ailength_L 34;
             } kern_Knda;
 
             feature dist {
@@ -1101,6 +1126,9 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert dedent(str(generated)).lstrip("\n") == dedent(
             """\
+            @kern1.Knda.KND_aaMatra_R = [aaMatra_kannada];
+            @kern2.Knda.KND_ailength_L = [aaMatra_kannada];
+
             lookup kern_Khar {
                 lookupflag IgnoreMarks;
                 pos u10A1E u10A06 <117 0 117 0>;
@@ -1108,7 +1136,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             lookup kern_Knda {
                 lookupflag IgnoreMarks;
-                pos [aaMatra_kannada] [aaMatra_kannada] 34;
+                pos @kern1.Knda.KND_aaMatra_R @kern2.Knda.KND_ailength_L 34;
             } kern_Knda;
 
             feature dist {
@@ -1256,6 +1284,13 @@ def test_kern_split_multi_glyph_class(FontClass):
     }
     expectation = dedent(
         """\
+        @kern1.Latn.foo = [a];
+        @kern1.Latn.foo.1 = [period];
+        @kern1.Zyyy.foo = [period];
+        @kern2.Latn.foo = [b];
+        @kern2.Latn.foo.1 = [period];
+        @kern2.Zyyy.foo = [period];
+
         lookup kern_Latn {
             lookupflag IgnoreMarks;
             pos a a 1;
@@ -1266,23 +1301,23 @@ def test_kern_split_multi_glyph_class(FontClass):
             pos b period 6;
             pos period a 7;
             pos period b 8;
-            enum pos a [b] 12;
-            enum pos a [period] 12;
-            enum pos period [b] 13;
-            enum pos [a] b 10;
-            enum pos [a] period 11;
-            enum pos [period] b 10;
-            pos [a] [b] 14;
-            pos [a] [period] 14;
-            pos [period] [b] 14;
+            enum pos a @kern2.Latn.foo 12;
+            enum pos a @kern2.Latn.foo.1 12;
+            enum pos period @kern2.Latn.foo 13;
+            enum pos @kern1.Latn.foo b 10;
+            enum pos @kern1.Latn.foo period 11;
+            enum pos @kern1.Latn.foo.1 b 10;
+            pos @kern1.Latn.foo @kern2.Latn.foo 14;
+            pos @kern1.Latn.foo @kern2.Latn.foo.1 14;
+            pos @kern1.Latn.foo.1 @kern2.Latn.foo 14;
         } kern_Latn;
 
         lookup kern_Common {
             lookupflag IgnoreMarks;
             pos period period 9;
-            enum pos period [period] 13;
-            enum pos [period] period 11;
-            pos [period] [period] 14;
+            enum pos period @kern2.Zyyy.foo 13;
+            enum pos @kern1.Zyyy.foo period 11;
+            pos @kern1.Zyyy.foo @kern2.Zyyy.foo 14;
         } kern_Common;
 
         feature kern {
@@ -1344,22 +1379,35 @@ def test_kern_split_and_drop(FontClass, caplog):
 
     assert dedent(str(newFeatures)) == dedent(
         """\
+        @kern1.Grek.bar = [period];
+        @kern1.Grek.foo = [alpha];
+        @kern1.Latn.bar = [period];
+        @kern1.Latn.foo = [a];
+        @kern1.Orya.bar = [period];
+        @kern1.Orya.foo = [a-orya];
+        @kern2.Grek.bar = [period];
+        @kern2.Grek.foo = [alpha];
+        @kern2.Latn.bar = [period];
+        @kern2.Latn.foo = [a];
+        @kern2.Orya.bar = [period];
+        @kern2.Orya.foo = [a-orya];
+
         lookup kern_Grek {
             lookupflag IgnoreMarks;
-            pos [alpha] [period] 20;
-            pos [period] [alpha] 20;
+            pos @kern1.Grek.foo @kern2.Grek.bar 20;
+            pos @kern1.Grek.bar @kern2.Grek.foo 20;
         } kern_Grek;
 
         lookup kern_Latn {
             lookupflag IgnoreMarks;
-            pos [a] [period] 20;
-            pos [period] [a] 20;
+            pos @kern1.Latn.foo @kern2.Latn.bar 20;
+            pos @kern1.Latn.bar @kern2.Latn.foo 20;
         } kern_Latn;
 
         lookup kern_Orya {
             lookupflag IgnoreMarks;
-            pos [a-orya] [period] 20;
-            pos [period] [a-orya] 20;
+            pos @kern1.Orya.foo @kern2.Orya.bar 20;
+            pos @kern1.Orya.bar @kern2.Orya.foo 20;
         } kern_Orya;
 
         feature kern {
@@ -1412,9 +1460,12 @@ def test_kern_split_and_drop_mixed(caplog, FontClass):
 
     assert dedent(str(newFeatures)) == dedent(
         """\
+        @kern1.Latn.foo = [V W];
+        @kern2.Latn.foo = [W];
+
         lookup kern_Latn {
             lookupflag IgnoreMarks;
-            pos [V W] [W] -20;
+            pos @kern1.Latn.foo @kern2.Latn.foo -20;
         } kern_Latn;
 
         feature kern {
@@ -1441,14 +1492,17 @@ def test_kern_split_and_mix_common(FontClass):
 
     assert dedent(str(newFeatures)) == dedent(
         """\
+        @kern1.Latn.foo = [V W];
+        @kern1.Nkoo.foo = [gba-nko];
+
         lookup kern_Latn {
             lookupflag IgnoreMarks;
-            enum pos [V W] period -20;
+            enum pos @kern1.Latn.foo period -20;
         } kern_Latn;
 
         lookup kern_Nkoo {
             lookupflag IgnoreMarks;
-            enum pos [gba-nko] period <-20 0 -20 0>;
+            enum pos @kern1.Nkoo.foo period <-20 0 -20 0>;
         } kern_Nkoo;
 
         feature kern {
@@ -1501,14 +1555,19 @@ def test_kern_multi_script(FontClass):
 
     assert dedent(str(newFeatures)) == dedent(
         """\
+        @kern1.Arab.foo = [lam-ar];
+        @kern1.Nkoo.foo = [gba-nko];
+        @kern2.Arab.foo = [comma-ar];
+        @kern2.Nkoo.foo = [comma-ar];
+
         lookup kern_Arab {
             lookupflag IgnoreMarks;
-            pos [lam-ar] [comma-ar] <-20 0 -20 0>;
+            pos @kern1.Arab.foo @kern2.Arab.foo <-20 0 -20 0>;
         } kern_Arab;
 
         lookup kern_Nkoo {
             lookupflag IgnoreMarks;
-            pos [gba-nko] [comma-ar] <-20 0 -20 0>;
+            pos @kern1.Nkoo.foo @kern2.Nkoo.foo <-20 0 -20 0>;
         } kern_Nkoo;
 
         feature kern {

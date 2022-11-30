@@ -10,6 +10,7 @@ from fontTools import unicodedata
 from fontTools.unicodedata import script_horizontal_direction
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
+from ufo2ft.errors import Error
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize
 
@@ -158,6 +159,13 @@ class KernFeatureWriter(BaseFeatureWriter):
         # extend feature file with the new generated statements
         feaFile = self.context.feaFile
 
+        # first add the glyph class definitions
+        side1Classes = self.context.kerning.side1Classes
+        side2Classes = self.context.kerning.side2Classes
+        newClassDefs = []
+        for classes in (side1Classes, side2Classes):
+            newClassDefs.extend([c for _, c in sorted(classes.items())])
+
         lookupGroups = []
         for _, lookupGroup in sorted(lookups.items()):
             lookupGroups.extend(lookupGroup.values())
@@ -165,23 +173,25 @@ class KernFeatureWriter(BaseFeatureWriter):
         # NOTE: We don't write classDefs because we literalise all classes.
         self._insert(
             feaFile=feaFile,
+            classDefs=newClassDefs,
             lookups=lookupGroups,
             features=[features[tag] for tag in ["kern", "dist"] if tag in features],
         )
         return True
 
     def getKerningData(self):
-        side1Classes, side2Classes = self.getKerningGroups()
-        pairs = self.getKerningPairs(side1Classes, side2Classes)
-        return SimpleNamespace(
-            side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
-        )
+        side1Groups, side2Groups = self.getKerningGroups()
+        pairs = self.getKerningPairs(side1Groups, side2Groups)
+        # side(1|2)Classes will hold the feaLib AST to write out.
+        return SimpleNamespace(side1Classes={}, side2Classes={}, pairs=pairs)
 
     def getKerningGroups(self):
         font = self.context.font
         allGlyphs = self.context.glyphSet
         side1Groups = {}
         side2Groups = {}
+        side1Membership = {}
+        side2Membership = {}
         for name, members in font.groups.items():
             # prune non-existent or skipped glyphs
             members = {g for g in members if g in allGlyphs}
@@ -191,8 +201,16 @@ class KernFeatureWriter(BaseFeatureWriter):
             # skip groups without UFO3 public.kern{1,2} prefix
             if name.startswith(SIDE1_PREFIX):
                 side1Groups[name] = tuple(sorted(members))
+                name_truncated = name[13:]
+                for member in members:
+                    side1Membership[member] = name_truncated
             elif name.startswith(SIDE2_PREFIX):
                 side2Groups[name] = tuple(sorted(members))
+                name_truncated = name[13:]
+                for member in members:
+                    side2Membership[member] = name_truncated
+        self.context.side1Membership = side1Membership
+        self.context.side2Membership = side2Membership
         return side1Groups, side2Groups
 
     def getKerningPairs(self, side1Classes, side2Classes):
@@ -224,8 +242,7 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         return result
 
-    @classmethod
-    def _makePairPosRule(cls, pair, ast_cache, rtl=False):
+    def _makePairPosRule(self, pair, script, astCache1, astCache2, rtl=False):
         enumerated = pair.firstIsClass ^ pair.secondIsClass
         valuerecord = ast.ValueRecord(
             xPlacement=pair.value if rtl else None,
@@ -234,9 +251,13 @@ class KernFeatureWriter(BaseFeatureWriter):
             yAdvance=0 if rtl else None,
         )
         return ast.PairPosStatement(
-            glyphs1=cls._convertToFeaAst(pair.side1, ast_cache),
+            glyphs1=self._convertToFeaAst(
+                pair.side1, True, script, self.context, astCache1
+            ),
             valuerecord1=valuerecord,
-            glyphs2=cls._convertToFeaAst(pair.side2, ast_cache),
+            glyphs2=self._convertToFeaAst(
+                pair.side2, False, script, self.context, astCache2
+            ),
             valuerecord2=None,
             enumerated=enumerated,
         )
@@ -244,18 +265,47 @@ class KernFeatureWriter(BaseFeatureWriter):
     @staticmethod
     def _convertToFeaAst(
         side: str | tuple[str, ...],
-        ast_cache: dict[str | tuple[str, ...], ast.GlyphName | ast.GlyphClass],
+        isFirst: bool,
+        script: str,
+        context: SimpleNamespace,
+        astCache: dict[str | tuple[str, ...], ast.GlyphName | ast.GlyphClass],
     ) -> ast.GlyphName | ast.GlyphClass:
         """Cache the conversion of a pair name or literal class to the Fea AST,
         because we'll see the same literal classes over and over."""
-        if side in ast_cache:
-            return ast_cache[side]
+        if side in astCache:
+            return astCache[side]
+
         if isinstance(side, str):
-            side_ast = ast.GlyphName(side)
+            sideAst = ast.GlyphName(side)
         else:
-            side_ast = ast.GlyphClass([ast.GlyphName(g) for g in side])
-        ast_cache[side] = side_ast
-        return side_ast
+            if isFirst:
+                classPrefix = "kern1"
+                membership = context.side1Membership
+                classDefs = context.kerning.side1Classes
+            else:
+                classPrefix = "kern2"
+                membership = context.side2Membership
+                classDefs = context.kerning.side2Classes
+            firstGlyph = next(iter(side))
+            originalGroupName = membership[firstGlyph]
+            className = f"{classPrefix}.{script}.{originalGroupName}"
+            # A class like `[a period]` will be split into `[a]` and `[period]`
+            # within the same per-script lookup. Guard against silent
+            # overwriting. We expect at most two splits, into explicit and
+            # implicit script glyph classes.
+            if className in classDefs:
+                className += ".1"
+                if className in classDefs:
+                    raise Error(
+                        f"Internal KernFeatureWriter error: group {originalGroupName} "
+                        "unexpectedly split into more than two parts."
+                    )
+            classDef = ast.makeGlyphClassDefinition(className, side)
+            classDefs[className] = classDef
+            sideAst = ast.GlyphClassName(classDef)
+
+        astCache[side] = sideAst
+        return sideAst
 
     def _makeKerningLookup(self, name, ignoreMarks=True):
         lookup = ast.LookupBlock(name)
@@ -324,10 +374,11 @@ class KernFeatureWriter(BaseFeatureWriter):
                 )
                 scriptLookups[key] = lookup
 
-            # For each script, keep a name-or-class-to-fea-name-or-class cache
-            # around, because we expect to see the same literal classes over and
-            # over.
-            ast_cache = {}
+            # For each script, keep a per-side
+            # name-or-class-to-fea-name-or-class cache around, because we expect
+            # to see the same literal classes over and over.
+            astCache1 = {}
+            astCache2 = {}
             for pair in pairs:
                 bidiTypes = {
                     direction
@@ -346,7 +397,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 # Numbers are always shaped LTR even in RTL scripts:
                 pairIsRtl = "L" not in bidiTypes
                 rule = self._makePairPosRule(
-                    pair, ast_cache, rtl=scriptIsRtl and pairIsRtl
+                    pair, script, astCache1, astCache2, rtl=scriptIsRtl and pairIsRtl
                 )
                 lookup.statements.append(rule)
 
@@ -472,13 +523,6 @@ def partitionByScript(
         for script in scripts:
             side2Scripts.setdefault(script, set()).add(glyph)
 
-    # NOTE: Always split a pair, turning class names (`@kern1.something`) into
-    # class literals (`[a b c]`), even if both sides have matching scripts.
-    # Because turning all classes into literals makes some kerning work,
-    # emitting some as-is instead results in a mixture of literal and named
-    # glyph classes, which for some reason drops a lot of kerning (check with
-    # kerning-validator). There is no space saving to be had by trying to assign
-    # them names again, because names don't exist at the OpenType level.
     for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
         # Preserve the type (glyph or class) of each side.
         localGlyphs: set[str] = set()
@@ -499,13 +543,11 @@ def partitionByScript(
             (localSide2,) = side2Scripts[secondScript]
             localGlyphs.add(localSide2)
 
-        # Handle very obvious common cases: one script, same on both sides
         if firstScript == secondScript or secondScript in DFLT_SCRIPTS:
             localScript = firstScript
-        # First is common, second is single script
         elif firstScript in DFLT_SCRIPTS:
             localScript = secondScript
-        # One script and it's different on both sides and it's not common
+        # Two different explicit scripts:
         else:
             LOGGER.info(
                 "Skipping kerning pair <%s %s %s> with mixed script (%s, %s)",
