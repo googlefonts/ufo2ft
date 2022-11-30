@@ -201,12 +201,12 @@ class KernFeatureWriter(BaseFeatureWriter):
             # skip groups without UFO3 public.kern{1,2} prefix
             if name.startswith(SIDE1_PREFIX):
                 side1Groups[name] = tuple(sorted(members))
-                name_truncated = name[13:]
+                name_truncated = name[len(SIDE1_PREFIX) :]
                 for member in members:
                     side1Membership[member] = name_truncated
             elif name.startswith(SIDE2_PREFIX):
                 side2Groups[name] = tuple(sorted(members))
-                name_truncated = name[13:]
+                name_truncated = name[len(SIDE2_PREFIX) :]
                 for member in members:
                     side2Membership[member] = name_truncated
         self.context.side1Membership = side1Membership
