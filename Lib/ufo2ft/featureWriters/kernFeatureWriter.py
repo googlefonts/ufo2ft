@@ -178,8 +178,10 @@ class KernFeatureWriter(BaseFeatureWriter):
     def getKerningData(self):
         side1Groups, side2Groups = self.getKerningGroups()
         pairs = self.getKerningPairs(side1Groups, side2Groups)
-        # side(1|2)Classes will hold the feaLib AST to write out.
-        return SimpleNamespace(side1Classes={}, side2Classes={}, pairs=pairs)
+        # side(1|2)Classes and classDefs will hold the feaLib AST to write out.
+        return SimpleNamespace(
+            side1Classes={}, side2Classes={}, classDefs={}, pairs=pairs
+        )
 
     def getKerningGroups(self):
         font = self.context.font
@@ -322,7 +324,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         classDefs, side1Classes, side2Classes = makeAllGlyphClassDefinitions(
             kerningPerScript, self.context, self.context.feaFile
         )
-        self.context.kerning.classDefs = classDefs
+        assert not classDefs.keys() & self.context.kerning.classDefs.keys()
+        self.context.kerning.classDefs.update(classDefs)
 
         for script, pairs in kerningPerScript.items():
             scriptLookups = lookups.setdefault(script, {})
