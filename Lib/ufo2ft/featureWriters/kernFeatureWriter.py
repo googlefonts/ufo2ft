@@ -131,7 +131,7 @@ class KernFeatureWriter(BaseFeatureWriter):
           its `closure_glyphs` machinery;
         * and the bidirectionality class, so we can later filter out kerning
           pairs that would mix RTL and LTR glyphs, which will not occur in
-          applications. Unicode BiDi classes L, AN and ER are considered L, R
+          applications. Unicode BiDi classes L, AN and EN are considered L, R
           and AL are considered R.
     * Get the kerning groups from the UFO and filter out glyphs not in the
       glyphset and empty groups. Remember which group a glyph is a member of,
