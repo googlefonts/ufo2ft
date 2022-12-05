@@ -1377,31 +1377,31 @@ def test_kern_split_and_drop(FontClass, caplog):
 
     assert dedent(str(newFeatures)) == dedent(
         """\
+        @kern1.Grek.bar = [period];
         @kern1.Grek.foo = [alpha];
-        @kern1.Latn.bar = [period];
         @kern1.Latn.foo = [a];
         @kern1.Orya.foo = [a-orya];
+        @kern2.Grek.bar = [period];
         @kern2.Grek.foo = [alpha];
-        @kern2.Latn.bar = [period];
         @kern2.Latn.foo = [a];
         @kern2.Orya.foo = [a-orya];
 
         lookup kern_Grek {
             lookupflag IgnoreMarks;
-            pos @kern1.Grek.foo @kern2.Latn.bar 20;
-            pos @kern1.Latn.bar @kern2.Grek.foo 20;
+            pos @kern1.Grek.foo @kern2.Grek.bar 20;
+            pos @kern1.Grek.bar @kern2.Grek.foo 20;
         } kern_Grek;
 
         lookup kern_Latn {
             lookupflag IgnoreMarks;
-            pos @kern1.Latn.foo @kern2.Latn.bar 20;
-            pos @kern1.Latn.bar @kern2.Latn.foo 20;
+            pos @kern1.Latn.foo @kern2.Grek.bar 20;
+            pos @kern1.Grek.bar @kern2.Latn.foo 20;
         } kern_Latn;
 
         lookup kern_Orya {
             lookupflag IgnoreMarks;
-            pos @kern1.Orya.foo @kern2.Latn.bar 20;
-            pos @kern1.Latn.bar @kern2.Orya.foo 20;
+            pos @kern1.Orya.foo @kern2.Grek.bar 20;
+            pos @kern1.Grek.bar @kern2.Orya.foo 20;
         } kern_Orya;
 
         feature kern {
@@ -1551,16 +1551,16 @@ def test_kern_multi_script(FontClass):
         """\
         @kern1.Arab.foo = [lam-ar];
         @kern1.Nkoo.foo = [gba-nko];
-        @kern2.Nkoo.foo = [comma-ar];
+        @kern2.Arab.foo = [comma-ar];
 
         lookup kern_Arab {
             lookupflag IgnoreMarks;
-            pos @kern1.Arab.foo @kern2.Nkoo.foo <-20 0 -20 0>;
+            pos @kern1.Arab.foo @kern2.Arab.foo <-20 0 -20 0>;
         } kern_Arab;
 
         lookup kern_Nkoo {
             lookupflag IgnoreMarks;
-            pos @kern1.Nkoo.foo @kern2.Nkoo.foo <-20 0 -20 0>;
+            pos @kern1.Nkoo.foo @kern2.Arab.foo <-20 0 -20 0>;
         } kern_Nkoo;
 
         feature kern {

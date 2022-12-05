@@ -564,7 +564,8 @@ def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
                     "Common",
                 )
 
-    for script, pairs in kerningPerScript.items():
+    sortedKerningPerScript = sorted(kerningPerScript.items())
+    for script, pairs in sortedKerningPerScript:
         if script == COMMON_SCRIPT:
             continue
         for pair in pairs:
