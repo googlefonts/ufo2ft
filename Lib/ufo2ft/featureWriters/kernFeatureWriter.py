@@ -99,13 +99,89 @@ class KernFeatureWriter(BaseFeatureWriter):
     """Generates a kerning feature based on groups and rules contained
     in an UFO's kerning data.
 
-    There are currently two possible writing modes:
-    2) "skip" (default) will not write anything if the features are already present;
-    1) "append" will add additional lookups to an existing feature, if present,
-       or it will add a new one at the end of all features.
+    There are currently two possible writing modes: 2) "skip" (default) will not
+    write anything if the features are already present; 1) "append" will add
+    additional lookups to an existing feature, if present, or it will add a new
+    one at the end of all features.
 
     If the `quantization` argument is given in the filter options, the resulting
     anchors are rounded to the nearest multiple of the quantization value.
+
+    ## Implementation Notes
+
+    The algorithm works like this:
+
+    * Parse GDEF GlyphClassDefinition from UFO features.fea to get the set of
+      "Mark" glyphs (this will be used later to decide whether to add
+      ignoreMarks flag to kern lookups containing pairs between base and mark
+      glyphs).
+    * Get the ordered glyphset for the font, for filtering kerning groups and
+      kernings that reference unknown glyphs.
+    * Determine which scripts the kerning affects (read: "the font most probably
+      supports"), to know which lookups to generate later:
+        * First, determine the unambiguous script associations for each
+          (Unicoded) glyph in the glyphset, as in, glyphs that have a single
+          entry for their Unicode script extensions property;
+        * then, parse the `languagesystem` statements in the provided feature
+          file to add on top.
+    * Compile a Unicode cmap from the UFO and a GSUB table from the features so
+      far, so we can determine:
+        * the script (extensions) for each glyph in the glyphset, including
+          glyphs reachable via substitution, using the fontTools subsetter with
+          its `closure_glyphs` machinery;
+        * and the bidirectionality class, so we can later filter out kerning
+          pairs that would mix RTL and LTR glyphs, which will not occur in
+          applications. Unicode BiDi classes L, AN and ER are considered L, R
+          and AL are considered R.
+    * Get the kerning groups from the UFO and filter out glyphs not in the
+      glyphset and empty groups. Remember which group a glyph is a member of,
+      for kern1 and kern2, so we can later reconstruct per-script groups.
+    * Get the bare kerning pairs from the UFO, filtering out pairs with unknown
+      groups or glyphs not in the glyphset and (redundant) zero class-to-class
+      kernings and optionally quantizing kerning values.
+    * Start generating lookups. By default, the ignore marks flag is added to
+      each lookup. Kerning pairs that kern bases against marks or marks against
+      marks, according to the glyphs' GDEF category, then get split off into a
+      second lookup without the ignore marks flag.
+    * Go through all kerning pairs and split them up by script, to put them in
+      different lookups. This reduces the size of each lookup compared to
+      splitting by direction, as previously done.
+        * Partition the first and second side of a pair by script and emit only
+          those with the same script (e.g. `a` and `b` are both "Latn", `period`
+          and `period` are both "Common", but `a` and `a-cy` would mix "Latn"
+          and "Cyrl" and are dropped) or those that kern an explicit against a
+          "common" or implicit script, e.g. `a` and `period`.
+        * Glyphs can have multiple scripts assigned to them (legitimately, e.g.
+          U+0951 DEVANAGARI STRESS SIGN UDATTA, or for random reasons like
+          having both `sub h by h.sc` and `sub Etaprosgegrammeni by h.sc;`).
+          Only scripts that were determined earlier to be supported by the font
+          will be considered. Usually, we will emit pairs where both sides have
+          the same script and no splitting is necessary. The only mixed script
+          pairs we emit are common (e.g. Zyyy) against explicit (e.g. Latn)
+          scripts. A glyph can be part of both for weird reasons, so we always
+          treat any glyph with a common script as a purely common glyph. This
+          avoids creating overlapping groups with the multi-script glyph in a
+          lookup.
+        * Preserve the type of the kerning pair, so class-to-class kerning stays
+          that way, even when there's only one glyph on each side.
+    * Reconstruct kerning group names for the newly split classes. This is done
+      for debuggability; it makes no difference for the final font binary.
+        * This first looks at the common lookups and then all others, assigning
+          new group names are it goes. A class like `@kern1.A = [A A-cy
+          increment]` may be split up into `@kern1.Latn.A = [A]`, `@kern1.Cyrl.A
+          = [A-cy]` and `@kern1.Common.A = [increment]`. Note: If there is no
+          dedicated Common lookup, common glyph classes like `[period]` might
+          carry the name `@kern1.Grek.foo` if the class was first encountered
+          while going over the Grek lookup.
+    * Discard pairs that mix RTL and LTR BiDi types, because they won't show up
+      in applications due to how Unicode text is split into runs.
+    * Discard empty lookups, if they were created but all their pairs were
+      discarded.
+    * Make a `kern` (and potentially `dist`) feature block and register the
+      lookups for each script. Some scripts need to be registered in the `dist`
+      feature for some shapers to discover them, e.g. Yezi.
+    * Write the new glyph class definitions and then the lookups and feature
+      blocks to the feature file.
     """
 
     tableTag = "GPOS"
@@ -454,16 +530,6 @@ def partitionByScript(
     """Split a potentially mixed-script pair into pairs that make sense based
     on the dominant script, and yield each combination with its dominant script."""
 
-    # First, partition the pair by their assigned scripts. Glyphs can have
-    # multiple scripts assigned to them (legitimately, e.g. U+0951 DEVANAGARI
-    # STRESS SIGN UDATTA, or for random reasons like having both `sub h by h.sc`
-    # and `sub Etaprosgegrammeni by h.sc;`). Usually, we will emit pairs where
-    # both sides have the same script and no splitting is necessary. The only
-    # mixed script pairs we emit are implicit (e.g. Zyyy) against explicit (e.g.
-    # Latn) scripts. A glyph can be part of both for weird reasons, so we always
-    # treat any glyph with an implicit script as a purely implicit glyph. This
-    # avoids creating overlapping groups with the multi-script glyph in a
-    # lookup.
     side1Scripts: dict[str, set[str]] = {}
     side2Scripts: dict[str, set[str]] = {}
     for glyph in pair.firstGlyphs:
