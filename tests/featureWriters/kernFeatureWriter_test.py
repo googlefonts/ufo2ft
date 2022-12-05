@@ -73,8 +73,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         classDefs = getClassDefs(feaFile)
         assert len(classDefs) == 2
-        assert classDefs[0].name == "kern1.Zyyy.A"
-        assert classDefs[1].name == "kern2.Zyyy.B"
+        assert classDefs[0].name == "kern1.Common.A"
+        assert classDefs[1].name == "kern2.Common.B"
         assert getGlyphs(classDefs[0]) == ["A", "Aacute", "Acircumflex"]
         assert getGlyphs(classDefs[1]) == ["B", "E", "F"]
 
@@ -85,7 +85,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         assert kern_lookup.name == "kern_Common"
         rules = getPairPosRules(kern_lookup)
         assert len(rules) == 1
-        assert str(rules[0]) == "pos @kern1.Zyyy.A @kern2.Zyyy.B 10;"
+        assert str(rules[0]) == "pos @kern1.Common.A @kern2.Common.B 10;"
 
     def test_ignoreMarks(self, FontClass):
         font = FontClass()
@@ -1284,12 +1284,10 @@ def test_kern_split_multi_glyph_class(FontClass):
     }
     expectation = dedent(
         """\
+        @kern1.Common.foo = [period];
         @kern1.Latn.foo = [a];
-        @kern1.Latn.foo.1 = [period];
-        @kern1.Zyyy.foo = [period];
+        @kern2.Common.foo = [period];
         @kern2.Latn.foo = [b];
-        @kern2.Latn.foo.1 = [period];
-        @kern2.Zyyy.foo = [period];
 
         lookup kern_Latn {
             lookupflag IgnoreMarks;
@@ -1302,22 +1300,22 @@ def test_kern_split_multi_glyph_class(FontClass):
             pos period a 7;
             pos period b 8;
             enum pos a @kern2.Latn.foo 12;
-            enum pos a @kern2.Latn.foo.1 12;
+            enum pos a @kern2.Common.foo 12;
             enum pos period @kern2.Latn.foo 13;
             enum pos @kern1.Latn.foo b 10;
             enum pos @kern1.Latn.foo period 11;
-            enum pos @kern1.Latn.foo.1 b 10;
+            enum pos @kern1.Common.foo b 10;
             pos @kern1.Latn.foo @kern2.Latn.foo 14;
-            pos @kern1.Latn.foo @kern2.Latn.foo.1 14;
-            pos @kern1.Latn.foo.1 @kern2.Latn.foo 14;
+            pos @kern1.Latn.foo @kern2.Common.foo 14;
+            pos @kern1.Common.foo @kern2.Latn.foo 14;
         } kern_Latn;
 
         lookup kern_Common {
             lookupflag IgnoreMarks;
             pos period period 9;
-            enum pos period @kern2.Zyyy.foo 13;
-            enum pos @kern1.Zyyy.foo period 11;
-            pos @kern1.Zyyy.foo @kern2.Zyyy.foo 14;
+            enum pos period @kern2.Common.foo 13;
+            enum pos @kern1.Common.foo period 11;
+            pos @kern1.Common.foo @kern2.Common.foo 14;
         } kern_Common;
 
         feature kern {
@@ -1379,23 +1377,19 @@ def test_kern_split_and_drop(FontClass, caplog):
 
     assert dedent(str(newFeatures)) == dedent(
         """\
-        @kern1.Grek.bar = [period];
         @kern1.Grek.foo = [alpha];
         @kern1.Latn.bar = [period];
         @kern1.Latn.foo = [a];
-        @kern1.Orya.bar = [period];
         @kern1.Orya.foo = [a-orya];
-        @kern2.Grek.bar = [period];
         @kern2.Grek.foo = [alpha];
         @kern2.Latn.bar = [period];
         @kern2.Latn.foo = [a];
-        @kern2.Orya.bar = [period];
         @kern2.Orya.foo = [a-orya];
 
         lookup kern_Grek {
             lookupflag IgnoreMarks;
-            pos @kern1.Grek.foo @kern2.Grek.bar 20;
-            pos @kern1.Grek.bar @kern2.Grek.foo 20;
+            pos @kern1.Grek.foo @kern2.Latn.bar 20;
+            pos @kern1.Latn.bar @kern2.Grek.foo 20;
         } kern_Grek;
 
         lookup kern_Latn {
@@ -1406,8 +1400,8 @@ def test_kern_split_and_drop(FontClass, caplog):
 
         lookup kern_Orya {
             lookupflag IgnoreMarks;
-            pos @kern1.Orya.foo @kern2.Orya.bar 20;
-            pos @kern1.Orya.bar @kern2.Orya.foo 20;
+            pos @kern1.Orya.foo @kern2.Latn.bar 20;
+            pos @kern1.Latn.bar @kern2.Orya.foo 20;
         } kern_Orya;
 
         feature kern {
@@ -1557,12 +1551,11 @@ def test_kern_multi_script(FontClass):
         """\
         @kern1.Arab.foo = [lam-ar];
         @kern1.Nkoo.foo = [gba-nko];
-        @kern2.Arab.foo = [comma-ar];
         @kern2.Nkoo.foo = [comma-ar];
 
         lookup kern_Arab {
             lookupflag IgnoreMarks;
-            pos @kern1.Arab.foo @kern2.Arab.foo <-20 0 -20 0>;
+            pos @kern1.Arab.foo @kern2.Nkoo.foo <-20 0 -20 0>;
         } kern_Arab;
 
         lookup kern_Nkoo {
