@@ -124,7 +124,8 @@ class KernFeatureWriter(BaseFeatureWriter):
       far, so we can determine:
         * the script (extensions) for each glyph in the glyphset, including
           glyphs reachable via substitution, using the fontTools subsetter with
-          its `closure_glyphs` machinery;
+          its `closure_glyphs` machinery; the scripts are cut down to the ones
+          we think the font supports;
         * and the bidirectionality class, so we can later filter out kerning
           pairs that would mix RTL and LTR glyphs, which will not occur in
           applications. Unicode BiDi classes L, AN and EN are considered L, R
@@ -146,16 +147,17 @@ class KernFeatureWriter(BaseFeatureWriter):
           those with the same script (e.g. `a` and `b` are both "Latn", `period`
           and `period` are both "Default", but `a` and `a-cy` would mix "Latn"
           and "Cyrl" and are dropped) or those that kern an explicit against a
-          "common" or implicit script, e.g. `a` and `period`.
+          "common" or "inherited" script, e.g. `a` and `period`.
         * Glyphs can have multiple scripts assigned to them (legitimately, e.g.
           U+0951 DEVANAGARI STRESS SIGN UDATTA, or for random reasons like
           having both `sub h by h.sc` and `sub Etaprosgegrammeni by h.sc;`).
           Only scripts that were determined earlier to be supported by the font
           will be considered. Usually, we will emit pairs where both sides have
           the same script and no splitting is necessary. The only mixed script
-          pairs we emit are common (e.g. Zyyy) against explicit (e.g. Latn)
-          scripts. A glyph can be part of both for weird reasons, so we always
-          treat any glyph with a common script as a purely common glyph. This
+          pairs we emit are common or inherited (Zyyy or Zinh) against explicit
+          (e.g. Latn) scripts. A glyph can be part of both for weird reasons, so
+          we always treat any glyph with a common or inherited script as a
+          purely common (not inherited) glyph for bucketing purposes. This
           avoids creating overlapping groups with the multi-script glyph in a
           lookup.
         * Preserve the type of the kerning pair, so class-to-class kerning stays
@@ -344,18 +346,15 @@ class KernFeatureWriter(BaseFeatureWriter):
             lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
         return lookup
 
-    def knownScriptsPerCodepoint(self, uv):
+    def knownScriptsPerCodepoint(self, uv: int) -> set[str]:
         if not self.context.knownScripts:
             # If there are no languagesystems and nothing to derive from Unicode
             # codepoints, consider everything common; it'll all end in DFLT/dflt
             # anyway.
-            return COMMON_SCRIPT
+            return {COMMON_SCRIPT}
         else:
-            return {
-                x
-                for x in unicodedata.script_extension(chr(uv))
-                if x in self.context.knownScripts or x in DFLT_SCRIPTS
-            }
+            script_extension = unicodedata.script_extension(chr(uv))
+            return script_extension & (self.context.knownScripts | DFLT_SCRIPTS)
 
     def _makeKerningLookups(self):
         marks = self.context.gdefClasses.mark
@@ -529,19 +528,21 @@ def partitionByScript(
     side1Scripts: dict[str, set[str]] = {}
     side2Scripts: dict[str, set[str]] = {}
     for glyph in pair.firstGlyphs:
-        scripts = glyphScripts.get(glyph, COMMON_SCRIPTS_SET)
-        # If a glyph is both common *and* another script, treat it as common.
-        # This ensures that a pair appears to the shaper exactly once (as long
-        # as every script sees at most 2 lookups (disregarding mark lookups),
-        # the common one and the script-specific one.
-        if scripts & COMMON_SCRIPTS_SET:
-            scripts = scripts & COMMON_SCRIPTS_SET
+        scripts = glyphScripts.get(glyph, DFLT_SCRIPTS)
+        # If a glyph is both common or inherited *and* another script, treat it
+        # as just common (throwing Zyyy and Zinh into the same bucket for
+        # simplicity). This ensures that a pair appears to the shaper exactly
+        # once, as long as every script sees at most 2 lookups (or 3 with mark
+        # lookups, but they contain distinct pairs), the common one and the
+        # script-specific one.
+        if scripts & DFLT_SCRIPTS:
+            scripts = COMMON_SCRIPTS_SET
         for script in scripts:
             side1Scripts.setdefault(script, set()).add(glyph)
     for glyph in pair.secondGlyphs:
-        scripts = glyphScripts.get(glyph, COMMON_SCRIPTS_SET)
-        if scripts & COMMON_SCRIPTS_SET:
-            scripts = scripts & COMMON_SCRIPTS_SET
+        scripts = glyphScripts.get(glyph, DFLT_SCRIPTS)
+        if scripts & DFLT_SCRIPTS:
+            scripts = COMMON_SCRIPTS_SET
         for script in scripts:
             side2Scripts.setdefault(script, set()).add(glyph)
 
@@ -565,9 +566,9 @@ def partitionByScript(
             (localSide2,) = side2Scripts[secondScript]
             localGlyphs.add(localSide2)
 
-        if firstScript == secondScript or secondScript in DFLT_SCRIPTS:
+        if firstScript == secondScript or secondScript == COMMON_SCRIPT:
             localScript = firstScript
-        elif firstScript in DFLT_SCRIPTS:
+        elif firstScript == COMMON_SCRIPT:
             localScript = secondScript
         # Two different explicit scripts:
         else:
