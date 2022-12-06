@@ -160,6 +160,10 @@ class KernFeatureWriter(BaseFeatureWriter):
           purely common (not inherited) glyph for bucketing purposes. This
           avoids creating overlapping groups with the multi-script glyph in a
           lookup.
+        * Some glyphs may have a script of Zyyy or Zinh but have a disjoint set
+          of explicit scripts as their script extension. By looking only at the
+          script extension, we treat many of them as being part of an explicit
+          script rather than as a common or inherited glyph.
         * Preserve the type of the kerning pair, so class-to-class kerning stays
           that way, even when there's only one glyph on each side.
     * Reconstruct kerning group names for the newly split classes. This is done
