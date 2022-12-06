@@ -31,6 +31,7 @@ RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
 AMBIGUOUS_BIDIS = {"R", "L"}
 COMMON_SCRIPTS_SET = {COMMON_SCRIPT}
+COMMON_CLASS_NAME = "Default"
 
 
 def unicodeBidiType(uv):
@@ -143,7 +144,7 @@ class KernFeatureWriter(BaseFeatureWriter):
       splitting by direction, as previously done.
         * Partition the first and second side of a pair by script and emit only
           those with the same script (e.g. `a` and `b` are both "Latn", `period`
-          and `period` are both "Common", but `a` and `a-cy` would mix "Latn"
+          and `period` are both "Default", but `a` and `a-cy` would mix "Latn"
           and "Cyrl" and are dropped) or those that kern an explicit against a
           "common" or implicit script, e.g. `a` and `period`.
         * Glyphs can have multiple scripts assigned to them (legitimately, e.g.
@@ -164,8 +165,8 @@ class KernFeatureWriter(BaseFeatureWriter):
         * This first looks at the common lookups and then all others, assigning
           new group names are it goes. A class like `@kern1.A = [A A-cy
           increment]` may be split up into `@kern1.Latn.A = [A]`, `@kern1.Cyrl.A
-          = [A-cy]` and `@kern1.Common.A = [increment]`. Note: If there is no
-          dedicated Common lookup, common glyph classes like `[period]` might
+          = [A-cy]` and `@kern1.Default.A = [increment]`. Note: If there is no
+          dedicated Default lookup, common glyph classes like `[period]` might
           carry the name `@kern1.Grek.foo` if the class was first encountered
           while going over the Grek lookup.
     * Discard pairs that mix RTL and LTR BiDi types, because they won't show up
@@ -406,7 +407,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             if not lookup:
                 # For neatness:
                 lookup = self._makeKerningLookup(
-                    key.replace(COMMON_SCRIPT, "Common"),
+                    key.replace(COMMON_SCRIPT, COMMON_CLASS_NAME),
                     ignoreMarks=ignoreMarks,
                 )
                 scriptLookups[key] = lookup
@@ -612,7 +613,7 @@ def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
                     side1Membership,
                     classDefs,
                     classNames,
-                    "Common",
+                    COMMON_CLASS_NAME,
                 )
             if pair.secondIsClass and pair.side2 not in side2Classes:
                 addClassDefinition(
@@ -622,7 +623,7 @@ def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
                     side2Membership,
                     classDefs,
                     classNames,
-                    "Common",
+                    COMMON_CLASS_NAME,
                 )
 
     sortedKerningPerScript = sorted(kerningPerScript.items())
