@@ -99,11 +99,6 @@ class KernFeatureWriter(BaseFeatureWriter):
     """Generates a kerning feature based on groups and rules contained
     in an UFO's kerning data.
 
-    There are currently two possible writing modes: 2) "skip" (default) will not
-    write anything if the features are already present; 1) "append" will add
-    additional lookups to an existing feature, if present, or it will add a new
-    one at the end of all features.
-
     If the `quantization` argument is given in the filter options, the resulting
     anchors are rounded to the nearest multiple of the quantization value.
 
