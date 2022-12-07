@@ -135,6 +135,9 @@ class KernFeatureWriter(BaseFeatureWriter):
           pairs that would mix RTL and LTR glyphs, which will not occur in
           applications. Unicode BiDi classes L, AN and EN are considered L, R
           and AL are considered R.
+    * Note: the glyph script determination has the quirk of declaring "Hira" and
+      "Kana" scripts as "Hrkt" so that they are considered one script and can be
+      kerned against each other.
     * Get the kerning groups from the UFO and filter out glyphs not in the
       glyphset and empty groups. Remember which group a glyph is a member of,
       for kern1 and kern2, so we can later reconstruct per-script groups.
