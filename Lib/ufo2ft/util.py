@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib
 import logging
 import re
@@ -12,6 +14,8 @@ from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Identity, Transform
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
+
+from ufo2ft.constants import HIRAGANA_KATAKANA_SCRIPTS
 
 logger = logging.getLogger(__name__)
 
@@ -595,3 +599,18 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
         maxComponentDepth = max(maxComponentDepth, componentDepth)
 
     return maxComponentDepth
+
+
+def bucketizedScriptExtensions(codepoint: int) -> set[str]:
+    """Returns the Unicode script extensions for a codepoint, combining some
+    scripts into the same bucket.
+
+    This allows lookups to contain more than one script. The most prominent case
+    is being able to kern Hiragana and Katakana against each other, Unicode
+    defines "Hrkt" as an alias for both scripts.
+    """
+    scripts = unicodedata.script_extension(chr(codepoint))
+    if HIRAGANA_KATAKANA_SCRIPTS & scripts:
+        scripts -= HIRAGANA_KATAKANA_SCRIPTS
+        scripts.add("Hrkt")  # Hrkt is an alias for Hira and Kata.
+    return scripts
