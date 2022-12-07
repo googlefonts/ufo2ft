@@ -4,10 +4,11 @@ from textwrap import dedent
 import pytest
 from fontTools import unicodedata
 
+from ufo2ft.constants import HIRAGANA_KATAKANA_SCRIPTS
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
-from ufo2ft.util import DFLT_SCRIPTS
+from ufo2ft.util import DFLT_SCRIPTS, bucketizedScriptExtensions
 
 from . import FeatureWriterTest
 
@@ -1651,13 +1652,29 @@ def test_kern_mixed_bidis(caplog, FontClass):
     assert "<one-ar alef-ar 8> with ambiguous direction" in caplog.text
 
 
+def bucketizedScript(codepoint: int) -> str:
+    """Returns the Unicode script for a codepoint, combining some
+    scripts into the same bucket.
+
+    This allows lookups to contain more than one script. The most prominent case
+    is being able to kern Hiragana and Katakana against each other, Unicode
+    defines "Hrkt" as an alias for both scripts.
+
+    Note: Keep in sync with bucketizedScriptExtensions!
+    """
+    script = unicodedata.script(chr(codepoint))
+    if script in HIRAGANA_KATAKANA_SCRIPTS:
+        return "Hrkt"
+    return script
+
+
 def test_kern_zyyy_zinh(FontClass):
     """Test that a sampling of glyphs with a common or inherited script, but a
     disjoint set of explicit script extensions end up in the correct lookups."""
     glyphs = {}
     for i in range(0, 0x110000, 0x10):
-        script = unicodedata.script(chr(i))
-        script_extension = unicodedata.script_extension(chr(i))
+        script = bucketizedScript(i)
+        script_extension = bucketizedScriptExtensions(i)
         if script not in script_extension:
             assert script in DFLT_SCRIPTS
             name = f"uni{i:04X}"
@@ -1713,6 +1730,14 @@ def test_kern_zyyy_zinh(FontClass):
             pos uniA700 uniA700 27;
         } kern_Hani;
 
+        lookup kern_Hrkt {
+            lookupflag IgnoreMarks;
+            pos uni3010 uni3010 8;
+            pos uni3030 uni3030 9;
+            pos uni30A0 uni30A0 10;
+            pos uniFF70 uniFF70 29;
+        } kern_Hrkt;
+
         lookup kern_Default {
             lookupflag IgnoreMarks;
             pos uni0640 uni0640 0;
@@ -1724,8 +1749,6 @@ def test_kern_zyyy_zinh(FontClass):
             pos uni10130 uni10130 33;
             pos uni102E0 uni102E0 34;
             pos uni102F0 uni102F0 35;
-            pos uni30A0 uni30A0 10;
-            pos uniFF70 uniFF70 29;
         } kern_Default;
 
         feature kern {
@@ -1742,6 +1765,11 @@ def test_kern_zyyy_zinh(FontClass):
             language dflt;
             lookup kern_Default;
             lookup kern_Hani;
+
+            script kana;
+            language dflt;
+            lookup kern_Default;
+            lookup kern_Hrkt;
         } kern;
 
         feature dist {
@@ -1760,6 +1788,57 @@ def test_kern_zyyy_zinh(FontClass):
             lookup kern_Default;
             lookup kern_Dupl;
         } dist;
+        """
+    )
+
+
+def test_kern_hira_kana_hrkt(FontClass):
+    """Test that Hiragana and Katakana lands in the same lookup and can be
+    kerned against each other and common glyphs are kerned just once."""
+    glyphs = {"a-hira": 0x3042, "a-kana": 0x30A2, "period": ord(".")}
+    kerning = {
+        ("a-hira", "a-hira"): 1,
+        ("a-hira", "a-kana"): 2,
+        ("a-kana", "a-hira"): 3,
+        ("a-kana", "a-kana"): 4,
+        ("period", "period"): 5,
+        ("a-hira", "period"): 6,
+        ("period", "a-hira"): 7,
+        ("a-kana", "period"): 8,
+        ("period", "a-kana"): 9,
+    }
+    ufo = makeUFO(FontClass, glyphs, None, kerning)
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        lookup kern_Hrkt {
+            lookupflag IgnoreMarks;
+            pos a-hira a-hira 1;
+            pos a-hira a-kana 2;
+            pos a-hira period 6;
+            pos a-kana a-hira 3;
+            pos a-kana a-kana 4;
+            pos a-kana period 8;
+            pos period a-hira 7;
+            pos period a-kana 9;
+        } kern_Hrkt;
+
+        lookup kern_Default {
+            lookupflag IgnoreMarks;
+            pos period period 5;
+        } kern_Default;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Default;
+
+            script kana;
+            language dflt;
+            lookup kern_Default;
+            lookup kern_Hrkt;
+        } kern;
         """
     )
 
