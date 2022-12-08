@@ -1,3 +1,5 @@
+from types import MappingProxyType
+
 SPARSE_TTF_MASTER_TABLES = frozenset(
     ["glyf", "head", "hmtx", "loca", "maxp", "post", "vmtx"]
 )
@@ -39,6 +41,8 @@ OPENTYPE_META_KEY = "public.openTypeMeta"
 UNICODE_VARIATION_SEQUENCES_KEY = "public.unicodeVariationSequences"
 
 COMMON_SCRIPT = "Zyyy"
+
+UNICODE_SCRIPT_ALIASES = MappingProxyType({"Hira": "Hrkt", "Kana": "Hrkt"})
 
 INDIC_SCRIPTS = [
     "Beng",  # Bengali

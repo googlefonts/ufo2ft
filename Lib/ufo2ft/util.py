@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import importlib
 import logging
 import re
 from copy import deepcopy
 from inspect import currentframe, getfullargspec
-from typing import Set
+from typing import Mapping, Set
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
@@ -12,6 +14,8 @@ from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Identity, Transform
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
+
+from ufo2ft.constants import UNICODE_SCRIPT_ALIASES
 
 logger = logging.getLogger(__name__)
 
@@ -321,7 +325,7 @@ def unicodeInScripts(uv, scripts):
     False if it does not intersect.
     Return None for 'Common' script ('Zyyy').
     """
-    sx = unicodedata.script_extension(chr(uv))
+    sx = unicodeScriptExtensions(uv)
     if "Zyyy" in sx:
         return None
     return not sx.isdisjoint(scripts)
@@ -595,3 +599,16 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
         maxComponentDepth = max(maxComponentDepth, componentDepth)
 
     return maxComponentDepth
+
+
+def unicodeScriptExtensions(
+    codepoint: int, aliases: Mapping[str, str] = UNICODE_SCRIPT_ALIASES
+) -> set[str]:
+    """Returns the Unicode script extensions for a codepoint, optionally
+    aliasing some scripts.
+
+    This allows lookups to contain more than one script. The most prominent case
+    is being able to kern Hiragana and Katakana against each other, Unicode
+    defines "Hrkt" as an alias for both scripts.
+    """
+    return {aliases.get(s, s) for s in unicodedata.script_extension(chr(codepoint))}
