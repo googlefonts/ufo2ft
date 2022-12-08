@@ -602,7 +602,7 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
 
 
 def unicodeScriptExtensions(
-    codepoint: int, aliases: Mapping[str, str] | None = None
+    codepoint: int, aliases: Mapping[str, str] = UNICODE_SCRIPT_ALIASES
 ) -> set[str]:
     """Returns the Unicode script extensions for a codepoint, optionally
     aliasing some scripts.
@@ -611,6 +611,4 @@ def unicodeScriptExtensions(
     is being able to kern Hiragana and Katakana against each other, Unicode
     defines "Hrkt" as an alias for both scripts.
     """
-    if aliases is None:
-        aliases = UNICODE_SCRIPT_ALIASES
     return {aliases.get(s, s) for s in unicodedata.script_extension(chr(codepoint))}
