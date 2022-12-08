@@ -11,7 +11,7 @@ from fontTools.unicodedata import script_horizontal_direction
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize
+from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptExtensions
 
 LOGGER = logging.getLogger(__name__)
 
@@ -130,6 +130,9 @@ class KernFeatureWriter(BaseFeatureWriter):
           pairs that would mix RTL and LTR glyphs, which will not occur in
           applications. Unicode BiDi classes L, AN and EN are considered L, R
           and AL are considered R.
+    * Note: the glyph script determination has the quirk of declaring "Hira" and
+      "Kana" scripts as "Hrkt" so that they are considered one script and can be
+      kerned against each other.
     * Get the kerning groups from the UFO and filter out glyphs not in the
       glyphset and empty groups. Remember which group a glyph is a member of,
       for kern1 and kern2, so we can later reconstruct per-script groups.
@@ -357,7 +360,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             # anyway.
             return {COMMON_SCRIPT}
         else:
-            script_extension = unicodedata.script_extension(chr(uv))
+            script_extension = unicodeScriptExtensions(uv)
             return script_extension & (self.context.knownScripts | DFLT_SCRIPTS)
 
     def _makeKerningLookups(self):
