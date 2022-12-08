@@ -4,11 +4,11 @@ from textwrap import dedent
 import pytest
 from fontTools import unicodedata
 
-from ufo2ft.constants import HIRAGANA_KATAKANA_SCRIPTS
+from ufo2ft.constants import UNICODE_SCRIPT_ALIASES
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
-from ufo2ft.util import DFLT_SCRIPTS, bucketizedScriptExtensions
+from ufo2ft.util import DFLT_SCRIPTS, unicodeScriptExtensions
 
 from . import FeatureWriterTest
 
@@ -1652,7 +1652,7 @@ def test_kern_mixed_bidis(caplog, FontClass):
     assert "<one-ar alef-ar 8> with ambiguous direction" in caplog.text
 
 
-def bucketizedScript(codepoint: int) -> str:
+def unicodeScript(codepoint: int) -> str:
     """Returns the Unicode script for a codepoint, combining some
     scripts into the same bucket.
 
@@ -1660,12 +1660,10 @@ def bucketizedScript(codepoint: int) -> str:
     is being able to kern Hiragana and Katakana against each other, Unicode
     defines "Hrkt" as an alias for both scripts.
 
-    Note: Keep in sync with bucketizedScriptExtensions!
+    Note: Keep in sync with unicodeScriptExtensions!
     """
     script = unicodedata.script(chr(codepoint))
-    if script in HIRAGANA_KATAKANA_SCRIPTS:
-        return "Hrkt"
-    return script
+    return UNICODE_SCRIPT_ALIASES.get(script, script)
 
 
 def test_kern_zyyy_zinh(FontClass):
@@ -1673,8 +1671,8 @@ def test_kern_zyyy_zinh(FontClass):
     disjoint set of explicit script extensions end up in the correct lookups."""
     glyphs = {}
     for i in range(0, 0x110000, 0x10):
-        script = bucketizedScript(i)
-        script_extension = bucketizedScriptExtensions(i)
+        script = unicodeScript(i)
+        script_extension = unicodeScriptExtensions(i)
         if script not in script_extension:
             assert script in DFLT_SCRIPTS
             name = f"uni{i:04X}"

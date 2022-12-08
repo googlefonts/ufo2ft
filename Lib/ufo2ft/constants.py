@@ -40,7 +40,7 @@ UNICODE_VARIATION_SEQUENCES_KEY = "public.unicodeVariationSequences"
 
 COMMON_SCRIPT = "Zyyy"
 
-HIRAGANA_KATAKANA_SCRIPTS = {"Hira", "Kana"}
+UNICODE_SCRIPT_ALIASES = {"Hira": "Hrkt", "Kana": "Hrkt"}
 
 INDIC_SCRIPTS = [
     "Beng",  # Bengali
