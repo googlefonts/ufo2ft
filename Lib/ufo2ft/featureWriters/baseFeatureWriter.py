@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureWriters import ast
-from ufo2ft.util import bucketizedScriptExtensions
+from ufo2ft.util import unicodeScriptExtensions
 
 INSERT_FEATURE_MARKER = r"\s*# Automatic Code.*"
 
@@ -413,7 +413,7 @@ class BaseFeatureWriter:
             if glyph.name not in glyphSet or glyph.unicodes is None:
                 continue
             for codepoint in glyph.unicodes:
-                scripts = bucketizedScriptExtensions(codepoint)
+                scripts = unicodeScriptExtensions(codepoint)
                 if len(scripts) == 1:
                     single_scripts.update(scripts)
 

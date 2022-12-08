@@ -11,12 +11,7 @@ from fontTools.unicodedata import script_horizontal_direction
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import (
-    DFLT_SCRIPTS,
-    bucketizedScriptExtensions,
-    classifyGlyphs,
-    quantize,
-)
+from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptExtensions
 
 LOGGER = logging.getLogger(__name__)
 
@@ -365,7 +360,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             # anyway.
             return {COMMON_SCRIPT}
         else:
-            script_extension = bucketizedScriptExtensions(uv)
+            script_extension = unicodeScriptExtensions(uv)
             return script_extension & (self.context.knownScripts | DFLT_SCRIPTS)
 
     def _makeKerningLookups(self):
