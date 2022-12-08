@@ -4,11 +4,15 @@ from collections import OrderedDict, defaultdict
 from functools import partial
 
 from fontTools.misc.fixedTools import otRound
-from fontTools.unicodedata import script_extension
 
 from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import classifyGlyphs, quantize, unicodeInScripts
+from ufo2ft.util import (
+    classifyGlyphs,
+    quantize,
+    unicodeInScripts,
+    unicodeScriptExtensions,
+)
 
 
 class AbstractMarkPos:
@@ -867,7 +871,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
             unicodeIsAbvm = partial(unicodeInScripts, scripts=scriptsUsingAbvm)
 
             def unicodeIsNotAbvm(uv):
-                return bool(script_extension(chr(uv)) - self.scriptsUsingAbvm)
+                return bool(unicodeScriptExtensions(uv) - self.scriptsUsingAbvm)
 
             if any(unicodeIsAbvm(uv) for uv in cmap):
                 # If there are any characters from Indic/USE/Khmer scripts in
