@@ -1,3 +1,5 @@
+from types import MappingProxyType
+
 SPARSE_TTF_MASTER_TABLES = frozenset(
     ["glyf", "head", "hmtx", "loca", "maxp", "post", "vmtx", "cvt ", "fpgm", "prep"]
 )
@@ -45,6 +47,7 @@ TRUETYPE_ROUND_KEY = "public.truetype.roundOffsetToGrid"
 TRUETYPE_METRICS_KEY = "public.truetype.useMyMetrics"
 TRUETYPE_OVERLAP_KEY = "public.truetype.overlap"
 OBJECT_LIBS_KEY = "public.objectLibs"
+UNICODE_SCRIPT_ALIASES = MappingProxyType({"Hira": "Hrkt", "Kana": "Hrkt"})
 
 INDIC_SCRIPTS = [
     "Beng",  # Bengali

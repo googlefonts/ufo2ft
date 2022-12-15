@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureWriters import ast
+from ufo2ft.util import unicodeScriptExtensions
 
 INSERT_FEATURE_MARKER = r"\s*# Automatic Code.*"
 
@@ -122,8 +123,12 @@ class BaseFeatureWriter:
     def write(self, font, feaFile, compiler=None):
         """Write features and class definitions for this font to a feaLib
         FeatureFile object.
-        Returns True if feature file was modified, False if no new features
-        were generated.
+
+        The main entry point for the FeatureCompiler to any of the
+        FeatureWriters.
+
+        Returns True if feature file was modified, False if no new features were
+        generated.
         """
         self.setContext(font, feaFile, compiler=compiler)
         try:
@@ -386,3 +391,34 @@ class BaseFeatureWriter:
             frozenset(marks),
             frozenset(components),
         )
+
+    def guessFontScripts(self):
+        """Returns a set of scripts the font probably supports.
+
+        This is done by:
+
+        1. Looking at all defined codepoints in a font and remembering the
+           script of any of the codepoints if it is associated with just one
+           script. This would remember the script of U+0780 THAANA LETTER HAA
+           (Thaa) but not U+061F ARABIC QUESTION MARK (multiple scripts).
+        2. Adding explicitly declared `languagesystem` scripts on top.
+        """
+        font = self.context.font
+        glyphSet = self.context.glyphSet
+        feaFile = self.context.feaFile
+        single_scripts = set()
+
+        # First, detect scripts from the codepoints.
+        for glyph in font:
+            if glyph.name not in glyphSet or glyph.unicodes is None:
+                continue
+            for codepoint in glyph.unicodes:
+                scripts = unicodeScriptExtensions(codepoint)
+                if len(scripts) == 1:
+                    single_scripts.update(scripts)
+
+        # Then, add explicitly declared languagesystems on top.
+        feaScripts = ast.getScriptLanguageSystems(feaFile)
+        single_scripts.update(feaScripts.keys())
+
+        return single_scripts
