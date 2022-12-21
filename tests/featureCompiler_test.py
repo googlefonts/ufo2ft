@@ -231,7 +231,11 @@ class FeatureCompilerTest:
                 foo = ast.FeatureBlock("FOO ")
                 foo.statements.append(
                     ast.SingleSubstStatement(
-                        "a", "v", prefix="", suffix="", forceChain=None
+                        [ast.GlyphName("a")],
+                        [ast.GlyphName("v")],
+                        prefix="",
+                        suffix="",
+                        forceChain=None,
                     )
                 )
                 feaFile.statements.append(foo)
@@ -327,13 +331,15 @@ class FeatureCompilerTest:
             } liga;
 
 
-            lookup kern_ltr {
+            lookup kern_Default {
                 lookupflag IgnoreMarks;
                 pos a v -40;
-            } kern_ltr;
+            } kern_Default;
 
             feature kern {
-                lookup kern_ltr;
+                script DFLT;
+                language dflt;
+                lookup kern_Default;
             } kern;
             """
         )
