@@ -42,7 +42,6 @@ TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"
 TRUETYPE_METRICS_KEY = "public.truetype.useMyMetrics"
 TRUETYPE_OVERLAP_KEY = "public.truetype.overlap"
 TRUETYPE_ROUND_KEY = "public.truetype.roundOffsetToGrid"
-
 UNICODE_VARIATION_SEQUENCES_KEY = "public.unicodeVariationSequences"
 
 COMMON_SCRIPT = "Zyyy"
