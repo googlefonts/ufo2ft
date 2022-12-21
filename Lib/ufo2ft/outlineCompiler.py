@@ -21,6 +21,7 @@ from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPointPen
 from fontTools.ttLib import TTFont, newTable
+from fontTools.ttLib.standardGlyphOrder import standardGlyphOrder
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS, Glyph
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
@@ -790,7 +791,7 @@ class BaseOutlineCompiler:
         secondSideBearings = []  # right in hhea, bottom in vhea
         extents = []
         if mtxTable is not None:
-            for glyphName in self.allGlyphs:
+            for glyphName in self.glyphOrder:
                 advance, firstSideBearing = mtxTable[glyphName]
                 advances.append(advance)
                 bounds = self.glyphBoundingBoxes[glyphName]
@@ -839,10 +840,18 @@ class BaseOutlineCompiler:
         for i in reserved:
             setattr(table, "reserved%i" % i, 0)
         table.metricDataFormat = 0
-        # glyph count
-        setattr(
-            table, "numberOf%sMetrics" % ("H" if isHhea else "V"), len(self.allGlyphs)
-        )
+        # precompute the number of long{Hor,Ver}Metric records in 'hmtx' table
+        # so we don't need to compile the latter to get this updated
+        numLongMetrics = len(advances)
+        if numLongMetrics > 1:
+            lastAdvance = advances[-1]
+            while advances[numLongMetrics - 2] == lastAdvance:
+                numLongMetrics -= 1
+                if numLongMetrics <= 1:
+                    # all advances are equal
+                    numLongMetrics = 1
+                    break
+        setattr(table, "numberOf%sMetrics" % ("H" if isHhea else "V"), numLongMetrics)
 
     def setupTable_hhea(self):
         """
@@ -1479,7 +1488,10 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
 
         post = self.otf["post"]
         post.formatType = 2.0
-        post.extraNames = []
+        # if we set extraNames = [], it will be automatically computed upon compile as
+        # we do below; if we do it upfront we can skip reloading in postProcessor.
+        post.extraNames = [g for g in self.glyphOrder if g not in standardGlyphOrder]
+
         post.mapping = {}
         post.glyphOrder = self.glyphOrder
 
@@ -1520,6 +1532,10 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
                 self.autoUseMyMetrics(ttGlyph, name, hmtx)
             self.compileGlyphInstructions(ttGlyph, name)
             glyf[name] = ttGlyph
+
+        # update various maxp fields based on glyf without needing to compile the font
+        if "maxp" in self.otf:
+            self.otf["maxp"].recalc(self.otf)
 
     @staticmethod
     def autoUseMyMetrics(ttGlyph, glyphName, hmtx):

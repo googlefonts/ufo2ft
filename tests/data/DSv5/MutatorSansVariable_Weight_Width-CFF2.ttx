@@ -384,22 +384,22 @@
           900 300 -900 -300 vlineto
         </CharString>
         <CharString name="I">
-          0 40 10 20 -10 0 14 1 blend
+          0 40 10 20 -10 0 14.30922 1 blend
           hmoveto
           10 10 -10 hlineto
         </CharString>
         <CharString name="I.narrow">
-          0 40 10 20 -10 0 14 1 blend
+          0 40 10 20 -10 0 14.30922 1 blend
           hmoveto
           10 10 -10 hlineto
         </CharString>
         <CharString name="S">
-          0 40 10 20 -10 0 14 1 blend
+          0 40 10 20 -10 0 14.30922 1 blend
           hmoveto
           10 10 -10 hlineto
         </CharString>
         <CharString name="S.closed">
-          0 40 10 20 -10 0 14 1 blend
+          0 40 10 20 -10 0 14.30922 1 blend
           hmoveto
           10 10 -10 hlineto
         </CharString>

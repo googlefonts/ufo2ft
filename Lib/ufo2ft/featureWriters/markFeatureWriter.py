@@ -7,7 +7,12 @@ from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import classifyGlyphs, quantize, unicodeInScripts
+from ufo2ft.util import (
+    classifyGlyphs,
+    quantize,
+    unicodeInScripts,
+    unicodeScriptExtensions,
+)
 
 
 class AbstractMarkPos:
@@ -300,6 +305,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.anchorLists = self._getAnchorLists()
         ctx.anchorPairs = self._getAnchorPairs()
+        ctx.feaScripts = set(ast.getScriptLanguageSystems(feaFile).keys())
 
     def shouldContinue(self):
         if not self.context.anchorPairs:
@@ -822,13 +828,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
         )
         ctx.markToMarkAttachments = self._makeMarkToMarkAttachments()
 
-        abvmGlyphs = self._getAbvmGlyphs()
+        abvmGlyphs, notAbvmGlyphs = self._getAbvmGlyphs()
 
         def isAbvm(glyphName):
             return glyphName in abvmGlyphs
 
         def isNotAbvm(glyphName):
-            return glyphName not in abvmGlyphs
+            return glyphName in notAbvmGlyphs
 
         features = {}
         todo = ctx.todo
@@ -852,19 +858,43 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return features
 
     def _getAbvmGlyphs(self):
-        cmap = self.makeUnicodeToGlyphNameMapping()
-        unicodeIsAbvm = partial(unicodeInScripts, scripts=self.scriptsUsingAbvm)
-        if any(unicodeIsAbvm(uv) for uv in cmap):
-            # If there are any characters from Indic/USE/Khmer scripts in the cmap, we
-            # compile a temporary GSUB table to resolve substitutions and get
-            # the set of all the relevant glyphs, including alternate glyphs.
-            gsub = self.compileGSUB()
-            glyphGroups = classifyGlyphs(unicodeIsAbvm, cmap, gsub)
-            # the 'glyphGroups' dict is keyed by the return value of the
-            # classifying include, so here 'True' means all the Indic/USE/Khmer glyphs
-            return glyphGroups.get(True, set())
-        else:
-            return set()
+        glyphSet = set(self.getOrderedGlyphSet().keys())
+        scriptsUsingAbvm = self.scriptsUsingAbvm
+        if self.context.feaScripts:
+            # https://github.com/googlefonts/ufo2ft/issues/579 Some characters
+            # can be used in multiple scripts and some of these scripts might
+            # need an abvm feature and some might not, so we filter-out the
+            # abvm scripts that the font does not intend to support.
+            scriptsUsingAbvm = scriptsUsingAbvm & self.context.feaScripts
+        if scriptsUsingAbvm:
+            cmap = self.makeUnicodeToGlyphNameMapping()
+            unicodeIsAbvm = partial(unicodeInScripts, scripts=scriptsUsingAbvm)
+
+            def unicodeIsNotAbvm(uv):
+                return bool(unicodeScriptExtensions(uv) - self.scriptsUsingAbvm)
+
+            if any(unicodeIsAbvm(uv) for uv in cmap):
+                # If there are any characters from Indic/USE/Khmer scripts in
+                # the cmap, we compile a temporary GSUB table to resolve
+                # substitutions and get the set of all the relevant glyphs,
+                # including alternate glyphs.
+                gsub = self.compileGSUB()
+                glyphGroups = classifyGlyphs(unicodeIsAbvm, cmap, gsub)
+                # the 'glyphGroups' dict is keyed by the return value of the
+                # classifying include, so here 'True' means all the
+                # Indic/USE/Khmer glyphs
+                abvmGlyphs = glyphGroups.get(True, set())
+
+                # If a character can be used in Indic/USE/Khmer scripts as well
+                # as other scripts, we want to return it in both 'abvmGlyphs'
+                # (done above) and 'notAbvmGlyphs' (done below) sets.
+                glyphGroups = classifyGlyphs(unicodeIsNotAbvm, cmap, gsub)
+                notAbvmGlyphs = glyphGroups.get(True, set())
+                # Since cmap might not cover all glyphs, we union with the
+                # glyph set.
+                notAbvmGlyphs |= glyphSet - abvmGlyphs
+                return abvmGlyphs, notAbvmGlyphs
+        return set(), glyphSet
 
     def _write(self):
         self._pruneUnusedAnchors()
