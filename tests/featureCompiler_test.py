@@ -100,6 +100,18 @@ class ParseLayoutFeaturesTest:
 
         assert "# hello world" in str(fea)
 
+    def test_include_dir_cwd(self, FontClass, tmp_path, monkeypatch):
+        (tmp_path / "test.fea").write_text("# hello world", encoding="utf-8")
+        ufo = FontClass()
+        ufo.features.text = "include(test.fea)"
+
+        with monkeypatch.context() as context:
+            context.chdir(tmp_path)
+            ufo.save("Test.ufo")
+            fea = parseLayoutFeatures(ufo)
+
+        assert "# hello world" in str(fea)
+
 
 class DummyFeatureWriter:
     tableTag = "GPOS"
