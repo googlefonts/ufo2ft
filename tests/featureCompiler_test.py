@@ -15,8 +15,6 @@ from ufo2ft.featureWriters import (
     ast,
 )
 
-from .testSupport import pushd
-
 
 class ParseLayoutFeaturesTest:
     def test_include(self, FontClass, tmpdir):
@@ -40,14 +38,16 @@ class ParseLayoutFeaturesTest:
 
         assert "# hello world" in str(fea)
 
-    def test_include_no_ufo_path(self, FontClass, tmpdir):
+    def test_include_no_ufo_path(self, FontClass, tmpdir, monkeypatch):
         ufo = FontClass()
         ufo.features.text = dedent(
             """\
             include(test.fea)
             """
         )
-        with pushd(str(tmpdir)):
+        with monkeypatch.context() as context:
+            context.chdir(str(tmpdir))
+            ufo.save("Test.ufo")
             with pytest.raises(IncludedFeaNotFound):
                 parseLayoutFeatures(ufo)
 
