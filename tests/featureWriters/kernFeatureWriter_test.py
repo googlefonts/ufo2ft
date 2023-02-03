@@ -45,7 +45,6 @@ def getPairPosRules(lookup):
 
 
 class KernFeatureWriterTest(FeatureWriterTest):
-
     FeatureWriter = KernFeatureWriter
 
     def test_cleanup_missing_glyphs(self, FontClass):

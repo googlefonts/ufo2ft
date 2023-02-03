@@ -67,7 +67,6 @@ def useProductionNames(request):
 
 
 class IntegrationTest:
-
     _layoutTables = ["GDEF", "GSUB", "GPOS", "BASE"]
 
     # We have specific unit tests for CFF vs TrueType output, but we run

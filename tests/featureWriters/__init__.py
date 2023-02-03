@@ -3,7 +3,6 @@ from ufo2ft.featureWriters import ast
 
 
 class FeatureWriterTest:
-
     # subclasses must override this
     FeatureWriter = None
 
