@@ -65,7 +65,6 @@ def test_NamedAnchor_repr():
 
 
 class MarkFeatureWriterTest(FeatureWriterTest):
-
     FeatureWriter = MarkFeatureWriter
 
     def test__makeMarkClassDefinitions_empty(self, FontClass):

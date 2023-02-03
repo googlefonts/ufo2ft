@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="component_different_transform" format="2">
+  <advance width="750"/>
+  <outline>
+    <component base="no_component" xScale="1.25" yScale="1.25"/>
+  </outline>
+</glyph>

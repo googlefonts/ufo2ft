@@ -43,7 +43,6 @@ def test_getFilterClass():
         getFilterClass("Baz")
 
     with _TempModule("myfilters"), _TempModule("myfilters.fooBar") as temp_module:
-
         with pytest.raises(AttributeError):
             # this fails because `myfilters.fooBar` module does not
             # have a `FooBarFilter` class

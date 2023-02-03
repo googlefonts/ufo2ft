@@ -39,7 +39,6 @@ TEST_LIB_PLIST = readPlistFromString(
 
 
 class FooBarWriter(BaseFeatureWriter):
-
     tableTag = "GSUB"
 
     def __init__(self, **kwargs):

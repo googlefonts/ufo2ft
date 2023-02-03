@@ -224,7 +224,6 @@ class FeatureCompilerTest:
 
     def test_GSUB_writers_run_first(self, FontClass):
         class FooFeatureWriter(BaseFeatureWriter):
-
             tableTag = "GSUB"
 
             def write(self, font, feaFile, compiler=None):
