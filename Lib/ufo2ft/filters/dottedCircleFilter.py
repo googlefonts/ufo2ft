@@ -95,7 +95,6 @@ def circle(pen, origin, radius):
 
 
 class DottedCircleFilter(BaseFilter):
-
     _kwargs = {"margin": 80, "sidebearing": 160, "dots": 12}
 
     def __call__(self, font, glyphSet=None):

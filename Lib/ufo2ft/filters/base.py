@@ -14,7 +14,6 @@ timing_logger = logging.getLogger("ufo2ft.timer")
 
 
 class BaseFilter:
-
     # tuple of strings listing the names of required positional arguments
     # which will be set as attributes of the filter instance
     _args = ()

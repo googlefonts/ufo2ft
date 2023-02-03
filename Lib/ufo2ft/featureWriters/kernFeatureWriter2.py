@@ -38,7 +38,6 @@ def unicodeBidiType(uv):
 
 
 class KerningPair:
-
     __slots__ = ("side1", "side2", "value", "directions", "bidiTypes")
 
     def __init__(self, side1, side2, value, directions=None, bidiTypes=None):
@@ -216,7 +215,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         kerning = font.kerning
 
         pairsByFlags = {}
-        for (side1, side2) in kerning:
+        for side1, side2 in kerning:
             # filter out pairs that reference missing groups or glyphs
             if side1 not in side1Classes and side1 not in allGlyphs:
                 continue
