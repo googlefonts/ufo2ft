@@ -380,8 +380,10 @@ class TTFInterpolatablePreProcessor:
             # Other bits of the system will check for incompatible construction,
             # we just want to stay alive.
             for component_index in range(0, min(component_counts)):
+                # We only care about the two-by-twos; translations can differ
                 transforms = [
-                    layer.components[component_index].transformation for layer in layers
+                    layer.components[component_index].transformation[0:4]
+                    for layer in layers
                 ]
 
                 if any(transform != transforms[0] for transform in transforms):
