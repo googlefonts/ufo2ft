@@ -583,7 +583,7 @@ class BaseOutlineCompiler:
 
         def adjustOffset(offset, angle):
             """Adjust Y offset based on italic angle, to get X offset."""
-            return offset * math.tan(math.radians(-angle)) if angle else 0
+            return offset * math.atan(math.radians(-angle)) if angle else 0
 
         v = getAttrWithFallback(font.info, "openTypeOS2SubscriptXSize")
         if v is None:

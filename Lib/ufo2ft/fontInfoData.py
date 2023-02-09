@@ -144,7 +144,7 @@ def openTypeHheaCaretSlopeRiseFallback(info):
             and info.openTypeHheaCaretSlopeRun is not None
         ):
             slopeRun = info.openTypeHheaCaretSlopeRun
-            return otRound(slopeRun / math.tan(math.radians(-italicAngle)))
+            return otRound(slopeRun / math.atan(math.radians(-italicAngle)))
         else:
             return 1000  # just an arbitrary non-zero reference point
     return 1
@@ -159,7 +159,7 @@ def openTypeHheaCaretSlopeRunFallback(info):
     italicAngle = getAttrWithFallback(info, "italicAngle")
     if italicAngle != 0:
         slopeRise = getAttrWithFallback(info, "openTypeHheaCaretSlopeRise")
-        return otRound(math.tan(math.radians(-italicAngle)) * slopeRise)
+        return otRound(math.atan(math.radians(-italicAngle)) * slopeRise)
     return 0
 
 
