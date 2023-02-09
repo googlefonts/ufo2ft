@@ -138,16 +138,16 @@ class GetAttrWithFallbackTest:
 
         info.italicAngle = -12
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == 1000
-        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == 213
+        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == 206
 
         info.italicAngle = 12
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == 1000
-        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == -213
+        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == -206
 
         info.openTypeHheaCaretSlopeRise = 2048
         assert info.openTypeHheaCaretSlopeRun is None
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == 2048
-        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == -435
+        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == -422
 
         info.openTypeHheaCaretSlopeRise = None
         info.openTypeHheaCaretSlopeRun = 200
