@@ -152,7 +152,7 @@ class GetAttrWithFallbackTest:
         info.openTypeHheaCaretSlopeRise = None
         info.openTypeHheaCaretSlopeRun = 200
         assert info.openTypeHheaCaretSlopeRise is None
-        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == -941
+        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == -969
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == 200
 
     def test_head_created(self, info):
