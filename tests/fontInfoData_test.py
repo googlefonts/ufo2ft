@@ -147,7 +147,7 @@ class GetAttrWithFallbackTest:
         info.openTypeHheaCaretSlopeRise = 2048
         assert info.openTypeHheaCaretSlopeRun is None
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == 2048
-        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == -422
+        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == -423
 
         info.openTypeHheaCaretSlopeRise = None
         info.openTypeHheaCaretSlopeRun = 200
