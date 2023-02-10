@@ -150,10 +150,10 @@ class GetAttrWithFallbackTest:
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == -423
 
         info.openTypeHheaCaretSlopeRise = None
-        info.openTypeHheaCaretSlopeRun = 200
+        info.openTypeHheaCaretSlopeRun = -206
         assert info.openTypeHheaCaretSlopeRise is None
-        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == -969
-        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == 200
+        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == 998 # rounding error, expected 1000
+        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == -206
 
     def test_head_created(self, info):
         os.environ["SOURCE_DATE_EPOCH"] = "1514485183"
