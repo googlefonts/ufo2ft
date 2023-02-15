@@ -1,5 +1,3 @@
-import contextlib
-import os
 import sys
 import types
 
@@ -28,13 +26,3 @@ class _TempModule:
         else:
             del sys.modules[self.mod_name]
         self._saved_module = []
-
-
-@contextlib.contextmanager
-def pushd(target):
-    saved = os.getcwd()
-    os.chdir(target)
-    try:
-        yield saved
-    finally:
-        os.chdir(saved)

@@ -47,7 +47,7 @@ def parseLayoutFeatures(font, includeDir=None):
         # the include directory to the parent of the UFO.
         ufoPath = os.path.normpath(ufoPath)
         buf.name = os.path.join(ufoPath, "features.fea")
-        includeDir = os.path.dirname(ufoPath)
+        includeDir = os.path.dirname(ufoPath) or "."
     glyphNames = set(font.keys())
     includeDir = os.path.normpath(includeDir) if includeDir else None
     try:
