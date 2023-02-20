@@ -398,12 +398,20 @@ class KernFeatureWriter(BaseFeatureWriter):
         bidiGlyphs = self.context.bidiGlyphs
         glyphScripts = self.context.glyphScripts
         kerningPerScript = splitKerning(pairs, glyphScripts)
+        side1Classes = self.context.kerning.side1Classes
+        side2Classes = self.context.kerning.side2Classes
 
-        classDefs, side1Classes, side2Classes = makeAllGlyphClassDefinitions(
+        newClassDefs, newSide1Classes, newSide2Classes = makeAllGlyphClassDefinitions(
             kerningPerScript, self.context, self.context.feaFile
         )
-        assert not classDefs.keys() & self.context.kerning.classDefs.keys()
-        self.context.kerning.classDefs.update(classDefs)
+        # NOTE: Consider duplicate names a bug, even if the classes would carry
+        # the same glyphs.
+        assert not self.context.kerning.classDefs.keys() & newClassDefs.keys()
+        self.context.kerning.classDefs.update(newClassDefs)
+        assert not side1Classes.keys() & newSide1Classes.keys()
+        side1Classes.update(newSide1Classes)
+        assert not side2Classes.keys() & newSide2Classes.keys()
+        side2Classes.update(newSide2Classes)
 
         for script, pairs in kerningPerScript.items():
             scriptLookups = lookups.setdefault(script, {})
@@ -597,39 +605,53 @@ def partitionByScript(
 
 
 def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
-    side1Classes = {}
-    side2Classes = {}
+    # Note: Refer to the context for existing classDefs and mappings of glyph
+    # class tuples to feaLib AST to avoid overwriting existing class names,
+    # because base and mark kerning pairs might be separate passes.
+    newClassDefs = {}
+    existingSide1Classes = context.kerning.side1Classes
+    existingSide2Classes = context.kerning.side2Classes
+    newSide1Classes = {}
+    newSide2Classes = {}
     side1Membership = context.side1Membership
     side2Membership = context.side2Membership
 
-    classDefs = {}
     if feaFile is not None:
         classNames = {cdef.name for cdef in ast.iterClassDefinitions(feaFile)}
     else:
         classNames = set()
+    classNames.update(context.kerning.classDefs.keys())
 
     # Generate common class names first so that common classes are correctly
     # named in other lookups.
     if COMMON_SCRIPT in kerningPerScript:
         common_pairs = kerningPerScript[COMMON_SCRIPT]
         for pair in common_pairs:
-            if pair.firstIsClass and pair.side1 not in side1Classes:
+            if (
+                pair.firstIsClass
+                and pair.side1 not in existingSide1Classes
+                and pair.side1 not in newSide1Classes
+            ):
                 addClassDefinition(
                     "kern1",
                     pair.side1,
-                    side1Classes,
+                    newSide1Classes,
                     side1Membership,
-                    classDefs,
+                    newClassDefs,
                     classNames,
                     COMMON_CLASS_NAME,
                 )
-            if pair.secondIsClass and pair.side2 not in side2Classes:
+            if (
+                pair.secondIsClass
+                and pair.side2 not in existingSide2Classes
+                and pair.side2 not in newSide2Classes
+            ):
                 addClassDefinition(
                     "kern2",
                     pair.side2,
-                    side2Classes,
+                    newSide2Classes,
                     side2Membership,
-                    classDefs,
+                    newClassDefs,
                     classNames,
                     COMMON_CLASS_NAME,
                 )
@@ -639,28 +661,36 @@ def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
         if script == COMMON_SCRIPT:
             continue
         for pair in pairs:
-            if pair.firstIsClass and pair.side1 not in side1Classes:
+            if (
+                pair.firstIsClass
+                and pair.side1 not in existingSide1Classes
+                and pair.side1 not in newSide1Classes
+            ):
                 addClassDefinition(
                     "kern1",
                     pair.side1,
-                    side1Classes,
+                    newSide1Classes,
                     side1Membership,
-                    classDefs,
+                    newClassDefs,
                     classNames,
                     script,
                 )
-            if pair.secondIsClass and pair.side2 not in side2Classes:
+            if (
+                pair.secondIsClass
+                and pair.side2 not in existingSide2Classes
+                and pair.side2 not in newSide2Classes
+            ):
                 addClassDefinition(
                     "kern2",
                     pair.side2,
-                    side2Classes,
+                    newSide2Classes,
                     side2Membership,
-                    classDefs,
+                    newClassDefs,
                     classNames,
                     script,
                 )
 
-    return classDefs, side1Classes, side2Classes
+    return newClassDefs, newSide1Classes, newSide2Classes
 
 
 def addClassDefinition(
