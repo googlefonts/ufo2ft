@@ -777,11 +777,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Default;
                 lookup kern_Arab;
+                language URD;
 
                 script latn;
                 language dflt;
                 lookup kern_Default;
                 lookup kern_Latn;
+                language TRK;
             } kern;
             """
         )
@@ -901,12 +903,14 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 lookup kern_Default;
                 lookup kern_Arab;
                 lookup kern_Arab_marks;
+                language URD;
 
                 script latn;
                 language dflt;
                 lookup kern_Default;
                 lookup kern_Latn;
                 lookup kern_Latn_marks;
+                language TRK;
             } kern;
             """
         )
@@ -988,6 +992,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Arab;
                 lookup kern_Arab_marks;
+                language ARA;
             } kern;
             """
         )
