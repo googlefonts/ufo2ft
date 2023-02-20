@@ -1951,6 +1951,43 @@ def test_defining_classdefs(FontClass):
     )
 
 
+def test_hyphenated_duplicates(FontClass):
+    """Check that kerning group names are kept separate even if their sanitized
+    names are the same."""
+
+    glyphs = {"comma": ord(","), "period": ord(".")}
+    groups = {
+        "public.kern1.hy-phen": ["comma"],
+        "public.kern1.hyp-hen": ["period"],
+    }
+    kerning = {
+        ("public.kern1.hy-phen", "comma"): 1,
+        ("public.kern1.hyp-hen", "period"): 2,
+    }
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        @kern1.Default.hyphen = [comma];
+        @kern1.Default.hyphen_1 = [period];
+
+        lookup kern_Default {
+            lookupflag IgnoreMarks;
+            enum pos @kern1.Default.hyphen comma 1;
+            enum pos @kern1.Default.hyphen_1 period 2;
+        } kern_Default;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Default;
+        } kern;
+        """
+    )
+
+
 if __name__ == "__main__":
     import sys
 
