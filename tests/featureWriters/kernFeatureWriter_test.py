@@ -1840,6 +1840,117 @@ def test_kern_hira_kana_hrkt(FontClass):
     )
 
 
+# flake8: noqa: B950
+def test_defining_classdefs(FontClass):
+    """Check that we aren't redefining class definitions with different
+    content."""
+
+    glyphs = {
+        "halant-telugu": 0xC4D,  # Telu
+        "ka-telugu.below": None,  # Telu by substitution
+        "ka-telugu": 0xC15,  # Telu
+        "rVocalicMatra-telugu": 0xC43,  # Telu
+        "sha-telugu.below": None,  # Default
+        "ss-telugu.alt": None,  # Default
+        "ssa-telugu.alt": None,  # Telu by substitution
+        "ssa-telugu": 0xC37,  # Telu
+    }
+    groups = {
+        "public.kern1.sha-telugu.below": ["sha-telugu.below"],
+        # The following group is a mix of Telu and Default through its gylphs. The
+        # kerning for bases below will create a Telu and Default split group.
+        # Important for the NOTE below.
+        "public.kern1.ssa-telugu.alt": ["ssa-telugu.alt", "ss-telugu.alt"],
+        "public.kern2.ka-telugu.below": ["ka-telugu.below"],
+        "public.kern2.rVocalicMatra-telugu": ["rVocalicMatra-telugu"],
+    }
+    kerning = {
+        # The follwoing three pairs are base-to-base pairs:
+        ("public.kern1.sha-telugu.below", "public.kern2.ka-telugu.below"): 20,
+        ("public.kern1.ssa-telugu.alt", "public.kern2.ka-telugu.below"): 60,
+        ("public.kern1.ssa-telugu.alt", "sha-telugu.below"): 150,
+        # NOTE: This last pair kerns bases against marks, triggering an extra
+        # pass to make a mark lookup that will create new classDefs. This extra
+        # pass will work on just this one pair, and kern splitting won't split
+        # off a Default group from `public.kern1.ssa-telugu.alt`, you get just a
+        # Telu pair. Unless the writer keeps track of which classDefs it already
+        # generated, this will overwrite the previous `@kern1.Telu.ssatelugu.alt
+        # = [ssa-telugu.alt]` with `@kern1.Telu.ssatelugu.alt =
+        # [ss-telugu.alt]`, losing kerning.
+        ("public.kern1.ssa-telugu.alt", "public.kern2.rVocalicMatra-telugu"): 180,
+    }
+    features = """
+        feature blwf {
+            script tel2;
+            sub halant-telugu ka-telugu by ka-telugu.below;
+        } blwf;
+
+        feature psts {
+            script tel2;
+            sub ssa-telugu' [rVocalicMatra-telugu sha-telugu.below ka-telugu.below] by ssa-telugu.alt;
+        } psts;
+    """
+    ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+    ufo.lib["public.openTypeCategories"] = {
+        "halant-telugu": "mark",
+        "ka-telugu": "base",
+        "rVocalicMatra-telugu": "mark",
+        "ss-telugu.alt": "base",
+        "ssa-telugu.alt": "base",
+        "ssa-telugu": "base",
+    }
+
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        @kern1.Default.ssatelugu.alt = [ss-telugu.alt];
+        @kern1.Telu.shatelugu.below = [sha-telugu.below];
+        @kern1.Telu.ssatelugu.alt = [ssa-telugu.alt];
+        @kern2.Telu.katelugu.below = [ka-telugu.below];
+        @kern2.Telu.rVocalicMatratelugu = [rVocalicMatra-telugu];
+        
+        lookup kern_Telu {
+            lookupflag IgnoreMarks;
+            enum pos @kern1.Telu.ssatelugu.alt sha-telugu.below 150;
+            pos @kern1.Telu.shatelugu.below @kern2.Telu.katelugu.below 20;
+            pos @kern1.Default.ssatelugu.alt @kern2.Telu.katelugu.below 60;
+            pos @kern1.Telu.ssatelugu.alt @kern2.Telu.katelugu.below 60;
+        } kern_Telu;
+        
+        lookup kern_Telu_marks {
+            pos @kern1.Default.ssatelugu.alt @kern2.Telu.rVocalicMatratelugu 180;
+            pos @kern1.Telu.ssatelugu.alt @kern2.Telu.rVocalicMatratelugu 180;
+        } kern_Telu_marks;
+        
+        lookup kern_Default {
+            lookupflag IgnoreMarks;
+            enum pos @kern1.Default.ssatelugu.alt sha-telugu.below 150;
+        } kern_Default;
+        
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Default;
+        } kern;
+        
+        feature dist {
+            script tel2;
+            language dflt;
+            lookup kern_Default;
+            lookup kern_Telu;
+            lookup kern_Telu_marks;
+        
+            script telu;
+            language dflt;
+            lookup kern_Default;
+            lookup kern_Telu;
+            lookup kern_Telu_marks;
+        } dist;
+        """
+    )
+
+
 if __name__ == "__main__":
     import sys
 
