@@ -2000,11 +2000,10 @@ def test_dflt_language(FontClass):
     glyphs = {"a": ord("a"), "comma": ord(",")}
     groups = {}
     kerning = {("a", "a"): 1, ("comma", "comma"): 2}
-    # NOTE the deliberatly different casings for `latn`.
     features = """
             languagesystem DFLT dflt;
             languagesystem DFLT ZND;
-            languagesystem Latn dflt;
+            languagesystem latn dflt;
             languagesystem latn ANG;
     """
     ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
