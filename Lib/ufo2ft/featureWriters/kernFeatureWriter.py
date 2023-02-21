@@ -201,12 +201,12 @@ class KernFeatureWriter(BaseFeatureWriter):
         # Remember which languages are defined for which OT tag, as all
         # generated kerning needs to be registered for the script's `dflt`
         # language, but also all those the designer defined manually. Otherwise,
-        # setting a different language for a script would deactivate kerning.
-        # NOTE: This does not contain languages defined for DFLT. The spec
-        # technically allows it, but
-        feaScripts = ast.getScriptLanguageSystems(feaFile)
+        # setting any language for a script would deactivate kerning.
+        feaScripts = ast.getScriptLanguageSystems(feaFile, excludeDflt=False)
         ctx.feaScripts = {
-            otTag.lower(): languages  # NOTE: Lower otTag because it's sourced verbatim
+            # NOTE: Lower otTag because it's sourced verbatim from the feature
+            # file, except if it's "DFLT", because that one is special.
+            (otTag.lower() if otTag != "DFLT" else otTag): languages
             for _, languageSystems in feaScripts.items()
             for otTag, languages in languageSystems
         }
@@ -496,9 +496,9 @@ class KernFeatureWriter(BaseFeatureWriter):
         # Ensure we have kerning for pure common script runs (e.g. ">1")
         isKernBlock = feature.name == "kern"
         if isKernBlock and COMMON_SCRIPT in lookups:
-            # NOTE: Let's hope no actual languages are ever defined for DFLT.
+            languages = feaScripts.get("DFLT", ["dflt"])
             ast.addLookupReferences(
-                feature, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
+                feature, lookups[COMMON_SCRIPT].values(), "DFLT", languages
             )
 
         # Feature blocks use script tags to distinguish what to run for a
@@ -529,13 +529,10 @@ class KernFeatureWriter(BaseFeatureWriter):
                     if dfltScript in lookups:
                         lookupsForThisScript.extend(lookups[dfltScript].values())
                 lookupsForThisScript.extend(lookups[script].values())
-                # Register the lookups for all languages defined by the designer
-                # for the script.
+                # Register the lookups for all languages defined in the feature
+                # file for the script, otherwise kerning is not applied if any
+                # language is set at all.
                 languages = feaScripts.get(tag, ["dflt"])
-                # NOTE: We always use the `dflt` language because there is no
-                # language-specific kerning to be derived from UFO (kerning.plist)
-                # sources and we are independent of what's going on in the rest of
-                # the features.fea file.
                 ast.addLookupReferences(feature, lookupsForThisScript, tag, languages)
 
 

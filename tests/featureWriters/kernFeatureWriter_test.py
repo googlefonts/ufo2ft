@@ -1993,6 +1993,52 @@ def test_hyphenated_duplicates(FontClass):
     )
 
 
+def test_dflt_language(FontClass):
+    """Check that languages defined for the special DFLT script are registered
+    as well."""
+
+    glyphs = {"a": ord("a"), "comma": ord(",")}
+    groups = {}
+    kerning = {("a", "a"): 1, ("comma", "comma"): 2}
+    # NOTE the deliberatly different casings for `latn`.
+    features = """
+            languagesystem DFLT dflt;
+            languagesystem DFLT ZND;
+            languagesystem Latn dflt;
+            languagesystem latn ANG;
+    """
+    ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos a a 1;
+        } kern_Latn;
+
+        lookup kern_Default {
+            lookupflag IgnoreMarks;
+            pos comma comma 2;
+        } kern_Default;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Default;
+            language ZND;
+
+            script latn;
+            language dflt;
+            lookup kern_Default;
+            lookup kern_Latn;
+            language ANG;
+        } kern;
+        """
+    )
+
+
 if __name__ == "__main__":
     import sys
 
