@@ -204,9 +204,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         # setting any language for a script would deactivate kerning.
         feaScripts = ast.getScriptLanguageSystems(feaFile, excludeDflt=False)
         ctx.feaScripts = {
-            # NOTE: Lower otTag because it's sourced verbatim from the feature
-            # file, except if it's "DFLT", because that one is special.
-            (otTag.lower() if otTag != "DFLT" else otTag): languages
+            otTag: languages
             for _, languageSystems in feaScripts.items()
             for otTag, languages in languageSystems
         }
