@@ -56,4 +56,7 @@ for filtername in args.filters:
     f(ufo)
 
 logger.info("Written on %s" % args.output)
-ufo.save(args.output)
+try:
+    ufo.save(args.output, overwrite=True)
+except TypeError:
+    ufo.save(args.output)
