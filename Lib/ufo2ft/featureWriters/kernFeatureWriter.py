@@ -202,10 +202,10 @@ class KernFeatureWriter(BaseFeatureWriter):
         # generated kerning needs to be registered for the script's `dflt`
         # language, but also all those the designer defined manually. Otherwise,
         # setting any language for a script would deactivate kerning.
-        feaScripts = ast.getScriptLanguageSystems(feaFile, excludeDflt=False)
-        ctx.feaScripts = {
+        feaLanguagesByScript = ast.getScriptLanguageSystems(feaFile, excludeDflt=False)
+        ctx.feaLanguagesByScript = {
             otTag: languages
-            for _, languageSystems in feaScripts.items()
+            for _, languageSystems in feaLanguagesByScript.items()
             for otTag, languages in languageSystems
         }
 
@@ -472,15 +472,15 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
-        feaScripts = self.context.feaScripts
+        feaLanguagesByScript = self.context.feaLanguagesByScript
         if "kern" in self.context.todo:
             kern = ast.FeatureBlock("kern")
-            self._registerLookups(kern, lookups, feaScripts)
+            self._registerLookups(kern, lookups, feaLanguagesByScript)
             if kern.statements:
                 features["kern"] = kern
         if "dist" in self.context.todo:
             dist = ast.FeatureBlock("dist")
-            self._registerLookups(dist, lookups, feaScripts)
+            self._registerLookups(dist, lookups, feaLanguagesByScript)
             if dist.statements:
                 features["dist"] = dist
         return features
@@ -489,12 +489,12 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _registerLookups(
         feature: ast.FeatureBlock,
         lookups: dict[str, dict[str, ast.LookupBlock]],
-        feaScripts: Mapping[str, list[str]],
+        feaLanguagesByScript: Mapping[str, list[str]],
     ) -> None:
         # Ensure we have kerning for pure common script runs (e.g. ">1")
         isKernBlock = feature.name == "kern"
         if isKernBlock and COMMON_SCRIPT in lookups:
-            languages = feaScripts.get("DFLT", ["dflt"])
+            languages = feaLanguagesByScript.get("DFLT", ["dflt"])
             ast.addLookupReferences(
                 feature, lookups[COMMON_SCRIPT].values(), "DFLT", languages
             )
@@ -530,7 +530,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 # Register the lookups for all languages defined in the feature
                 # file for the script, otherwise kerning is not applied if any
                 # language is set at all.
-                languages = feaScripts.get(tag, ["dflt"])
+                languages = feaLanguagesByScript.get(tag, ["dflt"])
                 ast.addLookupReferences(feature, lookupsForThisScript, tag, languages)
 
 
