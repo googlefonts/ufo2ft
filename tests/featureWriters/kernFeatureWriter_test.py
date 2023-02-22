@@ -777,11 +777,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Default;
                 lookup kern_Arab;
+                language URD;
 
                 script latn;
                 language dflt;
                 lookup kern_Default;
                 lookup kern_Latn;
+                language TRK;
             } kern;
             """
         )
@@ -901,12 +903,14 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 lookup kern_Default;
                 lookup kern_Arab;
                 lookup kern_Arab_marks;
+                language URD;
 
                 script latn;
                 language dflt;
                 lookup kern_Default;
                 lookup kern_Latn;
                 lookup kern_Latn_marks;
+                language TRK;
             } kern;
             """
         )
@@ -988,6 +992,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Arab;
                 lookup kern_Arab_marks;
+                language ARA;
             } kern;
             """
         )
@@ -1983,6 +1988,51 @@ def test_hyphenated_duplicates(FontClass):
             script DFLT;
             language dflt;
             lookup kern_Default;
+        } kern;
+        """
+    )
+
+
+def test_dflt_language(FontClass):
+    """Check that languages defined for the special DFLT script are registered
+    as well."""
+
+    glyphs = {"a": ord("a"), "comma": ord(",")}
+    groups = {}
+    kerning = {("a", "a"): 1, ("comma", "comma"): 2}
+    features = """
+            languagesystem DFLT dflt;
+            languagesystem DFLT ZND;
+            languagesystem latn dflt;
+            languagesystem latn ANG;
+    """
+    ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos a a 1;
+        } kern_Latn;
+
+        lookup kern_Default {
+            lookupflag IgnoreMarks;
+            pos comma comma 2;
+        } kern_Default;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Default;
+            language ZND;
+
+            script latn;
+            language dflt;
+            lookup kern_Default;
+            lookup kern_Latn;
+            language ANG;
         } kern;
         """
     )
