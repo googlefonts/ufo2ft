@@ -198,6 +198,17 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.glyphSet = self.getOrderedGlyphSet()
 
+        # Remember which languages are defined for which OT tag, as all
+        # generated kerning needs to be registered for the script's `dflt`
+        # language, but also all those the designer defined manually. Otherwise,
+        # setting any language for a script would deactivate kerning.
+        feaLanguagesByScript = ast.getScriptLanguageSystems(feaFile, excludeDflt=False)
+        ctx.feaLanguagesByScript = {
+            otTag: languages
+            for _, languageSystems in feaLanguagesByScript.items()
+            for otTag, languages in languageSystems
+        }
+
         # TODO: Also include substitution information from Designspace rules to
         # correctly set the scripts of variable substitution glyphs, maybe add
         # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
@@ -461,27 +472,31 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
+        feaLanguagesByScript = self.context.feaLanguagesByScript
         if "kern" in self.context.todo:
             kern = ast.FeatureBlock("kern")
-            self._registerLookups(kern, lookups)
+            self._registerLookups(kern, lookups, feaLanguagesByScript)
             if kern.statements:
                 features["kern"] = kern
         if "dist" in self.context.todo:
             dist = ast.FeatureBlock("dist")
-            self._registerLookups(dist, lookups)
+            self._registerLookups(dist, lookups, feaLanguagesByScript)
             if dist.statements:
                 features["dist"] = dist
         return features
 
     @staticmethod
     def _registerLookups(
-        feature: ast.FeatureBlock, lookups: dict[str, dict[str, ast.LookupBlock]]
+        feature: ast.FeatureBlock,
+        lookups: dict[str, dict[str, ast.LookupBlock]],
+        feaLanguagesByScript: Mapping[str, list[str]],
     ) -> None:
         # Ensure we have kerning for pure common script runs (e.g. ">1")
         isKernBlock = feature.name == "kern"
         if isKernBlock and COMMON_SCRIPT in lookups:
+            languages = feaLanguagesByScript.get("DFLT", ["dflt"])
             ast.addLookupReferences(
-                feature, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
+                feature, lookups[COMMON_SCRIPT].values(), "DFLT", languages
             )
 
         # Feature blocks use script tags to distinguish what to run for a
@@ -512,11 +527,11 @@ class KernFeatureWriter(BaseFeatureWriter):
                     if dfltScript in lookups:
                         lookupsForThisScript.extend(lookups[dfltScript].values())
                 lookupsForThisScript.extend(lookups[script].values())
-                # NOTE: We always use the `dflt` language because there is no
-                # language-specific kerning to be derived from UFO (kerning.plist)
-                # sources and we are independent of what's going on in the rest of
-                # the features.fea file.
-                ast.addLookupReferences(feature, lookupsForThisScript, tag, ["dflt"])
+                # Register the lookups for all languages defined in the feature
+                # file for the script, otherwise kerning is not applied if any
+                # language is set at all.
+                languages = feaLanguagesByScript.get(tag, ["dflt"])
+                ast.addLookupReferences(feature, lookupsForThisScript, tag, languages)
 
 
 def splitKerning(pairs, glyphScripts):
