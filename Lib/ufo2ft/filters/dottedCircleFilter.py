@@ -53,6 +53,7 @@ from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.filters import BaseFilter
+from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _getNewGlyphFactory, _GlyphSet, _LazyFontName, _setGlyphMargin
 
 logger = logging.getLogger(__name__)
@@ -152,11 +153,12 @@ class DottedCircleFilter(BaseFilter):
         glyph = _getNewGlyphFactory(proto)(name="uni25CC", unicodes=[0x25CC])
         pen = glyph.getPen()
 
-        bigradius = (font.info.xHeight - 2 * self.options.margin) / 2
+        xHeight = getAttrWithFallback(font.info, "xHeight")
+        bigradius = (xHeight - 2 * self.options.margin) / 2
         littleradius = bigradius / 6
         left = self.options.sidebearing + littleradius
         right = self.options.sidebearing + bigradius * 2 - littleradius
-        middleY = font.info.xHeight / 2
+        middleY = xHeight / 2
         middleX = (left + right) / 2
         subangle = 2 * math.pi / self.options.dots
         for t in range(self.options.dots):
