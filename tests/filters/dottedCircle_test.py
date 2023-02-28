@@ -33,3 +33,16 @@ def test_dotted_circle_filter(FontClass, datadir):
     assert len(dotted_circle) == 12
     assert int(dotted_circle.width) == 688
     assert dotted_circle.unicodes == [0x25CC]
+
+
+def test_empty_font(FontClass):
+    """Check that the filter works on an empty font, i.e. uses fallbacks where
+    appropriate."""
+
+    font = FontClass()
+    philter = DottedCircleFilter()
+    glyphset = _GlyphSet.from_layer(font)
+
+    modified = philter(font, glyphset)
+
+    assert "uni25CC" in modified
