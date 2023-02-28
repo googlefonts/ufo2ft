@@ -1956,6 +1956,76 @@ def test_defining_classdefs(FontClass):
     )
 
 
+def test_mark_base_kerning(FontClass):
+    """Check that kerning of bases against marks is correctly split into
+    base-only and mixed-mark-and-base lookups, to preserve the semantics of
+    kerning exceptions (pairs modifying the effect of other pairs)."""
+
+    glyphs = {
+        "aa-tamil": 0x0B86,
+        "va-tamil": 0x0BB5,
+        "aulengthmark-tamil": 0x0BD7,
+    }
+    groups = {
+        # Each group is a mix of mark and base glyph.
+        "public.kern1.e-tamil": ["aulengthmark-tamil", "va-tamil"],
+        "public.kern2.e-tamil": ["aulengthmark-tamil", "va-tamil"],
+    }
+    kerning = {
+        ("aa-tamil", "va-tamil"): -20,
+        ("aa-tamil", "public.kern2.e-tamil"): -35,
+        ("va-tamil", "aa-tamil"): -20,
+        ("public.kern1.e-tamil", "aa-tamil"): -35,
+        ("aulengthmark-tamil", "aulengthmark-tamil"): -200,
+        ("public.kern1.e-tamil", "public.kern2.e-tamil"): -100,
+    }
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+    ufo.lib["public.openTypeCategories"] = {
+        "aulengthmark-tamil": "mark",
+    }
+
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        @kern1.Taml.etamil = [va-tamil];
+        @kern1.Taml.etamil_1 = [aulengthmark-tamil];
+        @kern2.Taml.etamil = [va-tamil];
+        @kern2.Taml.etamil_1 = [aulengthmark-tamil];
+
+        lookup kern_Taml {
+            lookupflag IgnoreMarks;
+            pos aa-tamil va-tamil -20;
+            pos va-tamil aa-tamil -20;
+            enum pos aa-tamil @kern2.Taml.etamil -35;
+            enum pos @kern1.Taml.etamil aa-tamil -35;
+            pos @kern1.Taml.etamil @kern2.Taml.etamil -100;
+        } kern_Taml;
+
+        lookup kern_Taml_marks {
+            pos aulengthmark-tamil aulengthmark-tamil -200;
+            enum pos aa-tamil @kern2.Taml.etamil_1 -35;
+            enum pos @kern1.Taml.etamil_1 aa-tamil -35;
+            pos @kern1.Taml.etamil_1 @kern2.Taml.etamil_1 -100;
+            pos @kern1.Taml.etamil_1 @kern2.Taml.etamil -100;
+            pos @kern1.Taml.etamil @kern2.Taml.etamil_1 -100;
+        } kern_Taml_marks;
+
+        feature dist {
+            script tml2;
+            language dflt;
+            lookup kern_Taml;
+            lookup kern_Taml_marks;
+
+            script taml;
+            language dflt;
+            lookup kern_Taml;
+            lookup kern_Taml_marks;
+        } dist;
+        """
+    )
+
+
 def test_hyphenated_duplicates(FontClass):
     """Check that kerning group names are kept separate even if their sanitized
     names are the same."""
