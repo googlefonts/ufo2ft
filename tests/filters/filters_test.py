@@ -38,6 +38,7 @@ def fooBar():
 def test_getFilterClass():
     assert getFilterClass("Foo Bar") == FooBarFilter
     assert getFilterClass("FooBar") == FooBarFilter
+    assert getFilterClass("FooBarFilter") == FooBarFilter
     assert getFilterClass("fooBar") == FooBarFilter
     with pytest.raises(ImportError):
         getFilterClass("Baz")
