@@ -1,4 +1,7 @@
-from ufo2ft.filters.dottedCircleFilter import DottedCircleFilter
+import logging
+
+from ufo2ft.filters import loadFilters
+from ufo2ft.filters.dottedCircle import DottedCircleFilter
 from ufo2ft.util import _GlyphSet
 
 
@@ -45,6 +48,25 @@ def test_empty_font(FontClass):
     ]
 
     pre_filters, _ = loadFilters(font)
+    (philter,) = pre_filters
+    glyphset = _GlyphSet.from_layer(font)
+
+    modified = philter(font, glyphset)
+
+    assert "uni25CC" in modified
+
+
+def test_empty_font_deprecated(FontClass, caplog):
+    """Check that the module redirection works."""
+
+    font = FontClass()
+    font.lib["com.github.googlei18n.ufo2ft.filters"] = [
+        {"name": "DottedCircleFilter", "pre": True}
+    ]
+
+    with caplog.at_level(logging.WARNING):
+        pre_filters, _ = loadFilters(font)
+    assert "Please update" in caplog.text
     (philter,) = pre_filters
     glyphset = _GlyphSet.from_layer(font)
 
