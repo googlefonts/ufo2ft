@@ -340,7 +340,7 @@ def unicodeScriptDirection(uv):
     sc = unicodedata.script(chr(uv))
     if sc in DFLT_SCRIPTS:
         return None
-    return unicodedata.script_horizontal_direction(sc)
+    return unicodedata.script_horizontal_direction(sc, "LTR")
 
 
 def calcCodePageRanges(unicodes):
