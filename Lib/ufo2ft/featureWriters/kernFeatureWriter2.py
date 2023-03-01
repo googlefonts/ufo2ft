@@ -257,7 +257,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         scriptGroups = {}
         for scriptCode, scriptLangSys in feaScripts.items():
             if scriptCode:
-                direction = unicodedata.script_horizontal_direction(scriptCode)
+                direction = unicodedata.script_horizontal_direction(scriptCode, "LTR")
             else:
                 direction = "LTR"
             if scriptCode in DIST_ENABLED_SCRIPTS:
