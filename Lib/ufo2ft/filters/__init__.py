@@ -9,7 +9,7 @@ from .base import BaseFilter
 from .cubicToQuadratic import CubicToQuadraticFilter
 from .decomposeComponents import DecomposeComponentsFilter
 from .decomposeTransformedComponents import DecomposeTransformedComponentsFilter
-from .dottedCircleFilter import DottedCircleFilter
+from .dottedCircle import DottedCircleFilter
 from .explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
 from .flattenComponents import FlattenComponentsFilter
 from .propagateAnchors import PropagateAnchorsFilter

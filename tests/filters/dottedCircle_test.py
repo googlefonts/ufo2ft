@@ -40,7 +40,12 @@ def test_empty_font(FontClass):
     appropriate."""
 
     font = FontClass()
-    philter = DottedCircleFilter()
+    font.lib["com.github.googlei18n.ufo2ft.filters"] = [
+        {"name": "dottedCircle", "pre": True}
+    ]
+
+    pre_filters, _ = loadFilters(font)
+    (philter,) = pre_filters
     glyphset = _GlyphSet.from_layer(font)
 
     modified = philter(font, glyphset)
