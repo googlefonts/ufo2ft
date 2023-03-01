@@ -1,6 +1,5 @@
 from ufo2ft.filters.dottedCircleFilter import DottedCircleFilter
 from ufo2ft.util import _GlyphSet
-from ufo2ft.filters import loadFilters
 
 
 def test_dotted_circle_filter(FontClass, datadir):
@@ -41,12 +40,7 @@ def test_empty_font(FontClass):
     appropriate."""
 
     font = FontClass()
-    font.lib["com.github.googlei18n.ufo2ft.filters"] = [
-        {"name": "DottedCircleFilter", "pre": True}
-    ]
-
-    pre_filters, _ = loadFilters(font)
-    (philter,) = pre_filters
+    philter = DottedCircleFilter()
     glyphset = _GlyphSet.from_layer(font)
 
     modified = philter(font, glyphset)
