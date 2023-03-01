@@ -25,7 +25,7 @@ or in the ``lib.plist`` file of a UFO::
     <array>
       <dict>
         <key>name</key>
-        <string>DottedCircleFilter</string>
+        <string>dottedCircle</string>
         <key>pre</key>
         <true/>
       </dict>
