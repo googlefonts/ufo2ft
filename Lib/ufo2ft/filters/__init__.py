@@ -45,8 +45,6 @@ def getFilterClass(filterName, pkg="ufo2ft.filters"):
     # TODO add support for third-party plugin discovery?
     # if filter name is 'Foo Bar', the module should be called 'fooBar'
     filterName = filterName.replace(" ", "")
-    if filterName.endswith("Filter"):
-        filterName = filterName[: -len("Filter")]
     moduleName = filterName[0].lower() + filterName[1:]
     module = importlib.import_module(".".join([pkg, moduleName]))
     # if filter name is 'Foo Bar', the class should be called 'FooBarFilter'
