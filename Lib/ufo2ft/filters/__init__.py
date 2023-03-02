@@ -48,7 +48,9 @@ def getFilterClass(filterName, pkg="ufo2ft.filters"):
     moduleName = filterName[0].lower() + filterName[1:]
     module = importlib.import_module(".".join([pkg, moduleName]))
     # if filter name is 'Foo Bar', the class should be called 'FooBarFilter'
-    className = filterName[0].upper() + filterName[1:] + "Filter"
+    className = filterName[0].upper() + filterName[1:]
+    if not className.endswith("Filter"):
+        className += "Filter"
     return getattr(module, className)
 
 
