@@ -1,4 +1,4 @@
-import logging
+import pytest
 
 from ufo2ft.filters import loadFilters
 from ufo2ft.filters.dottedCircle import DottedCircleFilter
@@ -56,7 +56,7 @@ def test_empty_font(FontClass):
     assert "uni25CC" in modified
 
 
-def test_empty_font_deprecated(FontClass, caplog):
+def test_empty_font_deprecated(FontClass):
     """Check that the module redirection works."""
 
     font = FontClass()
@@ -64,9 +64,8 @@ def test_empty_font_deprecated(FontClass, caplog):
         {"name": "DottedCircleFilter", "pre": True}
     ]
 
-    with caplog.at_level(logging.WARNING):
+    with pytest.warns(UserWarning, match="Please update .*"):
         pre_filters, _ = loadFilters(font)
-    assert "Please update" in caplog.text
     (philter,) = pre_filters
     glyphset = _GlyphSet.from_layer(font)
 

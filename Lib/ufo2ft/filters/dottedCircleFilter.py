@@ -5,17 +5,17 @@ Make an alias for the class here to steer the importer in the right
 direction.
 """
 
-import logging
+import warnings
 
 from .dottedCircle import DottedCircleFilter
-
-LOGGER = logging.getLogger(__name__)
 
 
 class DottedCircleFilterFilter(DottedCircleFilter):
     def __init__(self, *args, **kwargs):
-        LOGGER.warning(
+        warnings.warn(
             "Please update your filter name from `DottedCircleFilter` to "
-            "`dottedCircle`."
+            "`dottedCircle`.",
+            UserWarning,
+            stacklevel=1,
         )
         super().__init__(*args, **kwargs)
