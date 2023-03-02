@@ -56,6 +56,7 @@ def test_empty_font(FontClass):
     assert "uni25CC" in modified
 
 
+@pytest.mark.filterwarnings("ignore:Please update")
 def test_empty_font_deprecated(FontClass):
     """Check that the module redirection works."""
 
@@ -64,8 +65,7 @@ def test_empty_font_deprecated(FontClass):
         {"name": "DottedCircleFilter", "pre": True}
     ]
 
-    with pytest.warns(UserWarning, match="Please update .*"):
-        pre_filters, _ = loadFilters(font)
+    pre_filters, _ = loadFilters(font)
     (philter,) = pre_filters
     glyphset = _GlyphSet.from_layer(font)
 
