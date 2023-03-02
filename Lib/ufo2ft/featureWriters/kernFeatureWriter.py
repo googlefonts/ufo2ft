@@ -393,16 +393,53 @@ class KernFeatureWriter(BaseFeatureWriter):
             self._makeSplitScriptKernLookups(lookups, pairs)
         return lookups
 
-    def _splitBaseAndMarkPairs(self, pairs, marks):
-        basePairs, markPairs = [], []
-        if marks:
-            for pair in pairs:
-                if any(glyph in marks for glyph in pair.glyphs):
-                    markPairs.append(pair)
+    def _splitBaseAndMarkPairs(
+        self, pairs: list[KerningPair], marks: set[str]
+    ) -> tuple[list[KerningPair], list[KerningPair]]:
+        if not marks:
+            return list(pairs), []
+
+        basePairs: list[KerningPair] = []
+        markPairs: list[KerningPair] = []
+        for pair in pairs:
+            # Disentangle kerning between bases and marks by splitting a pair
+            # into a list of base-to-base pairs (basePairs) and a list of
+            # base-to-mark, mark-to-base and mark-to-mark pairs (markPairs).
+            # This ensures that "kerning exceptions" (a kerning pair modifying
+            # the effect of another) work as intended because these related
+            # pairs end up in the same list together.
+            side1Bases: tuple[str, ...] | str | None = None
+            side1Marks: tuple[str, ...] | str | None = None
+            if pair.firstIsClass:
+                side1Bases = tuple(glyph for glyph in pair.side1 if glyph not in marks)
+                side1Marks = tuple(glyph for glyph in pair.side1 if glyph in marks)
+            else:
+                if pair.side1 in marks:
+                    side1Marks = pair.side1
                 else:
-                    basePairs.append(pair)
-        else:
-            basePairs[:] = pairs
+                    side1Bases = pair.side1
+
+            side2Bases: tuple[str, ...] | str | None = None
+            side2Marks: tuple[str, ...] | str | None = None
+            if pair.secondIsClass:
+                side2Bases = tuple(glyph for glyph in pair.side2 if glyph not in marks)
+                side2Marks = tuple(glyph for glyph in pair.side2 if glyph in marks)
+            else:
+                if pair.side2 in marks:
+                    side2Marks = pair.side2
+                else:
+                    side2Bases = pair.side2
+
+            if side1Bases and side2Bases:  # base-to-base
+                basePairs.append(KerningPair(side1Bases, side2Bases, value=pair.value))
+
+            if side1Bases and side2Marks:  # base-to-mark
+                markPairs.append(KerningPair(side1Bases, side2Marks, value=pair.value))
+            if side1Marks and side2Bases:  # mark-to-base
+                markPairs.append(KerningPair(side1Marks, side2Bases, value=pair.value))
+            if side1Marks and side2Marks:  # mark-to-mark
+                markPairs.append(KerningPair(side1Marks, side2Marks, value=pair.value))
+
         return basePairs, markPairs
 
     def _makeSplitScriptKernLookups(self, lookups, pairs, ignoreMarks=True, suffix=""):
