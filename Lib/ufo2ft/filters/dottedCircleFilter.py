@@ -6,7 +6,7 @@ import warnings
 from .dottedCircle import DottedCircleFilter  # noqa
 
 warnings.warn(
-    "Please update your filter name from `DottedCircleFilter` to " "`dottedCircle`.",
+    "The dottedCircleFilter module is deprecated, please import dottedCircle instead.",
     UserWarning,
     stacklevel=1,
 )
