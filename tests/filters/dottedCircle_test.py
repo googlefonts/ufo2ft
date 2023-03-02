@@ -1,4 +1,7 @@
-from ufo2ft.filters.dottedCircleFilter import DottedCircleFilter
+import pytest
+
+from ufo2ft.filters import loadFilters
+from ufo2ft.filters.dottedCircle import DottedCircleFilter
 from ufo2ft.util import _GlyphSet
 
 
@@ -40,7 +43,30 @@ def test_empty_font(FontClass):
     appropriate."""
 
     font = FontClass()
-    philter = DottedCircleFilter()
+    font.lib["com.github.googlei18n.ufo2ft.filters"] = [
+        {"name": "dottedCircle", "pre": True}
+    ]
+
+    pre_filters, _ = loadFilters(font)
+    (philter,) = pre_filters
+    glyphset = _GlyphSet.from_layer(font)
+
+    modified = philter(font, glyphset)
+
+    assert "uni25CC" in modified
+
+
+@pytest.mark.filterwarnings("ignore:Please update")
+def test_empty_font_deprecated(FontClass):
+    """Check that the module redirection works."""
+
+    font = FontClass()
+    font.lib["com.github.googlei18n.ufo2ft.filters"] = [
+        {"name": "DottedCircleFilter", "pre": True}
+    ]
+
+    pre_filters, _ = loadFilters(font)
+    (philter,) = pre_filters
     glyphset = _GlyphSet.from_layer(font)
 
     modified = philter(font, glyphset)
