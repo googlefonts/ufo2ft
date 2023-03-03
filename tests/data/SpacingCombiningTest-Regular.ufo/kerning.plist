@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>highspacingdot-deva</key>
+    <dict>
+      <key>ka-deva</key>
+      <integer>-200</integer>
+    </dict>
+    <key>ka-deva</key>
+    <dict>
+      <key>highspacingdot-deva</key>
+      <integer>-150</integer>
+      <key>ra-deva</key>
+      <integer>-250</integer>
+    </dict>
+    <key>ra-deva</key>
+    <dict>
+      <key>ka-deva</key>
+      <integer>-250</integer>
+    </dict>
+  </dict>
+</plist>

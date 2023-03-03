@@ -361,7 +361,25 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makeKerningLookup(self, name, ignoreMarks=True):
         lookup = ast.LookupBlock(name)
         if ignoreMarks and self.options.ignoreMarks:
-            lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
+            # We only want to filter the spacing marks
+            marks = self.context.gdefClasses.mark
+            spacing = []
+            if marks:
+                spacing = [mark for mark in marks if self.context.font[mark].width != 0]
+            if not spacing:
+                # Simple case, there are no spacing ("Spacing Combining") marks,
+                # do what we've always done.
+                lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
+            else:
+                # We want spacing marks to block kerns.
+                className = "MFS_%s" % name
+                filteringClass = ast.makeGlyphClassDefinitions(
+                    {className: spacing}, feaFile=self.context.feaFile
+                )[className]
+                lookup.statements.append(filteringClass)
+                lookup.statements.append(
+                    ast.makeLookupFlag(markFilteringSet=filteringClass)
+                )
         return lookup
 
     def knownScriptsPerCodepoint(self, uv: int) -> set[str]:
