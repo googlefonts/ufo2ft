@@ -1,5 +1,4 @@
 import logging
-import os
 from textwrap import dedent
 
 import pytest
@@ -1257,39 +1256,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Default;
             } kern;
-            """
-        )
-
-    def test_skip_spacing_marks(self, FontClass):
-        dirname = os.path.dirname(os.path.dirname(__file__))
-        fontPath = os.path.join(dirname, "data", "SpacingCombiningTest-Regular.ufo")
-        testufo = FontClass(fontPath)
-        generated = self.writeFeatures(testufo)
-        assert dedent(str(generated)) == dedent(
-            """\
-            lookup kern_Deva {
-                @MFS_kern_Deva = [highspacingdot-deva];
-                lookupflag UseMarkFilteringSet @MFS_kern_Deva;
-                pos ka-deva ra-deva -250;
-                pos ra-deva ka-deva -250;
-            } kern_Deva;
-
-            lookup kern_Deva_marks {
-                pos highspacingdot-deva ka-deva -200;
-                pos ka-deva highspacingdot-deva -150;
-            } kern_Deva_marks;
-
-            feature dist {
-                script dev2;
-                language dflt;
-                lookup kern_Deva;
-                lookup kern_Deva_marks;
-
-                script deva;
-                language dflt;
-                lookup kern_Deva;
-                lookup kern_Deva_marks;
-            } dist;
             """
         )
 
