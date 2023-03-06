@@ -39,7 +39,7 @@ setup(
         "cffsubr": [],  # keep empty for backward compat
         "compreffor": ["compreffor>=0.4.6"],
     },
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
