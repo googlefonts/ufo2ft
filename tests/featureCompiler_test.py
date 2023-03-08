@@ -341,7 +341,6 @@ class FeatureCompilerTest:
                 sub f f by f_f;
             } liga;
 
-
             lookup kern_Default {
                 lookupflag IgnoreMarks;
                 pos a v -40;

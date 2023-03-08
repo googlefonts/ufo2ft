@@ -13,8 +13,12 @@ class FeatureWriterTest:
         """
         writer = cls.FeatureWriter(**kwargs)
         feaFile = parseLayoutFeatures(ufo)
-        n = len(feaFile.statements)
+        old_statements = [st.asFea() for st in feaFile.statements]
+
         if writer.write(ufo, feaFile):
             new = ast.FeatureFile()
-            new.statements = feaFile.statements[n:]
+
+            for statement in feaFile.statements:
+                if statement.asFea() not in old_statements:
+                    new.statements.append(statement)
             return new
