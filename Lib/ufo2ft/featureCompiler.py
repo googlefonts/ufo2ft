@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import logging
 import os
+import re
 from collections import OrderedDict
 from inspect import isclass
 from io import StringIO
 from tempfile import NamedTemporaryFile
+from typing import Any
 
 from fontTools import mtiLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
@@ -21,6 +25,7 @@ from ufo2ft.featureWriters import (
     isValidFeatureWriter,
     loadFeatureWriters,
 )
+from ufo2ft.util import describe_ufo
 
 logger = logging.getLogger(__name__)
 timer = Timer(logging.getLogger("ufo2ft.timer"), level=logging.DEBUG)
@@ -281,6 +286,16 @@ class FeatureCompiler(BaseFeatureCompiler):
             if self.featureWriters:
                 featureFile = parseLayoutFeatures(self.ufo, self.feaIncludeDir)
 
+                warn_about_miscased_insertion_markers(
+                    describe_ufo(self.ufo),
+                    featureFile,
+                    {
+                        feaWriter.insertFeatureMarker
+                        for feaWriter in self.featureWriters
+                        if feaWriter.insertFeatureMarker is not None
+                    },
+                )
+
                 path = self.ufo.path
                 for writer in self.featureWriters:
                     try:
@@ -354,3 +369,32 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
             table = mtiLib.build(features.splitlines(), self.ttFont)
             assert table.tableTag == tag
             self.ttFont[tag] = table
+
+
+def warn_about_miscased_insertion_markers(
+    ufo_description: str, feaFile: ast.FeatureFile | ast.Block, patterns: set[str]
+) -> None:
+    """Warn the user about potentially mistyped feature insertion markers."""
+
+    patterns_compiled = tuple(
+        (re.compile(pattern), re.compile(pattern, re.IGNORECASE))
+        for pattern in patterns
+    )
+
+    def _inner(block: Any) -> None:
+        for statement in block.statements:
+            if hasattr(statement, "statements"):
+                _inner(statement)
+            elif isinstance(statement, ast.Comment):
+                for pattern_case, pattern_ignore_case in patterns_compiled:
+                    match_case = re.match(pattern_case, str(statement))
+                    match_ignore_case = re.match(pattern_ignore_case, str(statement))
+                    if match_ignore_case and not match_case:
+                        logger.warning(
+                            "%s: The insertion comment '%s' in the feature file is "
+                            "miscased, ignoring it.",
+                            ufo_description,
+                            statement,
+                        )
+
+    _inner(feaFile)
