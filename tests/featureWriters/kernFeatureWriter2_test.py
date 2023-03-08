@@ -147,7 +147,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # default is ignoreMarks=True
         feaFile = self.writeFeatures(font)
         assert str(feaFile) == dedent(
-            """
+            """\
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos B C -30;
@@ -166,7 +166,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         feaFile = self.writeFeatures(font, ignoreMarks=False)
         assert str(feaFile) == dedent(
-            """
+            """\
             lookup kern_ltr {
                 pos A acutecomb -55;
                 pos B C -30;
@@ -198,7 +198,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # default is ignoreMarks=True
         feaFile = self.writeFeatures(font)
         assert str(feaFile) == dedent(
-            """
+            """\
             lookup kern_ltr_marks {
                 pos A acutecomb -55;
             } kern_ltr_marks;
@@ -301,7 +301,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # test append mode ignores insert marker
         generated = self.writeFeatures(ufo, mode="append")
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -384,7 +384,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 #
             } kern;
 
-
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -401,7 +400,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # test append mode ignores insert marker
         generated = self.writeFeatures(ufo, mode="append")
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -444,7 +443,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # test append mode ignores insert marker
         generated = self.writeFeatures(ufo, mode="append")
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -476,7 +475,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_rtl {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
@@ -906,7 +905,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos A V -40;
@@ -933,7 +932,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos A V -40;
@@ -1025,7 +1024,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_rtl {
                 lookupflag IgnoreMarks;
                 pos u10A1E u10A06 <117 0 117 0>;
@@ -1153,7 +1152,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_dflt {
                 lookupflag IgnoreMarks;
                 pos seven four -25;
