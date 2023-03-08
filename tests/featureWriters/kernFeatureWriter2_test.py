@@ -236,7 +236,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         expected = existing + dedent(
             """
-
             lookup kern_ltr {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
