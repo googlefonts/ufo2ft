@@ -80,11 +80,13 @@ class BaseFeatureWriter:
           instantiated from a FeatureCompiler);
         - a set of features (tags) to be generated. If self.mode is "skip",
           these are all the features which are _not_ already present.
+        - a set of all existing features (tags) in the feaFile.
 
         Returns the context namespace instance.
         """
         todo = set(self.features)
         insertComments = None
+        existing = set()
         if self.mode == "skip":
             if self.insertFeatureMarker is not None:
                 insertComments = self.collectInsertMarkers(
@@ -104,6 +106,7 @@ class BaseFeatureWriter:
             compiler=compiler,
             todo=todo,
             insertComments=insertComments,
+            existingFeatures=existing,
         )
 
         return self.context

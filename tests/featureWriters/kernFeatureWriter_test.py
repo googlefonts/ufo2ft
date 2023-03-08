@@ -7,7 +7,7 @@ from fontTools import unicodedata
 
 from ufo2ft.constants import UNICODE_SCRIPT_ALIASES
 from ufo2ft.errors import InvalidFeaturesData
-from ufo2ft.featureCompiler import parseLayoutFeatures
+from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
 from ufo2ft.util import DFLT_SCRIPTS, unicodeScriptExtensions
 
@@ -332,6 +332,30 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern;
             """
         )
+
+    def test_comment_wrong_case_or_missing(self, FontClass, caplog):
+        ufo = FontClass()
+        for name in ("a", "b"):
+            ufo.newGlyph(name)
+        ufo.kerning.update({("a", "b"): 25.0})
+        ufo.features.text = dedent(
+            """
+            feature kern {
+                # Automatic code
+            } kern;
+            """
+        ).strip()
+
+        with caplog.at_level(logging.WARNING):
+            compiler = FeatureCompiler(ufo, featureWriters=[KernFeatureWriter])
+            font = compiler.compile()
+
+        # We mis-cased the insertion marker above, so it's ignored and we end up
+        # with an empty `kern` block overriding the other kerning in the font
+        # source and therefore no `GPOS` table.
+        assert "miscased, ignoring it" in caplog.text
+        assert "Dropping the former" in caplog.text
+        assert "GPOS" not in font
 
     def test_insert_comment_before_extended(self, FontClass):
         ufo = FontClass()
