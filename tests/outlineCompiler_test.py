@@ -228,6 +228,26 @@ class OutlineTTFCompilerTest:
         assert meta.data["PRIA"] == b"Some private ascii string"
         assert meta.data["PRIU"] == "Some private unicode string…".encode("utf-8")
 
+    def test_setupTable_name(self, testufo):
+        compiler = OutlineTTFCompiler(testufo)
+        compiler.compile()
+        actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
+        assert actual == "Some Font Regular (Style Map Family Name)"
+
+        testufo.info.openTypeNameRecords.append(
+            {
+                "nameID": 1,
+                "platformID": 3,
+                "encodingID": 1,
+                "languageID": 1033,
+                "string": "Custom Name for Windows",
+            }
+        )
+        compiler = OutlineTTFCompiler(testufo)
+        compiler.compile()
+        actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
+        assert actual == "Custom Name for Windows"
+
 
 class OutlineOTFCompilerTest:
     def test_setupTable_CFF_all_blues_defined(self, testufo):
