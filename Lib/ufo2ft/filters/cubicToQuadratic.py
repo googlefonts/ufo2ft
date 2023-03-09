@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class CubicToQuadraticFilter(BaseFilter):
-
     _kwargs = {
         "conversionError": None,
         "reverseDirection": True,

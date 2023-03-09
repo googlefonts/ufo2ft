@@ -1,4 +1,5 @@
 import logging
+import os
 from textwrap import dedent
 
 import pytest
@@ -45,7 +46,6 @@ def getPairPosRules(lookup):
 
 
 class KernFeatureWriterTest(FeatureWriterTest):
-
     FeatureWriter = KernFeatureWriter
 
     def test_cleanup_missing_glyphs(self, FontClass):
@@ -155,7 +155,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # default is ignoreMarks=True
         feaFile = self.writeFeatures(font)
         assert str(feaFile) == dedent(
-            """
+            """\
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
                 pos B C -30;
@@ -176,7 +176,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         feaFile = self.writeFeatures(font, ignoreMarks=False)
         assert str(feaFile) == dedent(
-            """
+            """\
             lookup kern_Latn {
                 pos A acutecomb -55;
                 pos B C -30;
@@ -210,7 +210,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # default is ignoreMarks=True
         feaFile = self.writeFeatures(font)
         assert str(feaFile) == dedent(
-            """
+            """\
             lookup kern_Default_marks {
                 pos A acutecomb -55;
             } kern_Default_marks;
@@ -250,7 +250,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         expected = existing + dedent(
             """
-
             lookup kern_Default {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -319,7 +318,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # test append mode ignores insert marker
         generated = self.writeFeatures(ufo, mode="append")
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_Default {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -406,7 +405,6 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 #
             } kern;
 
-
             lookup kern_Default {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -425,7 +423,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # test append mode ignores insert marker
         generated = self.writeFeatures(ufo, mode="append")
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_Default {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -470,7 +468,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # test append mode ignores insert marker
         generated = self.writeFeatures(ufo, mode="append")
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_Default {
                 lookupflag IgnoreMarks;
                 pos seven six 25;
@@ -547,7 +545,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert dedent(str(generated)) == dedent(
-            """
+            """\
             lookup kern_Arab {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
@@ -574,7 +572,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert dedent(str(generated)) == dedent(
-            """
+            """\
             lookup kern_Thaa {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
@@ -778,11 +776,13 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Default;
                 lookup kern_Arab;
+                language URD;
 
                 script latn;
                 language dflt;
                 lookup kern_Default;
                 lookup kern_Latn;
+                language TRK;
             } kern;
             """
         )
@@ -902,12 +902,14 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 lookup kern_Default;
                 lookup kern_Arab;
                 lookup kern_Arab_marks;
+                language URD;
 
                 script latn;
                 language dflt;
                 lookup kern_Default;
                 lookup kern_Latn;
                 lookup kern_Latn_marks;
+                language TRK;
             } kern;
             """
         )
@@ -989,6 +991,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Arab;
                 lookup kern_Arab_marks;
+                language ARA;
             } kern;
             """
         )
@@ -1086,7 +1089,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert str(generated) == dedent(
-            """
+            """\
             lookup kern_Khar {
                 lookupflag IgnoreMarks;
                 pos u10A1E u10A06 <117 0 117 0>;
@@ -1206,7 +1209,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         generated = self.writeFeatures(ufo)
 
         assert dedent(str(generated)) == dedent(
-            """
+            """\
             lookup kern_Hebr {
                 lookupflag IgnoreMarks;
                 pos yod-hb bet-hb <-100 0 -100 0>;
@@ -1252,6 +1255,39 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Default;
             } kern;
+            """
+        )
+
+    def test_skip_spacing_marks(self, FontClass):
+        dirname = os.path.dirname(os.path.dirname(__file__))
+        fontPath = os.path.join(dirname, "data", "SpacingCombiningTest-Regular.ufo")
+        testufo = FontClass(fontPath)
+        generated = self.writeFeatures(testufo)
+        assert dedent(str(generated)) == dedent(
+            """\
+            lookup kern_Deva {
+                @MFS_kern_Deva = [highspacingdot-deva];
+                lookupflag UseMarkFilteringSet @MFS_kern_Deva;
+                pos ka-deva ra-deva -250;
+                pos ra-deva ka-deva -250;
+            } kern_Deva;
+
+            lookup kern_Deva_marks {
+                pos highspacingdot-deva ka-deva -200;
+                pos ka-deva highspacingdot-deva -150;
+            } kern_Deva_marks;
+
+            feature dist {
+                script dev2;
+                language dflt;
+                lookup kern_Deva;
+                lookup kern_Deva_marks;
+
+                script deva;
+                language dflt;
+                lookup kern_Deva;
+                lookup kern_Deva_marks;
+            } dist;
             """
         )
 
@@ -1836,6 +1872,269 @@ def test_kern_hira_kana_hrkt(FontClass):
             language dflt;
             lookup kern_Default;
             lookup kern_Hrkt;
+        } kern;
+        """
+    )
+
+
+# flake8: noqa: B950
+def test_defining_classdefs(FontClass):
+    """Check that we aren't redefining class definitions with different
+    content."""
+
+    glyphs = {
+        "halant-telugu": 0xC4D,  # Telu
+        "ka-telugu.below": None,  # Telu by substitution
+        "ka-telugu": 0xC15,  # Telu
+        "rVocalicMatra-telugu": 0xC43,  # Telu
+        "sha-telugu.below": None,  # Default
+        "ss-telugu.alt": None,  # Default
+        "ssa-telugu.alt": None,  # Telu by substitution
+        "ssa-telugu": 0xC37,  # Telu
+    }
+    groups = {
+        "public.kern1.sha-telugu.below": ["sha-telugu.below"],
+        # The following group is a mix of Telu and Default through its gylphs. The
+        # kerning for bases below will create a Telu and Default split group.
+        # Important for the NOTE below.
+        "public.kern1.ssa-telugu.alt": ["ssa-telugu.alt", "ss-telugu.alt"],
+        "public.kern2.ka-telugu.below": ["ka-telugu.below"],
+        "public.kern2.rVocalicMatra-telugu": ["rVocalicMatra-telugu"],
+    }
+    kerning = {
+        # The follwoing three pairs are base-to-base pairs:
+        ("public.kern1.sha-telugu.below", "public.kern2.ka-telugu.below"): 20,
+        ("public.kern1.ssa-telugu.alt", "public.kern2.ka-telugu.below"): 60,
+        ("public.kern1.ssa-telugu.alt", "sha-telugu.below"): 150,
+        # NOTE: This last pair kerns bases against marks, triggering an extra
+        # pass to make a mark lookup that will create new classDefs. This extra
+        # pass will work on just this one pair, and kern splitting won't split
+        # off a Default group from `public.kern1.ssa-telugu.alt`, you get just a
+        # Telu pair. Unless the writer keeps track of which classDefs it already
+        # generated, this will overwrite the previous `@kern1.Telu.ssatelugu.alt
+        # = [ssa-telugu.alt]` with `@kern1.Telu.ssatelugu.alt =
+        # [ss-telugu.alt]`, losing kerning.
+        ("public.kern1.ssa-telugu.alt", "public.kern2.rVocalicMatra-telugu"): 180,
+    }
+    features = """
+        feature blwf {
+            script tel2;
+            sub halant-telugu ka-telugu by ka-telugu.below;
+        } blwf;
+
+        feature psts {
+            script tel2;
+            sub ssa-telugu' [rVocalicMatra-telugu sha-telugu.below ka-telugu.below] by ssa-telugu.alt;
+        } psts;
+    """
+    ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+    ufo.lib["public.openTypeCategories"] = {
+        "halant-telugu": "mark",
+        "ka-telugu": "base",
+        "rVocalicMatra-telugu": "mark",
+        "ss-telugu.alt": "base",
+        "ssa-telugu.alt": "base",
+        "ssa-telugu": "base",
+    }
+
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        @kern1.Default.ssatelugu.alt = [ss-telugu.alt];
+        @kern1.Telu.shatelugu.below = [sha-telugu.below];
+        @kern1.Telu.ssatelugu.alt = [ssa-telugu.alt];
+        @kern2.Telu.katelugu.below = [ka-telugu.below];
+        @kern2.Telu.rVocalicMatratelugu = [rVocalicMatra-telugu];
+        
+        lookup kern_Telu {
+            lookupflag IgnoreMarks;
+            enum pos @kern1.Telu.ssatelugu.alt sha-telugu.below 150;
+            pos @kern1.Telu.shatelugu.below @kern2.Telu.katelugu.below 20;
+            pos @kern1.Default.ssatelugu.alt @kern2.Telu.katelugu.below 60;
+            pos @kern1.Telu.ssatelugu.alt @kern2.Telu.katelugu.below 60;
+        } kern_Telu;
+        
+        lookup kern_Telu_marks {
+            pos @kern1.Default.ssatelugu.alt @kern2.Telu.rVocalicMatratelugu 180;
+            pos @kern1.Telu.ssatelugu.alt @kern2.Telu.rVocalicMatratelugu 180;
+        } kern_Telu_marks;
+        
+        lookup kern_Default {
+            lookupflag IgnoreMarks;
+            enum pos @kern1.Default.ssatelugu.alt sha-telugu.below 150;
+        } kern_Default;
+        
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Default;
+        } kern;
+        
+        feature dist {
+            script tel2;
+            language dflt;
+            lookup kern_Default;
+            lookup kern_Telu;
+            lookup kern_Telu_marks;
+        
+            script telu;
+            language dflt;
+            lookup kern_Default;
+            lookup kern_Telu;
+            lookup kern_Telu_marks;
+        } dist;
+        """
+    )
+
+
+def test_mark_base_kerning(FontClass):
+    """Check that kerning of bases against marks is correctly split into
+    base-only and mixed-mark-and-base lookups, to preserve the semantics of
+    kerning exceptions (pairs modifying the effect of other pairs)."""
+
+    glyphs = {
+        "aa-tamil": 0x0B86,
+        "va-tamil": 0x0BB5,
+        "aulengthmark-tamil": 0x0BD7,
+    }
+    groups = {
+        # Each group is a mix of mark and base glyph.
+        "public.kern1.e-tamil": ["aulengthmark-tamil", "va-tamil"],
+        "public.kern2.e-tamil": ["aulengthmark-tamil", "va-tamil"],
+    }
+    kerning = {
+        ("aa-tamil", "va-tamil"): -20,
+        ("aa-tamil", "public.kern2.e-tamil"): -35,
+        ("va-tamil", "aa-tamil"): -20,
+        ("public.kern1.e-tamil", "aa-tamil"): -35,
+        ("aulengthmark-tamil", "aulengthmark-tamil"): -200,
+        ("public.kern1.e-tamil", "public.kern2.e-tamil"): -100,
+    }
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+    ufo.lib["public.openTypeCategories"] = {
+        "aulengthmark-tamil": "mark",
+    }
+
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        @kern1.Taml.etamil = [va-tamil];
+        @kern1.Taml.etamil_1 = [aulengthmark-tamil];
+        @kern2.Taml.etamil = [va-tamil];
+        @kern2.Taml.etamil_1 = [aulengthmark-tamil];
+
+        lookup kern_Taml {
+            lookupflag IgnoreMarks;
+            pos aa-tamil va-tamil -20;
+            pos va-tamil aa-tamil -20;
+            enum pos aa-tamil @kern2.Taml.etamil -35;
+            enum pos @kern1.Taml.etamil aa-tamil -35;
+            pos @kern1.Taml.etamil @kern2.Taml.etamil -100;
+        } kern_Taml;
+
+        lookup kern_Taml_marks {
+            pos aulengthmark-tamil aulengthmark-tamil -200;
+            enum pos aa-tamil @kern2.Taml.etamil_1 -35;
+            enum pos @kern1.Taml.etamil_1 aa-tamil -35;
+            pos @kern1.Taml.etamil_1 @kern2.Taml.etamil_1 -100;
+            pos @kern1.Taml.etamil_1 @kern2.Taml.etamil -100;
+            pos @kern1.Taml.etamil @kern2.Taml.etamil_1 -100;
+        } kern_Taml_marks;
+
+        feature dist {
+            script tml2;
+            language dflt;
+            lookup kern_Taml;
+            lookup kern_Taml_marks;
+
+            script taml;
+            language dflt;
+            lookup kern_Taml;
+            lookup kern_Taml_marks;
+        } dist;
+        """
+    )
+
+
+def test_hyphenated_duplicates(FontClass):
+    """Check that kerning group names are kept separate even if their sanitized
+    names are the same."""
+
+    glyphs = {"comma": ord(","), "period": ord(".")}
+    groups = {
+        "public.kern1.hy-phen": ["comma"],
+        "public.kern1.hyp-hen": ["period"],
+    }
+    kerning = {
+        ("public.kern1.hy-phen", "comma"): 1,
+        ("public.kern1.hyp-hen", "period"): 2,
+    }
+    ufo = makeUFO(FontClass, glyphs, groups, kerning)
+
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        @kern1.Default.hyphen = [comma];
+        @kern1.Default.hyphen_1 = [period];
+
+        lookup kern_Default {
+            lookupflag IgnoreMarks;
+            enum pos @kern1.Default.hyphen comma 1;
+            enum pos @kern1.Default.hyphen_1 period 2;
+        } kern_Default;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Default;
+        } kern;
+        """
+    )
+
+
+def test_dflt_language(FontClass):
+    """Check that languages defined for the special DFLT script are registered
+    as well."""
+
+    glyphs = {"a": ord("a"), "comma": ord(",")}
+    groups = {}
+    kerning = {("a", "a"): 1, ("comma", "comma"): 2}
+    features = """
+            languagesystem DFLT dflt;
+            languagesystem DFLT ZND;
+            languagesystem latn dflt;
+            languagesystem latn ANG;
+    """
+    ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+
+    newFeatures = KernFeatureWriterTest.writeFeatures(ufo)
+
+    assert dedent(str(newFeatures)) == dedent(
+        """\
+        lookup kern_Latn {
+            lookupflag IgnoreMarks;
+            pos a a 1;
+        } kern_Latn;
+
+        lookup kern_Default {
+            lookupflag IgnoreMarks;
+            pos comma comma 2;
+        } kern_Default;
+
+        feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Default;
+            language ZND;
+
+            script latn;
+            language dflt;
+            lookup kern_Default;
+            lookup kern_Latn;
+            language ANG;
         } kern;
         """
     )

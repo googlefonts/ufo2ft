@@ -20,15 +20,16 @@ for name in getattr(ast, "__all__", dir(ast)):
 del sys, self, name
 
 
-def getScriptLanguageSystems(feaFile):
+def getScriptLanguageSystems(feaFile, excludeDflt=True):
     """Return dictionary keyed by Unicode script code containing lists of
-    (OT_SCRIPT_TAG, [OT_LANGUAGE_TAG, ...]) tuples (excluding "DFLT").
+    (OT_SCRIPT_TAG, [OT_LANGUAGE_TAG, ...]) tuples (excluding "DFLT" by default,
+    unless excludeDflt is False).
     """
     languagesByScript = collections.OrderedDict()
     for ls in [
         st for st in feaFile.statements if isinstance(st, ast.LanguageSystemStatement)
     ]:
-        if ls.script == "DFLT":
+        if ls.script == "DFLT" and excludeDflt:
             continue
         languagesByScript.setdefault(ls.script, []).append(ls.language)
 

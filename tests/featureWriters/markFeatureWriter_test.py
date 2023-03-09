@@ -65,7 +65,6 @@ def test_NamedAnchor_repr():
 
 
 class MarkFeatureWriterTest(FeatureWriterTest):
-
     FeatureWriter = MarkFeatureWriter
 
     def test__makeMarkClassDefinitions_empty(self, FontClass):
@@ -283,9 +282,9 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         assert str(feaFile) == dedent(
             """\
-            markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
+            markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark2base {
                     pos base a
@@ -378,6 +377,8 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         assert str(feaFile) == dedent(
             """\
+            markClass tildecomb <anchor 100 200> @MC_top;
+
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
@@ -388,8 +389,6 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 #
                 #
             } mark;
-
-            markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mark {
                 lookup mark2base {
