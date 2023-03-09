@@ -316,6 +316,8 @@ class TTFInterpolatablePreProcessor:
                 else:
                     func(ufo, glyphSet)
 
+        self.check_for_nonmatching_components(needs_decomposition)
+
         # If we decomposed a glyph in some masters, we must ensure it is decomposed in
         # all masters. (https://github.com/googlefonts/ufo2ft/issues/507)
         if needs_decomposition:
@@ -355,3 +357,35 @@ class TTFInterpolatablePreProcessor:
                 func(ufo, glyphSet)
 
         return self.glyphSets
+
+    def check_for_nonmatching_components(self, needs_decomposition):
+        # Look through all the glyphsets and if we find any glyphs
+        # where the transforms don't match across masters, we add it
+        # to the needs_decomposition list. See #507
+
+        all_glyphs = set.union(*[set(x.keys()) for x in self.glyphSets])
+
+        for glyph in all_glyphs:
+            if glyph in needs_decomposition:
+                continue  # We know there's an issue here
+            layers = [
+                glyphset[glyph] for glyphset in self.glyphSets if glyph in glyphset
+            ]
+
+            # Skip early if there aren't any components
+            component_counts = [len(layer.components) for layer in layers]
+            if not any(component_counts):
+                continue
+
+            # Other bits of the system will check for incompatible construction,
+            # we just want to stay alive.
+            for component_index in range(0, min(component_counts)):
+                # We only care about the two-by-twos; translations can differ
+                transforms = [
+                    layer.components[component_index].transformation[0:4]
+                    for layer in layers
+                ]
+
+                if any(transform != transforms[0] for transform in transforms):
+                    needs_decomposition.add(glyph)
+                    break

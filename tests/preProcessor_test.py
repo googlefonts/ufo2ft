@@ -379,6 +379,19 @@ class SkipExportGlyphsTest:
         assert glyphs["e"].numberOfContours == 13
         assert not hasattr(glyphs["e"], "components")
 
+    def test_decompose_transformed_different_transforms(self, FontClass):
+        ufo1 = FontClass(getpath("ComponentTransformTest-Regular.ufo"))
+        ufo2 = FontClass(getpath("ComponentTransformTest-Bold.ufo"))
+        fonts = ufo2ft.compileInterpolatableTTFs([ufo1, ufo2], inplace=True)
+        for font in fonts:
+            glyphs = font["glyf"].glyphs
+            for g in glyphs.values():
+                g.expand(font["glyf"])
+            assert not hasattr(glyphs["no_component"], "components")
+            assert hasattr(glyphs["component_no_transform"], "components")
+            assert hasattr(glyphs["component_same_transform"], "components")
+            assert not hasattr(glyphs["component_different_transform"], "components")
+
 
 @pytest.fixture
 def color_ufo(FontClass):

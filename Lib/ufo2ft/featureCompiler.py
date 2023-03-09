@@ -47,7 +47,7 @@ def parseLayoutFeatures(font, includeDir=None):
         # the include directory to the parent of the UFO.
         ufoPath = os.path.normpath(ufoPath)
         buf.name = os.path.join(ufoPath, "features.fea")
-        includeDir = os.path.dirname(ufoPath)
+        includeDir = os.path.dirname(ufoPath) or "."
     glyphNames = set(font.keys())
     includeDir = os.path.normpath(includeDir) if includeDir else None
     try:
@@ -281,8 +281,14 @@ class FeatureCompiler(BaseFeatureCompiler):
             if self.featureWriters:
                 featureFile = parseLayoutFeatures(self.ufo, self.feaIncludeDir)
 
+                path = self.ufo.path
                 for writer in self.featureWriters:
-                    writer.write(self.ufo, featureFile, compiler=self)
+                    try:
+                        writer.write(self.ufo, featureFile, compiler=self)
+                    except FeatureLibError:
+                        if path is None:
+                            self._write_temporary_feature_file(featureFile.asFea())
+                        raise
 
                 # stringify AST to get correct line numbers in error messages
                 self.features = featureFile.asFea()
@@ -316,14 +322,15 @@ class FeatureCompiler(BaseFeatureCompiler):
                 addOpenTypeFeaturesFromString(self.ttFont, self.features, filename=path)
             except FeatureLibError:
                 if path is None:
-                    # if compilation fails, create temporary file for inspection
-                    data = self.features.encode("utf-8")
-                    with NamedTemporaryFile(delete=False) as tmp:
-                        tmp.write(data)
-                    logger.error(
-                        "Compilation failed! Inspect temporary file: %r", tmp.name
-                    )
+                    self._write_temporary_feature_file(self.features)
                 raise
+
+    def _write_temporary_feature_file(self, features: str) -> None:
+        # if compilation fails, create temporary file for inspection
+        data = features.encode("utf-8")
+        with NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(data)
+        logger.error("Compilation failed! Inspect temporary file: %r", tmp.name)
 
 
 class MtiFeatureCompiler(BaseFeatureCompiler):
