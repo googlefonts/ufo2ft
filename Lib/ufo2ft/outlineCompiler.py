@@ -1471,9 +1471,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
         maxp.maxComponentElements = max(
             len(g.components) for g in self.allGlyphs.values()
         )
-        maxComponentDepths = self.getMaxComponentDepths()
-        if maxComponentDepths:
-            maxp.maxComponentDepth = max(maxComponentDepths)
+        maxp.maxComponentDepth = max(self.getMaxComponentDepths().values(), default=0)
 
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
