@@ -22,7 +22,7 @@ from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPointPen
 from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.standardGlyphOrder import standardGlyphOrder
-from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS, Glyph
+from fontTools.ttLib.tables._g_l_y_f import Glyph
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
@@ -1395,7 +1395,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         topDict.FontBBox = self.fontBoundingBox
 
 
-class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
+class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines."""
 
     sfntVersion = "\000\001\000\000"
@@ -1489,13 +1489,19 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
         post.glyphOrder = self.glyphOrder
 
     def setupOtherTables(self):
+        self.instructionCompiler = InstructionCompiler(
+            self.ufo, self.otf, autoUseMyMetrics=self.autoUseMyMetrics
+        )
+
         self.setupTable_glyf()
+
         if self.ufo.info.openTypeGaspRangeRecords:
             self.setupTable_gasp()
-        self.setupTable_cvt()
-        self.setupTable_fpgm()
-        self.setupTable_prep()
-        self.update_maxp()
+
+        self.instructionCompiler.setupTable_cvt()
+        self.instructionCompiler.setupTable_fpgm()
+        self.instructionCompiler.setupTable_prep()
+        self.instructionCompiler.update_maxp()
 
     def setupTable_glyf(self):
         """Make the glyf table."""
@@ -1507,7 +1513,6 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
-        hmtx = self.otf.get("hmtx")
         ttGlyphs = self.getCompiledGlyphs()
         # Sort the glyphs so that simple glyphs are compiled first, and composite
         # glyphs are compiled later. Otherwise the glyph hashes may not be ready
@@ -1515,38 +1520,25 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
         maxComponentDepths = self.getMaxComponentDepths()
         for name in sorted(self.glyphOrder, key=lambda n: maxComponentDepths.get(n, 0)):
             ttGlyph = ttGlyphs[name]
-            if ttGlyph.isComposite() and hmtx is not None and self.autoUseMyMetrics:
-                self.autoUseMyMetrics(ttGlyph, name, hmtx)
-            self.compileGlyphInstructions(ttGlyph, name)
+            self.instructionCompiler.compileGlyphInstructions(ttGlyph, name)
             glyf[name] = ttGlyph
 
         # update various maxp fields based on glyf without needing to compile the font
         if "maxp" in self.otf:
             self.otf["maxp"].recalc(self.otf)
 
-    @staticmethod
-    def autoUseMyMetrics(ttGlyph, glyphName, hmtx):
-        """Set the "USE_MY_METRICS" flag on the first component having the
-        same advance width as the composite glyph, no transform and no
-        horizontal shift (but allow it to shift vertically).
-        This forces the composite glyph to use the possibly hinted horizontal
-        metrics of the sub-glyph, instead of those from the "hmtx" table.
-        """
-        width = hmtx[glyphName][0]
-        for component in ttGlyph.components:
-            try:
-                baseName, transform = component.getComponentInfo()
-            except AttributeError:
-                # component uses '{first,second}Pt' instead of 'x' and 'y'
-                continue
-            try:
-                baseMetrics = hmtx[baseName]
-            except KeyError:
-                continue  # ignore missing components
-            else:
-                if baseMetrics[0] == width and transform[:-1] == (1, 0, 0, 1, 0):
-                    component.flags |= USE_MY_METRICS
-                    break
+    # NOTE: the previous 'autoUseMyMetrics' method was moved to the InstructionCompiler
+    # This property setter is kept for backward compatibility to support the relatively
+    # obscure use-case (present in tests) of setting compiler.autoUseMyMetrics = None
+    # in order to disable the feature. It seems to me it's unlikely that one would like
+    # actually disable this at all...
+    @property
+    def autoUseMyMetrics(self) -> bool:
+        return getattr(self, "_autoUseMyMetrics", True)
+
+    @autoUseMyMetrics.setter
+    def autoUseMyMetrics(self, value):
+        self._autoUseMyMetrics = bool(value)
 
 
 class StubGlyph:
