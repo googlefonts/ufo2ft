@@ -1513,13 +1513,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler, InstructionCompiler):
         # glyphs are compiled later. Otherwise the glyph hashes may not be ready
         # to calculate when a base glyph of a composite glyph is not in the font yet.
         maxComponentDepths = self.getMaxComponentDepths()
-        compilation_order = [
-            name
-            for _, name in sorted(
-                [(maxComponentDepths.get(name, 0), name) for name in self.glyphOrder]
-            )
-        ]
-        for name in compilation_order:
+        for name in sorted(self.glyphOrder, key=lambda n: maxComponentDepths.get(n, 0)):
             ttGlyph = ttGlyphs[name]
             if ttGlyph.isComposite() and hmtx is not None and self.autoUseMyMetrics:
                 self.autoUseMyMetrics(ttGlyph, name, hmtx)
