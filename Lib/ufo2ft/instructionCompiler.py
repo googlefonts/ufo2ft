@@ -22,8 +22,8 @@ from ufo2ft.constants import (
 )
 
 if TYPE_CHECKING:
-    from defcon import Font, Glyph
     from fontTools.ttLib.tables._g_l_y_f import Glyph as TTGlyph
+    from ufoLib2 import Font, Glyph
 
 
 logger = logging.getLogger(__name__)
@@ -31,11 +31,13 @@ logger = logging.getLogger(__name__)
 
 class InstructionCompiler:
     def __init__(
-        self, ufo: Optional[Font] = None, otf: Optional[ttLib.TTFont] = None
+        self, ufo: Font, otf: ttLib.TTFont, autoUseMyMetrics: bool = True
     ) -> None:
         self.ufo = ufo
         self.otf = otf
-        self.autoUseMyMetrics = False
+        if not autoUseMyMetrics:
+            # If autoUseMyMetrics is False, replace the method with a no-op
+            self.autoUseMyMetrics = lambda *args: None
 
     def _check_glyph_hash(
         self, glyphName: str, ttglyph: TTGlyph, glyph_hash: Optional[str]
@@ -63,7 +65,8 @@ class InstructionCompiler:
             return False
         return True
 
-    def _check_tt_data_format(self, ttdata: dict, name: str) -> None:
+    @staticmethod
+    def _check_tt_data_format(ttdata: dict, name: str) -> None:
         """Make sure we understand the format version, currently only version 1
         is supported."""
         formatVersion = ttdata.get("formatVersion", None)
@@ -144,6 +147,30 @@ class InstructionCompiler:
         ttglyph.program = ttLib.tables.ttProgram.Program()
         ttglyph.program.fromAssembly(asm)
 
+    def autoUseMyMetrics(self, ttGlyph, glyphName):
+        """Set the "USE_MY_METRICS" flag on the first component having the
+        same advance width as the composite glyph, no transform and no
+        horizontal shift (but allow it to shift vertically).
+        This forces the composite glyph to use the possibly hinted horizontal
+        metrics of the sub-glyph, instead of those from the "hmtx" table.
+        """
+        hmtx = self.otf["hmtx"]
+        width = hmtx[glyphName][0]
+        for component in ttGlyph.components:
+            try:
+                baseName, transform = component.getComponentInfo()
+            except AttributeError:
+                # component uses '{first,second}Pt' instead of 'x' and 'y'
+                continue
+            try:
+                baseMetrics = hmtx[baseName]
+            except KeyError:
+                continue  # ignore missing components
+            else:
+                if baseMetrics[0] == width and transform[:-1] == (1, 0, 0, 1, 0):
+                    component.flags |= USE_MY_METRICS
+                    break
+
     def _set_composite_flags(self, glyph: Glyph, ttglyph: TTGlyph) -> None:
         # Set component flags
 
@@ -155,6 +182,7 @@ class InstructionCompiler:
                 f"{len(ttglyph.components)}, not setting component flags from"
                 "UFO. They may still be set heuristically."
             )
+            self.autoUseMyMetrics(ttglyph, glyph.name)
             return
 
         # We need to decide when to set the flags.
@@ -162,7 +190,9 @@ class InstructionCompiler:
         # doesn't have an identifier, we should leave the flags alone.
 
         # Keep track of which component has the USE_MY_METRICS flag
+        # and whether any component lib contains the useMyMetrics key
         use_my_metrics_comp = None
+        lib_contains_use_my_metrics_key = False
 
         for i, c in enumerate(ttglyph.components):
 
@@ -203,11 +233,6 @@ class InstructionCompiler:
                     c.flags &= ~ROUND_XY_TO_GRID
 
                 # USE_MY_METRICS
-
-                if self.autoUseMyMetrics:
-                    # Leave the existing USE_MY_METRICS flag alone
-                    continue
-
                 if component_lib.get(TRUETYPE_METRICS_KEY, False):
                     if use_my_metrics_comp is None:
                         c.flags |= USE_MY_METRICS
@@ -222,6 +247,12 @@ class InstructionCompiler:
                         c.flags &= ~USE_MY_METRICS
                 else:
                     c.flags &= ~USE_MY_METRICS
+                lib_contains_use_my_metrics_key |= TRUETYPE_METRICS_KEY in component_lib
+
+        # If no UFO component has the 'public.truetype.useMyMetrics' key defined
+        # we try to automatically set it
+        if not lib_contains_use_my_metrics_key:
+            self.autoUseMyMetrics(ttglyph, glyph.name)
 
     def update_maxp(self) -> None:
         """Update the maxp table with relevant values from the UFO and compiled
