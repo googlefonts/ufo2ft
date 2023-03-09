@@ -195,7 +195,6 @@ class InstructionCompiler:
         lib_contains_use_my_metrics_key = False
 
         for i, c in enumerate(ttglyph.components):
-
             # Set OVERLAP_COMPOUND on the first component only
             if i == 0 and TRUETYPE_OVERLAP_KEY in glyph.lib:
                 if glyph.lib.get(TRUETYPE_OVERLAP_KEY, False):

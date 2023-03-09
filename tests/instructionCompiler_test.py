@@ -80,7 +80,6 @@ def testufo(FontClass):
 
 
 class InstructionCompilerTest:
-
     # _check_glyph_hash
 
     def test_check_glyph_hash_match(self, quaduforeversed, quadfont):
