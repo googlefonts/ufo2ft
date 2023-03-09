@@ -59,17 +59,14 @@ class AbstractMarkPos:
 
 
 class MarkToBasePos(AbstractMarkPos):
-
     Statement = ast.MarkBasePosStatement
 
 
 class MarkToMarkPos(AbstractMarkPos):
-
     Statement = ast.MarkMarkPosStatement
 
 
 class MarkToLigaPos(AbstractMarkPos):
-
     Statement = ast.MarkLigPosStatement
 
     def _filterMarks(self, include):

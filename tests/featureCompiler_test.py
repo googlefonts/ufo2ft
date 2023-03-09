@@ -15,8 +15,6 @@ from ufo2ft.featureWriters import (
     ast,
 )
 
-from .testSupport import pushd
-
 
 class ParseLayoutFeaturesTest:
     def test_include(self, FontClass, tmpdir):
@@ -40,14 +38,16 @@ class ParseLayoutFeaturesTest:
 
         assert "# hello world" in str(fea)
 
-    def test_include_no_ufo_path(self, FontClass, tmpdir):
+    def test_include_no_ufo_path(self, FontClass, tmpdir, monkeypatch):
         ufo = FontClass()
         ufo.features.text = dedent(
             """\
             include(test.fea)
             """
         )
-        with pushd(str(tmpdir)):
+        with monkeypatch.context() as context:
+            context.chdir(str(tmpdir))
+            ufo.save("Test.ufo")
             with pytest.raises(IncludedFeaNotFound):
                 parseLayoutFeatures(ufo)
 
@@ -97,6 +97,18 @@ class ParseLayoutFeaturesTest:
         ufo.save(tmp_path / "Test.ufo")
 
         fea = parseLayoutFeatures(ufo, features_dir)
+
+        assert "# hello world" in str(fea)
+
+    def test_include_dir_cwd(self, FontClass, tmp_path, monkeypatch):
+        (tmp_path / "test.fea").write_text("# hello world", encoding="utf-8")
+        ufo = FontClass()
+        ufo.features.text = "include(test.fea)"
+
+        with monkeypatch.context() as context:
+            context.chdir(tmp_path)
+            ufo.save("Test.ufo")
+            fea = parseLayoutFeatures(ufo)
 
         assert "# hello world" in str(fea)
 
@@ -224,7 +236,6 @@ class FeatureCompilerTest:
 
     def test_GSUB_writers_run_first(self, FontClass):
         class FooFeatureWriter(BaseFeatureWriter):
-
             tableTag = "GSUB"
 
             def write(self, font, feaFile, compiler=None):
@@ -329,7 +340,6 @@ class FeatureCompilerTest:
             feature liga {
                 sub f f by f_f;
             } liga;
-
 
             lookup kern_Default {
                 lookupflag IgnoreMarks;

@@ -234,23 +234,21 @@ class BaseFeatureWriter:
             statements.insert(index, feature)
             indices.append(index)
 
-        # Write classDefs, anchorsDefs, markClassDefs, lookups at earliest
-        # opportunity.
-        others = []
         minindex = min(indices)
+        if lookups:
+            feaFile.statements = statements = (
+                statements[:minindex] + lookups + statements[minindex:]
+            )
+
+        # Write classDefs, anchorsDefs, markClassDefs, lookups at
+        # the very top of the feature file.
+        others = []
         for defs in [classDefs, anchorDefs, markClassDefs]:
             if defs:
                 others.extend(defs)
                 others.append(ast.Comment(""))
-        # Insert lookups
-        if lookups:
-            if minindex > 0 and not others:
-                others.append(ast.Comment(""))
-            others.extend(lookups)
-        if others:
-            feaFile.statements = statements = (
-                statements[:minindex] + others + statements[minindex:]
-            )
+
+        feaFile.statements = statements = others + statements
 
     @staticmethod
     def collectInsertMarkers(feaFile, insertFeatureMarker, featureTags):

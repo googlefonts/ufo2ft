@@ -38,7 +38,6 @@ def testufo(FontClass):
 
 
 class GdefFeatureWriterTest(FeatureWriterTest):
-
     FeatureWriter = GdefFeatureWriter
 
     @classmethod

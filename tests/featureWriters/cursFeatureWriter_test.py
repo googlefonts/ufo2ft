@@ -19,7 +19,6 @@ def testufo(FontClass):
 
 
 class CursFeatureWriterTest(FeatureWriterTest):
-
     FeatureWriter = CursFeatureWriter
 
     def test_curs_feature(self, testufo):

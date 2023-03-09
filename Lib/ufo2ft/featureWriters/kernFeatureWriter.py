@@ -198,6 +198,17 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.glyphSet = self.getOrderedGlyphSet()
 
+        # Remember which languages are defined for which OT tag, as all
+        # generated kerning needs to be registered for the script's `dflt`
+        # language, but also all those the designer defined manually. Otherwise,
+        # setting any language for a script would deactivate kerning.
+        feaLanguagesByScript = ast.getScriptLanguageSystems(feaFile, excludeDflt=False)
+        ctx.feaLanguagesByScript = {
+            otTag: languages
+            for _, languageSystems in feaLanguagesByScript.items()
+            for otTag, languages in languageSystems
+        }
+
         # TODO: Also include substitution information from Designspace rules to
         # correctly set the scripts of variable substitution glyphs, maybe add
         # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
@@ -350,7 +361,25 @@ class KernFeatureWriter(BaseFeatureWriter):
     def _makeKerningLookup(self, name, ignoreMarks=True):
         lookup = ast.LookupBlock(name)
         if ignoreMarks and self.options.ignoreMarks:
-            lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
+            # We only want to filter the spacing marks
+            marks = self.context.gdefClasses.mark
+            spacing = []
+            if marks:
+                spacing = [mark for mark in marks if self.context.font[mark].width != 0]
+            if not spacing:
+                # Simple case, there are no spacing ("Spacing Combining") marks,
+                # do what we've always done.
+                lookup.statements.append(ast.makeLookupFlag("IgnoreMarks"))
+            else:
+                # We want spacing marks to block kerns.
+                className = "MFS_%s" % name
+                filteringClass = ast.makeGlyphClassDefinitions(
+                    {className: spacing}, feaFile=self.context.feaFile
+                )[className]
+                lookup.statements.append(filteringClass)
+                lookup.statements.append(
+                    ast.makeLookupFlag(markFilteringSet=filteringClass)
+                )
         return lookup
 
     def knownScriptsPerCodepoint(self, uv: int) -> set[str]:
@@ -382,28 +411,73 @@ class KernFeatureWriter(BaseFeatureWriter):
             self._makeSplitScriptKernLookups(lookups, pairs)
         return lookups
 
-    def _splitBaseAndMarkPairs(self, pairs, marks):
-        basePairs, markPairs = [], []
-        if marks:
-            for pair in pairs:
-                if any(glyph in marks for glyph in pair.glyphs):
-                    markPairs.append(pair)
+    def _splitBaseAndMarkPairs(
+        self, pairs: list[KerningPair], marks: set[str]
+    ) -> tuple[list[KerningPair], list[KerningPair]]:
+        if not marks:
+            return list(pairs), []
+
+        basePairs: list[KerningPair] = []
+        markPairs: list[KerningPair] = []
+        for pair in pairs:
+            # Disentangle kerning between bases and marks by splitting a pair
+            # into a list of base-to-base pairs (basePairs) and a list of
+            # base-to-mark, mark-to-base and mark-to-mark pairs (markPairs).
+            # This ensures that "kerning exceptions" (a kerning pair modifying
+            # the effect of another) work as intended because these related
+            # pairs end up in the same list together.
+            side1Bases: tuple[str, ...] | str | None = None
+            side1Marks: tuple[str, ...] | str | None = None
+            if pair.firstIsClass:
+                side1Bases = tuple(glyph for glyph in pair.side1 if glyph not in marks)
+                side1Marks = tuple(glyph for glyph in pair.side1 if glyph in marks)
+            else:
+                if pair.side1 in marks:
+                    side1Marks = pair.side1
                 else:
-                    basePairs.append(pair)
-        else:
-            basePairs[:] = pairs
+                    side1Bases = pair.side1
+
+            side2Bases: tuple[str, ...] | str | None = None
+            side2Marks: tuple[str, ...] | str | None = None
+            if pair.secondIsClass:
+                side2Bases = tuple(glyph for glyph in pair.side2 if glyph not in marks)
+                side2Marks = tuple(glyph for glyph in pair.side2 if glyph in marks)
+            else:
+                if pair.side2 in marks:
+                    side2Marks = pair.side2
+                else:
+                    side2Bases = pair.side2
+
+            if side1Bases and side2Bases:  # base-to-base
+                basePairs.append(KerningPair(side1Bases, side2Bases, value=pair.value))
+
+            if side1Bases and side2Marks:  # base-to-mark
+                markPairs.append(KerningPair(side1Bases, side2Marks, value=pair.value))
+            if side1Marks and side2Bases:  # mark-to-base
+                markPairs.append(KerningPair(side1Marks, side2Bases, value=pair.value))
+            if side1Marks and side2Marks:  # mark-to-mark
+                markPairs.append(KerningPair(side1Marks, side2Marks, value=pair.value))
+
         return basePairs, markPairs
 
     def _makeSplitScriptKernLookups(self, lookups, pairs, ignoreMarks=True, suffix=""):
         bidiGlyphs = self.context.bidiGlyphs
         glyphScripts = self.context.glyphScripts
         kerningPerScript = splitKerning(pairs, glyphScripts)
+        side1Classes = self.context.kerning.side1Classes
+        side2Classes = self.context.kerning.side2Classes
 
-        classDefs, side1Classes, side2Classes = makeAllGlyphClassDefinitions(
+        newClassDefs, newSide1Classes, newSide2Classes = makeAllGlyphClassDefinitions(
             kerningPerScript, self.context, self.context.feaFile
         )
-        assert not classDefs.keys() & self.context.kerning.classDefs.keys()
-        self.context.kerning.classDefs.update(classDefs)
+        # NOTE: Consider duplicate names a bug, even if the classes would carry
+        # the same glyphs.
+        assert not self.context.kerning.classDefs.keys() & newClassDefs.keys()
+        self.context.kerning.classDefs.update(newClassDefs)
+        assert not side1Classes.keys() & newSide1Classes.keys()
+        side1Classes.update(newSide1Classes)
+        assert not side2Classes.keys() & newSide2Classes.keys()
+        side2Classes.update(newSide2Classes)
 
         for script, pairs in kerningPerScript.items():
             scriptLookups = lookups.setdefault(script, {})
@@ -453,27 +527,31 @@ class KernFeatureWriter(BaseFeatureWriter):
 
     def _makeFeatureBlocks(self, lookups):
         features = {}
+        feaLanguagesByScript = self.context.feaLanguagesByScript
         if "kern" in self.context.todo:
             kern = ast.FeatureBlock("kern")
-            self._registerLookups(kern, lookups)
+            self._registerLookups(kern, lookups, feaLanguagesByScript)
             if kern.statements:
                 features["kern"] = kern
         if "dist" in self.context.todo:
             dist = ast.FeatureBlock("dist")
-            self._registerLookups(dist, lookups)
+            self._registerLookups(dist, lookups, feaLanguagesByScript)
             if dist.statements:
                 features["dist"] = dist
         return features
 
     @staticmethod
     def _registerLookups(
-        feature: ast.FeatureBlock, lookups: dict[str, dict[str, ast.LookupBlock]]
+        feature: ast.FeatureBlock,
+        lookups: dict[str, dict[str, ast.LookupBlock]],
+        feaLanguagesByScript: Mapping[str, list[str]],
     ) -> None:
         # Ensure we have kerning for pure common script runs (e.g. ">1")
         isKernBlock = feature.name == "kern"
         if isKernBlock and COMMON_SCRIPT in lookups:
+            languages = feaLanguagesByScript.get("DFLT", ["dflt"])
             ast.addLookupReferences(
-                feature, lookups[COMMON_SCRIPT].values(), "DFLT", ["dflt"]
+                feature, lookups[COMMON_SCRIPT].values(), "DFLT", languages
             )
 
         # Feature blocks use script tags to distinguish what to run for a
@@ -504,11 +582,11 @@ class KernFeatureWriter(BaseFeatureWriter):
                     if dfltScript in lookups:
                         lookupsForThisScript.extend(lookups[dfltScript].values())
                 lookupsForThisScript.extend(lookups[script].values())
-                # NOTE: We always use the `dflt` language because there is no
-                # language-specific kerning to be derived from UFO (kerning.plist)
-                # sources and we are independent of what's going on in the rest of
-                # the features.fea file.
-                ast.addLookupReferences(feature, lookupsForThisScript, tag, ["dflt"])
+                # Register the lookups for all languages defined in the feature
+                # file for the script, otherwise kerning is not applied if any
+                # language is set at all.
+                languages = feaLanguagesByScript.get(tag, ["dflt"])
+                ast.addLookupReferences(feature, lookupsForThisScript, tag, languages)
 
 
 def splitKerning(pairs, glyphScripts):
@@ -597,39 +675,53 @@ def partitionByScript(
 
 
 def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
-    side1Classes = {}
-    side2Classes = {}
+    # Note: Refer to the context for existing classDefs and mappings of glyph
+    # class tuples to feaLib AST to avoid overwriting existing class names,
+    # because base and mark kerning pairs might be separate passes.
+    newClassDefs = {}
+    existingSide1Classes = context.kerning.side1Classes
+    existingSide2Classes = context.kerning.side2Classes
+    newSide1Classes = {}
+    newSide2Classes = {}
     side1Membership = context.side1Membership
     side2Membership = context.side2Membership
 
-    classDefs = {}
     if feaFile is not None:
         classNames = {cdef.name for cdef in ast.iterClassDefinitions(feaFile)}
     else:
         classNames = set()
+    classNames.update(context.kerning.classDefs.keys())
 
     # Generate common class names first so that common classes are correctly
     # named in other lookups.
     if COMMON_SCRIPT in kerningPerScript:
         common_pairs = kerningPerScript[COMMON_SCRIPT]
         for pair in common_pairs:
-            if pair.firstIsClass and pair.side1 not in side1Classes:
+            if (
+                pair.firstIsClass
+                and pair.side1 not in existingSide1Classes
+                and pair.side1 not in newSide1Classes
+            ):
                 addClassDefinition(
                     "kern1",
                     pair.side1,
-                    side1Classes,
+                    newSide1Classes,
                     side1Membership,
-                    classDefs,
+                    newClassDefs,
                     classNames,
                     COMMON_CLASS_NAME,
                 )
-            if pair.secondIsClass and pair.side2 not in side2Classes:
+            if (
+                pair.secondIsClass
+                and pair.side2 not in existingSide2Classes
+                and pair.side2 not in newSide2Classes
+            ):
                 addClassDefinition(
                     "kern2",
                     pair.side2,
-                    side2Classes,
+                    newSide2Classes,
                     side2Membership,
-                    classDefs,
+                    newClassDefs,
                     classNames,
                     COMMON_CLASS_NAME,
                 )
@@ -639,28 +731,36 @@ def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
         if script == COMMON_SCRIPT:
             continue
         for pair in pairs:
-            if pair.firstIsClass and pair.side1 not in side1Classes:
+            if (
+                pair.firstIsClass
+                and pair.side1 not in existingSide1Classes
+                and pair.side1 not in newSide1Classes
+            ):
                 addClassDefinition(
                     "kern1",
                     pair.side1,
-                    side1Classes,
+                    newSide1Classes,
                     side1Membership,
-                    classDefs,
+                    newClassDefs,
                     classNames,
                     script,
                 )
-            if pair.secondIsClass and pair.side2 not in side2Classes:
+            if (
+                pair.secondIsClass
+                and pair.side2 not in existingSide2Classes
+                and pair.side2 not in newSide2Classes
+            ):
                 addClassDefinition(
                     "kern2",
                     pair.side2,
-                    side2Classes,
+                    newSide2Classes,
                     side2Membership,
-                    classDefs,
+                    newClassDefs,
                     classNames,
                     script,
                 )
 
-    return classDefs, side1Classes, side2Classes
+    return newClassDefs, newSide1Classes, newSide2Classes
 
 
 def addClassDefinition(
