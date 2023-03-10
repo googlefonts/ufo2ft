@@ -392,9 +392,10 @@ def warn_about_miscased_insertion_markers(
                     if match_ignore_case and not match_case:
                         logger.warning(
                             "%s: The insertion comment '%s' in the feature file is "
-                            "miscased, ignoring it.",
+                            "miscased (search pattern: %s), ignoring it.",
                             ufo_description,
                             statement,
+                            pattern_case.pattern,
                         )
 
     _inner(feaFile)
