@@ -353,9 +353,22 @@ class KernFeatureWriterTest(FeatureWriterTest):
         # We mis-cased the insertion marker above, so it's ignored and we end up
         # with an empty `kern` block overriding the other kerning in the font
         # source and therefore no `GPOS` table.
-        assert "miscased, ignoring it" in caplog.text
+        assert "miscased" in caplog.text
         assert "Dropping the former" in caplog.text
         assert "GPOS" not in font
+
+        # Append mode ignores insertion markers and so should not log warnings
+        # and have kerning in the final font.
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
+            compiler = FeatureCompiler(
+                ufo, featureWriters=[KernFeatureWriter(mode="append")]
+            )
+            font = compiler.compile()
+
+        assert "miscased" in caplog.text
+        assert "Dropping the former" not in caplog.text
+        assert "GPOS" in font
 
     def test_insert_comment_before_extended(self, FontClass):
         ufo = FontClass()
