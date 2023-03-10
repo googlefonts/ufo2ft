@@ -372,7 +372,7 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
 
 
 def warn_about_miscased_insertion_markers(
-    ufo_description: str, feaFile: ast.FeatureFile | ast.Block, patterns: set[str]
+    ufo_description: str, feaFile: ast.FeatureFile, patterns: set[str]
 ) -> None:
     """Warn the user about potentially mistyped feature insertion markers."""
 
@@ -381,21 +381,21 @@ def warn_about_miscased_insertion_markers(
         for pattern in patterns
     )
 
-    def _inner(block: Any) -> None:
+    # NOTE: Insertion markers can only meaningfully occur in top-level feature
+    # blocks.
+    for block in ast.iterFeatureBlocks(feaFile):
         for statement in block.statements:
-            if hasattr(statement, "statements"):
-                _inner(statement)
-            elif isinstance(statement, ast.Comment):
-                for pattern_case, pattern_ignore_case in patterns_compiled:
-                    match_case = re.match(pattern_case, str(statement))
-                    match_ignore_case = re.match(pattern_ignore_case, str(statement))
-                    if match_ignore_case and not match_case:
-                        logger.warning(
-                            "%s: The insertion comment '%s' in the feature file is "
-                            "miscased (search pattern: %s), ignoring it.",
-                            ufo_description,
-                            statement,
-                            pattern_case.pattern,
-                        )
-
-    _inner(feaFile)
+            if not isinstance(statement, ast.Comment):
+                continue
+            for pattern_case, pattern_ignore_case in patterns_compiled:
+                text = str(statement)
+                match_case = re.match(pattern_case, text)
+                match_ignore_case = re.match(pattern_ignore_case, text)
+                if match_ignore_case and not match_case:
+                    logger.warning(
+                        "%s: The insertion comment '%s' in the feature file is "
+                        "miscased (search pattern: %s), ignoring it.",
+                        ufo_description,
+                        text,
+                        pattern_case.pattern,
+                    )
