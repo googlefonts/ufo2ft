@@ -165,6 +165,8 @@ class BaseOutlineCompiler:
         if self.meta:
             self.setupTable_meta()
         self.setupOtherTables()
+        if self.colorLayers:
+            self._computeCOLRClipBoxes()
         self.importTTX()
 
         return self.otf
@@ -975,6 +977,23 @@ class BaseOutlineCompiler:
                 clipBoxes=clipBoxes,
                 allowLayerReuse=self.colrLayerReuse,
             )
+
+    def _computeCOLRClipBoxes(self):
+        if (
+            "COLR" not in self.otf
+            or self.otf["COLR"].version == 0
+            or self.otf["COLR"].table.ClipList is not None
+        ):
+            return
+
+        # we don't need exact, tightest clipboxes, it's preferable that same clipboxes get
+        # reused, hence we quantize to 1/10th of upem, rounded to nearest multiple of 10
+        # e.g. 100 unit intervals for 1000 upem, 200 units for 2048 etc.
+        # TODO: Make the quantization configurable?
+        upem = getAttrWithFallback(self.ufo.info, "unitsPerEm")
+        self.otf["COLR"].table.computeClipBoxes(
+            self.otf.getGlyphSet(), quantization=int(round(upem / 10, -1))
+        )
 
     def setupTable_CPAL(self):
         """
