@@ -622,5 +622,6 @@ def describe_ufo(ufo: Any) -> str:
         and hasattr(ufo.reader.fs, "root_path")
     ):
         return ufo.reader.fs.root_path
-    else:
+    elif ufo.info.familyName or ufo.info.styleName:
         return f"{ufo.info.familyName} {ufo.info.styleName}"
+    return repr(ufo)
