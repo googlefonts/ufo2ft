@@ -623,5 +623,5 @@ def describe_ufo(ufo: Any) -> str:
     ):
         return ufo.reader.fs.root_path
     elif ufo.info.familyName or ufo.info.styleName:
-        return f"{ufo.info.familyName} {ufo.info.styleName}"
+        return " ".join(n for n in (ufo.info.familyName, ufo.info.styleName) if n)
     return repr(ufo)
