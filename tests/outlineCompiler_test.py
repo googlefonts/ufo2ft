@@ -3,6 +3,7 @@ import os
 
 import pytest
 from cu2qu.ufo import font_to_quadratic
+from fontTools.colorLib.unbuilder import unbuildColrV1
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 
@@ -900,6 +901,66 @@ class ColrCpalTest:
             "b": [("b.color1", 1), ("b.color2", 0)],
             "c": [("c.color2", 1), ("c.color1", 0)],
         }
+
+    @pytest.mark.parametrize("compileFunc", [compileTTF, compileOTF])
+    @pytest.mark.parametrize("manualClipBoxes", [True, False])
+    @pytest.mark.parametrize("autoClipBoxes", [True, False])
+    def test_colrv1_computeClipBoxes(
+        self,
+        FontClass,
+        compileFunc,
+        manualClipBoxes,
+        autoClipBoxes,
+    ):
+        testufo = FontClass(getpath("COLRv1Test.ufo"))
+        assert "com.github.googlei18n.ufo2ft.colorLayers" in testufo.lib
+        assert "com.github.googlei18n.ufo2ft.colorPalettes" in testufo.lib
+        assert "com.github.googlei18n.ufo2ft.colrClipBoxes" not in testufo.lib
+
+        if manualClipBoxes:
+            testufo.lib["com.github.googlei18n.ufo2ft.colrClipBoxes"] = [
+                ("a", (0, 0, 1000, 1000))
+            ]
+
+        result = compileFunc(testufo, colrAutoClipBoxes=autoClipBoxes)
+        palettes = [
+            [(c.red, c.green, c.blue, c.alpha) for c in p]
+            for p in result["CPAL"].palettes
+        ]
+        assert palettes == [[(255, 76, 26, 255), (0, 102, 204, 255)]]
+
+        colr = result["COLR"].table
+        layers = unbuildColrV1(colr.LayerList, colr.BaseGlyphList)
+        assert layers == {
+            "a": {
+                "Format": 1,
+                "Layers": [
+                    {
+                        "Format": 10,
+                        "Paint": {"Format": 2, "PaletteIndex": 0, "Alpha": 1.0},
+                        "Glyph": "a.color1",
+                    },
+                    {
+                        "Format": 10,
+                        "Paint": {"Format": 2, "PaletteIndex": 1, "Alpha": 1.0},
+                        "Glyph": "a.color2",
+                    },
+                ],
+            }
+        }
+
+        if manualClipBoxes or autoClipBoxes:
+            assert colr.ClipList is not None
+            clipBoxes = {g: clip.as_tuple() for g, clip in colr.ClipList.clips.items()}
+            if manualClipBoxes:
+                # the one that was set manually always prevails
+                assert clipBoxes == {"a": (0, 0, 1000, 1000)}
+            elif autoClipBoxes:
+                # the clipBox that was computed automatically
+                assert clipBoxes == {"a": (100, 0, 500, 700)}
+        else:
+            # no clipboxes, neither manual nor automatic
+            assert colr.ClipList is None
 
 
 class CmapTest:
