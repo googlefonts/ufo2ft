@@ -204,12 +204,14 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.glyphSet = self.getOrderedGlyphSet()
 
-        # If the font contains kerning, the feaFile contains `kern` or `dist`
-        # feature blocks, but we have no insertion markers (or they were
-        # misspelt and ignored), warn the user that the kerning blocks in the
-        # feaFile take precedence and other kerning is dropped.
+        # Unless we use the legacy append mode (which ignores insertion
+        # markers), if the font contains kerning and the feaFile contains `kern`
+        # or `dist` feature blocks, but we have no insertion markers (or they
+        # were misspelt and ignored), warn the user that the kerning blocks in
+        # the feaFile take precedence and other kerning is dropped.
         if (
-            font.kerning
+            self.mode == "skip"
+            and font.kerning
             and ctx.existingFeatures & self.features
             and not ctx.insertComments
         ):
