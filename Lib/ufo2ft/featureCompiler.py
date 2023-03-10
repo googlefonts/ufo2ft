@@ -286,15 +286,16 @@ class FeatureCompiler(BaseFeatureCompiler):
             if self.featureWriters:
                 featureFile = parseLayoutFeatures(self.ufo, self.feaIncludeDir)
 
-                warn_about_miscased_insertion_markers(
-                    describe_ufo(self.ufo),
-                    featureFile,
-                    {
-                        feaWriter.insertFeatureMarker
-                        for feaWriter in self.featureWriters
-                        if feaWriter.insertFeatureMarker is not None
-                    },
-                )
+                # Insertion markers are only considered in "skip" mode.
+                if any(writer.mode == "skip" for writer in self.featureWriters):
+                    markers = {
+                        writer.insertFeatureMarker
+                        for writer in self.featureWriters
+                        if writer.insertFeatureMarker is not None
+                    }
+                    warn_about_miscased_insertion_markers(
+                        describe_ufo(self.ufo), featureFile, markers
+                    )
 
                 path = self.ufo.path
                 for writer in self.featureWriters:

@@ -366,8 +366,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
             )
             font = compiler.compile()
 
-        assert "miscased" in caplog.text
-        assert "Dropping the former" not in caplog.text
+        assert not caplog.text
         assert "GPOS" in font
 
     def test_insert_comment_before_extended(self, FontClass):
