@@ -143,18 +143,19 @@
 
   <fpgm>
     <assembly>
-      PUSHB[ ]
-      0 0
-      SVTCA[0]
-      MDRP[01100]
+      PUSHB[ ]	/* 1 value pushed */
+      0
+      FDEF[ ]	/* FunctionDefinition */
+        POP[ ]	/* PopTopStack */
+      ENDF[ ]	/* EndFunctionDefinition */
     </assembly>
   </fpgm>
 
   <prep>
     <assembly>
-      PUSHB[ ]
+      PUSHB[ ]	/* 2 values pushed */
       4 3
-      INSTCTRL[ ]
+      INSTCTRL[ ]	/* SetInstrExecControl */
     </assembly>
   </prep>
 
@@ -239,10 +240,10 @@
       </contour>
       <instructions>
         <assembly>
-          PUSHB[ ]
+          PUSHB[ ]	/* 2 values pushed */
           0 0
-          SVTCA[0]
-          MDRP[01100]
+          SVTCA[0]	/* SetFPVectorToAxis */
+          MDRP[01100]	/* MoveDirectRelPt */
         </assembly>
       </instructions>
     </TTGlyph>
