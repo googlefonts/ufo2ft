@@ -63,9 +63,9 @@
     <maxZones value="1"/>
     <maxTwilightPoints value="0"/>
     <maxStorage value="0"/>
-    <maxFunctionDefs value="0"/>
+    <maxFunctionDefs value="1"/>
     <maxInstructionDefs value="0"/>
-    <maxStackElements value="0"/>
+    <maxStackElements value="2"/>
     <maxSizeOfInstructions value="0"/>
     <maxComponentElements value="0"/>
     <maxComponentDepth value="0"/>
@@ -140,6 +140,13 @@
     <cmap_format_4 platformID="3" platEncID="1" language="0">
     </cmap_format_4>
   </cmap>
+
+  <cvt>
+    <cv index="0" value="0"/>
+    <cv index="1" value="0"/>
+    <cv index="2" value="70"/>
+    <cv index="3" value="49"/>
+  </cvt>
 
   <loca>
     <!-- The 'loca' table will be calculated by the compiler -->
@@ -470,6 +477,17 @@
       <mapping from="1.0" to="1.0"/>
     </segment>
   </avar>
+
+  <cvar>
+    <version major="1" minor="0"/>
+    <tuple>
+      <coord axis="wdth" value="1.0"/>
+      <delta cvt="0" value="0"/>
+      <delta cvt="1" value="0"/>
+      <delta cvt="2" value="10"/>
+      <delta cvt="3" value="15"/>
+    </tuple>
+  </cvar>
 
   <fvar>
 

@@ -63,10 +63,10 @@
     <maxZones value="1"/>
     <maxTwilightPoints value="0"/>
     <maxStorage value="0"/>
-    <maxFunctionDefs value="0"/>
+    <maxFunctionDefs value="1"/>
     <maxInstructionDefs value="0"/>
-    <maxStackElements value="0"/>
-    <maxSizeOfInstructions value="0"/>
+    <maxStackElements value="2"/>
+    <maxSizeOfInstructions value="5"/>
     <maxComponentElements value="0"/>
     <maxComponentDepth value="0"/>
   </maxp>
@@ -141,6 +141,30 @@
     </cmap_format_4>
   </cmap>
 
+  <fpgm>
+    <assembly>
+      PUSHB[ ]
+      0 0
+      SVTCA[0]
+      MDRP[01100]
+    </assembly>
+  </fpgm>
+
+  <prep>
+    <assembly>
+      PUSHB[ ]
+      4 3
+      INSTCTRL[ ]
+    </assembly>
+  </prep>
+
+  <cvt>
+    <cv index="0" value="0"/>
+    <cv index="1" value="0"/>
+    <cv index="2" value="0"/>
+    <cv index="3" value="0"/>
+  </cvt>
+
   <loca>
     <!-- The 'loca' table will be calculated by the compiler -->
   </loca>
@@ -213,7 +237,14 @@
         <pt x="10" y="10" on="1"/>
         <pt x="10" y="0" on="1"/>
       </contour>
-      <instructions/>
+      <instructions>
+        <assembly>
+          PUSHB[ ]
+          0 0
+          SVTCA[0]
+          MDRP[01100]
+        </assembly>
+      </instructions>
     </TTGlyph>
 
   </glyf>
@@ -554,6 +585,17 @@
     </AxisValueArray>
     <ElidedFallbackNameID value="262"/>  <!-- Regular -->
   </STAT>
+
+  <cvar>
+    <version major="1" minor="0"/>
+    <tuple>
+      <coord axis="wght" min="0.7" value="1.0" max="1.0"/>
+      <delta cvt="0" value="0"/>
+      <delta cvt="1" value="0"/>
+      <delta cvt="2" value="10"/>
+      <delta cvt="3" value="1"/>
+    </tuple>
+  </cvar>
 
   <fvar>
 
