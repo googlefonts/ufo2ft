@@ -102,6 +102,7 @@ class BaseOutlineCompiler:
         tables=None,
         notdefGlyph=None,
         colrLayerReuse=True,
+        colrAutoClipBoxes=True,
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
@@ -118,6 +119,7 @@ class BaseOutlineCompiler:
         if tables is not None:
             self.tables = tables
         self.colrLayerReuse = colrLayerReuse
+        self.colrAutoClipBoxes = colrAutoClipBoxes
         # cached values defined later on
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
@@ -165,7 +167,7 @@ class BaseOutlineCompiler:
         if self.meta:
             self.setupTable_meta()
         self.setupOtherTables()
-        if self.colorLayers:
+        if self.colorLayers and self.colrAutoClipBoxes:
             self._computeCOLRClipBoxes()
         self.importTTX()
 
@@ -1109,6 +1111,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         notdefGlyph=None,
         roundTolerance=None,
         optimizeCFF=True,
+        colrLayerReuse=True,
+        colrAutoClipBoxes=True,
     ):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
@@ -1121,6 +1125,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             glyphOrder=glyphOrder,
             tables=tables,
             notdefGlyph=notdefGlyph,
+            colrLayerReuse=colrLayerReuse,
+            colrAutoClipBoxes=colrAutoClipBoxes,
         )
         self.optimizeCFF = optimizeCFF
         self._defaultAndNominalWidths = None
