@@ -144,8 +144,8 @@
   <cvt>
     <cv index="0" value="0"/>
     <cv index="1" value="0"/>
-    <cv index="2" value="70"/>
-    <cv index="3" value="49"/>
+    <cv index="2" value="100"/>
+    <cv index="3" value="51"/>
   </cvt>
 
   <loca>
@@ -485,7 +485,7 @@
       <delta cvt="0" value="0"/>
       <delta cvt="1" value="0"/>
       <delta cvt="2" value="10"/>
-      <delta cvt="3" value="15"/>
+      <delta cvt="3" value="-15"/>
     </tuple>
   </cvar>
 
