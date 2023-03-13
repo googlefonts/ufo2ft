@@ -102,7 +102,7 @@ class InstructionCompiler:
 
             self.otf[table_tag] = table = ttLib.newTable(table_tag)
             table.program = ttLib.tables.ttProgram.Program()
-            table.program.fromAssembly(asm)
+            table.program.fromAssembly(asm.splitlines())
 
     def compileGlyphInstructions(self, ttGlyph, name) -> None:
         """Compile the glyph instructions from the UFO glyph `name` to bytecode
@@ -146,7 +146,7 @@ class InstructionCompiler:
             return
 
         ttglyph.program = ttLib.tables.ttProgram.Program()
-        ttglyph.program.fromAssembly(asm)
+        ttglyph.program.fromAssembly(asm.splitlines())
 
     def autoUseMyMetrics(self, ttGlyph, glyphName):
         """Set the "USE_MY_METRICS" flag on the first component having the
