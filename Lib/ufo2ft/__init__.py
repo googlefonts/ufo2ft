@@ -105,6 +105,7 @@ base_args = dict(
     debugFeatureFile=None,
     notdefGlyph=None,
     colrLayerReuse=True,
+    colrAutoClipBoxes=True,
     feaIncludeDir=None,
 )
 
@@ -267,6 +268,7 @@ compileInterpolatableTTFs_args = {
         flattenComponents=False,
         layerNames=None,
         colrLayerReuse=False,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -402,6 +404,7 @@ compileInterpolatableOTFs_args = {
         roundTolerance=None,
         optimizeCFF=CFFOptimization.NONE,
         colrLayerReuse=False,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -530,6 +533,7 @@ compileVariableTTF_args = {
         flattenComponents=False,
         excludeVariationTables=(),
         optimizeGvar=True,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -635,6 +639,7 @@ compileVariableCFF2_args = {
         roundTolerance=None,
         excludeVariationTables=(),
         optimizeCFF=CFFOptimization.SPECIALIZE,
+        colrAutoClipBoxes=False,
     ),
 }
 
