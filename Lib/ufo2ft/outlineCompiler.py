@@ -1386,7 +1386,14 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines."""
 
     sfntVersion = "\000\001\000\000"
-    tables = BaseOutlineCompiler.tables | {"loca", "gasp", "glyf"}
+    tables = BaseOutlineCompiler.tables | {
+        "cvt ",
+        "fpgm",
+        "gasp",
+        "glyf",
+        "loca",
+        "prep",
+    }
 
     def compileGlyphs(self):
         """Compile and return the TrueType glyphs for this font."""
@@ -1482,10 +1489,15 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
         self.setupTable_glyf()
 
-        self.instructionCompiler.setupTable_cvt()
-        self.instructionCompiler.setupTable_fpgm()
-        self.instructionCompiler.setupTable_gasp()
-        self.instructionCompiler.setupTable_prep()
+        if "cvt " in self.tables:
+            self.instructionCompiler.setupTable_cvt()
+        if "fpgm" in self.tables:
+            self.instructionCompiler.setupTable_fpgm()
+        if "gasp" in self.tables:
+            self.instructionCompiler.setupTable_gasp()
+        if "prep" in self.tables:
+            self.instructionCompiler.setupTable_prep()
+
         self.instructionCompiler.update_maxp()
 
     def setupTable_glyf(self):
