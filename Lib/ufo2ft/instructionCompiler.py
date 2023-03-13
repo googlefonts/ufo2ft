@@ -20,6 +20,7 @@ from ufo2ft.constants import (
     TRUETYPE_OVERLAP_KEY,
     TRUETYPE_ROUND_KEY,
 )
+from ufo2ft.fontInfoData import intListToNum
 
 if TYPE_CHECKING:
     from fontTools.ttLib.tables._g_l_y_f import Glyph as TTGlyph
@@ -305,6 +306,19 @@ class InstructionCompiler:
 
     def setupTable_fpgm(self) -> None:
         self._compile_program("fontProgram", "fpgm")
+
+    def setupTable_gasp(self):
+        if not self.ufo.info.openTypeGaspRangeRecords:
+            return
+
+        self.otf["gasp"] = gasp = newTable("gasp")
+        gasp_ranges = dict()
+        for record in self.ufo.info.openTypeGaspRangeRecords:
+            rangeMaxPPEM = record["rangeMaxPPEM"]
+            behavior_bits = record["rangeGaspBehavior"]
+            rangeGaspBehavior = intListToNum(behavior_bits, 0, 4)
+            gasp_ranges[rangeMaxPPEM] = rangeGaspBehavior
+        gasp.gaspRange = gasp_ranges
 
     def setupTable_prep(self) -> None:
         self._compile_program("controlValueProgram", "prep")

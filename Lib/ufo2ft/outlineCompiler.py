@@ -286,19 +286,6 @@ class BaseOutlineCompiler:
     # Table Builders
     # --------------
 
-    def setupTable_gasp(self):
-        if "gasp" not in self.tables:
-            return
-
-        self.otf["gasp"] = gasp = newTable("gasp")
-        gasp_ranges = dict()
-        for record in self.ufo.info.openTypeGaspRangeRecords:
-            rangeMaxPPEM = record["rangeMaxPPEM"]
-            behavior_bits = record["rangeGaspBehavior"]
-            rangeGaspBehavior = intListToNum(behavior_bits, 0, 4)
-            gasp_ranges[rangeMaxPPEM] = rangeGaspBehavior
-        gasp.gaspRange = gasp_ranges
-
     def setupTable_head(self):
         """
         Make the head table.
@@ -1495,11 +1482,9 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
         self.setupTable_glyf()
 
-        if self.ufo.info.openTypeGaspRangeRecords:
-            self.setupTable_gasp()
-
         self.instructionCompiler.setupTable_cvt()
         self.instructionCompiler.setupTable_fpgm()
+        self.instructionCompiler.setupTable_gasp()
         self.instructionCompiler.setupTable_prep()
         self.instructionCompiler.update_maxp()
 

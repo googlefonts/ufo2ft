@@ -67,13 +67,6 @@ def emptyufo(FontClass):
 
 
 class OutlineTTFCompilerTest:
-    def test_setupTable_gasp(self, testufo):
-        compiler = OutlineTTFCompiler(testufo)
-        compiler.otf = TTFont()
-        compiler.setupTable_gasp()
-        assert "gasp" in compiler.otf
-        assert compiler.otf["gasp"].gaspRange == {7: 10, 65535: 15}
-
     def test_compile_with_gasp(self, testufo):
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
