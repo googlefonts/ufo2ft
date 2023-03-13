@@ -37,7 +37,7 @@ class InstructionCompiler:
         self.otf = otf
         if not autoUseMyMetrics:
             # If autoUseMyMetrics is False, replace the method with a no-op
-            self.autoUseMyMetrics = lambda *args: None
+            self.autoUseMyMetrics = lambda ttGlyph, glyphName: None
 
     def _check_glyph_hash(
         self, glyphName: str, ttglyph: TTGlyph, glyph_hash: Optional[str]
