@@ -115,29 +115,18 @@ def designspace_v5(FontClass):
         }
 
     def add_programs(font):
-        font.lib["public.truetype.instructions"]["controlValueProgram"] = (
-            "PUSHB[ ]\n"
-            "4 3\n"
-            "INSTCTRL[ ]\n"
-        )
-        font.lib["public.truetype.instructions"]["fontProgram"] = (
-            "PUSHB[ ]\n"
-            "0\n"
-            "FDEF[ ]\n"
-            "POP[ ]\n"
-            "ENDF[ ]\n"
-        )
+        font.lib["public.truetype.instructions"][
+            "controlValueProgram"
+        ] = "PUSHB[ ]\n4 3\nINSTCTRL[ ]"
+        font.lib["public.truetype.instructions"][
+            "fontProgram"
+        ] = "PUSHB[ ]\n0\nFDEF[ ]\nPOP[ ]\nENDF[ ]"
 
     def add_glyph_program(glyph, hash):
         # The hash must be passed as an argument. We could probably calculate it here,
         # but it must match the outline after it has been passed through cu2qu.
         glyph.lib["public.truetype.instructions"] = {
-            "assembly": (
-                "PUSHB[ ]\n"
-                "0 0\n"
-                "SVTCA[0]\n"
-                "MDRP[01100]\n"
-            ),
+            "assembly": "PUSHB[ ]\n0 0\nSVTCA[0]\nMDRP[01100]",
             "formatVersion": "1",
             "id": hash,
         }
