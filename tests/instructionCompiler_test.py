@@ -694,6 +694,27 @@ class InstructionCompilerTest:
         # Check if the bytecode is correct, though this may be out of scope
         assert ic.otf["fpgm"].program.getBytecode() == b"\xb0\x00\x2C\x21\x2D"
 
+    # setupTable_gasp
+
+    def test_setupTable_gasp(self, testufo):
+        ic = InstructionCompiler(testufo, TTFont())
+        ic.setupTable_gasp()
+        assert "gasp" in ic.otf
+        assert ic.otf["gasp"].gaspRange == {7: 10, 65535: 15}
+
+    def test_compile_without_gasp(self, testufo):
+        testufo.info.openTypeGaspRangeRecords = None
+        ic = InstructionCompiler(testufo, TTFont())
+        ic.setupTable_gasp()
+        assert "gasp" not in ic.otf
+
+    def test_compile_empty_gasp(self, testufo):
+        # ignore empty gasp
+        testufo.info.openTypeGaspRangeRecords = []
+        ic = InstructionCompiler(testufo, TTFont())
+        ic.setupTable_gasp()
+        assert "gasp" not in ic.otf
+
     # setupTable_prep
 
     def test_setupTable_prep_no_ttdata(self, quadufo):
