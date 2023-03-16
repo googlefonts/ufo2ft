@@ -29,7 +29,7 @@ setup(
     setup_requires=pytest_runner + wheel + ["setuptools_scm"],
     tests_require=["pytest>=2.8"],
     install_requires=[
-        "fonttools[ufo]>=4.38.0",
+        "fonttools[ufo]>=4.39.2",
         "cu2qu>=1.6.7",
         "cffsubr>=0.2.8",
         "booleanOperations>=0.9.0",
@@ -39,7 +39,7 @@ setup(
         "cffsubr": [],  # keep empty for backward compat
         "compreffor": ["compreffor>=0.4.6"],
     },
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
