@@ -556,12 +556,7 @@ class BaseOutlineCompiler:
         font = self.ufo
         os2.version = 0x0004
         # average glyph width
-        os2.xAvgCharWidth = 0
-        hmtx = self.otf.get("hmtx")
-        if hmtx is not None:
-            widths = [width for width, _ in hmtx.metrics.values() if width > 0]
-            if widths:
-                os2.xAvgCharWidth = otRound(sum(widths) / len(widths))
+        os2.recalcAvgCharWidth(self.otf)
         # weight and width classes
         os2.usWeightClass = getAttrWithFallback(font.info, "openTypeOS2WeightClass")
         os2.usWidthClass = getAttrWithFallback(font.info, "openTypeOS2WidthClass")
