@@ -11,7 +11,13 @@ from fontTools.unicodedata import script_horizontal_direction
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import DFLT_SCRIPTS, classifyGlyphs, quantize, unicodeScriptExtensions
+from ufo2ft.util import (
+    DFLT_SCRIPTS,
+    classifyGlyphs,
+    describe_ufo,
+    quantize,
+    unicodeScriptExtensions,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -197,6 +203,23 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx = super().setContext(font, feaFile, compiler=compiler)
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.glyphSet = self.getOrderedGlyphSet()
+
+        # Unless we use the legacy append mode (which ignores insertion
+        # markers), if the font contains kerning and the feaFile contains `kern`
+        # or `dist` feature blocks, but we have no insertion markers (or they
+        # were misspelt and ignored), warn the user that the kerning blocks in
+        # the feaFile take precedence and other kerning is dropped.
+        if (
+            self.mode == "skip"
+            and font.kerning
+            and ctx.existingFeatures & self.features
+            and not ctx.insertComments
+        ):
+            LOGGER.warning(
+                "%s: font has kerning, but also manually written kerning features "
+                "without an insertion comment. Dropping the former.",
+                describe_ufo(font),
+            )
 
         # Remember which languages are defined for which OT tag, as all
         # generated kerning needs to be registered for the script's `dflt`

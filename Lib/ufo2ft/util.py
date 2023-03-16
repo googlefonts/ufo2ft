@@ -5,7 +5,7 @@ import logging
 import re
 from copy import deepcopy
 from inspect import currentframe, getfullargspec
-from typing import Mapping, Set
+from typing import Any, Mapping, Set
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
@@ -612,3 +612,16 @@ def unicodeScriptExtensions(
     defines "Hrkt" as an alias for both scripts.
     """
     return {aliases.get(s, s) for s in unicodedata.script_extension(chr(codepoint))}
+
+
+def describe_ufo(ufo: Any) -> str:
+    """Returns a description of a UFO suitable for logging."""
+    if (
+        hasattr(ufo, "reader")
+        and hasattr(ufo.reader, "fs")
+        and hasattr(ufo.reader.fs, "root_path")
+    ):
+        return ufo.reader.fs.root_path
+    elif ufo.info.familyName or ufo.info.styleName:
+        return " ".join(n for n in (ufo.info.familyName, ufo.info.styleName) if n)
+    return repr(ufo)
