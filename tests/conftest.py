@@ -102,6 +102,35 @@ def designspace_v5(FontClass):
         pen.lineTo((0 + x_offset, 10 + y_offset))
         pen.closePath()
 
+    def add_cvt(font, index):
+        font.lib["public.truetype.instructions"] = {
+            "controlValue": {0: 0, 2: 30 + 10 * index, 3: 100 - index**2},
+            "formatVersion": "1",
+            "maxFunctionDefs": 1,
+            "maxInstructionDefs": 0,
+            "maxStackElements": 2,
+            "maxStorage": 0,
+            "maxTwilightPoints": 0,
+            "maxZones": 1,
+        }
+
+    def add_programs(font):
+        font.lib["public.truetype.instructions"][
+            "controlValueProgram"
+        ] = "PUSHB[ ]\n4 3\nINSTCTRL[ ]"
+        font.lib["public.truetype.instructions"][
+            "fontProgram"
+        ] = "PUSHB[ ]\n0\nFDEF[ ]\nPOP[ ]\nENDF[ ]"
+
+    def add_glyph_program(glyph, hash):
+        # The hash must be passed as an argument. We could probably calculate it here,
+        # but it must match the outline after it has been passed through cu2qu.
+        glyph.lib["public.truetype.instructions"] = {
+            "assembly": "PUSHB[ ]\n0 0\nSVTCA[0]\nMDRP[01100]",
+            "formatVersion": "1",
+            "id": hash,
+        }
+
     def draw_something(glyph, number, is_sans):
         # Ensure Sans and Serif sources are incompatible to make sure that the
         # DS5 code treats them separately when using e.g. cu2qu. Use some number
@@ -122,9 +151,15 @@ def designspace_v5(FontClass):
         if source.layerName is not None:
             continue
         font = FontClass()
+        add_cvt(font, index)
+        if index == 0:
+            # Add some instructions to the default source
+            add_programs(font)
         for name in ("I", "S", "I.narrow", "S.closed", "a"):
             glyph = font.newGlyph(name)
             draw_something(glyph, index, "Serif" not in source.filename)
+        if index == 0:
+            add_glyph_program(font["a"], "w0l0+0l0+10l10+10l10+0|")
         font.lib["public.glyphOrder"] = sorted(font.keys())
         sources[source.filename] = font
 

@@ -45,6 +45,12 @@ def quadufo(FontClass):
 
 
 @pytest.fixture
+def nestedcomponentsufo(FontClass):
+    font = FontClass(getpath("NestedComponents-Regular.ufo"))
+    return font
+
+
+@pytest.fixture
 def use_my_metrics_ufo(FontClass):
     return FontClass(getpath("UseMyMetrics.ufo"))
 
@@ -63,13 +69,6 @@ def emptyufo(FontClass):
 
 
 class OutlineTTFCompilerTest:
-    def test_setupTable_gasp(self, testufo):
-        compiler = OutlineTTFCompiler(testufo)
-        compiler.otf = TTFont()
-        compiler.setupTable_gasp()
-        assert "gasp" in compiler.otf
-        assert compiler.otf["gasp"].gaspRange == {7: 10, 65535: 15}
-
     def test_compile_with_gasp(self, testufo):
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
@@ -96,6 +95,14 @@ class OutlineTTFCompilerTest:
         assert compiler.glyphBoundingBoxes["space"] is None
         # float coordinates are rounded, so is the bbox
         assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
+
+    def test_getMaxComponentDepths(self, nestedcomponentsufo):
+        compiler = OutlineTTFCompiler(nestedcomponentsufo)
+        assert "a" not in compiler.getMaxComponentDepths()
+        assert "b" not in compiler.getMaxComponentDepths()
+        assert compiler.getMaxComponentDepths()["c"] == 1
+        assert compiler.getMaxComponentDepths()["d"] == 1
+        assert compiler.getMaxComponentDepths()["e"] == 2
 
     def test_autoUseMyMetrics(self, use_my_metrics_ufo):
         compiler = OutlineTTFCompiler(use_my_metrics_ufo)
