@@ -601,6 +601,12 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
     return maxComponentDepth
 
 
+def location_to_string(location):
+    """Reports a designspace location (dictionary mapping axis:loc)
+    in a user-friendly way"""
+    return ", ".join([f"{axis}={loc:g}" for axis, loc in location.items()])
+
+
 def unicodeScriptExtensions(
     codepoint: int, aliases: Mapping[str, str] = UNICODE_SCRIPT_ALIASES
 ) -> set[str]:
