@@ -24,8 +24,10 @@ from ufo2ft.preProcessor import (
 )
 from ufo2ft.util import (
     _getDefaultNotdefGlyph,
+    colrClipBoxQuantization,
     ensure_all_sources_have_names,
     init_kwargs,
+    location_to_string,
     prune_unknown_kwargs,
 )
 
@@ -104,6 +106,8 @@ base_args = dict(
     debugFeatureFile=None,
     notdefGlyph=None,
     colrLayerReuse=True,
+    colrAutoClipBoxes=True,
+    colrClipBoxQuantization=colrClipBoxQuantization,  # Callable[[Font], int]
     feaIncludeDir=None,
 )
 
@@ -266,6 +270,7 @@ compileInterpolatableTTFs_args = {
         flattenComponents=False,
         layerNames=None,
         colrLayerReuse=False,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -401,6 +406,7 @@ compileInterpolatableOTFs_args = {
         roundTolerance=None,
         optimizeCFF=CFFOptimization.NONE,
         colrLayerReuse=False,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -529,6 +535,7 @@ compileVariableTTF_args = {
         flattenComponents=False,
         excludeVariationTables=(),
         optimizeGvar=True,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -634,6 +641,7 @@ compileVariableCFF2_args = {
         roundTolerance=None,
         excludeVariationTables=(),
         optimizeCFF=CFFOptimization.SPECIALIZE,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -765,7 +773,19 @@ def _compileNeededSources(
                 continue
             default_source = vfDoc.findDefault()
             if default_source is None:
-                raise InvalidDesignSpaceData("No default source.")
+                default_location = location_to_string(vfDoc.newDefaultLocation())
+                master_locations = []
+                for sourceDescriptor in vfDoc.sources:
+                    master_location = sourceDescriptor.name + " at "
+                    master_location += location_to_string(
+                        sourceDescriptor.getFullDesignLocation(vfDoc)
+                    )
+                    master_locations.append(master_location)
+                master_location_descriptions = "\n".join(master_locations)
+                raise InvalidDesignSpaceData(
+                    f"No default source; expected default master at {default_location}."
+                    f" Found master locations:\n{master_location_descriptions}"
+                )
             vfNameToBaseUfo[vfName] = default_source.font
             for source in vfDoc.sources:
                 sourcesToCompile.add(source.name)
