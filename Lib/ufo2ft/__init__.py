@@ -24,6 +24,7 @@ from ufo2ft.preProcessor import (
 )
 from ufo2ft.util import (
     _getDefaultNotdefGlyph,
+    colrClipBoxQuantization,
     ensure_all_sources_have_names,
     init_kwargs,
     location_to_string,
@@ -105,6 +106,8 @@ base_args = dict(
     debugFeatureFile=None,
     notdefGlyph=None,
     colrLayerReuse=True,
+    colrAutoClipBoxes=True,
+    colrClipBoxQuantization=colrClipBoxQuantization,  # Callable[[Font], int]
     feaIncludeDir=None,
 )
 
@@ -267,6 +270,7 @@ compileInterpolatableTTFs_args = {
         flattenComponents=False,
         layerNames=None,
         colrLayerReuse=False,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -402,6 +406,7 @@ compileInterpolatableOTFs_args = {
         roundTolerance=None,
         optimizeCFF=CFFOptimization.NONE,
         colrLayerReuse=False,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -530,6 +535,7 @@ compileVariableTTF_args = {
         flattenComponents=False,
         excludeVariationTables=(),
         optimizeGvar=True,
+        colrAutoClipBoxes=False,
     ),
 }
 
@@ -635,6 +641,7 @@ compileVariableCFF2_args = {
         roundTolerance=None,
         excludeVariationTables=(),
         optimizeCFF=CFFOptimization.SPECIALIZE,
+        colrAutoClipBoxes=False,
     ),
 }
 
