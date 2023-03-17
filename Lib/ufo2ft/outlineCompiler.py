@@ -44,6 +44,7 @@ from ufo2ft.fontInfoData import (
 from ufo2ft.util import (
     _copyGlyph,
     calcCodePageRanges,
+    colrClipBoxQuantization,
     makeOfficialGlyphOrder,
     makeUnicodeToGlyphNameMapping,
 )
@@ -103,6 +104,7 @@ class BaseOutlineCompiler:
         notdefGlyph=None,
         colrLayerReuse=True,
         colrAutoClipBoxes=True,
+        colrClipBoxQuantization=colrClipBoxQuantization,
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
@@ -120,6 +122,7 @@ class BaseOutlineCompiler:
             self.tables = tables
         self.colrLayerReuse = colrLayerReuse
         self.colrAutoClipBoxes = colrAutoClipBoxes
+        self.colrClipBoxQuantization = colrClipBoxQuantization
         # cached values defined later on
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
@@ -988,14 +991,8 @@ class BaseOutlineCompiler:
         ):
             return
 
-        # we don't need exact, tightest clipboxes, it's preferable that same clipboxes get
-        # reused, hence we quantize to 1/10th of upem, rounded to nearest multiple of 10
-        # e.g. 100 unit intervals for 1000 upem, 200 units for 2048 etc.
-        # TODO: Make the quantization configurable?
-        upem = getAttrWithFallback(self.ufo.info, "unitsPerEm")
-        self.otf["COLR"].table.computeClipBoxes(
-            self.otf.getGlyphSet(), quantization=int(round(upem / 10, -1))
-        )
+        q = self.colrClipBoxQuantization(self.ufo)
+        self.otf["COLR"].table.computeClipBoxes(self.otf.getGlyphSet(), quantization=q)
 
     def setupTable_CPAL(self):
         """
@@ -1113,6 +1110,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         optimizeCFF=True,
         colrLayerReuse=True,
         colrAutoClipBoxes=True,
+        colrClipBoxQuantization=colrClipBoxQuantization,
     ):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
@@ -1127,6 +1125,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             notdefGlyph=notdefGlyph,
             colrLayerReuse=colrLayerReuse,
             colrAutoClipBoxes=colrAutoClipBoxes,
+            colrClipBoxQuantization=colrClipBoxQuantization,
         )
         self.optimizeCFF = optimizeCFF
         self._defaultAndNominalWidths = None

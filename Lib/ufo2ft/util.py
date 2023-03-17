@@ -16,6 +16,7 @@ from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
 
 from ufo2ft.constants import UNICODE_SCRIPT_ALIASES
+from ufo2ft.fontInfoData import getAttrWithFallback
 
 logger = logging.getLogger(__name__)
 
@@ -443,8 +444,6 @@ class _LazyFontName:
         self.font = font
 
     def __str__(self):
-        from ufo2ft.fontInfoData import getAttrWithFallback
-
         return getAttrWithFallback(self.font.info, "postscriptFontName")
 
 
@@ -631,3 +630,20 @@ def describe_ufo(ufo: Any) -> str:
     elif ufo.info.familyName or ufo.info.styleName:
         return " ".join(n for n in (ufo.info.familyName, ufo.info.styleName) if n)
     return repr(ufo)
+
+
+def colrClipBoxQuantization(ufo: Any) -> int:
+    """Integer value to quantize COLR ClipBoxes.
+
+    The higher the value, the greater the chances that that same clipboxes get
+    reused for multiple color glyphs.
+    This is only called when compile option `colrAutoClipBoxes` is True.
+
+    By default, we quantize to 1/10th of the font's upem, rounded to nearest
+    multiple of 10: e.g. 100 unit intervals for 1000 upem, 200 units for 2048 etc.
+
+    The caller can pass their own callback function to return a different value
+    than the default one.
+    """
+    upem = getAttrWithFallback(ufo.info, "unitsPerEm")
+    return int(round(upem / 10, -1))

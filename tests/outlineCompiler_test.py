@@ -4,6 +4,7 @@ import os
 import pytest
 from cu2qu.ufo import font_to_quadratic
 from fontTools.colorLib.unbuilder import unbuildColrV1
+from fontTools.misc.arrayTools import quantizeRect
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 
@@ -904,13 +905,22 @@ class ColrCpalTest:
 
     @pytest.mark.parametrize("compileFunc", [compileTTF, compileOTF])
     @pytest.mark.parametrize("manualClipBoxes", [True, False])
-    @pytest.mark.parametrize("autoClipBoxes", [True, False])
+    @pytest.mark.parametrize(
+        "autoClipBoxes, quantization",
+        [
+            (True, 1),
+            (True, 32),
+            (True, 100),
+            (False, None),
+        ],
+    )
     def test_colrv1_computeClipBoxes(
         self,
         FontClass,
         compileFunc,
         manualClipBoxes,
         autoClipBoxes,
+        quantization,
     ):
         testufo = FontClass(getpath("COLRv1Test.ufo"))
         assert "com.github.googlei18n.ufo2ft.colorLayers" in testufo.lib
@@ -922,7 +932,11 @@ class ColrCpalTest:
                 ("a", (0, 0, 1000, 1000))
             ]
 
-        result = compileFunc(testufo, colrAutoClipBoxes=autoClipBoxes)
+        result = compileFunc(
+            testufo,
+            colrAutoClipBoxes=autoClipBoxes,
+            colrClipBoxQuantization=lambda _ufo: quantization,
+        )
         palettes = [
             [(c.red, c.green, c.blue, c.alpha) for c in p]
             for p in result["CPAL"].palettes
@@ -957,7 +971,9 @@ class ColrCpalTest:
                 assert clipBoxes == {"a": (0, 0, 1000, 1000)}
             elif autoClipBoxes:
                 # the clipBox that was computed automatically
-                assert clipBoxes == {"a": (100, 0, 500, 700)}
+                assert clipBoxes == {
+                    "a": quantizeRect((111, 82, 485, 626), quantization)
+                }
         else:
             # no clipboxes, neither manual nor automatic
             assert colr.ClipList is None
