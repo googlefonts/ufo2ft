@@ -45,6 +45,7 @@ from ufo2ft.instructionCompiler import InstructionCompiler
 from ufo2ft.util import (
     _copyGlyph,
     calcCodePageRanges,
+    colrClipBoxQuantization,
     getMaxComponentDepth,
     makeOfficialGlyphOrder,
     makeUnicodeToGlyphNameMapping,
@@ -104,6 +105,8 @@ class BaseOutlineCompiler:
         tables=None,
         notdefGlyph=None,
         colrLayerReuse=True,
+        colrAutoClipBoxes=True,
+        colrClipBoxQuantization=colrClipBoxQuantization,
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
@@ -120,6 +123,8 @@ class BaseOutlineCompiler:
         if tables is not None:
             self.tables = tables
         self.colrLayerReuse = colrLayerReuse
+        self.colrAutoClipBoxes = colrAutoClipBoxes
+        self.colrClipBoxQuantization = colrClipBoxQuantization
         # cached values defined later on
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
@@ -168,6 +173,8 @@ class BaseOutlineCompiler:
         if self.meta:
             self.setupTable_meta()
         self.setupOtherTables()
+        if self.colorLayers and self.colrAutoClipBoxes:
+            self._computeCOLRClipBoxes()
         self.importTTX()
 
         return self.otf
@@ -966,6 +973,17 @@ class BaseOutlineCompiler:
                 allowLayerReuse=self.colrLayerReuse,
             )
 
+    def _computeCOLRClipBoxes(self):
+        if (
+            "COLR" not in self.otf
+            or self.otf["COLR"].version == 0
+            or self.otf["COLR"].table.ClipList is not None
+        ):
+            return
+
+        q = self.colrClipBoxQuantization(self.ufo)
+        self.otf["COLR"].table.computeClipBoxes(self.otf.getGlyphSet(), quantization=q)
+
     def setupTable_CPAL(self):
         """
         Compile the CPAL table.
@@ -1080,6 +1098,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         notdefGlyph=None,
         roundTolerance=None,
         optimizeCFF=True,
+        colrLayerReuse=True,
+        colrAutoClipBoxes=True,
+        colrClipBoxQuantization=colrClipBoxQuantization,
     ):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
@@ -1092,6 +1113,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             glyphOrder=glyphOrder,
             tables=tables,
             notdefGlyph=notdefGlyph,
+            colrLayerReuse=colrLayerReuse,
+            colrAutoClipBoxes=colrAutoClipBoxes,
+            colrClipBoxQuantization=colrClipBoxQuantization,
         )
         self.optimizeCFF = optimizeCFF
         self._defaultAndNominalWidths = None
