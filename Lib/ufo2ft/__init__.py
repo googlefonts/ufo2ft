@@ -24,6 +24,7 @@ from ufo2ft.preProcessor import (
 )
 from ufo2ft.util import (
     _getDefaultNotdefGlyph,
+    colrClipBoxQuantization,
     ensure_all_sources_have_names,
     init_kwargs,
     location_to_string,
@@ -106,6 +107,7 @@ base_args = dict(
     notdefGlyph=None,
     colrLayerReuse=True,
     colrAutoClipBoxes=True,
+    colrClipBoxQuantization=colrClipBoxQuantization,  # Callable[[Font], int]
     feaIncludeDir=None,
 )
 
