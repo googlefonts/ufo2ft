@@ -1,7 +1,7 @@
 from types import MappingProxyType
 
 SPARSE_TTF_MASTER_TABLES = frozenset(
-    ["glyf", "head", "hmtx", "loca", "maxp", "post", "vmtx"]
+    ["glyf", "head", "hmtx", "loca", "maxp", "post", "vmtx", "cvt ", "fpgm", "prep"]
 )
 SPARSE_OTF_MASTER_TABLES = frozenset(["CFF ", "VORG", "head", "hmtx", "maxp", "vmtx"])
 
@@ -35,9 +35,13 @@ COLOR_LAYER_MAPPING_KEY = UFO2FT_PREFIX + "colorLayerMapping"
 # ]
 COLR_CLIP_BOXES_KEY = UFO2FT_PREFIX + "colrClipBoxes"
 
+OBJECT_LIBS_KEY = "public.objectLibs"
 OPENTYPE_CATEGORIES_KEY = "public.openTypeCategories"
 OPENTYPE_META_KEY = "public.openTypeMeta"
-
+TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"
+TRUETYPE_METRICS_KEY = "public.truetype.useMyMetrics"
+TRUETYPE_OVERLAP_KEY = "public.truetype.overlap"
+TRUETYPE_ROUND_KEY = "public.truetype.roundOffsetToGrid"
 UNICODE_VARIATION_SEQUENCES_KEY = "public.unicodeVariationSequences"
 
 COMMON_SCRIPT = "Zyyy"

@@ -22,7 +22,7 @@ from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPointPen
 from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.standardGlyphOrder import standardGlyphOrder
-from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS, Glyph
+from fontTools.ttLib.tables._g_l_y_f import Glyph
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
@@ -41,10 +41,12 @@ from ufo2ft.fontInfoData import (
     intListToNum,
     normalizeStringForPostscript,
 )
+from ufo2ft.instructionCompiler import InstructionCompiler
 from ufo2ft.util import (
     _copyGlyph,
     calcCodePageRanges,
     colrClipBoxQuantization,
+    getMaxComponentDepth,
     makeOfficialGlyphOrder,
     makeUnicodeToGlyphNameMapping,
 )
@@ -127,6 +129,7 @@ class BaseOutlineCompiler:
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
         self._compiledGlyphs = None
+        self._maxComponentDepths = None
 
     def compile(self):
         """
@@ -289,19 +292,6 @@ class BaseOutlineCompiler:
     # --------------
     # Table Builders
     # --------------
-
-    def setupTable_gasp(self):
-        if "gasp" not in self.tables:
-            return
-
-        self.otf["gasp"] = gasp = newTable("gasp")
-        gasp_ranges = dict()
-        for record in self.ufo.info.openTypeGaspRangeRecords:
-            rangeMaxPPEM = record["rangeMaxPPEM"]
-            behavior_bits = record["rangeGaspBehavior"]
-            rangeGaspBehavior = intListToNum(behavior_bits, 0, 4)
-            gasp_ranges[rangeMaxPPEM] = rangeGaspBehavior
-        gasp.gaspRange = gasp_ranges
 
     def setupTable_head(self):
         """
@@ -1415,7 +1405,14 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines."""
 
     sfntVersion = "\000\001\000\000"
-    tables = BaseOutlineCompiler.tables | {"loca", "gasp", "glyf"}
+    tables = BaseOutlineCompiler.tables | {
+        "cvt ",
+        "fpgm",
+        "gasp",
+        "glyf",
+        "loca",
+        "prep",
+    }
 
     def compileGlyphs(self):
         """Compile and return the TrueType glyphs for this font."""
@@ -1452,6 +1449,23 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
             glyphBoxes[glyphName] = bounds
         return glyphBoxes
 
+    def getMaxComponentDepths(self):
+        """Collect glyphs max components depths.
+
+        Return a dictionary of non zero max components depth keyed by glyph names.
+        The max component depth of composite glyphs is 1 or more.
+        Simple glyphs are not keyed.
+        """
+        if self._maxComponentDepths:
+            return self._maxComponentDepths
+        maxComponentDepths = dict()
+        for name, glyph in self.allGlyphs.items():
+            depth = getMaxComponentDepth(glyph, self.allGlyphs)
+            if depth > 0:
+                maxComponentDepths[name] = depth
+        self._maxComponentDepths = maxComponentDepths
+        return self._maxComponentDepths
+
     def setupTable_maxp(self):
         """Make the maxp table."""
         if "maxp" not in self.tables:
@@ -1470,6 +1484,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         maxp.maxComponentElements = max(
             len(g.components) for g in self.allGlyphs.values()
         )
+        maxp.maxComponentDepth = max(self.getMaxComponentDepths().values(), default=0)
 
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
@@ -1487,9 +1502,22 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         post.glyphOrder = self.glyphOrder
 
     def setupOtherTables(self):
+        self.instructionCompiler = InstructionCompiler(
+            self.ufo, self.otf, autoUseMyMetrics=self.autoUseMyMetrics
+        )
+
         self.setupTable_glyf()
-        if self.ufo.info.openTypeGaspRangeRecords:
-            self.setupTable_gasp()
+
+        if "cvt " in self.tables:
+            self.instructionCompiler.setupTable_cvt()
+        if "fpgm" in self.tables:
+            self.instructionCompiler.setupTable_fpgm()
+        if "gasp" in self.tables:
+            self.instructionCompiler.setupTable_gasp()
+        if "prep" in self.tables:
+            self.instructionCompiler.setupTable_prep()
+
+        self.instructionCompiler.update_maxp()
 
     def setupTable_glyf(self):
         """Make the glyf table."""
@@ -1501,41 +1529,32 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
-        hmtx = self.otf.get("hmtx")
         ttGlyphs = self.getCompiledGlyphs()
-        for name in self.glyphOrder:
+        # Sort the glyphs so that simple glyphs are compiled first, and composite
+        # glyphs are compiled later. Otherwise the glyph hashes may not be ready
+        # to calculate when a base glyph of a composite glyph is not in the font yet.
+        maxComponentDepths = self.getMaxComponentDepths()
+        for name in sorted(self.glyphOrder, key=lambda n: maxComponentDepths.get(n, 0)):
             ttGlyph = ttGlyphs[name]
-            if ttGlyph.isComposite() and hmtx is not None and self.autoUseMyMetrics:
-                self.autoUseMyMetrics(ttGlyph, name, hmtx)
+            self.instructionCompiler.compileGlyphInstructions(ttGlyph, name)
             glyf[name] = ttGlyph
 
         # update various maxp fields based on glyf without needing to compile the font
         if "maxp" in self.otf:
             self.otf["maxp"].recalc(self.otf)
 
-    @staticmethod
-    def autoUseMyMetrics(ttGlyph, glyphName, hmtx):
-        """Set the "USE_MY_METRICS" flag on the first component having the
-        same advance width as the composite glyph, no transform and no
-        horizontal shift (but allow it to shift vertically).
-        This forces the composite glyph to use the possibly hinted horizontal
-        metrics of the sub-glyph, instead of those from the "hmtx" table.
-        """
-        width = hmtx[glyphName][0]
-        for component in ttGlyph.components:
-            try:
-                baseName, transform = component.getComponentInfo()
-            except AttributeError:
-                # component uses '{first,second}Pt' instead of 'x' and 'y'
-                continue
-            try:
-                baseMetrics = hmtx[baseName]
-            except KeyError:
-                continue  # ignore missing components
-            else:
-                if baseMetrics[0] == width and transform[:-1] == (1, 0, 0, 1, 0):
-                    component.flags |= USE_MY_METRICS
-                    break
+    # NOTE: the previous 'autoUseMyMetrics' method was moved to the InstructionCompiler
+    # This property setter is kept for backward compatibility to support the relatively
+    # obscure use-case (present in tests) of setting compiler.autoUseMyMetrics = None
+    # in order to disable the feature. It seems to me it's unlikely that one would like
+    # actually disable this at all...
+    @property
+    def autoUseMyMetrics(self) -> bool:
+        return getattr(self, "_autoUseMyMetrics", True)
+
+    @autoUseMyMetrics.setter
+    def autoUseMyMetrics(self, value):
+        self._autoUseMyMetrics = bool(value)
 
 
 class StubGlyph:
