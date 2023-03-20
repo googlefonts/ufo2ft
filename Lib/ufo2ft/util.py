@@ -324,7 +324,7 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None, extra_substitutions=None):
         for glyphs in glyphSets.values():
             to_append = set()
             for glyph in glyphs:
-                to_append |= extra_substitutions[glyph]
+                to_append |= extra_substitutions.get(glyph, set())
             glyphs.update(to_append)
 
     return glyphSets
