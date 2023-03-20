@@ -74,7 +74,7 @@ class BaseFeatureCompiler:
     layout tables from these.
     """
 
-    def __init__(self, ufo, ttFont=None, glyphSet=None, **kwargs):
+    def __init__(self, ufo, ttFont=None, glyphSet=None, extraSubstitutions=None):
         """
         Args:
           ufo: an object representing a UFO (defcon.Font or equivalent)
@@ -84,6 +84,10 @@ class BaseFeatureCompiler:
             the same glyph order as the ufo object.
           glyphSet: a (optional) dict containing pre-processed copies of
             the UFO glyphs.
+          extraSubstitutions: an optional dictionary mapping glyph names
+            to a set of other glyphs which should be considered reachable
+            from them (for example when using designspace rules to effect
+            substitutions).
         """
         self.ufo = ufo
 
@@ -102,6 +106,8 @@ class BaseFeatureCompiler:
         else:
             glyphSet = ufo
         self.glyphSet = OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
+
+        self.extraSubstitutions = extraSubstitutions
 
     def setupFeatures(self):
         """Make the features source.
@@ -174,6 +180,7 @@ class FeatureCompiler(BaseFeatureCompiler):
         glyphSet=None,
         featureWriters=None,
         feaIncludeDir=None,
+        extraSubstitutions=None,
         **kwargs,
     ):
         """
@@ -199,8 +206,9 @@ class FeatureCompiler(BaseFeatureCompiler):
             the feature file. If None, the include directory is set to the
             parent directory of the UFO, provided the UFO has a path.
         """
-        BaseFeatureCompiler.__init__(self, ufo, ttFont, glyphSet)
-
+        BaseFeatureCompiler.__init__(
+            self, ufo, ttFont, glyphSet, extraSubstitutions=extraSubstitutions
+        )
         self.feaIncludeDir = feaIncludeDir
 
         self.initFeatureWriters(featureWriters)

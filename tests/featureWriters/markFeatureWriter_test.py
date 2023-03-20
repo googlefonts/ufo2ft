@@ -6,7 +6,7 @@ from textwrap import dedent
 import pytest
 
 from ufo2ft.errors import InvalidFeaturesData
-from ufo2ft.featureCompiler import parseLayoutFeatures
+from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.featureWriters.markFeatureWriter import (
     MarkFeatureWriter,
@@ -1413,6 +1413,27 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             } mark;
             """
+        )
+
+    def test_extra_substitutions(self, FontClass):
+        dirname = os.path.dirname(os.path.dirname(__file__))
+        fontPath = os.path.join(dirname, "data", "Alternates-Regular.ufo")
+        testufo = FontClass(fontPath)
+        generated = self.writeFeatures(
+            testufo,
+            compiler=FeatureCompiler(
+                testufo,
+                extraSubstitutions={
+                    "uuMatra-oriya": {"uuMatra-oriya.BRACKET.varAlt01"},
+                    "ka-oriya": {"ka-oriya.BRACKET.varAlt01"},
+                    "lVocalicMatra-oriya": {"lVocalicMatra-oriya.BRACKET.varAlt01"},
+                },
+            ),
+        )
+        assert (
+            "@MFS_blwm_mark2mark_bottom = [uuMatra-oriya lVocalicMatra-oriya "
+            "ka-oriya.below lVocalicMatra-oriya.BRACKET.varAlt01 "
+            "uuMatra-oriya.BRACKET.varAlt01]" in str(generated)
         )
 
 

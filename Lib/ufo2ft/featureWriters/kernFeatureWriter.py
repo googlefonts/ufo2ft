@@ -237,9 +237,10 @@ class KernFeatureWriter(BaseFeatureWriter):
         # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
+        extras = self.extraSubstitutions()
         ctx.knownScripts = self.guessFontScripts()
-        scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub)
-        bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub)
+        scriptGlyphs = classifyGlyphs(self.knownScriptsPerCodepoint, cmap, gsub, extras)
+        bidiGlyphs = classifyGlyphs(unicodeBidiType, cmap, gsub, extras)
         ctx.bidiGlyphs = bidiGlyphs
 
         glyphScripts = {}
