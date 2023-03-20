@@ -6,7 +6,7 @@ from textwrap import dedent
 import pytest
 
 from ufo2ft.errors import InvalidFeaturesData
-from ufo2ft.featureCompiler import parseLayoutFeatures, FeatureCompiler
+from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.featureWriters.markFeatureWriter import (
     MarkFeatureWriter,
@@ -1433,8 +1433,9 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             ),
         )
         assert (
-            "@MFS_blwm_mark2mark_bottom = [uuMatra-oriya lVocalicMatra-oriya ka-oriya.below lVocalicMatra-oriya.BRACKET.varAlt01 uuMatra-oriya.BRACKET.varAlt01]"
-            in str(generated)
+            "@MFS_blwm_mark2mark_bottom = [uuMatra-oriya lVocalicMatra-oriya "
+            "ka-oriya.below lVocalicMatra-oriya.BRACKET.varAlt01 "
+            "uuMatra-oriya.BRACKET.varAlt01]" in str(generated)
         )
 
 

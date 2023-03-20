@@ -1,7 +1,7 @@
 import logging
 import os
-from enum import IntEnum
 from collections import defaultdict
+from enum import IntEnum
 
 from fontTools import varLib
 from fontTools.designspaceLib import DesignSpaceDocument

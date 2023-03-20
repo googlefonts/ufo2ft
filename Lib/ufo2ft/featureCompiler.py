@@ -202,7 +202,9 @@ class FeatureCompiler(BaseFeatureCompiler):
             the feature file. If None, the include directory is set to the
             parent directory of the UFO, provided the UFO has a path.
         """
-        BaseFeatureCompiler.__init__(self, ufo, ttFont, glyphSet, extraSubstitutions=extraSubstitutions)
+        BaseFeatureCompiler.__init__(
+            self, ufo, ttFont, glyphSet, extraSubstitutions=extraSubstitutions
+        )
         self.feaIncludeDir = feaIncludeDir
 
         self.initFeatureWriters(featureWriters)
