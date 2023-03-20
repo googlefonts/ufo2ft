@@ -1,6 +1,7 @@
 import logging
 import os
 from enum import IntEnum
+from collections import defaultdict
 
 from fontTools import varLib
 from fontTools.designspaceLib import DesignSpaceDocument
@@ -271,6 +272,7 @@ compileInterpolatableTTFs_args = {
         layerNames=None,
         colrLayerReuse=False,
         colrAutoClipBoxes=False,
+        extraSubstitutions=None,
     ),
 }
 
@@ -386,6 +388,11 @@ def compileInterpolatableTTFsFromDS(designSpaceDoc, **kwargs):
     if kwargs["notdefGlyph"] is None:
         kwargs["notdefGlyph"] = _getDefaultNotdefGlyph(designSpaceDoc)
 
+    kwargs["extraSubstitutions"] = defaultdict(set)
+    for rule in designSpaceDoc.rules:
+        for left, right in rule.subs:
+            kwargs["extraSubstitutions"][left].add(right)
+
     ttfs = compileInterpolatableTTFs(ufos, **kwargs)
 
     if kwargs["inplace"]:
@@ -407,6 +414,7 @@ compileInterpolatableOTFs_args = {
         optimizeCFF=CFFOptimization.NONE,
         colrLayerReuse=False,
         colrAutoClipBoxes=False,
+        extraSubstitutions=None,
     ),
 }
 
@@ -450,6 +458,11 @@ def compileInterpolatableOTFsFromDS(designSpaceDoc, **kwargs):
 
     if kwargs["notdefGlyph"] is None:
         kwargs["notdefGlyph"] = _getDefaultNotdefGlyph(designSpaceDoc)
+
+    kwargs["extraSubstitutions"] = defaultdict(set)
+    for rule in designSpaceDoc.rules:
+        for left, right in rule.subs:
+            kwargs["extraSubstitutions"][left].add(right)
 
     otfs = []
     for source in designSpaceDoc.sources:

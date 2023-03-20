@@ -284,7 +284,7 @@ def closeGlyphsOverGSUB(gsub, glyphs):
     gsub.closure_glyphs(subsetter)
 
 
-def classifyGlyphs(unicodeFunc, cmap, gsub=None):
+def classifyGlyphs(unicodeFunc, cmap, gsub=None, extra_substitutions=None):
     """'unicodeFunc' is a callable that takes a Unicode codepoint and
     returns a string, or collection of strings, denoting some Unicode
     property associated with the given character (or None if a character
@@ -292,6 +292,9 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
     codepoints to glyph names. 'gsub' is an (optional) fonttools GSUB
     table object, used to find all the glyphs that are "reachable" via
     substitutions from the initial sets of glyphs defined in the cmap.
+    'extra_substitutions' is an optional dictionary mapping glyph names
+    to a set of other glyphs which should be considered reachable from them
+    (for example when using designspace rules to effect substitutions).
 
     Returns a dictionary of glyph sets associated with the given Unicode
     properties.
@@ -316,6 +319,13 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
             s = glyphs | neutralGlyphs
             closeGlyphsOverGSUB(gsub, s)
             glyphs.update(s - neutralGlyphs)
+
+    if extra_substitutions:
+        for glyphs in glyphSets.values():
+            to_append = set()
+            for glyph in glyphs:
+                to_append |= extra_substitutions[glyph]
+            glyphs.update(to_append)
 
     return glyphSets
 
