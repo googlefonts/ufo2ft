@@ -1424,11 +1424,9 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             compiler=FeatureCompiler(
                 testufo,
                 extraSubstitutions={
-                    "uuMatra-oriya": set(["uuMatra-oriya.BRACKET.varAlt01"]),
-                    "ka-oriya": set(["ka-oriya.BRACKET.varAlt01"]),
-                    "lVocalicMatra-oriya": set(
-                        ["lVocalicMatra-oriya.BRACKET.varAlt01"]
-                    ),
+                    "uuMatra-oriya": {"uuMatra-oriya.BRACKET.varAlt01"},
+                    "ka-oriya": {"ka-oriya.BRACKET.varAlt01"},
+                    "lVocalicMatra-oriya": {"lVocalicMatra-oriya.BRACKET.varAlt01"},
                 },
             ),
         )
