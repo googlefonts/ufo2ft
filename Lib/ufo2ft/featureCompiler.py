@@ -84,6 +84,10 @@ class BaseFeatureCompiler:
             the same glyph order as the ufo object.
           glyphSet: a (optional) dict containing pre-processed copies of
             the UFO glyphs.
+          extraSubstitutions: an optional dictionary mapping glyph names
+            to a set of other glyphs which should be considered reachable
+            from them (for example when using designspace rules to effect
+            substitutions).
         """
         self.ufo = ufo
 
