@@ -122,6 +122,7 @@ compileOTF_args = {
         cffVersion=1,
         subroutinizer=None,
         _tables=None,
+        extraSubstitutions=None,
     ),
 }
 
