@@ -7,7 +7,7 @@ class FeatureWriterTest:
     FeatureWriter = None
 
     @classmethod
-    def writeFeatures(cls, ufo, **kwargs):
+    def writeFeatures(cls, ufo, compiler=None, **kwargs):
         """Return a new FeatureFile object containing only the newly
         generated statements, or None if no new feature was generated.
         """
@@ -15,7 +15,7 @@ class FeatureWriterTest:
         feaFile = parseLayoutFeatures(ufo)
         old_statements = [st.asFea() for st in feaFile.statements]
 
-        if writer.write(ufo, feaFile):
+        if writer.write(ufo, feaFile, compiler=compiler):
             new = ast.FeatureFile()
 
             for statement in feaFile.statements:

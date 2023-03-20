@@ -24,7 +24,8 @@ class CursFeatureWriter(BaseFeatureWriter):
         cmap = self.makeUnicodeToGlyphNameMapping()
         if any(unicodeScriptDirection(uv) == "LTR" for uv in cmap):
             gsub = self.compileGSUB()
-            dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub)
+            extras = self.extraSubstitutions()
+            dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub, extras)
             shouldSplit = "LTR" in dirGlyphs
         else:
             shouldSplit = False

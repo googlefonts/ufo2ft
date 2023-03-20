@@ -876,7 +876,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 # substitutions and get the set of all the relevant glyphs,
                 # including alternate glyphs.
                 gsub = self.compileGSUB()
-                glyphGroups = classifyGlyphs(unicodeIsAbvm, cmap, gsub)
+                extras = self.extraSubstitutions()
+                glyphGroups = classifyGlyphs(unicodeIsAbvm, cmap, gsub, extras)
                 # the 'glyphGroups' dict is keyed by the return value of the
                 # classifying include, so here 'True' means all the
                 # Indic/USE/Khmer glyphs
@@ -885,7 +886,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 # If a character can be used in Indic/USE/Khmer scripts as well
                 # as other scripts, we want to return it in both 'abvmGlyphs'
                 # (done above) and 'notAbvmGlyphs' (done below) sets.
-                glyphGroups = classifyGlyphs(unicodeIsNotAbvm, cmap, gsub)
+                glyphGroups = classifyGlyphs(unicodeIsNotAbvm, cmap, gsub, extras)
                 notAbvmGlyphs = glyphGroups.get(True, set())
                 # Since cmap might not cover all glyphs, we union with the
                 # glyph set.

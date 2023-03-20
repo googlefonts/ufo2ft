@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>lib</key>
+    <dict>
+      <key>com.schriftgestaltung.layerId</key>
+      <string>41544896-EF4D-4C26-89A7-324DAFD89EC7</string>
+      <key>com.schriftgestaltung.layerOrderInGlyph.ka-oriya</key>
+      <integer>6</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.ka-oriya.below</key>
+      <integer>4</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.lVocalicMatra-oriya</key>
+      <integer>6</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.uuMatra-oriya</key>
+      <integer>6</integer>
+    </dict>
+  </dict>
+</plist>
