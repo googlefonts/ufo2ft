@@ -321,7 +321,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             # type. We then mark each kerning pair with these properties when
             # any of the glyphs involved in a pair intersects these groups.
             gsub = self.compileGSUB()
-            extras = self.context.compiler.extraSubstitutions
+            extras = self.extraSubstitutions()
             dirGlyphs = classifyGlyphs(unicodeScriptDirection, cmap, gsub, extras)
             directions = self._intersectPairs("directions", dirGlyphs)
             shouldSplit = "RTL" in directions

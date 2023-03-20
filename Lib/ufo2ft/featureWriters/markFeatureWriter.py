@@ -876,7 +876,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 # substitutions and get the set of all the relevant glyphs,
                 # including alternate glyphs.
                 gsub = self.compileGSUB()
-                extras = self.context.compiler.extraSubstitutions
+                extras = self.extraSubstitutions()
                 glyphGroups = classifyGlyphs(unicodeIsAbvm, cmap, gsub, extras)
                 # the 'glyphGroups' dict is keyed by the return value of the
                 # classifying include, so here 'True' means all the

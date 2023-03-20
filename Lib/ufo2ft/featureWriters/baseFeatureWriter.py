@@ -330,6 +330,11 @@ class BaseFeatureWriter:
             compiler._gsub = gsub
         return gsub
 
+    def extraSubstitutions(self):
+        compiler = self.context.compiler
+        if compiler is not None:
+            return compiler.extraSubstitutions
+
     def getOpenTypeCategories(self):
         """Return 'public.openTypeCategories' values as a tuple of sets of
         unassigned, bases, ligatures, marks, components."""
