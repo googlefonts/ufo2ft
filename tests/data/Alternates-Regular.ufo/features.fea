@@ -1,0 +1,6 @@
+# Prefix: Languagesystems
+languagesystem DFLT dflt;
+
+languagesystem ory2 dflt;
+languagesystem latn dflt; # This is needed in our full builds because we use feature variations
+
