@@ -79,11 +79,19 @@ def iterClassDefinitions(feaFile, featureTag=None):
         for s in feaFile.statements:
             if isinstance(s, ast.GlyphClassDefinition):
                 yield s
+            elif isinstance(s, ast.LookupBlock):
+                for ns in s.statements:
+                    if isinstance(ns, ast.GlyphClassDefinition):
+                        yield ns
     # then iterate over per-feature class definitions
     for fea in iterFeatureBlocks(feaFile, tag=featureTag):
         for s in fea.statements:
             if isinstance(s, ast.GlyphClassDefinition):
                 yield s
+            elif isinstance(s, ast.LookupBlock):
+                for ns in s.statements:
+                    if isinstance(ns, ast.GlyphClassDefinition):
+                        yield ns
 
 
 LOOKUP_FLAGS = {
