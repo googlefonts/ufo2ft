@@ -73,17 +73,12 @@ def findTable(feaLib, tag):
             return statement
 
 
-def iterClassDefinitions(feaFile, featureTag=None):
-    if featureTag is None:
-        # start from top-level class definitions
-        for s in feaFile.statements:
-            if isinstance(s, ast.GlyphClassDefinition):
-                yield s
-    # then iterate over per-feature class definitions
-    for fea in iterFeatureBlocks(feaFile, tag=featureTag):
-        for s in fea.statements:
-            if isinstance(s, ast.GlyphClassDefinition):
-                yield s
+def iterClassDefinitions(feaFile):
+    for s in feaFile.statements:
+        if isinstance(s, ast.GlyphClassDefinition):
+            yield s
+        elif isinstance(s, (ast.Block)):
+            yield from iterClassDefinitions(s)
 
 
 LOOKUP_FLAGS = {
