@@ -1,5 +1,7 @@
 from io import StringIO
+
 from fontTools.feaLib.parser import Parser
+
 from ufo2ft.featureWriters import ast
 
 
