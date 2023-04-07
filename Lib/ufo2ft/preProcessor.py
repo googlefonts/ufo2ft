@@ -5,7 +5,7 @@ from ufo2ft.constants import (
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
 )
-from ufo2ft.filters import isValidFilter, loadFilters
+from ufo2ft.filters import isValidFilter, loadFilterFromString, loadFilters
 from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
 from ufo2ft.filters.decomposeTransformedComponents import (
     DecomposeTransformedComponentsFilter,
@@ -34,6 +34,8 @@ def _load_custom_filters(ufo, filters=None):
             result.extend(itertools.chain(*loadFilters(ufo)))
             seen_ellipsis = True
         else:
+            if isinstance(f, str):
+                f = loadFilterFromString(f)
             if not isValidFilter(type(f)):
                 raise TypeError(f"Invalid filter: {f!r}")
             result.append(f)
