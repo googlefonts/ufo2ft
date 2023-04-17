@@ -156,15 +156,40 @@ class GetAttrWithFallbackTest:
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == 200
 
     def test_head_created(self, info):
-        os.environ["SOURCE_DATE_EPOCH"] = "1514485183"
+        current_epoch = "1514485183"
+        current_timestamp = "2017/12/28 18:19:43"
+        os.environ["SOURCE_DATE_EPOCH"] = current_epoch
         try:
-            assert (
-                getAttrWithFallback(info, "openTypeHeadCreated")
-                == "2017/12/28 18:19:43"
-            )
+            actual = getAttrWithFallback(info, "openTypeHeadCreated")
+            assert actual == current_timestamp
         finally:
             del os.environ["SOURCE_DATE_EPOCH"]
-        assert getAttrWithFallback(info, "openTypeHeadCreated") != "2017/12/28 18:19:43"
+        actual = getAttrWithFallback(info, "openTypeHeadCreated")
+        assert actual != current_timestamp
+
+    def test_head_modified(self, info):
+        current_epoch = "1514485183"
+        current_timestamp = "2017/12/28 18:19:43"
+        created_timestamp = "2017/01/01 00:00:00"
+
+        assert info.openTypeHeadCreated is None
+        info.openTypeHeadCreated = created_timestamp
+
+        os.environ["SOURCE_DATE_EPOCH"] = current_epoch
+        try:
+            actual = getAttrWithFallback(info, "openTypeHeadModified")
+            assert actual == current_timestamp
+        finally:
+            del os.environ["SOURCE_DATE_EPOCH"]
+
+        os.environ["SOURCE_DATE_EPOCH"] = current_epoch
+        os.environ["UFO2FT_HEAD_MODIFIED"] = "created"
+        try:
+            actual = getAttrWithFallback(info, "openTypeHeadModified")
+            assert actual == created_timestamp
+        finally:
+            del os.environ["SOURCE_DATE_EPOCH"]
+            del os.environ["UFO2FT_HEAD_MODIFIED"]
 
     def test_empty_info(self, InfoClass):
         info = InfoClass()

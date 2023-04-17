@@ -100,15 +100,28 @@ def dateStringForNow():
 
 
 def openTypeHeadCreatedFallback(info):
-    """
-    Fallback to the environment variable SOURCE_DATE_EPOCH if set, otherwise
-    now.
+    """Return an appropriate timestamp for created in head.
+
+    If SOURCE_DATE_EPOCH is set, it returns the corresponding value. Otherwise,
+    it returns the current timestamp.
     """
     if "SOURCE_DATE_EPOCH" in os.environ:
         t = datetime.utcfromtimestamp(int(os.environ["SOURCE_DATE_EPOCH"]))
         return t.strftime(_date_format)
     else:
         return dateStringForNow()
+
+
+def openTypeHeadModifiedFallback(info):
+    """Return an appropriate timestamp for modified in head.
+
+    If UFO2FT_HEAD_MODIFIED is set to created, it returns the same value as the
+    one in openTypeHeadCreated. Otherwise, it returns the current timestamp.
+    """
+    if os.environ.get("UFO2FT_HEAD_MODIFIED") == "created":
+        return getAttrWithFallback(info, "openTypeHeadCreated")
+    else:
+        return openTypeHeadCreatedFallback(info)
 
 
 # hhea
@@ -436,6 +449,7 @@ specialFallbacks = dict(
     styleMapFamilyName=styleMapFamilyNameFallback,
     styleMapStyleName=styleMapStyleNameFallback,
     openTypeHeadCreated=openTypeHeadCreatedFallback,
+    openTypeHeadModified=openTypeHeadModifiedFallback,
     openTypeHheaAscender=openTypeHheaAscenderFallback,
     openTypeHheaDescender=openTypeHheaDescenderFallback,
     openTypeHheaCaretSlopeRise=openTypeHheaCaretSlopeRiseFallback,

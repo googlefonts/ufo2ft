@@ -35,7 +35,6 @@ from ufo2ft.constants import (
 )
 from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import (
-    dateStringForNow,
     dateStringToTimeValue,
     getAttrWithFallback,
     intListToNum,
@@ -333,7 +332,12 @@ class BaseOutlineCompiler:
             dateStringToTimeValue(getAttrWithFallback(font.info, "openTypeHeadCreated"))
             - mac_epoch_diff
         )
-        head.modified = dateStringToTimeValue(dateStringForNow()) - mac_epoch_diff
+        head.modified = (
+            dateStringToTimeValue(
+                getAttrWithFallback(font.info, "openTypeHeadModified")
+            )
+            - mac_epoch_diff
+        )
 
         # bounding box
         xMin, yMin, xMax, yMax = self.fontBoundingBox
