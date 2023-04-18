@@ -4,9 +4,11 @@ import logging
 import os
 import re
 from collections import OrderedDict
+from dataclasses import dataclass, field
 from inspect import isclass
 from io import StringIO
 from tempfile import NamedTemporaryFile
+from typing import Any
 
 from fontTools import mtiLib
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
@@ -24,6 +26,7 @@ from ufo2ft.featureWriters import (
     isValidFeatureWriter,
     loadFeatureWriters,
 )
+from ufo2ft.featureWriters.baseFeatureWriter import BaseFeatureWriter
 from ufo2ft.util import describe_ufo
 
 logger = logging.getLogger(__name__)
@@ -407,3 +410,169 @@ def warn_about_miscased_insertion_markers(
                         text,
                         pattern_case.pattern,
                     )
+
+
+# BaseFeatureCompiler entrypoints:
+# * __init__(ufo, ttFont, glyphSet, featureWriters, feaIncludeDir)
+# * compile()
+
+
+@dataclass
+class PreMergeData:
+    """Per-source work-in-progress feature information."""
+
+    featureFile: ast.FeatureFile | None  # TODO: type
+    """Original feature code read from the UFO."""
+
+    preMergeData: OnePerFeatureWriter[Any]
+    """Custom data from each feature writer's preWrite() and preMerge() steps.
+
+    The exact contents are specific to each feature writer. Each feature writer
+    can expect to get back during the preMerge() step the same data that it has
+    output in the preWrite() step.
+    """
+
+
+OnePerFeatureWriter = list
+OnePerSource = list
+
+
+@dataclass
+class InterpolatableFeatureCompiler:
+    default_source: Any
+    other_sources: list[Any]
+    featureWriters: tuple[BaseFeatureWriter, ...] = field(
+        default=tuple(FeatureCompiler.defaultFeatureWriters)
+    )
+    feaIncludeDir: TODO  # From kwargs
+
+    def preWrite(self, ufo, ttf, glyphSet, **kwargs) -> PreMergeData:
+        """Generate feaLib AST for the features of the given UFO.
+
+        The TTF and glyph set are for reference only but won't be touched here,
+        only when calling compile() will the TTF get new GPOS/GSUB data.
+        """
+        featureFile = None
+        results = []
+        with timer("run feature writers preWrite()"):
+            if self.featureWriters:
+                featureFile = parseLayoutFeatures(ufo, self.feaIncludeDir)
+
+                # Insertion markers are only considered in "skip" mode.
+                if any(writer.mode == "skip" for writer in self.featureWriters):
+                    markers = {
+                        writer.insertFeatureMarker
+                        for writer in self.featureWriters
+                        if writer.insertFeatureMarker is not None
+                    }
+                    warn_about_miscased_insertion_markers(
+                        describe_ufo(ufo), featureFile, markers
+                    )
+
+                path = ufo.path
+                for writer in self.featureWriters:
+                    try:
+                        preMergeData = writer.preWrite(ufo, featureFile, compiler=self)
+                        results.append(preMergeData)
+                    except FeatureLibError:
+                        if path is None:
+                            # TODO
+                            self._write_temporary_feature_file(featureFile.asFea())
+                        raise
+
+        return PreMergeData(featureFile=featureFile, preMergeData=results)
+
+    def preMerge(
+        self, ttfs: OnePerSource[TTFont], preMergeDatas: OnePerSource[PreMergeData]
+    ) -> OnePerSource[PreMergeData]:
+        """Ask each feature writer to do its own lookup alignment operation,
+        the result is one "feature code" for each TTF.
+
+        The TTFs are provided for reference only, it's compile() that will write
+        the features to each.
+        """
+        results = [PreMergeData(data.featureFile, []) for data in preMergeDatas]
+        with timer("run feature writers preMerge()"):
+            for i, writer in enumerate(self.featureWriters):
+                thisWriterPreMergeDatas = [
+                    data.preMergeData[i] for data in preMergeDatas
+                ]
+                aligned = writer.preMerge(
+                    self.default_source,
+                    self.other_sources,
+                    ttfs,
+                    thisWriterPreMergeDatas,
+                )
+                for result, data in zip(results, aligned):
+                    result.preMergeData.append(data)
+
+        return results
+
+    def compile(self, ufo: Any, preMergeData: PreMergeData, ttf: TTFont) -> None:
+        """Compile the feature file into this TTF."""
+        features = self.setupFeatures(ufo, preMergeData)
+        self.buildTables(ufo, features, ttf)
+
+    def setupFeatures(self, ufo: Any, preMergeData: PreMergeData) -> str:
+        """
+        Make the features source.
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the file creation
+        in a different way if desired.
+        """
+        with timer("run feature writers"):
+            if self.featureWriters:
+                # Use as starting point the feature file AST that was parsed
+                # in preWrite() and passed around untouched until now.
+                assert preMergeData.featureFile is not None
+                featureFile = preMergeData.featureFile
+
+                path = ufo.path
+                for writer in self.featureWriters:
+                    try:
+                        writer.write(ufo, featureFile, compiler=self)
+                    except FeatureLibError:
+                        if path is None:
+                            self._write_temporary_feature_file(featureFile.asFea())
+                        raise
+
+                # stringify AST to get correct line numbers in error messages
+                features = featureFile.asFea()
+            else:
+                # no featureWriters, simply read existing features' text
+                features = ufo.features.text or ""
+
+        return features
+
+    def buildTables(self, ufo: Any, features: str, ttf: TTFont):
+        """
+        Compile OpenType feature tables from the source.
+        Raises a FeaLibError if the feature compilation was unsuccessful.
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the table compilation
+        in a different way if desired.
+        """
+
+        if not features:
+            return
+
+        # the path is used by the lexer to follow 'include' statements;
+        # if we generated some automatic features, includes have already been
+        # resolved, and we work from a string which does't exist on disk
+        path = ufo.path if not self.featureWriters else None
+        with timer("build OpenType features"):
+            try:
+                addOpenTypeFeaturesFromString(ttf, features, filename=path)
+            except FeatureLibError:
+                if path is None:
+                    self._write_temporary_feature_file(features)
+                raise
+
+    def _write_temporary_feature_file(self, features: str) -> None:
+        # if compilation fails, create temporary file for inspection
+        data = features.encode("utf-8")
+        with NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(data)
+        logger.error("Compilation failed! Inspect temporary file: %r", tmp.name)

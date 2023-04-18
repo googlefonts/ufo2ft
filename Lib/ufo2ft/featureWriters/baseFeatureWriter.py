@@ -67,6 +67,25 @@ class BaseFeatureWriter:
         logger = ".".join([self.__class__.__module__, self.__class__.__name__])
         self.log = logging.getLogger(logger)
 
+    def preWrite(self, font, feaFile, compiler=None) -> Any:
+        """Prepare data for the preMerge step, if needed.
+
+        Return the data in question.
+
+        The default is to return None and then do nothing in the preMerge().
+        """
+        return None
+
+    def preMerge(
+        self,
+        default_source: Any,
+        other_sources: list[Any],
+        fonts: list[TTFont],
+        preMergeDatas: list[Any],
+    ) -> list[Any]:
+        """Align the contents of preMergeDatas from a global point of view."""
+        return preMergeDatas
+
     def setContext(self, font, feaFile, compiler=None):
         """Populate a temporary `self.context` namespace, which is reset
         after each new call to `_write` method.

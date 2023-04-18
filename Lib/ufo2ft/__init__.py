@@ -14,6 +14,7 @@ from ufo2ft.errors import InvalidDesignSpaceData
 from ufo2ft.featureCompiler import (
     MTI_FEATURES_PREFIX,
     FeatureCompiler,
+    InterpolatableFeatureCompiler,
     MtiFeatureCompiler,
 )
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
@@ -331,6 +332,108 @@ def compileInterpolatableTTFs(ufos, **kwargs):
                 kwargs["debugFeatureFile"].write("\n### %s ###\n" % fontName)
             compileFeatures(ufo, ttf, glyphSet=glyphSet, **kwargs)
 
+        ttf = call_postprocessor(ttf, ufo, glyphSet, **kwargs)
+
+        if layerName is not None:
+            # for sparse masters (i.e. containing only a subset of the glyphs), we
+            # need to include the post table in order to store glyph names, so that
+            # fontTools.varLib can interpolate glyphs with same name across masters.
+            # However we want to prevent the underlinePosition/underlineThickness
+            # fields in such sparse masters to be included when computing the deltas
+            # for the MVAR table. Thus, we set them to this unlikely, limit value
+            # (-36768) which is a signal varLib should ignore them when building MVAR.
+            ttf["post"].underlinePosition = -0x8000
+            ttf["post"].underlineThickness = -0x8000
+
+        yield ttf
+
+
+def compileInterpolatableTTFs2(ufos, **kwargs):
+    """Create FontTools TrueType fonts from a list of UFOs with interpolatable
+    outlines. Cubic curves are converted compatibly to quadratic curves using
+    the Cu2Qu conversion algorithm.
+
+    Return an iterator object that yields a TTFont instance for each UFO.
+
+    *layerNames* refers to the layer names to use glyphs from in the order of
+    the UFOs in *ufos*. By default, this is a list of `[None]` times the number
+    of UFOs, i.e. using the default layer from all the UFOs.
+
+    When the layerName is not None for a given UFO, the corresponding TTFont object
+    will contain only a minimum set of tables ("head", "hmtx", "glyf", "loca", "maxp",
+    "post" and "vmtx"), and no OpenType layout tables.
+
+    *skipExportGlyphs* is a list or set of glyph names to not be exported to the
+    final font. If these glyphs are used as components in any other glyph, those
+    components get decomposed. If the parameter is not passed in, the union of
+    all UFO's "public.skipExportGlyphs" lib keys will be used. If they don't
+    exist, all glyphs are exported. UFO groups and kerning will be pruned of
+    skipped glyphs.
+    """
+    from ufo2ft.util import _LazyFontName
+
+    kwargs = init_kwargs(kwargs, compileInterpolatableTTFs_args)
+
+    if kwargs["layerNames"] is None:
+        kwargs["layerNames"] = [None] * len(ufos)
+    layerNames = kwargs["layerNames"]
+    assert len(ufos) == len(layerNames)
+
+    glyphSets = call_preprocessor(ufos, **kwargs)
+
+    # Move default source to front of the queue so we know what generated
+    # feature writer lookups we need for the rest.
+    defaultSource = kwargs["defaultSource"]
+    assert isinstance(defaultSource, int)
+    ufos.insert(0, ufos.pop(defaultSource))
+    glyphSets.insert(0, glyphSets.pop(defaultSource))
+    layerNames.insert(0, layerNames.pop(defaultSource))
+
+    # TODO: check the kwargs stuff?
+    assert kwargs["featureCompilerClass"] is None
+    kwargs = prune_unknown_kwargs(kwargs, InterpolatableFeatureCompiler)
+    featureCompiler = InterpolatableFeatureCompiler(
+        default_source=ufos[0], other_sources=ufos[1:], **kwargs
+    )
+
+    ttfs = []
+    preMergeDatas = []
+
+    for ufo, glyphSet, layerName in zip(ufos, glyphSets, layerNames):
+        fontName = _LazyFontName(ufo)
+        if layerName is not None:
+            logger.info("Building OpenType tables for %s-%s", fontName, layerName)
+        else:
+            logger.info("Building OpenType tables for %s", fontName)
+
+        ttf = call_outline_compiler(
+            ufo,
+            glyphSet,
+            **kwargs,
+            tables=SPARSE_TTF_MASTER_TABLES if layerName else None,
+        )
+        ttfs.append(ttf)
+
+        # Only the default layer is likely to have all glyphs used in feature
+        # code.
+        if layerName is None:
+            if kwargs["debugFeatureFile"]:
+                kwargs["debugFeatureFile"].write("\n### %s ###\n" % fontName)
+            preMergeData = featureCompiler.preWrite(ufo, ttf, glyphSet, **kwargs)
+            preMergeDatas.append(preMergeData)
+
+            # if kwargs["debugFeatureFile"]:
+            #     if hasattr(featureCompiler, "writeFeatures"):
+            #         featureCompiler.writeFeatures(kwargs["debugFeatureFile"])
+
+    # Align lookups in generated features ("pre-merge" step) to make them mergeable
+    # See this issue: https://github.com/googlefonts/ufo2ft/pull/734#issuecomment-1512784380
+    mergeDatas = featureCompiler.preMerge(ttfs, preMergeDatas)
+
+    for ufo, ttf, glyphSet, layerName, mergeData in zip(
+        ufos, ttfs, glyphSets, layerNames, mergeDatas
+    ):
+        featureCompiler.compile(ufo, mergeData, ttf)
         ttf = call_postprocessor(ttf, ufo, glyphSet, **kwargs)
 
         if layerName is not None:
