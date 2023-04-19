@@ -236,7 +236,7 @@ def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
             else:
                 from ufo2ft.errors import InvalidFontData
 
-                InvalidFontData(
+                raise InvalidFontData(
                     "cannot map '%s' to U+%04X; already mapped to '%s'"
                     % (glyphName, uni, mapping[uni])
                 )
