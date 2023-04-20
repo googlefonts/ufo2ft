@@ -1414,6 +1414,30 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         "prep",
     }
 
+    def __init__(
+        self,
+        font,
+        glyphSet=None,
+        glyphOrder=None,
+        tables=None,
+        notdefGlyph=None,
+        colrLayerReuse=True,
+        colrAutoClipBoxes=True,
+        colrClipBoxQuantization=colrClipBoxQuantization,
+        autoUseMyMetrics=True,
+    ):
+        super().__init__(
+            font,
+            glyphSet=glyphSet,
+            glyphOrder=glyphOrder,
+            tables=tables,
+            notdefGlyph=notdefGlyph,
+            colrLayerReuse=colrLayerReuse,
+            colrAutoClipBoxes=colrAutoClipBoxes,
+            colrClipBoxQuantization=colrClipBoxQuantization,
+        )
+        self.autoUseMyMetrics = autoUseMyMetrics
+
     def compileGlyphs(self):
         """Compile and return the TrueType glyphs for this font."""
         allGlyphs = self.allGlyphs

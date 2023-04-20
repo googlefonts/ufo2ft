@@ -119,6 +119,11 @@ class OutlineTTFCompilerTest:
         for component in ttf["glyf"]["romanthree"].components:
             assert not (component.flags & USE_MY_METRICS)
 
+    def test_autoUseMyMetrics_False(self, use_my_metrics_ufo):
+        compiler = OutlineTTFCompiler(use_my_metrics_ufo, autoUseMyMetrics=False)
+        ttf = compiler.compile()
+        assert not (ttf["glyf"]["Iacute"].components[1].flags & USE_MY_METRICS)
+
     def test_autoUseMyMetrics_None(self, use_my_metrics_ufo):
         compiler = OutlineTTFCompiler(use_my_metrics_ufo)
         # setting 'autoUseMyMetrics' attribute to None disables the feature
