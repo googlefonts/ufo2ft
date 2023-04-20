@@ -386,7 +386,10 @@ class KernFeatureWriter(BaseFeatureWriter):
         lookup = ast.LookupBlock(name)
         if ignoreMarks and self.options.ignoreMarks:
             # We only want to filter the spacing marks
-            marks = self.context.gdefClasses.mark
+            marks = set(self.context.gdefClasses.mark or []) & set(
+                self.context.glyphSet.keys()
+            )
+
             spacing = []
             if marks:
                 spacing = [mark for mark in marks if self.context.font[mark].width != 0]
