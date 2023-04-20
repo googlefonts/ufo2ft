@@ -223,6 +223,7 @@ compileTTF_args = {
         reverseDirection=True,
         rememberCurveType=True,
         flattenComponents=False,
+        autoUseMyMetrics=True,
     ),
 }
 
@@ -274,6 +275,7 @@ compileInterpolatableTTFs_args = {
         colrLayerReuse=False,
         colrAutoClipBoxes=False,
         extraSubstitutions=None,
+        autoUseMyMetrics=True,
     ),
 }
 
@@ -550,6 +552,7 @@ compileVariableTTF_args = {
         excludeVariationTables=(),
         optimizeGvar=True,
         colrAutoClipBoxes=False,
+        autoUseMyMetrics=True,
     ),
 }
 
