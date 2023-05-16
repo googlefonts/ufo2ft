@@ -48,6 +48,10 @@ class ExplodeColorLayerGlyphsFilter(BaseFilter):
                 layerGlyphSet, glyphSet, component.baseGlyph, layerName
             )
             component.baseGlyph = baseLayerGlyphName
+        # The new alternates must have their codepoints stripped lest they
+        # become encoded, which they will be if placed in the default layer.
+        # See: https://github.com/googlefonts/ufo2ft/pull/739#issuecomment-1516075892
+        layerGlyph.unicodes = []
         glyphSet[layerGlyphName] = layerGlyph
         self.context.colorLayerGlyphNames.add(layerGlyphName)
         return layerGlyphName
