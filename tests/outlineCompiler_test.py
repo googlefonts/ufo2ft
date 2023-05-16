@@ -985,6 +985,28 @@ class ColrCpalTest:
             # no clipboxes, neither manual nor automatic
             assert colr.ClipList is None
 
+    @pytest.mark.parametrize("compileFunc", [compileTTF, compileOTF])
+    def test_strip_color_codepoints(self, FontClass, compileFunc):
+        """Test that glyphs in the color layer do not become accessible by
+        codepoint in the final font, given that they are copied into the default
+        layer as alternates.
+
+        See: https://github.com/googlefonts/ufo2ft/pull/739#issuecomment-1516075892"""
+
+        # Load a test UFO with color layers, and give a codepoint to one of the
+        # glyphs in those layers.
+        ufo = FontClass(getpath("ColorTest.ufo"))
+
+        color_glyph = ufo.layers["color1"]["a"]
+        color_glyph.unicode = 0x3020
+
+        # Build the UFO into a TTF or OTF.
+        built = compileFunc(ufo)
+
+        # Confirm that it has no entry for the codepoint above.
+        cmap = built.getBestCmap()
+        assert 0x3020 not in cmap
+
 
 class CmapTest:
     def test_cmap_BMP(self, testufo):
