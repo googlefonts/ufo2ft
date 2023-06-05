@@ -4,7 +4,7 @@ cu2qu==1.6.7.post2
 compreffor==0.5.3
 booleanOperations==0.9.0
 cffsubr==0.2.9.post1
-skia-pathops==0.7.4
+skia-pathops==0.8.0
 
 # alternative UFO implementation
 ufoLib2==0.14.0
