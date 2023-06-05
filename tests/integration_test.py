@@ -1,6 +1,7 @@
 import difflib
 import io
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from ufo2ft import (
     compileVariableTTFs,
 )
 from ufo2ft.constants import KEEP_GLYPH_NAMES
+from ufo2ft.errors import InvalidFontData
 from ufo2ft.filters import TransformationsFilter
 
 
@@ -414,6 +416,32 @@ class IntegrationTest:
             fonts["MutatorSerifVariable_Width"],
             "DSv5/MutatorSerifVariable_Width-CFF2.ttx",
         )
+
+    @pytest.mark.parametrize(
+        "compileFunc",
+        [
+            compileOTF,
+            compileTTF,
+        ],
+    )
+    def test_compile_overloaded_codepoints(self, FontClass, compileFunc):
+        """Confirm that ufo2ft produces an error when compiling a UFO with
+        multiple glyphs using the same codepoint. Currently only covers
+        individual UFOs."""
+
+        # Create a UFO in-memory with two glyphs using the same codepoint.
+        ufo = FontClass()
+        glyph_a = ufo.newGlyph("A")
+        glyph_b = ufo.newGlyph("B")
+        glyph_a.unicode = glyph_b.unicode = 0x0041
+
+        # Confirm that ufo2ft raises an appropriate exception with an
+        # appropriate description when compiling.
+        with pytest.raises(
+            InvalidFontData,
+            match=re.escape("cannot map 'B' to U+0041; already mapped to 'A'"),
+        ):
+            _ = compileFunc(ufo)
 
 
 if __name__ == "__main__":
