@@ -14,7 +14,7 @@ from fontTools.cffLib import (
     TopDictIndex,
 )
 from fontTools.misc.arrayTools import unionRect
-from fontTools.misc.fixedTools import otRound
+from fontTools.misc.roundTools import noRound, otRound
 from fontTools.pens.boundsPen import ControlBoundsPen
 from fontTools.pens.pointPen import SegmentToPointPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
@@ -1424,7 +1424,9 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         colrLayerReuse=True,
         colrAutoClipBoxes=True,
         colrClipBoxQuantization=colrClipBoxQuantization,
+        dropImpliedOnCurves=False,
         autoUseMyMetrics=True,
+        roundCoordinates=True,
     ):
         super().__init__(
             font,
@@ -1437,11 +1439,14 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
             colrClipBoxQuantization=colrClipBoxQuantization,
         )
         self.autoUseMyMetrics = autoUseMyMetrics
+        self.dropImpliedOnCurves = dropImpliedOnCurves
+        self.roundCoordinates = roundCoordinates
 
     def compileGlyphs(self):
         """Compile and return the TrueType glyphs for this font."""
         allGlyphs = self.allGlyphs
         ttGlyphs = {}
+        round = otRound if self.roundCoordinates else noRound
         for name in self.glyphOrder:
             glyph = allGlyphs[name]
             pen = TTGlyphPointPen(allGlyphs)
@@ -1451,7 +1456,10 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                 logger.error("%r has invalid curve format; skipped", name)
                 ttGlyph = Glyph()
             else:
-                ttGlyph = pen.glyph()
+                ttGlyph = pen.glyph(
+                    dropImpliedOnCurves=self.dropImpliedOnCurves,
+                    round=round,
+                )
             ttGlyphs[name] = ttGlyph
         return ttGlyphs
 
