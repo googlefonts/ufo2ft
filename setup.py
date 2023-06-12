@@ -30,7 +30,6 @@ setup(
     tests_require=["pytest>=2.8"],
     install_requires=[
         "fonttools[ufo]>=4.39.2",
-        "cu2qu>=1.6.7",
         "cffsubr>=0.2.8",
         "booleanOperations>=0.9.0",
     ],

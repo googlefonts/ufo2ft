@@ -2,7 +2,7 @@ import logging
 import os
 
 import pytest
-from cu2qu.ufo import CURVE_TYPE_LIB_KEY
+from fontTools.cu2qu.ufo import CURVE_TYPE_LIB_KEY
 from fontTools import designspaceLib
 
 import ufo2ft
