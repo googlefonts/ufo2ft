@@ -1,7 +1,7 @@
 import logging
 
 import pytest
-from cu2qu.ufo import font_to_quadratic
+from fontTools.cu2qu.ufo import font_to_quadratic
 from fontTools.pens.hashPointPen import HashPointPen
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
