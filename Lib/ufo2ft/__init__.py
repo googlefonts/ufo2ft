@@ -224,6 +224,7 @@ compileTTF_args = {
         rememberCurveType=True,
         flattenComponents=False,
         autoUseMyMetrics=True,
+        dropImpliedOnCurves=False,
     ),
 }
 
@@ -248,6 +249,9 @@ def compileTTF(ufo, **kwargs):
     "public.skipExportGlyphs" lib key will be consulted. If it doesn't exist,
     all glyphs are exported. UFO groups and kerning will be pruned of skipped
     glyphs.
+
+    *dropImpliedOnCurves* (bool) specifies whether on-curve points that are exactly
+    in between two off-curves can be dropped when building glyphs (default: False).
     """
     kwargs = init_kwargs(kwargs, compileTTF_args)
 
@@ -324,6 +328,10 @@ def compileInterpolatableTTFs(ufos, **kwargs):
             glyphSet,
             **kwargs,
             tables=SPARSE_TTF_MASTER_TABLES if layerName else None,
+            # we want to keep coordinates as floats in glyf masters so that fonttools
+            # can compute impliable on-curve points from unrounded coordinates before
+            # building the VF
+            roundCoordinates=False,
         )
 
         # Only the default layer is likely to have all glyphs used in feature
@@ -553,6 +561,7 @@ compileVariableTTF_args = {
         optimizeGvar=True,
         colrAutoClipBoxes=False,
         autoUseMyMetrics=True,
+        dropImpliedOnCurves=False,
     ),
 }
 
@@ -616,6 +625,7 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
     excludeVariationTables = kwargs.pop("excludeVariationTables")
     variableFontNames = kwargs.pop("variableFontNames")
     colrLayerReuse = kwargs.pop("colrLayerReuse")
+    dropImpliedOnCurves = kwargs.pop("dropImpliedOnCurves")
 
     # Pop inplace because we'll make a copy at this level so deeper functions
     # don't need to worry
@@ -640,6 +650,7 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
             skip_vf=lambda vf_name: variableFontNames
             and vf_name not in variableFontNames,
             colr_layer_reuse=colrLayerReuse,
+            drop_implied_oncurves=dropImpliedOnCurves,
         )
 
     for vfName, varfont in list(vfNameToTTFont.items()):
