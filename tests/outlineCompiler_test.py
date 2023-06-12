@@ -2,7 +2,7 @@ import logging
 import os
 
 import pytest
-from cu2qu.ufo import font_to_quadratic
+from fontTools.cu2qu.ufo import font_to_quadratic
 from fontTools.colorLib.unbuilder import unbuildColrV1
 from fontTools.misc.arrayTools import quantizeRect
 from fontTools.ttLib import TTFont

@@ -267,7 +267,7 @@ class TTFInterpolatablePreProcessor:
         skipExportGlyphs=None,
         filters=None,
     ):
-        from cu2qu.ufo import DEFAULT_MAX_ERR
+        from fontTools.cu2qu.ufo import DEFAULT_MAX_ERR
 
         self.ufos = ufos
         self.inplace = inplace
@@ -304,7 +304,7 @@ class TTFInterpolatablePreProcessor:
         self.postFilters = [[f for f in filters if not f.pre] for filters in filterses]
 
     def process(self):
-        from cu2qu.ufo import fonts_to_quadratic
+        from fontTools.cu2qu.ufo import fonts_to_quadratic
 
         needs_decomposition = set()
 
