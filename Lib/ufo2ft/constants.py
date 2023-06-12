@@ -75,7 +75,6 @@ USE_SCRIPTS = [
     "Buhd",  # Buhid
     "Cakm",  # Chakma
     "Cham",  # Cham
-    "Cham",  # Cham
     "Chrs",  # Chorasmian
     "Cpmn",  # Cypro Minoan
     "Diak",  # Dives Akuru
