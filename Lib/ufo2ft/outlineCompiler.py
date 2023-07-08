@@ -1329,8 +1329,14 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         # populate various numbers
         topDict.isFixedPitch = int(getAttrWithFallback(info, "postscriptIsFixedPitch"))
         topDict.ItalicAngle = float(getAttrWithFallback(info, "italicAngle"))
-        if 'public.openTypePostUnderlinePosition' in self.ufo.lib and info.postscriptUnderlinePosition is None:
-            underlinePosition = self.ufo.lib['public.openTypePostUnderlinePosition'] - getAttrWithFallback(info, "postscriptUnderlineThickness") / 2
+        if (
+            "public.openTypePostUnderlinePosition" in self.ufo.lib
+            and info.postscriptUnderlinePosition is None
+        ):
+            underlinePosition = (
+                self.ufo.lib["public.openTypePostUnderlinePosition"]
+                - getAttrWithFallback(info, "postscriptUnderlineThickness") / 2
+            )
         else:
             underlinePosition = getAttrWithFallback(info, "postscriptUnderlinePosition")
         topDict.UnderlinePosition = otRound(underlinePosition)
