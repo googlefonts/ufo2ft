@@ -185,6 +185,12 @@ class GetAttrWithFallbackTest:
         assert getAttrWithFallback(info, "xHeight") == 1024
         assert getAttrWithFallback(info, "descender") == -410
 
+    def test_underline_position(self, info):
+        assert getAttrWithFallback(info, "postscriptUnderlinePosition") == -75
+
+        info.postscriptUnderlinePosition = -485
+        assert getAttrWithFallback(info, "postscriptUnderlinePosition") == -485
+
 
 class PostscriptBlueScaleFallbackTest:
     def test_without_blue_zones(self, info):

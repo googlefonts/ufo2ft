@@ -262,6 +262,18 @@ class OutlineTTFCompilerTest:
         actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
         assert actual == "Custom Name for Windows"
 
+    def test_post_underline(self, testufo):
+        compiler = OutlineTTFCompiler(testufo)
+        compiler.compile()
+        actual = compiler.otf["post"].underlinePosition
+        assert actual == -200
+
+        testufo.lib['public.openTypePostUnderlinePosition'] = -485
+        compiler = OutlineTTFCompiler(testufo)
+        compiler.compile()
+        actual = compiler.otf["post"].underlinePosition
+        assert actual == -485
+
 
 class OutlineOTFCompilerTest:
     def test_setupTable_CFF_all_blues_defined(self, testufo):
@@ -595,6 +607,62 @@ class OutlineOTFCompilerTest:
 
         assert private.defaultWidthX == 500
         assert private.nominalWidthX == 0
+
+    def test_underline(self, testufo):
+        # Test with no lib key
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        assert post == -200
+        assert cff_underline == -200
+
+        # Test with a lib key and postscriptUnderlinePosition
+        testufo.lib['public.openTypePostUnderlinePosition'] = -485
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        assert post == -485
+        assert cff_underline == -200
+
+        # Test with a lib key and no postscriptUnderlinePosition
+        testufo.lib['public.openTypePostUnderlinePosition'] = -485
+        testufo.info.postscriptUnderlinePosition = None
+        testufo.info.postscriptUnderlineThickness = 100
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        assert post == -485
+        assert cff_underline == -535
+
+        # Test rounding
+        testufo.lib['public.openTypePostUnderlinePosition'] = -485
+        testufo.info.postscriptUnderlinePosition = None
+        testufo.info.postscriptUnderlineThickness = 43
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        assert post == -485
+        assert cff_underline == -506
 
 
 class GlyphOrderTest:
