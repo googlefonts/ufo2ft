@@ -268,7 +268,7 @@ class OutlineTTFCompilerTest:
         actual = compiler.otf["post"].underlinePosition
         assert actual == -200
 
-        testufo.lib['public.openTypePostUnderlinePosition'] = -485
+        testufo.lib["public.openTypePostUnderlinePosition"] = -485
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
         actual = compiler.otf["post"].underlinePosition
@@ -622,7 +622,7 @@ class OutlineOTFCompilerTest:
         assert cff_underline == -200
 
         # Test with a lib key and postscriptUnderlinePosition
-        testufo.lib['public.openTypePostUnderlinePosition'] = -485
+        testufo.lib["public.openTypePostUnderlinePosition"] = -485
         compiler = OutlineOTFCompiler(testufo)
         compiler.compile()
 
@@ -635,7 +635,7 @@ class OutlineOTFCompilerTest:
         assert cff_underline == -200
 
         # Test with a lib key and no postscriptUnderlinePosition
-        testufo.lib['public.openTypePostUnderlinePosition'] = -485
+        testufo.lib["public.openTypePostUnderlinePosition"] = -485
         testufo.info.postscriptUnderlinePosition = None
         testufo.info.postscriptUnderlineThickness = 100
         compiler = OutlineOTFCompiler(testufo)
@@ -650,7 +650,7 @@ class OutlineOTFCompilerTest:
         assert cff_underline == -535
 
         # Test rounding
-        testufo.lib['public.openTypePostUnderlinePosition'] = -485
+        testufo.lib["public.openTypePostUnderlinePosition"] = -485
         testufo.info.postscriptUnderlinePosition = None
         testufo.info.postscriptUnderlineThickness = 43
         compiler = OutlineOTFCompiler(testufo)
