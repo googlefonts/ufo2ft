@@ -187,7 +187,7 @@ class GetAttrWithFallbackTest:
 
     def test_underline_position(self, info):
         assert getAttrWithFallback(info, "postscriptUnderlinePosition") == -75
-        
+
         info.postscriptUnderlinePosition = -485
         assert getAttrWithFallback(info, "postscriptUnderlinePosition") == -485
 
