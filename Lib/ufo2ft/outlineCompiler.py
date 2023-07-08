@@ -929,7 +929,7 @@ class BaseOutlineCompiler:
         post.italicAngle = italicAngle
         # underline
         if 'public.openTypePostUnderlinePosition' in font.lib:
-            underlinePosition = font.info['public.openTypePostUnderlinePosition']
+            underlinePosition = font.lib['public.openTypePostUnderlinePosition']
         else:
             underlinePosition = getAttrWithFallback(
                 font.info, "postscriptUnderlinePosition"
