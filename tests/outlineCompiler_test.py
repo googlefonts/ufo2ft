@@ -20,6 +20,7 @@ from ufo2ft.constants import (
     SPARSE_OTF_MASTER_TABLES,
     SPARSE_TTF_MASTER_TABLES,
     USE_PRODUCTION_NAMES,
+    OPENTYPE_POST_UNDERLINE_POSITION_KEY,
 )
 from ufo2ft.fontInfoData import intListToNum
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
@@ -262,13 +263,14 @@ class OutlineTTFCompilerTest:
         actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
         assert actual == "Custom Name for Windows"
 
-    def test_post_underline(self, testufo):
+    def test_post_underline_without_public_key(self, testufo):
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
         actual = compiler.otf["post"].underlinePosition
         assert actual == -200
 
-        testufo.lib["public.openTypePostUnderlinePosition"] = -485
+    def test_post_underline_with_public_key(self, testufo):
+        testufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
         compiler = OutlineTTFCompiler(testufo)
         compiler.compile()
         actual = compiler.otf["post"].underlinePosition
@@ -608,7 +610,7 @@ class OutlineOTFCompilerTest:
         assert private.defaultWidthX == 500
         assert private.nominalWidthX == 0
 
-    def test_underline(self, testufo):
+    def test_underline_without_public_key(self, testufo):
         # Test with no lib key
         compiler = OutlineOTFCompiler(testufo)
         compiler.compile()
@@ -621,8 +623,9 @@ class OutlineOTFCompilerTest:
         assert post == -200
         assert cff_underline == -200
 
+    def test_underline_with_public_key(self, testufo):
         # Test with a lib key and postscriptUnderlinePosition
-        testufo.lib["public.openTypePostUnderlinePosition"] = -485
+        testufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
         compiler = OutlineOTFCompiler(testufo)
         compiler.compile()
 
@@ -634,8 +637,9 @@ class OutlineOTFCompilerTest:
         assert post == -485
         assert cff_underline == -200
 
+    def test_underline_with_public_key_and_no_psPosition(self, testufo):
         # Test with a lib key and no postscriptUnderlinePosition
-        testufo.lib["public.openTypePostUnderlinePosition"] = -485
+        testufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
         testufo.info.postscriptUnderlinePosition = None
         testufo.info.postscriptUnderlineThickness = 100
         compiler = OutlineOTFCompiler(testufo)
@@ -649,8 +653,9 @@ class OutlineOTFCompilerTest:
         assert post == -485
         assert cff_underline == -535
 
+    def test_underline_ps_rounding(self, testufo):
         # Test rounding
-        testufo.lib["public.openTypePostUnderlinePosition"] = -485
+        testufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
         testufo.info.postscriptUnderlinePosition = None
         testufo.info.postscriptUnderlineThickness = 43
         compiler = OutlineOTFCompiler(testufo)
