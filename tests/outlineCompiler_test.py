@@ -17,10 +17,10 @@ from ufo2ft import (
 )
 from ufo2ft.constants import (
     GLYPHS_DONT_USE_PRODUCTION_NAMES,
+    OPENTYPE_POST_UNDERLINE_POSITION_KEY,
     SPARSE_OTF_MASTER_TABLES,
     SPARSE_TTF_MASTER_TABLES,
     USE_PRODUCTION_NAMES,
-    OPENTYPE_POST_UNDERLINE_POSITION_KEY,
 )
 from ufo2ft.fontInfoData import intListToNum
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
