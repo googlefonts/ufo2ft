@@ -626,6 +626,7 @@ class OutlineOTFCompilerTest:
     def test_underline_with_public_key(self, testufo):
         # Test with a lib key and postscriptUnderlinePosition
         testufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
+        testufo.info.postscriptUnderlinePosition = -42
         compiler = OutlineOTFCompiler(testufo)
         compiler.compile()
 
@@ -635,7 +636,7 @@ class OutlineOTFCompilerTest:
         cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
 
         assert post == -485
-        assert cff_underline == -200
+        assert cff_underline == -42
 
     def test_underline_with_public_key_and_no_psPosition(self, testufo):
         # Test with a lib key and no postscriptUnderlinePosition
@@ -652,6 +653,21 @@ class OutlineOTFCompilerTest:
 
         assert post == -485
         assert cff_underline == -535
+
+    def test_underline_with_no_public_key_and_no_psPosition(self, testufo):
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        # Note: This is actually incorrect according to the post/cff
+        # spec, but it is how UFO3 has things defined, and is expected
+        # current behavior.
+        assert post == -200
+        assert cff_underline == -200
 
     def test_underline_ps_rounding(self, testufo):
         # Test rounding
