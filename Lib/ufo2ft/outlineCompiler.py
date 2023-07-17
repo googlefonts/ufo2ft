@@ -31,6 +31,7 @@ from ufo2ft.constants import (
     COLOR_PALETTES_KEY,
     COLR_CLIP_BOXES_KEY,
     OPENTYPE_META_KEY,
+    OPENTYPE_POST_UNDERLINE_POSITION_KEY,
     UNICODE_VARIATION_SEQUENCES_KEY,
 )
 from ufo2ft.errors import InvalidFontData
@@ -928,9 +929,12 @@ class BaseOutlineCompiler:
         italicAngle = float(getAttrWithFallback(font.info, "italicAngle"))
         post.italicAngle = italicAngle
         # underline
-        underlinePosition = getAttrWithFallback(
-            font.info, "postscriptUnderlinePosition"
-        )
+        if OPENTYPE_POST_UNDERLINE_POSITION_KEY in font.lib:
+            underlinePosition = font.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY]
+        else:
+            underlinePosition = getAttrWithFallback(
+                font.info, "postscriptUnderlinePosition"
+            )
         post.underlinePosition = otRound(underlinePosition)
         underlineThickness = getAttrWithFallback(
             font.info, "postscriptUnderlineThickness"
@@ -1326,7 +1330,16 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         # populate various numbers
         topDict.isFixedPitch = int(getAttrWithFallback(info, "postscriptIsFixedPitch"))
         topDict.ItalicAngle = float(getAttrWithFallback(info, "italicAngle"))
-        underlinePosition = getAttrWithFallback(info, "postscriptUnderlinePosition")
+        if (
+            OPENTYPE_POST_UNDERLINE_POSITION_KEY in self.ufo.lib
+            and info.postscriptUnderlinePosition is None
+        ):
+            underlinePosition = (
+                self.ufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY]
+                - getAttrWithFallback(info, "postscriptUnderlineThickness") / 2
+            )
+        else:
+            underlinePosition = getAttrWithFallback(info, "postscriptUnderlinePosition")
         topDict.UnderlinePosition = otRound(underlinePosition)
         underlineThickness = getAttrWithFallback(info, "postscriptUnderlineThickness")
         topDict.UnderlineThickness = otRound(underlineThickness)
