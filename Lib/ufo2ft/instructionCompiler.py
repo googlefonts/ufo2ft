@@ -39,6 +39,11 @@ class InstructionCompiler:
         if not autoUseMyMetrics:
             # If autoUseMyMetrics is False, replace the method with a no-op
             self.autoUseMyMetrics = lambda ttGlyph, glyphName: None
+        # Only warn--that a glyph's number of components are different in TTFont
+        # vs original UFO--when the USE_MY_METRICS flags are set manually, don't
+        # bother when automatically set:
+        # https://github.com/googlefonts/ufo2ft/issues/743
+        self.warn_if_components_mismatch = not autoUseMyMetrics
 
     def _check_glyph_hash(
         self, glyphName: str, ttglyph: TTGlyph, glyph_hash: Optional[str]
@@ -176,13 +181,14 @@ class InstructionCompiler:
         # Set component flags
 
         if len(ttglyph.components) != len(glyph.components):
-            # May happen if nested components have been flattened by a filter
-            logger.error(
-                "Number of components differ between UFO and TTF "
-                f"in glyph '{glyph.name}' ({len(glyph.components)} vs. "
-                f"{len(ttglyph.components)}, not setting component flags from"
-                "UFO. They may still be set heuristically."
-            )
+            if self.warn_if_components_mismatch:
+                # May happen if nested components have been flattened by a filter
+                logger.error(
+                    "Number of components differ between UFO and TTF "
+                    f"in glyph '{glyph.name}' ({len(glyph.components)} vs. "
+                    f"{len(ttglyph.components)}, not setting component flags from"
+                    "UFO. They may still be set heuristically."
+                )
             self.autoUseMyMetrics(ttglyph, glyph.name)
             return
 

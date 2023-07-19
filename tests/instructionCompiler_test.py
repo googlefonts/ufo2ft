@@ -566,6 +566,28 @@ class InstructionCompilerTest:
         assert not ttglyph.components[0].flags & USE_MY_METRICS
         assert not ttglyph.components[1].flags & USE_MY_METRICS
 
+    @pytest.mark.parametrize("autoUseMyMetrics", [True, False])
+    def test_set_composite_flags_auto_use_my_metrics_warn_if_components_mismatch(
+        self, quadufo, quadfont, autoUseMyMetrics, caplog
+    ):
+        # check we only log error message for component number mismatch when NOT setting
+        # USE_MY_METRICS flags automatically (otherwise it'd be unintended noise)
+        do_issue_warning = not autoUseMyMetrics
+
+        ic = InstructionCompiler(quadufo, quadfont, autoUseMyMetrics=autoUseMyMetrics)
+        name = "h"
+
+        glyph = quadufo[name]
+        ttglyph = quadfont["glyf"][name]
+        assert len(glyph.components) == len(ttglyph.components)
+        glyph.clearComponents()  # to produce an artificial len(components) mismatch
+        assert len(glyph.components) != len(ttglyph.components)
+
+        with caplog.at_level(logging.ERROR, logger="ufo2ft.instructionCompiler"):
+            ic._set_composite_flags(glyph=glyph, ttglyph=ttglyph)
+
+        assert ("Number of components differ" in caplog.text) is do_issue_warning
+
     # update_maxp
 
     def test_update_maxp_no_ttdata(self, quaduforeversed, quadfont):
