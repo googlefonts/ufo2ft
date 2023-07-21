@@ -237,7 +237,7 @@ class InstructionCompiler:
                         c.flags |= USE_MY_METRICS
                         use_my_metrics_comp = ufo_component_id
                     else:
-                        logger.warning(
+                        logger.debug(
                             f"Ignoring USE_MY_METRICS flag on component {i}, "
                             f"'{ufo_component_id}' because it has been set on "
                             f"component '{use_my_metrics_comp}' already "
