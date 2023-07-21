@@ -570,10 +570,6 @@ class InstructionCompilerTest:
     def test_set_composite_flags_auto_use_my_metrics_warn_if_components_mismatch(
         self, quadufo, quadfont, autoUseMyMetrics, caplog
     ):
-        # check we only log error message for component number mismatch when NOT setting
-        # USE_MY_METRICS flags automatically (otherwise it'd be unintended noise)
-        do_issue_warning = not autoUseMyMetrics
-
         ic = InstructionCompiler(quadufo, quadfont, autoUseMyMetrics=autoUseMyMetrics)
         name = "h"
 
@@ -583,10 +579,10 @@ class InstructionCompilerTest:
         glyph.clearComponents()  # to produce an artificial len(components) mismatch
         assert len(glyph.components) != len(ttglyph.components)
 
-        with caplog.at_level(logging.ERROR, logger="ufo2ft.instructionCompiler"):
+        with caplog.at_level(logging.DEBUG, logger="ufo2ft.instructionCompiler"):
             ic._set_composite_flags(glyph=glyph, ttglyph=ttglyph)
 
-        assert ("Number of components differ" in caplog.text) is do_issue_warning
+        assert "Number of components differ" in caplog.text
 
     # update_maxp
 

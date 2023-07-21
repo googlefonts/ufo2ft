@@ -39,11 +39,6 @@ class InstructionCompiler:
         if not autoUseMyMetrics:
             # If autoUseMyMetrics is False, replace the method with a no-op
             self.autoUseMyMetrics = lambda ttGlyph, glyphName: None
-        # Only warn--that a glyph's number of components are different in TTFont
-        # vs original UFO--when the USE_MY_METRICS flags are set manually, don't
-        # bother when automatically set:
-        # https://github.com/googlefonts/ufo2ft/issues/743
-        self.warn_if_components_mismatch = not autoUseMyMetrics
 
     def _check_glyph_hash(
         self, glyphName: str, ttglyph: TTGlyph, glyph_hash: Optional[str]
@@ -181,14 +176,12 @@ class InstructionCompiler:
         # Set component flags
 
         if len(ttglyph.components) != len(glyph.components):
-            if self.warn_if_components_mismatch:
-                # May happen if nested components have been flattened by a filter
-                logger.error(
-                    "Number of components differ between UFO and TTF "
-                    f"in glyph '{glyph.name}' ({len(glyph.components)} vs. "
-                    f"{len(ttglyph.components)}, not setting component flags from"
-                    "UFO. They may still be set heuristically."
-                )
+            # May happen if nested components have been flattened by a filter
+            logger.debug(
+                "Number of components differ between UFO and TTF "
+                f"in glyph '{glyph.name}' ({len(glyph.components)} vs. "
+                f"{len(ttglyph.components)}, not setting component flags from UFO."
+            )
             self.autoUseMyMetrics(ttglyph, glyph.name)
             return
 
@@ -213,10 +206,10 @@ class InstructionCompiler:
             ufo_component_id = glyph.components[i].identifier
             if ufo_component_id is None:
                 # No information about component flags is stored in the UFO.
-                # We don’t modify the flags. Two flags have already been set elsewhere:
-                # - ROUND_XY_TO_GRID is set in TTGlyphPointPen.glyph() called from
-                #                    OutlineTTFCompiler.compileGlyphs()
-                # - USE_MY_METRICS   is set in OutlineTTFCompiler.setupTable_glyf()
+                # We don’t modify the flags. Two flags are being set elsewhere:
+                # - ROUND_XY_TO_GRID has already been set in TTGlyphPointPen.glyph()
+                #                    called from OutlineTTFCompiler.compileGlyphs()
+                # - USE_MY_METRICS   is set automatically below if no component has it
                 continue
 
             if (
@@ -244,7 +237,7 @@ class InstructionCompiler:
                         c.flags |= USE_MY_METRICS
                         use_my_metrics_comp = ufo_component_id
                     else:
-                        logger.warning(
+                        logger.debug(
                             f"Ignoring USE_MY_METRICS flag on component {i}, "
                             f"'{ufo_component_id}' because it has been set on "
                             f"component '{use_my_metrics_comp}' already "
