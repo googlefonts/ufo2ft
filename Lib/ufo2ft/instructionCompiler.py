@@ -206,10 +206,10 @@ class InstructionCompiler:
             ufo_component_id = glyph.components[i].identifier
             if ufo_component_id is None:
                 # No information about component flags is stored in the UFO.
-                # We don’t modify the flags. Two flags have already been set elsewhere:
-                # - ROUND_XY_TO_GRID is set in TTGlyphPointPen.glyph() called from
-                #                    OutlineTTFCompiler.compileGlyphs()
-                # - USE_MY_METRICS   is set in OutlineTTFCompiler.setupTable_glyf()
+                # We don’t modify the flags. Two flags are being set elsewhere:
+                # - ROUND_XY_TO_GRID has already been set in TTGlyphPointPen.glyph()
+                #                    called from OutlineTTFCompiler.compileGlyphs()
+                # - USE_MY_METRICS   is set automatically below if no component has it
                 continue
 
             if (
