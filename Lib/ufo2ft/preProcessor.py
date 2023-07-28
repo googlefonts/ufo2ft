@@ -231,6 +231,12 @@ class TTFPreProcessor(OTFPreProcessor):
                     allQuadratic=allQuadratic,
                 )
             )
+        elif reverseDirection:
+            from ufo2ft.filters.reverseContourDirection import (
+                ReverseContourDirectionFilter,
+            )
+
+            filters.append(ReverseContourDirectionFilter(include=lambda g: len(g)))
         return filters
 
 
@@ -345,6 +351,14 @@ class TTFInterpolatablePreProcessor:
                 remember_curve_type=self._rememberCurveType and self.inplace,
                 all_quadratic=self.allQuadratic,
             )
+        elif self._reverseDirection:
+            from ufo2ft.filters.reverseContourDirection import (
+                ReverseContourDirectionFilter,
+            )
+
+            reverseDirection = ReverseContourDirectionFilter(include=lambda g: len(g))
+            for ufo, glyphSet in zip(self.ufos, self.glyphSets):
+                reverseDirection(ufo, glyphSet)
 
         # TrueType fonts cannot mix contours and components, so pick out all glyphs
         # that have contours (`bool(len(g)) == True`) and decompose their
