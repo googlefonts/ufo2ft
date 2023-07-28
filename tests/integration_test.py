@@ -443,11 +443,13 @@ class IntegrationTest:
         ):
             _ = compileFunc(ufo)
 
-    def test_compileTTF_not_allQuadratic(self, testufo):
+    def test_compileTTF_glyf1_not_allQuadratic(self, testufo):
         ttf = compileTTF(testufo, allQuadratic=False)
         expectTTX(ttf, "TestFont-not-allQuadratic.ttx", tables=["glyf"])
 
-    def test_compileVariableTTF_not_allQuadratic(self, designspace):
+        assert ttf["head"].glyphDataFormat == 1
+
+    def test_compileVariableTTF_glyf1_not_allQuadratic(self, designspace):
         base_master = designspace.findDefault()
         assert base_master is not None
         # add a glyph with some curveTo to exercise the cu2qu codepath
@@ -461,6 +463,8 @@ class IntegrationTest:
 
         vf = compileVariableTTF(designspace, allQuadratic=False)
         expectTTX(vf, "TestVariableFont-TTF-not-allQuadratic.ttx", tables=["glyf"])
+
+        assert vf["head"].glyphDataFormat == 1
 
 
 if __name__ == "__main__":

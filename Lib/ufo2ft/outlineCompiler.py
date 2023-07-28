@@ -363,7 +363,7 @@ class BaseOutlineCompiler:
         )
         head.fontDirectionHint = 2
         head.indexToLocFormat = 0
-        head.glyphDataFormat = 0
+        head.glyphDataFormat = getattr(self, "glyphDataFormat", 0)
 
     def setupTable_name(self):
         """
@@ -1440,6 +1440,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         dropImpliedOnCurves=False,
         autoUseMyMetrics=True,
         roundCoordinates=True,
+        glyphDataFormat=0,
     ):
         super().__init__(
             font,
@@ -1454,6 +1455,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         self.autoUseMyMetrics = autoUseMyMetrics
         self.dropImpliedOnCurves = dropImpliedOnCurves
         self.roundCoordinates = roundCoordinates
+        self.glyphDataFormat = glyphDataFormat
 
     def compileGlyphs(self):
         """Compile and return the TrueType glyphs for this font."""

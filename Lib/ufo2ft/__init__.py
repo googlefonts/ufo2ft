@@ -263,7 +263,10 @@ def compileTTF(ufo, **kwargs):
     glyphSet = call_preprocessor(ufo, **kwargs)
 
     logger.info("Building OpenType tables")
-    otf = call_outline_compiler(ufo, glyphSet, **kwargs)
+
+    otf = call_outline_compiler(
+        ufo, glyphSet, glyphDataFormat=(0 if kwargs["allQuadratic"] else 1), **kwargs
+    )
 
     # Only the default layer is likely to have all glyphs used in feature code.
     if kwargs["layerName"] is None:
@@ -333,6 +336,7 @@ def compileInterpolatableTTFs(ufos, **kwargs):
             ufo,
             glyphSet,
             **kwargs,
+            glyphDataFormat=(0 if kwargs["allQuadratic"] else 1),
             tables=SPARSE_TTF_MASTER_TABLES if layerName else None,
             # we want to keep coordinates as floats in glyf masters so that fonttools
             # can compute impliable on-curve points from unrounded coordinates before
