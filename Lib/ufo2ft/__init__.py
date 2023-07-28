@@ -280,6 +280,7 @@ compileInterpolatableTTFs_args = {
     **dict(
         preProcessorClass=TTFInterpolatablePreProcessor,
         outlineCompilerClass=OutlineTTFCompiler,
+        convertCubics=True,
         cubicConversionError=None,
         reverseDirection=True,
         flattenComponents=False,
@@ -564,6 +565,7 @@ compileVariableTTF_args = {
     **dict(
         preProcessorClass=TTFInterpolatablePreProcessor,
         outlineCompilerClass=OutlineTTFCompiler,
+        convertCubics=True,
         cubicConversionError=None,
         reverseDirection=True,
         flattenComponents=False,
