@@ -262,6 +262,7 @@ class TTFInterpolatablePreProcessor:
         ufos,
         inplace=False,
         flattenComponents=False,
+        convertCubics=True,
         conversionError=None,
         reverseDirection=True,
         rememberCurveType=True,
@@ -289,6 +290,7 @@ class TTFInterpolatablePreProcessor:
             )
             for ufo, layerName in zip(ufos, layerNames)
         ]
+        self.convertCubics = convertCubics
         self._conversionErrors = [
             (conversionError or DEFAULT_MAX_ERR)
             * getAttrWithFallback(ufo.info, "unitsPerEm")
@@ -334,14 +336,15 @@ class TTFInterpolatablePreProcessor:
             for func in funcs:
                 func(ufo, glyphSet)
 
-        fonts_to_quadratic(
-            self.glyphSets,
-            max_err=self._conversionErrors,
-            reverse_direction=self._reverseDirection,
-            dump_stats=True,
-            remember_curve_type=self._rememberCurveType and self.inplace,
-            all_quadratic=self.allQuadratic,
-        )
+        if self.convertCubics:
+            fonts_to_quadratic(
+                self.glyphSets,
+                max_err=self._conversionErrors,
+                reverse_direction=self._reverseDirection,
+                dump_stats=True,
+                remember_curve_type=self._rememberCurveType and self.inplace,
+                all_quadratic=self.allQuadratic,
+            )
 
         # TrueType fonts cannot mix contours and components, so pick out all glyphs
         # that have contours (`bool(len(g)) == True`) and decompose their

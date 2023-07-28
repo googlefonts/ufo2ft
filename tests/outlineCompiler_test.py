@@ -70,22 +70,22 @@ def emptyufo(FontClass):
 
 
 class OutlineTTFCompilerTest:
-    def test_compile_with_gasp(self, testufo):
-        compiler = OutlineTTFCompiler(testufo)
+    def test_compile_with_gasp(self, quadufo):
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert "gasp" in compiler.otf
         assert compiler.otf["gasp"].gaspRange == {7: 10, 65535: 15}
 
-    def test_compile_without_gasp(self, testufo):
-        testufo.info.openTypeGaspRangeRecords = None
-        compiler = OutlineTTFCompiler(testufo)
+    def test_compile_without_gasp(self, quadufo):
+        quadufo.info.openTypeGaspRangeRecords = None
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert "gasp" not in compiler.otf
 
-    def test_compile_empty_gasp(self, testufo):
+    def test_compile_empty_gasp(self, quadufo):
         # ignore empty gasp
-        testufo.info.openTypeGaspRangeRecords = []
-        compiler = OutlineTTFCompiler(testufo)
+        quadufo.info.openTypeGaspRangeRecords = []
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert "gasp" not in compiler.otf
 
@@ -150,10 +150,10 @@ class OutlineTTFCompilerTest:
         assert compiler.otf["hhea"].minRightSideBearing == 0
         assert compiler.otf["hhea"].xMaxExtent == 0
 
-    def test_os2_no_widths(self, testufo):
-        for glyph in testufo:
+    def test_os2_no_widths(self, quadufo):
+        for glyph in quadufo:
             glyph.width = 0
-        compiler = OutlineTTFCompiler(testufo)
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert compiler.otf["OS/2"].xAvgCharWidth == 0
 
@@ -220,8 +220,8 @@ class OutlineTTFCompilerTest:
         assert endPts == [4]
         assert list(flags) == [0, 0, 0, 0, 1]
 
-    def test_setupTable_meta(self, testufo):
-        testufo.lib["public.openTypeMeta"] = {
+    def test_setupTable_meta(self, quadufo):
+        quadufo.lib["public.openTypeMeta"] = {
             "appl": b"BEEF",
             "bild": b"AAAA",
             "dlng": ["en-Latn", "nl-Latn"],
@@ -231,7 +231,7 @@ class OutlineTTFCompilerTest:
             "PRIU": "Some private unicode string…",
         }
 
-        compiler = OutlineTTFCompiler(testufo)
+        compiler = OutlineTTFCompiler(quadufo)
         ttFont = compiler.compile()
         meta = ttFont["meta"]
 
@@ -243,13 +243,13 @@ class OutlineTTFCompilerTest:
         assert meta.data["PRIA"] == b"Some private ascii string"
         assert meta.data["PRIU"] == "Some private unicode string…".encode("utf-8")
 
-    def test_setupTable_name(self, testufo):
-        compiler = OutlineTTFCompiler(testufo)
+    def test_setupTable_name(self, quadufo):
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
         assert actual == "Some Font Regular (Style Map Family Name)"
 
-        testufo.info.openTypeNameRecords.append(
+        quadufo.info.openTypeNameRecords.append(
             {
                 "nameID": 1,
                 "platformID": 3,
@@ -258,20 +258,20 @@ class OutlineTTFCompilerTest:
                 "string": "Custom Name for Windows",
             }
         )
-        compiler = OutlineTTFCompiler(testufo)
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
         assert actual == "Custom Name for Windows"
 
-    def test_post_underline_without_public_key(self, testufo):
-        compiler = OutlineTTFCompiler(testufo)
+    def test_post_underline_without_public_key(self, quadufo):
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         actual = compiler.otf["post"].underlinePosition
         assert actual == -200
 
-    def test_post_underline_with_public_key(self, testufo):
-        testufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
-        compiler = OutlineTTFCompiler(testufo)
+    def test_post_underline_with_public_key(self, quadufo):
+        quadufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         actual = compiler.otf["post"].underlinePosition
         assert actual == -485
@@ -687,7 +687,7 @@ class OutlineOTFCompilerTest:
 
 
 class GlyphOrderTest:
-    def test_compile_original_glyph_order(self, testufo):
+    def test_compile_original_glyph_order(self, quadufo):
         DEFAULT_ORDER = [
             ".notdef",
             "space",
@@ -704,11 +704,11 @@ class GlyphOrderTest:
             "k",
             "l",
         ]
-        compiler = OutlineTTFCompiler(testufo)
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == DEFAULT_ORDER
 
-    def test_compile_tweaked_glyph_order(self, testufo):
+    def test_compile_tweaked_glyph_order(self, quadufo):
         NEW_ORDER = [
             ".notdef",
             "space",
@@ -725,12 +725,12 @@ class GlyphOrderTest:
             "k",
             "l",
         ]
-        testufo.lib["public.glyphOrder"] = NEW_ORDER
-        compiler = OutlineTTFCompiler(testufo)
+        quadufo.lib["public.glyphOrder"] = NEW_ORDER
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == NEW_ORDER
 
-    def test_compile_strange_glyph_order(self, testufo):
+    def test_compile_strange_glyph_order(self, quadufo):
         """Move space and .notdef to end of glyph ids
         ufo2ft always puts .notdef first.
         """
@@ -751,8 +751,8 @@ class GlyphOrderTest:
             "k",
             "l",
         ]
-        testufo.lib["public.glyphOrder"] = NEW_ORDER
-        compiler = OutlineTTFCompiler(testufo)
+        quadufo.lib["public.glyphOrder"] = NEW_ORDER
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
 

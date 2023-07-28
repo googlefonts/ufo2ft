@@ -22,7 +22,7 @@ from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPointPen
 from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.standardGlyphOrder import standardGlyphOrder
-from fontTools.ttLib.tables._g_l_y_f import Glyph
+from fontTools.ttLib.tables._g_l_y_f import Glyph, flagCubic
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
@@ -1462,6 +1462,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         allGlyphs = self.allGlyphs
         ttGlyphs = {}
         round = otRound if self.roundCoordinates else noRound
+        glyphDataFormat = self.glyphDataFormat
         for name in self.glyphOrder:
             glyph = allGlyphs[name]
             pen = TTGlyphPointPen(allGlyphs)
@@ -1475,6 +1476,16 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                     dropImpliedOnCurves=self.dropImpliedOnCurves,
                     round=round,
                 )
+                if (
+                    glyphDataFormat == 0
+                    and ttGlyph.numberOfContours > 0
+                    and any(f & flagCubic for f in ttGlyph.flags)
+                ):
+                    raise ValueError(
+                        f"{name!r} has cubic Bezier curves, but glyphDataFormat=0; "
+                        "either convert to quadratic (convertCubics=True) or use "
+                        "allQuadratic=False so that glyphDataFormat=1."
+                    )
             ttGlyphs[name] = ttGlyph
         return ttGlyphs
 
