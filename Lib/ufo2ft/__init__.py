@@ -225,6 +225,7 @@ compileTTF_args = {
         flattenComponents=False,
         autoUseMyMetrics=True,
         dropImpliedOnCurves=False,
+        allQuadratic=True,
     ),
 }
 
@@ -252,6 +253,10 @@ def compileTTF(ufo, **kwargs):
 
     *dropImpliedOnCurves* (bool) specifies whether on-curve points that are exactly
     in between two off-curves can be dropped when building glyphs (default: False).
+
+    *allQuadratic* (bool) specifies whether to convert all curves to quadratic - True
+    by default, builds traditional glyf v0 table. If False, quadratic curves or cubic
+    curves are generated depending on which has fewer points; a glyf v1 is generated.
     """
     kwargs = init_kwargs(kwargs, compileTTF_args)
 
@@ -280,6 +285,7 @@ compileInterpolatableTTFs_args = {
         colrAutoClipBoxes=False,
         extraSubstitutions=None,
         autoUseMyMetrics=True,
+        allQuadratic=True,
     ),
 }
 
@@ -562,6 +568,7 @@ compileVariableTTF_args = {
         colrAutoClipBoxes=False,
         autoUseMyMetrics=True,
         dropImpliedOnCurves=False,
+        allQuadratic=True,
     ),
 }
 
@@ -611,6 +618,10 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
     *variableFontNames* is an optional list of names of variable fonts
       to build. If not provided, all variable fonts listed in the given
       designspace will by built.
+
+    *allQuadratic* (bool) specifies whether to convert all curves to quadratic - True
+      by default, builds traditional glyf v0 table. If False, quadratic curves or cubic
+      curves are generated depending on which has fewer points; a glyf v1 is generated.
 
     The rest of the arguments works the same as in the other compile functions.
 

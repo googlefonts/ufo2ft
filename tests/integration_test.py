@@ -443,6 +443,25 @@ class IntegrationTest:
         ):
             _ = compileFunc(ufo)
 
+    def test_compileTTF_not_allQuadratic(self, testufo):
+        ttf = compileTTF(testufo, allQuadratic=False)
+        expectTTX(ttf, "TestFont-not-allQuadratic.ttx", tables=["glyf"])
+
+    def test_compileVariableTTF_not_allQuadratic(self, designspace):
+        base_master = designspace.findDefault()
+        assert base_master is not None
+        # add a glyph with some curveTo to exercise the cu2qu codepath
+        glyph = base_master.font.newGlyph("curved")
+        glyph.width = 1000
+        pen = glyph.getPen()
+        pen.moveTo((500, 0))
+        pen.curveTo((500, 277.614), (388.072, 500), (250, 500))
+        pen.curveTo((111.928, 500), (0, 277.614), (0, 0))
+        pen.closePath()
+
+        vf = compileVariableTTF(designspace, allQuadratic=False)
+        expectTTX(vf, "TestVariableFont-TTF-not-allQuadratic.ttx", tables=["glyf"])
+
 
 if __name__ == "__main__":
     sys.exit(pytest.main(sys.argv))

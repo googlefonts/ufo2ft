@@ -14,6 +14,7 @@ class CubicToQuadraticFilter(BaseFilter):
         "conversionError": None,
         "reverseDirection": True,
         "rememberCurveType": False,
+        "allQuadratic": True,
     }
 
     def set_context(self, font, glyphSet):
@@ -64,6 +65,7 @@ class CubicToQuadraticFilter(BaseFilter):
             self.context.absoluteError,
             reverse_direction=self.options.reverseDirection,
             stats=self.context.stats,
+            all_quadratic=self.options.allQuadratic,
         )
         contours = list(glyph)
         glyph.clearContours()

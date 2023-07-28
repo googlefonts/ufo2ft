@@ -195,6 +195,7 @@ class TTFPreProcessor(OTFPreProcessor):
         flattenComponents=False,
         convertCubics=True,
         conversionError=None,
+        allQuadratic=True,
         reverseDirection=True,
         rememberCurveType=True,
     ):
@@ -227,6 +228,7 @@ class TTFPreProcessor(OTFPreProcessor):
                     conversionError=conversionError,
                     reverseDirection=reverseDirection,
                     rememberCurveType=rememberCurveType and self.inplace,
+                    allQuadratic=allQuadratic,
                 )
             )
         return filters
@@ -266,6 +268,7 @@ class TTFInterpolatablePreProcessor:
         layerNames=None,
         skipExportGlyphs=None,
         filters=None,
+        allQuadratic=True,
     ):
         from fontTools.cu2qu.ufo import DEFAULT_MAX_ERR
 
@@ -293,6 +296,7 @@ class TTFInterpolatablePreProcessor:
         ]
         self._reverseDirection = reverseDirection
         self._rememberCurveType = rememberCurveType
+        self.allQuadratic = allQuadratic
 
         self.defaultFilters = []
         for ufo in ufos:
@@ -336,6 +340,7 @@ class TTFInterpolatablePreProcessor:
             reverse_direction=self._reverseDirection,
             dump_stats=True,
             remember_curve_type=self._rememberCurveType and self.inplace,
+            all_quadratic=self.allQuadratic,
         )
 
         # TrueType fonts cannot mix contours and components, so pick out all glyphs
