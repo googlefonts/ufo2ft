@@ -131,6 +131,20 @@ class TTFPreProcessorTest:
         a = glyphSet["a"]
         assert (a[0][0].x, a[0][0].y) == (ufo["a"][0][0].x + 10, ufo["a"][0][0].y - 10)
 
+    def test_no_convertCubics_reverseDirection(self, FontClass):
+        ufo = FontClass(getpath("TestFont.ufo"))
+
+        glyphSet = TTFPreProcessor(
+            ufo, convertCubics=False, reverseDirection=True
+        ).process()
+
+        contours = [contour for contour in glyphSet["c"]]
+        points = [point for point in contours[0]]
+        assert points[0].segmentType == "line"
+        assert points[1].segmentType is None
+        assert points[2].segmentType is None
+        assert points[3].segmentType == "curve"
+
 
 class TTFInterpolatablePreProcessorTest:
     def test_no_inplace(self, FontClass):
@@ -247,6 +261,22 @@ class TTFInterpolatablePreProcessorTest:
             ufo2["a"][0][0].x + 20,
             ufo2["a"][0][0].y - 10,
         )
+
+    def test_no_convertCubics_reverseDirection(self, FontClass):
+        ufo1 = FontClass(getpath("TestFont.ufo"))
+        ufo2 = FontClass(getpath("TestFont.ufo"))
+
+        glyphSets = TTFInterpolatablePreProcessor(
+            [ufo1, ufo2], convertCubics=False, reverseDirection=True
+        ).process()
+
+        for glyphSet in glyphSets:
+            contours = [contour for contour in glyphSet["c"]]
+            points = [point for point in contours[0]]
+            assert points[0].segmentType == "line"
+            assert points[1].segmentType is None
+            assert points[2].segmentType is None
+            assert points[3].segmentType == "curve"
 
 
 class SkipExportGlyphsTest:

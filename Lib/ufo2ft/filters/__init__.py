@@ -14,6 +14,7 @@ from .explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
 from .flattenComponents import FlattenComponentsFilter
 from .propagateAnchors import PropagateAnchorsFilter
 from .removeOverlaps import RemoveOverlapsFilter
+from .reverseContourDirection import ReverseContourDirectionFilter
 from .sortContours import SortContoursFilter
 from .transformations import TransformationsFilter
 
@@ -27,6 +28,7 @@ __all__ = [
     "FlattenComponentsFilter",
     "PropagateAnchorsFilter",
     "RemoveOverlapsFilter",
+    "ReverseContourDirectionFilter",
     "SortContoursFilter",
     "TransformationsFilter",
     "loadFilters",
