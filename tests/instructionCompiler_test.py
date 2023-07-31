@@ -7,6 +7,7 @@ from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
     ROUND_XY_TO_GRID,
     USE_MY_METRICS,
+    flagOverlapSimple,
 )
 from fontTools.ttLib.ttFont import TTFont
 
@@ -583,6 +584,23 @@ class InstructionCompilerTest:
             ic._set_composite_flags(glyph=glyph, ttglyph=ttglyph)
 
         assert "Number of components differ" in caplog.text
+
+    @pytest.mark.parametrize("overlap", [None, False, True])
+    def test_set_simple_flags(self, quadufo, quadfont, overlap):
+        ic = InstructionCompiler(quadufo, quadfont)
+        name = "a"
+
+        glyph = quadufo[name]
+        if overlap is not None:
+            glyph.lib = {"public.truetype.overlap": overlap}
+        ttglyph = quadfont["glyf"][name]
+
+        ic._set_simple_flags(glyph=glyph, ttglyph=ttglyph)
+
+        if overlap:
+            assert ttglyph.flags[0] & flagOverlapSimple
+        else:
+            assert not ttglyph.flags[0] & flagOverlapSimple
 
     # update_maxp
 

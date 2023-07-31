@@ -11,6 +11,7 @@ from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
     ROUND_XY_TO_GRID,
     USE_MY_METRICS,
+    flagOverlapSimple,
 )
 
 from ufo2ft.constants import (
@@ -121,6 +122,8 @@ class InstructionCompiler:
             self._compile_tt_glyph_program(glyph, ttGlyph, ttdata)
         if ttGlyph.isComposite():
             self._set_composite_flags(glyph, ttGlyph)
+        else:
+            self._set_simple_flags(glyph, ttGlyph)
 
     def _compile_tt_glyph_program(
         self, glyph: Glyph, ttglyph: TTGlyph, ttdata: dict
@@ -252,6 +255,19 @@ class InstructionCompiler:
         # we try to automatically set it
         if not lib_contains_use_my_metrics_key:
             self.autoUseMyMetrics(ttglyph, glyph.name)
+
+    def _set_simple_flags(self, glyph: Glyph, ttglyph: TTGlyph) -> None:
+        # Set simple glyph flags
+
+        if ttglyph.numberOfContours < 1 or not ttglyph.flags:
+            return
+
+        # Set OVERLAP_SIMPLE
+        if TRUETYPE_OVERLAP_KEY in glyph.lib:
+            if glyph.lib[TRUETYPE_OVERLAP_KEY]:
+                ttglyph.flags[0] |= flagOverlapSimple
+            else:
+                ttglyph.flags[0] &= ~flagOverlapSimple
 
     def update_maxp(self) -> None:
         """Update the maxp table with relevant values from the UFO and compiled

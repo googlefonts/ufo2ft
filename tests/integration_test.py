@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from fontTools.pens.boundsPen import BoundsPen
+from fontTools.ttLib.tables._g_l_y_f import OVERLAP_COMPOUND, flagOverlapSimple
 
 from ufo2ft import (
     compileInterpolatableTTFs,
@@ -17,7 +18,7 @@ from ufo2ft import (
     compileVariableTTF,
     compileVariableTTFs,
 )
-from ufo2ft.constants import KEEP_GLYPH_NAMES
+from ufo2ft.constants import KEEP_GLYPH_NAMES, TRUETYPE_OVERLAP_KEY
 from ufo2ft.errors import InvalidFontData
 from ufo2ft.filters import TransformationsFilter
 
@@ -465,6 +466,19 @@ class IntegrationTest:
         expectTTX(vf, "TestVariableFont-TTF-not-allQuadratic.ttx", tables=["glyf"])
 
         assert vf["head"].glyphDataFormat == 1
+
+    def test_compileTTF_overlap_simple_flag(self, testufo):
+        """Test that the OVERLAP_{SIMPLE,COMPOUND} are set on glyphs that have it"""
+        testufo["a"].lib = {TRUETYPE_OVERLAP_KEY: True}
+        testufo["h"].lib = {TRUETYPE_OVERLAP_KEY: True}
+        ttf = compileTTF(testufo, useProductionNames=False)
+
+        # OVERLAP_SIMPLE is set on 'a' but not on 'b'
+        assert ttf["glyf"]["a"].flags[0] & flagOverlapSimple
+        assert not ttf["glyf"]["b"].flags[0] & flagOverlapSimple
+        # OVERLAP_COMPOUND is set on 'h' but not on 'g'
+        assert not ttf["glyf"]["g"].components[0].flags & OVERLAP_COMPOUND
+        assert ttf["glyf"]["h"].components[0].flags & OVERLAP_COMPOUND
 
 
 if __name__ == "__main__":
