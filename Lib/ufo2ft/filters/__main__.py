@@ -34,8 +34,6 @@ if not args.output:
 
 ufo = loader(args.ufo)
 
-include = None
-
 if args.include:
     include_set = set(args.include.split(","))
 
@@ -47,6 +45,9 @@ elif args.exclude:
 
     def include(g):
         return g.name not in exclude_set
+
+else:
+    include = None
 
 
 for filtername in args.filters:
