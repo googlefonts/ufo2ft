@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 from fontTools.pens.boundsPen import BoundsPen
-from fontTools.ttLib.tables._g_l_y_f import OVERLAP_COMPOUND, flagOverlapSimple
+from fontTools.ttLib.tables._g_l_y_f import (
+    OVERLAP_COMPOUND,
+    flagCubic,
+    flagOverlapSimple,
+)
 
 from ufo2ft import (
     compileInterpolatableTTFs,
@@ -450,17 +454,21 @@ class IntegrationTest:
 
         assert ttf["head"].glyphDataFormat == 1
 
+    @staticmethod
+    def drawCurvedContour(glyph):
+        pen = glyph.getPen()
+        pen.moveTo((500, 0))
+        pen.curveTo((500, 277.614), (388.072, 500), (250, 500))
+        pen.curveTo((111.928, 500), (0, 277.614), (0, 0))
+        pen.closePath()
+
     def test_compileVariableTTF_glyf1_not_allQuadratic(self, designspace):
         base_master = designspace.findDefault()
         assert base_master is not None
         # add a glyph with some curveTo to exercise the cu2qu codepath
         glyph = base_master.font.newGlyph("curved")
         glyph.width = 1000
-        pen = glyph.getPen()
-        pen.moveTo((500, 0))
-        pen.curveTo((500, 277.614), (388.072, 500), (250, 500))
-        pen.curveTo((111.928, 500), (0, 277.614), (0, 0))
-        pen.closePath()
+        self.drawCurvedContour(glyph)
 
         vf = compileVariableTTF(designspace, allQuadratic=False)
         expectTTX(vf, "TestVariableFont-TTF-not-allQuadratic.ttx", tables=["glyf"])
@@ -479,6 +487,26 @@ class IntegrationTest:
         # OVERLAP_COMPOUND is set on 'h' but not on 'g'
         assert not ttf["glyf"]["g"].components[0].flags & OVERLAP_COMPOUND
         assert ttf["glyf"]["h"].components[0].flags & OVERLAP_COMPOUND
+
+    def test_compileVariableTTF_notdefGlyph_with_curves(self, designspace):
+        # The test DS contains two full masters (Regular and Bold) and one intermediate
+        # 'sparse' (Medium) master, which does not contain a .notdef glyph and as such
+        # is supposed to inherit one from the default master. If the notdef contains
+        # any curves, an error occured because these are weren't been converted to
+        # quadratic: https://github.com/googlefonts/ufo2ft/issues/501
+
+        # First we draw an additional contour containing cubic curves in the Regular
+        # and Bold's .notdef glyphs
+        for src_idx in (0, 2):
+            notdef = designspace.sources[src_idx].font[".notdef"]
+            self.drawCurvedContour(notdef)
+        assert ".notdef" not in designspace.sources[1].font.layers["Medium"]
+
+        # this must NOT fail!
+        vf = compileVariableTTF(designspace, convertCubics=True, allQuadratic=True)
+
+        # and because allQuadratic=True, we expect .notdef contains no cubic curves
+        assert not any(f & flagCubic for f in vf["glyf"][".notdef"].flags)
 
 
 if __name__ == "__main__":
