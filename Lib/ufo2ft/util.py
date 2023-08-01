@@ -475,7 +475,7 @@ def getDefaultMasterFont(designSpaceDoc):
     return defaultSource.font
 
 
-def _getDefaultNotdefGlyph(designSpaceDoc):
+def _getDefaultNotdefGlyph(designSpaceDoc, empty=False):
     from ufo2ft.errors import InvalidDesignSpaceData
 
     try:
@@ -488,6 +488,18 @@ def _getDefaultNotdefGlyph(designSpaceDoc):
             notdefGlyph = baseUfo[".notdef"]
         except KeyError:
             notdefGlyph = None
+        else:
+            if empty:
+                # create a new empty .notdef glyph with the same width/height
+                # as the default master's .notdef glyph to be use for sparse layer
+                # master TTFs, so that it won't participate in gvar interpolation
+                # TODO(anthrotype): Use sentinel values for width/height to
+                # mark the glyph as non-participating for HVAR if/when fonttools
+                # supports that, https://github.com/googlefonts/ufo2ft/issues/501
+                emptyGlyph = _getNewGlyphFactory(notdefGlyph)(".notdef")
+                emptyGlyph.width = notdefGlyph.width
+                emptyGlyph.height = notdefGlyph.height
+                notdefGlyph = emptyGlyph
     return notdefGlyph
 
 
