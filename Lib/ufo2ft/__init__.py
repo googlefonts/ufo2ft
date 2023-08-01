@@ -408,7 +408,7 @@ def compileInterpolatableTTFsFromDS(designSpaceDoc, **kwargs):
     kwargs["skipExportGlyphs"] = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
 
     if kwargs["notdefGlyph"] is None:
-        kwargs["notdefGlyph"] = _getDefaultNotdefGlyph(designSpaceDoc)
+        kwargs["notdefGlyph"] = _getDefaultNotdefGlyph(designSpaceDoc, empty=True)
 
     kwargs["extraSubstitutions"] = defaultdict(set)
     for rule in designSpaceDoc.rules:
