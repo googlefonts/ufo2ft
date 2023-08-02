@@ -515,6 +515,23 @@ class IntegrationTest:
         # varLib only warns: https://github.com/fonttools/fonttools/issues/2572
         assert ".notdef" in vf["gvar"].variations
 
+    def test_compileVariableCFF2_sparse_notdefGlyph(self, designspace):
+        # test that sparse layer without .notdef does not participate in computation
+        # of CFF2 and HVAR deltas for the .notdef glypht
+        for src_idx, transform in ((0, (1, 0, 0, 1, 0, 0)), (2, (2, 0, 0, 2, 0, 0))):
+            notdef = designspace.sources[src_idx].font[".notdef"]
+            self.drawCurvedContour(notdef, transform)
+        designspace.sources[2].font[".notdef"].width *= 2
+        assert ".notdef" not in designspace.sources[1].font.layers["Medium"]
+
+        vf = compileVariableCFF2(designspace)
+
+        expectTTX(
+            vf,
+            "TestVariableFont-CFF2-sparse-notdefGlyph.ttx",
+            tables=["CFF2", "hmtx", "HVAR"],
+        )
+
 
 if __name__ == "__main__":
     sys.exit(pytest.main(sys.argv))

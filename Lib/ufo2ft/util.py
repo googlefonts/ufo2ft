@@ -475,7 +475,17 @@ def getDefaultMasterFont(designSpaceDoc):
     return defaultSource.font
 
 
-def _getDefaultNotdefGlyph(designSpaceDoc, empty=False):
+def _notdefGlyphFallback(designSpaceDoc):
+    """Return an empty glyph to be used as .notdef for sparse layer masters.
+
+    Sparse layers usually do not contain a .notdef glyph, however in order to
+    compile valid TTFs to be used as master in varLib.build, a .notdef at index 0 is
+    required. We can't use the auto-generated .notdef glyph because it may be
+    incompatible with the one already present in the other masters. So we make
+    an empty glyph which will be ignored when building gvar or HVAR.
+    If the default master does not contain a .notdef either, return None since
+    the auto-generated .notdef can be used.
+    """
     from ufo2ft.errors import InvalidDesignSpaceData
 
     try:
@@ -489,17 +499,11 @@ def _getDefaultNotdefGlyph(designSpaceDoc, empty=False):
         except KeyError:
             notdefGlyph = None
         else:
-            if empty:
-                # create a new empty .notdef glyph with the same width/height
-                # as the default master's .notdef glyph to be use for sparse layer
-                # master TTFs, so that it won't participate in gvar interpolation
-                # TODO(anthrotype): Use sentinel values for width/height to
-                # mark the glyph as non-participating for HVAR if/when fonttools
-                # supports that, https://github.com/googlefonts/ufo2ft/issues/501
-                emptyGlyph = _getNewGlyphFactory(notdefGlyph)(".notdef")
-                emptyGlyph.width = notdefGlyph.width
-                emptyGlyph.height = notdefGlyph.height
-                notdefGlyph = emptyGlyph
+            notdefGlyph = _getNewGlyphFactory(notdefGlyph)(".notdef")
+            # sentinel value for varLib that means this advance does not participate
+            # https://github.com/fonttools/fonttools/pull/3235
+            notdefGlyph.width = 0xFFFF
+            notdefGlyph.height = 0xFFFF
     return notdefGlyph
 
 

@@ -24,7 +24,7 @@ from ufo2ft.preProcessor import (
     TTFPreProcessor,
 )
 from ufo2ft.util import (
-    _getDefaultNotdefGlyph,
+    _notdefGlyphFallback,
     colrClipBoxQuantization,
     ensure_all_sources_have_names,
     init_kwargs,
@@ -408,7 +408,7 @@ def compileInterpolatableTTFsFromDS(designSpaceDoc, **kwargs):
     kwargs["skipExportGlyphs"] = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
 
     if kwargs["notdefGlyph"] is None:
-        kwargs["notdefGlyph"] = _getDefaultNotdefGlyph(designSpaceDoc, empty=True)
+        kwargs["notdefGlyph"] = _notdefGlyphFallback(designSpaceDoc)
 
     kwargs["extraSubstitutions"] = defaultdict(set)
     for rule in designSpaceDoc.rules:
@@ -479,7 +479,7 @@ def compileInterpolatableOTFsFromDS(designSpaceDoc, **kwargs):
     kwargs["skipExportGlyphs"] = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
 
     if kwargs["notdefGlyph"] is None:
-        kwargs["notdefGlyph"] = _getDefaultNotdefGlyph(designSpaceDoc)
+        kwargs["notdefGlyph"] = _notdefGlyphFallback(designSpaceDoc)
 
     kwargs["extraSubstitutions"] = defaultdict(set)
     for rule in designSpaceDoc.rules:
