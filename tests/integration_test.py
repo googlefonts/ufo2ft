@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from fontTools.pens.boundsPen import BoundsPen
+from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
     flagCubic,
@@ -455,8 +456,10 @@ class IntegrationTest:
         assert ttf["head"].glyphDataFormat == 1
 
     @staticmethod
-    def drawCurvedContour(glyph):
+    def drawCurvedContour(glyph, transform=None):
         pen = glyph.getPen()
+        if transform is not None:
+            pen = TransformPen(pen, transform)
         pen.moveTo((500, 0))
         pen.curveTo((500, 277.614), (388.072, 500), (250, 500))
         pen.curveTo((111.928, 500), (0, 277.614), (0, 0))
@@ -497,9 +500,9 @@ class IntegrationTest:
 
         # First we draw an additional contour containing cubic curves in the Regular
         # and Bold's .notdef glyphs
-        for src_idx in (0, 2):
+        for src_idx, transform in ((0, (1, 0, 0, 1, 0, 0)), (2, (2, 0, 0, 2, 0, 0))):
             notdef = designspace.sources[src_idx].font[".notdef"]
-            self.drawCurvedContour(notdef)
+            self.drawCurvedContour(notdef, transform)
         assert ".notdef" not in designspace.sources[1].font.layers["Medium"]
 
         # this must NOT fail!
@@ -507,6 +510,10 @@ class IntegrationTest:
 
         # and because allQuadratic=True, we expect .notdef contains no cubic curves
         assert not any(f & flagCubic for f in vf["glyf"][".notdef"].flags)
+
+        # ensure .notdef has variations and was NOT dropped as incompatible,
+        # varLib only warns: https://github.com/fonttools/fonttools/issues/2572
+        assert ".notdef" in vf["gvar"].variations
 
 
 if __name__ == "__main__":

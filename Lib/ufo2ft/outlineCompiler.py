@@ -262,7 +262,7 @@ class BaseOutlineCompiler:
             return
 
         reverseContour = sfntVersion == "\000\001\000\000"
-        if notdefGlyph:
+        if notdefGlyph is not None:
             notdefGlyph = _copyGlyph(notdefGlyph, reverseContour=reverseContour)
         else:
             unitsPerEm = otRound(getAttrWithFallback(font.info, "unitsPerEm"))
