@@ -465,20 +465,20 @@
         <Region index="0">
           <VarRegionAxis index="0">
             <StartCoord value="0.0"/>
-            <PeakCoord value="0.36365"/>
+            <PeakCoord value="1.0"/>
             <EndCoord value="1.0"/>
           </VarRegionAxis>
         </Region>
         <Region index="1">
           <VarRegionAxis index="0">
-            <StartCoord value="0.36365"/>
-            <PeakCoord value="1.0"/>
+            <StartCoord value="0.0"/>
+            <PeakCoord value="0.36365"/>
             <EndCoord value="1.0"/>
           </VarRegionAxis>
         </Region>
         <Region index="2">
           <VarRegionAxis index="0">
-            <StartCoord value="0.0"/>
+            <StartCoord value="0.36365"/>
             <PeakCoord value="1.0"/>
             <EndCoord value="1.0"/>
           </VarRegionAxis>
