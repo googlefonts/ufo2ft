@@ -415,10 +415,9 @@ class BaseOutlineCompiler:
             22: getAttrWithFallback(font.info, "openTypeNameWWSSubfamilyName"),
         }
 
-        # don't add typographic names if they are the same as the legacy ones
-        if nameVals[1] == nameVals[16]:
+        # don't add typographic names if *both* are the same as the legacy ones
+        if nameVals[1] == nameVals[16] and nameVals[2] == nameVals[17]:
             del nameVals[16]
-        if nameVals[2] == nameVals[17]:
             del nameVals[17]
         # postscript font name
         if nameVals[6]:
