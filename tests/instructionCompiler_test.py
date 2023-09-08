@@ -281,11 +281,18 @@ class InstructionCompilerTest:
 
     def test_compileGlyphInstructions_missing_glyph(self, caplog):
         # The method logs an info when trying to compile a glyph which is
-        # missing in the UFO, e.g. '.notdef'
+        # missing in the UFO
         ic = InstructionCompiler(dict(), None)
         with caplog.at_level(logging.INFO, logger="ufo2ft.instructionCompiler"):
             ic.compileGlyphInstructions(None, "A")
         assert "Skipping compilation of instructions for glyph 'A'" in caplog.text
+        # ... except for '.notdef' which is frequently generated
+        with caplog.at_level(logging.INFO, logger="ufo2ft.instructionCompiler"):
+            ic.compileGlyphInstructions(None, ".notdef")
+        assert (
+            "Skipping compilation of instructions for glyph '.notdef'"
+            not in caplog.text
+        )
 
     # _compile_tt_glyph_program
 
