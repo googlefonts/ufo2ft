@@ -6,4 +6,4 @@ cffsubr==0.2.9.post1
 skia-pathops==0.8.0.post1
 
 # alternative UFO implementation
-ufoLib2==0.14.0
+ufoLib2==0.16.0
