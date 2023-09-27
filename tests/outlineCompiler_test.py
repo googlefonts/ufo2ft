@@ -1,5 +1,6 @@
 import logging
 import os
+from io import BytesIO
 
 import pytest
 from fontTools.colorLib.unbuilder import unbuildColrV1
@@ -1377,6 +1378,29 @@ def test_pass_on_conversion_error(FontClass):
     # Two off-curves:
     font2_coords = list(font2["glyf"]["test"].coordinates)
     assert font2_coords == [(0, 43), (0, 0), (43, 0), (43, 19), (19, 43)]
+
+
+@pytest.mark.parametrize("CompilerClass", [OutlineOTFCompiler, OutlineTTFCompiler])
+@pytest.mark.parametrize(
+    "vendorID, expected",
+    [
+        ("A", "A   "),
+        ("AA", "AA  "),
+        ("AAA", "AAA "),
+        ("AAAA", "AAAA"),
+    ],
+)
+def test_achVendId_space_padded_if_less_than_4_chars(
+    FontClass, CompilerClass, vendorID, expected
+):
+    ufo = FontClass()
+    ufo.info.openTypeOS2VendorID = vendorID
+    font = CompilerClass(ufo).compile()
+    tmp = BytesIO()
+    font.save(tmp)
+    font = TTFont(tmp)
+
+    assert font["OS/2"].achVendID == expected
 
 
 if __name__ == "__main__":

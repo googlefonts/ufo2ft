@@ -652,8 +652,8 @@ class BaseOutlineCompiler:
         os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
         os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
 
-        # vendor id
-        os2.achVendID = getAttrWithFallback(font.info, "openTypeOS2VendorID")
+        # vendor id, padded with spaces if < 4 bytes
+        os2.achVendID = getAttrWithFallback(font.info, "openTypeOS2VendorID").ljust(4)
 
         # vertical metrics
         os2.sxHeight = otRound(getAttrWithFallback(font.info, "xHeight"))
