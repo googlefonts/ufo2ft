@@ -576,6 +576,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Arab;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Arab;
+
                 script arab;
                 language dflt;
                 lookup kern_Arab;
@@ -602,6 +606,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Thaa;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Arab;
+                lookup kern_Thaa;
+
                 script arab;
                 language dflt;
                 lookup kern_Arab;
@@ -624,6 +633,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Thaa;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Thaa;
+
                 script thaa;
                 language dflt;
                 lookup kern_Thaa;
@@ -1043,6 +1056,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Arab_marks;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Arab;
+                lookup kern_Arab_marks;
+
                 script arab;
                 language dflt;
                 lookup kern_Arab;
@@ -1284,6 +1302,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 script DFLT;
                 language dflt;
                 lookup kern_Default;
+                lookup kern_Hebr;
 
                 script hebr;
                 language dflt;
@@ -1677,6 +1696,11 @@ def test_kern_multi_script(FontClass):
         } kern_Nkoo;
 
         feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Arab;
+            lookup kern_Nkoo;
+
             script arab;
             language dflt;
             lookup kern_Arab;

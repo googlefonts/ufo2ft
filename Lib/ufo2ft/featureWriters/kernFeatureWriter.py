@@ -581,14 +581,17 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         # InDesign bugfix: register kerning lookups for all LTR scripts under DFLT
         # so that the basic composer, without a language selected, will still kern.
+        # Register LTR lookups if any, otherwise RTL lookups.
         if isKernBlock:
-            for script in sorted(lookups):
-                if (
-                    script_horizontal_direction(script, "LTR") == "LTR"
-                    and script not in DIST_ENABLED_SCRIPTS
-                    and script != COMMON_SCRIPT
-                ):
-                    dfltLookups.extend(lookups[script].values())
+            lookupsLTR: list[ast.LookupBlock] = []
+            lookupsRTL: list[ast.LookupBlock] = []
+            for script, scriptLookups in sorted(lookups.items()):
+                if script != COMMON_SCRIPT and script not in DIST_ENABLED_SCRIPTS:
+                    if script_horizontal_direction(script, "LTR") == "LTR":
+                        lookupsLTR.extend(scriptLookups.values())
+                    elif script_horizontal_direction(script, "LTR") == "RTL":
+                        lookupsRTL.extend(scriptLookups.values())
+            dfltLookups.extend(lookupsLTR or lookupsRTL)
 
         if dfltLookups:
             languages = feaLanguagesByScript.get("DFLT", ["dflt"])
