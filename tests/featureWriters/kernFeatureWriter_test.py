@@ -154,7 +154,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         # default is ignoreMarks=True
         feaFile = self.writeFeatures(font)
-        assert str(feaFile) == dedent(
+        assert dedent(str(feaFile)) == dedent(
             """\
             lookup kern_Latn {
                 lookupflag IgnoreMarks;
@@ -166,6 +166,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Latn_marks;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Latn;
+                lookup kern_Latn_marks;
+                
                 script latn;
                 language dflt;
                 lookup kern_Latn;
@@ -175,7 +180,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
         )
 
         feaFile = self.writeFeatures(font, ignoreMarks=False)
-        assert str(feaFile) == dedent(
+        assert dedent(str(feaFile)) == dedent(
             """\
             lookup kern_Latn {
                 pos A acutecomb -55;
@@ -183,6 +188,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Latn;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Latn;
+                
                 script latn;
                 language dflt;
                 lookup kern_Latn;
@@ -567,6 +576,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Arab;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Arab;
+
                 script arab;
                 language dflt;
                 lookup kern_Arab;
@@ -593,6 +606,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Thaa;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Arab;
+                lookup kern_Thaa;
+
                 script arab;
                 language dflt;
                 lookup kern_Arab;
@@ -615,6 +633,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Thaa;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Thaa;
+
                 script thaa;
                 language dflt;
                 lookup kern_Thaa;
@@ -664,6 +686,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Latn;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Latn;
+
                 script latn;
                 language dflt;
                 lookup kern_Latn;
@@ -713,6 +739,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Latn;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Latn;
+
                 script latn;
                 language dflt;
                 lookup kern_Latn;
@@ -807,6 +837,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 script DFLT;
                 language dflt;
                 lookup kern_Default;
+                lookup kern_Latn;
 
                 script arab;
                 language dflt;
@@ -932,6 +963,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 script DFLT;
                 language dflt;
                 lookup kern_Default;
+                lookup kern_Latn;
+                lookup kern_Latn_marks;
 
                 script arab;
                 language dflt;
@@ -1023,6 +1056,11 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Arab_marks;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Arab;
+                lookup kern_Arab_marks;
+
                 script arab;
                 language dflt;
                 lookup kern_Arab;
@@ -1052,6 +1090,10 @@ class KernFeatureWriterTest(FeatureWriterTest):
             } kern_Latn;
 
             feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Latn;
+ 
                 script arab;
                 language dflt;
                 lookup kern_Arab;
@@ -1260,6 +1302,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 script DFLT;
                 language dflt;
                 lookup kern_Default;
+                lookup kern_Hebr;
 
                 script hebr;
                 language dflt;
@@ -1397,6 +1440,7 @@ def test_kern_split_multi_glyph_class(FontClass):
             script DFLT;
             language dflt;
             lookup kern_Default;
+            lookup kern_Latn;
 
             script latn;
             language dflt;
@@ -1480,6 +1524,11 @@ def test_kern_split_and_drop(FontClass, caplog):
         } kern_Orya;
 
         feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Grek;
+            lookup kern_Latn;
+
             script grek;
             language dflt;
             lookup kern_Grek;
@@ -1538,6 +1587,10 @@ def test_kern_split_and_drop_mixed(caplog, FontClass):
         } kern_Latn;
 
         feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Latn;
+
             script latn;
             language dflt;
             lookup kern_Latn;
@@ -1575,6 +1628,10 @@ def test_kern_split_and_mix_common(FontClass):
         } kern_Nkoo;
 
         feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Latn;
+
             script latn;
             language dflt;
             lookup kern_Latn;
@@ -1639,6 +1696,11 @@ def test_kern_multi_script(FontClass):
         } kern_Nkoo;
 
         feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_Arab;
+            lookup kern_Nkoo;
+
             script arab;
             language dflt;
             lookup kern_Arab;
@@ -1707,6 +1769,7 @@ def test_kern_mixed_bidis(caplog, FontClass):
             script DFLT;
             language dflt;
             lookup kern_Default;
+            lookup kern_Latn;
 
             script arab;
             language dflt;
@@ -1825,6 +1888,9 @@ def test_kern_zyyy_zinh(FontClass):
             script DFLT;
             language dflt;
             lookup kern_Default;
+            lookup kern_Grek;
+            lookup kern_Hani;
+            lookup kern_Hrkt;
 
             script grek;
             language dflt;
@@ -1903,6 +1969,7 @@ def test_kern_hira_kana_hrkt(FontClass):
             script DFLT;
             language dflt;
             lookup kern_Default;
+            lookup kern_Hrkt;
 
             script kana;
             language dflt;
@@ -2164,6 +2231,7 @@ def test_dflt_language(FontClass):
             script DFLT;
             language dflt;
             lookup kern_Default;
+            lookup kern_Latn;
             language ZND;
 
             script latn;

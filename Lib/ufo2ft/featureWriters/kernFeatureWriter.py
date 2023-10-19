@@ -575,11 +575,27 @@ class KernFeatureWriter(BaseFeatureWriter):
     ) -> None:
         # Ensure we have kerning for pure common script runs (e.g. ">1")
         isKernBlock = feature.name == "kern"
+        dfltLookups: list[ast.LookupBlock] = []
         if isKernBlock and COMMON_SCRIPT in lookups:
+            dfltLookups.extend(lookups[COMMON_SCRIPT].values())
+
+        # InDesign bugfix: register kerning lookups for all LTR scripts under DFLT
+        # so that the basic composer, without a language selected, will still kern.
+        # Register LTR lookups if any, otherwise RTL lookups.
+        if isKernBlock:
+            lookupsLTR: list[ast.LookupBlock] = []
+            lookupsRTL: list[ast.LookupBlock] = []
+            for script, scriptLookups in sorted(lookups.items()):
+                if script != COMMON_SCRIPT and script not in DIST_ENABLED_SCRIPTS:
+                    if script_horizontal_direction(script, "LTR") == "LTR":
+                        lookupsLTR.extend(scriptLookups.values())
+                    elif script_horizontal_direction(script, "LTR") == "RTL":
+                        lookupsRTL.extend(scriptLookups.values())
+            dfltLookups.extend(lookupsLTR or lookupsRTL)
+
+        if dfltLookups:
             languages = feaLanguagesByScript.get("DFLT", ["dflt"])
-            ast.addLookupReferences(
-                feature, lookups[COMMON_SCRIPT].values(), "DFLT", languages
-            )
+            ast.addLookupReferences(feature, dfltLookups, "DFLT", languages)
 
         # Feature blocks use script tags to distinguish what to run for a
         # Unicode script.
