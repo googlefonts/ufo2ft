@@ -573,24 +573,29 @@ class KernFeatureWriter(BaseFeatureWriter):
         lookups: dict[str, dict[str, ast.LookupBlock]],
         feaLanguagesByScript: Mapping[str, list[str]],
     ) -> None:
+        # InDesign bugfix: register kerning lookups for all LTR scripts under
+        # both DFLT and all other LTR scripts so that the basic composer kerns
+        # everything correctly, in particular: when no language is selected
+        # (hence the need to put everything in DFLT) and when e.g. Russian
+        # language is selected but the text contains Latin words (hence the
+        # need to have all LTR scripts register the lookups of all other
+        # scritps). This is nonsense for conformant OpenType implementations
+        # but the default composer of InDesign is terrible.
+        lookupsLTR: list[ast.LookupBlock] = []
+        lookupsRTL: list[ast.LookupBlock] = []
+        for script, scriptLookups in sorted(lookups.items()):
+            if script != COMMON_SCRIPT and script not in DIST_ENABLED_SCRIPTS:
+                if script_horizontal_direction(script, "LTR") == "LTR":
+                    lookupsLTR.extend(scriptLookups.values())
+                elif script_horizontal_direction(script, "LTR") == "RTL":
+                    lookupsRTL.extend(scriptLookups.values())
+
         # Ensure we have kerning for pure common script runs (e.g. ">1")
         isKernBlock = feature.name == "kern"
         dfltLookups: list[ast.LookupBlock] = []
-        if isKernBlock and COMMON_SCRIPT in lookups:
-            dfltLookups.extend(lookups[COMMON_SCRIPT].values())
-
-        # InDesign bugfix: register kerning lookups for all LTR scripts under DFLT
-        # so that the basic composer, without a language selected, will still kern.
-        # Register LTR lookups if any, otherwise RTL lookups.
         if isKernBlock:
-            lookupsLTR: list[ast.LookupBlock] = []
-            lookupsRTL: list[ast.LookupBlock] = []
-            for script, scriptLookups in sorted(lookups.items()):
-                if script != COMMON_SCRIPT and script not in DIST_ENABLED_SCRIPTS:
-                    if script_horizontal_direction(script, "LTR") == "LTR":
-                        lookupsLTR.extend(scriptLookups.values())
-                    elif script_horizontal_direction(script, "LTR") == "RTL":
-                        lookupsRTL.extend(scriptLookups.values())
+            if COMMON_SCRIPT in lookups:
+                dfltLookups.extend(lookups[COMMON_SCRIPT].values())
             dfltLookups.extend(lookupsLTR or lookupsRTL)
 
         if dfltLookups:
@@ -620,11 +625,15 @@ class KernFeatureWriter(BaseFeatureWriter):
                     feature.statements.append(ast.Comment(""))
                 # We have something for this script. First add the default
                 # lookups, then the script-specific ones
-                lookupsForThisScript = []
+                lookupsForThisScript: list[ast.LookupBlock] = []
                 for dfltScript in DFLT_SCRIPTS:
                     if dfltScript in lookups:
                         lookupsForThisScript.extend(lookups[dfltScript].values())
-                lookupsForThisScript.extend(lookups[script].values())
+                if isKernBlock and script_horizontal_direction(script, "LTR") == "LTR":
+                    # InDesign: add lookups of all other LTR scripts for an LTR script.
+                    lookupsForThisScript.extend(lookupsLTR)
+                else:
+                    lookupsForThisScript.extend(lookups[script].values())
                 # Register the lookups for all languages defined in the feature
                 # file for the script, otherwise kerning is not applied if any
                 # language is set at all.

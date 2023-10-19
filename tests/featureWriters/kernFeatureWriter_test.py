@@ -1532,9 +1532,11 @@ def test_kern_split_and_drop(FontClass, caplog):
             script grek;
             language dflt;
             lookup kern_Grek;
+            lookup kern_Latn;
 
             script latn;
             language dflt;
+            lookup kern_Grek;
             lookup kern_Latn;
         } kern;
 
@@ -1896,15 +1898,21 @@ def test_kern_zyyy_zinh(FontClass):
             language dflt;
             lookup kern_Default;
             lookup kern_Grek;
+            lookup kern_Hani;
+            lookup kern_Hrkt;
 
             script hani;
             language dflt;
             lookup kern_Default;
+            lookup kern_Grek;
             lookup kern_Hani;
+            lookup kern_Hrkt;
 
             script kana;
             language dflt;
             lookup kern_Default;
+            lookup kern_Grek;
+            lookup kern_Hani;
             lookup kern_Hrkt;
         } kern;
 
