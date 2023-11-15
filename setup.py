@@ -29,7 +29,7 @@ setup(
     setup_requires=pytest_runner + wheel + ["setuptools_scm"],
     tests_require=["pytest>=2.8"],
     install_requires=[
-        "fonttools[ufo]>=4.42.0",
+        "fonttools[ufo]>=4.44.3",
         "cffsubr>=0.2.8",
         "booleanOperations>=0.9.0",
     ],
