@@ -267,14 +267,20 @@ class MarkFeatureWriter(BaseFeatureWriter):
     If the `quantization` argument is given in the filter options, the resulting
     anchors are rounded to the nearest multiple of the quantization value.
 
-    Mark-to-base or mark-to-ligature attachments that reference non-overlapping
-    mark classes get grouped in the same lookup. If a mark glyph is in more than
-    one mark class, then additional lookups are generated for those as required.
-    If you prefer to have as many mark-to-base and mark-to-liga lookups as there
-    are mark classes, you can disable this with `groupMarkClasses=False`.
+    If `groupMarkClases=True`, mark-to-base or mark-to-ligature attachments that
+    reference non-overlapping mark classes will get grouped in the same lookup; and
+    if a mark glyph is in more than one mark class, additional lookups will be generated
+    for those as required. NOTE: this was the default behavior until ufo2ft 2.33.4.
+    The current default behavior was simplified to match other font editors and
+    we now build as many mark-to-base and mark-to-liga lookups as there
+    are mark classes, and lookups are sorted alphabetically by the mark class
+    name so the more specific ('top.alt' instead 'top') would be applied last and
+    wins in case when the same base or ligature glyph can attach to the same mark
+    through multiple mark classes.
+    https://github.com/googlefonts/ufo2ft/issues/591
     """
 
-    options = dict(quantization=1, groupMarkClasses=True)
+    options = dict(quantization=1, groupMarkClasses=False)
 
     tableTag = "GPOS"
     features = frozenset(["mark", "mkmk", "abvm", "blwm"])
