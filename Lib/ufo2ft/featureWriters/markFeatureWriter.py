@@ -732,14 +732,16 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     def _makeMarkFeature(self, include):
         baseLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToBaseAttachments):
+        for attachments in self.context.groupedMarkToBaseAttachments:
+            i = len(baseLkps)
             lookup = self._makeMarkLookup(
                 f"mark2base{'_' + str(i) if i > 0 else ''}", attachments, include
             )
             if lookup:
                 baseLkps.append(lookup)
         ligaLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
+        for attachments in self.context.groupedMarkToLigaAttachments:
+            i = len(ligaLkps)
             lookup = self._makeMarkLookup(
                 f"mark2liga{'_' + str(i) if i > 0 else ''}", attachments, include
             )
@@ -794,7 +796,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
             raise AssertionError(tag)
 
         baseLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToBaseAttachments):
+        for attachments in self.context.groupedMarkToBaseAttachments:
+            i = len(baseLkps)
             lookup = self._makeMarkLookup(
                 f"{tag}_mark2base{'_' + str(i) if i > 0 else ''}",
                 attachments,
@@ -804,7 +807,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
             if lookup:
                 baseLkps.append(lookup)
         ligaLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
+        for attachments in self.context.groupedMarkToLigaAttachments:
+            i = len(ligaLkps)
             lookup = self._makeMarkLookup(
                 f"{tag}_mark2liga{'_' + str(i) if i > 0 else ''}",
                 attachments,
