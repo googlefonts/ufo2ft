@@ -56,6 +56,11 @@ class _GlyphSet(dict):
             layer = font.layers.defaultLayer
 
         if copy:
+            logger.debug(
+                "Copying '%s' (%s) glyphset",
+                _LazyFontName(font),
+                layerName if layerName is not None else "default",
+            )
             self = _copyLayer(layer, obj_type=cls)
             self.lib = deepcopy(layer.lib)
         else:

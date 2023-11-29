@@ -644,10 +644,7 @@ def compileVariableTTFs(designSpaceDoc: DesignSpaceDocument, **kwargs):
     colrLayerReuse = kwargs.pop("colrLayerReuse")
     dropImpliedOnCurves = kwargs.pop("dropImpliedOnCurves")
 
-    # Pop inplace because we'll make a copy at this level so deeper functions
-    # don't need to worry
-    inplace = kwargs.pop("inplace")
-    if not inplace:
+    if not kwargs["inplace"]:
         designSpaceDoc = designSpaceDoc.deepcopyExceptFonts()
 
     vfNameToBaseUfo = _compileNeededSources(
@@ -760,10 +757,7 @@ def compileVariableCFF2s(designSpaceDoc, **kwargs):
     variableFontNames = kwargs.pop("variableFontNames")
     colrLayerReuse = kwargs.pop("colrLayerReuse")
 
-    # Pop inplace because we'll make a copy at this level so deeper functions
-    # don't need to worry
-    inplace = kwargs.pop("inplace")
-    if not inplace:
+    if not kwargs["inplace"]:
         designSpaceDoc = designSpaceDoc.deepcopyExceptFonts()
 
     vfNameToBaseUfo = _compileNeededSources(

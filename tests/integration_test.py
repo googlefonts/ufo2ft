@@ -1,5 +1,6 @@
 import difflib
 import io
+import logging
 import os
 import re
 import sys
@@ -8,6 +9,7 @@ from pathlib import Path
 import pytest
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.transformPen import TransformPen
+from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
     flagCubic,
@@ -531,6 +533,24 @@ class IntegrationTest:
             "TestVariableFont-CFF2-sparse-notdefGlyph.ttx",
             tables=["CFF2", "hmtx", "HVAR"],
         )
+
+    @pytest.mark.parametrize("compileFunc", [compileVariableTTF, compileVariableCFF2])
+    @pytest.mark.parametrize("inplace", [False, True])
+    def test_compileVariable_inplace(self, compileFunc, designspace, inplace, caplog):
+        fontClass = designspace.sources[0].font.__class__
+
+        with caplog.at_level(logging.DEBUG):
+            _ = compileFunc(designspace, inplace=inplace)
+
+        # check logger says we are 'Copying' a glyphset only when inplace=False
+        assert ("Copying 'LayerFont-" in caplog.text) ^ inplace
+
+        # when inplace=True, the source font attributes are modified to hold the
+        # compiled TTFont objects; otherwise, they stay the same
+        if inplace:
+            assert isinstance(designspace.sources[0].font, TTFont)
+        else:
+            assert isinstance(designspace.sources[0].font, fontClass)
 
 
 if __name__ == "__main__":
