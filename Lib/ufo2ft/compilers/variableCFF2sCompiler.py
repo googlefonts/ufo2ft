@@ -14,6 +14,7 @@ class VariableCFF2sCompiler(InterpolatableOTFCompiler):
     outlineCompilerClass: Type = OutlineOTFCompiler
     roundTolerance: float = None
     colrAutoClipBoxes: bool = False
+    cffVersion: int = 2
     # This should probably be SPECIALIZE, but our tests expect no optimization!
     optimizeCFF: CFFOptimization = CFFOptimization.NONE
     excludeVariationTables: tuple = ()

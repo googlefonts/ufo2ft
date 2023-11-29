@@ -7,13 +7,13 @@ from fontTools import varLib
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, CFFOptimization
 from ufo2ft.outlineCompiler import OutlineOTFCompiler
 from ufo2ft.preProcessor import OTFPreProcessor
-from ufo2ft.util import prune_unknown_kwargs
 
 from .baseCompiler import DesignspaceCompiler
+from .otfCompiler import OTFCompiler
 
 
 @dataclass
-class InterpolatableOTFCompiler(DesignspaceCompiler):
+class InterpolatableOTFCompiler(OTFCompiler, DesignspaceCompiler):
     preProcessorClass: Type = OTFPreProcessor
     outlineCompilerClass: Type = OutlineOTFCompiler
     featureCompilerClass: Type = None
@@ -50,14 +50,6 @@ class InterpolatableOTFCompiler(DesignspaceCompiler):
     object will contain only a minimum set of tables ("head", "hmtx", "CFF ", "maxp",
     "vmtx" and "VORG"), and no OpenType layout tables.
     """
-
-    # XXX temporary, fix with multiple inheritance
-    def compileOutlines(self, ufo, glyphSet):
-        kwargs = prune_unknown_kwargs(self.__dict__, self.outlineCompilerClass)
-        kwargs["optimizeCFF"] = self.optimizeCFF >= CFFOptimization.SPECIALIZE
-        kwargs["tables"] = self._tables
-        outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
-        return outlineCompiler.compile()
 
     def compile_designspace(self, designSpaceDoc):
         self._pre_compile_designspace(designSpaceDoc)

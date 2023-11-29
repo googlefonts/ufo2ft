@@ -91,5 +91,5 @@ class OTFCompiler(BaseCompiler):
             postProcessor = self.postProcessorClass(font, ufo, glyphSet=glyphSet)
             kwargs = prune_unknown_kwargs(self.__dict__, postProcessor.process)
             kwargs["optimizeCFF"] = self.optimizeCFF >= CFFOptimization.SUBROUTINIZE
-            ttf = postProcessor.process(**kwargs)
-        return ttf
+            font = postProcessor.process(**kwargs)
+        return font
