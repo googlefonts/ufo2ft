@@ -278,8 +278,6 @@ class DesignspaceCompiler(BaseCompiler):
         return vfNameToBaseUfo, originalSources
 
     def compile_variable(self, designSpaceDoc):
-        # Pop inplace because we'll make a copy at this level so deeper functions
-        # don't need to worry
         if not self.inplace:
             designSpaceDoc = designSpaceDoc.deepcopyExceptFonts()
 
