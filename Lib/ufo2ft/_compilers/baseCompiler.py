@@ -68,14 +68,14 @@ class BaseCompiler:
                     "public.skipExportGlyphs", []
                 )
 
-        # Preprocessors expect this parameter under a different name.
-        if hasattr(self, "cubicConversionError"):
-            self.conversionError = self.cubicConversionError
-
         callables = [self.preProcessorClass]
         if hasattr(self.preProcessorClass, "initDefaultFilters"):
             callables.append(self.preProcessorClass.initDefaultFilters)
+
         preprocessor_args = prune_unknown_kwargs(self.__dict__, *callables)
+        # Preprocessors expect this parameter under a different name.
+        if hasattr(self, "cubicConversionError"):
+            preprocessor_args["conversionError"] = self.cubicConversionError
         preProcessor = self.preProcessorClass(ufo_or_ufos, **preprocessor_args)
         return preProcessor.process()
 
