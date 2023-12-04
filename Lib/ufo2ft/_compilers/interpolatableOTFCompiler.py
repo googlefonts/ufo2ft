@@ -46,7 +46,10 @@ class InterpolatableOTFCompiler(OTFCompiler, BaseInterpolatableCompiler):
                     _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
                 ),
             }
-            compiler = InterpolatableOTFCompiler(**args)
+            # Remove interpolatable-specific args
+            del args["variableFontNames"]
+            del args["excludeVariationTables"]
+            compiler = OTFCompiler(**args)
             self.extraSubstitutions = save_extraSubstitutions
             otfs.append(compiler.compile(source.font))
         return self._post_compile_designspace(designSpaceDoc, otfs)
