@@ -26,27 +26,6 @@ class InterpolatableTTFCompiler(BaseInterpolatableCompiler):
     autoUseMyMetrics: bool = True
     allQuadratic: bool = True
     skipFeatureCompilation: bool = False
-    """Create FontTools TrueType fonts from a list of UFOs with interpolatable
-    outlines. Cubic curves are converted compatibly to quadratic curves using
-    the Cu2Qu conversion algorithm.
-
-    Return an iterator object that yields a TTFont instance for each UFO.
-
-    *layerNames* refers to the layer names to use glyphs from in the order of
-    the UFOs in *ufos*. By default, this is a list of `[None]` times the number
-    of UFOs, i.e. using the default layer from all the UFOs.
-
-    When the layerName is not None for a given UFO, the corresponding TTFont object
-    will contain only a minimum set of tables ("head", "hmtx", "glyf", "loca", "maxp",
-    "post" and "vmtx"), and no OpenType layout tables.
-
-    *skipExportGlyphs* is a list or set of glyph names to not be exported to the
-    final font. If these glyphs are used as components in any other glyph, those
-    components get decomposed. If the parameter is not passed in, the union of
-    all UFO's "public.skipExportGlyphs" lib keys will be used. If they don't
-    exist, all glyphs are exported. UFO groups and kerning will be pruned of
-    skipped glyphs.
-    """
 
     def compile(self, ufos):
         if self.layerNames is None:
