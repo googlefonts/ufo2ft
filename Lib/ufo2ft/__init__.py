@@ -6,6 +6,18 @@ from ufo2ft._compilers.variableCFF2sCompiler import VariableCFF2sCompiler
 from ufo2ft._compilers.variableTTFsCompiler import VariableTTFsCompiler
 from ufo2ft.constants import CFFOptimization  # noqa: F401 (fontmake uses it)
 
+__all__ = [
+    "compileTTF",
+    "compileOTF",
+    "compileInterpolatableTTFs",
+    "compileVariableTTFs",
+    "compileInterpolatableTTFsFromDS",
+    "compileInterpolatableOTFsFromDS",
+    "compileVariableTTF",
+    "compileVariableCFF2",
+    "compileVariableCFF2s",
+]
+
 
 def compileTTF(ufo, **kwargs):
     """Create FontTools TrueType font from a UFO.
