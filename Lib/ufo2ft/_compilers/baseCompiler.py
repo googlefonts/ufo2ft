@@ -48,11 +48,15 @@ class BaseCompiler:
         self.timer = Timer(logging.getLogger("ufo2ft.timer"), level=logging.DEBUG)
 
     def compile(self, ufo):
-        glyphSet = self.preprocess(ufo)
-        font = self.compileOutlines(ufo, glyphSet)
+        with self.timer("preprocess UFO"):
+            glyphSet = self.preprocess(ufo)
+        with self.timer("compile a basic TTF"):
+            font = self.compileOutlines(ufo, glyphSet)
         if self.layerName is None and not self.skipFeatureCompilation:
             self.compileFeatures(ufo, font, glyphSet=glyphSet)
-        return self.postprocess(font, ufo, glyphSet)
+        with self.timer("postprocess TTF"):
+            font = self.postprocess(font, ufo, glyphSet)
+        return font
 
     def preprocess(self, ufo_or_ufos):
         self.logger.info("Pre-processing glyphs")
@@ -79,14 +83,12 @@ class BaseCompiler:
         preProcessor = self.preProcessorClass(ufo_or_ufos, **preprocessor_args)
         return preProcessor.process()
 
-    # @timer("compile a basic TTF")
     def compileOutlines(self, ufo, glyphSet):
         kwargs = prune_unknown_kwargs(self.__dict__, self.outlineCompilerClass)
         kwargs["tables"] = self._tables
         outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
         return outlineCompiler.compile()
 
-    # @timer("postprocess TTF"):
     def postprocess(self, ttf, ufo, glyphSet):
         if self.postProcessorClass is not None:
             postProcessor = self.postProcessorClass(ttf, ufo, glyphSet=glyphSet)

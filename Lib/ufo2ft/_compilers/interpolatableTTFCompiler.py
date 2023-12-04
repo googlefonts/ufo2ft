@@ -67,7 +67,6 @@ class InterpolatableTTFCompiler(BaseInterpolatableCompiler):
 
         return ttf
 
-    # @timer("compile a basic TTF")
     def compileOutlines(self, ufo, glyphSet, layerName=None):
         kwargs = prune_unknown_kwargs(self.__dict__, self.outlineCompilerClass)
         kwargs["glyphDataFormat"] = 0 if self.allQuadratic else 1
