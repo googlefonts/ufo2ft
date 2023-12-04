@@ -139,7 +139,7 @@ class BaseCompiler:
         return otFont
 
 
-class DesignspaceCompiler(BaseCompiler):
+class BaseInterpolatableCompiler(BaseCompiler):
     variableFontNames: list = None
     """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines. Cubic curves are converted compatibly to

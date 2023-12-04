@@ -8,12 +8,12 @@ from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, CFFOptimization
 from ufo2ft.outlineCompiler import OutlineOTFCompiler
 from ufo2ft.preProcessor import OTFPreProcessor
 
-from .baseCompiler import DesignspaceCompiler
+from .baseCompiler import BaseInterpolatableCompiler
 from .otfCompiler import OTFCompiler
 
 
 @dataclass
-class InterpolatableOTFCompiler(OTFCompiler, DesignspaceCompiler):
+class InterpolatableOTFCompiler(OTFCompiler, BaseInterpolatableCompiler):
     preProcessorClass: Type = OTFPreProcessor
     outlineCompilerClass: Type = OutlineOTFCompiler
     featureCompilerClass: Optional[Type] = None

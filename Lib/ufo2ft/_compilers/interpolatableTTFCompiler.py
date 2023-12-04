@@ -8,11 +8,11 @@ from ufo2ft.outlineCompiler import OutlineTTFCompiler
 from ufo2ft.preProcessor import TTFInterpolatablePreProcessor
 from ufo2ft.util import _LazyFontName, prune_unknown_kwargs
 
-from .baseCompiler import DesignspaceCompiler
+from .baseCompiler import BaseInterpolatableCompiler
 
 
 @dataclass
-class InterpolatableTTFCompiler(DesignspaceCompiler):
+class InterpolatableTTFCompiler(BaseInterpolatableCompiler):
     preProcessorClass: Type = TTFInterpolatablePreProcessor
     outlineCompilerClass: Type = OutlineTTFCompiler
     convertCubics: bool = True
