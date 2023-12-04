@@ -141,8 +141,9 @@ class BaseCompiler:
         return otFont
 
 
+@dataclass
 class BaseInterpolatableCompiler(BaseCompiler):
-    variableFontNames: list = None
+    variableFontNames: Optional[list] = None
     """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines. Cubic curves are converted compatibly to
     quadratic curves using the Cu2Qu conversion algorithm.
