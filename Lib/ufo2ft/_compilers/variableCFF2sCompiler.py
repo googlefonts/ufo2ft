@@ -15,8 +15,7 @@ class VariableCFF2sCompiler(InterpolatableOTFCompiler):
     roundTolerance: Optional[float] = None
     colrAutoClipBoxes: bool = False
     cffVersion: int = 2
-    # This should probably be SPECIALIZE, but our tests expect no optimization!
-    optimizeCFF: CFFOptimization = CFFOptimization.NONE
+    optimizeCFF: CFFOptimization = CFFOptimization.SPECIALIZE
     excludeVariationTables: tuple = ()
     """Create FontTools TrueType variable fonts for each variable font defined
     in the given DesignSpaceDocument, using their UFO sources
