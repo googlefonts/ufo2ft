@@ -44,7 +44,7 @@ class BaseCompiler:
     _tables: Optional[list] = None
 
     def __post_init__(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = logging.getLogger("ufo2ft")
         self.timer = Timer(logging.getLogger("ufo2ft.timer"), level=logging.DEBUG)
 
     def compile(self, ufo):
