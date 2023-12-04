@@ -12,6 +12,9 @@ from .baseCompiler import BaseInterpolatableCompiler
 from .otfCompiler import OTFCompiler
 
 
+# We want the designspace handling of BaseInterpolatableCompiler but
+# we also need to pick up the OTF-specific compileOutlines/postprocess
+# methods from OTFCompiler.
 @dataclass
 class InterpolatableOTFCompiler(OTFCompiler, BaseInterpolatableCompiler):
     preProcessorClass: Type = OTFPreProcessor
