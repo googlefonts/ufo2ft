@@ -1,4 +1,12 @@
+from enum import IntEnum
 from types import MappingProxyType
+
+
+class CFFOptimization(IntEnum):
+    NONE = 0
+    SPECIALIZE = 1
+    SUBROUTINIZE = 2
+
 
 SPARSE_TTF_MASTER_TABLES = frozenset(
     ["glyf", "head", "hmtx", "loca", "maxp", "post", "vmtx", "cvt ", "fpgm", "prep"]
