@@ -14,11 +14,11 @@ class OTFCompiler(BaseCompiler):
     preProcessorClass: Type = OTFPreProcessor
     outlineCompilerClass: Type = OutlineOTFCompiler
     optimizeCFF: CFFOptimization = CFFOptimization.SUBROUTINIZE
-    roundTolerance: float = None
+    roundTolerance: Optional[float] = None
     cffVersion: int = 1
     subroutinizer: Optional[str] = None
-    _tables: list = None
-    extraSubstitutions: dict = None
+    _tables: Optional[list] = None
+    extraSubstitutions: Optional[dict] = None
 
     """Create FontTools CFF font from a UFO.
 

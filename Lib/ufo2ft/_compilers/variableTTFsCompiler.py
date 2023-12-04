@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Type
+from typing import Type, Optional
 
 from ufo2ft.outlineCompiler import OutlineTTFCompiler
 from ufo2ft.preProcessor import TTFInterpolatablePreProcessor
@@ -12,7 +12,7 @@ class VariableTTFsCompiler(InterpolatableTTFCompiler):
     preProcessorClass: Type = TTFInterpolatablePreProcessor
     outlineCompilerClass: Type = OutlineTTFCompiler
     convertCubics: bool = True
-    cubicConversionError: float = None
+    cubicConversionError: Optional[float] = None
     reverseDirection: bool = True
     flattenComponents: bool = False
     excludeVariationTables: tuple = ()

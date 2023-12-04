@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Type
+from typing import Type, Optional
 
 from fontTools import varLib
 
@@ -16,13 +16,13 @@ class InterpolatableTTFCompiler(DesignspaceCompiler):
     preProcessorClass: Type = TTFInterpolatablePreProcessor
     outlineCompilerClass: Type = OutlineTTFCompiler
     convertCubics: bool = True
-    cubicConversionError: float = None
+    cubicConversionError: Optional[float] = None
     reverseDirection: bool = True
     flattenComponents: bool = False
-    layerNames: str = None
+    layerNames: Optional[str] = None
     colrLayerReuse: bool = False
     colrAutoClipBoxes: bool = False
-    extraSubstitutions: bool = None
+    extraSubstitutions: Optional[bool] = None
     autoUseMyMetrics: bool = True
     allQuadratic: bool = True
     skipFeatureCompilation: bool = False

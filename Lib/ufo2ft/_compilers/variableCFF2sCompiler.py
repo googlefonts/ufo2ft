@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Type
+from typing import Type, Optional
 
 from ufo2ft.constants import CFFOptimization
 from ufo2ft.outlineCompiler import OutlineOTFCompiler
@@ -12,7 +12,7 @@ from .interpolatableOTFCompiler import InterpolatableOTFCompiler
 class VariableCFF2sCompiler(InterpolatableOTFCompiler):
     preProcessorClass: Type = OTFPreProcessor
     outlineCompilerClass: Type = OutlineOTFCompiler
-    roundTolerance: float = None
+    roundTolerance: Optional[float] = None
     colrAutoClipBoxes: bool = False
     cffVersion: int = 2
     # This should probably be SPECIALIZE, but our tests expect no optimization!

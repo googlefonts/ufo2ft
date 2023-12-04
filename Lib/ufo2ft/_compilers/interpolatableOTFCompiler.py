@@ -1,6 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import Type
+from typing import Type, Optional
 
 from fontTools import varLib
 
@@ -16,12 +16,12 @@ from .otfCompiler import OTFCompiler
 class InterpolatableOTFCompiler(OTFCompiler, DesignspaceCompiler):
     preProcessorClass: Type = OTFPreProcessor
     outlineCompilerClass: Type = OutlineOTFCompiler
-    featureCompilerClass: Type = None
-    roundTolerance: float = None
+    featureCompilerClass: Optional[Type] = None
+    roundTolerance: Optional[float] = None
     optimizeCFF: CFFOptimization = CFFOptimization.NONE
     colrLayerReuse: bool = False
     colrAutoClipBoxes: bool = False
-    extraSubstitutions: bool = None
+    extraSubstitutions: Optional[dict] = None
     skipFeatureCompilation: bool = False
     excludeVariationTables: tuple = ()
     """Create FontTools CFF fonts from the DesignSpaceDocument UFO sources

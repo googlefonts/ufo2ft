@@ -25,24 +25,23 @@ from ufo2ft.util import (
 class BaseCompiler:
     postProcessorClass: Type = PostProcessor
     featureCompilerClass: Optional[Type] = None
-    featureWriters: list = None
-    filters: list = None
-    glyphOrder: list = None
-    useProductionNames: bool = None
+    featureWriters: Optional[list] = None
+    filters: Optional[list] = None
+    glyphOrder: Optional[list] = None
+    useProductionNames: Optional[bool] = None
     removeOverlaps: bool = False
-    overlapsBackend: str = None
+    overlapsBackend: Optional[str] = None
     inplace: bool = False
-    layerName: str = None
-    skipExportGlyphs: bool = None
-    debugFeatureFile: str = None
-    notdefGlyph: str = None
+    layerName: Optional[str] = None
+    skipExportGlyphs: Optional[bool] = None
+    debugFeatureFile: Optional[str] = None
+    notdefGlyph: Optional[str] = None
     colrLayerReuse: bool = True
     colrAutoClipBoxes: bool = True
     colrClipBoxQuantization: Callable[[object], int] = colrClipBoxQuantization
-    feaIncludeDir: str = None
+    feaIncludeDir: Optional[str] = None
     skipFeatureCompilation: bool = False
-    flattenComponents: bool = None
-    _tables: list = None
+    _tables: Optional[list] = None
 
     def __post_init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
