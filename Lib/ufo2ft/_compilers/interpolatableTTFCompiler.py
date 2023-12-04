@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Type, Optional
+from typing import Optional, Type
 
 from fontTools import varLib
 

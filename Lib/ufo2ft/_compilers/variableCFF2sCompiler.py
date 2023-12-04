@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Type, Optional
+from typing import Optional, Type
 
 from ufo2ft.constants import CFFOptimization
 from ufo2ft.outlineCompiler import OutlineOTFCompiler
