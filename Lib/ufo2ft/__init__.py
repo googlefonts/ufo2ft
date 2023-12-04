@@ -1,9 +1,9 @@
-from ufo2ft.compilers.interpolatableOTFCompiler import InterpolatableOTFCompiler
-from ufo2ft.compilers.interpolatableTTFCompiler import InterpolatableTTFCompiler
-from ufo2ft.compilers.otfCompiler import OTFCompiler
-from ufo2ft.compilers.ttfCompiler import TTFCompiler
-from ufo2ft.compilers.variableCFF2sCompiler import VariableCFF2sCompiler
-from ufo2ft.compilers.variableTTFsCompiler import VariableTTFsCompiler
+from ufo2ft._compilers.interpolatableOTFCompiler import InterpolatableOTFCompiler
+from ufo2ft._compilers.interpolatableTTFCompiler import InterpolatableTTFCompiler
+from ufo2ft._compilers.otfCompiler import OTFCompiler
+from ufo2ft._compilers.ttfCompiler import TTFCompiler
+from ufo2ft._compilers.variableCFF2sCompiler import VariableCFF2sCompiler
+from ufo2ft._compilers.variableTTFsCompiler import VariableTTFsCompiler
 from ufo2ft.constants import CFFOptimization  # noqa: F401 (fontmake uses it)
 
 
