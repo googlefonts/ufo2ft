@@ -379,16 +379,4 @@ class BaseInterpolatableCompiler(BaseCompiler):
                 featureCompiler.writeFeatures(self.debugFeatureFile)
 
         # Add back feature variations, as the code above would overwrite them.
-        designSpaceData = varLib.load_designspace(designSpaceDoc)
-        featureTag = designSpaceData.lib.get(
-            varLib.FEAVAR_FEATURETAG_LIB_KEY,
-            "rclt" if designSpaceData.rulesProcessingLast else "rvrn",
-        )
-        if designSpaceData.rules:
-            varLib._add_GSUB_feature_variations(
-                ttFont,
-                designSpaceData.axes,
-                designSpaceData.internal_axis_supports,
-                designSpaceData.rules,
-                featureTag,
-            )
+        varLib.addGSUBFeatureVariations(ttFont, designSpaceDoc)
