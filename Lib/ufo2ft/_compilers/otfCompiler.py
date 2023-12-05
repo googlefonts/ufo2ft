@@ -33,4 +33,5 @@ class OTFCompiler(BaseCompiler):
             kwargs = prune_unknown_kwargs(self.__dict__, postProcessor.process)
             kwargs["optimizeCFF"] = self.optimizeCFF >= CFFOptimization.SUBROUTINIZE
             font = postProcessor.process(**kwargs)
+        self._glyphSet = glyphSet
         return font

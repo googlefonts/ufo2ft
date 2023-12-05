@@ -55,6 +55,7 @@ class InterpolatableOTFCompiler(OTFCompiler, BaseInterpolatableCompiler):
             compiler = OTFCompiler(**args)
             self.extraSubstitutions = save_extraSubstitutions
             otfs.append(compiler.compile(ufo))
+            self.glyphSets.append(compiler._glyphSet)
         return otfs
 
     def _merge(self, designSpaceDoc, excludeVariationTables):
