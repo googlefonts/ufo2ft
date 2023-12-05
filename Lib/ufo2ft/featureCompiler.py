@@ -102,6 +102,10 @@ class BaseFeatureCompiler:
 
         glyphOrder = ttFont.getGlyphOrder()
         if glyphSet is not None:
+            if set(glyphOrder) != set(glyphSet.keys()):
+                print("Glyph order incompatible")
+                print("In UFO but not in font:", set(glyphSet.keys()) - set(glyphOrder))
+                print("In font but not in UFO:", set(glyphOrder) - set(glyphSet.keys()))
             assert set(glyphOrder) == set(glyphSet.keys())
         else:
             glyphSet = ufo
@@ -241,7 +245,9 @@ class FeatureCompiler(BaseFeatureCompiler):
             if writer is ...:
                 if seen_ellipsis:
                     raise ValueError("ellipsis not allowed more than once")
-                writers = loadFeatureWriters(self.ufo)
+                writers = loadFeatureWriters(
+                    self.ufo, variable=hasattr(self, "designspace")
+                )
                 if writers is not None:
                     result.extend(writers)
                 else:
@@ -407,3 +413,34 @@ def warn_about_miscased_insertion_markers(
                         text,
                         pattern_case.pattern,
                     )
+
+
+class VariableFeatureCompiler(FeatureCompiler):
+    """Generate a variable feature file and compile OpenType tables from a
+    designspace file.
+    """
+
+    def __init__(
+        self,
+        ufo,
+        designspace,
+        ttFont=None,
+        glyphSet=None,
+        featureWriters=None,
+        **kwargs,
+    ):
+        self.designspace = designspace
+        super().__init__(ufo, ttFont, glyphSet, featureWriters, **kwargs)
+
+    def setupFeatures(self):
+        if self.featureWriters:
+            featureFile = parseLayoutFeatures(self.ufo)
+
+            for writer in self.featureWriters:
+                writer.write(self.designspace, featureFile, compiler=self)
+
+            # stringify AST to get correct line numbers in error messages
+            self.features = featureFile.asFea()
+        else:
+            # no featureWriters, simply read existing features' text
+            self.features = self.ufo.features.text or ""

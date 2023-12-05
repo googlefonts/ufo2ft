@@ -1,3 +1,4 @@
+import copy
 import logging
 from collections import OrderedDict, namedtuple
 from types import SimpleNamespace
@@ -321,6 +322,8 @@ class BaseFeatureWriter:
         from ufo2ft.util import compileGSUB
 
         compiler = self.context.compiler
+        fvar = None
+        feafile = self.context.feaFile
         if compiler is not None:
             # The result is cached in the compiler instance, so if another
             # writer requests one it is not compiled again.
@@ -328,12 +331,15 @@ class BaseFeatureWriter:
                 return compiler._gsub
 
             glyphOrder = compiler.ttFont.getGlyphOrder()
+            fvar = compiler.ttFont.get("fvar")
+            if fvar:
+                feafile = copy.deepcopy(feafile)
         else:
             # the 'real' glyph order doesn't matter because the table is not
             # compiled to binary, only the glyph names are used
             glyphOrder = sorted(self.context.font.keys())
 
-        gsub = compileGSUB(self.context.feaFile, glyphOrder)
+        gsub = compileGSUB(feafile, glyphOrder, fvar=fvar)
 
         if compiler and not hasattr(compiler, "_gsub"):
             compiler._gsub = gsub
