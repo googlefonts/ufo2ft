@@ -78,11 +78,6 @@ class InterpolatableTTFCompiler(BaseInterpolatableCompiler):
         outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
         return outlineCompiler.compile()
 
-    def compile_designspace(self, designSpaceDoc):
-        ufos = self._pre_compile_designspace(designSpaceDoc)
-        ttfs = self.compile(ufos)
-        return self._post_compile_designspace(designSpaceDoc, ttfs)
-
     def _merge(self, designSpaceDoc, excludeVariationTables):
         return varLib.build_many(
             designSpaceDoc,

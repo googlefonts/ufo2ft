@@ -28,10 +28,13 @@ class InterpolatableOTFCompiler(OTFCompiler, BaseInterpolatableCompiler):
     skipFeatureCompilation: bool = False
     excludeVariationTables: tuple = ()
 
-    def compile_designspace(self, designSpaceDoc):
-        self._pre_compile_designspace(designSpaceDoc)
+    # We can't use the same compile method as interpolatableTTFCompiler
+    # because that has a TTFInterpolatablePreProcessor which preprocesses
+    # all UFOs together, whereas we need to do the preprocessing one at
+    # at a time.
+    def compile(self, ufos):
         otfs = []
-        for source in designSpaceDoc.sources:
+        for ufo, layerName in zip(ufos, self.layerNames):
             # There's a Python bug where dataclasses.asdict() doesn't work with
             # dataclasses that contain a defaultdict.
             save_extraSubstitutions = self.extraSubstitutions
@@ -39,11 +42,11 @@ class InterpolatableOTFCompiler(OTFCompiler, BaseInterpolatableCompiler):
             args = {
                 **dataclasses.asdict(self),
                 **dict(
-                    layerName=source.layerName,
+                    layerName=layerName,
                     removeOverlaps=False,
                     overlapsBackend=None,
                     optimizeCFF=CFFOptimization.NONE,
-                    _tables=SPARSE_OTF_MASTER_TABLES if source.layerName else None,
+                    _tables=SPARSE_OTF_MASTER_TABLES if layerName else None,
                 ),
             }
             # Remove interpolatable-specific args
@@ -51,8 +54,8 @@ class InterpolatableOTFCompiler(OTFCompiler, BaseInterpolatableCompiler):
             del args["excludeVariationTables"]
             compiler = OTFCompiler(**args)
             self.extraSubstitutions = save_extraSubstitutions
-            otfs.append(compiler.compile(source.font))
-        return self._post_compile_designspace(designSpaceDoc, otfs)
+            otfs.append(compiler.compile(ufo))
+        return otfs
 
     def _merge(self, designSpaceDoc, excludeVariationTables):
         return varLib.build_many(

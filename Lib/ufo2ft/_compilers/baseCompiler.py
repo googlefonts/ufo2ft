@@ -175,6 +175,11 @@ class BaseInterpolatableCompiler(BaseCompiler):
     "maxp", "post" and "vmtx"), and no OpenType layout tables.
     """
 
+    def compile_designspace(self, designSpaceDoc):
+        ufos = self._pre_compile_designspace(designSpaceDoc)
+        ttfs = self.compile(ufos)
+        return self._post_compile_designspace(designSpaceDoc, ttfs)
+
     def _pre_compile_designspace(self, designSpaceDoc):
         ufos, self.layerNames = [], []
         for source in designSpaceDoc.sources:
