@@ -251,10 +251,7 @@ def compileGSUB(featureFile, glyphOrder, fvar=None):
     font.setGlyphOrder(glyphOrder)
     if fvar:
         font["fvar"] = fvar
-        tables = {"GSUB", "GDEF"}
-    else:
-        tables = {"GSUB"}
-    addOpenTypeFeatures(font, featureFile, tables=tables)
+    addOpenTypeFeatures(font, featureFile, tables={"GSUB"})
     return font.get("GSUB")
 
 

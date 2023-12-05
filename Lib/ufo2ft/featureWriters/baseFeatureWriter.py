@@ -1,4 +1,3 @@
-import copy
 import logging
 from collections import OrderedDict, namedtuple
 from types import SimpleNamespace
@@ -332,8 +331,6 @@ class BaseFeatureWriter:
 
             glyphOrder = compiler.ttFont.getGlyphOrder()
             fvar = compiler.ttFont.get("fvar")
-            if fvar:
-                feafile = copy.deepcopy(feafile)
         else:
             # the 'real' glyph order doesn't matter because the table is not
             # compiled to binary, only the glyph names are used
