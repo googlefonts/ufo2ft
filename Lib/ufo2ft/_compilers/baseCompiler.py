@@ -364,6 +364,7 @@ class BaseInterpolatableCompiler(BaseCompiler):
                 for ttfSource, ufoSource in zip(vfDoc.sources, ufoDoc.sources):
                     ufoSource.font = originalSources[ttfSource.name]
                 defaultGlyphset = originalGlyphsets[ufoDoc.findDefault().name]
+                self.logger.info(f"Compiling variable features for {vfName}")
                 self.compile_variable_features(ufoDoc, ttFont, defaultGlyphset)
 
     def compile_variable_features(self, designSpaceDoc, ttFont, glyphSet):
