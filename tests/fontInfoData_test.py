@@ -133,7 +133,7 @@ class GetAttrWithFallbackTest:
         assert getAttrWithFallback(info, "openTypeOS2WinDescent") == 250
 
     def test_caret_slope(self, info):
-        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == 1
+        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == 1000
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == 0
 
         info.italicAngle = -12

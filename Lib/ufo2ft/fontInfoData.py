@@ -133,9 +133,9 @@ def openTypeHheaDescenderFallback(info):
 def openTypeHheaCaretSlopeRiseFallback(info):
     """
     Fallback to *openTypeHheaCaretSlopeRise*. If the italicAngle is zero,
-    return 1. If italicAngle is non-zero, compute the slope rise from the
+    return UPEM. If italicAngle is non-zero, compute the slope rise from the
     complementary openTypeHheaCaretSlopeRun, if the latter is defined.
-    Else, default to an arbitrary fixed reference point (1000).
+    Else, default to the font's UPEM.
     """
     italicAngle = getAttrWithFallback(info, "italicAngle")
     if italicAngle != 0:
@@ -145,9 +145,7 @@ def openTypeHheaCaretSlopeRiseFallback(info):
         ):
             slopeRun = info.openTypeHheaCaretSlopeRun
             return otRound(slopeRun / math.tan(math.radians(-italicAngle)))
-        else:
-            return 1000  # just an arbitrary non-zero reference point
-    return 1
+    return getAttrWithFallback(info, "unitsPerEm")
 
 
 def openTypeHheaCaretSlopeRunFallback(info):
