@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.variableScalar import VariableScalar
+from fontTools.misc.fixedTools import otRound
 
 from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.errors import InvalidFeaturesData
@@ -462,8 +463,8 @@ class BaseFeatureWriter:
                 for anchor in glyph.anchors:
                     if anchor.name == anchorName:
                         location = get_userspace_location(designspace, source.location)
-                        x_value.add_value(location, anchor.x)
-                        y_value.add_value(location, anchor.y)
+                        x_value.add_value(location, otRound(anchor.x))
+                        y_value.add_value(location, otRound(anchor.y))
                         found = True
             if not found:
                 return None
