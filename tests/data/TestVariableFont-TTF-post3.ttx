@@ -41,7 +41,7 @@
     <minLeftSideBearing value="-37"/>
     <minRightSideBearing value="-50"/>
     <xMaxExtent value="582"/>
-    <caretSlopeRise value="1"/>
+    <caretSlopeRise value="1000"/>
     <caretSlopeRun value="0"/>
     <caretOffset value="0"/>
     <reserved0 value="0"/>
