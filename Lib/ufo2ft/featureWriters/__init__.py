@@ -48,7 +48,7 @@ def isValidFeatureWriter(klass):
     return True
 
 
-def loadFeatureWriters(ufo, ignoreErrors=True, variable=False):
+def loadFeatureWriters(ufo, ignoreErrors=True):
     """Check UFO lib for key "com.github.googlei18n.ufo2ft.featureWriters",
     containing a list of dicts, each having the following key/value pairs:
     For example:
@@ -62,10 +62,6 @@ def loadFeatureWriters(ufo, ignoreErrors=True, variable=False):
     Import each feature writer class from the specified module (default is
     the built-in ufo2ft.featureWriters), and instantiate it with the given
     'options' dict.
-
-    If ``variable`` is true, then the feature writer class is asked if it
-    has an associated class which works on Designspace files instead of UFOs,
-    and if so, then this is used instead.
 
     Return the list of feature writer objects.
     If the 'featureWriters' key is missing from the UFO lib, return None.
