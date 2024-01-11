@@ -273,6 +273,14 @@ class BaseInterpolatableCompiler(BaseCompiler):
         # Disable GPOS compaction while building masters because the compaction
         # will be undone anyway by varLib merge and then done again on the final VF
         gpos_compact_value = self.ftConfig.pop(GPOS_COMPRESSION_LEVEL, None)
+        # we want to rename glyphs only on the final VF and skip postprocessing masters
+        save_production_names, self.useProductionNames = self.useProductionNames, False
+        save_postprocessor, self.postProcessorClass = self.postProcessorClass, None
+        # skip per-master feature compilation if we are building variable features
+        save_skip_features, self.skipFeatureCompilation = (
+            self.skipFeatureCompilation,
+            can_optimize_features,
+        )
         try:
             # Compile all needed sources in each interpolable subspace to make sure
             # they're all compatible; that also ensures that sub-vfs within the same
@@ -285,19 +293,12 @@ class BaseInterpolatableCompiler(BaseCompiler):
                 if not subDoc.sources:
                     continue
 
-                save_production_names = self.useProductionNames
-                self.useProductionNames = False
-                save_postprocessor = self.postProcessorClass
-                self.postProcessorClass = None
-                self.skipFeatureCompilation = can_optimize_features
-
                 ttfDesignSpace = self.compile_designspace(subDoc)
 
                 if gpos_compact_value is not None:
+                    # the VF will inherit the config from the base TTF master
                     baseTtf = getDefaultMasterFont(ttfDesignSpace)
                     baseTtf.cfg[GPOS_COMPRESSION_LEVEL] = gpos_compact_value
-                self.postProcessorClass = save_postprocessor
-                self.useProductionNames = save_production_names
 
                 # Stick TTFs back into original big DS
                 for ttfSource, glyphSet in zip(ttfDesignSpace.sources, self.glyphSets):
@@ -308,8 +309,12 @@ class BaseInterpolatableCompiler(BaseCompiler):
                     sourcesByName[ttfSource.name].font = ttfSource.font
                     originalGlyphsets[ttfSource.name] = glyphSet
         finally:
+            # can restore self to its original state
             if gpos_compact_value is not None:
                 self.ftConfig[GPOS_COMPRESSION_LEVEL] = gpos_compact_value
+            self.postProcessorClass = save_postprocessor
+            self.useProductionNames = save_production_names
+            self.skipFeatureCompilation = save_skip_features
 
         return (
             vfNameToBaseUfo,
