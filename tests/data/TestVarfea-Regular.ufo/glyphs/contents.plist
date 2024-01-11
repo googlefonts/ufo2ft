@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>alef-ar.fina</key>
+    <string>alef-ar.fina.glif</string>
+    <key>dotabove-ar</key>
+    <string>dotabove-ar.glif</string>
+    <key>peh-ar.init</key>
+    <string>peh-ar.init.glif</string>
+    <key>peh-ar.init.BRACKET.varAlt01</key>
+    <string>peh-ar.init.B_R_A_C_K_E_T_.varA_lt01.glif</string>
+    <key>space</key>
+    <string>space.glif</string>
+  </dict>
+</plist>

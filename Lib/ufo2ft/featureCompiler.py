@@ -9,6 +9,7 @@ from io import StringIO
 from tempfile import NamedTemporaryFile
 
 from fontTools import mtiLib
+from fontTools.designspaceLib import DesignSpaceDocument, SourceDescriptor
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
 from fontTools.feaLib.parser import Parser
@@ -102,6 +103,10 @@ class BaseFeatureCompiler:
 
         glyphOrder = ttFont.getGlyphOrder()
         if glyphSet is not None:
+            if set(glyphOrder) != set(glyphSet.keys()):
+                print("Glyph order incompatible")
+                print("In UFO but not in font:", set(glyphSet.keys()) - set(glyphOrder))
+                print("In font but not in UFO:", set(glyphOrder) - set(glyphSet.keys()))
             assert set(glyphOrder) == set(glyphSet.keys())
         else:
             glyphSet = ufo
@@ -407,3 +412,56 @@ def warn_about_miscased_insertion_markers(
                         text,
                         pattern_case.pattern,
                     )
+
+
+class VariableFeatureCompiler(FeatureCompiler):
+    """Generate a variable feature file and compile OpenType tables from a
+    designspace file.
+    """
+
+    def __init__(
+        self,
+        ufo,
+        designspace,
+        ttFont=None,
+        glyphSet=None,
+        featureWriters=None,
+        **kwargs,
+    ):
+        self.designspace = designspace
+        super().__init__(ufo, ttFont, glyphSet, featureWriters, **kwargs)
+
+    def setupFeatures(self):
+        if self.featureWriters:
+            featureFile = parseLayoutFeatures(self.ufo)
+
+            for writer in self.featureWriters:
+                writer.write(self.designspace, featureFile, compiler=self)
+
+            # stringify AST to get correct line numbers in error messages
+            self.features = featureFile.asFea()
+        else:
+            # no featureWriters, simply read existing features' text
+            self.features = self.ufo.features.text or ""
+
+
+def _featuresCompatible(designSpaceDoc: DesignSpaceDocument) -> bool:
+    """Returns whether the features of the individual source UFOs are the same.
+
+    NOTE: Only compares the feature file text inside the source UFO and does not
+    follow imports. This will suffice as long as no external feature file is
+    using variable syntax and all sources are stored n the same parent folder
+    (so the same includes point to the same files).
+    """
+
+    assert all(hasattr(source.font, "features") for source in designSpaceDoc.sources)
+
+    def transform(f: SourceDescriptor) -> str:
+        # Strip comments
+        text = re.sub("(?m)#.*$", "", f.font.features.text or "")
+        # Strip extraneous whitespace
+        text = re.sub(r"\s+", " ", text)
+        return text
+
+    first = transform(designSpaceDoc.sources[0])
+    return all(transform(s) == first for s in designSpaceDoc.sources[1:])

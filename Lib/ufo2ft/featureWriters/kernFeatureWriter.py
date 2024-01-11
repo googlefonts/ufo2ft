@@ -4,9 +4,13 @@ import itertools
 import logging
 from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import Iterator, Mapping
+from typing import Any, Iterator, Mapping
 
 from fontTools import unicodedata
+from fontTools.designspaceLib import DesignSpaceDocument
+from fontTools.feaLib.variableScalar import Location as VariableScalarLocation
+from fontTools.feaLib.variableScalar import VariableScalar
+from fontTools.ufoLib.kerning import lookupKerningValue
 from fontTools.unicodedata import script_horizontal_direction
 
 from ufo2ft.constants import COMMON_SCRIPT, INDIC_SCRIPTS, USE_SCRIPTS
@@ -14,7 +18,9 @@ from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import (
     DFLT_SCRIPTS,
     classifyGlyphs,
+    collapse_varscalar,
     describe_ufo,
+    get_userspace_location,
     quantize,
     unicodeScriptExtensions,
 )
@@ -60,7 +66,7 @@ class KerningPair:
 
     side1: str | tuple[str, ...]
     side2: str | tuple[str, ...]
-    value: float
+    value: float | VariableScalar
 
     def __lt__(self, other: KerningPair) -> bool:
         if not isinstance(other, KerningPair):
@@ -205,20 +211,25 @@ class KernFeatureWriter(BaseFeatureWriter):
         ctx.glyphSet = self.getOrderedGlyphSet()
 
         # Unless we use the legacy append mode (which ignores insertion
-        # markers), if the font contains kerning and the feaFile contains `kern`
-        # or `dist` feature blocks, but we have no insertion markers (or they
-        # were misspelt and ignored), warn the user that the kerning blocks in
-        # the feaFile take precedence and other kerning is dropped.
+        # markers), if the font (Designspace: default source) contains kerning
+        # and the feaFile contains `kern` or `dist` feature blocks, but we have
+        # no insertion markers (or they were misspelt and ignored), warn the
+        # user that the kerning blocks in the feaFile take precedence and other
+        # kerning is dropped.
+        if hasattr(font, "findDefault"):
+            default_source = font.findDefault().font
+        else:
+            default_source = font
         if (
             self.mode == "skip"
-            and font.kerning
+            and default_source.kerning
             and ctx.existingFeatures & self.features
             and not ctx.insertComments
         ):
             LOGGER.warning(
                 "%s: font has kerning, but also manually written kerning features "
                 "without an insertion comment. Dropping the former.",
-                describe_ufo(font),
+                describe_ufo(default_source),
             )
 
         # Remember which languages are defined for which OT tag, as all
@@ -299,41 +310,96 @@ class KernFeatureWriter(BaseFeatureWriter):
             side1Classes={}, side2Classes={}, classDefs={}, pairs=pairs
         )
 
-    def getKerningGroups(self):
-        font = self.context.font
+    def getKerningGroups(
+        self,
+    ) -> tuple[Mapping[str, tuple[str, ...]], Mapping[str, tuple[str, ...]]]:
         allGlyphs = self.context.glyphSet
-        side1Groups = {}
-        side2Groups = {}
-        side1Membership = {}
-        side2Membership = {}
-        for name, members in font.groups.items():
-            # prune non-existent or skipped glyphs
-            members = {g for g in members if g in allGlyphs}
-            if not members:
+
+        side1Groups: dict[str, tuple[str, ...]] = {}
+        side1Membership: dict[str, str] = {}
+        side2Groups: dict[str, tuple[str, ...]] = {}
+        side2Membership: dict[str, str] = {}
+
+        if isinstance(self.context.font, DesignSpaceDocument):
+            fonts = [source.font for source in self.context.font.sources]
+        else:
+            fonts = [self.context.font]
+
+        for font in fonts:
+            assert font is not None
+            for name, members in font.groups.items():
+                # prune non-existent or skipped glyphs
+                members = {g for g in members if g in allGlyphs}
                 # skip empty groups
-                continue
-            # skip groups without UFO3 public.kern{1,2} prefix
-            if name.startswith(SIDE1_PREFIX):
-                side1Groups[name] = tuple(sorted(members))
-                name_truncated = name[len(SIDE1_PREFIX) :]
-                for member in members:
-                    side1Membership[member] = name_truncated
-            elif name.startswith(SIDE2_PREFIX):
-                side2Groups[name] = tuple(sorted(members))
-                name_truncated = name[len(SIDE2_PREFIX) :]
-                for member in members:
-                    side2Membership[member] = name_truncated
+                if not members:
+                    continue
+                # skip groups without UFO3 public.kern{1,2} prefix
+                if name.startswith(SIDE1_PREFIX):
+                    name_truncated = name[len(SIDE1_PREFIX) :]
+                    known_members = members.intersection(side1Membership.keys())
+                    if known_members:
+                        for glyph_name in known_members:
+                            original_name_truncated = side1Membership[glyph_name]
+                            if name_truncated != original_name_truncated:
+                                log_regrouped_glyph(
+                                    "first",
+                                    name,
+                                    original_name_truncated,
+                                    font,
+                                    glyph_name,
+                                )
+                        # Skip the whole group definition if there is any
+                        # overlap problem.
+                        continue
+                    group = side1Groups.get(name)
+                    if group is None:
+                        side1Groups[name] = tuple(sorted(members))
+                        for member in members:
+                            side1Membership[member] = name_truncated
+                    elif set(group) != members:
+                        log_redefined_group("left", name, group, font, members)
+                elif name.startswith(SIDE2_PREFIX):
+                    name_truncated = name[len(SIDE2_PREFIX) :]
+                    known_members = members.intersection(side2Membership.keys())
+                    if known_members:
+                        for glyph_name in known_members:
+                            original_name_truncated = side2Membership[glyph_name]
+                            if name_truncated != original_name_truncated:
+                                log_regrouped_glyph(
+                                    "second",
+                                    name,
+                                    original_name_truncated,
+                                    font,
+                                    glyph_name,
+                                )
+                        # Skip the whole group definition if there is any
+                        # overlap problem.
+                        continue
+                    group = side2Groups.get(name)
+                    if group is None:
+                        side2Groups[name] = tuple(sorted(members))
+                        for member in members:
+                            side2Membership[member] = name_truncated
+                    elif set(group) != members:
+                        log_redefined_group("right", name, group, font, members)
         self.context.side1Membership = side1Membership
         self.context.side2Membership = side2Membership
         return side1Groups, side2Groups
 
-    def getKerningPairs(self, side1Classes, side2Classes):
+    def getKerningPairs(
+        self,
+        side1Classes: Mapping[str, tuple[str, ...]],
+        side2Classes: Mapping[str, tuple[str, ...]],
+    ) -> list[KerningPair]:
+        if self.context.isVariable:
+            return self.getVariableKerningPairs(side1Classes, side2Classes)
+
         glyphSet = self.context.glyphSet
         font = self.context.font
         kerning = font.kerning
         quantization = self.options.quantization
 
-        kerning = font.kerning
+        kerning: Mapping[tuple[str, str], float] = font.kerning
         result = []
         for (side1, side2), value in kerning.items():
             firstIsClass, secondIsClass = (side1 in side1Classes, side2 in side2Classes)
@@ -352,6 +418,122 @@ class KernFeatureWriter(BaseFeatureWriter):
             if secondIsClass:
                 side2 = side2Classes[side2]
             value = quantize(value, quantization)
+            result.append(KerningPair(side1, side2, value))
+
+        return result
+
+    def getVariableKerningPairs(
+        self,
+        side1Classes: Mapping[str, tuple[str, ...]],
+        side2Classes: Mapping[str, tuple[str, ...]],
+    ) -> list[KerningPair]:
+        designspace: DesignSpaceDocument = self.context.font
+        glyphSet = self.context.glyphSet
+        quantization = self.options.quantization
+
+        # Gather utility variables for faster kerning lookups.
+        # TODO: Do we construct these in code elsewhere?
+        assert not (set(side1Classes) & set(side2Classes))
+        unified_groups = {**side1Classes, **side2Classes}
+
+        glyphToFirstGroup = {
+            glyph_name: group_name  # TODO: Is this overwrite safe? User input is adversarial
+            for group_name, glyphs in side1Classes.items()
+            for glyph_name in glyphs
+        }
+        glyphToSecondGroup = {
+            glyph_name: group_name
+            for group_name, glyphs in side2Classes.items()
+            for glyph_name in glyphs
+        }
+
+        # Collate every kerning pair in the designspace, as even UFOs that
+        # provide no entry for the pair must contribute a value at their
+        # source's location in the VariableScalar.
+        # NOTE: This is required as the DS+UFO kerning model and the OpenType
+        #       variation model handle the absence of a kerning value at a
+        #       given location differently:
+        #       - DS+UFO:
+        #           If the missing pair excepts another pair, take its value;
+        #           Otherwise, take a value of 0.
+        #       - OpenType:
+        #           Always interpolate from other locations, ignoring more
+        #           general pairs that this one excepts.
+        # See discussion: https://github.com/googlefonts/ufo2ft/pull/635
+        all_pairs: set[tuple[str, str]] = set()
+        for source in designspace.sources:
+            if source.layerName is not None:
+                continue
+            assert source.font is not None
+            all_pairs |= set(source.font.kerning)
+
+        kerning_pairs_in_progress: dict[
+            tuple[str | tuple[str], str | tuple[str]], VariableScalar
+        ] = {}
+        for source in designspace.sources:
+            # Skip sparse sources, because they can have no kerning.
+            if source.layerName is not None:
+                continue
+            assert source.font is not None
+
+            location = VariableScalarLocation(
+                get_userspace_location(designspace, source.location)
+            )
+
+            kerning: Mapping[tuple[str, str], float] = source.font.kerning
+            for pair in all_pairs:
+                side1, side2 = pair
+                firstIsClass = side1 in side1Classes
+                secondIsClass = side2 in side2Classes
+
+                # Filter out pairs that reference missing groups or glyphs.
+                # TODO: Can we do this outside of the loop? We know the pairs already.
+                if not firstIsClass and side1 not in glyphSet:
+                    continue
+                if not secondIsClass and side2 not in glyphSet:
+                    continue
+
+                # Get the kerning value for this source and quantize, following
+                # the DS+UFO semantics described above.
+                value = quantize(
+                    lookupKerningValue(
+                        pair,
+                        kerning,
+                        unified_groups,
+                        glyphToFirstGroup=glyphToFirstGroup,
+                        glyphToSecondGroup=glyphToSecondGroup,
+                    ),
+                    quantization,
+                )
+
+                if firstIsClass:
+                    side1 = side1Classes[side1]
+                if secondIsClass:
+                    side2 = side2Classes[side2]
+
+                # TODO: Can we instantiate these outside of the loop? We know the pairs already.
+                var_scalar = kerning_pairs_in_progress.setdefault(
+                    (side1, side2), VariableScalar()
+                )
+                # NOTE: Avoid using .add_value because it instantiates a new
+                # VariableScalarLocation on each call.
+                var_scalar.values[location] = value
+
+        # We may need to provide a default location value to the variation
+        # model, find out where that is.
+        default_source = designspace.findDefault()
+        assert default_source is not None
+        default_location = VariableScalarLocation(
+            get_userspace_location(designspace, default_source.location)
+        )
+
+        result = []
+        for (side1, side2), value in kerning_pairs_in_progress.items():
+            # TODO: Should we interpolate a default value if it's not in the
+            # sources, rather than inserting a zero? What would varLib do?
+            if default_location not in value.values:
+                value.values[default_location] = 0
+            value = collapse_varscalar(value)
             result.append(KerningPair(side1, side2, value))
 
         return result
@@ -382,6 +564,18 @@ class KernFeatureWriter(BaseFeatureWriter):
             enumerated=enumerated,
         )
 
+    def _filterSpacingMarks(self, marks):
+        if self.context.isVariable:
+            spacing = []
+            for mark in marks:
+                if all(
+                    source.font[mark].width != 0 for source in self.context.font.sources
+                ):
+                    spacing.append(mark)
+            return spacing
+
+        return [mark for mark in marks if self.context.font[mark].width != 0]
+
     def _makeKerningLookup(self, name, ignoreMarks=True):
         lookup = ast.LookupBlock(name)
         if ignoreMarks and self.options.ignoreMarks:
@@ -392,7 +586,7 @@ class KernFeatureWriter(BaseFeatureWriter):
 
             spacing = []
             if marks:
-                spacing = [mark for mark in marks if self.context.font[mark].width != 0]
+                spacing = self._filterSpacingMarks(marks)
             if not spacing:
                 # Simple case, there are no spacing ("Spacing Combining") marks,
                 # do what we've always done.
@@ -816,3 +1010,30 @@ def addClassDefinition(
     classNames.add(className)
     classDef = ast.makeGlyphClassDefinition(className, group)
     classes[group] = classDefs[className] = classDef
+
+
+def log_redefined_group(
+    side: str, name: str, group: tuple[str, ...], font: Any, members: set[str]
+) -> None:
+    LOGGER.warning(
+        "incompatible %s groups: %s was previously %s, %s tried to make it %s",
+        side,
+        name,
+        sorted(group),
+        font,
+        sorted(members),
+    )
+
+
+def log_regrouped_glyph(
+    side: str, name: str, original_name: str, font: Any, member: str
+) -> None:
+    LOGGER.warning(
+        "incompatible %s groups: %s tries to put glyph %s in group %s, but it's already in %s, "
+        "discarding",
+        side,
+        font,
+        member,
+        name,
+        original_name,
+    )

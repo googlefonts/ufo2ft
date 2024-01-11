@@ -41,7 +41,7 @@
     <minLeftSideBearing value="-37"/>
     <minRightSideBearing value="-50"/>
     <xMaxExtent value="582"/>
-    <caretSlopeRise value="1"/>
+    <caretSlopeRise value="1000"/>
     <caretSlopeRun value="0"/>
     <caretOffset value="0"/>
     <reserved0 value="0"/>
@@ -325,7 +325,7 @@
         <!-- RegionCount=1 -->
         <Region index="0">
           <VarRegionAxis index="0">
-            <StartCoord value="0.0"/>
+            <StartCoord value="0.36365"/>
             <PeakCoord value="1.0"/>
             <EndCoord value="1.0"/>
           </VarRegionAxis>

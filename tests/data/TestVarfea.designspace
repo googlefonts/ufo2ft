@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<designspace format="5.0">
+  <axes>
+    <axis tag="wght" name="Weight" minimum="100" maximum="1000" default="100"/>
+  </axes>
+  <rules>
+    <rule name="BRACKET.Weight_600_1000">
+      <conditionset>
+        <condition name="Weight" minimum="600" maximum="1000"/>
+      </conditionset>
+      <sub name="peh-ar.init" with="peh-ar.init.BRACKET.varAlt01"/>
+    </rule>
+  </rules>
+  <sources>
+    <source filename="TestVarfea-Regular.ufo" name="TestVarfea Regular" familyname="TestVarfea" stylename="Regular">
+      <lib copy="1"/>
+      <groups copy="1"/>
+      <features copy="1"/>
+      <info copy="1"/>
+      <location>
+        <dimension name="Weight" xvalue="100"/>
+      </location>
+    </source>
+    <source filename="TestVarfea-Bold.ufo" name="TestVarfea Bold" familyname="TestVarfea" stylename="Bold">
+      <location>
+        <dimension name="Weight" xvalue="1000"/>
+      </location>
+    </source>
+  </sources>
+</designspace>
