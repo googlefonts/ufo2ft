@@ -322,7 +322,12 @@ class BaseInterpolatableCompiler(BaseCompiler):
         if not vfNameToBaseUfo:
             return {}
 
-        self.logger.info("Building variable TTF fonts: %s", ", ".join(vfNameToBaseUfo))
+        vfNames = list(vfNameToBaseUfo.keys())
+        self.logger.info(
+            "Building variable font%s: %s",
+            "s" if len(vfNames) > 1 else "",
+            ", ".join(vfNames),
+        )
 
         excludeVariationTables = self.excludeVariationTables
         if buildVariableFeatures:
