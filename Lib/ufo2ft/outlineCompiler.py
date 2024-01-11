@@ -108,6 +108,7 @@ class BaseOutlineCompiler:
         colrLayerReuse=True,
         colrAutoClipBoxes=True,
         colrClipBoxQuantization=colrClipBoxQuantization,
+        ftConfig=None,
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
@@ -126,6 +127,7 @@ class BaseOutlineCompiler:
         self.colrLayerReuse = colrLayerReuse
         self.colrAutoClipBoxes = colrAutoClipBoxes
         self.colrClipBoxQuantization = colrClipBoxQuantization
+        self.ftConfig = ftConfig or {}
         # cached values defined later on
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
@@ -136,7 +138,7 @@ class BaseOutlineCompiler:
         """
         Compile the OpenType binary.
         """
-        self.otf = TTFont(sfntVersion=self.sfntVersion)
+        self.otf = TTFont(sfntVersion=self.sfntVersion, cfg=self.ftConfig)
 
         # only compile vertical metrics tables if vhea metrics are defined
         vertical_metrics = [
@@ -1104,6 +1106,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         colrLayerReuse=True,
         colrAutoClipBoxes=True,
         colrClipBoxQuantization=colrClipBoxQuantization,
+        ftConfig=None,
     ):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
@@ -1119,6 +1122,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             colrLayerReuse=colrLayerReuse,
             colrAutoClipBoxes=colrAutoClipBoxes,
             colrClipBoxQuantization=colrClipBoxQuantization,
+            ftConfig=ftConfig,
         )
         self.optimizeCFF = optimizeCFF
         self._defaultAndNominalWidths = None
@@ -1440,6 +1444,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         autoUseMyMetrics=True,
         roundCoordinates=True,
         glyphDataFormat=0,
+        ftConfig=None,
     ):
         super().__init__(
             font,
@@ -1450,6 +1455,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
             colrLayerReuse=colrLayerReuse,
             colrAutoClipBoxes=colrAutoClipBoxes,
             colrClipBoxQuantization=colrClipBoxQuantization,
+            ftConfig=ftConfig,
         )
         self.autoUseMyMetrics = autoUseMyMetrics
         self.dropImpliedOnCurves = dropImpliedOnCurves

@@ -1,5 +1,6 @@
 import difflib
 import io
+import logging
 import os
 import re
 import sys
@@ -7,6 +8,8 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+from fontTools.designspaceLib import DesignSpaceDocument
+from fontTools.otlLib.optimize.gpos import COMPRESSION_LEVEL as GPOS_COMPRESSION_LEVEL
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib.tables._g_l_y_f import (
@@ -546,6 +549,35 @@ class IntegrationTest:
             "TestVariableFont-CFF2-sparse-notdefGlyph.ttx",
             tables=["CFF2", "hmtx", "HVAR"],
         )
+
+    @pytest.mark.parametrize("compileMethod", [compileTTF, compileOTF])
+    @pytest.mark.parametrize("compression_level", [0, 9])
+    def test_compile_static_font_with_gpos_compression(
+        self, caplog, compileMethod, testufo, compression_level
+    ):
+        with caplog.at_level(logging.INFO, logger="fontTools"):
+            compileMethod(testufo, ftConfig={GPOS_COMPRESSION_LEVEL: compression_level})
+        disabled = compression_level == 0
+        logged = "Compacting GPOS..." in caplog.text
+        assert logged ^ disabled
+
+    @pytest.mark.parametrize("compileMethod", [compileVariableTTF, compileVariableCFF2])
+    @pytest.mark.parametrize("variableFeatures", [True, False])
+    @pytest.mark.parametrize("compression_level", [0, 9])
+    def test_compile_variable_font_with_gpos_compression(
+        self, caplog, compileMethod, FontClass, variableFeatures, compression_level
+    ):
+        designspace = DesignSpaceDocument.fromfile(getpath("TestVarfea.designspace"))
+        designspace.loadSourceFonts(FontClass)
+        with caplog.at_level(logging.INFO, logger="fontTools"):
+            compileMethod(
+                designspace,
+                ftConfig={GPOS_COMPRESSION_LEVEL: compression_level},
+                variableFeatures=variableFeatures,
+            )
+        disabled = compression_level == 0
+        logged = "Compacting GPOS..." in caplog.text
+        assert logged ^ disabled
 
 
 if __name__ == "__main__":
