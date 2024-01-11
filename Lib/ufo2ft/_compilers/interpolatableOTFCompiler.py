@@ -7,6 +7,7 @@ from fontTools import varLib
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, CFFOptimization
 from ufo2ft.outlineCompiler import OutlineOTFCompiler
 from ufo2ft.preProcessor import OTFPreProcessor
+from ufo2ft.util import prune_unknown_kwargs
 
 from .baseCompiler import BaseInterpolatableCompiler
 from .otfCompiler import OTFCompiler
@@ -50,8 +51,7 @@ class InterpolatableOTFCompiler(OTFCompiler, BaseInterpolatableCompiler):
                 ),
             }
             # Remove interpolatable-specific args
-            del args["variableFontNames"]
-            del args["excludeVariationTables"]
+            args = prune_unknown_kwargs(args, OTFCompiler)
             compiler = OTFCompiler(**args)
             self.extraSubstitutions = save_extraSubstitutions
             otfs.append(compiler.compile(ufo))

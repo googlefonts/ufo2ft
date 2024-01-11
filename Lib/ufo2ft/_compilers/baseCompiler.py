@@ -259,7 +259,9 @@ class BaseInterpolatableCompiler(BaseCompiler):
 
         # If the feature files are compatible between the sources, we can save
         # time by building a variable feature file right at the end.
-        can_optimize_features = _featuresCompatible(designSpaceDoc)
+        can_optimize_features = self.variableFeatures and _featuresCompatible(
+            designSpaceDoc
+        )
         if can_optimize_features:
             self.logger.info("Features are compatible across masters; building later")
 

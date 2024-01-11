@@ -17,3 +17,4 @@ class VariableCFF2sCompiler(InterpolatableOTFCompiler):
     cffVersion: int = 2
     optimizeCFF: CFFOptimization = CFFOptimization.SPECIALIZE
     excludeVariationTables: tuple = ()
+    variableFeatures: bool = True
