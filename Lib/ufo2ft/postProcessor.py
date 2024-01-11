@@ -404,4 +404,5 @@ def _reloadFont(font: TTFont) -> TTFont:
     stream = BytesIO()
     font.save(stream)
     stream.seek(0)
-    return TTFont(stream)
+    # keep the same Config (constructor will make a copy)
+    return TTFont(stream, cfg=font.cfg)

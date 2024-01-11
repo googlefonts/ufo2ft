@@ -1,13 +1,13 @@
 import logging
 import os
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, Optional, Type
 
 from fontTools import varLib
 from fontTools.designspaceLib.split import splitInterpolable, splitVariableFonts
 from fontTools.misc.loggingTools import Timer
-from fontTools.otlLib.optimize.gpos import GPOS_COMPACT_MODE_ENV_KEY
+from fontTools.otlLib.optimize.gpos import COMPRESSION_LEVEL as GPOS_COMPRESSION_LEVEL
 
 from ufo2ft.constants import MTI_FEATURES_PREFIX
 from ufo2ft.errors import InvalidDesignSpaceData
@@ -22,6 +22,7 @@ from ufo2ft.util import (
     _notdefGlyphFallback,
     colrClipBoxQuantization,
     ensure_all_sources_have_names,
+    getDefaultMasterFont,
     location_to_string,
     prune_unknown_kwargs,
 )
@@ -47,6 +48,7 @@ class BaseCompiler:
     colrClipBoxQuantization: Callable[[object], int] = colrClipBoxQuantization
     feaIncludeDir: Optional[str] = None
     skipFeatureCompilation: bool = False
+    ftConfig: dict = field(default_factory=dict)
     _tables: Optional[list] = None
 
     def __post_init__(self):
@@ -269,38 +271,46 @@ class BaseInterpolatableCompiler(BaseCompiler):
         originalSources = {}
         originalGlyphsets = {}
 
-        # Compile all needed sources in each interpolable subspace to make sure
-        # they're all compatible; that also ensures that sub-vfs within the same
-        # interpolable sub-space are compatible too.
-        for subDoc in interpolableSubDocs:
-            # Only keep the sources that we've identified earlier as need-to-compile
-            subDoc.sources = [s for s in subDoc.sources if s.name in sourcesToCompile]
-            if not subDoc.sources:
-                continue
+        # Disable GPOS compaction while building masters because the compaction
+        # will be undone anyway by varLib merge and then done again on the final VF
+        gpos_compact_value = self.ftConfig.pop(GPOS_COMPRESSION_LEVEL, None)
+        try:
+            # Compile all needed sources in each interpolable subspace to make sure
+            # they're all compatible; that also ensures that sub-vfs within the same
+            # interpolable sub-space are compatible too.
+            for subDoc in interpolableSubDocs:
+                # Only keep the sources that we've identified earlier as need-to-compile
+                subDoc.sources = [
+                    s for s in subDoc.sources if s.name in sourcesToCompile
+                ]
+                if not subDoc.sources:
+                    continue
 
-            # FIXME: Hack until we get a fontTools config module. Disable GPOS
-            # compaction while building masters because the compaction will be undone
-            # anyway by varLib merge and then done again on the VF
-            gpos_compact_value = os.environ.pop(GPOS_COMPACT_MODE_ENV_KEY, None)
-            save_production_names = self.useProductionNames
-            self.useProductionNames = False
-            save_postprocessor = self.postProcessorClass
-            self.postProcessorClass = None
-            self.skipFeatureCompilation = can_optimize_features
-            try:
+                save_production_names = self.useProductionNames
+                self.useProductionNames = False
+                save_postprocessor = self.postProcessorClass
+                self.postProcessorClass = None
+                self.skipFeatureCompilation = can_optimize_features
+
                 ttfDesignSpace = self.compile_designspace(subDoc)
-            finally:
-                if gpos_compact_value is not None:
-                    os.environ[GPOS_COMPACT_MODE_ENV_KEY] = gpos_compact_value
-            self.postProcessorClass = save_postprocessor
-            self.useProductionNames = save_production_names
 
-            # Stick TTFs back into original big DS
-            for ttfSource, glyphSet in zip(ttfDesignSpace.sources, self.glyphSets):
-                if can_optimize_features:
-                    originalSources[ttfSource.name] = sourcesByName[ttfSource.name].font
-                sourcesByName[ttfSource.name].font = ttfSource.font
-                originalGlyphsets[ttfSource.name] = glyphSet
+                if gpos_compact_value is not None:
+                    baseTtf = getDefaultMasterFont(ttfDesignSpace)
+                    baseTtf.cfg[GPOS_COMPRESSION_LEVEL] = gpos_compact_value
+                self.postProcessorClass = save_postprocessor
+                self.useProductionNames = save_production_names
+
+                # Stick TTFs back into original big DS
+                for ttfSource, glyphSet in zip(ttfDesignSpace.sources, self.glyphSets):
+                    if can_optimize_features:
+                        originalSources[ttfSource.name] = sourcesByName[
+                            ttfSource.name
+                        ].font
+                    sourcesByName[ttfSource.name].font = ttfSource.font
+                    originalGlyphsets[ttfSource.name] = glyphSet
+        finally:
+            if gpos_compact_value is not None:
+                self.ftConfig[GPOS_COMPRESSION_LEVEL] = gpos_compact_value
 
         return (
             vfNameToBaseUfo,
