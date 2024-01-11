@@ -1,3 +1,5 @@
+from fontTools.misc.fixedTools import otRound
+
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 
 
@@ -55,16 +57,21 @@ class GdefFeatureWriter(BaseFeatureWriter):
                     and anchor.name.startswith("caret_")
                     and anchor.x is not None
                 ):
-                    glyphCarets.add(round(anchor.x))
+                    glyphCarets.add(self._getAnchor(glyphName, anchor.name)[0])
                 elif (
                     anchor.name
                     and anchor.name.startswith("vcaret_")
                     and anchor.y is not None
                 ):
-                    glyphCarets.add(round(anchor.y))
+                    glyphCarets.add(self._getAnchor(glyphName, anchor.name)[1])
 
             if glyphCarets:
-                carets[glyphName] = sorted(glyphCarets)
+                if self.context.isVariable:
+                    carets[glyphName] = sorted(
+                        glyphCarets, key=lambda caret: list(caret.values.values())[0]
+                    )
+                else:
+                    carets[glyphName] = [otRound(c) for c in sorted(glyphCarets)]
 
         return carets
 

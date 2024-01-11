@@ -18,6 +18,11 @@ __all__ = [
     "compileVariableCFF2s",
 ]
 
+try:
+    from ._version import version as __version__
+except ImportError:
+    __version__ = "0.0.0+unknown"
+
 
 def compileTTF(ufo, **kwargs):
     """Create FontTools TrueType font from a UFO.
@@ -168,6 +173,30 @@ def compileVariableTTFs(designSpaceDoc, **kwargs):
 
 
 def compileInterpolatableTTFsFromDS(designSpaceDoc, **kwargs):
+    """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
+    with interpolatable outlines. Cubic curves are converted compatibly to
+    quadratic curves using the Cu2Qu conversion algorithm.
+
+    If the Designspace contains a "public.skipExportGlyphs" lib key, these
+    glyphs will not be exported to the final font. If these glyphs are used as
+    components in any other glyph, those components get decomposed. If the lib
+    key doesn't exist in the Designspace, all glyphs are exported (keys in
+    individual UFOs are ignored). UFO groups and kerning will be pruned of
+    skipped glyphs.
+
+    The DesignSpaceDocument should contain SourceDescriptor objects with 'font'
+    attribute set to an already loaded defcon.Font object (or compatible UFO
+    Font class). If 'font' attribute is unset or None, an AttributeError exception
+    is thrown.
+
+    Return a copy of the DesignSpaceDocument object (or the same one if
+    inplace=True) with the source's 'font' attribute set to the corresponding
+    TTFont instance.
+
+    For sources that have the 'layerName' attribute defined, the corresponding TTFont
+    object will contain only a minimum set of tables ("head", "hmtx", "glyf", "loca",
+    "maxp", "post" and "vmtx"), and no OpenType layout tables.
+    """
     return InterpolatableTTFCompiler(**kwargs).compile_designspace(designSpaceDoc)
 
 

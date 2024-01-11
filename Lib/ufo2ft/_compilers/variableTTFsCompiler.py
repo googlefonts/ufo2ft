@@ -21,4 +21,4 @@ class VariableTTFsCompiler(InterpolatableTTFCompiler):
     autoUseMyMetrics: bool = True
     dropImpliedOnCurves: bool = False
     allQuadratic: bool = True
-    pass
+    variableFeatures: bool = True

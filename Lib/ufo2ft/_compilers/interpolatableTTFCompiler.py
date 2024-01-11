@@ -31,9 +31,9 @@ class InterpolatableTTFCompiler(BaseInterpolatableCompiler):
         if self.layerNames is None:
             self.layerNames = [None] * len(ufos)
         assert len(ufos) == len(self.layerNames)
-        glyphSets = self.preprocess(ufos)
+        self.glyphSets = self.preprocess(ufos)
 
-        for ufo, glyphSet, layerName in zip(ufos, glyphSets, self.layerNames):
+        for ufo, glyphSet, layerName in zip(ufos, self.glyphSets, self.layerNames):
             yield self.compile_one(ufo, glyphSet, layerName)
 
     def compile_one(self, ufo, glyphSet, layerName):
@@ -77,11 +77,6 @@ class InterpolatableTTFCompiler(BaseInterpolatableCompiler):
         kwargs["roundCoordinates"] = False
         outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
         return outlineCompiler.compile()
-
-    def compile_designspace(self, designSpaceDoc):
-        ufos = self._pre_compile_designspace(designSpaceDoc)
-        ttfs = self.compile(ufos)
-        return self._post_compile_designspace(designSpaceDoc, ttfs)
 
     def _merge(self, designSpaceDoc, excludeVariationTables):
         return varLib.build_many(

@@ -243,12 +243,14 @@ def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
     return mapping
 
 
-def compileGSUB(featureFile, glyphOrder):
+def compileGSUB(featureFile, glyphOrder, fvar=None):
     """Compile and return a GSUB table from `featureFile` (feaLib
     FeatureFile), using the given `glyphOrder` (list of glyph names).
     """
     font = ttLib.TTFont()
     font.setGlyphOrder(glyphOrder)
+    if fvar:
+        font["fvar"] = fvar
     addOpenTypeFeatures(font, featureFile, tables={"GSUB"})
     return font.get("GSUB")
 
@@ -549,7 +551,16 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
 
 def quantize(number, factor):
     """Round to a multiple of the given parameter"""
+    if not isinstance(number, (float, int)):
+        # Some kind of variable scalar
+        return number
     return factor * otRound(number / factor)
+
+
+def otRoundIgnoringVariable(number):
+    if not isinstance(number, (float, int)):
+        return number
+    return otRound(number)
 
 
 def init_kwargs(kwargs, defaults):
@@ -673,3 +684,18 @@ def colrClipBoxQuantization(ufo: Any) -> int:
     """
     upem = getAttrWithFallback(ufo.info, "unitsPerEm")
     return int(round(upem / 10, -1))
+
+
+def get_userspace_location(designspace, location):
+    """Map a location from designspace to userspace across all axes."""
+    location_user = designspace.map_backward(location)
+    return {designspace.getAxis(k).tag: v for k, v in location_user.items()}
+
+
+def collapse_varscalar(varscalar, threshold=0):
+    """Collapse a variable scalar to a plain scalar if all values are similar"""
+    # This should eventually be a method on the VariableScalar object
+    values = list(varscalar.values.values())
+    if not any(abs(v - values[0]) > threshold for v in values[1:]):
+        return list(varscalar.values.values())[0]
+    return varscalar
