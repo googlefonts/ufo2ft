@@ -276,9 +276,21 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     If the `quantization` argument is given in the filter options, the resulting
     anchors are rounded to the nearest multiple of the quantization value.
+
+    If `groupMarkClases=True`, mark-to-base or mark-to-ligature attachments that
+    reference non-overlapping mark classes will get grouped in the same lookup; and
+    if a mark glyph is in more than one mark class, additional lookups will be generated
+    for those as required. NOTE: this was the default behavior until ufo2ft 2.33.4.
+    The current default behavior was simplified to match other font editors and
+    we now build as many mark-to-base and mark-to-liga lookups as there
+    are mark classes, and lookups are sorted alphabetically by the mark class
+    name so the more specific ('top.alt' instead 'top') would be applied last and
+    wins in case when the same base or ligature glyph can attach to the same mark
+    through multiple mark classes.
+    https://github.com/googlefonts/ufo2ft/issues/591
     """
 
-    options = dict(quantization=1)
+    options = dict(quantization=1, groupMarkClasses=False)
 
     tableTag = "GPOS"
     features = frozenset(["mark", "mkmk", "abvm", "blwm"])
@@ -555,11 +567,23 @@ class MarkFeatureWriter(BaseFeatureWriter):
         #   through different anchor names, we may have to split the attachment
         #   into two attachments, using null anchors instead of one or the other
         #   mark class in each split attachment.
-        markGlyphToMarkClasses = defaultdict(set)
-        for attachment in attachments:
-            for markGlyph, markClasses in attachment.getMarkGlyphToMarkClasses():
-                markGlyphToMarkClasses[markGlyph].update(markClasses)
-        groupedMarkClasses = self._groupMarkClasses(markGlyphToMarkClasses)
+        if self.options.groupMarkClasses:
+            markGlyphToMarkClasses = defaultdict(set)
+            for attachment in attachments:
+                for markGlyph, markClasses in attachment.getMarkGlyphToMarkClasses():
+                    markGlyphToMarkClasses[markGlyph].update(markClasses)
+            groupedMarkClasses = self._groupMarkClasses(markGlyphToMarkClasses)
+        else:
+            # this will generate one lookup per mark class, and sort them
+            # lexicographically by the anchor name, so the lookup for e.g.
+            # '_top.alt01' will occur *after* the one for `_top` (the last wins) thus
+            # allowing some degree of control on potentially ambiguous attachments
+            # https://github.com/googlefonts/ufo2ft/issues/762
+            # https://github.com/googlefonts/ufo2ft/issues/591
+            groupedMarkClasses = [
+                [markClass.name]
+                for _, markClass in sorted(self.context.markClasses.items())
+            ]
         self._logIfAmbiguous(attachments, groupedMarkClasses)
         lookups = []
         for markClasses in groupedMarkClasses:
@@ -717,14 +741,16 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     def _makeMarkFeature(self, include):
         baseLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToBaseAttachments):
+        for attachments in self.context.groupedMarkToBaseAttachments:
+            i = len(baseLkps)
             lookup = self._makeMarkLookup(
                 f"mark2base{'_' + str(i) if i > 0 else ''}", attachments, include
             )
             if lookup:
                 baseLkps.append(lookup)
         ligaLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
+        for attachments in self.context.groupedMarkToLigaAttachments:
+            i = len(ligaLkps)
             lookup = self._makeMarkLookup(
                 f"mark2liga{'_' + str(i) if i > 0 else ''}", attachments, include
             )
@@ -779,7 +805,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
             raise AssertionError(tag)
 
         baseLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToBaseAttachments):
+        for attachments in self.context.groupedMarkToBaseAttachments:
+            i = len(baseLkps)
             lookup = self._makeMarkLookup(
                 f"{tag}_mark2base{'_' + str(i) if i > 0 else ''}",
                 attachments,
@@ -789,7 +816,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
             if lookup:
                 baseLkps.append(lookup)
         ligaLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
+        for attachments in self.context.groupedMarkToLigaAttachments:
+            i = len(ligaLkps)
             lookup = self._makeMarkLookup(
                 f"{tag}_mark2liga{'_' + str(i) if i > 0 else ''}",
                 attachments,
