@@ -57,6 +57,7 @@ class BaseCompiler:
         with self.timer("preprocess UFO"):
             glyphSet = self.preprocess(ufo)
         with self.timer("compile a basic TTF"):
+            self.logger.info("Building OpenType tables")
             font = self.compileOutlines(ufo, glyphSet)
         if self.layerName is None and not self.skipFeatureCompilation:
             self.compileFeatures(ufo, font, glyphSet=glyphSet)
