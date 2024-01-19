@@ -16,6 +16,7 @@ from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
 
 from ufo2ft.constants import UNICODE_SCRIPT_ALIASES
+from ufo2ft.errors import InvalidDesignSpaceData, InvalidFontData
 from ufo2ft.fontInfoData import getAttrWithFallback
 
 logger = logging.getLogger(__name__)
@@ -234,8 +235,6 @@ def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
             if uni not in mapping:
                 mapping[uni] = glyphName
             else:
-                from ufo2ft.errors import InvalidFontData
-
                 raise InvalidFontData(
                     "cannot map '%s' to U+%04X; already mapped to '%s'"
                     % (glyphName, uni, mapping[uni])
@@ -462,14 +461,10 @@ class _LazyFontName:
 def getDefaultMasterFont(designSpaceDoc):
     defaultSource = designSpaceDoc.findDefault()
     if not defaultSource:
-        from ufo2ft.errors import InvalidDesignSpaceData
-
         raise InvalidDesignSpaceData(
             "Can't find base (neutral) master in DesignSpace document"
         )
     if not defaultSource.font:
-        from ufo2ft.errors import InvalidDesignSpaceData
-
         raise InvalidDesignSpaceData(
             "DesignSpace source '%s' is missing required 'font' attribute"
             % getattr(defaultSource, "name", "<Unknown>")
@@ -488,8 +483,6 @@ def _notdefGlyphFallback(designSpaceDoc):
     If the default master does not contain a .notdef either, return None since
     the auto-generated .notdef can be used.
     """
-    from ufo2ft.errors import InvalidDesignSpaceData
-
     try:
         baseUfo = getDefaultMasterFont(designSpaceDoc)
     except InvalidDesignSpaceData:
@@ -608,7 +601,9 @@ def ensure_all_sources_have_names(doc: DesignSpaceDocument) -> None:
         used_names.add(source.name)
 
 
-def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0, seen=None):
+def getMaxComponentDepth(
+    glyph, glyphSet, maxComponentDepth=0, visited=None, rec_stack=None
+):
     """Return the height of a composite glyph's tree of components.
 
     This is equal to the depth of its deepest node, where the depth
@@ -617,17 +612,20 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0, seen=None):
 
     For glyphs that contain no components, only contours, this is 0.
     Composite glyphs have max component depth of 1 or greater.
+
+    Raises InvalidFontData if a cyclical component reference is detected.
     """
     if not glyph.components:
         return maxComponentDepth
 
-    if seen is None:
-        seen = set()
-    if glyph.name in seen:
-        from ufo2ft.errors import InvalidFontData
+    if visited is None:
+        visited = set()
+    if rec_stack is None:
+        rec_stack = []
 
-        raise InvalidFontData(f"cyclical component reference: {glyph.name!r}")
-    seen.add(glyph.name)
+    assert glyph.name not in visited
+    visited.add(glyph.name)
+    rec_stack.append(glyph.name)
 
     maxComponentDepth += 1
 
@@ -637,12 +635,18 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0, seen=None):
             baseGlyph = glyphSet[component.baseGlyph]
         except KeyError:
             continue
-        componentDepth = getMaxComponentDepth(
-            baseGlyph, glyphSet, initialMaxComponentDepth, seen
-        )
-        maxComponentDepth = max(maxComponentDepth, componentDepth)
+        if component.baseGlyph not in visited:
+            componentDepth = getMaxComponentDepth(
+                baseGlyph, glyphSet, initialMaxComponentDepth, visited, rec_stack
+            )
+            maxComponentDepth = max(maxComponentDepth, componentDepth)
+        elif component.baseGlyph in rec_stack:
+            raise InvalidFontData(
+                f"cyclical component reference:"
+                f" {' -> '.join(rec_stack)} => {component.baseGlyph}"
+            )
 
-    seen.remove(glyph.name)
+    rec_stack.pop()
 
     return maxComponentDepth
 

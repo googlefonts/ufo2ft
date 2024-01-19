@@ -50,9 +50,36 @@ def test_getMaxComponentDepth_cyclical_reference():
     glyph_b.getPen().addComponent("A", (1, 0, 0, 1, 0, 0))
     glyph_c.getPen().addComponent("B", (1, 0, 0, 1, 0, 0))
 
-    with pytest.raises(InvalidFontData, match="cyclical component reference: 'A'"):
+    with pytest.raises(
+        InvalidFontData, match="cyclical component reference: A -> C -> B => A"
+    ):
         util.getMaxComponentDepth(glyph_a, test_ufo)
-    with pytest.raises(InvalidFontData, match="cyclical component reference: 'B'"):
+    with pytest.raises(
+        InvalidFontData, match="cyclical component reference: B -> A -> C => B"
+    ):
         util.getMaxComponentDepth(glyph_b, test_ufo)
-    with pytest.raises(InvalidFontData, match="cyclical component reference: 'C'"):
+    with pytest.raises(
+        InvalidFontData, match="cyclical component reference: C -> B -> A => C"
+    ):
         util.getMaxComponentDepth(glyph_c, test_ufo)
+
+    glyph_d = test_ufo.newGlyph("D")
+    glyph_e = test_ufo.newGlyph("E")
+    glyph_f = test_ufo.newGlyph("F")
+    glyph_g = test_ufo.newGlyph("G")
+    glyph_h = test_ufo.newGlyph("H")
+
+    # adding same component multiple times should not cause infinite recursion
+    glyph_d.getPen().addComponent("E", (1, 0, 0, 1, 0, 0))
+    glyph_d.getPen().addComponent("E", (1, 0, 0, 1, 0, 0))
+    # G is reachable from both E and F, but there is no cycle.
+    glyph_e.getPen().addComponent("F", (1, 0, 0, 1, 0, 0))
+    glyph_f.getPen().addComponent("G", (1, 0, 0, 1, 0, 0))
+    glyph_e.getPen().addComponent("G", (1, 0, 0, 1, 0, 0))
+    glyph_g.getPen().addComponent("H", (1, 0, 0, 1, 0, 0))
+
+    assert util.getMaxComponentDepth(glyph_d, test_ufo) == 4
+    assert util.getMaxComponentDepth(glyph_e, test_ufo) == 3
+    assert util.getMaxComponentDepth(glyph_f, test_ufo) == 2
+    assert util.getMaxComponentDepth(glyph_g, test_ufo) == 1
+    assert util.getMaxComponentDepth(glyph_h, test_ufo) == 0
