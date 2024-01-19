@@ -608,7 +608,7 @@ def ensure_all_sources_have_names(doc: DesignSpaceDocument) -> None:
         used_names.add(source.name)
 
 
-def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
+def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0, seen=None):
     """Return the height of a composite glyph's tree of components.
 
     This is equal to the depth of its deepest node, where the depth
@@ -621,6 +621,14 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
     if not glyph.components:
         return maxComponentDepth
 
+    if seen is None:
+        seen = set()
+    if glyph.name in seen:
+        from ufo2ft.errors import InvalidFontData
+
+        raise InvalidFontData(f"cyclical component reference: {glyph.name!r}")
+    seen.add(glyph.name)
+
     maxComponentDepth += 1
 
     initialMaxComponentDepth = maxComponentDepth
@@ -630,9 +638,11 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
         except KeyError:
             continue
         componentDepth = getMaxComponentDepth(
-            baseGlyph, glyphSet, initialMaxComponentDepth
+            baseGlyph, glyphSet, initialMaxComponentDepth, seen
         )
         maxComponentDepth = max(maxComponentDepth, componentDepth)
+
+    seen.remove(glyph.name)
 
     return maxComponentDepth
 
