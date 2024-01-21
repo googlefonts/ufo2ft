@@ -595,29 +595,23 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
         assert dedent(str(generated)) == dedent(
             """\
-            lookup kern_Arab {
+            lookup kern_Arab_Thaa {
                 lookupflag IgnoreMarks;
                 pos four-ar seven-ar -30;
-            } kern_Arab;
-
-            lookup kern_Thaa {
-                lookupflag IgnoreMarks;
-                pos four-ar seven-ar -30;
-            } kern_Thaa;
+            } kern_Arab_Thaa;
 
             feature kern {
                 script DFLT;
                 language dflt;
-                lookup kern_Arab;
-                lookup kern_Thaa;
+                lookup kern_Arab_Thaa;
 
                 script arab;
                 language dflt;
-                lookup kern_Arab;
+                lookup kern_Arab_Thaa;
 
                 script thaa;
                 language dflt;
-                lookup kern_Thaa;
+                lookup kern_Arab_Thaa;
             } kern;
             """
         )
@@ -1496,74 +1490,55 @@ def test_kern_split_and_drop(FontClass, caplog):
 
     assert dedent(str(newFeatures)) == dedent(
         """\
-        @kern1.Grek.bar = [period];
-        @kern1.Grek.foo = [alpha];
-        @kern1.Latn.foo = [a];
-        @kern1.Orya.foo = [a-orya];
-        @kern2.Grek.bar = [period];
-        @kern2.Grek.foo = [alpha];
-        @kern2.Latn.foo = [a];
-        @kern2.Orya.foo = [a-orya];
+        @kern1.Cyrl_Grek_Latn_Orya.bar = [a-cy];
+        @kern1.Cyrl_Grek_Latn_Orya.bar_1 = [period];
+        @kern1.Cyrl_Grek_Latn_Orya.foo = [a a-orya alpha];
+        @kern2.Cyrl_Grek_Latn_Orya.bar = [a-cy];
+        @kern2.Cyrl_Grek_Latn_Orya.bar_1 = [period];
+        @kern2.Cyrl_Grek_Latn_Orya.foo = [a a-orya alpha];
 
-        lookup kern_Grek {
+        lookup kern_Cyrl_Grek_Latn_Orya {
             lookupflag IgnoreMarks;
-            pos @kern1.Grek.foo @kern2.Grek.bar 20;
-            pos @kern1.Grek.bar @kern2.Grek.foo 20;
-        } kern_Grek;
-
-        lookup kern_Latn {
-            lookupflag IgnoreMarks;
-            pos @kern1.Latn.foo @kern2.Grek.bar 20;
-            pos @kern1.Grek.bar @kern2.Latn.foo 20;
-        } kern_Latn;
-
-        lookup kern_Orya {
-            lookupflag IgnoreMarks;
-            pos @kern1.Orya.foo @kern2.Grek.bar 20;
-            pos @kern1.Grek.bar @kern2.Orya.foo 20;
-        } kern_Orya;
+            pos @kern1.Cyrl_Grek_Latn_Orya.foo @kern2.Cyrl_Grek_Latn_Orya.bar 20;
+            pos @kern1.Cyrl_Grek_Latn_Orya.foo @kern2.Cyrl_Grek_Latn_Orya.bar_1 20;
+            pos @kern1.Cyrl_Grek_Latn_Orya.bar @kern2.Cyrl_Grek_Latn_Orya.foo 20;
+            pos @kern1.Cyrl_Grek_Latn_Orya.bar_1 @kern2.Cyrl_Grek_Latn_Orya.foo 20;
+        } kern_Cyrl_Grek_Latn_Orya;
 
         feature kern {
             script DFLT;
             language dflt;
-            lookup kern_Grek;
-            lookup kern_Latn;
+            lookup kern_Cyrl_Grek_Latn_Orya;
+
+            script cyrl;
+            language dflt;
+            lookup kern_Cyrl_Grek_Latn_Orya;
 
             script grek;
             language dflt;
-            lookup kern_Grek;
+            lookup kern_Cyrl_Grek_Latn_Orya;
 
             script latn;
             language dflt;
-            lookup kern_Latn;
+            lookup kern_Cyrl_Grek_Latn_Orya;
         } kern;
 
         feature dist {
             script ory2;
             language dflt;
-            lookup kern_Orya;
+            lookup kern_Cyrl_Grek_Latn_Orya;
 
             script orya;
             language dflt;
-            lookup kern_Orya;
+            lookup kern_Cyrl_Grek_Latn_Orya;
         } dist;
         """
     )
 
-    msgs = sorted(msg[-30:] for msg in caplog.messages)
+    msgs = sorted(msg[-31:] for msg in caplog.messages)
     assert msgs == [
-        "with mixed script (Arab, Grek)",
-        "with mixed script (Arab, Latn)",
-        "with mixed script (Arab, Orya)",
-        "with mixed script (Cyrl, Grek)",
-        "with mixed script (Cyrl, Latn)",
-        "with mixed script (Cyrl, Orya)",
-        "with mixed script (Grek, Arab)",
-        "with mixed script (Grek, Cyrl)",
-        "with mixed script (Latn, Arab)",
-        "with mixed script (Latn, Cyrl)",
-        "with mixed script (Orya, Arab)",
-        "with mixed script (Orya, Cyrl)",
+        "with mixed direction (LTR, RTL)",
+        "with mixed direction (RTL, LTR)",
     ]
 
 
@@ -1598,7 +1573,7 @@ def test_kern_split_and_drop_mixed(caplog, FontClass):
         """
     )
     assert (
-        "Skipping kerning pair <('V', 'W') ('W', 'gba-nko') -20> with mixed script (Latn, Nkoo)"
+        "Skipping kerning pair <('V', 'W') ('W', 'gba-nko') -20> with mixed direction (LTR, RTL)"
         in caplog.text
     )
 
@@ -1681,33 +1656,26 @@ def test_kern_multi_script(FontClass):
 
     assert dedent(str(newFeatures)) == dedent(
         """\
-        @kern1.Arab.foo = [lam-ar];
-        @kern1.Nkoo.foo = [gba-nko];
-        @kern2.Arab.foo = [comma-ar];
+        @kern1.Arab_Nkoo.foo = [gba-nko lam-ar];
+        @kern2.Arab_Nkoo.foo = [comma-ar];
 
-        lookup kern_Arab {
+        lookup kern_Arab_Nkoo {
             lookupflag IgnoreMarks;
-            pos @kern1.Arab.foo @kern2.Arab.foo <-20 0 -20 0>;
-        } kern_Arab;
-
-        lookup kern_Nkoo {
-            lookupflag IgnoreMarks;
-            pos @kern1.Nkoo.foo @kern2.Arab.foo <-20 0 -20 0>;
-        } kern_Nkoo;
+            pos @kern1.Arab_Nkoo.foo @kern2.Arab_Nkoo.foo <-20 0 -20 0>;
+        } kern_Arab_Nkoo;
 
         feature kern {
             script DFLT;
             language dflt;
-            lookup kern_Arab;
-            lookup kern_Nkoo;
+            lookup kern_Arab_Nkoo;
 
             script arab;
             language dflt;
-            lookup kern_Arab;
+            lookup kern_Arab_Nkoo;
 
             script nko;
             language dflt;
-            lookup kern_Nkoo;
+            lookup kern_Arab_Nkoo;
         } kern;
         """
     )
@@ -1837,13 +1805,14 @@ def test_kern_zyyy_zinh(FontClass):
             pos uni1DC0 uni1DC0 6;
         } kern_Grek;
 
-        lookup kern_Hani {
+        lookup kern_Hani_Hrkt {
             lookupflag IgnoreMarks;
             pos uni1D360 uni1D360 37;
             pos uni1D370 uni1D370 38;
             pos uni1F250 uni1F250 39;
             pos uni3010 uni3010 8;
             pos uni3030 uni3030 9;
+            pos uni30A0 uni30A0 10;
             pos uni3190 uni3190 11;
             pos uni31C0 uni31C0 12;
             pos uni31D0 uni31D0 13;
@@ -1861,15 +1830,8 @@ def test_kern_zyyy_zinh(FontClass):
             pos uni33E0 uni33E0 25;
             pos uni33F0 uni33F0 26;
             pos uniA700 uniA700 27;
-        } kern_Hani;
-
-        lookup kern_Hrkt {
-            lookupflag IgnoreMarks;
-            pos uni3010 uni3010 8;
-            pos uni3030 uni3030 9;
-            pos uni30A0 uni30A0 10;
             pos uniFF70 uniFF70 29;
-        } kern_Hrkt;
+        } kern_Hani_Hrkt;
 
         lookup kern_Default {
             lookupflag IgnoreMarks;
@@ -1889,8 +1851,7 @@ def test_kern_zyyy_zinh(FontClass):
             language dflt;
             lookup kern_Default;
             lookup kern_Grek;
-            lookup kern_Hani;
-            lookup kern_Hrkt;
+            lookup kern_Hani_Hrkt;
 
             script grek;
             language dflt;
@@ -1900,12 +1861,12 @@ def test_kern_zyyy_zinh(FontClass):
             script hani;
             language dflt;
             lookup kern_Default;
-            lookup kern_Hani;
+            lookup kern_Hani_Hrkt;
 
             script kana;
             language dflt;
             lookup kern_Default;
-            lookup kern_Hrkt;
+            lookup kern_Hani_Hrkt;
         } kern;
 
         feature dist {
