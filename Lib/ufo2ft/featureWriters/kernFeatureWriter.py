@@ -60,6 +60,12 @@ def unicodeBidiType(uv):
         return None
 
 
+def script_direction(script: str) -> str:
+    if script == COMMON_SCRIPT:
+        return "Auto"
+    return script_horizontal_direction(script, "LTR")
+
+
 @dataclass(frozen=True, order=False)
 class KerningPair:
     __slots__ = ("side1", "side2", "value")
@@ -723,9 +729,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                         pair.value,
                     )
                     continue
-                directions = {
-                    script_horizontal_direction(script, "LTR") for script in scripts
-                }
+                directions = {script_direction(script) for script in scripts}
                 assert len(directions) == 1
                 scriptIsRtl = directions == {"RTL"}
                 # Numbers are always shaped LTR even in RTL scripts:
@@ -785,10 +789,10 @@ class KernFeatureWriter(BaseFeatureWriter):
             lookupsLTR: list[ast.LookupBlock] = []
             lookupsRTL: list[ast.LookupBlock] = []
             for script, scriptLookups in sorted(lookups.items()):
-                if script != COMMON_SCRIPT and script not in DIST_ENABLED_SCRIPTS:
-                    if script_horizontal_direction(script, "LTR") == "LTR":
+                if script not in DIST_ENABLED_SCRIPTS:
+                    if script_direction(script) == "LTR":
                         lookupsLTR.extend(scriptLookups.values())
-                    elif script_horizontal_direction(script, "LTR") == "RTL":
+                    elif script_direction(script) == "RTL":
                         lookupsRTL.extend(scriptLookups.values())
             dfltLookups.extend(
                 lkp for lkp in (lookupsLTR or lookupsRTL) if lkp not in dfltLookups
@@ -859,11 +863,6 @@ def partitionByScript(
 ) -> Iterator[tuple[str, KerningPair]]:
     """Split a potentially mixed-script pair into pairs that make sense based
     on the dominant script, and yield each combination with its dominant script."""
-
-    def script_direction(script: str) -> str:
-        if script == COMMON_SCRIPT:
-            return "Auto"
-        return script_horizontal_direction(script, "LTR")
 
     side1Directions: dict[str, set[str]] = {}
     side2Directions: dict[str, set[str]] = {}
