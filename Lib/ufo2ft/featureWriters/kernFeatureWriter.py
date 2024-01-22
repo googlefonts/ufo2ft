@@ -60,6 +60,12 @@ def unicodeBidiType(uv):
         return None
 
 
+def script_direction(script: str) -> str:
+    if script == COMMON_SCRIPT:
+        return "Auto"
+    return script_horizontal_direction(script, "LTR")
+
+
 @dataclass(frozen=True, order=False)
 class KerningPair:
     __slots__ = ("side1", "side2", "value")
@@ -157,24 +163,26 @@ class KernFeatureWriter(BaseFeatureWriter):
       second lookup without the ignore marks flag.
     * Go through all kerning pairs and split them up by script, to put them in
       different lookups. This reduces the size of each lookup compared to
-      splitting by direction, as previously done.
+      splitting by direction, as previously done. If there are kerning pairs
+      with different scripts on each side, these scripts are all kept together
+      to allow for cross-script kerning (in implementations that apply it).
+      Scripts with different direction are always split.
         * Partition the first and second side of a pair by script and emit only
           those with the same script (e.g. `a` and `b` are both "Latn", `period`
           and `period` are both "Default", but `a` and `a-cy` would mix "Latn"
-          and "Cyrl" and are dropped) or those that kern an explicit against a
-          "common" or "inherited" script, e.g. `a` and `period`.
+          and "Cyrl" and are dropped), or those with kerning across them, or
+          those that kern an explicit against a "common" or "inherited" script
+          (e.g. `a` and `period`).
         * Glyphs can have multiple scripts assigned to them (legitimately, e.g.
           U+0951 DEVANAGARI STRESS SIGN UDATTA, or for random reasons like
           having both `sub h by h.sc` and `sub Etaprosgegrammeni by h.sc;`).
           Only scripts that were determined earlier to be supported by the font
           will be considered. Usually, we will emit pairs where both sides have
-          the same script and no splitting is necessary. The only mixed script
-          pairs we emit are common or inherited (Zyyy or Zinh) against explicit
-          (e.g. Latn) scripts. A glyph can be part of both for weird reasons, so
-          we always treat any glyph with a common or inherited script as a
-          purely common (not inherited) glyph for bucketing purposes. This
-          avoids creating overlapping groups with the multi-script glyph in a
-          lookup.
+          the same script and no splitting is necessary. A glyph can be part of
+          both for weird reasons, so we always treat any glyph with a common or
+          inherited script as a purely common (not inherited) glyph for
+          bucketing purposes. This avoids creating overlapping groups with the
+          multi-script glyph in a lookup.
         * Some glyphs may have a script of Zyyy or Zinh but have a disjoint set
           of explicit scripts as their script extension. By looking only at the
           script extension, we treat many of them as being part of an explicit
@@ -291,7 +299,9 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         lookupGroups = []
         for _, lookupGroup in sorted(lookups.items()):
-            lookupGroups.extend(lookupGroup.values())
+            lookupGroups.extend(
+                lkp for lkp in lookupGroup.values() if lkp not in lookupGroups
+            )
 
         # NOTE: We don't write classDefs because we literalise all classes.
         self._insert(
@@ -700,18 +710,11 @@ class KernFeatureWriter(BaseFeatureWriter):
         assert not side2Classes.keys() & newSide2Classes.keys()
         side2Classes.update(newSide2Classes)
 
-        for script, pairs in kerningPerScript.items():
-            scriptLookups = lookups.setdefault(script, {})
-
-            key = f"kern_{script}{suffix}"
-            lookup = scriptLookups.get(key)
-            if not lookup:
-                # For neatness:
-                lookup = self._makeKerningLookup(
-                    key.replace(COMMON_SCRIPT, COMMON_CLASS_NAME),
-                    ignoreMarks=ignoreMarks,
-                )
-                scriptLookups[key] = lookup
+        for scripts, pairs in kerningPerScript.items():
+            lookupName = f"kern_{'_'.join(scripts)}{suffix}".replace(
+                COMMON_SCRIPT, COMMON_CLASS_NAME
+            )
+            lookup = self._makeKerningLookup(lookupName, ignoreMarks=ignoreMarks)
             for pair in pairs:
                 bidiTypes = {
                     direction
@@ -726,13 +729,17 @@ class KernFeatureWriter(BaseFeatureWriter):
                         pair.value,
                     )
                     continue
-                scriptIsRtl = script_horizontal_direction(script, "LTR") == "RTL"
+                directions = {script_direction(script) for script in scripts}
+                assert len(directions) == 1
+                scriptIsRtl = directions == {"RTL"}
                 # Numbers are always shaped LTR even in RTL scripts:
                 pairIsRtl = scriptIsRtl and "L" not in bidiTypes
                 rule = self._makePairPosRule(
                     pair, side1Classes, side2Classes, pairIsRtl
                 )
                 lookup.statements.append(rule)
+            for script in scripts:
+                lookups.setdefault(script, {})[lookupName] = lookup
 
         # Clean out empty lookups.
         for script, scriptLookups in list(lookups.items()):
@@ -771,7 +778,9 @@ class KernFeatureWriter(BaseFeatureWriter):
         isKernBlock = feature.name == "kern"
         dfltLookups: list[ast.LookupBlock] = []
         if isKernBlock and COMMON_SCRIPT in lookups:
-            dfltLookups.extend(lookups[COMMON_SCRIPT].values())
+            dfltLookups.extend(
+                lkp for lkp in lookups[COMMON_SCRIPT].values() if lkp not in dfltLookups
+            )
 
         # InDesign bugfix: register kerning lookups for all LTR scripts under DFLT
         # so that the basic composer, without a language selected, will still kern.
@@ -780,12 +789,14 @@ class KernFeatureWriter(BaseFeatureWriter):
             lookupsLTR: list[ast.LookupBlock] = []
             lookupsRTL: list[ast.LookupBlock] = []
             for script, scriptLookups in sorted(lookups.items()):
-                if script != COMMON_SCRIPT and script not in DIST_ENABLED_SCRIPTS:
-                    if script_horizontal_direction(script, "LTR") == "LTR":
+                if script not in DIST_ENABLED_SCRIPTS:
+                    if script_direction(script) == "LTR":
                         lookupsLTR.extend(scriptLookups.values())
-                    elif script_horizontal_direction(script, "LTR") == "RTL":
+                    elif script_direction(script) == "RTL":
                         lookupsRTL.extend(scriptLookups.values())
-            dfltLookups.extend(lookupsLTR or lookupsRTL)
+            dfltLookups.extend(
+                lkp for lkp in (lookupsLTR or lookupsRTL) if lkp not in dfltLookups
+            )
 
         if dfltLookups:
             languages = feaLanguagesByScript.get("DFLT", ["dflt"])
@@ -814,27 +825,38 @@ class KernFeatureWriter(BaseFeatureWriter):
                     feature.statements.append(ast.Comment(""))
                 # We have something for this script. First add the default
                 # lookups, then the script-specific ones
-                lookupsForThisScript = []
+                lookupsForThisScript = {}
                 for dfltScript in DFLT_SCRIPTS:
                     if dfltScript in lookups:
-                        lookupsForThisScript.extend(lookups[dfltScript].values())
-                lookupsForThisScript.extend(lookups[script].values())
+                        lookupsForThisScript.update(lookups[dfltScript])
+                lookupsForThisScript.update(lookups[script])
                 # Register the lookups for all languages defined in the feature
                 # file for the script, otherwise kerning is not applied if any
                 # language is set at all.
                 languages = feaLanguagesByScript.get(tag, ["dflt"])
-                ast.addLookupReferences(feature, lookupsForThisScript, tag, languages)
+                ast.addLookupReferences(
+                    feature, lookupsForThisScript.values(), tag, languages
+                )
 
 
 def splitKerning(pairs, glyphScripts):
     # Split kerning into per-script buckets, so we can post-process them before
-    # continuing.
+    # continuing. Scripts that have cross-script kerning pairs will be put in
+    # the same bucket.
     kerningPerScript = {}
     for pair in pairs:
-        for script, splitPair in partitionByScript(pair, glyphScripts):
-            kerningPerScript.setdefault(script, []).append(splitPair)
+        for scripts, splitPair in partitionByScript(pair, glyphScripts):
+            scripts = tuple(sorted(scripts))
+            kerningPerScript.setdefault(scripts, []).append(splitPair)
 
-    for pairs in kerningPerScript.values():
+    kerningPerScript = mergeScripts(kerningPerScript)
+
+    for scripts, pairs in kerningPerScript.items():
+        if len(scripts) > 1:
+            LOGGER.info(
+                "Merging kerning lookups from the following scripts: %s",
+                ", ".join(scripts),
+            )
         pairs.sort()
 
     return kerningPerScript
@@ -847,8 +869,9 @@ def partitionByScript(
     """Split a potentially mixed-script pair into pairs that make sense based
     on the dominant script, and yield each combination with its dominant script."""
 
-    side1Scripts: dict[str, set[str]] = {}
-    side2Scripts: dict[str, set[str]] = {}
+    side1Directions: dict[str, set[str]] = {}
+    side2Directions: dict[str, set[str]] = {}
+    resolvedScripts: dict[str, set[str]] = {}
     for glyph in pair.firstGlyphs:
         scripts = glyphScripts.get(glyph, DFLT_SCRIPTS)
         # If a glyph is both common or inherited *and* another script, treat it
@@ -859,56 +882,100 @@ def partitionByScript(
         # script-specific one.
         if scripts & DFLT_SCRIPTS:
             scripts = COMMON_SCRIPTS_SET
-        for script in scripts:
-            side1Scripts.setdefault(script, set()).add(glyph)
+        resolvedScripts[glyph] = scripts
+        for direction in (script_direction(script) for script in sorted(scripts)):
+            side1Directions.setdefault(direction, set()).add(glyph)
     for glyph in pair.secondGlyphs:
         scripts = glyphScripts.get(glyph, DFLT_SCRIPTS)
         if scripts & DFLT_SCRIPTS:
             scripts = COMMON_SCRIPTS_SET
-        for script in scripts:
-            side2Scripts.setdefault(script, set()).add(glyph)
+        resolvedScripts[glyph] = scripts
+        for direction in (script_direction(script) for script in sorted(scripts)):
+            side2Directions.setdefault(direction, set()).add(glyph)
 
-    for firstScript, secondScript in itertools.product(side1Scripts, side2Scripts):
-        # Preserve the type (glyph or class) of each side.
-        localGlyphs: set[str] = set()
+    for side1Direction, side2Direction in itertools.product(
+        side1Directions, side2Directions
+    ):
         localSide1: str | tuple[str, ...]
         localSide2: str | tuple[str, ...]
+        side1Scripts: set[str] = set()
+        side2Scripts: set[str] = set()
         if pair.firstIsClass:
-            localSide1 = tuple(sorted(side1Scripts[firstScript]))
-            localGlyphs.update(localSide1)
+            localSide1 = tuple(sorted(side1Directions[side1Direction]))
+            for glyph in localSide1:
+                side1Scripts |= resolvedScripts[glyph]
         else:
-            assert len(side1Scripts[firstScript]) == 1
-            (localSide1,) = side1Scripts[firstScript]
-            localGlyphs.add(localSide1)
+            assert len(side1Directions[side1Direction]) == 1
+            (localSide1,) = side1Directions[side1Direction]
+            side1Scripts |= resolvedScripts[localSide1]
         if pair.secondIsClass:
-            localSide2 = tuple(sorted(side2Scripts[secondScript]))
-            localGlyphs.update(localSide2)
+            localSide2 = tuple(sorted(side2Directions[side2Direction]))
+            for glyph in localSide2:
+                side2Scripts |= resolvedScripts[glyph]
         else:
-            assert len(side2Scripts[secondScript]) == 1
-            (localSide2,) = side2Scripts[secondScript]
-            localGlyphs.add(localSide2)
+            assert len(side2Directions[side2Direction]) == 1
+            (localSide2,) = side2Directions[side2Direction]
+            side2Scripts |= resolvedScripts[localSide2]
 
-        if firstScript == secondScript or secondScript == COMMON_SCRIPT:
-            localScript = firstScript
-        elif firstScript == COMMON_SCRIPT:
-            localScript = secondScript
-        # Two different explicit scripts:
-        else:
+        # Skip pairs with mixed direction.
+        if side1Direction != side2Direction and not any(
+            side == "Auto" for side in (side1Direction, side2Direction)
+        ):
             LOGGER.info(
-                "Skipping kerning pair <%s %s %s> with mixed script (%s, %s)",
+                "Skipping kerning pair <%s %s %s> with mixed direction (%s, %s)",
                 pair.side1,
                 pair.side2,
                 pair.value,
-                firstScript,
-                secondScript,
+                side1Direction,
+                side2Direction,
             )
             continue
 
-        yield localScript, KerningPair(
+        scripts = side1Scripts | side2Scripts
+        # If only one side has Common, drop it
+        if not all(side & COMMON_SCRIPTS_SET for side in (side1Scripts, side2Scripts)):
+            scripts -= COMMON_SCRIPTS_SET
+
+        yield scripts, KerningPair(
             localSide1,
             localSide2,
             pair.value,
         )
+
+
+def mergeScripts(kerningPerScript):
+    """Merge buckets that have common scripts. If we have [A, B], [B, C], and
+    [D] buckets, we want to merge the first two into [A, B, C] and leave [D] so
+    that all kerning pairs of the three scripts are in the same lookup."""
+    sets = [set(scripts) for scripts in kerningPerScript if scripts]
+    merged = True
+    while merged:
+        merged = False
+        result = []
+        while sets:
+            common, rest = sets[0], sets[1:]
+            sets = []
+            for scripts in rest:
+                if scripts.isdisjoint(common):
+                    sets.append(scripts)
+                else:
+                    merged = True
+                    common |= scripts
+            result.append(common)
+        sets = result
+
+    # Now that we have merged all common-script buckets, we need to re-assign
+    # the kerning pairs to the new buckets.
+    result = {tuple(sorted(scripts)): [] for scripts in sets}
+    for scripts, pairs in kerningPerScript.items():
+        for scripts2 in sets:
+            if scripts2 & set(scripts):
+                result[tuple(sorted(scripts2))].extend(pairs)
+                break
+        else:
+            # Shouldn't happen, but just in case.
+            raise AssertionError
+    return result
 
 
 def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
@@ -931,9 +998,10 @@ def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
 
     # Generate common class names first so that common classes are correctly
     # named in other lookups.
-    if COMMON_SCRIPT in kerningPerScript:
-        common_pairs = kerningPerScript[COMMON_SCRIPT]
-        for pair in common_pairs:
+    for scripts, pairs in kerningPerScript.items():
+        if set(scripts) != COMMON_SCRIPTS_SET:
+            continue
+        for pair in pairs:
             if (
                 pair.firstIsClass
                 and pair.side1 not in existingSide1Classes
@@ -964,9 +1032,10 @@ def makeAllGlyphClassDefinitions(kerningPerScript, context, feaFile=None):
                 )
 
     sortedKerningPerScript = sorted(kerningPerScript.items())
-    for script, pairs in sortedKerningPerScript:
-        if script == COMMON_SCRIPT:
+    for scripts, pairs in sortedKerningPerScript:
+        if set(scripts) == COMMON_SCRIPTS_SET:
             continue
+        script = "_".join(scripts).replace(COMMON_SCRIPT, COMMON_CLASS_NAME)
         for pair in pairs:
             if (
                 pair.firstIsClass
