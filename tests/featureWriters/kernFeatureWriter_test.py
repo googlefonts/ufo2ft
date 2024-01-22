@@ -1535,10 +1535,10 @@ def test_kern_split_and_drop(FontClass, caplog):
         """
     )
 
-    msgs = sorted(msg[-31:] for msg in caplog.messages)
-    assert msgs == [
-        "with mixed direction (LTR, RTL)",
-        "with mixed direction (RTL, LTR)",
+    assert caplog.messages == [
+        "Skipping kerning pair <('a', 'a-orya', 'alpha') ('a-cy', 'alef-ar', 'period') 20> with mixed direction (LTR, RTL)",
+        "Skipping kerning pair <('a-cy', 'alef-ar', 'period') ('a', 'a-orya', 'alpha') 20> with mixed direction (RTL, LTR)",
+        "Merging kerning lookups from the following scripts: Cyrl, Grek, Latn, Orya",
     ]
 
 

@@ -851,7 +851,12 @@ def splitKerning(pairs, glyphScripts):
 
     kerningPerScript = mergeScripts(kerningPerScript)
 
-    for pairs in kerningPerScript.values():
+    for scripts, pairs in kerningPerScript.items():
+        if len(scripts) > 1:
+            LOGGER.info(
+                "Merging kerning lookups from the following scripts: %s",
+                ", ".join(scripts),
+            )
         pairs.sort()
 
     return kerningPerScript
