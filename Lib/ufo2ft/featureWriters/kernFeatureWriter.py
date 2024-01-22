@@ -885,9 +885,7 @@ def partitionByScript(
         if scripts & DFLT_SCRIPTS:
             scripts = COMMON_SCRIPTS_SET
         resolvedScripts[glyph] = scripts
-        scripts = sorted(scripts)
-        directions = [script_direction(script) for script in scripts]
-        for direction in directions:
+        for direction in (script_direction(script) for script in sorted(scripts)):
             side2Directions.setdefault(direction, set()).add(glyph)
 
     for side1Direction, side2Direction in itertools.product(
