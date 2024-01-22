@@ -959,12 +959,17 @@ def mergeScripts(kerningPerScript):
             result.append(common)
         sets = result
 
+    # Now that we have merged all common-script buckets, we need to re-assign
+    # the kerning pairs to the new buckets.
     result = {tuple(sorted(scripts)): [] for scripts in sets}
     for scripts, pairs in kerningPerScript.items():
         for scripts2 in sets:
             if scripts2 & set(scripts):
                 result[tuple(sorted(scripts2))].extend(pairs)
                 break
+        else:
+            # Shouldn't happen, but just in case.
+            raise AssertionError
     return result
 
 
