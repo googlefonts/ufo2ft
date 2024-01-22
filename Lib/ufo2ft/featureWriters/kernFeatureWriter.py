@@ -164,8 +164,8 @@ class KernFeatureWriter(BaseFeatureWriter):
     * Go through all kerning pairs and split them up by script, to put them in
       different lookups. This reduces the size of each lookup compared to
       splitting by direction, as previously done. If there are kerning pairs
-      with different scripts on each side, theese scripts are all kept together
-      to allow for cross-script kerning (in implmenetations that apply it).
+      with different scripts on each side, these scripts are all kept together
+      to allow for cross-script kerning (in implementations that apply it).
       Scripts with different direction are always split.
         * Partition the first and second side of a pair by script and emit only
           those with the same script (e.g. `a` and `b` are both "Latn", `period`
