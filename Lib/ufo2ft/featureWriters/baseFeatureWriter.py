@@ -1,5 +1,5 @@
 import logging
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from types import SimpleNamespace
 
 from fontTools.designspaceLib import DesignSpaceDocument

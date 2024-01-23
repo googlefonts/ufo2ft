@@ -18,6 +18,7 @@ import fontTools.pens.boundsPen
 from fontTools.misc.transform import Transform
 
 from ufo2ft.filters import BaseFilter
+from ufo2ft.util import OpenTypeCategories
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +27,14 @@ class PropagateAnchorsFilter(BaseFilter):
     def set_context(self, font, glyphSet):
         ctx = super().set_context(font, glyphSet)
         ctx.processed = set()
+        ctx.categories = OpenTypeCategories.load(font)
         return ctx
 
     def __call__(self, font, glyphSet=None):
-        if super().__call__(font, glyphSet):
-            modified = self.context.modified
-            if modified:
-                logger.info("Glyphs with propagated anchors: %i" % len(modified))
-            return modified
+        modified = super().__call__(font, glyphSet)
+        if modified:
+            logger.info("Glyphs with propagated anchors: %i" % len(modified))
+        return modified
 
     def filter(self, glyph):
         if not glyph.components:
@@ -44,11 +45,12 @@ class PropagateAnchorsFilter(BaseFilter):
             glyph,
             self.context.processed,
             self.context.modified,
+            self.context.categories,
         )
         return len(glyph.anchors) > before
 
 
-def _propagate_glyph_anchors(glyphSet, composite, processed, modified):
+def _propagate_glyph_anchors(glyphSet, composite, processed, modified, categories):
     """
     Propagate anchors from base glyphs to a given composite
     glyph, and to all composite glyphs used in between.
@@ -58,7 +60,12 @@ def _propagate_glyph_anchors(glyphSet, composite, processed, modified):
         return
     processed.add(composite.name)
 
-    if not composite.components:
+    if not composite.components or (
+        # "If it is a 'mark' and there are anchors, it will not look into components"
+        # Georg said: https://github.com/googlefonts/ufo2ft/issues/802#issuecomment-1904109457
+        composite.name in categories.mark
+        and composite.anchors
+    ):
         return
 
     base_components = []
@@ -74,7 +81,7 @@ def _propagate_glyph_anchors(glyphSet, composite, processed, modified):
                 "in glyph {}".format(component.baseGlyph, composite.name)
             )
         else:
-            _propagate_glyph_anchors(glyphSet, glyph, processed, modified)
+            _propagate_glyph_anchors(glyphSet, glyph, processed, modified, categories)
             if any(a.name.startswith("_") for a in glyph.anchors):
                 mark_components.append(component)
             else:
