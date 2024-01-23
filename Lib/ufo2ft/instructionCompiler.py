@@ -5,7 +5,9 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 from fontTools import ttLib
-from fontTools.pens.hashPointPen import HashPointPen, ttScaleRound
+from fontTools.misc.fixedTools import floatToFixedToFloat
+from fontTools.pens.hashPointPen import HashPointPen
+from fontTools.pens.roundingPen import RoundingPointPen
 from fontTools.ttLib import newTable
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
@@ -13,6 +15,7 @@ from fontTools.ttLib.tables._g_l_y_f import (
     USE_MY_METRICS,
     flagOverlapSimple,
 )
+from functools import partial
 
 from ufo2ft.constants import (
     OBJECT_LIBS_KEY,
@@ -56,8 +59,11 @@ class InstructionCompiler:
         # Check the glyph hash against the TTGlyph that is being built
 
         ttwidth = self.otf["hmtx"][glyphName][0]
-        hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet(), ttScaleRound)
-        ttglyph.drawPoints(hash_pen, self.otf["glyf"])
+        hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet())
+        round_pen = RoundingPointPen(
+            hash_pen, transformRoundFunc=partial(floatToFixedToFloat, precisionBits=14)
+        )
+        ttglyph.drawPoints(round_pen, self.otf["glyf"])
 
         if glyph_hash != hash_pen.hash:
             logger.error(
