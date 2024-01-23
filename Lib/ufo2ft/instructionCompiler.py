@@ -5,7 +5,7 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 from fontTools import ttLib
-from fontTools.pens.hashPointPen import HashPointPen
+from fontTools.pens.hashPointPen import HashPointPen, ttScaleRound
 from fontTools.ttLib import newTable
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
@@ -56,7 +56,7 @@ class InstructionCompiler:
         # Check the glyph hash against the TTGlyph that is being built
 
         ttwidth = self.otf["hmtx"][glyphName][0]
-        hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet())
+        hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet(), ttScaleRound)
         ttglyph.drawPoints(hash_pen, self.otf["glyf"])
 
         if glyph_hash != hash_pen.hash:
