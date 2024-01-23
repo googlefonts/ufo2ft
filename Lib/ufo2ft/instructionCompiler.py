@@ -45,30 +45,51 @@ class InstructionCompiler:
             self.autoUseMyMetrics = lambda ttGlyph, glyphName: None
 
     def _check_glyph_hash(
-        self, glyphName: str, ttglyph: TTGlyph, glyph_hash: Optional[str]
+        self, glyph: Glyph, ttglyph: TTGlyph, stored_hash: Optional[str]
     ) -> bool:
-        """Check if the supplied glyph hash from the ufo matches the current outlines."""
-        if glyph_hash is None:
+        """Check if the supplied stored glyph hash from the ufo matches the current
+        outlines in the UFO and the TTGlyph."""
+        if stored_hash is None:
             # The glyph hash is required
             logger.error(
-                f"Glyph hash missing, glyph '{glyphName}' will have "
+                f"Glyph hash missing, glyph '{glyph.name}' will have "
                 "no instructions in font."
             )
             return False
 
-        # Check the glyph hash against the TTGlyph that is being built
+        # Check the stored hash against the current UFO glyph
 
-        ttwidth = self.otf["hmtx"][glyphName][0]
+        hash_pen = HashPointPen(glyph.width, self.ufo)
+        glyph.drawPoints(hash_pen)
+        if stored_hash != hash_pen.hash:
+            logger.error(
+                f"The stored hash for glyph '{glyph.name}' does not match the current "
+                "UFO glyph. Glyph will have no instructions in the font."
+            )
+            logger.error(f"Stored: {stored_hash}")
+            logger.error(f"Calced: {hash_pen.hash}")
+            return False
+
+        # Check the calculated glyph hash against the TTGlyph that is being built
+
+        hash_pen = HashPointPen(glyph.width, self.ufo)
+        round_pen = RoundingPointPen(
+            hash_pen, transformRoundFunc=partial(floatToFixedToFloat, precisionBits=14)
+        )
+        glyph.drawPoints(round_pen)
+        ufo_hash = hash_pen.hash
+
+        ttwidth = self.otf["hmtx"][glyph.name][0]
         hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet())
         round_pen = RoundingPointPen(
             hash_pen, transformRoundFunc=partial(floatToFixedToFloat, precisionBits=14)
         )
         ttglyph.drawPoints(round_pen, self.otf["glyf"])
 
-        if glyph_hash != hash_pen.hash:
+        if ufo_hash != hash_pen.hash:
             logger.error(
-                f"The stored hash for glyph '{glyphName}' does not match the TrueType "
-                "output glyph. Glyph will have no instructions in the font."
+                f"The calculated hash for glyph '{glyph.name}' does not match the "
+                "TrueType output glyph. Glyph will have no instructions in the font."
             )
             return False
         return True
@@ -138,7 +159,7 @@ class InstructionCompiler:
     ) -> None:
         self._check_tt_data_format(ttdata, f"glyph '{glyph.name}'")
         glyph_hash = ttdata.get("id", None)
-        if not self._check_glyph_hash(glyph.name, ttglyph, glyph_hash):
+        if not self._check_glyph_hash(glyph, ttglyph, glyph_hash):
             return
 
         # Compile the glyph program
