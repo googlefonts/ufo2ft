@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import array
 import logging
+from functools import partial
 from typing import TYPE_CHECKING, Optional
 
 from fontTools import ttLib
@@ -15,7 +16,6 @@ from fontTools.ttLib.tables._g_l_y_f import (
     USE_MY_METRICS,
     flagOverlapSimple,
 )
-from functools import partial
 
 from ufo2ft.constants import (
     OBJECT_LIBS_KEY,
