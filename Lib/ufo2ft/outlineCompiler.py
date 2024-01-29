@@ -643,7 +643,7 @@ class BaseOutlineCompiler:
             os2.ulUnicodeRange2 = intListToNum(uniRanges, 32, 32)
             os2.ulUnicodeRange3 = intListToNum(uniRanges, 64, 32)
             os2.ulUnicodeRange4 = intListToNum(uniRanges, 96, 32)
-        else:
+        elif "cmap" in self.otf:
             os2.recalcUnicodeRanges(self.otf)
 
         # codepage ranges

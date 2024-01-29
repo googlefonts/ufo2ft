@@ -11,6 +11,7 @@ from ufo2ft.constants import (
     KEEP_GLYPH_NAMES,
     USE_PRODUCTION_NAMES,
 )
+from ufo2ft.outlineCompiler import BaseOutlineCompiler
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,10 @@ class PostProcessor:
         2: SubroutinizerBackend.CFFSUBR,
     }
 
-    def __init__(self, otf, ufo, glyphSet=None):
+    def __init__(self, otf, ufo, glyphSet=None, info=None):
         self.ufo = ufo
         self.glyphSet = glyphSet if glyphSet is not None else ufo
-
+        self.info = info
         self.otf = otf
 
         self._postscriptNames = ufo.lib.get("public.postscriptNames")
@@ -102,6 +103,9 @@ class PostProcessor:
             )
 
         self.process_glyph_names(useProductionNames)
+
+        if self.info:
+            self.apply_fontinfo()
 
         return self.otf
 
@@ -356,6 +360,99 @@ class PostProcessor:
         logger.info(msg)
 
         return cffsubr.subroutinize(otf, cff_version=cffVersion, keep_glyph_names=False)
+
+    def apply_fontinfo(self):
+        """Apply the fontinfo data from the DesignSpace variable-font's lib to
+        the compiled font."""
+        import copy
+
+        # Create a temporary UFO and sets its fontinfo to the union of the main
+        # UFO's fontinfo and the DesignSpace variable-font’s info.
+        temp_ufo = type(self.ufo)()
+        temp_ufo.info = copy.copy(self.ufo.info)
+        for k, v in self.info.items():
+            setattr(temp_ufo.info, k, v)
+
+        # Build a temporary font with the only tables that can be modified with
+        # fontinfo.
+        tables = {"head", "hhea", "name", "OS/2", "post"} & set(self.otf.keys())
+        compiler = InfoCompiler(
+            temp_ufo,
+            glyphSet={},
+            glyphOrder=[],
+            tables=tables,
+        )
+        temp_otf = compiler.compile()
+
+        # Merge the modified data from the temporary font to the main font.
+        for tag in tables:
+            temp = temp_otf[tag]
+            orig = self.otf[tag]
+            if tag == "name":
+                temp_names = {
+                    (n.nameID, n.platformID, n.platEncID, n.langID): n
+                    for n in temp.names
+                }
+                orig_names = {
+                    (n.nameID, n.platformID, n.platEncID, n.langID): n
+                    for n in orig.names
+                }
+                orig_names.update(temp_names)
+                orig.names = list(orig_names.values())
+                continue
+
+            for attr in temp.__dict__:
+                if attr.startswith("_"):
+                    continue
+                if attr.startswith("reserved"):
+                    continue
+                if attr in ("tableTag", "tableVersion"):
+                    continue
+                if tag == "head" and attr in {
+                    "created",
+                    "modified",
+                    "xMin",
+                    "yMin",
+                    "xMax",
+                    "yMax",
+                    "fontDirectionHint",
+                    "indexToLocFormat",
+                    "glyphDataFormat",
+                }:
+                    continue
+                if tag == "hhea" and attr in {
+                    "checksumAdjustment",
+                    "metricDataFormat",
+                    "numberOfHMetrics",
+                    "advanceWidthMax",
+                    "minLeftSideBearing",
+                    "minRightSideBearing",
+                    "xMaxExtent",
+                }:
+                    continue
+                if tag == "OS/2" and attr in {
+                    "xAvgCharWidth",
+                    "usMaxContext",
+                }:
+                    continue
+                if tag == "post" and attr in {"formatType"}:
+                    continue
+
+                setattr(orig, attr, getattr(temp, attr))
+
+
+class InfoCompiler(BaseOutlineCompiler):
+    @staticmethod
+    def makeMissingRequiredGlyphs(*args, **kwargs):
+        return
+
+    def makeFontBoundingBox(self):
+        from ufo2ft.outlineCompiler import EMPTY_BOUNDING_BOX
+
+        return EMPTY_BOUNDING_BOX
+
+    def setupTable_maxp(self):
+        return
 
 
 # Adapted from fontTools.cff.specializer.programToCommands

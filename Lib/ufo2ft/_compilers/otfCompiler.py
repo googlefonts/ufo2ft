@@ -27,9 +27,11 @@ class OTFCompiler(BaseCompiler):
         outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
         return outlineCompiler.compile()
 
-    def postprocess(self, font, ufo, glyphSet):
+    def postprocess(self, font, ufo, glyphSet, info=None):
         if self.postProcessorClass is not None:
-            postProcessor = self.postProcessorClass(font, ufo, glyphSet=glyphSet)
+            postProcessor = self.postProcessorClass(
+                font, ufo, glyphSet=glyphSet, info=info
+            )
             kwargs = prune_unknown_kwargs(self.__dict__, postProcessor.process)
             kwargs["optimizeCFF"] = self.optimizeCFF >= CFFOptimization.SUBROUTINIZE
             font = postProcessor.process(**kwargs)
