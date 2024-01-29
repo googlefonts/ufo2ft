@@ -43,6 +43,7 @@ dots
     Number of dots in the circle.
 
 """
+
 import logging
 import math
 from statistics import mean

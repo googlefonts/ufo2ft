@@ -1621,7 +1621,6 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
 
 
 class StubGlyph:
-
     """
     This object will be used to create missing glyphs
     (specifically .notdef) in the provided UFO.

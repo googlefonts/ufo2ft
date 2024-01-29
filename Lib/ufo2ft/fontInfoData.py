@@ -11,7 +11,6 @@ for synthesizing values for specific attributes. These can be
 used externally as well.
 """
 
-
 import calendar
 import logging
 import math

@@ -4,7 +4,6 @@ from ufo2ft.util import _GlyphSet
 
 
 class ExplodeColorLayerGlyphsFilter(BaseFilter):
-
     """This filter doesn't really filter glyphs, but copies glyphs
     from UFO layers to alternate glyphs in the default layer, for use
     in the COLR table.
