@@ -11,7 +11,6 @@ from ufo2ft.constants import (
     KEEP_GLYPH_NAMES,
     USE_PRODUCTION_NAMES,
 )
-from ufo2ft.outlineCompiler import BaseOutlineCompiler
 
 logger = logging.getLogger(__name__)
 
@@ -364,95 +363,12 @@ class PostProcessor:
     def apply_fontinfo(self):
         """Apply the fontinfo data from the DesignSpace variable-font's lib to
         the compiled font."""
-        import copy
+        from ufo2ft.infoCompiler import InfoCompiler
 
-        # Create a temporary UFO and sets its fontinfo to the union of the main
-        # UFO's fontinfo and the DesignSpace variable-font’s info.
-        temp_ufo = type(self.ufo)()
-        temp_ufo.info = copy.copy(self.ufo.info)
-        for k, v in self.info.items():
-            setattr(temp_ufo.info, k, v)
+        logger.info("Applying variable-font info from DesignSpace lib")
 
-        # Build a temporary font with the only tables that can be modified with
-        # fontinfo.
-        tables = {"head", "hhea", "name", "OS/2", "post"} & set(self.otf.keys())
-        compiler = InfoCompiler(
-            temp_ufo,
-            glyphSet={},
-            glyphOrder=[],
-            tables=tables,
-        )
-        temp_otf = compiler.compile()
-
-        # Merge the modified data from the temporary font to the main font.
-        for tag in tables:
-            temp = temp_otf[tag]
-            orig = self.otf[tag]
-            if tag == "name":
-                temp_names = {
-                    (n.nameID, n.platformID, n.platEncID, n.langID): n
-                    for n in temp.names
-                }
-                orig_names = {
-                    (n.nameID, n.platformID, n.platEncID, n.langID): n
-                    for n in orig.names
-                }
-                orig_names.update(temp_names)
-                orig.names = list(orig_names.values())
-                continue
-
-            for attr in temp.__dict__:
-                if attr.startswith("_"):
-                    continue
-                if attr.startswith("reserved"):
-                    continue
-                if attr in ("tableTag", "tableVersion"):
-                    continue
-                if tag == "head" and attr in {
-                    "created",
-                    "modified",
-                    "xMin",
-                    "yMin",
-                    "xMax",
-                    "yMax",
-                    "fontDirectionHint",
-                    "indexToLocFormat",
-                    "glyphDataFormat",
-                }:
-                    continue
-                if tag == "hhea" and attr in {
-                    "checksumAdjustment",
-                    "metricDataFormat",
-                    "numberOfHMetrics",
-                    "advanceWidthMax",
-                    "minLeftSideBearing",
-                    "minRightSideBearing",
-                    "xMaxExtent",
-                }:
-                    continue
-                if tag == "OS/2" and attr in {
-                    "xAvgCharWidth",
-                    "usMaxContext",
-                }:
-                    continue
-                if tag == "post" and attr in {"formatType"}:
-                    continue
-
-                setattr(orig, attr, getattr(temp, attr))
-
-
-class InfoCompiler(BaseOutlineCompiler):
-    @staticmethod
-    def makeMissingRequiredGlyphs(*args, **kwargs):
-        return
-
-    def makeFontBoundingBox(self):
-        from ufo2ft.outlineCompiler import EMPTY_BOUNDING_BOX
-
-        return EMPTY_BOUNDING_BOX
-
-    def setupTable_maxp(self):
-        return
+        compiler = InfoCompiler(self.otf, self.ufo, self.info)
+        compiler.compile()
 
 
 # Adapted from fontTools.cff.specializer.programToCommands
