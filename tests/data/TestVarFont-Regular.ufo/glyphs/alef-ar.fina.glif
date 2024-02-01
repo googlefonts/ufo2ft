@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alef-ar.fina" format="2">
+  <advance width="356"/>
+  <unicode hex="0627"/>
+  <outline>
+    <contour>
+      <point x="210" y="601" type="line"/>
+      <point x="210" y="110" type="line"/>
+      <point x="406" y="110" type="line"/>
+      <point x="406" y="0" type="line"/>
+      <point x="100" y="0" type="line"/>
+      <point x="100" y="569" type="line"/>
+    </contour>
+  </outline>
+</glyph>
