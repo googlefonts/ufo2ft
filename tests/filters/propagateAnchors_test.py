@@ -106,6 +106,25 @@ from ufo2ft.filters.propagateAnchors import PropagateAnchorsFilter, logger
                         ("addComponent", ("macroncomb", (1, 0, 0, 1, 175, 0))),
                     ],
                 },
+                {
+                    "name": "r",
+                    "width": 350,
+                    "outline": [
+                        ("moveTo", ((0, 0),)),
+                        ("lineTo", ((0, 300),)),
+                        ("lineTo", ((175, 300),)),
+                        ("closePath", ()),
+                    ],
+                    "anchors": [(175, 300, "top"), (175, 0, "bottom")],
+                },
+                {
+                    "name": "rcombbelow",
+                    "width": 0,
+                    "outline": [
+                        ("addComponent", ("r", (0.5, 0, 0, 0.5, -100, -100))),
+                    ],
+                    "anchors": [(0, 0, "_bottom")],
+                },
             ]
         }
     ]
@@ -120,6 +139,12 @@ def font(request, FontClass):
             getattr(pen, operator)(*operands)
         for x, y, name in param.get("anchors", []):
             glyph.appendAnchor(dict(x=x, y=y, name=name))
+    # classify as 'mark' all glyphs with zero width and 'comb' in their name
+    font.lib["public.openTypeCategories"] = {
+        g["name"]: "mark"
+        for g in request.param["glyphs"]
+        if g.get("width", 0) == 0 and "comb" in g["name"]
+    }
     return font
 
 
@@ -149,6 +174,10 @@ EXPECTED = {
         ],
         {"a_a"},
     ),
+    # the composite glyph is a mark with anchors, hence propagation is not performed,
+    # i.e. 'top' and 'bottom' are *not* copied to 'rcombbelow':
+    # https://github.com/googlefonts/ufo2ft/issues/802
+    "rcombbelow": ([("_bottom", 0, 0)], set()),
 }
 
 
@@ -173,7 +202,7 @@ class PropagateAnchorsFilterTest:
     def test_whole_font(self, font):
         philter = PropagateAnchorsFilter()
         modified = philter(font)
-        assert modified == set(EXPECTED)
+        assert modified == {k for k in EXPECTED if k in EXPECTED[k][1]}
         for name, (expected_anchors, _) in EXPECTED.items():
             assert [(a.name, a.x, a.y) for a in font[name].anchors] == expected_anchors
 

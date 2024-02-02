@@ -1,15 +1,15 @@
 import logging
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from types import SimpleNamespace
 
 from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.variableScalar import VariableScalar
 from fontTools.misc.fixedTools import otRound
 
-from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureWriters import ast
 from ufo2ft.util import (
+    OpenTypeCategories,
     collapse_varscalar,
     get_userspace_location,
     quantize,
@@ -351,47 +351,7 @@ class BaseFeatureWriter:
     def getOpenTypeCategories(self):
         """Return 'public.openTypeCategories' values as a tuple of sets of
         unassigned, bases, ligatures, marks, components."""
-        font = self.context.font
-        unassigned, bases, ligatures, marks, components = (
-            set(),
-            set(),
-            set(),
-            set(),
-            set(),
-        )
-        openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
-        # Handle case where we are a variable feature writer
-        if not openTypeCategories and isinstance(font, DesignSpaceDocument):
-            font = font.sources[0].font
-            openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
-
-        for glyphName, category in openTypeCategories.items():
-            if category == "unassigned":
-                unassigned.add(glyphName)
-            elif category == "base":
-                bases.add(glyphName)
-            elif category == "ligature":
-                ligatures.add(glyphName)
-            elif category == "mark":
-                marks.add(glyphName)
-            elif category == "component":
-                components.add(glyphName)
-            else:
-                self.log.warning(
-                    f"The '{OPENTYPE_CATEGORIES_KEY}' value of {glyphName} in "
-                    f"{font.info.familyName} {font.info.styleName} is '{category}' "
-                    "when it should be 'unassigned', 'base', 'ligature', 'mark' "
-                    "or 'component'."
-                )
-        return namedtuple(
-            "OpenTypeCategories", "unassigned base ligature mark component"
-        )(
-            frozenset(unassigned),
-            frozenset(bases),
-            frozenset(ligatures),
-            frozenset(marks),
-            frozenset(components),
-        )
+        return OpenTypeCategories.load(self.context.font)
 
     def getGDEFGlyphClasses(self):
         """Return a tuple of GDEF GlyphClassDef base, ligature, mark, component
