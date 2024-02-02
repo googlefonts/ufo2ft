@@ -7,6 +7,8 @@ It builds a temporary font with the only the tables that can be modified with
 fontinfo, then merge relevant table attributes it into the original font.
 """
 
+import copy
+
 from ufo2ft.outlineCompiler import BaseOutlineCompiler
 
 
@@ -37,11 +39,9 @@ class InfoCompiler(BaseOutlineCompiler):
             temp_ufo.info.setDataFromSerialization(data)
         else:
             # ufoLib2
-            from ufoLib2.converters import structure, unstructure
-
-            data = unstructure(ufo.info)
-            data.update(info)
-            temp_ufo.info = structure(data, type(ufo.info))
+            temp_ufo.info = copy.copy(ufo.info)
+            for k, v in info.items():
+                setattr(temp_ufo.info, k, v)
 
         super().__init__(temp_ufo, tables=tables, glyphSet={}, glyphOrder=[])
 
