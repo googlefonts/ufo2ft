@@ -579,6 +579,19 @@ class IntegrationTest:
         logged = "Compacting GPOS..." in caplog.text
         assert logged ^ disabled
 
+    @pytest.mark.parametrize(
+        "compileMethod", [compileVariableTTFs, compileVariableCFF2s]
+    )
+    def test_apply_varfont_info(self, FontClass, compileMethod):
+        designspace = DesignSpaceDocument.fromfile(getpath("TestVarFont.designspace"))
+        designspace.loadSourceFonts(FontClass)
+
+        fonts = compileMethod(designspace)
+        assert len(fonts) == 2
+
+        expectTTX(fonts["MyFontVF1"], "TestVarFont-MyFontVF1.ttx", ["head", "name"])
+        expectTTX(fonts["MyFontVF2"], "TestVarFont-MyFontVF2.ttx", ["head", "name"])
+
 
 if __name__ == "__main__":
     sys.exit(pytest.main(sys.argv))

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>public.glyphOrder</key>
+    <array>
+      <string>space</string>
+      <string>alef-ar.fina</string>
+    </array>
+    <key>public.postscriptNames</key>
+    <dict>
+      <key>alef-ar.fina</key>
+      <string>uniFE8E</string>
+    </dict>
+  </dict>
+</plist>

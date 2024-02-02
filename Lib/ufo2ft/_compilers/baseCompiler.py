@@ -97,9 +97,11 @@ class BaseCompiler:
         outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
         return outlineCompiler.compile()
 
-    def postprocess(self, ttf, ufo, glyphSet):
+    def postprocess(self, ttf, ufo, glyphSet, info=None):
         if self.postProcessorClass is not None:
-            postProcessor = self.postProcessorClass(ttf, ufo, glyphSet=glyphSet)
+            postProcessor = self.postProcessorClass(
+                ttf, ufo, glyphSet=glyphSet, info=info
+            )
             kwargs = prune_unknown_kwargs(self.__dict__, postProcessor.process)
             ttf = postProcessor.process(**kwargs)
         return ttf
@@ -249,7 +251,10 @@ class BaseInterpolatableCompiler(BaseCompiler):
                         f"No default source; expected default master at {default_location}."
                         f" Found master locations:\n{master_location_descriptions}"
                     )
-                vfNameToBaseUfo[vfName] = default_source.font
+                vfNameToBaseUfo[vfName] = (
+                    default_source.font,
+                    vfDoc.lib.get("public.fontInfo"),
+                )
                 for source in vfDoc.sources:
                     sourcesToCompile.add(source.name)
 
@@ -359,8 +364,9 @@ class BaseInterpolatableCompiler(BaseCompiler):
                 designSpaceDoc, vfNameToTTFont, originalSources, originalGlyphsets
             )
         for vfName, varfont in list(vfNameToTTFont.items()):
+            ufo, info = vfNameToBaseUfo[vfName]
             vfNameToTTFont[vfName] = self.postprocess(
-                varfont, vfNameToBaseUfo[vfName], glyphSet=None
+                varfont, ufo, glyphSet=None, info=info
             )
 
         return vfNameToTTFont
