@@ -75,6 +75,9 @@ class InterpolatableTTFCompiler(BaseInterpolatableCompiler):
         # can compute impliable on-curve points from unrounded coordinates before
         # building the VF
         kwargs["roundCoordinates"] = False
+        # keep impliable oncurve points in the interpolatable master TTFs, they will
+        # be pruned at the end by varLib in the final VF.
+        kwargs["dropImpliedOnCurves"] = False
         outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
         return outlineCompiler.compile()
 
