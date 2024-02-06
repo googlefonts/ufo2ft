@@ -592,6 +592,24 @@ class IntegrationTest:
         expectTTX(fonts["MyFontVF1"], "TestVarFont-MyFontVF1.ttx", ["head", "name"])
         expectTTX(fonts["MyFontVF2"], "TestVarFont-MyFontVF2.ttx", ["head", "name"])
 
+    def test_compile_variable_ttf_drop_implied_oncurves(self, FontClass, caplog):
+        # https://github.com/googlefonts/ufo2ft/pull/817
+        designspace = DesignSpaceDocument.fromfile(getpath("OTestFont.designspace"))
+        designspace.loadSourceFonts(FontClass)
+
+        # dropImpliedOnCurves is False by default
+        vf1 = compileVariableTTF(designspace)
+
+        with caplog.at_level(logging.INFO, logger="fontTools.varLib"):
+            vf2 = compileVariableTTF(designspace, dropImpliedOnCurves=True)
+
+        assert "Failed to drop implied oncurves" not in caplog.text
+        assert "Dropped 4 on-curve points" in caplog.text
+
+        o1 = vf1["glyf"]["o"].coordinates
+        o2 = vf2["glyf"]["o"].coordinates
+        assert len(o1) == len(o2) + 4
+
 
 if __name__ == "__main__":
     sys.exit(pytest.main(sys.argv))
