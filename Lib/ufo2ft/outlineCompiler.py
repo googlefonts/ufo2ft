@@ -22,6 +22,7 @@ from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPointPen
 from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.standardGlyphOrder import standardGlyphOrder
+from fontTools.ttLib.tables import otTables
 from fontTools.ttLib.tables._g_l_y_f import Glyph, flagCubic
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
@@ -30,6 +31,10 @@ from ufo2ft.constants import (
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
     COLR_CLIP_BOXES_KEY,
+    GLYPHS_MATH_CONSTANTS_KEY,
+    GLYPHS_MATH_EXTENDED_SHAPE_KEY,
+    GLYPHS_MATH_PREFIX,
+    GLYPHS_MATH_VARIANTS_KEY,
     OPENTYPE_META_KEY,
     OPENTYPE_POST_UNDERLINE_POSITION_KEY,
     UNICODE_VARIATION_SEQUENCES_KEY,
@@ -76,6 +81,12 @@ def _getVerticalOrigin(font, glyph):
     return otRound(verticalOrigin)
 
 
+def _mathValueRecord(value):
+    value_record = otTables.MathValueRecord()
+    value_record.Value = otRound(value)
+    return value_record
+
+
 class BaseOutlineCompiler:
     """Create a feature-less outline binary."""
 
@@ -94,6 +105,7 @@ class BaseOutlineCompiler:
             "vhea",
             "COLR",
             "CPAL",
+            "MATH",
             "meta",
         ]
     )
@@ -175,6 +187,8 @@ class BaseOutlineCompiler:
             self.setupTable_CPAL()
         if self.meta:
             self.setupTable_meta()
+        if any(key.startswith(GLYPHS_MATH_PREFIX) for key in self.ufo.lib):
+            self.setupTable_MATH()
         self.setupOtherTables()
         if self.colorLayers and self.colrAutoClipBoxes:
             self._computeCOLRClipBoxes()
@@ -1049,6 +1063,199 @@ class BaseOutlineCompiler:
                 raise TypeError(
                     f"public.openTypeMeta '{key}' value should be bytes or a string."
                 )
+
+    def _bboxWidth(self, glyph):
+        bbox = self.glyphBoundingBoxes[glyph]
+        if bbox is None:
+            return 0
+        return bbox.xMax - bbox.xMin
+
+    def _bboxHeight(self, glyph):
+        bbox = self.glyphBoundingBoxes[glyph]
+        if bbox is None:
+            return 0
+        return bbox.yMax - bbox.yMin
+
+    def setupTable_MATH(self):
+        if "MATH" not in self.tables:
+            return
+
+        from fontTools.otlLib import builder as otl
+
+        ufo = self.ufo
+        constants = ufo.lib.get(GLYPHS_MATH_CONSTANTS_KEY)
+
+        h_variants = {}
+        v_variants = {}
+        for name, variants in ufo.lib.get(GLYPHS_MATH_VARIANTS_KEY, {}).items():
+            if "hVariants" in variants:
+                h_variants[name] = [
+                    (n, self._bboxWidth(n)) for n in variants["hVariants"]
+                ]
+            if "vVariants" in variants:
+                v_variants[name] = [
+                    (n, self._bboxHeight(n)) for n in variants["vVariants"]
+                ]
+
+        extended_shapes = set(ufo.lib.get(GLYPHS_MATH_EXTENDED_SHAPE_KEY))
+        for name, variants in v_variants.items():
+            if name not in extended_shapes:
+                extended_shapes.update(v[0] for v in variants)
+
+        italics_correction = {}
+        top_accent_attachment = {}
+        math_kerns = {}
+        kerning_sides = {
+            "tr": "TopRight",
+            "tl": "TopLeft",
+            "br": "BottomRight",
+            "bl": "BottomLeft",
+        }
+        for name, glyph in self.allGlyphs.items():
+            kerns = {}
+            for anchor in glyph.anchors:
+                if anchor.name == "math.ic":
+                    # The anchor x position is absolute, but we want
+                    # a value relative to the glyph's width.
+                    italics_correction[name] = anchor.x - glyph.width
+                if anchor.name == "math.ta":
+                    top_accent_attachment[name] = anchor.x
+                for aName in kerning_sides.keys():
+                    if anchor.name.startswith(f"math.{aName}"):
+                        side = kerning_sides[aName]
+                        # The anchor x positions are absolute, but we want
+                        # values relative to the glyph's width/origin.
+                        x, y = anchor.x, anchor.y
+                        if side.endswith("Right"):
+                            x -= glyph.width
+                        elif side.endswith("Left"):
+                            x = -x
+                        kerns.setdefault(side, []).append([x, y])
+            if kerns:
+                math_kerns[name] = kerns
+
+        h_assemblies = {}
+        v_assemblies = {}
+        for name, glyph in self.allGlyphs.items():
+            if GLYPHS_MATH_VARIANTS_KEY in glyph.lib:
+                variants = glyph.lib[GLYPHS_MATH_VARIANTS_KEY]
+                if "hAssembly" in variants:
+                    parts = variants["hAssembly"]
+                    # If the last part has italic correction, we use it as the
+                    # assembly's.
+                    h_assemblies[name] = (
+                        [(*part, self._bboxWidth(part[0])) for part in parts],
+                        italics_correction.pop(parts[-1][0], 0),
+                    )
+                if "vAssembly" in variants:
+                    parts = variants["vAssembly"]
+                    # If the last part has italic correction, we use it as the
+                    # assembly's.
+                    v_assemblies[name] = (
+                        [(*part, self._bboxHeight(part[0])) for part in parts],
+                        italics_correction.pop(parts[-1][0], 0),
+                    )
+
+        self.otf["MATH"] = math = newTable("MATH")
+        math.table = table = otTables.MATH()
+        table.Version = 0x00010000
+
+        if constants:
+            table.MathConstants = otTables.MathConstants()
+            for conv in table.MathConstants.getConverters():
+                value = otRound(constants.get(conv.name, 0))
+                if conv.tableClass:
+                    assert issubclass(conv.tableClass, otTables.MathValueRecord)
+                    value = _mathValueRecord(value)
+                setattr(table.MathConstants, conv.name, value)
+
+        glyphOrder = self.otf.getGlyphOrder()
+        glyphMap = {n: i for i, n in enumerate(glyphOrder)}
+
+        if any([extended_shapes, italics_correction, top_accent_attachment]):
+            table.MathGlyphInfo = info = otTables.MathGlyphInfo()
+
+        if extended_shapes:
+            info.ExtendedShapeCoverage = otl.buildCoverage(extended_shapes, glyphMap)
+
+        if italics_correction:
+            coverage = otl.buildCoverage(italics_correction.keys(), glyphMap)
+            ic = info.MathItalicsCorrectionInfo = otTables.MathItalicsCorrectionInfo()
+            ic.Coverage = coverage
+            ic.ItalicsCorrection = [
+                _mathValueRecord(italics_correction[n]) for n in coverage.glyphs
+            ]
+
+        if top_accent_attachment:
+            coverage = otl.buildCoverage(top_accent_attachment.keys(), glyphMap)
+            ta = info.MathTopAccentAttachment = otTables.MathTopAccentAttachment()
+            ta.TopAccentCoverage = coverage
+            ta.TopAccentAttachment = [
+                _mathValueRecord(top_accent_attachment[n]) for n in coverage.glyphs
+            ]
+
+        if math_kerns:
+            coverage = otl.buildCoverage(math_kerns.keys(), glyphMap)
+            ki = info.MathKernInfo = otTables.MathKernInfo()
+            ki.MathKernCoverage = coverage
+            ki.MathKernInfoRecords = records = []
+            for glyph in coverage.glyphs:
+                record = otTables.MathKernInfoRecord()
+                for side in kerning_sides.values():
+                    if pts := math_kerns[glyph].get(side):
+                        kern = otTables.MathKern()
+                        kern.HeightCount = len(pts) - 1
+                        kern.CorrectionHeight = [
+                            _mathValueRecord(pt[1]) for pt in pts[:-1]
+                        ]
+                        kern.KernValue = [_mathValueRecord(pt[0]) for pt in pts]
+                        setattr(record, f"{side}MathKern", kern)
+                records.append(record)
+
+        if any([h_variants, v_variants, h_assemblies, v_assemblies]):
+            table.MathVariants = variants = otTables.MathVariants()
+            overlap = constants.get("MinConnectorOverlap", 0)
+            table.MathVariants.MinConnectorOverlap = overlap
+
+        for attr, variants, assemblies in (
+            ("Horiz", h_variants, h_assemblies),
+            ("Vert", v_variants, v_assemblies),
+        ):
+            if not variants and not assemblies:
+                continue
+            coverage = list(variants.keys()) + list(assemblies.keys())
+            coverage = otl.buildCoverage(coverage, glyphMap)
+            constructions = []
+            for glyph in coverage.glyphs:
+                construction = otTables.MathGlyphConstruction()
+                construction.populateDefaults()
+                if glyph in variants:
+                    glyph_variants = variants[glyph]
+                    construction.VariantCount = len(glyph_variants)
+                    construction.MathGlyphVariantRecord = records = []
+                    for name, advance in glyph_variants:
+                        record = otTables.MathGlyphVariantRecord()
+                        record.VariantGlyph = name
+                        record.AdvanceMeasurement = otRound(advance)
+                        records.append(record)
+                if glyph in assemblies:
+                    parts, ic = assemblies[glyph]
+                    assembly = construction.GlyphAssembly = otTables.GlyphAssembly()
+                    assembly.PartRecords = records = []
+                    assembly.ItalicsCorrection = _mathValueRecord(ic)
+                    for part in parts:
+                        part_name, flags, start, end, advance = part
+                        record = otTables.GlyphPartRecord()
+                        record.glyph = part_name
+                        record.PartFlags = int(flags)
+                        record.StartConnectorLength = otRound(start)
+                        record.EndConnectorLength = otRound(end)
+                        record.FullAdvance = otRound(advance)
+                        records.append(record)
+                constructions.append(construction)
+
+            setattr(table.MathVariants, f"{attr}GlyphCoverage", coverage)
+            setattr(table.MathVariants, f"{attr}GlyphConstruction", constructions)
 
     def setupOtherTables(self):
         """
