@@ -1091,7 +1091,7 @@ class BaseOutlineCompiler:
                     (n, self._bboxHeight(n)) for n in variants["vVariants"]
                 ]
 
-        extended_shapes = set(ufo.lib.get(GLYPHS_MATH_EXTENDED_SHAPE_KEY))
+        extended_shapes = set(ufo.lib.get(GLYPHS_MATH_EXTENDED_SHAPE_KEY, []))
         for name, variants in v_variants.items():
             if name not in extended_shapes:
                 extended_shapes.update(v[0] for v in variants)
