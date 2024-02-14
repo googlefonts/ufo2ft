@@ -1093,7 +1093,7 @@ class BaseOutlineCompiler:
 
         extended_shapes = set(ufo.lib.get(GLYPHS_MATH_EXTENDED_SHAPE_KEY, []))
         for name, variants in v_variants.items():
-            if name not in extended_shapes:
+            if name in extended_shapes:
                 extended_shapes.update(v[0] for v in variants)
 
         italics_correction = {}
