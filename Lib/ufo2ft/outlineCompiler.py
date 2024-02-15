@@ -1070,6 +1070,63 @@ class BaseOutlineCompiler:
         return bbox.yMax - bbox.yMin
 
     def setupTable_MATH(self):
+        """
+        This builds MATH table based on data in the UFO font. The data is stored
+        either in private font/glyph lib keys or as glyph anchors with specific
+        names.
+
+        The data is based on GlyphsApp MATH plugin data as written out by
+        glyphsLib to the UFO font.
+
+        The font lib keys are:
+            - com.nagwa.MATHPlugin.constants: a dictionary of MATH constants as
+              expected by fontTools.otlLib.builder.buildMathTable(). Example:
+
+                ufo.lib["com.nagwa.MATHPlugin.constants"] = {
+                    "ScriptPercentScaleDown": 70,
+                    "ScriptScriptPercentScaleDown": 60,
+                    ...
+                }
+
+            - com.nagwa.MATHPlugin.variants: a dictionary of MATH glyph variants
+              keyed by glyph names, and each value is a dictionary with keys
+              "hVariants" and "vVariants". Example:
+
+                ufo.lib["com.nagwa.MATHPlugin.variants"] = {
+                    "parenleft": { "vVariants": ["parenleft", "parenleft.s1", "parenleft.s2"] },
+                    "tildecomb": { "hVariants": ["tildecomb", "tildecomb.s1", "tildecomb.s2"] },
+                    ...
+                }
+
+            - com.nagwa.MATHPlugin.extendedShape: a list of glyph names that
+              are extended shapes. Example:
+
+                ufo.lib["com.nagwa.MATHPlugin.extendedShapes"] = ["integral", "radical"]
+
+        The glyph lib keys are:
+            - com.nagwa.MATHPlugin.variants: a dictionary of MATH glyph variants
+              keyed by glyph names, and each value is a dictionary with keys
+              "hAssembly" and "vAssembly". Example:
+
+                ufo["braceleft"].lib["com.nagwa.MATHPlugin.variants"] = {
+                    "vAssembly": [
+                        # glyph name, flags, start connector length, end connector length
+                        ["braceleft.bottom", 0, 0, 200],
+                        ["braceleft.extender", 1, 200, 200],
+                        ["braceleft.middle", 0, 100, 100],
+                        ["braceleft.extender", 1, 200, 200],
+                        ["braceleft.top", 0, 200, 0],
+                    ],
+                }
+
+        The anchors are:
+            - math.ic: italic correction anchor
+            - math.ta: top accent attachment anchor
+            - math.tr*: top right kerning anchors
+            - math.tl*: top left kerning anchors
+            - math.br*: bottom right kerning anchors
+            - math.bl*: bottom left kerning anchors
+        """
         if "MATH" not in self.tables:
             return
 
@@ -1079,6 +1136,11 @@ class BaseOutlineCompiler:
         constants = ufo.lib.get(GLYPHS_MATH_CONSTANTS_KEY)
         min_connector_overlap = constants.pop("MinConnectorOverlap", 0)
 
+        # buildMathTable takes two dictionaries of glyph variants, one for
+        # horizontal variants and one for vertical variants, and items are
+        # tuples of glyph name and the advance width/height of the variant.
+        # Here we convert the UFO data to the expected format and measure the
+        # advances.
         h_variants = {}
         v_variants = {}
         for name, variants in ufo.lib.get(GLYPHS_MATH_VARIANTS_KEY, {}).items():
@@ -1091,6 +1153,8 @@ class BaseOutlineCompiler:
                     (n, self._bboxHeight(n)) for n in variants["vVariants"]
                 ]
 
+        # Collect the set of extended shapes, and if a shape has vertical
+        # variants, add the variants to the set.
         extended_shapes = set(ufo.lib.get(GLYPHS_MATH_EXTENDED_SHAPE_KEY, []))
         for name, variants in v_variants.items():
             if name in extended_shapes:
@@ -1138,6 +1202,11 @@ class BaseOutlineCompiler:
                     kernValues = [pt[0] for pt in pts]
                     math_kerns[name][side] = (correctionHeights, kernValues)
 
+        # buildMathTable() takes two dictionaries of glyph assemblies, one for
+        # horizontal assemblies and one for vertical assemblies, and items are
+        # lists of tuples of assembly parts and italics correction, and the
+        # assembly part includes the advance width/height of the part. Here we
+        # convert the UFO data to the expected format and measure the advances.
         h_assemblies = {}
         v_assemblies = {}
         for name, glyph in self.allGlyphs.items():
@@ -1145,18 +1214,18 @@ class BaseOutlineCompiler:
                 variants = glyph.lib[GLYPHS_MATH_VARIANTS_KEY]
                 if "hAssembly" in variants:
                     parts = variants["hAssembly"]
-                    # If the last part has italic correction, we use it as the
-                    # assembly's.
                     h_assemblies[name] = (
                         [(*part, self._bboxWidth(part[0])) for part in parts],
+                        # If the last part has italic correction, we use it as
+                        # the assembly's.
                         italics_correction.pop(parts[-1][0], 0),
                     )
                 if "vAssembly" in variants:
                     parts = variants["vAssembly"]
-                    # If the last part has italic correction, we use it as the
-                    # assembly's.
                     v_assemblies[name] = (
                         [(*part, self._bboxHeight(part[0])) for part in parts],
+                        # If the last part has italic correction, we use it as
+                        # the assembly's.
                         italics_correction.pop(parts[-1][0], 0),
                     )
 
