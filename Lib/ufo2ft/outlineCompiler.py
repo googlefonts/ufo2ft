@@ -1845,6 +1845,7 @@ class StubGlyph:
             self.draw = self._drawDefaultNotdef
             self.drawPoints = self._drawDefaultNotdefPoints
         self.reverseContour = reverseContour
+        self.lib = {}
 
     def __len__(self):
         if self.name == ".notdef":

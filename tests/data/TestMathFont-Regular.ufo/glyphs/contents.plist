@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>parenleft</key>
+    <string>parenleft.glif</string>
+    <key>parenleft.bot</key>
+    <string>parenleft.bot.glif</string>
+    <key>parenleft.ext</key>
+    <string>parenleft.ext.glif</string>
+    <key>parenleft.size1</key>
+    <string>parenleft.size1.glif</string>
+    <key>parenleft.size2</key>
+    <string>parenleft.size2.glif</string>
+    <key>parenleft.size3</key>
+    <string>parenleft.size3.glif</string>
+    <key>parenleft.size4</key>
+    <string>parenleft.size4.glif</string>
+    <key>parenleft.top</key>
+    <string>parenleft.top.glif</string>
+    <key>parenright</key>
+    <string>parenright.glif</string>
+    <key>parenright.bot</key>
+    <string>parenright.bot.glif</string>
+    <key>parenright.ext</key>
+    <string>parenright.ext.glif</string>
+    <key>parenright.size1</key>
+    <string>parenright.size1.glif</string>
+    <key>parenright.size2</key>
+    <string>parenright.size2.glif</string>
+    <key>parenright.size3</key>
+    <string>parenright.size3.glif</string>
+    <key>parenright.size4</key>
+    <string>parenright.size4.glif</string>
+    <key>parenright.top</key>
+    <string>parenright.top.glif</string>
+  </dict>
+</plist>
