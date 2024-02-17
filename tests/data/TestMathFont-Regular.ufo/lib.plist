@@ -124,31 +124,6 @@
       <string>parenleft</string>
       <string>parenright</string>
     </array>
-    <key>com.nagwa.MATHPlugin.variants</key>
-    <dict>
-      <key>parenleft</key>
-      <dict>
-        <key>vVariants</key>
-        <array>
-          <string>parenleft</string>
-          <string>parenleft.size1</string>
-          <string>parenleft.size2</string>
-          <string>parenleft.size3</string>
-          <string>parenleft.size4</string>
-        </array>
-      </dict>
-      <key>parenright</key>
-      <dict>
-        <key>vVariants</key>
-        <array>
-          <string>parenright</string>
-          <string>parenright.size1</string>
-          <string>parenright.size2</string>
-          <string>parenright.size3</string>
-          <string>parenright.size4</string>
-        </array>
-      </dict>
-    </dict>
     <key>public.glyphOrder</key>
     <array>
       <string>parenleft</string>

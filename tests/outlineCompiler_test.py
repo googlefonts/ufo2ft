@@ -1421,10 +1421,9 @@ def test_MATH_table(FontClass):
             assert attr.Value == value
 
     extendedShapes = set(ufo.lib[GLYPHS_MATH_EXTENDED_SHAPE_KEY])
-    variants = ufo.lib[GLYPHS_MATH_VARIANTS_KEY]
     for glyph in ufo.lib[GLYPHS_MATH_EXTENDED_SHAPE_KEY]:
-        if glyph in variants:
-            extendedShapes.update(variants[glyph].get("vVariants", []))
+        if variants := ufo[glyph].lib.get(GLYPHS_MATH_VARIANTS_KEY):
+            extendedShapes.update(variants.get("vVariants", []))
 
     assert set(math.MathGlyphInfo.ExtendedShapeCoverage.glyphs) == extendedShapes
 

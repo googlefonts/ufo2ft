@@ -1088,16 +1088,6 @@ class BaseOutlineCompiler:
                     ...
                 }
 
-            - com.nagwa.MATHPlugin.variants: a dictionary of MATH glyph variants
-              keyed by glyph names, and each value is a dictionary with keys
-              "hVariants" and "vVariants". Example:
-
-                ufo.lib["com.nagwa.MATHPlugin.variants"] = {
-                    "parenleft": { "vVariants": ["parenleft", "parenleft.s1", "parenleft.s2"] },
-                    "tildecomb": { "hVariants": ["tildecomb", "tildecomb.s1", "tildecomb.s2"] },
-                    ...
-                }
-
             - com.nagwa.MATHPlugin.extendedShape: a list of glyph names that
               are extended shapes. Example:
 
@@ -1106,9 +1096,10 @@ class BaseOutlineCompiler:
         The glyph lib keys are:
             - com.nagwa.MATHPlugin.variants: a dictionary of MATH glyph variants
               keyed by glyph names, and each value is a dictionary with keys
-              "hAssembly" and "vAssembly". Example:
+              "hVariants", "vVariants", "hAssembly", and "vAssembly". Example:
 
                 ufo["braceleft"].lib["com.nagwa.MATHPlugin.variants"] = {
+                    "vVariants": ["braceleft", "braceleft.s1", "braceleft.s2"],
                     "vAssembly": [
                         # glyph name, flags, start connector length, end connector length
                         ["braceleft.bottom", 0, 0, 200],
@@ -1135,30 +1126,6 @@ class BaseOutlineCompiler:
         ufo = self.ufo
         constants = ufo.lib.get(GLYPHS_MATH_CONSTANTS_KEY)
         min_connector_overlap = constants.pop("MinConnectorOverlap", 0)
-
-        # buildMathTable takes two dictionaries of glyph variants, one for
-        # horizontal variants and one for vertical variants, and items are
-        # tuples of glyph name and the advance width/height of the variant.
-        # Here we convert the UFO data to the expected format and measure the
-        # advances.
-        h_variants = {}
-        v_variants = {}
-        for name, variants in ufo.lib.get(GLYPHS_MATH_VARIANTS_KEY, {}).items():
-            if "hVariants" in variants:
-                h_variants[name] = [
-                    (n, self._bboxWidth(n)) for n in variants["hVariants"]
-                ]
-            if "vVariants" in variants:
-                v_variants[name] = [
-                    (n, self._bboxHeight(n)) for n in variants["vVariants"]
-                ]
-
-        # Collect the set of extended shapes, and if a shape has vertical
-        # variants, add the variants to the set.
-        extended_shapes = set(ufo.lib.get(GLYPHS_MATH_EXTENDED_SHAPE_KEY, []))
-        for name, variants in v_variants.items():
-            if name in extended_shapes:
-                extended_shapes.update(v[0] for v in variants)
 
         italics_correction = {}
         top_accent_attachment = {}
@@ -1202,7 +1169,14 @@ class BaseOutlineCompiler:
                     kernValues = [pt[0] for pt in pts]
                     math_kerns[name][side] = (correctionHeights, kernValues)
 
-        # buildMathTable() takes two dictionaries of glyph assemblies, one for
+        # buildMathTable takes two dictionaries of glyph variants, one for
+        # horizontal variants and one for vertical variants, and items are
+        # tuples of glyph name and the advance width/height of the variant.
+        # Here we convert the UFO data to the expected format and measure the
+        # advances.
+        h_variants = {}
+        v_variants = {}
+        # It also takes two dictionaries of glyph assemblies, one for
         # horizontal assemblies and one for vertical assemblies, and items are
         # lists of tuples of assembly parts and italics correction, and the
         # assembly part includes the advance width/height of the part. Here we
@@ -1212,6 +1186,14 @@ class BaseOutlineCompiler:
         for name, glyph in self.allGlyphs.items():
             if GLYPHS_MATH_VARIANTS_KEY in glyph.lib:
                 variants = glyph.lib[GLYPHS_MATH_VARIANTS_KEY]
+                if "hVariants" in variants:
+                    h_variants[name] = [
+                        (n, self._bboxWidth(n)) for n in variants["hVariants"]
+                    ]
+                if "vVariants" in variants:
+                    v_variants[name] = [
+                        (n, self._bboxHeight(n)) for n in variants["vVariants"]
+                    ]
                 if "hAssembly" in variants:
                     parts = variants["hAssembly"]
                     h_assemblies[name] = (
@@ -1228,6 +1210,13 @@ class BaseOutlineCompiler:
                         # the assembly's.
                         italics_correction.pop(parts[-1][0], 0),
                     )
+
+        # Collect the set of extended shapes, and if a shape has vertical
+        # variants, add the variants to the set.
+        extended_shapes = set(ufo.lib.get(GLYPHS_MATH_EXTENDED_SHAPE_KEY, []))
+        for name, variants in v_variants.items():
+            if name in extended_shapes:
+                extended_shapes.update(v[0] for v in variants)
 
         buildMathTable(
             self.otf,

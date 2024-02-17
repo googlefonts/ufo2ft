@@ -45,6 +45,14 @@
             <integer>0</integer>
           </array>
         </array>
+        <key>vVariants</key>
+        <array>
+          <string>parenleft</string>
+          <string>parenleft.size1</string>
+          <string>parenleft.size2</string>
+          <string>parenleft.size3</string>
+          <string>parenleft.size4</string>
+        </array>
       </dict>
     </dict>
   </lib>

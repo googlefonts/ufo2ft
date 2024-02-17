@@ -30,6 +30,14 @@
             <integer>0</integer>
           </array>
         </array>
+        <key>vVariants</key>
+        <array>
+          <string>parenright</string>
+          <string>parenright.size1</string>
+          <string>parenright.size2</string>
+          <string>parenright.size3</string>
+          <string>parenright.size4</string>
+        </array>
       </dict>
     </dict>
   </lib>
