@@ -18,6 +18,9 @@ from ufo2ft import (
 )
 from ufo2ft.constants import (
     GLYPHS_DONT_USE_PRODUCTION_NAMES,
+    GLYPHS_MATH_CONSTANTS_KEY,
+    GLYPHS_MATH_EXTENDED_SHAPE_KEY,
+    GLYPHS_MATH_VARIANTS_KEY,
     OPENTYPE_POST_UNDERLINE_POSITION_KEY,
     SPARSE_OTF_MASTER_TABLES,
     SPARSE_TTF_MASTER_TABLES,
@@ -1401,6 +1404,28 @@ def test_achVendId_space_padded_if_less_than_4_chars(
     font = TTFont(tmp)
 
     assert font["OS/2"].achVendID == expected
+
+
+def test_MATH_table(FontClass):
+    ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
+    result = compileTTF(ufo)
+    assert "MATH" in result
+
+    math = result["MATH"].table
+
+    for key, value in ufo.lib[GLYPHS_MATH_CONSTANTS_KEY].items():
+        attr = getattr(math.MathConstants, key)
+        if isinstance(attr, int):
+            assert attr == value
+        else:
+            assert attr.Value == value
+
+    extendedShapes = set(ufo.lib[GLYPHS_MATH_EXTENDED_SHAPE_KEY])
+    for glyph in ufo.lib[GLYPHS_MATH_EXTENDED_SHAPE_KEY]:
+        if variants := ufo[glyph].lib.get(GLYPHS_MATH_VARIANTS_KEY):
+            extendedShapes.update(variants.get("vVariants", []))
+
+    assert set(math.MathGlyphInfo.ExtendedShapeCoverage.glyphs) == extendedShapes
 
 
 if __name__ == "__main__":
