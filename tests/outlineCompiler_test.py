@@ -26,6 +26,7 @@ from ufo2ft.constants import (
     SPARSE_TTF_MASTER_TABLES,
     USE_PRODUCTION_NAMES,
 )
+from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import intListToNum
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 
@@ -1472,7 +1473,7 @@ def test_MATH_table_invalid(FontClass, compile, attribute):
         ["parenright.ext", 1, 100, 100],
         ["parenright.bot", 0, 100, 0],
     ]
-    with pytest.raises(AssertionError, match="Invalid assembly"):
+    with pytest.raises(InvalidFontData, match="Invalid assembly"):
         compile(ufo)
 
 
