@@ -1191,6 +1191,7 @@ class BaseOutlineCompiler:
                 if names := variants.get("vVariants"):
                     v_variants[name] = [(n, self._bboxHeight(n)) for n in names]
                 if parts := variants.get("hAssembly"):
+                    assert all(len(part) == 4 for part in parts), "Invalid assembly"
                     h_assemblies[name] = (
                         [(*part, self._bboxWidth(part[0])) for part in parts],
                         # If the last part has italic correction, we use it as
@@ -1198,6 +1199,7 @@ class BaseOutlineCompiler:
                         italics_correction.pop(parts[-1][0], 0),
                     )
                 if parts := variants.get("vAssembly"):
+                    assert all(len(part) == 4 for part in parts), "Invalid assembly"
                     v_assemblies[name] = (
                         [(*part, self._bboxHeight(part[0])) for part in parts],
                         # If the last part has italic correction, we use it as

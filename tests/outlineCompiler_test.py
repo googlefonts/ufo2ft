@@ -1463,6 +1463,19 @@ def test_MATH_table_ignore_empty(FontClass, compile, attribute):
     compile(ufo)
 
 
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+@pytest.mark.parametrize("attribute", ["vAssembly", "hAssembly"])
+def test_MATH_table_invalid(FontClass, compile, attribute):
+    ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
+    ufo["parenright"].lib[GLYPHS_MATH_VARIANTS_KEY][attribute] = [
+        ["parenright.top", 0, 0],
+        ["parenright.ext", 1, 100, 100],
+        ["parenright.bot", 0, 100, 0],
+    ]
+    with pytest.raises(AssertionError, match="Invalid assembly"):
+        compile(ufo)
+
+
 if __name__ == "__main__":
     import sys
 
