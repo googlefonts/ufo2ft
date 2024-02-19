@@ -26,6 +26,7 @@ from ufo2ft.constants import (
     SPARSE_TTF_MASTER_TABLES,
     USE_PRODUCTION_NAMES,
 )
+from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import intListToNum
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 
@@ -1406,9 +1407,10 @@ def test_achVendId_space_padded_if_less_than_4_chars(
     assert font["OS/2"].achVendID == expected
 
 
-def test_MATH_table(FontClass):
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+def test_MATH_table(FontClass, compile):
     ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
-    result = compileTTF(ufo)
+    result = compile(ufo)
     assert "MATH" in result
 
     math = result["MATH"].table
@@ -1426,6 +1428,53 @@ def test_MATH_table(FontClass):
             extendedShapes.update(variants.get("vVariants", []))
 
     assert set(math.MathGlyphInfo.ExtendedShapeCoverage.glyphs) == extendedShapes
+
+    assert set(math.MathVariants.VertGlyphCoverage.glyphs) == {
+        "parenright",
+        "parenleft",
+    }
+    assert math.MathVariants.VertGlyphConstruction
+    assert len(math.MathVariants.VertGlyphConstruction) == 2
+    assert (
+        math.MathVariants.VertGlyphConstruction[0].GlyphAssembly.ItalicsCorrection.Value
+        == 0
+    )
+    assert (
+        len(math.MathVariants.VertGlyphConstruction[0].GlyphAssembly.PartRecords) == 3
+    )
+
+    assert not math.MathVariants.HorizGlyphCoverage
+    assert not math.MathVariants.HorizGlyphConstruction
+
+
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+@pytest.mark.parametrize(
+    "attribute",
+    [
+        "vAssembly",
+        "hAssembly",
+        "vVariants",
+        "hVariants",
+    ],
+)
+def test_MATH_table_ignore_empty(FontClass, compile, attribute):
+    # Should not raise becaise of empty assembly/variants
+    ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
+    ufo["parenright"].lib[GLYPHS_MATH_VARIANTS_KEY][attribute] = []
+    compile(ufo)
+
+
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+@pytest.mark.parametrize("attribute", ["vAssembly", "hAssembly"])
+def test_MATH_table_invalid(FontClass, compile, attribute):
+    ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
+    ufo["parenright"].lib[GLYPHS_MATH_VARIANTS_KEY][attribute] = [
+        ["parenright.top", 0, 0],
+        ["parenright.ext", 1, 100, 100],
+        ["parenright.bot", 0, 100, 0],
+    ]
+    with pytest.raises(InvalidFontData, match="Invalid assembly"):
+        compile(ufo)
 
 
 if __name__ == "__main__":

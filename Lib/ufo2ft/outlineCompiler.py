@@ -1186,24 +1186,22 @@ class BaseOutlineCompiler:
         for name, glyph in self.allGlyphs.items():
             if GLYPHS_MATH_VARIANTS_KEY in glyph.lib:
                 variants = glyph.lib[GLYPHS_MATH_VARIANTS_KEY]
-                if "hVariants" in variants:
-                    h_variants[name] = [
-                        (n, self._bboxWidth(n)) for n in variants["hVariants"]
-                    ]
-                if "vVariants" in variants:
-                    v_variants[name] = [
-                        (n, self._bboxHeight(n)) for n in variants["vVariants"]
-                    ]
-                if "hAssembly" in variants:
-                    parts = variants["hAssembly"]
+                if names := variants.get("hVariants"):
+                    h_variants[name] = [(n, self._bboxWidth(n)) for n in names]
+                if names := variants.get("vVariants"):
+                    v_variants[name] = [(n, self._bboxHeight(n)) for n in names]
+                if parts := variants.get("hAssembly"):
+                    if not all(len(part) == 4 for part in parts):
+                        raise InvalidFontData("Invalid assembly")
                     h_assemblies[name] = (
                         [(*part, self._bboxWidth(part[0])) for part in parts],
                         # If the last part has italic correction, we use it as
                         # the assembly's.
                         italics_correction.pop(parts[-1][0], 0),
                     )
-                if "vAssembly" in variants:
-                    parts = variants["vAssembly"]
+                if parts := variants.get("vAssembly"):
+                    if not all(len(part) == 4 for part in parts):
+                        raise InvalidFontData("Invalid assembly")
                     v_assemblies[name] = (
                         [(*part, self._bboxHeight(part[0])) for part in parts],
                         # If the last part has italic correction, we use it as
