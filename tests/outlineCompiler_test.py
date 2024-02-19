@@ -1446,6 +1446,23 @@ def test_MATH_table(FontClass, compile):
     assert not math.MathVariants.HorizGlyphConstruction
 
 
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+@pytest.mark.parametrize(
+    "attribute",
+    [
+        "vAssembly",
+        "hAssembly",
+        "vVariants",
+        "hVariants",
+    ],
+)
+def test_MATH_table_ignore_empty(FontClass, compile, attribute):
+    # Should not raise becaise of empty assembly/variants
+    ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
+    ufo["parenright"].lib[GLYPHS_MATH_VARIANTS_KEY][attribute] = []
+    compile(ufo)
+
+
 if __name__ == "__main__":
     import sys
 
