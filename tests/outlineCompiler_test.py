@@ -1406,9 +1406,10 @@ def test_achVendId_space_padded_if_less_than_4_chars(
     assert font["OS/2"].achVendID == expected
 
 
-def test_MATH_table(FontClass):
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+def test_MATH_table(FontClass, compile):
     ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
-    result = compileTTF(ufo)
+    result = compile(ufo)
     assert "MATH" in result
 
     math = result["MATH"].table
@@ -1426,6 +1427,23 @@ def test_MATH_table(FontClass):
             extendedShapes.update(variants.get("vVariants", []))
 
     assert set(math.MathGlyphInfo.ExtendedShapeCoverage.glyphs) == extendedShapes
+
+    assert set(math.MathVariants.VertGlyphCoverage.glyphs) == {
+        "parenright",
+        "parenleft",
+    }
+    assert math.MathVariants.VertGlyphConstruction
+    assert len(math.MathVariants.VertGlyphConstruction) == 2
+    assert (
+        math.MathVariants.VertGlyphConstruction[0].GlyphAssembly.ItalicsCorrection.Value
+        == 0
+    )
+    assert (
+        len(math.MathVariants.VertGlyphConstruction[0].GlyphAssembly.PartRecords) == 3
+    )
+
+    assert not math.MathVariants.HorizGlyphCoverage
+    assert not math.MathVariants.HorizGlyphConstruction
 
 
 if __name__ == "__main__":
