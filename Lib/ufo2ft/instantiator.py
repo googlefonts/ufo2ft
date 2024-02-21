@@ -1,4 +1,5 @@
-# This code is based on ufoProcessor code, which is licensed as follows:
+# This code is derived from fontmake.instantiator (Apache License 2.0), which in
+# turn was based on ufoProcessor code. The latter is licensed as follows.
 # Copyright (c) 2017-2018 LettError and Erik van Blokland
 # All rights reserved.
 #
@@ -22,13 +23,10 @@
 
 """Module for generating static font instances.
 
-It is an alternative to mutatorMath (used internally by fontmake) and ufoProcessor. The
-aim is to be a minimal implementation that is focussed on using ufoLib2 for font data
+It is an alternative to ufoProcessor originally meant to be used internally by fontmake.
+The aim is to be a minimal implementation that is focussed on using ufoLib2 for font data
 abstraction, varLib for instance computation and fontMath as a font data shell for
 instance computation directly and exclusively.
-
-At the time of this writing, varLib lacks support for anisotropic (x, y) locations and
-extrapolation.
 """
 
 import copy
