@@ -41,6 +41,10 @@ def test_variable_features(FontClass):
 
         } mark;
 
+        table GDEF {
+            LigatureCaretByPos peh-ar.init 100;
+        } GDEF;
+
         feature curs {
             lookup curs {
                 lookupflag RightToLeft IgnoreMarks;
