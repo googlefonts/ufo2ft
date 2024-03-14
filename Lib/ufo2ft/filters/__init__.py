@@ -7,7 +7,7 @@ from ufo2ft.util import _loadPluginFromString
 
 from .base import BaseFilter, BaseIFilter
 from .cubicToQuadratic import CubicToQuadraticFilter
-from .decomposeComponents import DecomposeComponentsFilter
+from .decomposeComponents import DecomposeComponentsFilter, DecomposeComponentsIFilter
 from .decomposeTransformedComponents import DecomposeTransformedComponentsFilter
 from .dottedCircle import DottedCircleFilter
 from .explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
@@ -23,6 +23,7 @@ __all__ = [
     "BaseIFilter",
     "CubicToQuadraticFilter",
     "DecomposeComponentsFilter",
+    "DecomposeComponentsIFilter",
     "DecomposeTransformedComponentsFilter",
     "DottedCircleFilter",
     "ExplodeColorLayerGlyphsFilter",
