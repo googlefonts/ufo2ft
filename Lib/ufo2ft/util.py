@@ -14,6 +14,7 @@ from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.builder import addOpenTypeFeatures
 from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Identity, Transform
+from fontTools.pens.filterPen import DecomposingFilterPointPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
 
@@ -47,6 +48,39 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
         order.append(name)
     order.extend(sorted(names))
     return order
+
+
+def decomposeCompositeGlyph(
+    glyph,
+    glyphSet,
+    skipMissing=True,
+    reverseFlipped=True,
+    include=None,
+    decomposeNested=True,
+):
+    """Decompose composite glyph in-place resolving references from glyphSet."""
+    if len(glyph.components) == 0:
+        return
+    pen = DecomposingFilterPointPen(
+        glyph.getPointPen(),
+        glyphSet,
+        reverseFlipped=reverseFlipped,
+        include=include,
+        decomposeNested=decomposeNested,
+    )
+    for component in list(glyph.components):
+        try:
+            component.drawPoints(pen)
+        except pen.MissingComponentError:
+            if skipMissing:
+                logger.warning(
+                    "dropping non-existent component '%s' in glyph '%s'",
+                    component.baseGlyph,
+                    glyph.name,
+                )
+            else:
+                raise
+        glyph.removeComponent(component)
 
 
 class _GlyphSet(dict):
@@ -166,6 +200,7 @@ def _setGlyphMargin(glyph, side, margin):
         raise NotImplementedError(f"Unsupported Glyph class: {type(glyph)!r}")
 
 
+# DEPRECATED: use ufo2ft.util.decomposeCompositeGlyph above
 def deepCopyContours(
     glyphSet, parent, composite, transformation, specificComponents=None
 ):
