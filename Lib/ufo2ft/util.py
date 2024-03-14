@@ -768,6 +768,40 @@ class OpenTypeCategories(NamedTuple):
         )
 
 
+def importUfoModule():
+    try:
+        import ufoLib2
+    except ModuleNotFoundError:
+        try:
+            import defcon
+        except ModuleNotFoundError:
+            raise
+        else:
+            return defcon
+    else:
+        return ufoLib2
+
+
+def openFontFactory(*, ufo_module=None):
+    if ufo_module is None:
+        ufo_module = importUfoModule()
+
+    if hasattr(ufo_module.Font, "open"):
+
+        def ctor(path=None):
+            if path is None:
+                return ufo_module.Font()
+            else:
+                return ufo_module.Font.open(path)
+
+        return ctor
+    return ufo_module.Font
+
+
+def openFont(*args, ufo_module=None, **kwargs):
+    return openFontFactory(ufo_module=ufo_module)(*args, **kwargs)
+
+
 # zip(strict=True) was added with Python 3.10, we provide a backport below
 # https://docs.python.org/3/library/functions.html#zip
 if sys.version_info[:2] < (3, 10):
