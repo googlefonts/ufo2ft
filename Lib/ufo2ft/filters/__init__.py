@@ -5,7 +5,7 @@ from inspect import getfullargspec, isclass
 from ufo2ft.constants import FILTERS_KEY
 from ufo2ft.util import _loadPluginFromString
 
-from .base import BaseFilter
+from .base import BaseFilter, BaseIFilter
 from .cubicToQuadratic import CubicToQuadraticFilter
 from .decomposeComponents import DecomposeComponentsFilter
 from .decomposeTransformedComponents import DecomposeTransformedComponentsFilter
@@ -20,6 +20,7 @@ from .transformations import TransformationsFilter
 
 __all__ = [
     "BaseFilter",
+    "BaseIFilter",
     "CubicToQuadraticFilter",
     "DecomposeComponentsFilter",
     "DecomposeTransformedComponentsFilter",
@@ -85,13 +86,15 @@ def loadFilters(ufo):
     return preFilters, postFilters
 
 
-def isValidFilter(klass):
+def isValidFilter(klass, *bases):
     """Return True if 'klass' is a valid filter class.
     A valid filter class is a class (of type 'type'), that has
     a '__call__' (bound method), with the signature matching the same method
-    from the BaseFilter class:
+    from the BaseFilter or BaseIFilter classes, respectively:
 
            def __call__(self, font, glyphSet=None)
+
+           def __call__(self, fonts, glyphSets=None, instantiator=None, **kwargs)
     """
     if not isclass(klass):
         logger.error(f"{klass!r} is not a class")
@@ -99,10 +102,14 @@ def isValidFilter(klass):
     if not callable(klass):
         logger.error(f"{klass!r} is not callable")
         return False
-    if getfullargspec(klass.__call__).args != getfullargspec(BaseFilter.__call__).args:
-        logger.error(f"{klass!r} '__call__' method has incorrect signature")
-        return False
-    return True
+    for baseClass in bases or (BaseFilter, BaseIFilter):
+        if (
+            getfullargspec(klass.__call__).args
+            == getfullargspec(baseClass.__call__).args
+        ):
+            return True
+    logger.error(f"{klass!r} '__call__' method has incorrect signature")
+    return False
 
 
 def loadFilterFromString(spec):
