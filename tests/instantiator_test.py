@@ -2,18 +2,18 @@ import logging
 
 import fontTools.designspaceLib as designspaceLib
 import pytest
-import ufoLib2
 from fontTools.pens.recordingPen import RecordingPen
-from ufoLib2.objects.anchor import Anchor
 
-import fontmake.instantiator
+import ufo2ft.instantiator
+from ufo2ft.util import openFont, openFontFactory
 
 
-def test_interpolation_weight_width_class(data_dir):
+def test_interpolation_weight_width_class(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "MutatorSans" / "MutatorSans.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -61,15 +61,15 @@ def test_interpolation_weight_width_class(data_dir):
     assert font.info.openTypeOS2WidthClass == 9
 
 
-def test_default_groups_only(data_dir, caplog):
+def test_default_groups_only(ufo_module, data_dir, caplog):
     """Test that only the default source's groups end up in instances."""
 
     d = designspaceLib.DesignSpaceDocument()
     d.addAxisDescriptor(
         name="Weight", tag="wght", minimum=300, default=300, maximum=900
     )
-    d.addSourceDescriptor(location={"Weight": 300}, font=ufoLib2.Font())
-    d.addSourceDescriptor(location={"Weight": 900}, font=ufoLib2.Font())
+    d.addSourceDescriptor(location={"Weight": 300}, font=ufo_module.Font())
+    d.addSourceDescriptor(location={"Weight": 900}, font=ufo_module.Font())
     d.addInstanceDescriptor(styleName="2", location={"Weight": 400})
     d.findDefault()
 
@@ -82,7 +82,7 @@ def test_default_groups_only(data_dir, caplog):
         "alphatonos.alt",
     ]
 
-    generator = fontmake.instantiator.Instantiator.from_designspace(d)
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
     assert "contains different groups than the default source" in caplog.text
 
     instance = generator.generate_instance(d.instances[0])
@@ -91,7 +91,7 @@ def test_default_groups_only(data_dir, caplog):
     }
 
 
-def test_default_groups_only2(data_dir, caplog):
+def test_default_groups_only2(ufo_module, data_dir, caplog):
     """Test that the group difference warning is not triggered if non-default
     source groups are empty."""
 
@@ -99,8 +99,8 @@ def test_default_groups_only2(data_dir, caplog):
     d.addAxisDescriptor(
         name="Weight", tag="wght", minimum=300, default=300, maximum=900
     )
-    d.addSourceDescriptor(location={"Weight": 300}, font=ufoLib2.Font())
-    d.addSourceDescriptor(location={"Weight": 900}, font=ufoLib2.Font())
+    d.addSourceDescriptor(location={"Weight": 300}, font=ufo_module.Font())
+    d.addSourceDescriptor(location={"Weight": 900}, font=ufo_module.Font())
     d.addInstanceDescriptor(styleName="2", location={"Weight": 400})
     d.findDefault()
 
@@ -109,7 +109,7 @@ def test_default_groups_only2(data_dir, caplog):
         "alphatonos.alt",
     ]
 
-    generator = fontmake.instantiator.Instantiator.from_designspace(d)
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
     assert "contains different groups than the default source" not in caplog.text
 
     instance = generator.generate_instance(d.instances[0])
@@ -118,12 +118,13 @@ def test_default_groups_only2(data_dir, caplog):
     }
 
 
-def test_interpolation_no_rounding(data_dir):
+def test_interpolation_no_rounding(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "MutatorSans" / "MutatorSans.designspace"
     )
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
     designspace.instances[4].location = {"weight": 123.456, "width": 789.123}
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=False
     )
 
@@ -133,12 +134,13 @@ def test_interpolation_no_rounding(data_dir):
     assert isinstance(instance_font["A"].contours[0][0].x, float)
 
 
-def test_interpolation_rounding(data_dir):
+def test_interpolation_rounding(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "MutatorSans" / "MutatorSans.designspace"
     )
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
     designspace.instances[4].location = {"weight": 123.456, "width": 789.123}
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -149,46 +151,46 @@ def test_interpolation_rounding(data_dir):
 
 
 def test_weight_class_from_wght_axis():
-    assert fontmake.instantiator.weight_class_from_wght_value(-500) == 1
-    assert fontmake.instantiator.weight_class_from_wght_value(1.1) == 1
-    assert fontmake.instantiator.weight_class_from_wght_value(1) == 1
-    assert fontmake.instantiator.weight_class_from_wght_value(500.6) == 501
-    assert fontmake.instantiator.weight_class_from_wght_value(1000) == 1000
-    assert fontmake.instantiator.weight_class_from_wght_value(1000.0) == 1000
-    assert fontmake.instantiator.weight_class_from_wght_value(1000.1) == 1000
-    assert fontmake.instantiator.weight_class_from_wght_value(2000.1) == 1000
+    assert ufo2ft.instantiator.weight_class_from_wght_value(-500) == 1
+    assert ufo2ft.instantiator.weight_class_from_wght_value(1.1) == 1
+    assert ufo2ft.instantiator.weight_class_from_wght_value(1) == 1
+    assert ufo2ft.instantiator.weight_class_from_wght_value(500.6) == 501
+    assert ufo2ft.instantiator.weight_class_from_wght_value(1000) == 1000
+    assert ufo2ft.instantiator.weight_class_from_wght_value(1000.0) == 1000
+    assert ufo2ft.instantiator.weight_class_from_wght_value(1000.1) == 1000
+    assert ufo2ft.instantiator.weight_class_from_wght_value(2000.1) == 1000
 
 
 def test_width_class_from_wdth_axis():
-    assert fontmake.instantiator.width_class_from_wdth_value(-500) == 1
-    assert fontmake.instantiator.width_class_from_wdth_value(50) == 1
-    assert fontmake.instantiator.width_class_from_wdth_value(62.5) == 2
-    assert fontmake.instantiator.width_class_from_wdth_value(75) == 3
-    assert fontmake.instantiator.width_class_from_wdth_value(87.5) == 4
-    assert fontmake.instantiator.width_class_from_wdth_value(100) == 5
-    assert fontmake.instantiator.width_class_from_wdth_value(112) == 6
-    assert fontmake.instantiator.width_class_from_wdth_value(112.5) == 6
-    assert fontmake.instantiator.width_class_from_wdth_value(125) == 7
-    assert fontmake.instantiator.width_class_from_wdth_value(130) == 7
-    assert fontmake.instantiator.width_class_from_wdth_value(150) == 8
-    assert fontmake.instantiator.width_class_from_wdth_value(190) == 9
-    assert fontmake.instantiator.width_class_from_wdth_value(200) == 9
-    assert fontmake.instantiator.width_class_from_wdth_value(1000) == 9
+    assert ufo2ft.instantiator.width_class_from_wdth_value(-500) == 1
+    assert ufo2ft.instantiator.width_class_from_wdth_value(50) == 1
+    assert ufo2ft.instantiator.width_class_from_wdth_value(62.5) == 2
+    assert ufo2ft.instantiator.width_class_from_wdth_value(75) == 3
+    assert ufo2ft.instantiator.width_class_from_wdth_value(87.5) == 4
+    assert ufo2ft.instantiator.width_class_from_wdth_value(100) == 5
+    assert ufo2ft.instantiator.width_class_from_wdth_value(112) == 6
+    assert ufo2ft.instantiator.width_class_from_wdth_value(112.5) == 6
+    assert ufo2ft.instantiator.width_class_from_wdth_value(125) == 7
+    assert ufo2ft.instantiator.width_class_from_wdth_value(130) == 7
+    assert ufo2ft.instantiator.width_class_from_wdth_value(150) == 8
+    assert ufo2ft.instantiator.width_class_from_wdth_value(190) == 9
+    assert ufo2ft.instantiator.width_class_from_wdth_value(200) == 9
+    assert ufo2ft.instantiator.width_class_from_wdth_value(1000) == 9
 
 
-def test_swap_glyph_names(data_dir):
-    ufo = ufoLib2.Font.open(data_dir / "SwapGlyphNames" / "A.ufo")
+def test_swap_glyph_names(ufo_module, data_dir):
+    ufo = openFont(data_dir / "SwapGlyphNames" / "A.ufo", ufo_module=ufo_module)
 
-    fontmake.instantiator.swap_glyph_names(ufo, "a", "a.swap")
+    ufo2ft.instantiator.swap_glyph_names(ufo, "a", "a.swap")
 
     # Test swapped outlines.
     assert ufo["a"].unicode == 0x61
     assert len(ufo["a"]) == 1
-    assert len(ufo["a"].contours[0]) == 8
+    assert len(ufo["a"][0]) == 8
     assert ufo["a"].width == 666
     assert ufo["a.swap"].unicode is None
     assert len(ufo["a.swap"]) == 1
-    assert len(ufo["a.swap"].contours[0]) == 4
+    assert len(ufo["a.swap"][0]) == 4
     assert ufo["a.swap"].width == 600
 
     # Test swapped components.
@@ -200,13 +202,13 @@ def test_swap_glyph_names(data_dir):
     assert sorted(c.baseGlyph for c in ufo["aaa.swap"].components) == ["a", "a", "y"]
 
     # Test swapped anchors.
-    assert ufo["a"].anchors == [
-        Anchor(x=153, y=0, name="bottom"),
-        Anchor(x=153, y=316, name="top"),
+    assert [dict(a) for a in ufo["a"].anchors] == [
+        dict(x=153, y=0, name="bottom"),
+        dict(x=153, y=316, name="top"),
     ]
-    assert ufo["a.swap"].anchors == [
-        Anchor(x=351, y=0, name="bottom"),
-        Anchor(x=351, y=613, name="top"),
+    assert [dict(a) for a in ufo["a.swap"].anchors] == [
+        dict(x=351, y=0, name="bottom"),
+        dict(x=351, y=613, name="top"),
     ]
 
     # Test swapped glyph kerning.
@@ -227,7 +229,7 @@ def test_swap_glyph_names(data_dir):
     }
 
     # Swap a second time.
-    fontmake.instantiator.swap_glyph_names(ufo, "aaa", "aaa.swap")
+    ufo2ft.instantiator.swap_glyph_names(ufo, "aaa", "aaa.swap")
 
     # Test swapped glyphs.
     assert sorted(c.baseGlyph for c in ufo["aaa"].components) == ["a", "a", "y"]
@@ -248,19 +250,19 @@ def test_swap_glyph_names(data_dir):
         "y",
     }
 
-    with pytest.raises(fontmake.instantiator.InstantiatorError, match="Cannot swap"):
-        fontmake.instantiator.swap_glyph_names(ufo, "aaa", "aaa.swapa")
+    with pytest.raises(ufo2ft.instantiator.InstantiatorError, match="Cannot swap"):
+        ufo2ft.instantiator.swap_glyph_names(ufo, "aaa", "aaa.swapa")
 
 
-def test_swap_glyph_names_spec(data_dir):
+def test_swap_glyph_names_spec(ufo_module, data_dir):
     """Test that the rule example in the designspaceLib spec works.
 
     `adieresis` should look the same as before the rule application.
 
     [1]: fonttools/Doc/source/designspaceLib#ufo-instances
     """
-    ufo = ufoLib2.Font.open(data_dir / "SwapGlyphNames" / "B.ufo")
-    fontmake.instantiator.swap_glyph_names(ufo, "a", "a.alt")
+    ufo = openFont(data_dir / "SwapGlyphNames" / "B.ufo", ufo_module=ufo_module)
+    ufo2ft.instantiator.swap_glyph_names(ufo, "a", "a.alt")
 
     assert sorted(c.baseGlyph for c in ufo["adieresis"].components) == [
         "a.alt",
@@ -272,7 +274,7 @@ def test_swap_glyph_names_spec(data_dir):
     ]
 
 
-def test_rules_are_applied_deterministically(data_dir):
+def test_rules_are_applied_deterministically(ufo_module, data_dir):
     """Test that a combination of designspace rules that end up mapping
     serveral input glyphs to the same destination glyph result in a correct and
     deterministic series of glyph swaps.
@@ -290,14 +292,15 @@ def test_rules_are_applied_deterministically(data_dir):
     doc = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceRuleOrder" / "MyFont.designspace"
     )
-    instanciator = fontmake.instantiator.Instantiator.from_designspace(doc)
-    instance = instanciator.generate_instance(doc.instances[0])
+    doc.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(doc)
+    instance = generator.generate_instance(doc.instances[0])
     pen = RecordingPen()
     instance["Q"].draw(pen)
     instance_recording = pen.value
 
-    black_ufo = ufoLib2.Font.open(
-        data_dir / "DesignspaceRuleOrder" / "MyFont_Black.ufo"
+    black_ufo = openFont(
+        data_dir / "DesignspaceRuleOrder" / "MyFont_Black.ufo", ufo_module=ufo_module
     )
     pen = RecordingPen()
     black_ufo["Q.ss01.alt"].draw(pen)
@@ -306,35 +309,38 @@ def test_rules_are_applied_deterministically(data_dir):
     assert instance_recording == black_ufo_recording
 
 
-def test_raise_no_default_master(data_dir):
+def test_raise_no_default_master(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "MutatorSans" / "MutatorSans_no_default.designspace"
     )
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
 
-    with pytest.raises(fontmake.instantiator.InstantiatorError, match="no default"):
-        fontmake.instantiator.Instantiator.from_designspace(
+    with pytest.raises(ufo2ft.instantiator.InstantiatorError, match="no default"):
+        ufo2ft.instantiator.Instantiator.from_designspace(
             designspace, round_geometry=True
         )
 
 
-def test_raise_failed_glyph_interpolation(data_dir):
+def test_raise_failed_glyph_interpolation(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceBrokenTest" / "DesignspaceTest.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(designspace)
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(designspace)
 
     with pytest.raises(
-        fontmake.instantiator.InstantiatorError, match="Failed to generate instance"
+        ufo2ft.instantiator.InstantiatorError, match="Failed to generate instance"
     ):
         for instance in designspace.instances:
             instance.font = generator.generate_instance(instance)
 
 
-def test_ignore_failed_glyph_interpolation(data_dir):
+def test_ignore_failed_glyph_interpolation(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceBrokenTest" / "DesignspaceTest.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(designspace)
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(designspace)
     generator.skip_export_glyphs.append("asas")
 
     for instance in designspace.instances:
@@ -344,25 +350,27 @@ def test_ignore_failed_glyph_interpolation(data_dir):
         )
 
 
-def test_raise_anisotropic_location(data_dir):
+def test_raise_anisotropic_location(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "MutatorSans" / "MutatorSans-width-only.designspace"
     )
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
     designspace.instances[0].location["width"] = (100, 900)
 
     with pytest.raises(
-        fontmake.instantiator.InstantiatorError, match="anisotropic instance locations"
+        ufo2ft.instantiator.InstantiatorError, match="anisotropic instance locations"
     ):
-        fontmake.instantiator.Instantiator.from_designspace(
+        ufo2ft.instantiator.Instantiator.from_designspace(
             designspace, round_geometry=True
         )
 
 
-def test_copy_nonkerning_group(data_dir):
+def test_copy_nonkerning_group(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(designspace)
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(designspace)
 
     instance_font = generator.generate_instance(designspace.instances[0])
     assert instance_font.groups == {
@@ -371,11 +379,12 @@ def test_copy_nonkerning_group(data_dir):
     }
 
 
-def test_interpolation(data_dir):
+def test_interpolation(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -383,17 +392,17 @@ def test_interpolation(data_dir):
     assert instance_font["l"].width == 220
 
 
-def test_interpolation_only_default(data_dir, caplog):
+def test_interpolation_only_default(ufo_module, data_dir, caplog):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "MutatorSans" / "MutatorSans.designspace"
     )
-    designspace.loadSourceFonts(ufoLib2.Font.open)
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
     for name in designspace.default.font.glyphOrder:
         if name != "A":
             del designspace.default.font[name]
 
     with caplog.at_level(logging.WARNING):
-        generator = fontmake.instantiator.Instantiator.from_designspace(
+        generator = ufo2ft.instantiator.Instantiator.from_designspace(
             designspace, round_geometry=True
         )
     assert "contains glyphs that are missing from the" in caplog.text
@@ -402,13 +411,14 @@ def test_interpolation_only_default(data_dir, caplog):
     assert {g.name for g in instance_font} == {"A"}
 
 
-def test_interpolation_masters_as_instances(data_dir):
+def test_interpolation_masters_as_instances(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir
         / "DesignspaceBrokenTest"
         / "Designspace-MastersAsInstances.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -420,23 +430,24 @@ def test_interpolation_masters_as_instances(data_dir):
     assert instance_font["l"].width == 280
 
 
-def test_non_default_layer(data_dir, caplog):
+def test_non_default_layer(ufo_module, data_dir, caplog):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "MutatorSans" / "MutatorSans-non-default-layer.designspace"
     )
-    designspace.loadSourceFonts(ufoLib2.Font.open)
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
     instance_font = generator.generate_instance(designspace.instances[0])
     assert {g.name for g in instance_font} == {"A", "S", "W"}
 
 
-def test_instance_attributes(data_dir):
+def test_instance_attributes(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest-instance-attrs.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -448,11 +459,12 @@ def test_instance_attributes(data_dir):
     assert instance_font.info.styleMapStyleName == "xxx"
 
 
-def test_instance_no_attributes(data_dir, caplog):
+def test_instance_no_attributes(ufo_module, data_dir, caplog):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest-bare.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -467,11 +479,12 @@ def test_instance_no_attributes(data_dir, caplog):
     assert instance_font.info.styleMapStyleName is None
 
 
-def test_axis_mapping(data_dir):
+def test_axis_mapping(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest-wght-wdth.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -485,16 +498,16 @@ def test_axis_mapping(data_dir):
     ]
 
 
-def test_axis_mapping_manual_os2_classes(data_dir):
+def test_axis_mapping_manual_os2_classes(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest-wght-wdth.designspace"
     )
-    designspace.loadSourceFonts(ufoLib2.Font.open)
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
     designspace.sources[0].font.info.openTypeOS2WeightClass = 800
     designspace.sources[0].font.info.openTypeOS2WidthClass = 7
     designspace.sources[1].font.info.openTypeOS2WeightClass = 900
     designspace.sources[1].font.info.openTypeOS2WidthClass = 9
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -508,14 +521,14 @@ def test_axis_mapping_manual_os2_classes(data_dir):
     ]
 
 
-def test_axis_mapping_no_os2_width_class_inference(data_dir):
+def test_axis_mapping_no_os2_width_class_inference(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest-bare.designspace"
     )
-    designspace.loadSourceFonts(ufoLib2.Font.open)
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
     designspace.sources[0].font.info.openTypeOS2WeightClass = 800
     designspace.sources[1].font.info.openTypeOS2WeightClass = 900
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -526,11 +539,12 @@ def test_axis_mapping_no_os2_width_class_inference(data_dir):
     assert instance_font.lib["designspace.location"] == [("weight", 100.0)]
 
 
-def test_axis_mapping_no_os2_class_inference(data_dir):
+def test_axis_mapping_no_os2_class_inference(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest-opsz.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -541,11 +555,12 @@ def test_axis_mapping_no_os2_class_inference(data_dir):
     assert instance_font.lib["designspace.location"] == [("optical", 15.0)]
 
 
-def test_axis_mapping_italicAngle_inference(data_dir):
+def test_axis_mapping_italicAngle_inference(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest-slnt.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -556,11 +571,12 @@ def test_axis_mapping_italicAngle_inference(data_dir):
     assert instance_font.lib["designspace.location"] == [("slant", 40.123)]
 
 
-def test_lib_into_instance(data_dir):
+def test_lib_into_instance(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest-lib.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
 
@@ -576,11 +592,12 @@ def test_lib_into_instance(data_dir):
     assert instance_font2.lib["public.skipExportGlyphs"] == ["a", "b", "c"]
 
 
-def test_data_independence(data_dir):
+def test_data_independence(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
     instance_font1 = generator.generate_instance(designspace.instances[0])
@@ -654,7 +671,7 @@ def test_skipped_fontinfo_attributes():
         fontTools.ufoLib.fontInfoAttributesVersion3
         - set(fontMath.mathInfo._infoAttrs.keys())
         - {"postscriptWeightName"}  # Handled in fontMath specially.
-        - fontmake.instantiator.UFO_INFO_ATTRIBUTES_TO_COPY_TO_INSTANCES
+        - ufo2ft.instantiator.UFO_INFO_ATTRIBUTES_TO_COPY_TO_INSTANCES
         == SKIPPED_ATTRS
     )
 
@@ -665,16 +682,17 @@ def test_designspace_v5_discrete_axis_raises_error(data_dir):
     )
     # The error message should advise to use `splitInterpolable()`
     with pytest.raises(
-        fontmake.instantiator.InstantiatorError, match="splitInterpolable"
+        ufo2ft.instantiator.InstantiatorError, match="splitInterpolable"
     ):
-        fontmake.instantiator.Instantiator.from_designspace(designspace)
+        ufo2ft.instantiator.Instantiator.from_designspace(designspace)
 
 
-def test_strict_math_glyph(data_dir):
+def test_strict_math_glyph(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "InstantiatorStrictMathGlyph" / "StrictMathGlyph.designspace"
     )
-    generator = fontmake.instantiator.Instantiator.from_designspace(
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
     fonts = [
