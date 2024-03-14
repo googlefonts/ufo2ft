@@ -15,6 +15,7 @@ from .flattenComponents import FlattenComponentsFilter
 from .propagateAnchors import PropagateAnchorsFilter
 from .removeOverlaps import RemoveOverlapsFilter
 from .reverseContourDirection import ReverseContourDirectionFilter
+from .skipExportGlyphs import SkipExportGlyphsFilter, SkipExportGlyphsIFilter
 from .sortContours import SortContoursFilter
 from .transformations import TransformationsFilter
 
@@ -31,6 +32,8 @@ __all__ = [
     "PropagateAnchorsFilter",
     "RemoveOverlapsFilter",
     "ReverseContourDirectionFilter",
+    "SkipExportGlyphsFilter",
+    "SkipExportGlyphsIFilter",
     "SortContoursFilter",
     "TransformationsFilter",
     "loadFilters",
