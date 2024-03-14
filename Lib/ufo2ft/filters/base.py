@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, FrozenSet, Tuple
 
 from fontTools.misc.loggingTools import Timer
 
@@ -16,7 +16,7 @@ from ufo2ft.util import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, TypeAlias
 
     from ufoLib2.objects import Font, Glyph
 
@@ -254,6 +254,9 @@ class BaseFilter:
         return getattr(module, ifilter_name, None)
 
 
+HashableLocation: TypeAlias = FrozenSet[Tuple[str, float]]
+
+
 class BaseIFilter(BaseFilter):
     """Interpolatable variant that zips through mutliple glyphs at a time."""
 
@@ -394,3 +397,62 @@ class BaseIFilter(BaseFilter):
             return self.context.instantiator.interpolated_layers
         else:
             return [None] * len(self.context.glyphSets)
+
+    @staticmethod
+    def hashableLocation(location: dict[str, float]) -> HashableLocation:
+        """Convert (normalized) location dict to a hashable set of tuples."""
+        return frozenset((k, v) for k, v in location.items() if v != 0.0)
+
+    def glyphSourceLocations(self, glyphName) -> set[HashableLocation]:
+        """Return locations of all the sources that have a glyph."""
+        assert self.context.instantiator is not None
+        return {
+            self.hashableLocation(location)
+            for glyphSet, location in zip_strict(
+                self.context.glyphSets, self.context.instantiator.source_locations
+            )
+            if glyphName in glyphSet
+        }
+
+    def locationsFromComponentGlyphs(
+        self,
+        glyphName: str,
+        include: set[str] | None = None,
+    ) -> set[HashableLocation]:
+        """Return locations from all the components' base glyphs, recursively."""
+        assert self.context.instantiator is not None
+        locations = set()
+        for glyphSet in self.context.glyphSets:
+            if glyphName in glyphSet:
+                glyph = glyphSet[glyphName]
+                for component in glyph.components:
+                    if include is None or component.baseGlyph in include:
+                        locations |= self.glyphSourceLocations(component.baseGlyph)
+                        locations |= self.locationsFromComponentGlyphs(
+                            component.baseGlyph, include
+                        )
+        return locations
+
+    def ensureCompositeDefinedAtComponentLocations(
+        self,
+        glyphName: str,
+        include: set[str] | None = None,
+    ):
+        """Ensure the composite glyph is defined at all its components' locations.
+
+        The Instantiator is used to interpolate the glyph at the missing locations.
+        If we have no Instantiator, we can't interpolate so this does nothing.
+        """
+        if self.context.instantiator is None:
+            return
+
+        haveLocations = self.glyphSourceLocations(glyphName)
+        needLocations = self.locationsFromComponentGlyphs(glyphName, include)
+        locationsToAdd = needLocations - haveLocations
+        if locationsToAdd:
+            for glyphSet, interpolatedLayer in zip_strict(
+                self.context.glyphSets, self.context.instantiator.interpolated_layers
+            ):
+                if self.hashableLocation(interpolatedLayer.location) in locationsToAdd:
+                    assert glyphName not in glyphSet
+                    glyphSet[glyphName] = interpolatedLayer[glyphName]
