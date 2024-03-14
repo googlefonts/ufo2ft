@@ -33,7 +33,7 @@ from __future__ import annotations
 import copy
 import logging
 import typing
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -51,12 +51,17 @@ import fontMath
 import fontTools.misc.fixedTools
 from fontTools import designspaceLib, varLib
 
-from ufo2ft.util import _getNewGlyphFactory, importUfoModule, openFontFactory
+from ufo2ft.util import (
+    _getNewGlyphFactory,
+    importUfoModule,
+    openFontFactory,
+    zip_strict,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, KeysView
 
-    from ufoLib2.objects import Font, Glyph, Info, Layer
+    from ufoLib2.objects import Font, Glyph, Info
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +212,7 @@ class Instantiator:
     round_geometry: bool
     skip_export_glyphs: List[str]
     special_axes: Mapping[str, designspaceLib.AxisDescriptor]
-    source_layers: List[Tuple[Location, Layer]]
+    source_layers: List[Tuple[Location, Dict[str, Glyph]]]
     default_source_idx: int
     glyph_factory: Optional[Callable[[str], Glyph]]  # create new ufoLib/defcon Glyph
 
@@ -399,7 +404,7 @@ class Instantiator:
     def source_locations(self) -> Iterable[Location]:
         return (loc for loc, _ in self.source_layers)
 
-    def normalize(self, location):
+    def normalize(self, location: Location) -> Location:
         return varLib.models.normalizeLocation(location, self.axis_bounds)
 
     def generate_instance(self, instance: designspaceLib.InstanceDescriptor) -> Font:
@@ -489,13 +494,16 @@ class Instantiator:
 
         return font
 
-    def new_glyph(self, name):
+    def new_glyph(self, name: str) -> Glyph:
         assert self.glyph_factory is not None
         return self.glyph_factory(name=name)
 
     def generate_glyph_instance(
-        self, glyph_name, normalized_location, output_glyph=None
-    ):
+        self,
+        glyph_name: str,
+        normalized_location: Location,
+        output_glyph: Glyph | None = None,
+    ) -> Glyph:
         """Generate an instance of a single glyph at the given location.
 
         The location must be pecified using normalized coordinates.
@@ -606,6 +614,27 @@ class Instantiator:
             font.info.italicAngle = italic_angle_from_slnt_value(
                 slant_axis.map_backward(location[slant_axis.name])
             )
+
+    @property
+    def interpolated_layers(self) -> list[InterpolatedLayer]:
+        """Return one InterpolatedLayer for each source location."""
+        return [
+            InterpolatedLayer(self, loc, source_layer)
+            for loc, source_layer in self.source_layers
+        ]
+
+    def replace_source_layers(self, new_layers: list[dict[str, Glyph]]):
+        """Replace source layers with `new_layers` and clear the cached glyph models.
+
+        Raises `ValueError` if len(new_layers) != len(self.source_layers).
+        """
+        self.source_layers[:] = [
+            (loc, new_glyphs)
+            for (loc, _), new_glyphs in zip_strict(self.source_layers, new_layers)
+        ]
+        # this forces to reload the glyph variation models when an instance is requested
+        self.glyph_mutators.clear()
+        self.glyph_mutators.update((gn, None) for gn in self.glyph_names)
 
 
 def _error_msg_no_default(designspace: designspaceLib.DesignSpaceDocument) -> str:
@@ -907,3 +936,53 @@ class Variator:
             return copy.deepcopy(self.location_to_master[normalized_location_key])
 
         return self.model.interpolateFromMasters(normalized_location, self.masters)
+
+
+@dataclass(frozen=True, repr=False)
+class InterpolatedLayer(Mapping):
+    """Mapping of glyphs keyed by name, interpolated on demand.
+
+    If the given location corresponds to one of the source layers, and the
+    latter contains the glyph, this is used directly; otherwise, a new glyph
+    instance is generated on-the-fly at that location, and cached for subsequent
+    retrieval.
+
+    This is useful for APIs that expect a dict of glyphs for resolving component
+    references, e.g. FontTools pens.
+    """
+
+    instantiator: Instantiator
+    # axis coordinates for this layer (already normalized!)
+    location: Location
+    # source ufoLib2/defcon Layer (None if location isn't among the source locations)
+    source_layer: dict[str, Glyph] | None = None
+    _cache: dict[str, Glyph] = field(default_factory=dict)
+
+    def __iter__(self) -> Iterable[str]:
+        return iter(self.instantiator.glyph_names)
+
+    def __len__(self) -> int:
+        return len(self.instantiator.glyph_names)
+
+    def __getitem__(self, glyph_name: str) -> Glyph:
+        try:
+            return self._cache.setdefault(
+                glyph_name, self._get(glyph_name) or self._interpolate(glyph_name)
+            )
+        except InstantiatorError as e:
+            raise KeyError(glyph_name) from e
+
+    def __repr__(self):
+        return (
+            f"<{self.__class__.__name__} {self.location} "
+            f"({len(self)} glyphs) at 0x{id(self):12x}>"
+        )
+
+    def _get(self, glyph_name: str) -> Glyph | None:
+        glyph = None
+        if self.source_layer is not None:
+            glyph = self.source_layer.get(glyph_name)
+        return glyph
+
+    def _interpolate(self, glyph_name: str) -> Glyph:
+        return self.instantiator.generate_glyph_instance(glyph_name, self.location)
