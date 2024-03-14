@@ -14,7 +14,7 @@ from .decomposeTransformedComponents import (
 )
 from .dottedCircle import DottedCircleFilter
 from .explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
-from .flattenComponents import FlattenComponentsFilter
+from .flattenComponents import FlattenComponentsFilter, FlattenComponentsIFilter
 from .propagateAnchors import PropagateAnchorsFilter
 from .removeOverlaps import RemoveOverlapsFilter
 from .reverseContourDirection import ReverseContourDirectionFilter
@@ -33,6 +33,7 @@ __all__ = [
     "DottedCircleFilter",
     "ExplodeColorLayerGlyphsFilter",
     "FlattenComponentsFilter",
+    "FlattenComponentsIFilter",
     "PropagateAnchorsFilter",
     "RemoveOverlapsFilter",
     "ReverseContourDirectionFilter",
