@@ -28,18 +28,35 @@ The aim is to be a minimal implementation that is focussed on using ufoLib2 for 
 abstraction, varLib for instance computation and fontMath as a font data shell for
 instance computation directly and exclusively.
 """
+from __future__ import annotations
 
 import copy
 import logging
 import typing
-from typing import Any, Dict, List, Mapping, Set, Tuple, Union
+from dataclasses import dataclass
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
-import attr
 import fontMath
-import fontTools.designspaceLib as designspaceLib
 import fontTools.misc.fixedTools
-import fontTools.varLib as varLib
-import ufoLib2
+from fontTools import designspaceLib, varLib
+
+from ufo2ft.util import _getNewGlyphFactory, importUfoModule, openFontFactory
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, KeysView
+
+    from ufoLib2.objects import Font, Glyph, Info, Layer
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +188,7 @@ def process_rules_swaps(rules, location, glyphNames):
     return swaps
 
 
-@attr.s(auto_attribs=True, frozen=True, slots=True)
+@dataclass(frozen=True)
 class Instantiator:
     """Data class that holds all necessary information to generate a static
     font instance object at an arbitary location within the design space."""
@@ -179,23 +196,29 @@ class Instantiator:
     axis_bounds: AxisBounds  # Design space!
     copy_feature_text: str
     copy_nonkerning_groups: Mapping[str, List[str]]
-    copy_info: ufoLib2.objects.Info
+    copy_info: Optional[Info]
     copy_lib: Mapping[str, Any]
     default_design_location: Location
     designspace_rules: List[designspaceLib.RuleDescriptor]
-    glyph_mutators: Mapping[str, "Variator"]
+    glyph_mutators: Mapping[str, Optional["Variator"]]
     glyph_name_to_unicodes: Dict[str, List[int]]
-    info_mutator: "Variator"
-    kerning_mutator: "Variator"
+    info_mutator: Optional["Variator"]
+    kerning_mutator: Optional["Variator"]
     round_geometry: bool
     skip_export_glyphs: List[str]
     special_axes: Mapping[str, designspaceLib.AxisDescriptor]
+    source_layers: List[Tuple[Location, Layer]]
+    default_source_idx: int
+    glyph_factory: Optional[Callable[[str], Glyph]]  # create new ufoLib/defcon Glyph
 
     @classmethod
     def from_designspace(
         cls,
         designspace: designspaceLib.DesignSpaceDocument,
         round_geometry: bool = True,
+        do_info=True,
+        do_kerning=True,
+        do_glyphs=True,
     ):
         """Instantiates a new data class from a Designspace object."""
         if designspace.default is None:
@@ -216,16 +239,14 @@ class Instantiator:
                 "use MutatorMath instead."
             )
 
-        designspace.loadSourceFonts(ufoLib2.Font.open)
+        designspace.loadSourceFonts(openFontFactory())
 
         # The default font (default layer) determines which glyphs are interpolated,
         # because the math behind varLib and MutatorMath uses the default font as the
         # point of reference for all data.
         default_font = designspace.default.font
+        default_layer = default_font.layers.defaultLayer
         non_default_layer_name = designspace.default.layerName
-
-        glyph_names: Set[str] = set(default_font.keys())
-
         if non_default_layer_name is not None:
             try:
                 layer = default_font.layers[non_default_layer_name]
@@ -234,10 +255,10 @@ class Instantiator:
                     f"Layer {non_default_layer_name!r} not found "
                     f"in {designspace.default.filename}"
                 ) from e
-            layer = default_font.layers[non_default_layer_name]
-            glyph_names = layer.keys()
+            default_layer = default_font.layers[non_default_layer_name]
             logger.info(f"Building from layer {layer.name}")
 
+        glyph_names: Set[str] = set(default_layer.keys())
         for source in designspace.sources:
             other_names = set(source.font.keys())
             diff_names = other_names - glyph_names
@@ -278,43 +299,67 @@ class Instantiator:
             if axis.tag in {"wght", "wdth", "slnt"}:
                 special_axes[axis.tag] = axis
 
-        masters_info = collect_info_masters(designspace, axis_bounds)
-        try:
-            info_mutator = Variator.from_masters(masters_info, axis_order)
-        except varLib.errors.VarLibError as e:
-            raise InstantiatorError(
-                f"Cannot set up fontinfo for interpolation: {e}'"
-            ) from e
+        info_mutator = None
+        if do_info:
+            masters_info = collect_info_masters(designspace, axis_bounds)
+            try:
+                info_mutator = Variator.from_masters(masters_info, axis_order)
+            except varLib.errors.VarLibError as e:
+                raise InstantiatorError(
+                    f"Cannot set up fontinfo for interpolation: {e}'"
+                ) from e
 
-        masters_kerning = collect_kerning_masters(designspace, axis_bounds)
-        try:
-            kerning_mutator = Variator.from_masters(masters_kerning, axis_order)
-        except varLib.errors.VarLibError as e:
-            raise InstantiatorError(
-                f"Cannot set up kerning for interpolation: {e}'"
-            ) from e
+        kerning_mutator = None
+        if do_kerning:
+            masters_kerning = collect_kerning_masters(designspace, axis_bounds)
+            try:
+                kerning_mutator = Variator.from_masters(masters_kerning, axis_order)
+            except varLib.errors.VarLibError as e:
+                raise InstantiatorError(
+                    f"Cannot set up kerning for interpolation: {e}'"
+                ) from e
 
         glyph_mutators: Dict[str, Variator] = {}
         glyph_name_to_unicodes: Dict[str, List[int]] = {}
-        for glyph_name in glyph_names:
-            items = collect_glyph_masters(designspace, glyph_name, axis_bounds)
-            try:
-                glyph_mutators[glyph_name] = Variator.from_masters(items, axis_order)
-            except varLib.errors.VarLibError as e:
-                raise InstantiatorError(
-                    f"Cannot set up glyph {glyph_name} for interpolation: {e}'"
-                ) from e
-            glyph_name_to_unicodes[glyph_name] = default_font[glyph_name].unicodes
+        source_layers = []
+        default_source_idx = -1
+        glyph_factory = None
+        if do_glyphs:
+            for glyph_name in glyph_names:
+                # these will be loaded later on-demand
+                glyph_mutators[glyph_name] = None
+                glyph_name_to_unicodes[glyph_name] = default_font[glyph_name].unicodes
+            # collect (normalized location, source layer) tuples
+            for i, source in enumerate(designspace.sources):
+                if source.layerName is None:
+                    layer = source.font.layers.defaultLayer
+                else:
+                    layer = source.font.layers[source.layerName]
+                if glyph_factory is None and len(layer) > 0:
+                    glyph_factory = _getNewGlyphFactory(next(iter(layer)))
+                normalized_location = varLib.models.normalizeLocation(
+                    source.location, axis_bounds
+                )
+                if source is designspace.default:
+                    assert all(v == 0.0 for v in normalized_location.values())
+                    default_source_idx = i
+                source_layers.append((normalized_location, {g.name: g for g in layer}))
+            assert default_source_idx != -1
 
         # Construct defaults to copy over
-        copy_feature_text: str = default_font.features.text
-        copy_nonkerning_groups: Mapping[str, List[str]] = {
-            key: glyph_names
-            for key, glyph_names in default_font.groups.items()
-            if not key.startswith(("public.kern1.", "public.kern2."))
-        }  # Kerning groups are taken care of by the kerning Variator.
-        copy_info: ufoLib2.objects.Info = default_font.info
-        copy_lib: Mapping[str, Any] = default_font.lib
+        copy_feature_text: str = default_font.features.text if do_info else ""
+        # Kerning groups are taken care of by the kerning Variator.
+        copy_nonkerning_groups: Mapping[str, List[str]] = (
+            {
+                key: glyph_names
+                for key, glyph_names in default_font.groups.items()
+                if not key.startswith(("public.kern1.", "public.kern2."))
+            }
+            if do_info
+            else {}
+        )
+        copy_info: Optional[Info] = default_font.info if do_info else None
+        copy_lib: Mapping[str, Any] = default_font.lib if do_info else {}
 
         # The list of glyphs-not-to-export-and-decompose-where-used-as-a-component is
         # supposed to be taken from the Designspace when a Designspace is used as the
@@ -337,11 +382,27 @@ class Instantiator:
             round_geometry,
             skip_export_glyphs,
             special_axes,
+            source_layers,
+            default_source_idx,
+            glyph_factory,
         )
 
-    def generate_instance(
-        self, instance: designspaceLib.InstanceDescriptor
-    ) -> ufoLib2.Font:
+    @property
+    def default_source_glyphs(self) -> Dict[str, Glyph]:
+        return self.source_layers[self.default_source_idx][1]
+
+    @property
+    def glyph_names(self) -> KeysView[str]:
+        return self.default_source_glyphs.keys()
+
+    @property
+    def source_locations(self) -> Iterable[Location]:
+        return (loc for loc, _ in self.source_layers)
+
+    def normalize(self, location):
+        return varLib.models.normalizeLocation(location, self.axis_bounds)
+
+    def generate_instance(self, instance: designspaceLib.InstanceDescriptor) -> Font:
         """Generate an interpolated instance font object for an
         InstanceDescriptor."""
         if anisotropic(instance.location):
@@ -351,23 +412,24 @@ class Instantiator:
                 f"{instance.location} not supported by varLib."
             )
 
-        font = ufoLib2.Font()
+        ufo_module = importUfoModule()
+        font = ufo_module.Font()
 
         # Instances may leave out locations that match the default source, so merge
         # default location with the instance's location.
         location = {**self.default_design_location, **instance.location}
-        location_normalized = varLib.models.normalizeLocation(
-            location, self.axis_bounds
-        )
+        location_normalized = self.normalize(location)
 
         # Kerning
-        kerning_instance = self.kerning_mutator.instance_at(location_normalized)
-        if self.round_geometry:
-            kerning_instance.round()
-        kerning_instance.extractKerning(font)
+        if self.kerning_mutator:
+            kerning_instance = self.kerning_mutator.instance_at(location_normalized)
+            if self.round_geometry:
+                kerning_instance.round()
+            kerning_instance.extractKerning(font)
 
         # Info
-        self._generate_instance_info(instance, location_normalized, location, font)
+        if self.info_mutator:
+            self._generate_instance_info(instance, location_normalized, location, font)
 
         # Non-kerning groups. Kerning groups have been taken care of by the kerning
         # instance.
@@ -387,18 +449,13 @@ class Instantiator:
         font.lib["designspace.location"] = [loc for loc in location.items()]
 
         # Glyphs
-        for glyph_name, glyph_mutator in self.glyph_mutators.items():
+        for glyph_name in self.glyph_names:
             glyph = font.newGlyph(glyph_name)
 
             try:
-                glyph_instance = glyph_mutator.instance_at(location_normalized)
-
-                if self.round_geometry:
-                    glyph_instance = glyph_instance.round()
-
-                # onlyGeometry=True does not set name and unicodes, in ufoLib2 we can't
-                # modify a glyph's name. Copy unicodes from default font.
-                glyph_instance.extractGlyph(glyph, onlyGeometry=True)
+                self.generate_glyph_instance(
+                    glyph_name, location_normalized, output_glyph=glyph
+                )
             except Exception as e:
                 # TODO: Figure out what exceptions fontMath/varLib can throw.
                 # By default, explode if we cannot generate a glyph instance for
@@ -422,30 +479,80 @@ class Instantiator:
                     e,
                 )
 
-            glyph.unicodes = [uv for uv in self.glyph_name_to_unicodes[glyph_name]]
-
         # Process rules
-        glyph_names_list = self.glyph_mutators.keys()
         # The order of the swaps below is independent of the order of glyph names.
         # It depends on the order of the <sub>s in the designspace rules.
-        swaps = process_rules_swaps(self.designspace_rules, location, glyph_names_list)
+        swaps = process_rules_swaps(self.designspace_rules, location, self.glyph_names)
         for name_old, name_new in swaps:
             if name_old != name_new:
                 swap_glyph_names(font, name_old, name_new)
 
         return font
 
+    def new_glyph(self, name):
+        assert self.glyph_factory is not None
+        return self.glyph_factory(name=name)
+
+    def generate_glyph_instance(
+        self, glyph_name, normalized_location, output_glyph=None
+    ):
+        """Generate an instance of a single glyph at the given location.
+
+        The location must be pecified using normalized coordinates.
+        If output_glyph is None, the instance is generated in a new Glyph object
+        and returned. Otherwise, the instance is extracted to the given Glyph object.
+        """
+        try:
+            glyph_mutator = self.glyph_mutators[glyph_name]
+        except KeyError as e:
+            raise InstantiatorError(
+                f"Failed to generate instance for glyph {glyph_name!r}: "
+                f"not found in the default source."
+            ) from e
+        if glyph_mutator is None:
+            sources = collect_glyph_masters(
+                self.source_layers,
+                glyph_name,
+                self.axis_bounds,
+                self.default_source_idx,
+            )
+            try:
+                glyph_mutator = self.glyph_mutators[glyph_name] = Variator.from_masters(
+                    sources, axis_order=list(self.axis_bounds)
+                )
+            except varLib.errors.VarLibError as e:
+                raise InstantiatorError(
+                    f"Cannot set up glyph {glyph_name} for interpolation: {e}'"
+                ) from e
+
+        glyph_instance = glyph_mutator.instance_at(normalized_location)
+
+        if self.round_geometry:
+            glyph_instance = glyph_instance.round()
+
+        if output_glyph is None:
+            output_glyph = self.new_glyph(glyph_name)
+
+        # onlyGeometry=True does not set name and unicodes, in ufoLib2 we can't
+        # modify a glyph's name. Copy unicodes from default font.
+        glyph_instance.extractGlyph(output_glyph, onlyGeometry=True)
+        output_glyph.unicodes = list(self.glyph_name_to_unicodes[glyph_name])
+
+        return output_glyph
+
     def _generate_instance_info(
         self,
         instance: designspaceLib.InstanceDescriptor,
         location_normalized: Location,
         location: Location,
-        font: ufoLib2.Font,
+        font: Font,
     ) -> None:
         """Generate fontinfo related attributes.
 
         Separate, as fontinfo treatment is more extensive than the rest.
         """
+        assert self.info_mutator is not None
+        assert self.copy_info is not None
         info_instance = self.info_mutator.instance_at(location_normalized)
         if self.round_geometry:
             info_instance = info_instance.round()
@@ -591,9 +698,10 @@ def collect_kerning_masters(
 
 
 def collect_glyph_masters(
-    designspace: designspaceLib.DesignSpaceDocument,
+    source_layers: List[Tuple[Location, Dict[str, Glyph]]],
     glyph_name: str,
     axis_bounds: AxisBounds,
+    default_source_idx: int,
 ) -> List[Tuple[Location, FontMathObject]]:
     """Return master glyph objects for glyph_name wrapped by MathGlyph.
 
@@ -606,27 +714,19 @@ def collect_glyph_masters(
     default_glyph_empty = False
     other_glyph_empty = False
 
-    for source in designspace.sources:
-        if source.layerName is None:  # Source font.
-            source_layer = source.font.layers.defaultLayer
-        else:  # Source layer.
-            source_layer = source.font.layers[source.layerName]
-
+    for i, (normalized_location, source_layer) in enumerate(source_layers):
         # Sparse fonts do not and layers may not contain every glyph.
         if glyph_name not in source_layer:
             continue
 
         source_glyph = source_layer[glyph_name]
 
-        if not (source_glyph.contours or source_glyph.components):
-            if source is designspace.findDefault():
+        if not (len(source_glyph) or source_glyph.components):
+            if i == default_source_idx:
                 default_glyph_empty = True
             else:
                 other_glyph_empty = True
 
-        normalized_location = varLib.models.normalizeLocation(
-            source.location, axis_bounds
-        )
         locations_and_masters.append(
             (normalized_location, fontMath.MathGlyph(source_glyph, strict=True))
         )
@@ -674,7 +774,7 @@ def italic_angle_from_slnt_value(slnt_user_value) -> Union[int, float]:
     return slant_user_value
 
 
-def swap_glyph_names(font: ufoLib2.Font, name_old: str, name_new: str):
+def swap_glyph_names(font: Any, name_old: str, name_new: str):
     """Swap two existing glyphs in the default layer of a font (outlines,
     width, component references, kerning references, group membership).
 
@@ -696,9 +796,9 @@ def swap_glyph_names(font: ufoLib2.Font, name_old: str, name_new: str):
         )
 
     # 1. Swap outlines and glyph width. Ignore lib content and other properties.
-    glyph_swap = ufoLib2.objects.Glyph(name="temporary_swap_glyph")
     glyph_old = font[name_old]
     glyph_new = font[name_new]
+    glyph_swap = _getNewGlyphFactory(glyph_old)(name="temporary_swap_glyph")
 
     p = glyph_swap.getPointPen()
     glyph_old.drawPoints(p)
@@ -717,9 +817,9 @@ def swap_glyph_names(font: ufoLib2.Font, name_old: str, name_new: str):
     glyph_new.width = glyph_swap.width
 
     # 2. Swap anchors.
-    glyph_swap.anchors = glyph_old.anchors
-    glyph_old.anchors = glyph_new.anchors
-    glyph_new.anchors = glyph_swap.anchors
+    glyph_swap.anchors = [dict(a) for a in glyph_old.anchors]
+    glyph_old.anchors = [dict(a) for a in glyph_new.anchors]
+    glyph_new.anchors = [dict(a) for a in glyph_swap.anchors]
 
     # 3. Remap components.
     for g in font:
@@ -742,7 +842,8 @@ def swap_glyph_names(font: ufoLib2.Font, name_old: str, name_new: str):
         elif second == name_new:
             second = name_old
         kerning_new[(first, second)] = value
-    font.kerning = kerning_new
+    font.kerning.clear()
+    font.kerning.update(kerning_new)
 
     # 5. Swap names in groups.
     for group_name, group_members in font.groups.items():
@@ -757,7 +858,7 @@ def swap_glyph_names(font: ufoLib2.Font, name_old: str, name_new: str):
         font.groups[group_name] = group_members_new
 
 
-@attr.s(auto_attribs=True, frozen=True, slots=True)
+@dataclass(frozen=True)
 class Variator:
     """A middle-man class that ingests a mapping of normalized locations to
     masters plus axis definitions and uses varLib to spit out interpolated
