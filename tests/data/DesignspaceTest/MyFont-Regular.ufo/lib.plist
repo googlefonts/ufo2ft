@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>blorb</key>
+    <string>asasa</string>
+    <key>designspace.location</key>
+    <array>
+      <array>
+        <string>weight</string>
+        <real>100.0</real>
+      </array>
+    </array>
+    <key>public.skipExportGlyphs</key>
+    <array/>
+  </dict>
+</plist>

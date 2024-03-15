@@ -32,6 +32,7 @@ setup(
         "fonttools[ufo]>=4.49.0",
         "cffsubr>=0.3.0",
         "booleanOperations>=0.9.0",
+        "fontMath>=0.9.3",
     ],
     extras_require={
         "pathops": ["skia-pathops>=0.8.0"],

@@ -3,7 +3,9 @@ from __future__ import annotations
 import importlib
 import logging
 import re
+import sys
 from copy import deepcopy
+from functools import partial
 from inspect import currentframe, getfullargspec
 from typing import Any, Mapping, NamedTuple, Set
 
@@ -764,3 +766,70 @@ class OpenTypeCategories(NamedTuple):
             frozenset(marks),
             frozenset(components),
         )
+
+
+def importUfoModule():
+    try:
+        import ufoLib2
+    except ModuleNotFoundError:
+        try:
+            import defcon
+        except ModuleNotFoundError:
+            raise
+        else:
+            return defcon
+    else:
+        return ufoLib2
+
+
+def openFontFactory(*, ufo_module=None):
+    if ufo_module is None:
+        ufo_module = importUfoModule()
+
+    if hasattr(ufo_module.Font, "open"):
+
+        def ctor(path=None):
+            if path is None:
+                return ufo_module.Font()
+            else:
+                return ufo_module.Font.open(path)
+
+        return ctor
+    return ufo_module.Font
+
+
+def openFont(*args, ufo_module=None, **kwargs):
+    return openFontFactory(ufo_module=ufo_module)(*args, **kwargs)
+
+
+# zip(strict=True) was added with Python 3.10, we provide a backport below
+# https://docs.python.org/3/library/functions.html#zip
+if sys.version_info[:2] < (3, 10):
+
+    def zip_strict(*iterables):
+        # https://peps.python.org/pep-0618/#reference-implementation
+        if not iterables:
+            return
+        iterators = tuple(iter(iterable) for iterable in iterables)
+        try:
+            while True:
+                items = []
+                for iterator in iterators:
+                    items.append(next(iterator))
+                yield tuple(items)
+        except StopIteration:
+            pass
+        if items:
+            i = len(items)
+            plural = " " if i == 1 else "s 1-"
+            msg = f"zip() argument {i + 1} is shorter than argument{plural}{i}"
+            raise ValueError(msg)
+        sentinel = object()
+        for i, iterator in enumerate(iterators[1:], 1):
+            if next(iterator, sentinel) is not sentinel:
+                plural = " " if i == 1 else "s 1-"
+                msg = f"zip() argument {i + 1} is longer than argument{plural}{i}"
+                raise ValueError(msg)
+
+else:
+    zip_strict = partial(zip, strict=True)

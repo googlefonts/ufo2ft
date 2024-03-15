@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import py
 import pytest
@@ -32,6 +33,11 @@ def InfoClass(ufo_module):
 @pytest.fixture
 def datadir():
     return py.path.local(py.path.local(__file__).dirname).join("data")
+
+
+@pytest.fixture(scope="session")
+def data_dir():
+    return Path(__file__).parent / "data"
 
 
 def getpath(filename):
