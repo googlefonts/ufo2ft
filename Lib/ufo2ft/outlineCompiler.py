@@ -50,6 +50,7 @@ from ufo2ft.fontInfoData import (
 from ufo2ft.instructionCompiler import InstructionCompiler
 from ufo2ft.util import (
     _copyGlyph,
+    _getNewGlyphFactory,
     calcCodePageRanges,
     colrClipBoxQuantization,
     getMaxComponentDepth,
@@ -115,11 +116,16 @@ class BaseOutlineCompiler:
         colrAutoClipBoxes=True,
         colrClipBoxQuantization=colrClipBoxQuantization,
         ftConfig=None,
+        *,
+        compilingVFDefaultSource=True,
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
         if glyphSet is None:
             glyphSet = {g.name: g for g in font}
+        # this is set to False by Interpolatable{O,T}TFCompiler when building a VF's
+        # non-default masters. E.g. it's used by makeMissingRequiredGlyphs method below.
+        self.compilingVFDefaultSource = compilingVFDefaultSource
         self.makeMissingRequiredGlyphs(font, glyphSet, self.sfntVersion, notdefGlyph)
         self.allGlyphs = glyphSet
         # store the glyph order
@@ -259,8 +265,7 @@ class BaseOutlineCompiler:
         """
         return makeUnicodeToGlyphNameMapping(self.allGlyphs, self.glyphOrder)
 
-    @staticmethod
-    def makeMissingRequiredGlyphs(font, glyphSet, sfntVersion, notdefGlyph=None):
+    def makeMissingRequiredGlyphs(self, font, glyphSet, sfntVersion, notdefGlyph=None):
         """
         Add .notdef to the glyph set if it is not present.
 
@@ -289,6 +294,10 @@ class BaseOutlineCompiler:
             )
 
         glyphSet[".notdef"] = notdefGlyph
+
+    def glyphFactory(self):
+        layer = self.ufo.layers.defaultLayer
+        return _getNewGlyphFactory(layer.instantiateGlyphObject())
 
     def makeOfficialGlyphOrder(self, glyphOrder):
         """
@@ -1288,6 +1297,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         colrAutoClipBoxes=True,
         colrClipBoxQuantization=colrClipBoxQuantization,
         ftConfig=None,
+        *,
+        compilingVFDefaultSource=True,
     ):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
@@ -1304,6 +1315,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             colrAutoClipBoxes=colrAutoClipBoxes,
             colrClipBoxQuantization=colrClipBoxQuantization,
             ftConfig=ftConfig,
+            compilingVFDefaultSource=compilingVFDefaultSource,
         )
         if not isinstance(optimizeCFF, bool):
             optimizeCFF = optimizeCFF >= CFFOptimization.SPECIALIZE
@@ -1628,6 +1640,8 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         roundCoordinates=True,
         glyphDataFormat=0,
         ftConfig=None,
+        *,
+        compilingVFDefaultSource=True,
     ):
         super().__init__(
             font,
@@ -1639,11 +1653,40 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
             colrAutoClipBoxes=colrAutoClipBoxes,
             colrClipBoxQuantization=colrClipBoxQuantization,
             ftConfig=ftConfig,
+            compilingVFDefaultSource=compilingVFDefaultSource,
         )
         self.autoUseMyMetrics = autoUseMyMetrics
         self.dropImpliedOnCurves = dropImpliedOnCurves
         self.roundCoordinates = roundCoordinates
         self.glyphDataFormat = glyphDataFormat
+
+    def makeMissingRequiredGlyphs(self, font, glyphSet, sfntVersion, notdefGlyph=None):
+        """
+        Add .notdef to the glyph set if it is not present.
+
+        When compiling non-default interpolatable master TTFs used to build a VF,
+        if any 'sparse' composite glyphs reference missing components, we add empty base
+        glyphs so that the master TTFs' glyf table will keep the composites; varLib will
+        ignores these empty glyphs when building variations.
+        """
+        super().makeMissingRequiredGlyphs(font, glyphSet, sfntVersion, notdefGlyph)
+
+        if not self.compilingVFDefaultSource:
+            newGlyph = self.glyphFactory()
+            for glyphName in list(glyphSet.keys()):
+                glyph = glyphSet[glyphName]
+                for comp in glyph.components:
+                    if comp.baseGlyph not in glyphSet:
+                        logger.info(
+                            "Added missing '%s' component base glyph, referenced from '%s'",
+                            comp.baseGlyph,
+                            glyphName,
+                        )
+                        # use sentinel value for width/height to signal varLib this glyph
+                        # doesn't participate in {H,V}VAR glyph metrics variations
+                        glyphSet[comp.baseGlyph] = newGlyph(
+                            comp.baseGlyph, width=0xFFFF, height=0xFFFF
+                        )
 
     def compileGlyphs(self):
         """Compile and return the TrueType glyphs for this font."""
