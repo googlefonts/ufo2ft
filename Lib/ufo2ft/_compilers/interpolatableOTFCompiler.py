@@ -1,4 +1,3 @@
-import dataclasses
 from dataclasses import dataclass
 from typing import Optional, Type
 
@@ -6,57 +5,28 @@ from fontTools import varLib
 
 from ufo2ft.constants import SPARSE_OTF_MASTER_TABLES, CFFOptimization
 from ufo2ft.outlineCompiler import OutlineOTFCompiler
-from ufo2ft.preProcessor import OTFPreProcessor
+from ufo2ft.preProcessor import OTFInterpolatablePreProcessor
 from ufo2ft.util import prune_unknown_kwargs
 
 from .baseCompiler import BaseInterpolatableCompiler
-from .otfCompiler import OTFCompiler
 
 
-# We want the designspace handling of BaseInterpolatableCompiler but
-# we also need to pick up the OTF-specific compileOutlines/postprocess
-# methods from OTFCompiler.
 @dataclass
-class InterpolatableOTFCompiler(OTFCompiler, BaseInterpolatableCompiler):
-    preProcessorClass: Type = OTFPreProcessor
+class InterpolatableOTFCompiler(BaseInterpolatableCompiler):
+    preProcessorClass: Type = OTFInterpolatablePreProcessor
     outlineCompilerClass: Type = OutlineOTFCompiler
-    featureCompilerClass: Optional[Type] = None
     roundTolerance: Optional[float] = None
     optimizeCFF: CFFOptimization = CFFOptimization.NONE
     colrLayerReuse: bool = False
     colrAutoClipBoxes: bool = False
-    extraSubstitutions: Optional[dict] = None
     skipFeatureCompilation: bool = False
-    excludeVariationTables: tuple = ()
 
-    # We can't use the same compile method as interpolatableTTFCompiler
-    # because that has a TTFInterpolatablePreProcessor which preprocesses
-    # all UFOs together, whereas we need to do the preprocessing one at
-    # at a time.
-    def compile(self, ufos):
-        otfs = []
-        for ufo, layerName in zip(ufos, self.layerNames):
-            # There's a Python bug where dataclasses.asdict() doesn't work with
-            # dataclasses that contain a defaultdict.
-            save_extraSubstitutions = self.extraSubstitutions
-            self.extraSubstitutions = None
-            args = {
-                **dataclasses.asdict(self),
-                **dict(
-                    layerName=layerName,
-                    removeOverlaps=False,
-                    overlapsBackend=None,
-                    optimizeCFF=CFFOptimization.NONE,
-                    _tables=SPARSE_OTF_MASTER_TABLES if layerName else None,
-                ),
-            }
-            # Remove interpolatable-specific args
-            args = prune_unknown_kwargs(args, OTFCompiler)
-            compiler = OTFCompiler(**args)
-            self.extraSubstitutions = save_extraSubstitutions
-            otfs.append(compiler.compile(ufo))
-            self.glyphSets.append(compiler._glyphSet)
-        return otfs
+    def compileOutlines(self, ufo, glyphSet, layerName=None):
+        kwargs = prune_unknown_kwargs(self.__dict__, self.outlineCompilerClass)
+        kwargs["tables"] = SPARSE_OTF_MASTER_TABLES if layerName is not None else None
+        kwargs["optimizeCFF"] = CFFOptimization.NONE
+        outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
+        return outlineCompiler.compile()
 
     def _merge(self, designSpaceDoc, excludeVariationTables):
         return varLib.build_many(

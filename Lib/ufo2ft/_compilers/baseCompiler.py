@@ -18,6 +18,7 @@ from ufo2ft.featureCompiler import (
 )
 from ufo2ft.postProcessor import PostProcessor
 from ufo2ft.util import (
+    _LazyFontName,
     _notdefGlyphFallback,
     colrClipBoxQuantization,
     ensure_all_sources_have_names,
@@ -48,7 +49,6 @@ class BaseCompiler:
     feaIncludeDir: Optional[str] = None
     skipFeatureCompilation: bool = False
     ftConfig: dict = field(default_factory=dict)
-    _tables: Optional[list] = None
 
     def __post_init__(self):
         self.logger = logging.getLogger("ufo2ft")
@@ -93,7 +93,6 @@ class BaseCompiler:
 
     def compileOutlines(self, ufo, glyphSet):
         kwargs = prune_unknown_kwargs(self.__dict__, self.outlineCompilerClass)
-        kwargs["tables"] = self._tables
         outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
         return outlineCompiler.compile()
 
@@ -153,7 +152,6 @@ class BaseCompiler:
 
 @dataclass
 class BaseInterpolatableCompiler(BaseCompiler):
-    variableFontNames: Optional[list] = None
     """Create FontTools TrueType fonts from the DesignSpaceDocument UFO sources
     with interpolatable outlines. Cubic curves are converted compatibly to
     quadratic curves using the Cu2Qu conversion algorithm.
@@ -178,6 +176,51 @@ class BaseInterpolatableCompiler(BaseCompiler):
     object will contain only a minimum set of tables ("head", "hmtx", "glyf", "loca",
     "maxp", "post" and "vmtx"), and no OpenType layout tables.
     """
+
+    extraSubstitutions: Optional[dict] = None
+    variableFontNames: Optional[list] = None
+
+    def compile(self, ufos):
+        if self.layerNames is None:
+            self.layerNames = [None] * len(ufos)
+        assert len(ufos) == len(self.layerNames)
+        self.glyphSets = self.preprocess(ufos)
+
+        for i, (ufo, glyphSet, layerName) in enumerate(
+            zip(ufos, self.glyphSets, self.layerNames)
+        ):
+            yield self.compile_one(ufo, glyphSet, layerName)
+
+    def compile_one(self, ufo, glyphSet, layerName):
+        fontName = _LazyFontName(ufo)
+        if layerName is not None:
+            self.logger.info("Building OpenType tables for %s-%s", fontName, layerName)
+        else:
+            self.logger.info("Building OpenType tables for %s", fontName)
+
+        ttf = self.compileOutlines(ufo, glyphSet, layerName)
+
+        # Only the default layer is likely to have all glyphs used in feature
+        # code.
+        if layerName is None and not self.skipFeatureCompilation:
+            if self.debugFeatureFile:
+                self.debugFeatureFile.write("\n### %s ###\n" % fontName)
+            self.compileFeatures(ufo, ttf, glyphSet=glyphSet)
+
+        ttf = self.postprocess(ttf, ufo, glyphSet)
+
+        if layerName is not None and "post" in ttf:
+            # for sparse masters (i.e. containing only a subset of the glyphs), we
+            # need to include the post table in order to store glyph names, so that
+            # fontTools.varLib can interpolate glyphs with same name across masters.
+            # However we want to prevent the underlinePosition/underlineThickness
+            # fields in such sparse masters to be included when computing the deltas
+            # for the MVAR table. Thus, we set them to this unlikely, limit value
+            # (-36768) which is a signal varLib should ignore them when building MVAR.
+            ttf["post"].underlinePosition = -0x8000
+            ttf["post"].underlineThickness = -0x8000
+
+        return ttf
 
     def compile_designspace(self, designSpaceDoc):
         ufos = self._pre_compile_designspace(designSpaceDoc)

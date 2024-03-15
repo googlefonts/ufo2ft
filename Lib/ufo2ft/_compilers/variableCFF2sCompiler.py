@@ -3,14 +3,14 @@ from typing import Optional, Type
 
 from ufo2ft.constants import CFFOptimization
 from ufo2ft.outlineCompiler import OutlineOTFCompiler
-from ufo2ft.preProcessor import OTFPreProcessor
+from ufo2ft.preProcessor import OTFInterpolatablePreProcessor
 
 from .interpolatableOTFCompiler import InterpolatableOTFCompiler
 
 
 @dataclass
 class VariableCFF2sCompiler(InterpolatableOTFCompiler):
-    preProcessorClass: Type = OTFPreProcessor
+    preProcessorClass: Type = OTFInterpolatablePreProcessor
     outlineCompilerClass: Type = OutlineOTFCompiler
     roundTolerance: Optional[float] = None
     colrAutoClipBoxes: bool = False
