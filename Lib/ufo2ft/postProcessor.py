@@ -10,6 +10,7 @@ from ufo2ft.constants import (
     GLYPHS_DONT_USE_PRODUCTION_NAMES,
     KEEP_GLYPH_NAMES,
     USE_PRODUCTION_NAMES,
+    CFFOptimization,
 )
 
 logger = logging.getLogger(__name__)
@@ -81,8 +82,9 @@ class PostProcessor:
           when this is present if the UFO lib and is set to True, this is
           equivalent to 'useProductionNames' set to False.
 
-        optimizeCFF (bool):
-          Subroubtinize CFF or CFF2 table, if present.
+        optimizeCFF (bool | CFFOptimization):
+          If True or >= CFFOptimization.SUBROUTINIZE, subroubtinize CFF or CFF2 table
+          (if present).
 
         cffVersion (Optiona[int]):
           The output CFF format, choose between 1 or 2. By default, it's the same as
@@ -95,6 +97,8 @@ class PostProcessor:
           NOTE: compreffor currently doesn't support input fonts with CFF2 table.
         """
         if self._get_cff_version(self.otf):
+            if not isinstance(optimizeCFF, bool):
+                optimizeCFF = optimizeCFF >= CFFOptimization.SUBROUTINIZE
             self.process_cff(
                 optimizeCFF=optimizeCFF,
                 cffVersion=cffVersion,

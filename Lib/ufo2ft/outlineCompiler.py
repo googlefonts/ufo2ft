@@ -37,6 +37,7 @@ from ufo2ft.constants import (
     OPENTYPE_META_KEY,
     OPENTYPE_POST_UNDERLINE_POSITION_KEY,
     UNICODE_VARIATION_SEQUENCES_KEY,
+    CFFOptimization,
 )
 from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import (
@@ -1304,6 +1305,8 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             colrClipBoxQuantization=colrClipBoxQuantization,
             ftConfig=ftConfig,
         )
+        if not isinstance(optimizeCFF, bool):
+            optimizeCFF = optimizeCFF >= CFFOptimization.SPECIALIZE
         self.optimizeCFF = optimizeCFF
         self._defaultAndNominalWidths = None
 
