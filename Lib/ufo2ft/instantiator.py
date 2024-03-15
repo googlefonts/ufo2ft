@@ -324,6 +324,7 @@ class Instantiator:
                     f"Cannot set up kerning for interpolation: {e}'"
                 ) from e
 
+        # left empty as the glyph sources will be loaded later on-demand
         glyph_mutators: Dict[str, Variator] = {}
         glyph_name_to_unicodes: Dict[str, List[int]] = {}
         source_layers = []
@@ -331,8 +332,6 @@ class Instantiator:
         glyph_factory = None
         if do_glyphs:
             for glyph_name in glyph_names:
-                # these will be loaded later on-demand
-                glyph_mutators[glyph_name] = None
                 glyph_name_to_unicodes[glyph_name] = default_font[glyph_name].unicodes
             # collect (normalized location, source layer) tuples
             for i, source in enumerate(designspace.sources):
@@ -510,13 +509,7 @@ class Instantiator:
         If output_glyph is None, the instance is generated in a new Glyph object
         and returned. Otherwise, the instance is extracted to the given Glyph object.
         """
-        try:
-            glyph_mutator = self.glyph_mutators[glyph_name]
-        except KeyError as e:
-            raise InstantiatorError(
-                f"Failed to generate instance for glyph {glyph_name!r}: "
-                f"not found in the default source."
-            ) from e
+        glyph_mutator = self.glyph_mutators.get(glyph_name)
         if glyph_mutator is None:
             sources = collect_glyph_masters(
                 self.source_layers,
@@ -634,7 +627,6 @@ class Instantiator:
         ]
         # this forces to reload the glyph variation models when an instance is requested
         self.glyph_mutators.clear()
-        self.glyph_mutators.update((gn, None) for gn in self.glyph_names)
 
 
 def _error_msg_no_default(designspace: designspaceLib.DesignSpaceDocument) -> str:
@@ -744,14 +736,21 @@ def collect_glyph_masters(
     other_glyph_empty = False
 
     for i, (normalized_location, source_layer) in enumerate(source_layers):
-        # Sparse fonts do not and layers may not contain every glyph.
+        this_is_default = i == default_source_idx
         if glyph_name not in source_layer:
-            continue
+            if this_is_default:
+                # Default layer must contain every glyph by definition.
+                raise InstantiatorError(
+                    f"glyph {glyph_name!r} not found in the default source"
+                )
+            else:
+                # Sparse fonts do not and layers may not contain every glyph.
+                continue
 
         source_glyph = source_layer[glyph_name]
 
         if not (len(source_glyph) or source_glyph.components):
-            if i == default_source_idx:
+            if this_is_default:
                 default_glyph_empty = True
             else:
                 other_glyph_empty = True
