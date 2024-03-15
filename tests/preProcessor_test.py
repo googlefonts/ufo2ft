@@ -338,8 +338,11 @@ class SkipExportGlyphsTest:
         skipExportGlyphs = ["_o.numero"]
         glyphSet = _GlyphSet.from_layer(ufo, skipExportGlyphs=skipExportGlyphs)
 
-        assert len(glyphSet["numero"].components) == 1  # The "N" component
-        assert len(glyphSet["numero"]) == 2  # The two contours of "o" and "_o.numero"
+        # "numero" now contains two components "N" and "o", and one contour from the
+        # decomposed "_o.numero"
+        assert {c.baseGlyph for c in glyphSet["numero"].components} == {"N", "o"}
+        assert len(glyphSet["numero"]) == 1
+        assert set(glyphSet.keys()) == {"N", "numero", "o"}  # "_o.numero" is gone
 
     def test_skip_export_glyphs_designspace(self, FontClass):
         # Designspace has a public.skipExportGlyphs lib key excluding "b" and "d".
