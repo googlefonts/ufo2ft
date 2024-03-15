@@ -601,7 +601,11 @@ def prune_unknown_kwargs(kwargs, *callables):
     """
     known_args = set()
     for func in callables:
-        known_args.update(getfullargspec(func).args)
+        arg_spec = getfullargspec(func)
+        known_args.update(arg_spec.args)
+        # also handle optional keyword-only arguments
+        if arg_spec.kwonlydefaults:
+            known_args.update(arg_spec.kwonlydefaults)
     return {k: v for k, v in kwargs.items() if k in known_args}
 
 
