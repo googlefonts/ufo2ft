@@ -53,7 +53,7 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
 def decomposeCompositeGlyph(
     glyph,
     glyphSet,
-    skipMissing=True,
+    skipMissing=False,
     reverseFlipped=True,
     include=None,
     decomposeNested=True,
