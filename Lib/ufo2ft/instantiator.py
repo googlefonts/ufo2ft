@@ -34,6 +34,7 @@ import copy
 import logging
 import typing
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -81,6 +82,9 @@ LocationKey = Tuple[Tuple[str, float], ...]
 # Type of mapping of axes to their minimum, default and maximum values, i.e.
 # `{"wght": (100.0, 400.0, 900.0), "wdth": (75.0, 100.0, 100.0)}`.
 AxisBounds = Dict[str, Tuple[float, float, float]]
+
+# A bunch of glyphs at a given location (in design coordinates)
+SourceLayer = Tuple[Location, Dict[str, "Glyph"]]
 
 # For mapping `wdth` axis user values to the OS2 table's width class field.
 WDTH_VALUE_TO_OS2_WIDTH_CLASS = {
@@ -199,22 +203,43 @@ class Instantiator:
     font instance object at an arbitary location within the design space."""
 
     axis_bounds: AxisBounds  # Design space!
-    copy_feature_text: str
-    copy_nonkerning_groups: Mapping[str, List[str]]
-    copy_info: Optional[Info]
-    copy_lib: Mapping[str, Any]
-    default_design_location: Location
-    designspace_rules: List[designspaceLib.RuleDescriptor]
-    glyph_mutators: Mapping[str, Optional["Variator"]]
-    glyph_name_to_unicodes: Dict[str, List[int]]
-    info_mutator: Optional["Variator"]
-    kerning_mutator: Optional["Variator"]
-    round_geometry: bool
-    skip_export_glyphs: List[str]
-    special_axes: Mapping[str, designspaceLib.AxisDescriptor]
-    source_layers: List[Tuple[Location, Dict[str, Glyph]]]
-    default_source_idx: int
-    glyph_factory: Optional[Callable[[str], Glyph]]  # create new ufoLib/defcon Glyph
+    source_layers: List[SourceLayer]  # at least 1 default layer required (can be empty)
+    copy_feature_text: str = ""
+    copy_nonkerning_groups: Mapping[str, List[str]] = field(default_factory=dict)
+    copy_info: Optional[Info] = None
+    copy_lib: Mapping[str, Any] = field(default_factory=dict)
+    designspace_rules: List[designspaceLib.RuleDescriptor] = field(default_factory=list)
+    glyph_mutators: Mapping[str, Optional["Variator"]] = field(default_factory=dict)
+    info_mutator: Optional["Variator"] = None
+    kerning_mutator: Optional["Variator"] = None
+    round_geometry: bool = False
+    skip_export_glyphs: List[str] = field(default_factory=list)
+    special_axes: Mapping[str, designspaceLib.AxisDescriptor] = field(
+        default_factory=dict
+    )
+    # computed attributes (see __post_init__ below)
+    default_source_idx: int = field(init=False)
+    default_design_location: Location = field(init=False)
+
+    def __post_init__(self):
+        default_location = {
+            axis: default for axis, (_, default, _) in self.axis_bounds.items()
+        }
+        default_location_items = default_location.items()
+        default_source_idx = None
+        for i, (location, _) in enumerate(self.source_layers):
+            if location.items() <= default_location_items:
+                default_source_idx = i
+                break
+        else:
+            raise InstantiatorError(
+                f"Missing source layer at default location: {default_location}"
+            )
+        assert default_source_idx is not None
+        object.__setattr__(self, "default_source_idx", default_source_idx)
+        object.__setattr__(
+            self, "default_design_location", {**default_location, **location}
+        )
 
     @classmethod
     def from_designspace(
@@ -291,6 +316,7 @@ class Instantiator:
 
         # Construct Variators
         axis_bounds: AxisBounds = {}  # Design space!
+        default_design_location = {}
         axis_order: List[str] = []
         special_axes = {}
         for axis in designspace.axes:
@@ -300,6 +326,7 @@ class Instantiator:
                 axis.map_forward(axis.default),
                 axis.map_forward(axis.maximum),
             )
+            default_design_location[axis.name] = axis_bounds[axis.name][1]
             # Some axes relate to existing OpenType fields and get special attention.
             if axis.tag in {"wght", "wdth", "slnt"}:
                 special_axes[axis.tag] = axis
@@ -326,29 +353,20 @@ class Instantiator:
 
         # left empty as the glyph sources will be loaded later on-demand
         glyph_mutators: Dict[str, Variator] = {}
-        glyph_name_to_unicodes: Dict[str, List[int]] = {}
         source_layers = []
-        default_source_idx = -1
-        glyph_factory = None
         if do_glyphs:
-            for glyph_name in glyph_names:
-                glyph_name_to_unicodes[glyph_name] = default_font[glyph_name].unicodes
-            # collect (normalized location, source layer) tuples
-            for i, source in enumerate(designspace.sources):
+            # collect (location, source layer) tuples
+            for source in designspace.sources:
                 if source.layerName is None:
                     layer = source.font.layers.defaultLayer
                 else:
                     layer = source.font.layers[source.layerName]
-                if glyph_factory is None and len(layer) > 0:
-                    glyph_factory = _getNewGlyphFactory(next(iter(layer)))
-                normalized_location = varLib.models.normalizeLocation(
-                    source.location, axis_bounds
-                )
+                source_location = source.location
                 if source is designspace.default:
-                    assert all(v == 0.0 for v in normalized_location.values())
-                    default_source_idx = i
-                source_layers.append((normalized_location, {g.name: g for g in layer}))
-            assert default_source_idx != -1
+                    # sanity check that the source marked as the default really matches
+                    # the default location (i.e. is a subset of)
+                    assert source_location.items() <= default_design_location.items()
+                source_layers.append((source_location, {g.name: g for g in layer}))
 
         # Construct defaults to copy over
         copy_feature_text: str = default_font.features.text if do_info else ""
@@ -373,23 +391,23 @@ class Instantiator:
 
         return cls(
             axis_bounds,
+            source_layers,
             copy_feature_text,
             copy_nonkerning_groups,
             copy_info,
             copy_lib,
-            designspace.default.location,
             designspace.rules,
             glyph_mutators,
-            glyph_name_to_unicodes,
             info_mutator,
             kerning_mutator,
             round_geometry,
             skip_export_glyphs,
             special_axes,
-            source_layers,
-            default_source_idx,
-            glyph_factory,
         )
+
+    @property
+    def axis_order(self):
+        return list(self.axis_bounds.keys())
 
     @property
     def default_source_glyphs(self) -> Dict[str, Glyph]:
@@ -401,7 +419,9 @@ class Instantiator:
 
     @property
     def source_locations(self) -> Iterable[Location]:
-        return (loc for loc, _ in self.source_layers)
+        return (
+            {**self.default_design_location, **loc} for loc, _ in self.source_layers
+        )
 
     def normalize(self, location: Location) -> Location:
         return varLib.models.normalizeLocation(location, self.axis_bounds)
@@ -493,8 +513,16 @@ class Instantiator:
 
         return font
 
+    @cached_property
+    def glyph_factory(self) -> Callable[[str], Glyph]:
+        glyphs = self.default_source_glyphs
+        if len(glyphs) > 0:
+            glyph_factory = _getNewGlyphFactory(next(iter(glyphs.values())))
+        else:
+            raise InstantiatorError("Default source has no glyphs, can't make new ones")
+        return glyph_factory
+
     def new_glyph(self, name: str) -> Glyph:
-        assert self.glyph_factory is not None
         return self.glyph_factory(name=name)
 
     def generate_glyph_instance(
@@ -505,7 +533,7 @@ class Instantiator:
     ) -> Glyph:
         """Generate an instance of a single glyph at the given location.
 
-        The location must be pecified using normalized coordinates.
+        The location must be specified using normalized coordinates.
         If output_glyph is None, the instance is generated in a new Glyph object
         and returned. Otherwise, the instance is extracted to the given Glyph object.
         """
@@ -519,7 +547,7 @@ class Instantiator:
             )
             try:
                 glyph_mutator = self.glyph_mutators[glyph_name] = Variator.from_masters(
-                    sources, axis_order=list(self.axis_bounds)
+                    sources, self.axis_order
                 )
             except varLib.errors.VarLibError as e:
                 raise InstantiatorError(
@@ -535,9 +563,9 @@ class Instantiator:
             output_glyph = self.new_glyph(glyph_name)
 
         # onlyGeometry=True does not set name and unicodes, in ufoLib2 we can't
-        # modify a glyph's name. Copy unicodes from default font.
+        # modify a glyph's name. Copy unicodes from default layer.
         glyph_instance.extractGlyph(output_glyph, onlyGeometry=True)
-        output_glyph.unicodes = list(self.glyph_name_to_unicodes[glyph_name])
+        output_glyph.unicodes = list(self.default_source_glyphs[glyph_name].unicodes)
 
         return output_glyph
 
@@ -611,8 +639,9 @@ class Instantiator:
     @property
     def interpolated_layers(self) -> list[InterpolatedLayer]:
         """Return one InterpolatedLayer for each source location."""
+        default = self.default_design_location
         return [
-            InterpolatedLayer(self, loc, source_layer)
+            InterpolatedLayer(self, {**default, **loc}, source_layer)
             for loc, source_layer in self.source_layers
         ]
 
@@ -719,7 +748,7 @@ def collect_kerning_masters(
 
 
 def collect_glyph_masters(
-    source_layers: List[Tuple[Location, Dict[str, Glyph]]],
+    source_layers: List[SourceLayer],
     glyph_name: str,
     axis_bounds: AxisBounds,
     default_source_idx: int,
@@ -735,7 +764,7 @@ def collect_glyph_masters(
     default_glyph_empty = False
     other_glyph_empty = False
 
-    for i, (normalized_location, source_layer) in enumerate(source_layers):
+    for i, (location, source_layer) in enumerate(source_layers):
         this_is_default = i == default_source_idx
         if glyph_name not in source_layer:
             if this_is_default:
@@ -755,6 +784,7 @@ def collect_glyph_masters(
             else:
                 other_glyph_empty = True
 
+        normalized_location = varLib.models.normalizeLocation(location, axis_bounds)
         locations_and_masters.append(
             (normalized_location, fontMath.MathGlyph(source_glyph, strict=True))
         )
@@ -951,11 +981,15 @@ class InterpolatedLayer(Mapping):
     """
 
     instantiator: Instantiator
-    # axis coordinates for this layer (already normalized!)
+    # axis coordinates for this layer in design space
     location: Location
     # source ufoLib2/defcon Layer (None if location isn't among the source locations)
     source_layer: dict[str, Glyph] | None = None
     _cache: dict[str, Glyph] = field(default_factory=dict)
+
+    @cached_property
+    def normalized_location(self):
+        return self.instantiator.normalize(self.location)
 
     def __iter__(self) -> Iterable[str]:
         return iter(self.instantiator.glyph_names)
@@ -984,4 +1018,6 @@ class InterpolatedLayer(Mapping):
         return glyph
 
     def _interpolate(self, glyph_name: str) -> Glyph:
-        return self.instantiator.generate_glyph_instance(glyph_name, self.location)
+        return self.instantiator.generate_glyph_instance(
+            glyph_name, self.normalized_location
+        )
