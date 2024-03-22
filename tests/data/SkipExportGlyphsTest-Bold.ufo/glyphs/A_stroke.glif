@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Astroke" format="2">
+  <advance width="730"/>
+  <unicode hex="023A"/>
+  <anchor x="363" y="0" name="bottom"/>
+  <anchor x="363" y="714" name="top"/>
+  <anchor x="363" y="358" name="center"/>
+  <anchor x="636" y="714" name="topright"/>
+  <outline>
+    <component base="A"/>
+    <component base="_stroke" xOffset="-5"/>
+  </outline>
+</glyph>

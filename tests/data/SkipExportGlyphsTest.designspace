@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<designspace format="5.0">
+  <axes>
+    <axis tag="wght" name="Weight" minimum="400" maximum="700" default="400">
+      <map input="400" output="90"/>
+      <map input="700" output="190"/>
+    </axis>
+  </axes>
+  <sources>
+    <source filename="SkipExportGlyphsTest-Regular.ufo" name="SkipExportGlyphsTest Regular">
+      <lib copy="1"/>
+      <groups copy="1"/>
+      <features copy="1"/>
+      <info copy="1"/>
+      <location>
+        <dimension name="Weight" xvalue="90"/>
+      </location>
+    </source>
+    <source filename="SkipExportGlyphsTest-Regular.ufo" name="SkipExportGlyphsTest Regular {151}" layer="{151}">
+      <location>
+        <dimension name="Weight" xvalue="151"/>
+      </location>
+    </source>
+    <source filename="SkipExportGlyphsTest-Regular.ufo" name="SkipExportGlyphsTest Regular {170}" layer="{170}">
+      <location>
+        <dimension name="Weight" xvalue="170"/>
+      </location>
+    </source>
+    <source filename="SkipExportGlyphsTest-Bold.ufo" name="SkipExportGlyphsTest Bold">
+      <location>
+        <dimension name="Weight" xvalue="190"/>
+      </location>
+    </source>
+  </sources>
+  <instances/>
+  <lib>
+    <dict>
+      <key>public.skipExportGlyphs</key>
+      <array>
+        <string>_stroke</string>
+      </array>
+    </dict>
+  </lib>
+</designspace>
