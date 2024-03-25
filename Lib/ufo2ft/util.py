@@ -760,7 +760,11 @@ class OpenTypeCategories(NamedTuple):
         openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
         # Handle case where we are a variable feature writer
         if not openTypeCategories and isinstance(font, DesignSpaceDocument):
-            font = font.sources[0].font
+            designspace = font
+            default = designspace.findDefault()
+            if default is None:
+                raise InvalidDesignSpaceData("No default source found in designspace")
+            font = default.font
             openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
 
         for glyphName, category in openTypeCategories.items():

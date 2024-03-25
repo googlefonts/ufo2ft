@@ -376,6 +376,13 @@ class BaseIFilter(BaseFilter):
         """Return the same class as self."""
         return cls  # no-op
 
+    def getDefaultFont(self) -> Font:
+        if self.context.instantiator is not None:
+            return self.context.fonts[self.context.instantiator.default_source_idx]
+        else:
+            # as good a guess as any...
+            return self.context.fonts[0]
+
     def getDefaultGlyphSet(self) -> dict[str, Glyph]:
         """Return the current glyphSet corresponding to the default location."""
         if self.context.instantiator is not None:

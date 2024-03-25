@@ -2,10 +2,6 @@
 <glyph name="Astroke" format="2">
   <advance width="639"/>
   <unicode hex="023A"/>
-  <anchor x="324" y="0" name="bottom"/>
-  <anchor x="318" y="714" name="top"/>
-  <anchor x="319" y="358" name="center"/>
-  <anchor x="519" y="714" name="topright"/>
   <outline>
     <component base="A"/>
     <component base="_stroke"/>
