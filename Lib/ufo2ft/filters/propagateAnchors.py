@@ -17,8 +17,8 @@ import logging
 import fontTools.pens.boundsPen
 from fontTools.misc.transform import Transform
 
-from ufo2ft.filters import BaseFilter
-from ufo2ft.util import OpenTypeCategories
+from ufo2ft.filters import BaseFilter, BaseIFilter
+from ufo2ft.util import OpenTypeCategories, zip_strict
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,39 @@ class PropagateAnchorsFilter(BaseFilter):
             self.context.categories,
         )
         return len(glyph.anchors) > before
+
+
+class PropagateAnchorsIFilter(BaseIFilter):
+    def set_context(self, *args, **kwargs):
+        ctx = super().set_context(*args, **kwargs)
+        ctx.processed = [set() for _ in range(len(ctx.glyphSets))]
+        ctx.categories = OpenTypeCategories.load(self.getDefaultFont())
+        return ctx
+
+    def __call__(self, fonts, glyphSets=None, instantiator=None, **kwargs):
+        modified = super().__call__(fonts, glyphSets, instantiator, **kwargs)
+        if modified:
+            logger.info("Glyphs with propagated anchors: %i" % len(modified))
+        return modified
+
+    def filter(self, glyphName, glyphs):
+        modified = False
+        if not any(glyph.components for glyph in glyphs):
+            return modified
+        before = len(self.context.modified)
+        for i, (glyphSet, interpolatedLayer) in enumerate(
+            zip_strict(self.context.glyphSets, self.getInterpolatedLayers())
+        ):
+            glyph = glyphSet.get(glyphName)
+            if glyph is not None:
+                _propagate_glyph_anchors(
+                    interpolatedLayer or glyphSet,
+                    glyph,
+                    self.context.processed[i],
+                    self.context.modified,
+                    self.context.categories,
+                )
+        return len(self.context.modified) > before
 
 
 def _propagate_glyph_anchors(glyphSet, composite, processed, modified, categories):

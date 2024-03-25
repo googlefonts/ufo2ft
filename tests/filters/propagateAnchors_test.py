@@ -1,8 +1,15 @@
 import pytest
+from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.misc.loggingTools import CapturingLogHandler
 
 import ufo2ft.filters
-from ufo2ft.filters.propagateAnchors import PropagateAnchorsFilter, logger
+from ufo2ft.filters.propagateAnchors import (
+    PropagateAnchorsFilter,
+    PropagateAnchorsIFilter,
+    logger,
+)
+from ufo2ft.instantiator import Instantiator
+from ufo2ft.util import _GlyphSet
 
 
 @pytest.fixture(
@@ -257,3 +264,50 @@ def test_CantarellAnchorPropagation_reduced_filter(FontClass, datadir):
 
     anchors_o = {(a.name, a.x, a.y) for a in ufo["ocircumflextilde"].anchors}
     assert ("top", 284.0, 730.0) in anchors_o
+
+
+class PropagateAnchorsIFilterTest:
+    def test_propagate_from_interpolated_components(self, FontClass, data_dir):
+        ds_path = data_dir / "SkipExportGlyphsTest.designspace"
+        ds = DesignSpaceDocument.fromfile(ds_path)
+        ds.loadSourceFonts(FontClass)
+
+        ufos = [s.font for s in ds.sources]
+        glyphSets = [_GlyphSet.from_layer(s.font, s.layerName) for s in ds.sources]
+
+        assert len(ufos) == len(glyphSets) == 4
+
+        # the composite glyph 'Astroke' has no anchors, but 'A' has some
+        for glyphSet in glyphSets:
+            if "Astroke" in glyphSet:
+                assert not glyphSet["Astroke"].anchors
+            if "A" in glyphSet:
+                assert glyphSet["A"].anchors
+
+        # in glyphSets[2] the 'Astroke' component base glyphs are missing so their
+        # propagated anchors are supposed to be interpolated on the fly
+        assert "Astroke" in glyphSets[2]
+        assert {c.baseGlyph for c in glyphSets[2]["Astroke"].components}.isdisjoint(
+            glyphSets[2].keys()
+        )
+        assert not glyphSets[2]["Astroke"].anchors
+
+        instantiator = Instantiator.from_designspace(
+            ds, do_kerning=False, do_info=False
+        )
+
+        philter = PropagateAnchorsIFilter()
+
+        modified = philter(ufos, glyphSets, instantiator)
+
+        assert modified == {"Astroke"}
+
+        assert [dict(a) for a in glyphSets[2]["Astroke"].anchors] == [
+            {"name": "bottom", "x": 458, "y": 0},
+            {"name": "center", "x": 457, "y": 358},
+            {"name": "top", "x": 457, "y": 714},
+            {"name": "topright", "x": 716, "y": 714},
+        ]
+        assert {c.baseGlyph for c in glyphSets[2]["Astroke"].components}.isdisjoint(
+            glyphSets[2].keys()
+        )

@@ -55,7 +55,7 @@ from ufo2ft.featureCompiler import parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.filters import BaseFilter
 from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.util import _getNewGlyphFactory, _GlyphSet, _LazyFontName, _setGlyphMargin
+from ufo2ft.util import _GlyphSet, _LazyFontName, _setGlyphMargin
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +114,7 @@ class DottedCircleFilter(BaseFilter):
         dotted_circle_glyph = self.check_dotted_circle()
 
         if dotted_circle_glyph == DO_NOTHING:
-            return []
+            return set()
 
         if not dotted_circle_glyph:
             dotted_circle_glyph = self.draw_dotted_circle(glyphSet)
@@ -126,9 +126,9 @@ class DottedCircleFilter(BaseFilter):
             self.ensure_base(dotted_circle_glyph)
 
         if added_glyph or added_anchors:
-            return [dotted_circle_glyph.name]
+            return {dotted_circle_glyph.name}
         else:
-            return []
+            return set()
 
     def check_dotted_circle(self):
         """Check for the presence of a dotted circle glyph and return it"""
@@ -150,8 +150,7 @@ class DottedCircleFilter(BaseFilter):
         font = self.context.font
         logger.debug("Adding dotted circle glyph")
 
-        proto = font.layers.defaultLayer.instantiateGlyphObject()
-        glyph = _getNewGlyphFactory(proto)(name="uni25CC", unicodes=[0x25CC])
+        glyph = self.context.glyphFactory(name="uni25CC", unicodes=[0x25CC])
         pen = glyph.getPen()
 
         xHeight = getAttrWithFallback(font.info, "xHeight")

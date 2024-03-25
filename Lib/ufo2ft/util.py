@@ -13,7 +13,8 @@ from fontTools import subset, ttLib, unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.builder import addOpenTypeFeatures
 from fontTools.misc.fixedTools import otRound
-from fontTools.misc.transform import Identity, Transform
+from fontTools.misc.transform import Identity
+from fontTools.pens.filterPen import DecomposingFilterPointPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
 
@@ -49,6 +50,39 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
     return order
 
 
+def decomposeCompositeGlyph(
+    glyph,
+    glyphSet,
+    skipMissing=False,
+    reverseFlipped=True,
+    include=None,
+    decomposeNested=True,
+):
+    """Decompose composite glyph in-place resolving references from glyphSet."""
+    if len(glyph.components) == 0:
+        return
+    pen = DecomposingFilterPointPen(
+        glyph.getPointPen(),
+        glyphSet,
+        reverseFlipped=reverseFlipped,
+        include=include,
+        decomposeNested=decomposeNested,
+    )
+    for component in list(glyph.components):
+        try:
+            component.drawPoints(pen)
+        except pen.MissingComponentError:
+            if skipMissing:
+                logger.warning(
+                    "dropping non-existent component '%s' in glyph '%s'",
+                    component.baseGlyph,
+                    glyph.name,
+                )
+            else:
+                raise
+        glyph.removeComponent(component)
+
+
 class _GlyphSet(dict):
     @classmethod
     def from_layer(cls, font, layerName=None, copy=False, skipExportGlyphs=None):
@@ -64,32 +98,15 @@ class _GlyphSet(dict):
         else:
             self = cls((g.name, g) for g in layer)
             self.lib = layer.lib
+        self.name = layer.name if layerName is not None else None
 
         # If any glyphs in the skipExportGlyphs list are used as components, decompose
         # them in the containing glyphs...
         if skipExportGlyphs:
-            for glyph in self.values():
-                if any(c.baseGlyph in skipExportGlyphs for c in glyph.components):
-                    deepCopyContours(self, glyph, glyph, Transform(), skipExportGlyphs)
-                    if hasattr(glyph, "removeComponent"):  # defcon
-                        for c in [
-                            component
-                            for component in glyph.components
-                            if component.baseGlyph in skipExportGlyphs
-                        ]:
-                            glyph.removeComponent(c)
-                    else:  # ufoLib2
-                        glyph.components[:] = [
-                            c
-                            for c in glyph.components
-                            if c.baseGlyph not in skipExportGlyphs
-                        ]
-            # ... and then remove them from the glyph set, if even present.
-            for glyph_name in skipExportGlyphs:
-                if glyph_name in self:
-                    del self[glyph_name]
+            from ufo2ft.filters.skipExportGlyphs import SkipExportGlyphsFilter
 
-        self.name = layer.name if layerName is not None else None
+            SkipExportGlyphsFilter(skipExportGlyphs)(font, self)
+
         return self
 
 
@@ -166,6 +183,7 @@ def _setGlyphMargin(glyph, side, margin):
         raise NotImplementedError(f"Unsupported Glyph class: {type(glyph)!r}")
 
 
+# DEPRECATED: use ufo2ft.util.decomposeCompositeGlyph above
 def deepCopyContours(
     glyphSet, parent, composite, transformation, specificComponents=None
 ):
@@ -583,7 +601,11 @@ def prune_unknown_kwargs(kwargs, *callables):
     """
     known_args = set()
     for func in callables:
-        known_args.update(getfullargspec(func).args)
+        arg_spec = getfullargspec(func)
+        known_args.update(arg_spec.args)
+        # also handle optional keyword-only arguments
+        if arg_spec.kwonlydefaults:
+            known_args.update(arg_spec.kwonlydefaults)
     return {k: v for k, v in kwargs.items() if k in known_args}
 
 
@@ -738,7 +760,11 @@ class OpenTypeCategories(NamedTuple):
         openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
         # Handle case where we are a variable feature writer
         if not openTypeCategories and isinstance(font, DesignSpaceDocument):
-            font = font.sources[0].font
+            designspace = font
+            default = designspace.findDefault()
+            if default is None:
+                raise InvalidDesignSpaceData("No default source found in designspace")
+            font = default.font
             openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
 
         for glyphName, category in openTypeCategories.items():

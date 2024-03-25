@@ -1324,7 +1324,12 @@ def test_custom_layer_compilation_interpolatable_otf_from_ds(designspace, inplac
         "dotabovecomb",
         "edotabove",
     ]
-    assert master_otfs[1].getGlyphOrder() == [".notdef", "e"]
+    # 'edotabove' composite glyph needed to be decomposed because these are CFF fonts;
+    # and because one of its components 'e' has an additional intermediate master, the
+    # latter 'bubbled up' to the parent glyph when this got decomposed; hence why
+    # we see 'edotabove' in master_otfs[1] below, but we do not in the previous test
+    # with interpolatalbe TTFs where 'edotabove' stays a composite glyph.
+    assert master_otfs[1].getGlyphOrder() == [".notdef", "e", "edotabove"]
     assert master_otfs[2].getGlyphOrder() == [
         ".notdef",
         "a",

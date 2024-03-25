@@ -165,6 +165,14 @@ class IntegrationTest:
         for ttf in ttfs:
             assert ttf["maxp"].maxComponentDepth == 1
 
+    def test_nestedComponents_variable(self, FontClass):
+        designspace = DesignSpaceDocument.fromfile(
+            getpath("NestedComponents.designspace")
+        )
+        designspace.loadSourceFonts(FontClass)
+        vf = compileVariableTTF(designspace, flattenComponents=True)
+        assert vf["maxp"].maxComponentDepth == 1
+
     def test_interpolatableTTFs_lazy(self, FontClass):
         # two same UFOs **must** be interpolatable
         ufos = [FontClass(getpath("TestFont.ufo")) for _ in range(2)]

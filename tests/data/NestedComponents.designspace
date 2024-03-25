@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<designspace format="5.0">
+  <axes>
+    <axis tag="wght" name="Weight" minimum="400" maximum="700" default="400"/>
+  </axes>
+  <sources>
+    <source filename="NestedComponents-Regular.ufo" name="Nested Components Regular">
+      <location>
+        <dimension name="Weight" xvalue="400"/>
+      </location>
+    </source>
+    <source filename="NestedComponents-Regular.ufo" layer="Medium" name="Nested Components Medium">
+      <location>
+        <dimension name="Weight" xvalue="550"/>
+      </location>
+    </source>
+    <source filename="NestedComponents-Bold.ufo" name="Nested Components Bold">
+      <location>
+        <dimension name="Weight" xvalue="700"/>
+      </location>
+    </source>
+  </sources>
+</designspace>

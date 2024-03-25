@@ -6,5 +6,9 @@
 		<string>public.default</string>
 		<string>glyphs</string>
 	</array>
+	<array>
+		<string>Medium</string>
+		<string>glyphs.M_edium</string>
+	</array>
 </array>
 </plist>
