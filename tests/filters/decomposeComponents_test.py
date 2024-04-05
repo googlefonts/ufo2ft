@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from fontTools.pens.basePen import MissingComponentError
 
@@ -318,3 +320,52 @@ class DecomposeComponentsIFilterTest:
         modified = DecomposeComponentsIFilter(include={"igrave"})(ufos, glyphSets)
         assert modified == {"igrave"}
         assert "igrave" not in medium_glyphs
+
+    def test_locations_from_component_glyphs_get_cached(
+        self, caplog, ufos_and_glyphSets
+    ):
+        ufos, glyphSets = ufos_and_glyphSets
+        regular_glyphs, medium_glyphs, bold_glyphs = glyphSets
+        instantiator = Instantiator(
+            {"Weight": (100, 100, 200)},
+            [
+                ({"Weight": 100}, regular_glyphs),
+                ({"Weight": 150}, medium_glyphs),
+                ({"Weight": 200}, bold_glyphs),
+            ],
+        )
+        philter = DecomposeComponentsIFilter()
+        philter.set_context(ufos, glyphSets, instantiator)
+
+        igrave_locations = philter.glyphSourceLocations("igrave")
+
+        # igrave is defined only at Weight 100 and 200
+        assert igrave_locations == {
+            frozenset({("Weight", 100)}),
+            frozenset({("Weight", 200)}),
+        }
+
+        # locationsFromComponentGlyphs logs DEBUG messages while traversing
+        # recursively each component glyph
+        with caplog.at_level(logging.DEBUG, logger="ufo2ft.filters"):
+            component_locations = philter.locationsFromComponentGlyphs("igrave")
+
+        assert "igrave" in caplog.text
+        assert "dotlessi" in caplog.text
+        assert "gravecomb" in caplog.text
+
+        # one of igrave's components (dotlessi) is also defined at Weight 150
+        expected_component_locations = igrave_locations | {frozenset({("Weight", 150)})}
+        assert component_locations == expected_component_locations
+
+        # locationsFromComponentGlyphs uses a cache to avoid traversing again component
+        # glyphs that were visited before; its result isn't expected to change within
+        # the current filter call.
+        caplog.clear()
+        with caplog.at_level(logging.DEBUG, logger="ufo2ft.filters"):
+            component_locations = philter.locationsFromComponentGlyphs("igrave")
+
+        assert "igrave" in caplog.text
+        assert "dotlessi" not in caplog.text
+        assert "gravecomb" not in caplog.text
+        assert component_locations == expected_component_locations
