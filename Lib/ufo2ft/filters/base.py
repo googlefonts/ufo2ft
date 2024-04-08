@@ -291,6 +291,10 @@ class BaseIFilter(BaseFilter):
             **kwargs,
         )
         self.context.modified = set()
+        # this is used to memoize locationsFromComponentGlyphs method below, to avoid
+        # redoing the same work over and over again (especially when font has loads of
+        # masters and many nested components).
+        self.context.componentLocations = {}
         proto = fonts[0].layers.defaultLayer.instantiateGlyphObject()
         self.context.glyphFactory = _getNewGlyphFactory(proto)
         return self.context
@@ -427,16 +431,27 @@ class BaseIFilter(BaseFilter):
         include: set[str] | None = None,
     ) -> set[HashableLocation]:
         """Return locations from all the components' base glyphs, recursively."""
+        logger.debug("Gathering all locations from component glyphs: %s", glyphName)
         assert self.context.instantiator is not None
         locations = set()
+        cache = self.context.componentLocations
         for glyphSet in self.context.glyphSets:
             if glyphName in glyphSet:
                 glyph = glyphSet[glyphName]
                 for component in glyph.components:
-                    if include is None or component.baseGlyph in include:
-                        locations |= self.glyphSourceLocations(component.baseGlyph)
-                        locations |= self.locationsFromComponentGlyphs(
-                            component.baseGlyph, include
+                    baseGlyph = component.baseGlyph
+                    if include is None or baseGlyph in include:
+                        locations |= self.glyphSourceLocations(baseGlyph)
+                        # using ternary operator instead of cache.setdefault because
+                        # the latter always evaluates the second argument, whereas
+                        # I want it to be lazy to avoid recursing too often.
+                        locations |= (
+                            cache[baseGlyph]
+                            if baseGlyph in cache
+                            else cache.setdefault(
+                                baseGlyph,
+                                self.locationsFromComponentGlyphs(baseGlyph, include),
+                            )
                         )
         return locations
 
@@ -462,4 +477,9 @@ class BaseIFilter(BaseFilter):
             ):
                 if self.hashableLocation(interpolatedLayer.location) in locationsToAdd:
                     assert glyphName not in glyphSet
+                    logger.debug(
+                        "Interpolating composite glyph %r at %s",
+                        glyphName,
+                        interpolatedLayer.location,
+                    )
                     glyphSet[glyphName] = interpolatedLayer[glyphName]
