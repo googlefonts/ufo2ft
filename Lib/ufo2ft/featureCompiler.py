@@ -469,7 +469,7 @@ def _featuresCompatible(designSpaceDoc: DesignSpaceDocument) -> bool:
     )
     assert sources[0] == designSpaceDoc.default
 
-    transformed = [transform(s) for s in designSpaceDoc.sources]
+    transformed = [transform(s) for s in sources]
     first = transformed[0]
     return all(s == first for s in transformed[1:]) or all(
         not s for s in transformed[1:]
