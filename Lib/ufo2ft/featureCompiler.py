@@ -446,7 +446,8 @@ class VariableFeatureCompiler(FeatureCompiler):
 
 
 def _featuresCompatible(designSpaceDoc: DesignSpaceDocument) -> bool:
-    """Returns whether the features of the individual source UFOs are the same.
+    """Returns True when the features of the individual source UFOs are the same,
+    or when only the default source has features.
 
     NOTE: Only compares the feature file text inside the source UFO and does not
     follow imports. This will suffice as long as no external feature file is
@@ -463,5 +464,13 @@ def _featuresCompatible(designSpaceDoc: DesignSpaceDocument) -> bool:
         text = re.sub(r"\s+", " ", text)
         return text
 
-    first = transform(designSpaceDoc.sources[0])
-    return all(transform(s) == first for s in designSpaceDoc.sources[1:])
+    sources = sorted(
+        designSpaceDoc.sources, key=lambda source: source != designSpaceDoc.default
+    )
+    assert sources[0] == designSpaceDoc.default
+
+    transformed = [transform(s) for s in designSpaceDoc.sources]
+    first = transformed[0]
+    return all(s == first for s in transformed[1:]) or all(
+        not s for s in transformed[1:]
+    )
