@@ -6,6 +6,7 @@ import pytest
 
 from ufo2ft import util
 from ufo2ft.errors import InvalidFontData
+from ufo2ft.util import zip_strict
 
 
 def test_overloaded_mapping_raises_error(FontClass):
@@ -83,3 +84,27 @@ def test_getMaxComponentDepth_cyclical_reference():
     assert util.getMaxComponentDepth(glyph_f, test_ufo) == 2
     assert util.getMaxComponentDepth(glyph_g, test_ufo) == 1
     assert util.getMaxComponentDepth(glyph_h, test_ufo) == 0
+
+
+def test_zip_strict():
+    assert list(zip_strict([0, 1], [2, 3])) == [(0, 2), (1, 3)]
+
+    with pytest.raises(
+        ValueError, match=r"zip\(\) argument 2 is shorter than argument 1"
+    ):
+        list(zip_strict([0, 1, 2], [3, 4]))
+
+    with pytest.raises(
+        ValueError, match=r"zip\(\) argument 3 is shorter than arguments 1-2"
+    ):
+        list(zip_strict([0, 1, 2], [3, 4], [5]))
+
+    with pytest.raises(
+        ValueError, match=r"zip\(\) argument 2 is longer than argument 1"
+    ):
+        list(zip_strict([0], [1, 2]))
+
+    with pytest.raises(
+        ValueError, match=r"zip\(\) argument 3 is longer than arguments 1-2"
+    ):
+        list(zip_strict([0, 1], [2, 3], [1, 2, 3]))

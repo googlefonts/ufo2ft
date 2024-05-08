@@ -1,4 +1,5 @@
 """Old implementation of KernFeatureWriter as of ufo2ft v2.30.0 for backward compat."""
+
 from types import SimpleNamespace
 
 from fontTools import unicodedata

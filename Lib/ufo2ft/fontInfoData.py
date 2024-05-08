@@ -11,14 +11,13 @@ for synthesizing values for specific attributes. These can be
 used externally as well.
 """
 
-
 import calendar
 import logging
 import math
 import os
 import time
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fontTools import ufoLib
 from fontTools.misc.fixedTools import otRound
@@ -105,7 +104,7 @@ def openTypeHeadCreatedFallback(info):
     now.
     """
     if "SOURCE_DATE_EPOCH" in os.environ:
-        t = datetime.utcfromtimestamp(int(os.environ["SOURCE_DATE_EPOCH"]))
+        t = datetime.fromtimestamp(int(os.environ["SOURCE_DATE_EPOCH"]), timezone.utc)
         return t.strftime(_date_format)
     else:
         return dateStringForNow()

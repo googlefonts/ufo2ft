@@ -10,6 +10,7 @@ from ufo2ft.constants import (
     GLYPHS_DONT_USE_PRODUCTION_NAMES,
     KEEP_GLYPH_NAMES,
     USE_PRODUCTION_NAMES,
+    CFFOptimization,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,10 +39,10 @@ class PostProcessor:
         2: SubroutinizerBackend.CFFSUBR,
     }
 
-    def __init__(self, otf, ufo, glyphSet=None):
+    def __init__(self, otf, ufo, glyphSet=None, info=None):
         self.ufo = ufo
         self.glyphSet = glyphSet if glyphSet is not None else ufo
-
+        self.info = info
         self.otf = otf
 
         self._postscriptNames = ufo.lib.get("public.postscriptNames")
@@ -81,8 +82,9 @@ class PostProcessor:
           when this is present if the UFO lib and is set to True, this is
           equivalent to 'useProductionNames' set to False.
 
-        optimizeCFF (bool):
-          Subroubtinize CFF or CFF2 table, if present.
+        optimizeCFF (bool | CFFOptimization):
+          If True or >= CFFOptimization.SUBROUTINIZE, subroubtinize CFF or CFF2 table
+          (if present).
 
         cffVersion (Optiona[int]):
           The output CFF format, choose between 1 or 2. By default, it's the same as
@@ -95,6 +97,8 @@ class PostProcessor:
           NOTE: compreffor currently doesn't support input fonts with CFF2 table.
         """
         if self._get_cff_version(self.otf):
+            if not isinstance(optimizeCFF, bool):
+                optimizeCFF = optimizeCFF >= CFFOptimization.SUBROUTINIZE
             self.process_cff(
                 optimizeCFF=optimizeCFF,
                 cffVersion=cffVersion,
@@ -102,6 +106,9 @@ class PostProcessor:
             )
 
         self.process_glyph_names(useProductionNames)
+
+        if self.info:
+            self.apply_fontinfo()
 
         return self.otf
 
@@ -356,6 +363,16 @@ class PostProcessor:
         logger.info(msg)
 
         return cffsubr.subroutinize(otf, cff_version=cffVersion, keep_glyph_names=False)
+
+    def apply_fontinfo(self):
+        """Apply the fontinfo data from the DesignSpace variable-font's lib to
+        the compiled font."""
+        from ufo2ft.infoCompiler import InfoCompiler
+
+        logger.info("Applying variable-font info from DesignSpace lib")
+
+        compiler = InfoCompiler(self.otf, self.ufo, self.info)
+        compiler.compile()
 
 
 # Adapted from fontTools.cff.specializer.programToCommands

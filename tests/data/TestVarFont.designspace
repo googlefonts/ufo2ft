@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<designspace format="5.0">
+  <axes>
+    <axis tag="wght" name="Weight" minimum="100" maximum="1000" default="100"/>
+  </axes>
+  <sources>
+    <source filename="TestVarFont-Regular.ufo" name="TestVarFont Regular" familyname="TestVarFont" stylename="Regular">
+      <lib copy="1"/>
+      <groups copy="1"/>
+      <features copy="1"/>
+      <info copy="1"/>
+      <location>
+        <dimension name="Weight" xvalue="100"/>
+      </location>
+    </source>
+    <source filename="TestVarFont-Bold.ufo" name="TestVarFont Bold" familyname="TestVarFont" stylename="Bold">
+      <location>
+        <dimension name="Weight" xvalue="1000"/>
+      </location>
+    </source>
+  </sources>
+  <variable-fonts>
+    <variable-font name="MyFontVF1">
+      <axis-subsets>
+        <axis-subset name="Weight"/>
+      </axis-subsets>
+    </variable-font>
+    <variable-font name="MyFontVF2">
+      <axis-subsets>
+        <axis-subset name="Weight"/>
+      </axis-subsets>
+      <lib>
+        <dict>
+          <key>public.fontInfo</key>
+          <dict>
+            <key>familyName</key>
+            <string>My Font Narrow VF</string>
+            <key>styleName</key>
+            <string>Regular</string>
+            <key>postscriptFontName</key>
+            <string>MyFontNarrVF-Regular</string>
+            <key>trademark</key>
+            <string>My Font Narrow VF is a registered trademark...</string>
+            <key>versionMajor</key>
+            <integer>2</integer>
+          </dict>
+        </dict>
+      </lib>
+    </variable-font>
+  </variable-fonts>
+</designspace>

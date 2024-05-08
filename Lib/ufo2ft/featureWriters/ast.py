@@ -1,6 +1,5 @@
 """Helpers to build or extract data from feaLib AST objects."""
 
-
 import collections
 import functools
 import operator
@@ -210,17 +209,25 @@ def getGDEFGlyphClasses(feaLib):
             for st in s.statements:
                 if isinstance(st, ast.GlyphClassDefStatement):
                     return _GDEFGlyphClasses(
-                        frozenset(st.baseGlyphs.glyphSet())
-                        if st.baseGlyphs is not None
-                        else frozenset(),
-                        frozenset(st.ligatureGlyphs.glyphSet())
-                        if st.ligatureGlyphs is not None
-                        else frozenset(),
-                        frozenset(st.markGlyphs.glyphSet())
-                        if st.markGlyphs is not None
-                        else frozenset(),
-                        frozenset(st.componentGlyphs.glyphSet())
-                        if st.componentGlyphs is not None
-                        else frozenset(),
+                        (
+                            frozenset(st.baseGlyphs.glyphSet())
+                            if st.baseGlyphs is not None
+                            else frozenset()
+                        ),
+                        (
+                            frozenset(st.ligatureGlyphs.glyphSet())
+                            if st.ligatureGlyphs is not None
+                            else frozenset()
+                        ),
+                        (
+                            frozenset(st.markGlyphs.glyphSet())
+                            if st.markGlyphs is not None
+                            else frozenset()
+                        ),
+                        (
+                            frozenset(st.componentGlyphs.glyphSet())
+                            if st.componentGlyphs is not None
+                            else frozenset()
+                        ),
                     )
     return _GDEFGlyphClasses(None, None, None, None)

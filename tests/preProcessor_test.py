@@ -338,8 +338,11 @@ class SkipExportGlyphsTest:
         skipExportGlyphs = ["_o.numero"]
         glyphSet = _GlyphSet.from_layer(ufo, skipExportGlyphs=skipExportGlyphs)
 
-        assert len(glyphSet["numero"].components) == 1  # The "N" component
-        assert len(glyphSet["numero"]) == 2  # The two contours of "o" and "_o.numero"
+        # "numero" now contains two components "N" and "o", and one contour from the
+        # decomposed "_o.numero"
+        assert {c.baseGlyph for c in glyphSet["numero"].components} == {"N", "o"}
+        assert len(glyphSet["numero"]) == 1
+        assert set(glyphSet.keys()) == {"N", "numero", "o"}  # "_o.numero" is gone
 
     def test_skip_export_glyphs_designspace(self, FontClass):
         # Designspace has a public.skipExportGlyphs lib key excluding "b" and "d".
@@ -370,6 +373,78 @@ class SkipExportGlyphsTest:
             assert glyphs["e"].numberOfContours == 13
             assert not hasattr(glyphs["e"], "components")
             assert glyphs["f"].isComposite()
+
+    def test_skip_export_glyphs_designspace_variable(self, FontClass):
+        # The designspace has a public.skipExportGlyphs lib key excluding "_stroke";
+        # there are four sources, a Regular, Medium, Semibold and Bold; there is a
+        # composite glyph "Astroke" that is composed of "A" and "_stroke".
+        designspace = designspaceLib.DesignSpaceDocument.fromfile(
+            getpath("SkipExportGlyphsTest.designspace")
+        )
+        designspace.loadSourceFonts(FontClass)
+
+        vf = ufo2ft.compileVariableTTF(designspace, useProductionNames=False)
+
+        # We expect that "_stroke" glyph is not exported and "Astroke" is decomposed to
+        # simple contour glyph.
+        glyf = vf["glyf"]
+        assert "_stroke" not in glyf
+        assert "Astroke" in glyf
+
+        Astroke = glyf["Astroke"]
+        assert not Astroke.isComposite()
+        assert Astroke.numberOfContours == 3
+
+        # 'Astroke' composite glyph should have 3 delta sets in gvar: two (corresponding
+        # to the Semibold and Bold masters) were already in the sources, and a third one
+        # was added by the preprocessor for the Medium master, because "_stroke" was
+        # present in the Medium and marked as non-export, to be decomposed.
+        gvar = vf["gvar"]
+        assert len(gvar.variations["Astroke"]) == 3
+
+        # Now we add a new composite glyph "_stroke.alt" to the full Regular and Bold
+        # sources and replace reference to the "_stroke" component in the "Astroke"
+        # with the new "_stroke.alt". So "Astroke" has now a component which in turn
+        # references another component (i.e. nested components). We also set the
+        # public.skipExportGlyphs to exclude "_stroke.alt" from the export, but not
+        # "_stroke" anymore, which should now be exported.
+        designspace.lib["public.skipExportGlyphs"] = ["_stroke.alt"]
+        num_Astroke_sources = 0
+        for source in designspace.sources:
+            if source.layerName is None:
+                layer = source.font.layers.defaultLayer
+                stroke_alt = layer.newGlyph("_stroke.alt")
+                stroke_alt.getPen().addComponent("_stroke", (1, 0, 0, 1, 0, -100))
+            else:
+                layer = source.font.layers[source.layerName]
+            if "Astroke" in layer:
+                Astroke = layer["Astroke"]
+                for component in Astroke.components:
+                    if component.baseGlyph == "_stroke":
+                        component.baseGlyph = "_stroke.alt"
+                num_Astroke_sources += 1
+
+        vf = ufo2ft.compileVariableTTF(designspace, useProductionNames=False)
+
+        # we expect that "_stroke.alt" glyph is not exported and the reference to it
+        # in "Astroke" is replaced with "_stroke" with the offset adjusted. "Astroke"
+        # itself should NOT be decomposed to simple glyph.
+        glyf = vf["glyf"]
+        assert "_stroke.alt" not in glyf
+        assert "_stroke" in glyf
+        assert "Astroke" in glyf
+
+        Astroke = glyf["Astroke"]
+        assert Astroke.isComposite()
+        assert [c.glyphName for c in Astroke.components] == ["A", "_stroke"]
+        stroke_comp = Astroke.components[1]
+        assert (stroke_comp.x, stroke_comp.y) == (0, -100)
+
+        # 'Astroke' composite glyph should have 2 delta sets in gvar: i.e. one for each
+        # of the non-default masters it was originally present in. No additional
+        # master should be added by the preprocessor in this case.
+        gvar = vf["gvar"]
+        assert len(gvar.variations["Astroke"]) == num_Astroke_sources - 1
 
     def test_skip_export_glyphs_multi_ufo(self, FontClass):
         # Bold has a public.skipExportGlyphs lib key excluding "b", "d" and "f".

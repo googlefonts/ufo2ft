@@ -165,6 +165,14 @@ class IntegrationTest:
         for ttf in ttfs:
             assert ttf["maxp"].maxComponentDepth == 1
 
+    def test_nestedComponents_variable(self, FontClass):
+        designspace = DesignSpaceDocument.fromfile(
+            getpath("NestedComponents.designspace")
+        )
+        designspace.loadSourceFonts(FontClass)
+        vf = compileVariableTTF(designspace, flattenComponents=True)
+        assert vf["maxp"].maxComponentDepth == 1
+
     def test_interpolatableTTFs_lazy(self, FontClass):
         # two same UFOs **must** be interpolatable
         ufos = [FontClass(getpath("TestFont.ufo")) for _ in range(2)]
@@ -578,6 +586,37 @@ class IntegrationTest:
         disabled = compression_level == 0
         logged = "Compacting GPOS..." in caplog.text
         assert logged ^ disabled
+
+    @pytest.mark.parametrize(
+        "compileMethod", [compileVariableTTFs, compileVariableCFF2s]
+    )
+    def test_apply_varfont_info(self, FontClass, compileMethod):
+        designspace = DesignSpaceDocument.fromfile(getpath("TestVarFont.designspace"))
+        designspace.loadSourceFonts(FontClass)
+
+        fonts = compileMethod(designspace)
+        assert len(fonts) == 2
+
+        expectTTX(fonts["MyFontVF1"], "TestVarFont-MyFontVF1.ttx", ["head", "name"])
+        expectTTX(fonts["MyFontVF2"], "TestVarFont-MyFontVF2.ttx", ["head", "name"])
+
+    def test_compile_variable_ttf_drop_implied_oncurves(self, FontClass, caplog):
+        # https://github.com/googlefonts/ufo2ft/pull/817
+        designspace = DesignSpaceDocument.fromfile(getpath("OTestFont.designspace"))
+        designspace.loadSourceFonts(FontClass)
+
+        # dropImpliedOnCurves is False by default
+        vf1 = compileVariableTTF(designspace)
+
+        with caplog.at_level(logging.INFO, logger="fontTools.varLib"):
+            vf2 = compileVariableTTF(designspace, dropImpliedOnCurves=True)
+
+        assert "Failed to drop implied oncurves" not in caplog.text
+        assert "Dropped 4 on-curve points" in caplog.text
+
+        o1 = vf1["glyf"]["o"].coordinates
+        o2 = vf2["glyf"]["o"].coordinates
+        assert len(o1) == len(o2) + 4
 
 
 if __name__ == "__main__":

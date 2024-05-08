@@ -3,19 +3,22 @@ from __future__ import annotations
 import importlib
 import logging
 import re
+import sys
 from copy import deepcopy
+from functools import partial
 from inspect import currentframe, getfullargspec
-from typing import Any, Mapping, Set
+from typing import Any, Mapping, NamedTuple, Set
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.builder import addOpenTypeFeatures
 from fontTools.misc.fixedTools import otRound
-from fontTools.misc.transform import Identity, Transform
+from fontTools.misc.transform import Identity
+from fontTools.pens.filterPen import DecomposingFilterPointPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
 
-from ufo2ft.constants import UNICODE_SCRIPT_ALIASES
+from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY, UNICODE_SCRIPT_ALIASES
 from ufo2ft.errors import InvalidDesignSpaceData, InvalidFontData
 from ufo2ft.fontInfoData import getAttrWithFallback
 
@@ -47,6 +50,39 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
     return order
 
 
+def decomposeCompositeGlyph(
+    glyph,
+    glyphSet,
+    skipMissing=False,
+    reverseFlipped=True,
+    include=None,
+    decomposeNested=True,
+):
+    """Decompose composite glyph in-place resolving references from glyphSet."""
+    if len(glyph.components) == 0:
+        return
+    pen = DecomposingFilterPointPen(
+        glyph.getPointPen(),
+        glyphSet,
+        reverseFlipped=reverseFlipped,
+        include=include,
+        decomposeNested=decomposeNested,
+    )
+    for component in list(glyph.components):
+        try:
+            component.drawPoints(pen)
+        except pen.MissingComponentError:
+            if skipMissing:
+                logger.warning(
+                    "dropping non-existent component '%s' in glyph '%s'",
+                    component.baseGlyph,
+                    glyph.name,
+                )
+            else:
+                raise
+        glyph.removeComponent(component)
+
+
 class _GlyphSet(dict):
     @classmethod
     def from_layer(cls, font, layerName=None, copy=False, skipExportGlyphs=None):
@@ -62,32 +98,15 @@ class _GlyphSet(dict):
         else:
             self = cls((g.name, g) for g in layer)
             self.lib = layer.lib
+        self.name = layer.name if layerName is not None else None
 
         # If any glyphs in the skipExportGlyphs list are used as components, decompose
         # them in the containing glyphs...
         if skipExportGlyphs:
-            for glyph in self.values():
-                if any(c.baseGlyph in skipExportGlyphs for c in glyph.components):
-                    deepCopyContours(self, glyph, glyph, Transform(), skipExportGlyphs)
-                    if hasattr(glyph, "removeComponent"):  # defcon
-                        for c in [
-                            component
-                            for component in glyph.components
-                            if component.baseGlyph in skipExportGlyphs
-                        ]:
-                            glyph.removeComponent(c)
-                    else:  # ufoLib2
-                        glyph.components[:] = [
-                            c
-                            for c in glyph.components
-                            if c.baseGlyph not in skipExportGlyphs
-                        ]
-            # ... and then remove them from the glyph set, if even present.
-            for glyph_name in skipExportGlyphs:
-                if glyph_name in self:
-                    del self[glyph_name]
+            from ufo2ft.filters.skipExportGlyphs import SkipExportGlyphsFilter
 
-        self.name = layer.name if layerName is not None else None
+            SkipExportGlyphsFilter(skipExportGlyphs)(font, self)
+
         return self
 
 
@@ -164,6 +183,7 @@ def _setGlyphMargin(glyph, side, margin):
         raise NotImplementedError(f"Unsupported Glyph class: {type(glyph)!r}")
 
 
+# DEPRECATED: use ufo2ft.util.decomposeCompositeGlyph above
 def deepCopyContours(
     glyphSet, parent, composite, transformation, specificComponents=None
 ):
@@ -581,7 +601,11 @@ def prune_unknown_kwargs(kwargs, *callables):
     """
     known_args = set()
     for func in callables:
-        known_args.update(getfullargspec(func).args)
+        arg_spec = getfullargspec(func)
+        known_args.update(arg_spec.args)
+        # also handle optional keyword-only arguments
+        if arg_spec.kwonlydefaults:
+            known_args.update(arg_spec.kwonlydefaults)
     return {k: v for k, v in kwargs.items() if k in known_args}
 
 
@@ -713,3 +737,125 @@ def collapse_varscalar(varscalar, threshold=0):
     if not any(abs(v - values[0]) > threshold for v in values[1:]):
         return list(varscalar.values.values())[0]
     return varscalar
+
+
+class OpenTypeCategories(NamedTuple):
+    unassigned: frozenset[str]
+    base: frozenset[str]
+    ligature: frozenset[str]
+    mark: frozenset[str]
+    component: frozenset[str]
+
+    @classmethod
+    def load(cls, font):
+        """Return 'public.openTypeCategories' values as a tuple of sets of
+        unassigned, bases, ligatures, marks, components."""
+        unassigned, bases, ligatures, marks, components = (
+            set(),
+            set(),
+            set(),
+            set(),
+            set(),
+        )
+        openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
+        # Handle case where we are a variable feature writer
+        if not openTypeCategories and isinstance(font, DesignSpaceDocument):
+            designspace = font
+            default = designspace.findDefault()
+            if default is None:
+                raise InvalidDesignSpaceData("No default source found in designspace")
+            font = default.font
+            openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
+
+        for glyphName, category in openTypeCategories.items():
+            if category == "unassigned":
+                unassigned.add(glyphName)
+            elif category == "base":
+                bases.add(glyphName)
+            elif category == "ligature":
+                ligatures.add(glyphName)
+            elif category == "mark":
+                marks.add(glyphName)
+            elif category == "component":
+                components.add(glyphName)
+            else:
+                logging.getLogger("ufo2ft").warning(
+                    f"The '{OPENTYPE_CATEGORIES_KEY}' value of {glyphName} in "
+                    f"{font.info.familyName} {font.info.styleName} is '{category}' "
+                    "when it should be 'unassigned', 'base', 'ligature', 'mark' "
+                    "or 'component'."
+                )
+        return cls(
+            frozenset(unassigned),
+            frozenset(bases),
+            frozenset(ligatures),
+            frozenset(marks),
+            frozenset(components),
+        )
+
+
+def importUfoModule():
+    try:
+        import ufoLib2
+    except ModuleNotFoundError:
+        try:
+            import defcon
+        except ModuleNotFoundError:
+            raise
+        else:
+            return defcon
+    else:
+        return ufoLib2
+
+
+def openFontFactory(*, ufo_module=None):
+    if ufo_module is None:
+        ufo_module = importUfoModule()
+
+    if hasattr(ufo_module.Font, "open"):
+
+        def ctor(path=None):
+            if path is None:
+                return ufo_module.Font()
+            else:
+                return ufo_module.Font.open(path)
+
+        return ctor
+    return ufo_module.Font
+
+
+def openFont(*args, ufo_module=None, **kwargs):
+    return openFontFactory(ufo_module=ufo_module)(*args, **kwargs)
+
+
+# zip(strict=True) was added with Python 3.10, we provide a backport below
+# https://docs.python.org/3/library/functions.html#zip
+if sys.version_info[:2] < (3, 10):
+
+    def zip_strict(*iterables):
+        # https://peps.python.org/pep-0618/#reference-implementation
+        if not iterables:
+            return
+        iterators = tuple(iter(iterable) for iterable in iterables)
+        try:
+            while True:
+                items = []
+                for iterator in iterators:
+                    items.append(next(iterator))
+                yield tuple(items)
+        except StopIteration:
+            pass
+        if items:
+            i = len(items)
+            plural = " " if i == 1 else "s 1-"
+            msg = f"zip() argument {i + 1} is shorter than argument{plural}{i}"
+            raise ValueError(msg)
+        sentinel = object()
+        for i, iterator in enumerate(iterators[1:], 1):
+            if next(iterator, sentinel) is not sentinel:
+                plural = " " if i == 1 else "s 1-"
+                msg = f"zip() argument {i + 1} is longer than argument{plural}{i}"
+                raise ValueError(msg)
+
+else:
+    zip_strict = partial(zip, strict=True)

@@ -1,0 +1,4 @@
+# Prefix: Languagesystems
+languagesystem DFLT dflt;
+languagesystem math dflt;
+
