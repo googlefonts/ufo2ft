@@ -2,7 +2,9 @@ import logging
 
 import pytest
 from fontTools.cu2qu.ufo import font_to_quadratic
+from fontTools.misc.fixedTools import floatToFixedToFloat
 from fontTools.pens.hashPointPen import HashPointPen
+from fontTools.pens.roundingPen import RoundingPointPen
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
     ROUND_XY_TO_GRID,
@@ -10,6 +12,7 @@ from fontTools.ttLib.tables._g_l_y_f import (
     flagOverlapSimple,
 )
 from fontTools.ttLib.ttFont import TTFont
+from functools import partial
 
 from ufo2ft.instructionCompiler import InstructionCompiler
 
@@ -40,7 +43,10 @@ def expect_maxp(
 
 def get_hash_ufo(glyph, ufo):
     hash_pen = HashPointPen(glyph.width, ufo)
-    glyph.drawPoints(hash_pen)
+    round_pen = RoundingPointPen(
+        hash_pen, transformRoundFunc=partial(floatToFixedToFloat, precisionBits=14)
+    )
+    glyph.drawPoints(round_pen)
     return hash_pen.hash
 
 
