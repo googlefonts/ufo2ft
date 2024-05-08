@@ -47,8 +47,7 @@ class InstructionCompiler:
     def _check_glyph_hash(
         self, glyph: Glyph, ttglyph: TTGlyph, stored_hash: Optional[str]
     ) -> bool:
-        """Check if the supplied stored glyph hash from the ufo matches the current
-        outlines in the UFO and the TTGlyph."""
+        """Check if the supplied stored glyph hash from the ufo matches the TTGlyph."""
         if stored_hash is None:
             # The glyph hash is required
             logger.error(
@@ -56,8 +55,6 @@ class InstructionCompiler:
                 "no instructions in font."
             )
             return False
-
-        # Check the stored glyph hash against the TTGlyph that is being built
 
         ttwidth = self.otf["hmtx"][glyph.name][0]
         hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet())
