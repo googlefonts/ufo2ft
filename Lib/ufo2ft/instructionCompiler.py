@@ -57,27 +57,13 @@ class InstructionCompiler:
             )
             return False
 
-        # Check the stored hash against the current UFO glyph
-
-        hash_pen = HashPointPen(glyph.width, self.ufo)
-        glyph.drawPoints(hash_pen)
-        if stored_hash != hash_pen.hash:
-            logger.error(
-                f"The stored hash for glyph '{glyph.name}' does not match the current "
-                "UFO glyph. Glyph will have no instructions in the font."
-            )
-            logger.error(f"Stored: {stored_hash}")
-            logger.error(f"Calced: {hash_pen.hash}")
-            return False
-
-        # Check the calculated glyph hash against the TTGlyph that is being built
+        # Check the stored glyph hash against the TTGlyph that is being built
 
         hash_pen = HashPointPen(glyph.width, self.ufo)
         round_pen = RoundingPointPen(
             hash_pen, transformRoundFunc=partial(floatToFixedToFloat, precisionBits=14)
         )
         glyph.drawPoints(round_pen)
-        ufo_hash = hash_pen.hash
 
         ttwidth = self.otf["hmtx"][glyph.name][0]
         hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet())
@@ -86,9 +72,9 @@ class InstructionCompiler:
         )
         ttglyph.drawPoints(round_pen, self.otf["glyf"])
 
-        if ufo_hash != hash_pen.hash:
+        if stored_hash != hash_pen.hash:
             logger.error(
-                f"The calculated hash for glyph '{glyph.name}' does not match the "
+                f"The stored hash for glyph '{glyph.name}' does not match the "
                 "TrueType output glyph. Glyph will have no instructions in the font."
             )
             return False
