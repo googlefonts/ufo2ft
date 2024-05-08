@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 import pytest
 from fontTools.cu2qu.ufo import font_to_quadratic
@@ -12,7 +13,6 @@ from fontTools.ttLib.tables._g_l_y_f import (
     flagOverlapSimple,
 )
 from fontTools.ttLib.ttFont import TTFont
-from functools import partial
 
 from ufo2ft.instructionCompiler import InstructionCompiler
 
