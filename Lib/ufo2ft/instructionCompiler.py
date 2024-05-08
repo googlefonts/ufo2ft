@@ -59,12 +59,6 @@ class InstructionCompiler:
 
         # Check the stored glyph hash against the TTGlyph that is being built
 
-        hash_pen = HashPointPen(glyph.width, self.ufo)
-        round_pen = RoundingPointPen(
-            hash_pen, transformRoundFunc=partial(floatToFixedToFloat, precisionBits=14)
-        )
-        glyph.drawPoints(round_pen)
-
         ttwidth = self.otf["hmtx"][glyph.name][0]
         hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet())
         round_pen = RoundingPointPen(
