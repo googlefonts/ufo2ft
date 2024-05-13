@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import array
 import logging
+from functools import partial
 from typing import TYPE_CHECKING, Optional
 
 from fontTools import ttLib
+from fontTools.misc.fixedTools import floatToFixedToFloat
 from fontTools.pens.hashPointPen import HashPointPen
+from fontTools.pens.roundingPen import RoundingPointPen
 from fontTools.ttLib import newTable
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
@@ -42,27 +45,28 @@ class InstructionCompiler:
             self.autoUseMyMetrics = lambda ttGlyph, glyphName: None
 
     def _check_glyph_hash(
-        self, glyphName: str, ttglyph: TTGlyph, glyph_hash: Optional[str]
+        self, glyph: Glyph, ttglyph: TTGlyph, stored_hash: Optional[str]
     ) -> bool:
-        """Check if the supplied glyph hash from the ufo matches the current outlines."""
-        if glyph_hash is None:
+        """Check if the supplied stored glyph hash from the ufo matches the TTGlyph."""
+        if stored_hash is None:
             # The glyph hash is required
             logger.error(
-                f"Glyph hash missing, glyph '{glyphName}' will have "
+                f"Glyph hash missing, glyph '{glyph.name}' will have "
                 "no instructions in font."
             )
             return False
 
-        # Check the glyph hash against the TTGlyph that is being built
-
-        ttwidth = self.otf["hmtx"][glyphName][0]
+        ttwidth = self.otf["hmtx"][glyph.name][0]
         hash_pen = HashPointPen(ttwidth, self.otf.getGlyphSet())
-        ttglyph.drawPoints(hash_pen, self.otf["glyf"])
+        round_pen = RoundingPointPen(
+            hash_pen, transformRoundFunc=partial(floatToFixedToFloat, precisionBits=14)
+        )
+        ttglyph.drawPoints(round_pen, self.otf["glyf"])
 
-        if glyph_hash != hash_pen.hash:
+        if stored_hash != hash_pen.hash:
             logger.error(
-                f"The stored hash for glyph '{glyphName}' does not match the TrueType "
-                "output glyph. Glyph will have no instructions in the font."
+                f"The stored hash for glyph '{glyph.name}' does not match the "
+                "TrueType output glyph. Glyph will have no instructions in the font."
             )
             return False
         return True
@@ -132,7 +136,7 @@ class InstructionCompiler:
     ) -> None:
         self._check_tt_data_format(ttdata, f"glyph '{glyph.name}'")
         glyph_hash = ttdata.get("id", None)
-        if not self._check_glyph_hash(glyph.name, ttglyph, glyph_hash):
+        if not self._check_glyph_hash(glyph, ttglyph, glyph_hash):
             return
 
         # Compile the glyph program

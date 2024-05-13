@@ -20,7 +20,6 @@ def testufo(FontClass):
 
 
 class InfoCompilerTest:
-
     def test_head(self, testttf, testufo):
         info = {"versionMajor": 5, "versionMinor": 6}
         compiler = InfoCompiler(testttf, testufo, info)

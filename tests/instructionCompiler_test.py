@@ -1,8 +1,11 @@
 import logging
+from functools import partial
 
 import pytest
 from fontTools.cu2qu.ufo import font_to_quadratic
+from fontTools.misc.fixedTools import floatToFixedToFloat
 from fontTools.pens.hashPointPen import HashPointPen
+from fontTools.pens.roundingPen import RoundingPointPen
 from fontTools.ttLib.tables._g_l_y_f import (
     OVERLAP_COMPOUND,
     ROUND_XY_TO_GRID,
@@ -40,7 +43,10 @@ def expect_maxp(
 
 def get_hash_ufo(glyph, ufo):
     hash_pen = HashPointPen(glyph.width, ufo)
-    glyph.drawPoints(hash_pen)
+    round_pen = RoundingPointPen(
+        hash_pen, transformRoundFunc=partial(floatToFixedToFloat, precisionBits=14)
+    )
+    glyph.drawPoints(round_pen)
     return hash_pen.hash
 
 
@@ -89,7 +95,7 @@ class InstructionCompilerTest:
         ttglyph = quadfont["glyf"]["a"]
 
         ic = InstructionCompiler(quaduforeversed, quadfont)
-        result = ic._check_glyph_hash(glyph.name, ttglyph, ufo_hash)
+        result = ic._check_glyph_hash(glyph, ttglyph, ufo_hash)
         assert result
 
     def test_check_glyph_hash_missing(self, quaduforeversed, quadfont):
@@ -97,7 +103,7 @@ class InstructionCompilerTest:
 
         ic = InstructionCompiler(quaduforeversed, quadfont)
         result = ic._check_glyph_hash(
-            glyph.name,
+            glyph,
             quadfont["glyf"]["a"],
             None,
         )
@@ -113,7 +119,7 @@ class InstructionCompilerTest:
 
         ic = InstructionCompiler(testufo, quadfont)
         result = ic._check_glyph_hash(
-            glyph.name,
+            glyph,
             ttglyph,
             ufo_hash,
         )
@@ -129,7 +135,7 @@ class InstructionCompilerTest:
 
         ic = InstructionCompiler(testufo, quadfont)
         result = ic._check_glyph_hash(
-            glyph.name,
+            glyph,
             ttglyph,
             ufo_hash,
         )
@@ -146,7 +152,7 @@ class InstructionCompilerTest:
 
         ic = InstructionCompiler(quaduforeversed, quadfont)
         result = ic._check_glyph_hash(
-            glyph.name,
+            glyph,
             ttglyph,
             ufo_hash,
         )
