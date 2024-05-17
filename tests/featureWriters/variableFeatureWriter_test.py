@@ -17,6 +17,7 @@ def test_variable_features(FontClass):
     assert dedent("\n" + tmp.getvalue()) == dedent(
         """
         markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
+        markClass gravecmb <anchor 250 400> @MC_top;
 
         lookup kern_Arab {
             lookupflag IgnoreMarks;
@@ -37,6 +38,8 @@ def test_variable_features(FontClass):
             lookup mark2base {
                 pos base alef-ar.fina
                     <anchor (wght=100:211 wght=1000:214) (wght=100:730 wght=1000:797)> mark @MC_top;
+                pos base a
+                    <anchor 250 400> mark @MC_top;
             } mark2base;
 
         } mark;
@@ -46,12 +49,12 @@ def test_variable_features(FontClass):
         } GDEF;
 
         feature curs {
-            lookup curs {
+            lookup curs_rtl {
                 lookupflag RightToLeft IgnoreMarks;
                 pos cursive alef-ar.fina <anchor (wght=100:299 wght=1000:330) (wght=100:97 wght=1000:115)> <anchor NULL>;
                 pos cursive peh-ar.init <anchor NULL> <anchor (wght=100:161 wght=1000:73) (wght=100:54 wght=1000:89)>;
                 pos cursive peh-ar.init.BRACKET.varAlt01 <anchor NULL> <anchor (wght=100:89 wght=1000:73) (wght=100:53 wght=1000:85)>;
-            } curs;
+            } curs_rtl;
 
         } curs;
 """  # noqa: B950

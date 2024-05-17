@@ -418,7 +418,7 @@ class BaseFeatureWriter:
             found = False
             for source in designspace.sources:
                 if glyphName not in source.font:
-                    return None
+                    continue
                 glyph = source.font[glyphName]
                 for anchor in glyph.anchors:
                     if anchor.name == anchorName:

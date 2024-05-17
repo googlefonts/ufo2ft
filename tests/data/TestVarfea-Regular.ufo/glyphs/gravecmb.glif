@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="gravecmb" format="2">
+  <advance width="500"/>
+  <unicode hex="0300"/>
+  <anchor x="250" y="400" name="_top"/>
+  <outline>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0.5955,0.7484,1,1</string>
+    </dict>
+  </lib>
+</glyph>
