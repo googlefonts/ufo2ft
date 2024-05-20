@@ -3,23 +3,17 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import Any, Mapping, Set
+from typing import Mapping
 
 from fontTools import unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
-from fontTools.feaLib.variableScalar import Location as VariableScalarLocation
-from fontTools.feaLib.variableScalar import VariableScalar
-from fontTools.ufoLib.kerning import lookupKerningValue
 
 from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import (
-    classifyGlyphs,
-    collapse_varscalar,
-    get_userspace_location,
-    quantize,
-    unicodeScriptDirection,
+from ufo2ft.featureWriters.kernFeatureWriter import (
+    KernFeatureWriter as NewKernFeatureWriter,
 )
+from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection
 
 SIDE1_PREFIX = "public.kern1."
 SIDE2_PREFIX = "public.kern2."
@@ -232,13 +226,32 @@ class KernFeatureWriter(BaseFeatureWriter):
     @staticmethod
     def getKerningPairs(font, side1Classes, side2Classes, glyphSet=None, options=None):
         if isinstance(font, DesignSpaceDocument):
-            return KernFeatureWriter.getVariableKerningPairs(
+            # Reuse the newer kern writers variable kerning extractor. Repack
+            # some arguments and the return type for this.
+            side1ClassesRaw: Mapping[str, tuple[str, ...]] = {
+                group_name: tuple(
+                    glyph
+                    for glyphs in glyph_defs.glyphSet()
+                    for glyph in glyphs.glyphSet()
+                )
+                for group_name, glyph_defs in side1Classes.items()
+            }
+            side2ClassesRaw: Mapping[str, tuple[str, ...]] = {
+                group_name: tuple(
+                    glyph
+                    for glyphs in glyph_defs.glyphSet()
+                    for glyph in glyphs.glyphSet()
+                )
+                for group_name, glyph_defs in side2Classes.items()
+            }
+            pairs = NewKernFeatureWriter.getVariableKerningPairs(
                 font,
-                side1Classes,
-                side2Classes,
-                glyphSet or set(),
-                options or SimpleNamespace(),
+                side1ClassesRaw,
+                side2ClassesRaw,
+                glyphSet or {},
+                options or KernFeatureWriter.options,
             )
+            return [KerningPair(pair.side1, pair.side2, pair.value) for pair in pairs]
 
         if glyphSet:
             allGlyphs = set(glyphSet.keys())
@@ -269,136 +282,6 @@ class KernFeatureWriter(BaseFeatureWriter):
                 if secondIsClass:
                     side2 = side2Classes[side2]
                 result.append(KerningPair(side1, side2, value))
-        return result
-
-    @staticmethod
-    def getVariableKerningPairs(
-        designspace: DesignSpaceDocument,
-        side1Classes: Any,
-        side2Classes: Any,
-        glyphSet: Set[str],
-        options: SimpleNamespace,
-    ) -> list[KerningPair]:
-        quantization = options.quantization
-
-        # Gather utility variables for faster kerning lookups.
-        # TODO: Do we construct these in code elsewhere?
-        assert not (set(side1Classes) & set(side2Classes))
-        unified_groups = {**side1Classes, **side2Classes}
-
-        side1ClassesRaw: Mapping[str, tuple[str, ...]] = {
-            group_name: tuple(
-                glyph for glyphs in glyph_defs.glyphSet() for glyph in glyphs.glyphSet()
-            )
-            for group_name, glyph_defs in side1Classes.items()
-        }
-        side2ClassesRaw: Mapping[str, tuple[str, ...]] = {
-            group_name: tuple(
-                glyph for glyphs in glyph_defs.glyphSet() for glyph in glyphs.glyphSet()
-            )
-            for group_name, glyph_defs in side2Classes.items()
-        }
-
-        glyphToFirstGroup = {
-            glyph_name: group_name  # TODO: Is this overwrite safe? User input is adversarial
-            for group_name, glyphs in side1ClassesRaw.items()
-            for glyph_name in glyphs
-        }
-        glyphToSecondGroup = {
-            glyph_name: group_name
-            for group_name, glyphs in side2ClassesRaw.items()
-            for glyph_name in glyphs
-        }
-
-        # Collate every kerning pair in the designspace, as even UFOs that
-        # provide no entry for the pair must contribute a value at their
-        # source's location in the VariableScalar.
-        # NOTE: This is required as the DS+UFO kerning model and the OpenType
-        #       variation model handle the absence of a kerning value at a
-        #       given location differently:
-        #       - DS+UFO:
-        #           If the missing pair excepts another pair, take its value;
-        #           Otherwise, take a value of 0.
-        #       - OpenType:
-        #           Always interpolate from other locations, ignoring more
-        #           general pairs that this one excepts.
-        # See discussion: https://github.com/googlefonts/ufo2ft/pull/635
-        all_pairs: set[tuple[str, str]] = set()
-        for source in designspace.sources:
-            if source.layerName is not None:
-                continue
-            assert source.font is not None
-            all_pairs |= set(source.font.kerning)
-
-        kerning_pairs_in_progress: dict[
-            tuple[str | tuple[str], str | tuple[str]], VariableScalar
-        ] = {}
-        for source in designspace.sources:
-            # Skip sparse sources, because they can have no kerning.
-            if source.layerName is not None:
-                continue
-            assert source.font is not None
-
-            location = VariableScalarLocation(
-                get_userspace_location(designspace, source.location)
-            )
-
-            kerning: Mapping[tuple[str, str], float] = source.font.kerning
-            for pair in all_pairs:
-                side1, side2 = pair
-                firstIsClass = side1 in side1Classes
-                secondIsClass = side2 in side2Classes
-
-                # Filter out pairs that reference missing groups or glyphs.
-                # TODO: Can we do this outside of the loop? We know the pairs already.
-                if not firstIsClass and side1 not in glyphSet:
-                    continue
-                if not secondIsClass and side2 not in glyphSet:
-                    continue
-
-                # Get the kerning value for this source and quantize, following
-                # the DS+UFO semantics described above.
-                value = quantize(
-                    lookupKerningValue(
-                        pair,
-                        kerning,
-                        unified_groups,
-                        glyphToFirstGroup=glyphToFirstGroup,
-                        glyphToSecondGroup=glyphToSecondGroup,
-                    ),
-                    quantization,
-                )
-
-                if firstIsClass:
-                    side1 = side1Classes[side1]
-                if secondIsClass:
-                    side2 = side2Classes[side2]
-
-                # TODO: Can we instantiate these outside of the loop? We know the pairs already.
-                var_scalar = kerning_pairs_in_progress.setdefault(
-                    (side1, side2), VariableScalar()
-                )
-                # NOTE: Avoid using .add_value because it instantiates a new
-                # VariableScalarLocation on each call.
-                var_scalar.values[location] = value
-
-        # We may need to provide a default location value to the variation
-        # model, find out where that is.
-        default_source = designspace.findDefault()
-        assert default_source is not None
-        default_location = VariableScalarLocation(
-            get_userspace_location(designspace, default_source.location)
-        )
-
-        result = []
-        for (side1, side2), value in kerning_pairs_in_progress.items():
-            # TODO: Should we interpolate a default value if it's not in the
-            # sources, rather than inserting a zero? What would varLib do?
-            if default_location not in value.values:
-                value.values[default_location] = 0
-            value = collapse_varscalar(value)
-            result.append(KerningPair(side1, side2, value))
-
         return result
 
     def _intersectPairs(self, attribute, glyphSets):

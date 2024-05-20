@@ -402,7 +402,13 @@ class KernFeatureWriter(BaseFeatureWriter):
         side2Classes: Mapping[str, tuple[str, ...]],
     ) -> list[KerningPair]:
         if self.context.isVariable:
-            return self.getVariableKerningPairs(side1Classes, side2Classes)
+            return self.getVariableKerningPairs(
+                self.context.font,
+                side1Classes,
+                side2Classes,
+                self.context.glyphSet,
+                self.options,
+            )
 
         glyphSet = self.context.glyphSet
         font = self.context.font
@@ -432,14 +438,15 @@ class KernFeatureWriter(BaseFeatureWriter):
 
         return result
 
+    @staticmethod
     def getVariableKerningPairs(
-        self,
+        designspace: DesignSpaceDocument,
         side1Classes: Mapping[str, tuple[str, ...]],
         side2Classes: Mapping[str, tuple[str, ...]],
+        glyphSet: Mapping[str, str],
+        options: SimpleNamespace,
     ) -> list[KerningPair]:
-        designspace: DesignSpaceDocument = self.context.font
-        glyphSet = self.context.glyphSet
-        quantization = self.options.quantization
+        quantization = options.quantization
 
         # Gather utility variables for faster kerning lookups.
         # TODO: Do we construct these in code elsewhere?
