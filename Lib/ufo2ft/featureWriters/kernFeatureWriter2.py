@@ -15,10 +15,10 @@ from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import (
     classifyGlyphs,
+    collapse_varscalar,
+    get_userspace_location,
     quantize,
     unicodeScriptDirection,
-    get_userspace_location,
-    collapse_varscalar,
 )
 
 SIDE1_PREFIX = "public.kern1."
