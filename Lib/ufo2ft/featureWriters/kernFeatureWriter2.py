@@ -249,7 +249,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 side1ClassesRaw,
                 side2ClassesRaw,
                 glyphSet or {},
-                options or KernFeatureWriter.options,
+                options or SimpleNamespace(**KernFeatureWriter.options),
             )
             return [KerningPair(pair.side1, pair.side2, pair.value) for pair in pairs]
 
