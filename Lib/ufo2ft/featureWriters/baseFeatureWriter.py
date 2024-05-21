@@ -42,6 +42,11 @@ class BaseFeatureWriter:
     The `options` class attribute contains a mapping of option
     names with their default values. These can be overridden on an
     instance by passing keyword arguments to the constructor.
+
+    Combining manually written and automatically generated feature code 
+    can be achieved by using the `# Automatic Code` insertion marker 
+    inside the feature code. Automatically generated code for the 
+    respective feature is added in that spot.
     """
 
     tableTag = None
