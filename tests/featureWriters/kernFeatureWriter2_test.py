@@ -694,6 +694,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             feature kern {
                 lookup kern_dflt;
+                lookup kern_ltr;
                 script latn;
                 language dflt;
                 lookup kern_ltr;
@@ -808,6 +809,8 @@ class KernFeatureWriterTest(FeatureWriterTest):
 
             feature kern {
                 lookup kern_dflt;
+                lookup kern_ltr;
+                lookup kern_ltr_marks;
                 script latn;
                 language dflt;
                 lookup kern_ltr;

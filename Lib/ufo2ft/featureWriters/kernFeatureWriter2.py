@@ -523,8 +523,28 @@ class KernFeatureWriter(BaseFeatureWriter):
         return features
 
     def _registerKernLookups(self, feature, lookups):
+        # InDesign bugfix: register kerning lookups for all LTR scripts under DFLT
+        # so that the basic composer, without a language selected, will still kern.
+        # Register LTR lookups if any, otherwise RTL lookups.
+        dfltLookups = []
+        ltrLookups = lookups.get("LTR")
+        rtlLookups = lookups.get("RTL")
         if "DFLT" in lookups:
-            ast.addLookupReferences(feature, lookups["DFLT"])
+            dfltLookups.extend(lkp for lkp in lookups["DFLT"])
+            dfltLookups.extend(
+                lkp for lkp in (ltrLookups or rtlLookups) if lkp not in dfltLookups
+            )
+            ast.addLookupReferences(feature, dfltLookups)
+        ltrLookupsRest = (
+            [lkp for lkp in ltrLookups if lkp not in dfltLookups]
+            if ltrLookups
+            else None
+        )
+        rtlLookupsRest = (
+            [lkp for lkp in rtlLookups if lkp not in dfltLookups]
+            if rtlLookups
+            else None
+        )
 
         scriptGroups = self.context.scriptGroups
         if "dist" in self.context.todo:
@@ -535,8 +555,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         ltrScripts = kernScripts.get("LTR", [])
         rtlScripts = kernScripts.get("RTL", [])
 
-        ltrLookups = lookups.get("LTR")
-        rtlLookups = lookups.get("RTL")
         if ltrLookups and rtlLookups:
             if ltrScripts and rtlScripts:
                 for script, langs in ltrScripts:
@@ -560,14 +578,16 @@ class KernFeatureWriter(BaseFeatureWriter):
                     )
         elif ltrLookups:
             if not (rtlScripts or distScripts):
-                ast.addLookupReferences(feature, ltrLookups)
+                if ltrLookupsRest:
+                    ast.addLookupReferences(feature, ltrLookupsRest)
             else:
                 ast.addLookupReferences(feature, ltrLookups, script="DFLT")
                 for script, langs in ltrScripts:
                     ast.addLookupReferences(feature, ltrLookups, script, langs)
         elif rtlLookups:
             if not (ltrScripts or distScripts):
-                ast.addLookupReferences(feature, rtlLookups)
+                if rtlLookupsRest:
+                    ast.addLookupReferences(feature, rtlLookupsRest)
             else:
                 ast.addLookupReferences(feature, rtlLookups, script="DFLT")
                 for script, langs in rtlScripts:
