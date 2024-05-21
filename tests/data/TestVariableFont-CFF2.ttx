@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ttFont sfntVersion="OTTO" ttLibVersion="4.44">
+<ttFont sfntVersion="OTTO" ttLibVersion="4.51">
 
   <GlyphOrder>
     <!-- The 'id' attribute is only for humans; it is ignored when parsed. -->
@@ -316,8 +316,15 @@
       <Format value="1"/>
       <VarRegionList>
         <!-- RegionAxisCount=1 -->
-        <!-- RegionCount=1 -->
+        <!-- RegionCount=2 -->
         <Region index="0">
+          <VarRegionAxis index="0">
+            <StartCoord value="0.0"/>
+            <PeakCoord value="0.36365"/>
+            <EndCoord value="1.0"/>
+          </VarRegionAxis>
+        </Region>
+        <Region index="1">
           <VarRegionAxis index="0">
             <StartCoord value="0.36365"/>
             <PeakCoord value="1.0"/>
@@ -329,10 +336,11 @@
       <VarData index="0">
         <!-- ItemCount=2 -->
         <NumShorts value="0"/>
-        <!-- VarRegionCount=1 -->
+        <!-- VarRegionCount=2 -->
         <VarRegionIndex index="0" value="0"/>
-        <Item index="0" value="[1]"/>
-        <Item index="1" value="[88]"/>
+        <VarRegionIndex index="1" value="1"/>
+        <Item index="0" value="[11, 88]"/>
+        <Item index="1" value="[89, 1]"/>
       </VarData>
     </VarStore>
   </GDEF>
@@ -395,12 +403,12 @@
                 <YCoordinate value="556"/>
                 <XDeviceTable>
                   <StartSize value="0"/>
-                  <EndSize value="0"/>
+                  <EndSize value="1"/>
                   <DeltaFormat value="32768"/>
                 </XDeviceTable>
                 <YDeviceTable>
                   <StartSize value="0"/>
-                  <EndSize value="1"/>
+                  <EndSize value="0"/>
                   <DeltaFormat value="32768"/>
                 </YDeviceTable>
               </BaseAnchor>

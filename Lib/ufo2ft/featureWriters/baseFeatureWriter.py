@@ -422,9 +422,13 @@ class BaseFeatureWriter:
             y_value = VariableScalar()
             found = False
             for source in designspace.sources:
-                if glyphName not in source.font:
+                if source.layerName is None:
+                    layer = source.font
+                else:
+                    layer = source.font.layers[source.layerName]
+                if glyphName not in layer:
                     continue
-                glyph = source.font[glyphName]
+                glyph = layer[glyphName]
                 for anchor in glyph.anchors:
                     if anchor.name == anchorName:
                         location = get_userspace_location(designspace, source.location)
