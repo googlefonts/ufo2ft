@@ -1,11 +1,18 @@
 """Old implementation of KernFeatureWriter as of ufo2ft v2.30.0 for backward compat."""
 
+from __future__ import annotations
+
 from types import SimpleNamespace
+from typing import Mapping
 
 from fontTools import unicodedata
+from fontTools.designspaceLib import DesignSpaceDocument
 
 from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
+from ufo2ft.featureWriters.kernFeatureWriter import (
+    KernFeatureWriter as NewKernFeatureWriter,
+)
 from ufo2ft.util import classifyGlyphs, quantize, unicodeScriptDirection
 
 SIDE1_PREFIX = "public.kern1."
@@ -113,7 +120,9 @@ class KernFeatureWriter(BaseFeatureWriter):
     def setContext(self, font, feaFile, compiler=None):
         ctx = super().setContext(font, feaFile, compiler=compiler)
         ctx.gdefClasses = self.getGDEFGlyphClasses()
-        ctx.kerning = self.getKerningData(font, feaFile, self.getOrderedGlyphSet())
+        ctx.kerning = self.getKerningData(
+            font, self.options, feaFile, self.getOrderedGlyphSet()
+        )
 
         feaScripts = ast.getScriptLanguageSystems(feaFile)
         ctx.scriptGroups = self._groupScriptsByTagAndDirection(feaScripts)
@@ -168,9 +177,9 @@ class KernFeatureWriter(BaseFeatureWriter):
         return True
 
     @classmethod
-    def getKerningData(cls, font, feaFile=None, glyphSet=None):
+    def getKerningData(cls, font, options, feaFile=None, glyphSet=None):
         side1Classes, side2Classes = cls.getKerningClasses(font, feaFile, glyphSet)
-        pairs = cls.getKerningPairs(font, side1Classes, side2Classes, glyphSet)
+        pairs = cls.getKerningPairs(font, side1Classes, side2Classes, glyphSet, options)
         return SimpleNamespace(
             side1Classes=side1Classes, side2Classes=side2Classes, pairs=pairs
         )
@@ -183,6 +192,13 @@ class KernFeatureWriter(BaseFeatureWriter):
             allGlyphs = set(font.keys())
         side1Groups = {}
         side2Groups = {}
+
+        if isinstance(font, DesignSpaceDocument):
+            default_font = font.findDefault()
+            assert default_font is not None
+            font = default_font.font
+            assert font is not None
+
         for name, members in font.groups.items():
             # prune non-existent or skipped glyphs
             members = [g for g in members if g in allGlyphs]
@@ -208,7 +224,35 @@ class KernFeatureWriter(BaseFeatureWriter):
         return side1Classes, side2Classes
 
     @staticmethod
-    def getKerningPairs(font, side1Classes, side2Classes, glyphSet=None):
+    def getKerningPairs(font, side1Classes, side2Classes, glyphSet=None, options=None):
+        if isinstance(font, DesignSpaceDocument):
+            # Reuse the newer kern writers variable kerning extractor. Repack
+            # some arguments and the return type for this.
+            side1ClassesRaw: Mapping[str, tuple[str, ...]] = {
+                group_name: tuple(
+                    glyph
+                    for glyphs in glyph_defs.glyphSet()
+                    for glyph in glyphs.glyphSet()
+                )
+                for group_name, glyph_defs in side1Classes.items()
+            }
+            side2ClassesRaw: Mapping[str, tuple[str, ...]] = {
+                group_name: tuple(
+                    glyph
+                    for glyphs in glyph_defs.glyphSet()
+                    for glyph in glyphs.glyphSet()
+                )
+                for group_name, glyph_defs in side2Classes.items()
+            }
+            pairs = NewKernFeatureWriter.getVariableKerningPairs(
+                font,
+                side1ClassesRaw,
+                side2ClassesRaw,
+                glyphSet or {},
+                options or SimpleNamespace(**KernFeatureWriter.options),
+            )
+            return [KerningPair(pair.side1, pair.side2, pair.value) for pair in pairs]
+
         if glyphSet:
             allGlyphs = set(glyphSet.keys())
         else:

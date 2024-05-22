@@ -59,3 +59,76 @@ def test_variable_features(FontClass):
         } curs;
 """  # noqa: B950
     )
+
+
+def test_variable_features_old_kern_writer(FontClass):
+    tmp = io.StringIO()
+    designspace = designspaceLib.DesignSpaceDocument.fromfile(
+        "tests/data/TestVarfea.designspace"
+    )
+    designspace.loadSourceFonts(FontClass)
+
+    default_source = designspace.findDefault()
+    assert default_source is not None
+    default_ufo = default_source.font
+    assert default_ufo is not None
+    default_ufo.lib["com.github.googlei18n.ufo2ft.featureWriters"] = [
+        {
+            "module": "ufo2ft.featureWriters.kernFeatureWriter2",
+            "class": "KernFeatureWriter",
+        },
+        {
+            "module": "ufo2ft.featureWriters.markFeatureWriter",
+            "class": "MarkFeatureWriter",
+        },
+        {
+            "module": "ufo2ft.featureWriters.gdefFeatureWriter",
+            "class": "GdefFeatureWriter",
+        },
+        {
+            "module": "ufo2ft.featureWriters.cursFeatureWriter",
+            "class": "CursFeatureWriter",
+        },
+    ]
+
+    _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
+
+    assert dedent("\n" + tmp.getvalue()) == dedent(
+        """
+        markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
+        markClass gravecmb <anchor 250 400> @MC_top;
+
+        lookup kern_rtl {
+            lookupflag IgnoreMarks;
+            pos alef-ar.fina alef-ar.fina <(wght=100:15 wght=1000:35) 0 (wght=100:15 wght=1000:35) 0>;
+        } kern_rtl;
+
+        feature kern {
+            lookup kern_rtl;
+        } kern;
+
+        feature mark {
+            lookup mark2base {
+                pos base alef-ar.fina
+                    <anchor (wght=100:211 wght=1000:214) (wght=100:730 wght=1000:797)> mark @MC_top;
+                pos base a
+                    <anchor 250 400> mark @MC_top;
+            } mark2base;
+
+        } mark;
+
+        table GDEF {
+            LigatureCaretByPos peh-ar.init 100;
+        } GDEF;
+
+        feature curs {
+            lookup curs_rtl {
+                lookupflag RightToLeft IgnoreMarks;
+                pos cursive alef-ar.fina <anchor (wght=100:299 wght=1000:330) (wght=100:97 wght=1000:115)> <anchor NULL>;
+                pos cursive peh-ar.init <anchor NULL> <anchor (wght=100:161 wght=1000:73) (wght=100:54 wght=1000:89)>;
+                pos cursive peh-ar.init.BRACKET.varAlt01 <anchor NULL> <anchor (wght=100:89 wght=1000:73) (wght=100:53 wght=1000:85)>;
+            } curs_rtl;
+
+        } curs;
+"""  # noqa: B950
+    )
