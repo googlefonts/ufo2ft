@@ -526,6 +526,7 @@ class KernFeatureWriter(BaseFeatureWriter):
         # InDesign bugfix: register kerning lookups for all LTR scripts under DFLT
         # so that the basic composer, without a language selected, will still kern.
         # Register LTR lookups if any, otherwise RTL lookups.
+        # See https://github.com/googlefonts/ufo2ft/pull/787.
         dfltLookups = []
         ltrLookups = lookups.get("LTR")
         rtlLookups = lookups.get("RTL")
