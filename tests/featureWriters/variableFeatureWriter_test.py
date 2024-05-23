@@ -90,6 +90,11 @@ def test_variable_features_old_kern_writer(FontClass):
             "class": "CursFeatureWriter",
         },
     ]
+    for index, source in enumerate(designspace.sources):
+        font = source.font
+        font.groups["public.kern1.alef"] = ["alef-ar.fina"]
+        font.groups["public.kern2.alef"] = ["alef-ar.fina"]
+        font.kerning[("public.kern1.alef", "public.kern2.alef")] = index
 
     _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
 
@@ -98,9 +103,13 @@ def test_variable_features_old_kern_writer(FontClass):
         markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
         markClass gravecmb <anchor 250 400> @MC_top;
 
+        @kern1.alef = [alef-ar.fina];
+        @kern2.alef = [alef-ar.fina];
+
         lookup kern_rtl {
             lookupflag IgnoreMarks;
             pos alef-ar.fina alef-ar.fina <(wght=100:15 wght=1000:35) 0 (wght=100:15 wght=1000:35) 0>;
+            pos @kern1.alef @kern2.alef <(wght=100:0 wght=1000:1) 0 (wght=100:0 wght=1000:1) 0>;
         } kern_rtl;
 
         feature kern {
