@@ -251,7 +251,39 @@ class KernFeatureWriter(BaseFeatureWriter):
                 glyphSet or {},
                 options or SimpleNamespace(**KernFeatureWriter.options),
             )
-            return [KerningPair(pair.side1, pair.side2, pair.value) for pair in pairs]
+            pairs.sort()
+            side1toClass: Mapping[tuple[str, ...], ast.GlyphClassDefinition] = {
+                tuple(
+                    glyph
+                    for glyphs in glyph_defs.glyphSet()
+                    for glyph in glyphs.glyphSet()
+                ): glyph_defs
+                for glyph_defs in side1Classes.values()
+            }
+            side2toClass: Mapping[tuple[str, ...], ast.GlyphClassDefinition] = {
+                tuple(
+                    glyph
+                    for glyphs in glyph_defs.glyphSet()
+                    for glyph in glyphs.glyphSet()
+                ): glyph_defs
+                for glyph_defs in side2Classes.values()
+            }
+            return [
+                KerningPair(
+                    (
+                        side1toClass[pair.side1]
+                        if isinstance(pair.side1, tuple)
+                        else pair.side1
+                    ),
+                    (
+                        side2toClass[pair.side2]
+                        if isinstance(pair.side2, tuple)
+                        else pair.side2
+                    ),
+                    pair.value,
+                )
+                for pair in pairs
+            ]
 
         if glyphSet:
             allGlyphs = set(glyphSet.keys())
