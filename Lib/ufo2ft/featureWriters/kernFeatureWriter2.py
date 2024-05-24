@@ -251,6 +251,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 glyphSet or {},
                 options or SimpleNamespace(**KernFeatureWriter.options),
             )
+            pairs.sort()
             side1toClass: Mapping[tuple[str, ...], ast.GlyphClassDefinition] = {
                 tuple(
                     glyph
