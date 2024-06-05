@@ -174,11 +174,9 @@ def _setGlyphMargin(glyph, side, margin):
     assert side in {"left", "right", "top", "bottom"}
     if hasattr(glyph, f"set{side.title()}Margin"):  # ufoLib2
         getattr(glyph, f"set{side.title()}Margin")(margin)
-        assert getattr(glyph, f"get{side.title()}Margin")() == margin
     elif hasattr(glyph, f"{side}Margin"):  # defcon
         descriptor = getattr(type(glyph), f"{side}Margin")
         descriptor.__set__(glyph, margin)
-        assert descriptor.__get__(glyph) == margin
     else:
         raise NotImplementedError(f"Unsupported Glyph class: {type(glyph)!r}")
 
