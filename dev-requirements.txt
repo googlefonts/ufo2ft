@@ -3,3 +3,4 @@ pytest
 black
 isort
 flake8-bugbear
+syrupy
