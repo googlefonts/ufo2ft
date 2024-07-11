@@ -764,15 +764,14 @@ def test_ambiguous_direction_pair(snapshot, FontClass, caplog):
         generated = KernFeatureWriterTest.writeFeatures(ufo)
 
     assert generated.asFea() == snapshot
-    # assert not generated
     assert caplog.messages == [
-        "Skipping part of a kerning pair <bar bar 1> with mixed direction (LeftToRight, RightToLeft)",
-        "Skipping part of a kerning pair <bar bar 1> with mixed direction (RightToLeft, LeftToRight)",
-        "Skipping part of a kerning pair <bar A 2> with conflicting BiDi classes",
-        "Skipping part of a kerning pair <bar A 2> with mixed direction (RightToLeft, LeftToRight)",
-        "Skipping part of a kerning pair <reh-ar A 3> with mixed direction (RightToLeft, LeftToRight)",
-        "Skipping part of a kerning pair <reh-ar one-ar 4> with conflicting BiDi classes",
-        "Skipping part of a kerning pair <yod-hb one 5> with conflicting BiDi classes",
+        "Skipping part of a kerning pair <bar bar 1> with mixed direction (LeftToRight, RightToLeft)",  # noqa: B950
+        "Skipping part of a kerning pair <bar bar 1> with mixed direction (RightToLeft, LeftToRight)",  # noqa: B950
+        "Skipping part of a kerning pair <bar A 2> with conflicting BiDi classes",  # noqa: B950
+        "Skipping part of a kerning pair <bar A 2> with mixed direction (RightToLeft, LeftToRight)",  # noqa: B950
+        "Skipping part of a kerning pair <reh-ar A 3> with mixed direction (RightToLeft, LeftToRight)",  # noqa: B950
+        "Skipping part of a kerning pair <reh-ar one-ar 4> with conflicting BiDi classes",  # noqa: B950
+        "Skipping part of a kerning pair <yod-hb one 5> with conflicting BiDi classes",  # noqa: B950
     ]
 
 
@@ -891,8 +890,8 @@ def test_kern_split_and_drop(snapshot, FontClass, caplog):
 
     assert newFeatures.asFea() == snapshot
     assert caplog.messages == [
-        "Skipping part of a kerning pair <('a', 'a-orya', 'alpha') ('alef-ar',) 20> with mixed direction (LeftToRight, RightToLeft)",
-        "Skipping part of a kerning pair <('alef-ar',) ('a', 'a-orya', 'alpha') 20> with mixed direction (RightToLeft, LeftToRight)",
+        "Skipping part of a kerning pair <('a', 'a-orya', 'alpha') ('alef-ar',) 20> with mixed direction (LeftToRight, RightToLeft)",  # noqa: B950
+        "Skipping part of a kerning pair <('alef-ar',) ('a', 'a-orya', 'alpha') 20> with mixed direction (RightToLeft, LeftToRight)",  # noqa: B950
     ]
 
 
@@ -1061,7 +1060,7 @@ def test_defining_classdefs(snapshot, FontClass):
             script tel2;
             sub ssa-telugu' [rVocalicMatra-telugu sha-telugu.below ka-telugu.below] by ssa-telugu.alt;
         } psts;
-    """
+    """  # noqa: B950
     ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
     ufo.lib["public.openTypeCategories"] = {
         "halant-telugu": "mark",

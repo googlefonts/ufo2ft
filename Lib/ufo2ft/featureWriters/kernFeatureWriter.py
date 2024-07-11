@@ -51,7 +51,7 @@ RTL_BIDI_TYPES = {"R", "AL"}
 LTR_BIDI_TYPES = {"L", "AN", "EN"}
 AMBIGUOUS_BIDIS = {"R", "L"}
 
-KerningGroup: TypeAlias = Mapping[str, tuple[str, ...]]
+KerningGroup: TypeAlias = "Mapping[str, tuple[str, ...]]"
 
 
 class Direction(enum.Enum):

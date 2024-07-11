@@ -116,7 +116,7 @@ def test_variable_features_explicit_writers(FontClass):
             script DFLT;
             language dflt;
             lookup kern_rtl;
-    
+
             script arab;
             language dflt;
             lookup kern_rtl;
