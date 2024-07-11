@@ -6,6 +6,7 @@ from fontTools import unicodedata
 from syrupy.extensions.amber import AmberSnapshotExtension
 from syrupy.location import PyTestLocation
 from syrupy.types import SnapshotIndex
+
 from ufo2ft.constants import UNICODE_SCRIPT_ALIASES
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
