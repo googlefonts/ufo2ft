@@ -586,7 +586,9 @@ class KernFeatureWriter(BaseFeatureWriter):
             spacing = []
             for mark in marks:
                 if all(
-                    source.font[mark].width != 0 for source in self.context.font.sources
+                    source.font[mark].width != 0
+                    for source in self.context.font.sources
+                    if mark in source.font
                 ):
                     spacing.append(mark)
             return spacing
