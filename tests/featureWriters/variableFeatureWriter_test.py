@@ -19,19 +19,19 @@ def test_variable_features(FontClass):
         markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
         markClass gravecmb <anchor 250 400> @MC_top;
 
-        lookup kern_Arab {
+        lookup kern_rtl {
             lookupflag IgnoreMarks;
             pos alef-ar.fina alef-ar.fina <(wght=100:15 wght=1000:35) 0 (wght=100:15 wght=1000:35) 0>;
-        } kern_Arab;
+        } kern_rtl;
 
         feature kern {
             script DFLT;
             language dflt;
-            lookup kern_Arab;
+            lookup kern_rtl;
 
             script arab;
             language dflt;
-            lookup kern_Arab;
+            lookup kern_rtl;
         } kern;
 
         feature mark {
@@ -61,7 +61,7 @@ def test_variable_features(FontClass):
     )
 
 
-def test_variable_features_old_kern_writer(FontClass):
+def test_variable_features_explicit_writers(FontClass):
     tmp = io.StringIO()
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         "tests/data/TestVarfea.designspace"
@@ -74,7 +74,7 @@ def test_variable_features_old_kern_writer(FontClass):
     assert default_ufo is not None
     default_ufo.lib["com.github.googlei18n.ufo2ft.featureWriters"] = [
         {
-            "module": "ufo2ft.featureWriters.kernFeatureWriter2",
+            "module": "ufo2ft.featureWriters.kernFeatureWriter",
             "class": "KernFeatureWriter",
         },
         {
@@ -103,16 +103,22 @@ def test_variable_features_old_kern_writer(FontClass):
         markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
         markClass gravecmb <anchor 250 400> @MC_top;
 
-        @kern1.alef = [alef-ar.fina];
-        @kern2.alef = [alef-ar.fina];
+        @kern1.rtl.alef = [alef-ar.fina];
+        @kern2.rtl.alef = [alef-ar.fina];
 
         lookup kern_rtl {
             lookupflag IgnoreMarks;
             pos alef-ar.fina alef-ar.fina <(wght=100:15 wght=1000:35) 0 (wght=100:15 wght=1000:35) 0>;
-            pos @kern1.alef @kern2.alef <(wght=100:0 wght=1000:1) 0 (wght=100:0 wght=1000:1) 0>;
+            pos @kern1.rtl.alef @kern2.rtl.alef <(wght=100:0 wght=1000:1) 0 (wght=100:0 wght=1000:1) 0>;
         } kern_rtl;
 
         feature kern {
+            script DFLT;
+            language dflt;
+            lookup kern_rtl;
+
+            script arab;
+            language dflt;
             lookup kern_rtl;
         } kern;
 
