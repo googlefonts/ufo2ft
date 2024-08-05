@@ -4,7 +4,7 @@ compreffor==0.5.5
 booleanOperations==0.9.0
 cffsubr==0.3.0
 skia-pathops==0.8.0.post1
-fontMath==0.9.3
+fontMath==0.9.4
 
 # alternative UFO implementation
 ufoLib2==0.16.0
