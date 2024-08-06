@@ -29,13 +29,13 @@ class CursFeatureWriter(BaseFeatureWriter):
             shouldSplit = False
 
         lookups = []
-        ordereredGlyphSet = self.getOrderedGlyphSet().items()
+        orderedGlyphSet = self.getOrderedGlyphSet().items()
         if shouldSplit:
             # Make LTR lookup
             LTRlookup = self._makeCursiveLookup(
                 (
                     glyph
-                    for (glyphName, glyph) in ordereredGlyphSet
+                    for (glyphName, glyph) in orderedGlyphSet
                     if glyphName in dirGlyphs["LTR"]
                 ),
                 direction="LTR",
@@ -47,7 +47,7 @@ class CursFeatureWriter(BaseFeatureWriter):
             RTLlookup = self._makeCursiveLookup(
                 (
                     glyph
-                    for (glyphName, glyph) in ordereredGlyphSet
+                    for (glyphName, glyph) in orderedGlyphSet
                     if glyphName not in dirGlyphs["LTR"]
                 ),
                 direction="RTL",
@@ -56,7 +56,7 @@ class CursFeatureWriter(BaseFeatureWriter):
                 lookups.append(RTLlookup)
         else:
             lookup = self._makeCursiveLookup(
-                (glyph for (glyphName, glyph) in ordereredGlyphSet)
+                (glyph for (glyphName, glyph) in orderedGlyphSet)
             )
             if lookup:
                 lookups.append(lookup)
