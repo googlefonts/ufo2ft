@@ -115,8 +115,6 @@ class CursFeatureWriter(BaseFeatureWriter):
 
         lookup.statements.extend(statements)
 
-        print(str(lookup))
-
         return lookup
 
     def _getAnchors(self, glyphName, entryName, exitName):
