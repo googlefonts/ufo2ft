@@ -88,7 +88,7 @@ class CursFeatureWriter(BaseFeatureWriter):
 
         return lookup
 
-    def _getAnchors(self, glyphName, glyph=None):
+    def _getAnchors(self, glyphName):
         entryAnchor = None
         exitAnchor = None
         entryAnchorXY = self._getAnchor(glyphName, "entry")
@@ -109,7 +109,7 @@ class CursFeatureWriter(BaseFeatureWriter):
         cursiveAnchors = dict()
         statements = []
         for glyph in glyphs:
-            entryAnchor, exitAnchor = self._getAnchors(glyph.name, glyph)
+            entryAnchor, exitAnchor = self._getAnchors(glyph.name)
             # A glyph can have only one of the cursive anchors (e.g. if it
             # attaches on one side only)
             if entryAnchor or exitAnchor:
