@@ -18,6 +18,25 @@ class CursFeatureWriter(BaseFeatureWriter):
     tableTag = "GPOS"
     features = frozenset(["curs"])
 
+    @staticmethod
+    def _getCursiveAnchorPairs(glyphs):
+        anchors = set()
+        for _, glyph in glyphs:
+            anchors.update(a.name for a in glyph.anchors)
+
+        anchorPairs = []
+        if "entry" in anchors and "exit" in anchors:
+            anchorPairs.append(("entry", "exit"))
+        for anchor in anchors:
+            if anchor.startswith("entry.") and f"exit.{anchor[6:]}" in anchors:
+                anchorPairs.append((anchor, f"exit.{anchor[6:]}"))
+
+        return sorted(anchorPairs)
+
+    @staticmethod
+    def _hasAnchor(glyph, anchorName):
+        return any(a.name == anchorName for a in glyph.anchors)
+
     def _makeCursiveFeature(self):
         cmap = self.makeUnicodeToGlyphNameMapping()
         if any(unicodeScriptDirection(uv) == "LTR" for uv in cmap):
@@ -29,54 +48,64 @@ class CursFeatureWriter(BaseFeatureWriter):
             shouldSplit = False
 
         lookups = []
-        ordereredGlyphSet = self.getOrderedGlyphSet().items()
-        if shouldSplit:
-            # Make LTR lookup
-            LTRlookup = self._makeCursiveLookup(
-                (
-                    glyph
-                    for (glyphName, glyph) in ordereredGlyphSet
-                    if glyphName in dirGlyphs["LTR"]
-                ),
-                direction="LTR",
-            )
-            if LTRlookup:
-                lookups.append(LTRlookup)
+        orderedGlyphSet = self.getOrderedGlyphSet().items()
+        cursiveAnchorsPairs = self._getCursiveAnchorPairs(orderedGlyphSet)
+        for entryName, exitName in cursiveAnchorsPairs:
+            if shouldSplit:
+                # Make LTR lookup
+                LTRlookup = self._makeCursiveLookup(
+                    (
+                        glyph
+                        for (glyphName, glyph) in orderedGlyphSet
+                        if glyphName in dirGlyphs["LTR"]
+                    ),
+                    entryName,
+                    exitName,
+                    direction="LTR",
+                )
+                if LTRlookup:
+                    lookups.append(LTRlookup)
 
-            # Make RTL lookup with other glyphs
-            RTLlookup = self._makeCursiveLookup(
-                (
-                    glyph
-                    for (glyphName, glyph) in ordereredGlyphSet
-                    if glyphName not in dirGlyphs["LTR"]
-                ),
-                direction="RTL",
-            )
-            if RTLlookup:
-                lookups.append(RTLlookup)
-        else:
-            lookup = self._makeCursiveLookup(
-                (glyph for (glyphName, glyph) in ordereredGlyphSet)
-            )
-            if lookup:
-                lookups.append(lookup)
+                # Make RTL lookup with other glyphs
+                RTLlookup = self._makeCursiveLookup(
+                    (
+                        glyph
+                        for (glyphName, glyph) in orderedGlyphSet
+                        if glyphName not in dirGlyphs["LTR"]
+                    ),
+                    entryName,
+                    exitName,
+                    direction="RTL",
+                )
+                if RTLlookup:
+                    lookups.append(RTLlookup)
+            else:
+                lookup = self._makeCursiveLookup(
+                    (glyph for (glyphName, glyph) in orderedGlyphSet),
+                    entryName,
+                    exitName,
+                )
+                if lookup:
+                    lookups.append(lookup)
 
         if lookups:
             feature = ast.FeatureBlock("curs")
             feature.statements.extend(lookups)
             return feature
 
-    def _makeCursiveLookup(self, glyphs, direction=None):
-        statements = self._makeCursiveStatements(glyphs)
+    def _makeCursiveLookup(self, glyphs, entryName, exitName, direction=None):
+        statements = self._makeCursiveStatements(glyphs, entryName, exitName)
 
         if not statements:
             return
 
         suffix = ""
+        if entryName != "entry":
+            suffix = f"_{entryName[6:]}"
         if direction == "LTR":
-            suffix = "_ltr"
+            suffix += "_ltr"
         elif direction == "RTL":
-            suffix = "_rtl"
+            suffix += "_rtl"
         lookup = ast.LookupBlock(name=f"curs{suffix}")
 
         if direction != "LTR":
@@ -86,13 +115,15 @@ class CursFeatureWriter(BaseFeatureWriter):
 
         lookup.statements.extend(statements)
 
+        print(str(lookup))
+
         return lookup
 
-    def _getAnchors(self, glyphName, glyph=None):
+    def _getAnchors(self, glyphName, entryName, exitName):
         entryAnchor = None
         exitAnchor = None
-        entryAnchorXY = self._getAnchor(glyphName, "entry")
-        exitAnchorXY = self._getAnchor(glyphName, "exit")
+        entryAnchorXY = self._getAnchor(glyphName, entryName)
+        exitAnchorXY = self._getAnchor(glyphName, exitName)
         if entryAnchorXY:
             entryAnchor = ast.Anchor(
                 x=otRoundIgnoringVariable(entryAnchorXY[0]),
@@ -105,11 +136,11 @@ class CursFeatureWriter(BaseFeatureWriter):
             )
         return entryAnchor, exitAnchor
 
-    def _makeCursiveStatements(self, glyphs):
+    def _makeCursiveStatements(self, glyphs, entryName, exitName):
         cursiveAnchors = dict()
         statements = []
         for glyph in glyphs:
-            entryAnchor, exitAnchor = self._getAnchors(glyph.name, glyph)
+            entryAnchor, exitAnchor = self._getAnchors(glyph.name, entryName, exitName)
             # A glyph can have only one of the cursive anchors (e.g. if it
             # attaches on one side only)
             if entryAnchor or exitAnchor:
