@@ -610,22 +610,20 @@ def split_base_and_mark_pairs(
         if pair.firstIsClass:
             side1Bases = tuple(glyph for glyph in pair.side1 if glyph not in marks)
             side1Marks = tuple(glyph for glyph in pair.side1 if glyph in marks)
+        elif pair.side1 in marks:
+            side1Marks = pair.side1
         else:
-            if pair.side1 in marks:
-                side1Marks = pair.side1
-            else:
-                side1Bases = pair.side1
+            side1Bases = pair.side1
 
         side2Bases: tuple[str, ...] | str | None = None
         side2Marks: tuple[str, ...] | str | None = None
         if pair.secondIsClass:
             side2Bases = tuple(glyph for glyph in pair.side2 if glyph not in marks)
             side2Marks = tuple(glyph for glyph in pair.side2 if glyph in marks)
+        elif pair.side2 in marks:
+            side2Marks = pair.side2
         else:
-            if pair.side2 in marks:
-                side2Marks = pair.side2
-            else:
-                side2Bases = pair.side2
+            side2Bases = pair.side2
 
         if side1Bases and side2Bases:  # base-to-base
             basePairs.append(KerningPair(side1Bases, side2Bases, value=pair.value))
