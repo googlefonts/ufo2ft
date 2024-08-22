@@ -5,7 +5,6 @@ import itertools
 import logging
 import sys
 from collections import OrderedDict
-from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Iterator, Mapping, cast
 
@@ -17,7 +16,6 @@ from fontTools.feaLib.variableScalar import VariableScalar
 from fontTools.ufoLib.kerning import lookupKerningValue
 from fontTools.unicodedata import script_horizontal_direction
 
-from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import (
     DFLT_SCRIPTS,
@@ -28,28 +26,25 @@ from ufo2ft.util import (
     quantize,
 )
 
+from .kernFeatureWriter import (
+    AMBIGUOUS_BIDIS,
+    DIST_ENABLED_SCRIPTS,
+    LTR_BIDI_TYPES,
+    RTL_BIDI_TYPES,
+    SIDE1_PREFIX,
+    SIDE2_PREFIX,
+    KerningPair,
+    addClassDefinition,
+    log_redefined_group,
+    log_regrouped_glyph,
+)
+
 if sys.version_info < (3, 10):
     from typing_extensions import TypeAlias
 else:
     from typing import TypeAlias
 
 LOGGER = logging.getLogger(__name__)
-
-SIDE1_PREFIX = "public.kern1."
-SIDE2_PREFIX = "public.kern2."
-
-# In HarfBuzz the 'dist' feature is automatically enabled for these shapers:
-#   src/hb-ot-shape-complex-myanmar.cc
-#   src/hb-ot-shape-complex-use.cc
-#   src/hb-ot-shape-complex-indic.cc
-#   src/hb-ot-shape-complex-khmer.cc
-# We derived the list of scripts associated to each dist-enabled shaper from
-# `hb_ot_shape_complex_categorize` in src/hb-ot-shape-complex-private.hh
-DIST_ENABLED_SCRIPTS = set(INDIC_SCRIPTS) | set(["Khmr", "Mymr"]) | set(USE_SCRIPTS)
-
-RTL_BIDI_TYPES = {"R", "AL"}
-LTR_BIDI_TYPES = {"L", "AN", "EN"}
-AMBIGUOUS_BIDIS = {"R", "L"}
 
 KerningGroup: TypeAlias = "Mapping[str, tuple[str, ...]]"
 
@@ -241,7 +236,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         return ctx
 
     def shouldContinue(self):
-        # TODO: Check this condition does the right thing
         if (
             not self.context.kerning.base_pairs_by_direction
             and not self.context.kerning.mark_pairs_by_direction
@@ -410,33 +404,6 @@ def get_kerning_groups(context: KernContext) -> tuple[KerningGroup, KerningGroup
     context.side1Membership = side1Membership
     context.side2Membership = side2Membership
     return side1Groups, side2Groups
-
-
-def log_redefined_group(
-    side: str, name: str, group: tuple[str, ...], font: Any, members: set[str]
-) -> None:
-    LOGGER.warning(
-        "incompatible %s groups: %s was previously %s, %s tried to make it %s",
-        side,
-        name,
-        sorted(group),
-        font,
-        sorted(members),
-    )
-
-
-def log_regrouped_glyph(
-    side: str, name: str, original_name: str, font: Any, member: str
-) -> None:
-    LOGGER.warning(
-        "incompatible %s groups: %s tries to put glyph %s in group %s, but it's already in %s, "
-        "discarding",
-        side,
-        font,
-        member,
-        name,
-        original_name,
-    )
 
 
 def get_kerning_pairs(
@@ -744,54 +711,6 @@ def partition_by_direction(
         yield (dominant_direction, KerningPair(localSide1, localSide2, pair.value))
 
 
-@dataclass(frozen=True, order=False)
-class KerningPair:
-    __slots__ = ("side1", "side2", "value")
-
-    side1: str | tuple[str, ...]
-    side2: str | tuple[str, ...]
-    value: float | VariableScalar
-
-    def __lt__(self, other: KerningPair) -> bool:
-        if not isinstance(other, KerningPair):
-            return NotImplemented
-
-        # Sort Kerning pairs so that glyph to glyph comes first, then glyph to
-        # class, class to glyph, and finally class to class. This makes "kerning
-        # exceptions" work, where more specific glyph pair values override less
-        # specific class kerning. NOTE: Since comparisons terminate early, this
-        # is never going to compare a str to a tuple.
-        selfTuple = (self.firstIsClass, self.secondIsClass, self.side1, self.side2)
-        otherTuple = (other.firstIsClass, other.secondIsClass, other.side1, other.side2)
-        return selfTuple < otherTuple
-
-    @property
-    def firstIsClass(self) -> bool:
-        return isinstance(self.side1, tuple)
-
-    @property
-    def secondIsClass(self) -> bool:
-        return isinstance(self.side2, tuple)
-
-    @property
-    def firstGlyphs(self) -> tuple[str, ...]:
-        if isinstance(self.side1, tuple):
-            return self.side1
-        else:
-            return (self.side1,)
-
-    @property
-    def secondGlyphs(self) -> tuple[str, ...]:
-        if isinstance(self.side2, tuple):
-            return self.side2
-        else:
-            return (self.side2,)
-
-    @property
-    def glyphs(self) -> tuple[str, ...]:
-        return (*self.firstGlyphs, *self.secondGlyphs)
-
-
 def make_kerning_lookups(
     context: KernContext, options: SimpleNamespace
 ) -> dict[Direction, dict[str, fea_ast.LookupBlock]]:
@@ -850,7 +769,6 @@ def make_split_kerning_lookups(
             if bidiTypes.issuperset(AMBIGUOUS_BIDIS):
                 assert None, "this should have been caught by the splitter"
             # European and Arabic Numbers are always shaped LTR even in RTL scripts:
-            # XXX: Taken care of by the splitter?
             pairIsRtl = (
                 direction == Direction.RightToLeft
                 and Direction.LeftToRight not in bidiTypes
@@ -992,18 +910,6 @@ def make_pairpos_rule(
         valuerecord2=None,
         enumerated=enumerated,
     )
-
-
-def addClassDefinition(
-    prefix: str, group, classes, originalMembership, classDefs, classNames, script: str
-) -> None:
-    firstGlyph = next(iter(group))
-    originalGroupName = originalMembership[firstGlyph]
-    groupName = f"{prefix}.{script}.{originalGroupName}"
-    className = ast.makeFeaClassName(groupName, classNames)
-    classNames.add(className)
-    classDef = ast.makeGlyphClassDefinition(className, group)
-    classes[group] = classDefs[className] = classDef
 
 
 def make_feature_blocks(
