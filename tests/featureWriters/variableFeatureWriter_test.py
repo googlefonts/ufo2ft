@@ -19,6 +19,16 @@ def test_variable_features(FontClass):
         markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
         markClass gravecmb <anchor 250 400> @MC_top;
 
+        feature curs {
+            lookup curs_rtl {
+                lookupflag RightToLeft IgnoreMarks;
+                pos cursive alef-ar.fina <anchor (wght=100:299 wght=1000:330) (wght=100:97 wght=1000:115)> <anchor NULL>;
+                pos cursive peh-ar.init <anchor NULL> <anchor (wght=100:161 wght=1000:73) (wght=100:54 wght=1000:89)>;
+                pos cursive peh-ar.init.BRACKET.varAlt01 <anchor NULL> <anchor (wght=100:89 wght=1000:73) (wght=100:53 wght=1000:85)>;
+            } curs_rtl;
+
+        } curs;
+
         lookup kern_Arab {
             lookupflag IgnoreMarks;
             pos alef-ar.fina alef-ar.fina <(wght=100:15 wght=1000:35) 0 (wght=100:15 wght=1000:35) 0>;
@@ -47,16 +57,6 @@ def test_variable_features(FontClass):
         table GDEF {
             LigatureCaretByPos peh-ar.init 100;
         } GDEF;
-
-        feature curs {
-            lookup curs_rtl {
-                lookupflag RightToLeft IgnoreMarks;
-                pos cursive alef-ar.fina <anchor (wght=100:299 wght=1000:330) (wght=100:97 wght=1000:115)> <anchor NULL>;
-                pos cursive peh-ar.init <anchor NULL> <anchor (wght=100:161 wght=1000:73) (wght=100:54 wght=1000:89)>;
-                pos cursive peh-ar.init.BRACKET.varAlt01 <anchor NULL> <anchor (wght=100:89 wght=1000:73) (wght=100:53 wght=1000:85)>;
-            } curs_rtl;
-
-        } curs;
 """  # noqa: B950
     )
 
