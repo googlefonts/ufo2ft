@@ -103,7 +103,9 @@ def test_variable_features_old_kern_writer(FontClass):
         markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
         markClass gravecmb <anchor 250 400> @MC_top;
 
+        @kern1.a = [a];
         @kern1.alef = [alef-ar.fina];
+        @kern2.a = [a];
         @kern2.alef = [alef-ar.fina];
 
         lookup kern_rtl {
