@@ -172,10 +172,10 @@ class FeatureCompiler(BaseFeatureCompiler):
     """
 
     defaultFeatureWriters = [
+        CursFeatureWriter,
         KernFeatureWriter,
         MarkFeatureWriter,
         GdefFeatureWriter,
-        CursFeatureWriter,
     ]
 
     def __init__(
