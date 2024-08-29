@@ -551,7 +551,13 @@ class KernFeatureWriter(BaseFeatureWriter):
             if default_location not in value.values:
                 value.values[default_location] = 0
             value = collapse_varscalar(value)
-            result.append(KerningPair(side1, side2, value))
+            pair = KerningPair(side1, side2, value)
+            # Ignore zero-valued class kern pairs. They are the most general
+            # kerns, so they don't override anything else like glyph kerns would
+            # and zero is the default.
+            if pair.firstIsClass and pair.secondIsClass and pair.value == 0:
+                continue
+            result.append(pair)
 
         return result
 
