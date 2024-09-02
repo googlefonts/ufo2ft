@@ -328,7 +328,7 @@ class BaseInterpolatableCompiler(BaseCompiler):
         # time by building a variable feature file right at the end.
         can_optimize_features = self.variableFeatures and all(
             _featuresCompatible(doc) for doc in interpolableSubDocs
-         )
+        )
         if can_optimize_features:
             self.logger.info("Features are compatible across masters; building later")
 
