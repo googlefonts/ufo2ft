@@ -1,3 +1,29 @@
+"""Alternative implementation of KernFeatureWriter.
+
+This behaves like the primary kern feature writer, with the important difference
+of grouping kerning data into lookups by kerning direction, not script, like the
+feature writer in ufo2ft v2.30 and older did.
+
+The original idea for the primary splitter was to generate smaller, easier to
+pack lookups for each script exclusively, as cross-script kerning dos not work
+in browsers. However, other applications may allow it, e.g. Adobe's InDesign.
+Subsequently, it was modified to clump together lookups that cross-reference
+each other's scripts, negating the size advantages if you design fonts with
+cross-script kerning for designer ease.
+
+As a special edge case, InDesign's default text shaper does not properly itemize
+text runs, meaning it may group different scripts into the same run unless the
+user specifically marks some text as being a specific script or language. To
+make all kerning reachable in that case, it must be put into a single broad LTR,
+RTL or neutral direction lookup instead of finer script clusters. That will make
+it work in all cases, including when there is no cross-script kerning to fuse
+different lookups together.
+
+Testing showed that size benefits are clawed back with the use of the HarfBuzz
+repacker (during compilation) and GPOS compression (after compilation) at
+acceptable speed.
+"""
+
 from __future__ import annotations
 
 import enum
