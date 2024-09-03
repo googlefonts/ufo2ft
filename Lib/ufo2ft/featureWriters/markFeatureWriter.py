@@ -162,7 +162,16 @@ def parseAnchorName(
 class NamedAnchor:
     """A position with a name, and an associated markClass."""
 
-    __slots__ = ("name", "x", "y", "isMark", "key", "number", "markClass")
+    __slots__ = (
+        "name",
+        "x",
+        "y",
+        "isMark",
+        "key",
+        "number",
+        "markClass",
+        "isContextual",
+    )
 
     # subclasses can customize these to use different anchor naming schemes
     markPrefix = MARK_PREFIX
@@ -190,6 +199,7 @@ class NamedAnchor:
         self.key = key
         self.number = number
         self.markClass = markClass
+        self.isContextual = False
 
     @property
     def markAnchorName(self):
@@ -620,6 +630,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     # skip '_1', '_2', etc. suffixed anchors for this lookup
                     # type; these will be are added in the mark2liga lookup
                     continue
+                if anchor.isContextual:
+                    # Skip contextual anchors. We don't support them in ufo2ft
+                    # and isContextual is always False, but subclasses may
+                    # handle them (e.g. glyphsLib’s MarkFeatureWriter).
+                    continue
                 assert not anchor.isMark
                 baseMarks.append(anchor)
             if not baseMarks:
@@ -639,6 +654,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
             for anchor in anchors:
                 # skip anchors for which no mark class is defined
                 if anchor.markClass is None or anchor.isMark:
+                    continue
+                if anchor.isContextual:
+                    # Skip contextual anchors. We don't support them in ufo2ft
+                    # and isContextual is always False, but subclasses may
+                    # handle them (e.g. glyphsLib’s MarkFeatureWriter).
                     continue
                 if anchor.number is not None:
                     self.log.warning(
@@ -670,6 +690,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 number = anchor.number
                 if number is None:
                     # we handled these in the mark2base lookup
+                    continue
+                if anchor.isContextual:
+                    # Skip contextual anchors. We don't support them in ufo2ft
+                    # and isContextual is always False, but subclasses may
+                    # handle them (e.g. glyphsLib’s MarkFeatureWriter).
                     continue
                 # unnamed anchors with only a number suffix "_1", "_2", etc.
                 # are understood as the ligature component having <anchor NULL>
