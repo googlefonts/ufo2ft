@@ -103,15 +103,8 @@ def test_variable_features_old_kern_writer(FontClass):
         markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
         markClass gravecmb <anchor 250 400> @MC_top;
 
-        @kern1.ltr.a = [a];
         @kern1.rtl.alef = [alef-ar.fina];
-        @kern2.ltr.a = [a];
         @kern2.rtl.alef = [alef-ar.fina];
-
-        lookup kern_ltr {
-            lookupflag IgnoreMarks;
-            pos @kern1.ltr.a @kern2.ltr.a 0;
-        } kern_ltr;
 
         lookup kern_rtl {
             lookupflag IgnoreMarks;
@@ -122,15 +115,11 @@ def test_variable_features_old_kern_writer(FontClass):
         feature kern {
             script DFLT;
             language dflt;
-            lookup kern_ltr;
+            lookup kern_rtl;
 
             script arab;
             language dflt;
             lookup kern_rtl;
-
-            script latn;
-            language dflt;
-            lookup kern_ltr;
         } kern;
 
         feature mark {
