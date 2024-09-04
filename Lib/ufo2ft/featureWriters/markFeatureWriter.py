@@ -162,7 +162,7 @@ def parseAnchorName(
     else:
         isMark = False
 
-    isIgnorable = not key[0].isalpha()
+    isIgnorable = key and not key[0].isalpha()
 
     return isMark, key, number, isContextual, isIgnorable
 
