@@ -34,17 +34,23 @@ def testufo(FontClass):
 @pytest.mark.parametrize(
     "input_expected",
     [
-        ("top", (False, "top", None)),
-        ("top_", (False, "top_", None)),
-        ("top1", (False, "top1", None)),
-        ("_bottom", (True, "bottom", None)),
-        ("bottom_2", (False, "bottom", 2)),
-        ("top_right_1", (False, "top_right", 1)),
+        ("top", (False, "top", None, False, False)),
+        ("top_", (False, "top_", None, False, False)),
+        ("top1", (False, "top1", None, False, False)),
+        ("_bottom", (True, "bottom", None, False, False)),
+        ("bottom_2", (False, "bottom", 2, False, False)),
+        ("top_right_1", (False, "top_right", 1, False, False)),
     ],
 )
 def test_parseAnchorName(input_expected):
-    anchorName, (isMark, key, number) = input_expected
-    assert parseAnchorName(anchorName) == (isMark, key, number)
+    anchorName, (isMark, key, number, isContextual, isIgnorable) = input_expected
+    assert parseAnchorName(anchorName) == (
+        isMark,
+        key,
+        number,
+        isContextual,
+        isIgnorable,
+    )
 
 
 def test_parseAnchorName_invalid():
