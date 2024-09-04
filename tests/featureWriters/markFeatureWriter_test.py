@@ -5,6 +5,7 @@ from textwrap import dedent
 
 import pytest
 
+from ufo2ft.constants import OBJECT_LIBS_KEY
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
 from ufo2ft.featureWriters import ast
@@ -1771,6 +1772,89 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             " [dotbelow-ar twodotsverticalbelow-ar twodotshorizontalbelow-ar]'"
             " lookup ContextualMark_2; # *bottom\n"
             "} ContextualMarkDispatch_2;\n"
+        )
+
+    def test_contextual_anchors_no_mark_feature(self, testufo):
+        a = testufo["a"]
+
+        a.appendAnchor({"name": "*top", "x": 200, "y": 200, "identifier": "*top"})
+        a.lib[OBJECT_LIBS_KEY] = {
+            "*top": {
+                "GPOS_Context": "f *",
+            },
+        }
+
+        writer = MarkFeatureWriter(features=["mkmk"])
+        feaFile = ast.FeatureFile()
+        assert str(feaFile) == ""
+        assert writer.write(testufo, feaFile)
+
+        assert str(feaFile) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
+        writer = MarkFeatureWriter()
+        feaFile = ast.FeatureFile()
+        assert str(feaFile) == ""
+        assert writer.write(testufo, feaFile)
+
+        assert str(feaFile) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            lookup mark2base {
+                pos base a
+                    <anchor 200 200> mark @MC_top
+                    <anchor 100 200> mark @MC_top;
+            } mark2base;
+
+            lookup mark2liga {
+                pos ligature f_i
+                        <anchor 100 500> mark @MC_top
+                    ligComponent
+                        <anchor 600 500> mark @MC_top;
+            } mark2liga;
+
+            lookup ContextualMark_0 {
+                pos base a
+                    <anchor 200 200> mark @MC_top;
+            } ContextualMark_0;
+
+            lookup ContextualMarkDispatch_0 {
+                # f *
+                pos f [a] [acutecomb tildecomb]' lookup ContextualMark_0; # *top
+            } ContextualMarkDispatch_0;
+
+            feature mark {
+                lookup mark2base;
+                lookup mark2liga;
+                lookup ContextualMarkDispatch_0;
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
         )
 
     def test_ignorable_anchors(self, FontClass):
