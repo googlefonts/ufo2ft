@@ -1818,7 +1818,6 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
             lookup mark2base {
                 pos base a
-                    <anchor 200 200> mark @MC_top
                     <anchor 100 200> mark @MC_top;
             } mark2base;
 
