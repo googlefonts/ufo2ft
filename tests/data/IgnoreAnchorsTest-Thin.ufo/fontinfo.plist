@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>ascender</key>
+    <integer>800</integer>
+    <key>capHeight</key>
+    <integer>700</integer>
+    <key>descender</key>
+    <integer>-200</integer>
+    <key>familyName</key>
+    <string>Ignore Anchors Test</string>
+    <key>italicAngle</key>
+    <integer>0</integer>
+    <key>openTypeHeadCreated</key>
+    <string>2023/11/22 14:08:36</string>
+    <key>openTypeOS2Type</key>
+    <array>
+      <integer>3</integer>
+    </array>
+    <key>postscriptBlueValues</key>
+    <array>
+      <integer>-10</integer>
+      <integer>0</integer>
+      <integer>470</integer>
+      <integer>480</integer>
+      <integer>700</integer>
+      <integer>710</integer>
+      <integer>800</integer>
+      <integer>810</integer>
+    </array>
+    <key>postscriptOtherBlues</key>
+    <array>
+      <integer>-210</integer>
+      <integer>-200</integer>
+    </array>
+    <key>postscriptUnderlinePosition</key>
+    <integer>-100</integer>
+    <key>postscriptUnderlineThickness</key>
+    <integer>50</integer>
+    <key>styleName</key>
+    <string>Thin</string>
+    <key>unitsPerEm</key>
+    <integer>1000</integer>
+    <key>versionMajor</key>
+    <integer>1</integer>
+    <key>versionMinor</key>
+    <integer>0</integer>
+    <key>xHeight</key>
+    <integer>470</integer>
+  </dict>
+</plist>
