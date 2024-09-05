@@ -744,7 +744,14 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 # If we are building the mark2base lookup, skip anchors with a number
                 if not liga and anchor.number is not None:
                     continue
-                anchor_context = anchor.libData["GPOS_Context"].strip()
+                anchor_context = anchor.libData.get("GPOS_Context", "").strip()
+                if not anchor_context:
+                    self.log.warning(
+                        "contextual anchor '%s' in glyph '%s' has no context data; skipped",
+                        anchor.name,
+                        glyphName,
+                    )
+                    continue
                 result[anchor_context].append((glyphName, anchor))
         return result
 

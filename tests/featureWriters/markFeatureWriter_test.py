@@ -1968,6 +1968,55 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_contextual_anchor_no_context(self, testufo, caplog):
+        a = testufo["a"]
+        a.appendAnchor({"name": "*top", "x": 200, "y": 200, "identifier": "*top"})
+        a.lib[OBJECT_LIBS_KEY] = {"*top": {"foo": "bar"}}
+
+        writer = MarkFeatureWriter()
+        feaFile = ast.FeatureFile()
+        assert str(feaFile) == ""
+
+        logger = "ufo2ft.featureWriters.markFeatureWriter.MarkFeatureWriter"
+        with caplog.at_level(logging.WARNING, logger=logger):
+            assert writer.write(testufo, feaFile)
+        assert len(caplog.records) == 1
+        assert (
+            "contextual anchor '*top' in glyph 'a' has no context data; skipped"
+            in caplog.text
+        )
+        assert str(feaFile) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
     def test_ignorable_anchors(self, FontClass):
         dirname = os.path.dirname(os.path.dirname(__file__))
         fontPath = os.path.join(dirname, "data", "IgnoreAnchorsTest-Thin.ufo")
