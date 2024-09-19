@@ -725,6 +725,36 @@ class MarkFeatureWriter(BaseFeatureWriter):
             result.append(MarkToLigaPos(glyphName, ligatureMarks))
         return result
 
+    def _makeContextualAttachments(self, glyphClass, liga=False):
+        ctx = self.context
+        result = defaultdict(list)
+        markGlyphNames = ctx.markGlyphNames
+        for glyphName, anchors in sorted(ctx.anchorLists.items()):
+            if glyphName in markGlyphNames:
+                continue
+            if glyphClass and glyphName not in glyphClass:
+                continue
+            for anchor in anchors:
+                # Skip non-contextual anchors
+                if not anchor.isContextual:
+                    continue
+                # If we are building the mark2liga lookup, skip anchors without a number
+                if liga and anchor.number is None:
+                    continue
+                # If we are building the mark2base lookup, skip anchors with a number
+                if not liga and anchor.number is not None:
+                    continue
+                anchor_context = anchor.libData.get("GPOS_Context", "").strip()
+                if not anchor_context:
+                    self.log.warning(
+                        "contextual anchor '%s' in glyph '%s' has no context data; skipped",
+                        anchor.name,
+                        glyphName,
+                    )
+                    continue
+                result[anchor_context].append((glyphName, anchor))
+        return result
+
     @staticmethod
     def _iterAttachments(attachments, include=None, marksFilter=None):
         for pos in attachments:
@@ -778,6 +808,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return lkp
 
     def _makeMarkFeature(self, include):
+        # First make the non-contextual lookups
         baseLkps = []
         for attachments in self.context.groupedMarkToBaseAttachments:
             i = len(baseLkps)
@@ -794,100 +825,113 @@ class MarkFeatureWriter(BaseFeatureWriter):
             )
             if lookup:
                 ligaLkps.append(lookup)
-        if not baseLkps and not ligaLkps:
-            return
 
-        feature = ast.FeatureBlock("mark")
-        for baseLkp in baseLkps:
-            feature.statements.append(baseLkp)
-        for ligaLkp in ligaLkps:
-            feature.statements.append(ligaLkp)
-        return feature
-
-    def _makeContextualMarkFeature(self, feature):
-        ctx = self.context
-
-        # Arrange by context
-        by_context = defaultdict(list)
-        markGlyphNames = ctx.markGlyphNames
-
-        for glyphName, anchors in sorted(ctx.anchorLists.items()):
-            if glyphName in markGlyphNames:
-                continue
-            for anchor in anchors:
-                if not anchor.isContextual:
-                    continue
-                anchor_context = anchor.libData["GPOS_Context"].strip()
-                by_context[anchor_context].append((glyphName, anchor))
-        if not by_context:
-            return feature, []
-
-        if feature is None:
-            feature = ast.FeatureBlock("mark")
-
-        # Pull the lookups from the feature and replace them with lookup references,
-        # to ensure the order is correct
-        lookups = feature.statements
-        feature.statements = [ast.LookupReferenceStatement(lu) for lu in lookups]
-        dispatch_lookups = {}
+        # Then make the contextual ones
+        refLkps = []
+        ctxLkps = {}
         # We sort the full context by longest first. This isn't perfect
         # but it gives us the best chance that more specific contexts
         # (typically longer) will take precedence over more general ones.
-        for ix, (fullcontext, glyph_anchor_pair) in enumerate(
-            sorted(by_context.items(), key=lambda x: -len(x[0]))
+        for context, glyph_anchor_pair in sorted(
+            self.context.contextualMarkToBaseAnchors.items(), key=lambda x: -len(x[0])
         ):
-            # Make the contextual lookup
-            lookupname = "ContextualMark_%i" % ix
+            # Group by anchor
+            attachments = defaultdict(list)
+            for glyphName, anchor in glyph_anchor_pair:
+                attachments[anchor.key].append(MarkToBasePos(glyphName, [anchor]))
+            self._makeContextualMarkLookup(
+                attachments,
+                context,
+                refLkps,
+                ctxLkps,
+            )
+
+        for context, glyph_anchor_pair in sorted(
+            self.context.contextualMarkToLigaAnchors.items(), key=lambda x: -len(x[0])
+        ):
+            # Group by anchor
+            attachments = defaultdict(list)
+            for glyphName, anchor in glyph_anchor_pair:
+                marks = [[]] * max(
+                    a.number
+                    for a in self.context.anchorLists[glyphName]
+                    if a.key and a.number is not None
+                )
+                marks[anchor.number - 1] = [anchor]
+                attachments[anchor.key].append(MarkToLigaPos(glyphName, marks))
+            self._makeContextualMarkLookup(
+                attachments,
+                context,
+                refLkps,
+                ctxLkps,
+            )
+
+        ctxLkps = list(ctxLkps.values())
+        if not baseLkps and not ligaLkps and not ctxLkps:
+            return None, []
+
+        feature = ast.FeatureBlock("mark")
+        if ctxLkps:
+            # When we have contextual lookups, we need to make sure that the
+            # contextual and non-contextual lookups are in the right order
+            # and we can’t use nested lookups inside the feature block for
+            # the referenced lookups, so we put all lookups outside the feature
+            # and use lookup references instead.
+            # We should probably always do this, as nested lookups are full of
+            # gotchas, but this will require updating many test expectations.
+            lookups = baseLkps + ligaLkps + refLkps + ctxLkps
+            for lookup in baseLkps + ligaLkps + ctxLkps:
+                feature.statements.append(ast.LookupReferenceStatement(lookup))
+        else:
+            lookups = []
+            for lookup in baseLkps + ligaLkps:
+                feature.statements.append(lookup)
+        return feature, lookups
+
+    def _makeContextualMarkLookup(
+        self,
+        attachments,
+        fullcontext,
+        refLkps,
+        ctxLkps,
+    ):
+        for anchorKey, statements in attachments.items():
+            # First make the contextual lookup
             if ";" in fullcontext:
                 before, after = fullcontext.split(";")
-                # I know it's not really a comment but this is the easiest way
-                # to get the lookup flag in there without reparsing it.
             else:
-                after = fullcontext
-                before = ""
+                before, after = "", fullcontext
             after = after.strip()
-            if before not in dispatch_lookups:
-                dispatch_lookups[before] = ast.LookupBlock(
-                    "ContextualMarkDispatch_%i" % len(dispatch_lookups.keys())
+            if before not in ctxLkps:
+                ctxLkps[before] = ast.LookupBlock(
+                    f"ContextualMarkDispatch_{len(ctxLkps)}"
                 )
                 if before:
-                    dispatch_lookups[before].statements.append(
-                        ast.Comment(f"{before};")
-                    )
-                feature.statements.append(
-                    ast.LookupReferenceStatement(dispatch_lookups[before])
-                )
-            lkp = dispatch_lookups[before]
-            lkp.statements.append(ast.Comment(f"# {after}"))
-            lookup = ast.LookupBlock(lookupname)
-            for glyph, anchor in glyph_anchor_pair:
-                lookup.statements.append(MarkToBasePos(glyph, [anchor]).asAST())
-            lookups.append(lookup)
+                    # I know it's not really a comment but this is the easiest way
+                    # to get the lookup flag in there without reparsing it.
+                    ctxLkps[before].statements.append(ast.Comment(f"{before};"))
+            ctxLkp = ctxLkps[before]
+            ctxLkp.statements.append(ast.Comment(f"# {after}"))
 
             # Insert mark glyph names after base glyph names if not specified otherwise.
             if "&" not in after:
                 after = after.replace("*", "* &")
 
-            # Group base glyphs by anchor
-            glyphs = {}
-            for glyph, anchor in glyph_anchor_pair:
-                glyphs.setdefault(anchor.key, [anchor, []])[1].append(glyph)
+            baseGlyphNames = " ".join([s.name for s in statements])
+            marks = ast.MarkClassName(self.context.markClasses[anchorKey]).asFea()
 
-            for anchor, bases in glyphs.values():
-                bases = " ".join(bases)
-                marks = ast.GlyphClass(
-                    self.context.markClasses[anchor.key].glyphs.keys()
-                ).asFea()
+            # Replace * with base glyph names
+            contextual = after.replace("*", f"[{baseGlyphNames}]")
 
-                # Replace * with base glyph names
-                contextual = after.replace("*", f"[{bases}]")
+            # Replace & with mark glyph names
+            refLkpName = f"ContextualMark_{len(refLkps)}"
+            contextual = contextual.replace("&", f"{marks}' lookup {refLkpName}")
+            ctxLkp.statements.append(ast.Comment(f"pos {contextual};"))
 
-                # Replace & with mark glyph names
-                contextual = contextual.replace("&", f"{marks}' lookup {lookupname}")
-                lkp.statements.append(ast.Comment(f"pos {contextual}; # {anchor.name}"))
-
-        lookups.extend(dispatch_lookups.values())
-        return feature, lookups
+            # Then make the non-contextual lookup it references
+            refLkp = ast.LookupBlock(refLkpName)
+            refLkp.statements = [s.asAST() for s in statements]
+            refLkps.append(refLkp)
 
     def _makeMkmkFeature(self, include):
         feature = ast.FeatureBlock("mkmk")
@@ -986,6 +1030,15 @@ class MarkFeatureWriter(BaseFeatureWriter):
         )
         ctx.markToMarkAttachments = self._makeMarkToMarkAttachments()
 
+        baseClass = self.context.gdefClasses.base
+        ctx.contextualMarkToBaseAnchors = self._makeContextualAttachments(baseClass)
+
+        ligatureClass = self.context.gdefClasses.ligature
+        ctx.contextualMarkToLigaAnchors = self._makeContextualAttachments(
+            ligatureClass,
+            True,
+        )
+
         abvmGlyphs, notAbvmGlyphs = self._getAbvmGlyphs()
 
         def isAbvm(glyphName):
@@ -998,8 +1051,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         lookups = []
         todo = ctx.todo
         if "mark" in todo:
-            mark = self._makeMarkFeature(include=isNotAbvm)
-            mark, markLookups = self._makeContextualMarkFeature(mark)
+            mark, markLookups = self._makeMarkFeature(include=isNotAbvm)
             if mark is not None:
                 features["mark"] = mark
                 lookups.extend(markLookups)
