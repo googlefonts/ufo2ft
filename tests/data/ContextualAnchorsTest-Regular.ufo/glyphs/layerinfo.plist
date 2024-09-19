@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>lib</key>
+    <dict>
+      <key>com.schriftgestaltung.layerId</key>
+      <string>3E7589AA-8194-470F-8E2F-13C1C581BE24</string>
+      <key>com.schriftgestaltung.layerOrderInGlyph.beh-ar</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.behDotless-ar</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.behDotless-ar.fina</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.behDotless-ar.init</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.behDotless-ar.init.alt</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.behDotless-ar.medi</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.behTwodotsbelowDotabove-ar</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.dotabove-ar</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.dotbelow-ar</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.reh-ar</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.twodotshorizontalbelow-ar</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.twodotsverticalbelow-ar</key>
+      <integer>1</integer>
+    </dict>
+  </dict>
+</plist>

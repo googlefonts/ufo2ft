@@ -5,6 +5,7 @@ from textwrap import dedent
 
 import pytest
 
+from ufo2ft.constants import OBJECT_LIBS_KEY
 from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
 from ufo2ft.featureWriters import ast
@@ -34,17 +35,23 @@ def testufo(FontClass):
 @pytest.mark.parametrize(
     "input_expected",
     [
-        ("top", (False, "top", None)),
-        ("top_", (False, "top_", None)),
-        ("top1", (False, "top1", None)),
-        ("_bottom", (True, "bottom", None)),
-        ("bottom_2", (False, "bottom", 2)),
-        ("top_right_1", (False, "top_right", 1)),
+        ("top", (False, "top", None, False, False)),
+        ("top_", (False, "top_", None, False, False)),
+        ("top1", (False, "top1", None, False, False)),
+        ("_bottom", (True, "bottom", None, False, False)),
+        ("bottom_2", (False, "bottom", 2, False, False)),
+        ("top_right_1", (False, "top_right", 1, False, False)),
     ],
 )
 def test_parseAnchorName(input_expected):
-    anchorName, (isMark, key, number) = input_expected
-    assert parseAnchorName(anchorName) == (isMark, key, number)
+    anchorName, (isMark, key, number, isContextual, isIgnorable) = input_expected
+    assert parseAnchorName(anchorName) == (
+        isMark,
+        key,
+        number,
+        isContextual,
+        isIgnorable,
+    )
 
 
 def test_parseAnchorName_invalid():
@@ -1705,6 +1712,173 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             "ka-oriya.below lVocalicMatra-oriya.BRACKET.varAlt01 "
             "uuMatra-oriya.BRACKET.varAlt01]" in str(generated)
         )
+
+    def test_contextual_anchors(self, FontClass):
+        dirname = os.path.dirname(os.path.dirname(__file__))
+        fontPath = os.path.join(dirname, "data", "ContextualAnchorsTest-Regular.ufo")
+        testufo = FontClass(fontPath)
+
+        writer = MarkFeatureWriter()
+        feaFile = ast.FeatureFile()
+        assert str(feaFile) == ""
+        assert writer.write(testufo, feaFile)
+
+        assert len(feaFile.markClasses) == 2
+        assert "MC_bottom" in feaFile.markClasses
+
+        feature = feaFile.statements[-1]
+        assert feature.name == "mark"
+        # note there are two mark2base lookups because ufo2ft v3 generates one lookup
+        # per mark class (previously 'top' and 'bottom' would go into one lookup)
+        assert str(feature) == dedent(
+            """\
+            feature mark {
+                lookup mark2base;
+                lookup mark2base_1;
+                lookup ContextualMarkDispatch_0;
+                lookup ContextualMarkDispatch_1;
+                lookup ContextualMarkDispatch_2;
+            } mark;
+            """
+        )
+
+        lookup = feature.statements[-3].lookup
+        assert str(lookup) == (
+            "lookup ContextualMarkDispatch_0 {\n"
+            "    lookupflag UseMarrkFilteringSet [twodotshorizontalbelow];\n"
+            "    # reh-ar * behDotess-ar.medi &\n"
+            "    pos reh-ar [behDotless-ar.init] behDotess-ar.medi"
+            " [dotbelow-ar twodotsverticalbelow-ar twodotshorizontalbelow-ar]'"
+            " lookup ContextualMark_0; # *bottom.twodots\n"
+            "} ContextualMarkDispatch_0;\n"
+        )
+
+        lookup = feature.statements[-2].lookup
+        assert str(lookup) == (
+            "lookup ContextualMarkDispatch_1 {\n"
+            "    lookupflag UseMarrkFilteringSet [twodotsverticalbelow];\n"
+            "    # reh-ar *\n"
+            "    pos reh-ar [behDotless-ar.init behDotless-ar.init.alt]"
+            " [dotbelow-ar twodotsverticalbelow-ar twodotshorizontalbelow-ar]'"
+            " lookup ContextualMark_1; # *bottom.vtwodots\n"
+            "} ContextualMarkDispatch_1;\n"
+        )
+
+        lookup = feature.statements[-1].lookup
+        assert str(lookup) == (
+            "lookup ContextualMarkDispatch_2 {\n"
+            "    # reh-ar *\n"
+            "    pos reh-ar [behDotless-ar.init]"
+            " [dotbelow-ar twodotsverticalbelow-ar twodotshorizontalbelow-ar]'"
+            " lookup ContextualMark_2; # *bottom\n"
+            "} ContextualMarkDispatch_2;\n"
+        )
+
+    def test_contextual_anchors_no_mark_feature(self, testufo):
+        a = testufo["a"]
+
+        a.appendAnchor({"name": "*top", "x": 200, "y": 200, "identifier": "*top"})
+        a.lib[OBJECT_LIBS_KEY] = {
+            "*top": {
+                "GPOS_Context": "f *",
+            },
+        }
+
+        writer = MarkFeatureWriter(features=["mkmk"])
+        feaFile = ast.FeatureFile()
+        assert str(feaFile) == ""
+        assert writer.write(testufo, feaFile)
+
+        assert str(feaFile) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
+        writer = MarkFeatureWriter()
+        feaFile = ast.FeatureFile()
+        assert str(feaFile) == ""
+        assert writer.write(testufo, feaFile)
+
+        assert str(feaFile) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            lookup mark2base {
+                pos base a
+                    <anchor 100 200> mark @MC_top;
+            } mark2base;
+
+            lookup mark2liga {
+                pos ligature f_i
+                        <anchor 100 500> mark @MC_top
+                    ligComponent
+                        <anchor 600 500> mark @MC_top;
+            } mark2liga;
+
+            lookup ContextualMark_0 {
+                pos base a
+                    <anchor 200 200> mark @MC_top;
+            } ContextualMark_0;
+
+            lookup ContextualMarkDispatch_0 {
+                # f *
+                pos f [a] [acutecomb tildecomb]' lookup ContextualMark_0; # *top
+            } ContextualMarkDispatch_0;
+
+            feature mark {
+                lookup mark2base;
+                lookup mark2liga;
+                lookup ContextualMarkDispatch_0;
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
+    def test_ignorable_anchors(self, FontClass):
+        dirname = os.path.dirname(os.path.dirname(__file__))
+        fontPath = os.path.join(dirname, "data", "IgnoreAnchorsTest-Thin.ufo")
+        testufo = FontClass(fontPath)
+
+        writer = MarkFeatureWriter()
+        feaFile = ast.FeatureFile()
+        assert str(feaFile) == ""
+        assert writer.write(testufo, feaFile)
+
+        assert len(feaFile.markClasses) == 1
+        assert "MC_top" in feaFile.markClasses
+
+        feature = feaFile.statements[-2]
+        assert feature.name == "mark"
+        assert len(feature.statements) == 1
+
+        lookup = feature.statements[0]
+        assert len(lookup.statements) == 4
+        for statement in lookup.statements:
+            assert isinstance(statement, ast.MarkBasePosStatement)
+            assert len(statement.marks) == 1
+            assert statement.marks[0][1].name == "MC_top"
 
 
 if __name__ == "__main__":
