@@ -6,7 +6,6 @@ from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.variableScalar import VariableScalar
 from fontTools.misc.fixedTools import otRound
 
-from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureWriters import ast
 from ufo2ft.util import (
     OpenTypeCategories,
@@ -218,17 +217,14 @@ class BaseFeatureWriter:
 
                 # insertFeatureMarker is in the middle of a feature block
                 # preceded and followed by statements that are not comments
-                #
-                # Glyphs3 can insert a feature block when rules are before
-                # and after the insert marker.
-                # See
-                # https://github.com/googlefonts/ufo2ft/issues/351#issuecomment-765294436
-                # This is currently not supported.
                 else:
-                    raise InvalidFeaturesData(
-                        "Insert marker has rules before and after, feature "
-                        f"{block.name} cannot be inserted. This is not supported."
-                    )
+                    index = statements.index(block) + 1
+                    # Split statements after the insertFeatureMarker into a new block
+                    afterBlock = ast.FeatureBlock(block.name)
+                    afterBlock.statements = block.statements[markerIndex:]
+                    statements.insert(index, afterBlock)
+                    # And remove them from the original block
+                    block.statements = block.statements[:markerIndex]
 
                 statements.insert(index, feature)
                 indices.append(index)

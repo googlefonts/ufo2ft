@@ -424,6 +424,31 @@
 # ---
 # name: test_insert_comment_middle
   '''
+  feature kern {
+      pos one four' -50 six;
+      #
+  } kern;
+  
+  lookup kern_dflt {
+      lookupflag IgnoreMarks;
+      pos seven six 25;
+  } kern_dflt;
+  
+  feature kern {
+      script DFLT;
+      language dflt;
+      lookup kern_dflt;
+  } kern;
+  
+  feature kern {
+      #
+      pos one six' -50 six;
+  } kern;
+  
+  '''
+# ---
+# name: test_insert_comment_middle.1
+  '''
   lookup kern_dflt {
       lookupflag IgnoreMarks;
       pos seven six 25;

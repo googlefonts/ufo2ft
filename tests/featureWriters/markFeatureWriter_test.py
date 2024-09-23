@@ -6,7 +6,6 @@ from textwrap import dedent
 import pytest
 
 from ufo2ft.constants import OBJECT_LIBS_KEY
-from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.featureWriters.markFeatureWriter import (
@@ -479,12 +478,56 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         )
         feaFile = parseLayoutFeatures(testufo)
 
-        with pytest.raises(
-            InvalidFeaturesData,
-            match="Insert marker has rules before and after, feature mark "
-            "cannot be inserted.",
-        ):
-            writer.write(testufo, feaFile)
+        writer.write(testufo, feaFile)
+        assert str(feaFile) == dedent(
+            """\
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            markClass acutecomb <anchor 100 200> @MC_top;
+            feature mark {
+                lookup mark1 {
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
+                } mark1;
+
+                #
+            } mark;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mark {
+                #
+                lookup mark2 {
+                    pos base a
+                        <anchor 150 250> mark @MC_top;
+                } mark2;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
 
         # test append mode ignores insert marker
         generated = self.writeFeatures(testufo, mode="append")
