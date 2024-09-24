@@ -8,7 +8,6 @@ from syrupy.location import PyTestLocation
 from syrupy.types import SnapshotIndex
 
 from ufo2ft.constants import UNICODE_SCRIPT_ALIASES
-from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
 from ufo2ft.featureWriters.kernFeatureWriter2 import KernFeatureWriter
 from ufo2ft.util import DFLT_SCRIPTS, unicodeScriptExtensions
@@ -348,12 +347,8 @@ def test_insert_comment_middle(snapshot, FontClass):
     writer = KernFeatureWriter()
     feaFile = parseLayoutFeatures(ufo)
 
-    with pytest.raises(
-        InvalidFeaturesData,
-        match="Insert marker has rules before and after, feature kern "
-        "cannot be inserted.",
-    ):
-        writer.write(ufo, feaFile)
+    writer.write(ufo, feaFile)
+    assert str(feaFile) == snapshot
 
     # test append mode ignores insert marker
     generated = KernFeatureWriterTest.writeFeatures(ufo, mode="append")

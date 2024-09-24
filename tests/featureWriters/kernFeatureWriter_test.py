@@ -6,7 +6,6 @@ import pytest
 from fontTools import unicodedata
 
 from ufo2ft.constants import UNICODE_SCRIPT_ALIASES
-from ufo2ft.errors import InvalidFeaturesData
 from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
 from ufo2ft.featureWriters import KernFeatureWriter, ast
 from ufo2ft.util import DFLT_SCRIPTS, unicodeScriptExtensions
@@ -170,7 +169,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 language dflt;
                 lookup kern_Latn;
                 lookup kern_Latn_marks;
-                
+
                 script latn;
                 language dflt;
                 lookup kern_Latn;
@@ -191,7 +190,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 script DFLT;
                 language dflt;
                 lookup kern_Latn;
-                
+
                 script latn;
                 language dflt;
                 lookup kern_Latn;
@@ -503,12 +502,31 @@ class KernFeatureWriterTest(FeatureWriterTest):
         writer = KernFeatureWriter()
         feaFile = parseLayoutFeatures(ufo)
 
-        with pytest.raises(
-            InvalidFeaturesData,
-            match="Insert marker has rules before and after, feature kern "
-            "cannot be inserted.",
-        ):
-            writer.write(ufo, feaFile)
+        writer.write(ufo, feaFile)
+        assert str(feaFile) == dedent(
+            """\
+            feature kern {
+                pos one four' -50 six;
+                #
+            } kern;
+
+            lookup kern_Default {
+                lookupflag IgnoreMarks;
+                pos seven six 25;
+            } kern_Default;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Default;
+            } kern;
+
+            feature kern {
+                #
+                pos one six' -50 six;
+            } kern;
+            """
+        )
 
         # test append mode ignores insert marker
         generated = self.writeFeatures(ufo, mode="append")
@@ -1087,7 +1105,7 @@ class KernFeatureWriterTest(FeatureWriterTest):
                 script DFLT;
                 language dflt;
                 lookup kern_Latn;
- 
+
                 script arab;
                 language dflt;
                 lookup kern_Arab;
@@ -2010,7 +2028,7 @@ def test_defining_classdefs(FontClass):
         @kern1.Telu.ssatelugu.alt = [ssa-telugu.alt];
         @kern2.Telu.katelugu.below = [ka-telugu.below];
         @kern2.Telu.rVocalicMatratelugu = [rVocalicMatra-telugu];
-        
+
         lookup kern_Telu {
             lookupflag IgnoreMarks;
             enum pos @kern1.Telu.ssatelugu.alt sha-telugu.below 150;
@@ -2018,30 +2036,30 @@ def test_defining_classdefs(FontClass):
             pos @kern1.Default.ssatelugu.alt @kern2.Telu.katelugu.below 60;
             pos @kern1.Telu.ssatelugu.alt @kern2.Telu.katelugu.below 60;
         } kern_Telu;
-        
+
         lookup kern_Telu_marks {
             pos @kern1.Default.ssatelugu.alt @kern2.Telu.rVocalicMatratelugu 180;
             pos @kern1.Telu.ssatelugu.alt @kern2.Telu.rVocalicMatratelugu 180;
         } kern_Telu_marks;
-        
+
         lookup kern_Default {
             lookupflag IgnoreMarks;
             enum pos @kern1.Default.ssatelugu.alt sha-telugu.below 150;
         } kern_Default;
-        
+
         feature kern {
             script DFLT;
             language dflt;
             lookup kern_Default;
         } kern;
-        
+
         feature dist {
             script tel2;
             language dflt;
             lookup kern_Default;
             lookup kern_Telu;
             lookup kern_Telu_marks;
-        
+
             script telu;
             language dflt;
             lookup kern_Default;
