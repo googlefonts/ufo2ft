@@ -295,3 +295,134 @@ class CursFeatureWriterTest(FeatureWriterTest):
             } curs;
             """
         )
+
+    def test_curs_feature_forced_RTL(self, testufo):
+        for c in ("a", "b", "c"):
+            g = testufo[c]
+            g.unicode = ord(c)
+            anchors = list(g.anchors)
+            g.anchors = []
+            for a in anchors:
+                g.appendAnchor({"name": a.name + ".RTL", "x": a.x, "y": a.y})
+
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+                feature curs {
+                    lookup curs_RTL {
+                        lookupflag RightToLeft IgnoreMarks;
+                        pos cursive a <anchor NULL> <anchor 100 200>;
+                        pos cursive b <anchor 0 200> <anchor 111 200>;
+                        pos cursive c <anchor 100 200> <anchor NULL>;
+                    } curs_RTL;
+
+                } curs;
+                """
+        )
+
+    def test_curs_feature_forced_LTR(self, testufo):
+        for n, u in (("a", 0x0627), ("b", 0x0628), ("c", 0x062C)):
+            g = testufo[n]
+            g.unicode = u
+            anchors = list(g.anchors)
+            g.anchors = []
+            for a in anchors:
+                g.appendAnchor({"name": a.name + ".LTR", "x": a.x, "y": a.y})
+
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+                feature curs {
+                    lookup curs_LTR {
+                        lookupflag IgnoreMarks;
+                        pos cursive a <anchor NULL> <anchor 100 200>;
+                        pos cursive b <anchor 0 200> <anchor 111 200>;
+                        pos cursive c <anchor 100 200> <anchor NULL>;
+                    } curs_LTR;
+
+                } curs;
+                """
+        )
+
+    def test_curs_feature_mixed_forced_direction(self, testufo):
+        testufo["a"].unicode = ord("a")
+        testufo["b"].unicode = ord("b")
+        testufo["c"].unicode = ord("c")
+
+        glyph = testufo.newGlyph("d")
+        glyph.unicode = ord("d")
+        glyph.appendAnchor({"name": "exit.RTL", "x": 110, "y": 210})
+
+        glyph = testufo.newGlyph("e")
+        glyph.unicode = ord("e")
+        glyph.appendAnchor({"name": "entry.RTL", "x": 10, "y": 210})
+        glyph.appendAnchor({"name": "exit.RTL", "x": 121, "y": 210})
+
+        glyph = testufo.newGlyph("f")
+        glyph.unicode = ord("f")
+        glyph.appendAnchor({"name": "entry.RTL", "x": 110, "y": 210})
+
+        glyph = testufo.newGlyph("alef")
+        glyph.unicode = 0x0627
+        glyph.appendAnchor({"name": "entry", "x": 100, "y": 200})
+
+        glyph = testufo.newGlyph("beh")
+        glyph.unicode = 0x0628
+        glyph.appendAnchor({"name": "entry", "x": 0, "y": 200})
+        glyph.appendAnchor({"name": "exit", "x": 111, "y": 200})
+
+        glyph = testufo.newGlyph("jeem")
+        glyph.unicode = 0x062C
+        glyph.appendAnchor({"name": "entry", "x": 100, "y": 200})
+
+        glyph = testufo.newGlyph("heh")
+        glyph.unicode = 0x0647
+        glyph.appendAnchor({"name": "entry.LTR", "x": 110, "y": 210})
+
+        glyph = testufo.newGlyph("waw")
+        glyph.unicode = 0x0648
+        glyph.appendAnchor({"name": "exit.LTR", "x": 10, "y": 210})
+        glyph.appendAnchor({"name": "exit.LTR", "x": 121, "y": 210})
+
+        glyph = testufo.newGlyph("zain")
+        glyph.unicode = 0x0632
+        glyph.appendAnchor({"name": "entry.LTR", "x": 110, "y": 210})
+
+        generated = self.writeFeatures(testufo)
+
+        assert str(generated) == dedent(
+            """\
+                feature curs {
+                    lookup curs_ltr {
+                        lookupflag IgnoreMarks;
+                        pos cursive a <anchor NULL> <anchor 100 200>;
+                        pos cursive b <anchor 0 200> <anchor 111 200>;
+                        pos cursive c <anchor 100 200> <anchor NULL>;
+                    } curs_ltr;
+
+                    lookup curs_rtl {
+                        lookupflag RightToLeft IgnoreMarks;
+                        pos cursive alef <anchor 100 200> <anchor NULL>;
+                        pos cursive beh <anchor 0 200> <anchor 111 200>;
+                        pos cursive jeem <anchor 100 200> <anchor NULL>;
+                    } curs_rtl;
+
+                    lookup curs_LTR {
+                        lookupflag IgnoreMarks;
+                        pos cursive heh <anchor 110 210> <anchor NULL>;
+                        pos cursive waw <anchor NULL> <anchor 10 210>;
+                        pos cursive zain <anchor 110 210> <anchor NULL>;
+                    } curs_LTR;
+
+                    lookup curs_RTL {
+                        lookupflag RightToLeft IgnoreMarks;
+                        pos cursive d <anchor NULL> <anchor 110 210>;
+                        pos cursive e <anchor 10 210> <anchor 121 210>;
+                        pos cursive f <anchor 110 210> <anchor NULL>;
+                    } curs_RTL;
+
+                } curs;
+                """
+        )
