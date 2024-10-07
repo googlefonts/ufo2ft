@@ -1806,62 +1806,68 @@ def test_kern_zyyy_zinh(FontClass):
         """\
         lookup kern_Deva {
             lookupflag IgnoreMarks;
-            pos uni1CD0 uni1CD0 3;
-            pos uni1CE0 uni1CE0 4;
-            pos uni1CF0 uni1CF0 5;
-            pos uni20F0 uni20F0 7;
-            pos uniA830 uniA830 28;
+            pos uni1CD0 uni1CD0 7;
+            pos uni1CE0 uni1CE0 8;
+            pos uni1CF0 uni1CF0 9;
+            pos uni20F0 uni20F0 11;
+            pos uniA830 uniA830 34;
         } kern_Deva;
 
         lookup kern_Dupl {
             lookupflag IgnoreMarks;
-            pos uni1BCA0 uni1BCA0 36;
+            pos uni1BCA0 uni1BCA0 42;
         } kern_Dupl;
 
         lookup kern_Grek {
             lookupflag IgnoreMarks;
-            pos uni1DC0 uni1DC0 6;
+            pos uni0300 uni0300 0;
+            pos uni1DC0 uni1DC0 10;
         } kern_Grek;
 
         lookup kern_Hani_Hrkt {
             lookupflag IgnoreMarks;
-            pos uni1D360 uni1D360 37;
-            pos uni1D370 uni1D370 38;
-            pos uni1F250 uni1F250 39;
-            pos uni3010 uni3010 8;
-            pos uni3030 uni3030 9;
-            pos uni30A0 uni30A0 10;
-            pos uni3190 uni3190 11;
-            pos uni31C0 uni31C0 12;
-            pos uni31D0 uni31D0 13;
-            pos uni31E0 uni31E0 14;
-            pos uni3220 uni3220 15;
-            pos uni3230 uni3230 16;
-            pos uni3240 uni3240 17;
-            pos uni3280 uni3280 18;
-            pos uni3290 uni3290 19;
-            pos uni32A0 uni32A0 20;
-            pos uni32B0 uni32B0 21;
-            pos uni32C0 uni32C0 22;
-            pos uni3360 uni3360 23;
-            pos uni3370 uni3370 24;
-            pos uni33E0 uni33E0 25;
-            pos uni33F0 uni33F0 26;
-            pos uniA700 uniA700 27;
-            pos uniFF70 uniFF70 29;
+            pos uni1D360 uni1D360 43;
+            pos uni1D370 uni1D370 44;
+            pos uni1F250 uni1F250 45;
+            pos uni2FF0 uni2FF0 13;
+            pos uni3010 uni3010 14;
+            pos uni3030 uni3030 15;
+            pos uni30A0 uni30A0 16;
+            pos uni3190 uni3190 17;
+            pos uni31C0 uni31C0 18;
+            pos uni31D0 uni31D0 19;
+            pos uni31E0 uni31E0 20;
+            pos uni3220 uni3220 21;
+            pos uni3230 uni3230 22;
+            pos uni3240 uni3240 23;
+            pos uni3280 uni3280 24;
+            pos uni3290 uni3290 25;
+            pos uni32A0 uni32A0 26;
+            pos uni32B0 uni32B0 27;
+            pos uni32C0 uni32C0 28;
+            pos uni3360 uni3360 29;
+            pos uni3370 uni3370 30;
+            pos uni33E0 uni33E0 31;
+            pos uni33F0 uni33F0 32;
+            pos uniA700 uniA700 33;
+            pos uniFF70 uniFF70 35;
         } kern_Hani_Hrkt;
 
         lookup kern_Default {
             lookupflag IgnoreMarks;
-            pos uni0640 uni0640 0;
-            pos uni0650 uni0650 1;
-            pos uni0670 uni0670 2;
-            pos uni10100 uni10100 30;
-            pos uni10110 uni10110 31;
-            pos uni10120 uni10120 32;
-            pos uni10130 uni10130 33;
-            pos uni102E0 uni102E0 34;
-            pos uni102F0 uni102F0 35;
+            pos uni0310 uni0310 1;
+            pos uni0320 uni0320 2;
+            pos uni0330 uni0330 3;
+            pos uni0640 uni0640 4;
+            pos uni0650 uni0650 5;
+            pos uni0670 uni0670 6;
+            pos uni10100 uni10100 36;
+            pos uni10110 uni10110 37;
+            pos uni10120 uni10120 38;
+            pos uni10130 uni10130 39;
+            pos uni102E0 uni102E0 40;
+            pos uni102F0 uni102F0 41;
+            pos uni2E30 uni2E30 12;
         } kern_Default;
 
         feature kern {
