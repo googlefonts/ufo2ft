@@ -51,7 +51,9 @@ class CursFeatureWriter(BaseFeatureWriter):
         orderedGlyphSet = self.getOrderedGlyphSet().items()
         cursiveAnchorsPairs = self._getCursiveAnchorPairs(orderedGlyphSet)
         for entryName, exitName in cursiveAnchorsPairs:
-            if shouldSplit:
+            # If the anchors have an explicit direction suffix, don’t set
+            # direction based on the script of the glyphs.
+            if not entryName.endswith((".LTR", ".RTL")) and shouldSplit:
                 # Make LTR lookup
                 LTRlookup = self._makeCursiveLookup(
                     (
@@ -107,6 +109,11 @@ class CursFeatureWriter(BaseFeatureWriter):
         elif direction == "RTL":
             suffix += "_rtl"
         lookup = ast.LookupBlock(name=f"curs{suffix}")
+
+        if entryName.endswith(".RTL"):
+            direction = "RTL"
+        elif entryName.endswith(".LTR"):
+            direction = "LTR"
 
         if direction != "LTR":
             lookup.statements.append(ast.makeLookupFlag(("IgnoreMarks", "RightToLeft")))
