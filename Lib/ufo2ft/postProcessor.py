@@ -318,19 +318,22 @@ class PostProcessor:
 
     @staticmethod
     def _convert_cff_to_cff2(otf):
-        from fontTools.varLib.cff import convertCFFtoCFF2
-
         logger.info("Converting CFF table to CFF2")
 
-        # convertCFFtoCFF2 doesn't strip T2CharStrings' widths, so we do it ourselves
-        # https://github.com/fonttools/fonttools/issues/1835
-        charstrings = otf["CFF "].cff[0].CharStrings
-        for glyph_name in otf.getGlyphOrder():
-            cs = charstrings[glyph_name]
-            cs.decompile()
-            cs.program = _stripCharStringWidth(cs.program)
+        try:
+            from fontTools.cffLib.CFFToCFF2 import convertCFFToCFF2
+        except ImportError:
+            from fontTools.varLib.cff import convertCFFtoCFF2 as convertCFFToCFF2
 
-        convertCFFtoCFF2(otf)
+            # convertCFFtoCFF2 doesn't strip T2CharStrings' widths, so we do it ourselves
+            # https://github.com/fonttools/fonttools/issues/1835
+            charstrings = otf["CFF "].cff[0].CharStrings
+            for glyph_name in otf.getGlyphOrder():
+                cs = charstrings[glyph_name]
+                cs.decompile()
+                cs.program = _stripCharStringWidth(cs.program)
+
+        convertCFFToCFF2(otf)
 
     @classmethod
     def _subroutinize(cls, backend, otf, cffVersion):
