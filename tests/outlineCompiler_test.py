@@ -761,6 +761,67 @@ class GlyphOrderTest:
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
 
+    def test_compile_reorder_space_glyph(self, quadufo):
+        """
+        Test that ufo2ft always puts .notdef first, and put space second if no
+        explicit glyph order is set.
+        """
+        EXPECTED_ORDER = [
+            ".notdef",
+            "space",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+        ]
+        # Check with no public.glyphOrder
+        del quadufo.lib["public.glyphOrder"]
+        assert not quadufo.glyphOrder
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
+
+        # Empty glyphOrder is considered the same
+        quadufo.glyphOrder = []
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
+
+        # Non-empty glyphOrder without "space" is considered the same
+        quadufo.glyphOrder = [n for n in EXPECTED_ORDER if n != "space"]
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
+
+        EXPECTED_ORDER = [
+            ".notdef",
+            "a",
+            "b",
+            "c",
+            "d",
+            "space",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+        ]
+        quadufo.glyphOrder = EXPECTED_ORDER
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
+
 
 class NamesTest:
     @pytest.mark.parametrize(
@@ -915,7 +976,7 @@ class NamesTest:
         assert long_name in result.getGlyphOrder()
 
     def test_duplicate_glyph_names(self, testufo):
-        order = ["ab", "ab.1", "a-b", "a/b", "ba"]
+        order = ["ab", "ab.1", "a-b", "a/b", "ba", "space"]
         testufo.lib["public.glyphOrder"] = order
         testufo.lib["public.postscriptNames"] = {"ba": "ab"}
         for name in order:
