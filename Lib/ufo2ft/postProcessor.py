@@ -3,6 +3,7 @@ import logging
 import re
 from io import BytesIO
 
+from fontTools.cffLib.CFFToCFF2 import convertCFFToCFF2
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.standardGlyphOrder import standardGlyphOrder
 
@@ -134,7 +135,8 @@ class PostProcessor:
                 cffInputVersion == CFFVersion.CFF
                 and cffOutputVersion == CFFVersion.CFF2
             ):
-                self._convert_cff_to_cff2(self.otf)
+                logger.info("Converting CFF table to CFF2")
+                convertCFFToCFF2(self.otf)
             else:
                 raise NotImplementedError(
                     "Unsupported CFF conversion {cffInputVersion} => {cffOutputVersion}"
@@ -316,25 +318,6 @@ class PostProcessor:
         else:
             return None
 
-    @staticmethod
-    def _convert_cff_to_cff2(otf):
-        logger.info("Converting CFF table to CFF2")
-
-        try:
-            from fontTools.cffLib.CFFToCFF2 import convertCFFToCFF2
-        except ImportError:
-            from fontTools.varLib.cff import convertCFFtoCFF2 as convertCFFToCFF2
-
-            # convertCFFtoCFF2 doesn't strip T2CharStrings' widths, so we do it ourselves
-            # https://github.com/fonttools/fonttools/issues/1835
-            charstrings = otf["CFF "].cff[0].CharStrings
-            for glyph_name in otf.getGlyphOrder():
-                cs = charstrings[glyph_name]
-                cs.decompile()
-                cs.program = _stripCharStringWidth(cs.program)
-
-        convertCFFToCFF2(otf)
-
     @classmethod
     def _subroutinize(cls, backend, otf, cffVersion):
         subroutinize = getattr(cls, f"_subroutinize_with_{backend.value}")
@@ -376,47 +359,6 @@ class PostProcessor:
 
         compiler = InfoCompiler(self.otf, self.ufo, self.info)
         compiler.compile()
-
-
-# Adapted from fontTools.cff.specializer.programToCommands
-# https://github.com/fonttools/fonttools/blob/babca16
-# /Lib/fontTools/cffLib/specializer.py#L40-L122
-# When converting from CFF to CFF2 we need to drop the charstrings' widths.
-# This function returns a new charstring program without the initial width value.
-# TODO: Move to fontTools?
-def _stripCharStringWidth(program):
-    seenWidthOp = False
-    result = []
-    stack = []
-    for token in program:
-        if not isinstance(token, str):
-            stack.append(token)
-            continue
-
-        if (not seenWidthOp) and token in {
-            "hstem",
-            "hstemhm",
-            "vstem",
-            "vstemhm",
-            "cntrmask",
-            "hintmask",
-            "hmoveto",
-            "vmoveto",
-            "rmoveto",
-            "endchar",
-        }:
-            seenWidthOp = True
-            parity = token in {"hmoveto", "vmoveto"}
-            numArgs = len(stack)
-            if numArgs and (numArgs % 2) ^ parity:
-                stack.pop(0)  # pop width
-
-        result.extend(stack)
-        result.append(token)
-        stack = []
-    if stack:
-        result.extend(stack)
-    return result
 
 
 def _reloadFont(font: TTFont) -> TTFont:
