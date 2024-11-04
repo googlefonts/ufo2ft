@@ -7,4 +7,4 @@ skia-pathops==0.8.0.post2
 fontMath==0.9.4
 
 # alternative UFO implementation
-ufoLib2==0.16.0
+ufoLib2==0.16.1
