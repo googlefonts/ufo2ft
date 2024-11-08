@@ -988,12 +988,30 @@ class BaseOutlineCompiler:
                 for glyphs, box in self.ufo.lib.get(COLR_CLIP_BOXES_KEY, ())
                 for glyphName in glyphs
             }
-            self.otf["COLR"] = buildCOLR(
+            colr = buildCOLR(
                 layerInfo,
                 glyphMap=glyphMap,
                 clipBoxes=clipBoxes,
                 allowLayerReuse=self.colrLayerReuse,
             )
+
+            # Warn if there are any COLRv0 base glyphs and the gid1 isn't blank
+            # https://github.com/MicrosoftDocs/typography-issues/issues/346
+            if (colr.version == 0 or colr.table.BaseGlyphRecordCount > 0) and len(
+                self.glyphOrder
+            ) > 1:
+                g1 = self.allGlyphs[self.glyphOrder[1]]
+                if len(g1) > 0 or len(g1.components) > 0:
+                    logger.warning(
+                        "COLRv0 might not render correctly on Windows because "
+                        "the glyph at index 1 is not empty ('%s'). DirectWrite's "
+                        "COLRv0 implementation in Windows 10 used to require glyph ID "
+                        "1 to be blank, see: "
+                        "https://github.com/MicrosoftDocs/typography-issues/issues/346",
+                        g1.name,
+                    )
+
+            self.otf["COLR"] = colr
 
     def _computeCOLRClipBoxes(self):
         if (

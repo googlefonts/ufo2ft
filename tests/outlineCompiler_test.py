@@ -1009,6 +1009,21 @@ class ColrCpalTest:
             "c": [("c.color2", 1), ("c.color1", 0)],
         }
 
+    def test_colr_cpal_gid1_not_blank(self, FontClass, caplog):
+        # https://github.com/MicrosoftDocs/typography-issues/issues/346
+        testufo = FontClass(getpath("ColorTest.ufo"))
+        del testufo["space"]
+
+        with caplog.at_level(logging.WARNING, logger="ufo2ft.outlineCompiler"):
+            ttf = compileTTF(testufo)
+
+        assert ttf["COLR"].version == 0
+        assert ttf.getGlyphOrder()[1] == "a"
+        assert (
+            "COLRv0 might not render correctly on Windows because "
+            "the glyph at index 1 is not empty ('a')."
+        ) in caplog.text
+
     @pytest.mark.parametrize("compileFunc", [compileTTF, compileOTF])
     @pytest.mark.parametrize("manualClipBoxes", [True, False])
     @pytest.mark.parametrize(
