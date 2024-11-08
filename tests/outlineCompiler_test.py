@@ -761,67 +761,6 @@ class GlyphOrderTest:
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
 
-    def test_compile_reorder_space_glyph(self, quadufo):
-        """
-        Test that ufo2ft always puts .notdef first, and put space second if no
-        explicit glyph order is set.
-        """
-        EXPECTED_ORDER = [
-            ".notdef",
-            "space",
-            "a",
-            "b",
-            "c",
-            "d",
-            "e",
-            "f",
-            "g",
-            "h",
-            "i",
-            "j",
-            "k",
-            "l",
-        ]
-        # Check with no public.glyphOrder
-        del quadufo.lib["public.glyphOrder"]
-        assert not quadufo.glyphOrder
-        compiler = OutlineTTFCompiler(quadufo)
-        compiler.compile()
-        assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
-
-        # Empty glyphOrder is considered the same
-        quadufo.glyphOrder = []
-        compiler = OutlineTTFCompiler(quadufo)
-        compiler.compile()
-        assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
-
-        # Non-empty glyphOrder without "space" is considered the same
-        quadufo.glyphOrder = [n for n in EXPECTED_ORDER if n != "space"]
-        compiler = OutlineTTFCompiler(quadufo)
-        compiler.compile()
-        assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
-
-        EXPECTED_ORDER = [
-            ".notdef",
-            "a",
-            "b",
-            "c",
-            "d",
-            "space",
-            "e",
-            "f",
-            "g",
-            "h",
-            "i",
-            "j",
-            "k",
-            "l",
-        ]
-        quadufo.glyphOrder = EXPECTED_ORDER
-        compiler = OutlineTTFCompiler(quadufo)
-        compiler.compile()
-        assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
-
 
 class NamesTest:
     @pytest.mark.parametrize(
@@ -976,7 +915,7 @@ class NamesTest:
         assert long_name in result.getGlyphOrder()
 
     def test_duplicate_glyph_names(self, testufo):
-        order = ["ab", "ab.1", "a-b", "a/b", "ba", "space"]
+        order = ["ab", "ab.1", "a-b", "a/b", "ba"]
         testufo.lib["public.glyphOrder"] = order
         testufo.lib["public.postscriptNames"] = {"ba": "ab"}
         for name in order:
@@ -1069,6 +1008,21 @@ class ColrCpalTest:
             "b": [("b.color1", 1), ("b.color2", 0)],
             "c": [("c.color2", 1), ("c.color1", 0)],
         }
+
+    def test_colr_cpal_gid1_not_blank(self, FontClass, caplog):
+        # https://github.com/MicrosoftDocs/typography-issues/issues/346
+        testufo = FontClass(getpath("ColorTest.ufo"))
+        del testufo["space"]
+
+        with caplog.at_level(logging.WARNING, logger="ufo2ft.outlineCompiler"):
+            ttf = compileTTF(testufo)
+
+        assert ttf["COLR"].version == 0
+        assert ttf.getGlyphOrder()[1] == "a"
+        assert (
+            "COLRv0 might not render correctly on Windows because "
+            "the glyph at index 1 is not empty ('a')."
+        ) in caplog.text
 
     @pytest.mark.parametrize("compileFunc", [compileTTF, compileOTF])
     @pytest.mark.parametrize("manualClipBoxes", [True, False])
