@@ -32,20 +32,15 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
     If not explicit glyphOrder is defined, sort glyphs alphabetically.
 
     If ".notdef" glyph is present in the font, force this to always be
-    the first glyph (at index 0). Also, if "space" is present in the font and
-    missing from glyphOrder, force it to be the second glyph (at index 1).
+    the first glyph (at index 0).
     """
     if glyphOrder is None:
         glyphOrder = getattr(font, "glyphOrder", ())
-    reorderSpace = "space" not in glyphOrder
     names = set(font.keys())
     order = []
     if ".notdef" in names:
         names.remove(".notdef")
         order.append(".notdef")
-    if reorderSpace and "space" in names:
-        names.remove("space")
-        order.append("space")
     for name in glyphOrder:
         if name not in names:
             continue
