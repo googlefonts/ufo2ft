@@ -71,7 +71,6 @@ def test_default_groups_only(ufo_module, data_dir, caplog):
     d.addSourceDescriptor(location={"Weight": 300}, font=ufo_module.Font())
     d.addSourceDescriptor(location={"Weight": 900}, font=ufo_module.Font())
     d.addInstanceDescriptor(styleName="2", location={"Weight": 400})
-    d.findDefault()
 
     d.sources[0].font.groups["public.kern1.GRK_alpha_alt_LC_1ST"] = [
         "alpha.alt",
@@ -102,7 +101,6 @@ def test_default_groups_only2(ufo_module, data_dir, caplog):
     d.addSourceDescriptor(location={"Weight": 300}, font=ufo_module.Font())
     d.addSourceDescriptor(location={"Weight": 900}, font=ufo_module.Font())
     d.addInstanceDescriptor(styleName="2", location={"Weight": 400})
-    d.findDefault()
 
     d.sources[0].font.groups["public.kern1.GRK_alpha_alt_LC_1ST"] = [
         "alpha.alt",
