@@ -251,7 +251,7 @@ class Instantiator:
         do_glyphs=True,
     ):
         """Instantiates a new data class from a Designspace object."""
-        if designspace.default is None:
+        if designspace.findDefault() is None:
             raise InstantiatorError(_error_msg_no_default(designspace))
 
         if any(hasattr(axis, "values") for axis in designspace.axes):
