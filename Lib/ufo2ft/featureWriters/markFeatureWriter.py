@@ -2,6 +2,7 @@ import itertools
 import re
 from collections import OrderedDict, defaultdict
 from functools import partial
+from typing import Dict, Optional, Set, Tuple
 
 from ufo2ft.constants import INDIC_SCRIPTS, OBJECT_LIBS_KEY, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
@@ -725,25 +726,38 @@ class MarkFeatureWriter(BaseFeatureWriter):
             result.append(MarkToLigaPos(glyphName, ligatureMarks))
         return result
 
-    def _makeContextualAttachments(self, glyphClass, liga=False):
-        ctx = self.context
-        result = defaultdict(list)
-        markGlyphNames = ctx.markGlyphNames
-        for glyphName, anchors in sorted(ctx.anchorLists.items()):
-            if glyphName in markGlyphNames:
-                continue
-            if glyphClass and glyphName not in glyphClass:
+    def _makeContextualAttachments(
+        self, baseClass: Optional[Set[str]], ligatureClass: Optional[Set[str]]
+    ) -> Tuple[Dict[str, Tuple[str, NamedAnchor]], Dict[str, Tuple[str, NamedAnchor]]]:
+        def includedOrNoClass(gdefClass: Optional[Set[str]], glyphName: str) -> bool:
+            return glyphName in gdefClass if gdefClass is not None else True
+
+        def includedInClass(gdefClass: Optional[Set[str]], glyphName: str) -> bool:
+            return glyphName in gdefClass if gdefClass is not None else False
+
+        baseResult = defaultdict(list)
+        ligatureResult = defaultdict(list)
+
+        for glyphName, anchors in sorted(self.context.anchorLists.items()):
+            if glyphName in self.context.markGlyphNames:
                 continue
             for anchor in anchors:
                 # Skip non-contextual anchors
                 if not anchor.isContextual:
                     continue
-                # If we are building the mark2liga lookup, skip anchors without a number
-                if liga and anchor.number is None:
+
+                if anchor.number is not None and includedOrNoClass(
+                    ligatureClass, glyphName
+                ):
+                    dest = ligatureResult
+                elif anchor.number is None and (
+                    includedOrNoClass(baseClass, glyphName)
+                    or includedInClass(ligatureClass, glyphName)
+                ):
+                    dest = baseResult
+                else:
                     continue
-                # If we are building the mark2base lookup, skip anchors with a number
-                if not liga and anchor.number is not None:
-                    continue
+
                 anchor_context = anchor.libData.get("GPOS_Context", "").strip()
                 if not anchor_context:
                     self.log.warning(
@@ -752,8 +766,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
                         glyphName,
                     )
                     continue
-                result[anchor_context].append((glyphName, anchor))
-        return result
+                dest[anchor_context].append((glyphName, anchor))
+        return baseResult, ligatureResult
 
     @staticmethod
     def _iterAttachments(attachments, include=None, marksFilter=None):
@@ -1031,12 +1045,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
         ctx.markToMarkAttachments = self._makeMarkToMarkAttachments()
 
         baseClass = self.context.gdefClasses.base
-        ctx.contextualMarkToBaseAnchors = self._makeContextualAttachments(baseClass)
-
         ligatureClass = self.context.gdefClasses.ligature
-        ctx.contextualMarkToLigaAnchors = self._makeContextualAttachments(
-            ligatureClass,
-            True,
+        ctx.contextualMarkToBaseAnchors, ctx.contextualMarkToLigaAnchors = (
+            self._makeContextualAttachments(baseClass, ligatureClass)
         )
 
         abvmGlyphs, notAbvmGlyphs = self._getAbvmGlyphs()
