@@ -746,6 +746,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 if not anchor.isContextual:
                     continue
 
+                # See "after" truth table for what this logic hopes to achieve:
+                # https://github.com/googlefonts/ufo2ft/pull/890#issuecomment-2498032081
                 if anchor.number is not None and includedOrNoClass(
                     ligatureClass, glyphName
                 ):
