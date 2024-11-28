@@ -2011,6 +2011,81 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_contextual_liga_anchor_no_number(self, testufo):
+        fi = testufo["f_i"]
+        fi.appendAnchor(
+            {"name": "*top.tilde", "x": 300, "y": 500, "identifier": "*top.tilde"}
+        )
+        fi.appendAnchor(
+            {"name": "*top_1.acute", "x": 200, "y": 300, "identifier": "*top_1.acute"}
+        )
+        fi.lib[OBJECT_LIBS_KEY] = {
+            "*top.tilde": {
+                "GPOS_Context": "* tildecomb",
+            },
+            "*top_1.acute": {
+                "GPOS_Context": "* acutecomb",
+            },
+        }
+
+        writer = MarkFeatureWriter()
+        feaFile = ast.FeatureFile()
+        assert writer.write(testufo, feaFile)
+
+        assert str(feaFile) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            lookup mark2base {
+                pos base a
+                    <anchor 100 200> mark @MC_top;
+            } mark2base;
+
+            lookup mark2liga {
+                pos ligature f_i
+                        <anchor 100 500> mark @MC_top
+                    ligComponent
+                        <anchor 600 500> mark @MC_top;
+            } mark2liga;
+
+            lookup ContextualMark_0 {
+                pos base f_i
+                    <anchor 300 500> mark @MC_top;
+            } ContextualMark_0;
+
+            lookup ContextualMark_1 {
+                pos ligature f_i
+                        <anchor 200 300> mark @MC_top
+                    ligComponent
+                        <anchor NULL>;
+            } ContextualMark_1;
+
+            lookup ContextualMarkDispatch_0 {
+                # * tildecomb
+                pos [f_i] @MC_top' lookup ContextualMark_0 tildecomb;
+                # * acutecomb
+                pos [f_i] @MC_top' lookup ContextualMark_1 acutecomb;
+            } ContextualMarkDispatch_0;
+
+            feature mark {
+                lookup mark2base;
+                lookup mark2liga;
+                lookup ContextualMarkDispatch_0;
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top {
+                    @MFS_mark2mark_top = [acutecomb tildecomb];
+                    lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                    pos mark tildecomb
+                        <anchor 100 300> mark @MC_top;
+                } mark2mark_top;
+
+            } mkmk;
+            """
+        )
+
     def test_contextual_anchor_no_context(self, testufo, caplog):
         a = testufo["a"]
         a.appendAnchor({"name": "*top", "x": 200, "y": 200, "identifier": "*top"})
