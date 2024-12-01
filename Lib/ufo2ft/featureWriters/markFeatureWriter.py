@@ -550,28 +550,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
             ),
         )
 
-    def _logIfAmbiguous(self, attachments, groupedMarkClasses):
-        """Warn about ambiguous situations and log the current resolution.
-        An anchor attachment is ambiguous if for the same mark glyph, more
-        than one mark class can be used to attach it to the base.
-        """
-        for attachment in attachments:
-            for markGlyph, markClasses in attachment.getMarkGlyphToMarkClasses():
-                if len(markClasses) > 1:
-                    self.log.info(
-                        "The base glyph %s and mark glyph %s are ambiguously "
-                        "connected by several anchor classes: %s. "
-                        "The last one will prevail.",
-                        attachment.name,
-                        markGlyph,
-                        ", ".join(
-                            markClass
-                            for group in groupedMarkClasses
-                            for markClass in group
-                            if markClass in markClasses
-                        ),
-                    )
-
     def _removeClassPrefix(self, markClass):
         assert markClass.startswith(self.markClassPrefix)
         return markClass[len(self.markClassPrefix) :]
@@ -613,7 +591,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 [markClass.name]
                 for _, markClass in sorted(self.context.markClasses.items())
             ]
-        self._logIfAmbiguous(attachments, groupedMarkClasses)
         lookups = []
         for markClasses in groupedMarkClasses:
             lookup = []

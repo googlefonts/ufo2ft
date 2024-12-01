@@ -1685,12 +1685,6 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         generated = self.writeFeatures(ufo, groupMarkClasses=groupMarkClasses)
 
-        assert (
-            "The base glyph a and mark glyph acutecomb are ambiguously "
-            f"connected by several anchor classes: {warning}. "
-            "The last one will prevail." in caplog.text
-        )
-
         assert str(generated) == expected
 
     def test_skipExportGlyphs(self, testufo):
