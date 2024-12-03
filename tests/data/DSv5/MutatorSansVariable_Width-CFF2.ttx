@@ -128,51 +128,6 @@
   </cmap>
 
   <name>
-    <namerecord nameID="256" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Width
-    </namerecord>
-    <namerecord nameID="257" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans Light Condensed
-    </namerecord>
-    <namerecord nameID="258" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansLightCondensed
-    </namerecord>
-    <namerecord nameID="259" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans Light Extended
-    </namerecord>
-    <namerecord nameID="260" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansLightExtended
-    </namerecord>
-    <namerecord nameID="261" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansLightCondensed
-    </namerecord>
-    <namerecord nameID="262" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Regular
-    </namerecord>
-    <namerecord nameID="263" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      serif
-    </namerecord>
-    <namerecord nameID="264" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans
-    </namerecord>
-    <namerecord nameID="265" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      weight
-    </namerecord>
-    <namerecord nameID="266" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Light
-    </namerecord>
-    <namerecord nameID="267" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      width
-    </namerecord>
-    <namerecord nameID="268" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Condensed
-    </namerecord>
-    <namerecord nameID="269" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Normal
-    </namerecord>
-    <namerecord nameID="270" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Extended
-    </namerecord>
     <namerecord nameID="1" platformID="3" platEncID="1" langID="0x409">
       New Font
     </namerecord>
@@ -210,30 +165,27 @@
       MutatorMathTest-SansLightCondensed
     </namerecord>
     <namerecord nameID="262" platformID="3" platEncID="1" langID="0x409">
-      Regular
-    </namerecord>
-    <namerecord nameID="263" platformID="3" platEncID="1" langID="0x409">
       serif
     </namerecord>
-    <namerecord nameID="264" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="263" platformID="3" platEncID="1" langID="0x409">
       Sans
     </namerecord>
-    <namerecord nameID="265" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="264" platformID="3" platEncID="1" langID="0x409">
       weight
     </namerecord>
-    <namerecord nameID="266" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="265" platformID="3" platEncID="1" langID="0x409">
       Light
     </namerecord>
-    <namerecord nameID="267" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="266" platformID="3" platEncID="1" langID="0x409">
       width
     </namerecord>
-    <namerecord nameID="268" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="267" platformID="3" platEncID="1" langID="0x409">
       Condensed
     </namerecord>
-    <namerecord nameID="269" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="268" platformID="3" platEncID="1" langID="0x409">
       Normal
     </namerecord>
-    <namerecord nameID="270" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="269" platformID="3" platEncID="1" langID="0x409">
       Extended
     </namerecord>
   </name>
@@ -462,17 +414,17 @@
     <DesignAxisRecord>
       <Axis index="0">
         <AxisTag value="SRIF"/>
-        <AxisNameID value="263"/>  <!-- serif -->
+        <AxisNameID value="262"/>  <!-- serif -->
         <AxisOrdering value="0"/>
       </Axis>
       <Axis index="1">
         <AxisTag value="wght"/>
-        <AxisNameID value="265"/>  <!-- weight -->
+        <AxisNameID value="264"/>  <!-- weight -->
         <AxisOrdering value="1"/>
       </Axis>
       <Axis index="2">
         <AxisTag value="wdth"/>
-        <AxisNameID value="267"/>  <!-- width -->
+        <AxisNameID value="266"/>  <!-- width -->
         <AxisOrdering value="2"/>
       </Axis>
     </DesignAxisRecord>
@@ -481,13 +433,13 @@
       <AxisValue index="0" Format="1">
         <AxisIndex value="0"/>
         <Flags value="0"/>
-        <ValueNameID value="264"/>  <!-- Sans -->
+        <ValueNameID value="263"/>  <!-- Sans -->
         <Value value="0.0"/>
       </AxisValue>
       <AxisValue index="1" Format="2">
         <AxisIndex value="1"/>
         <Flags value="0"/>
-        <ValueNameID value="266"/>  <!-- Light -->
+        <ValueNameID value="265"/>  <!-- Light -->
         <NominalValue value="300.0"/>
         <RangeMinValue value="300.0"/>
         <RangeMaxValue value="400.0"/>
@@ -495,7 +447,7 @@
       <AxisValue index="2" Format="2">
         <AxisIndex value="2"/>
         <Flags value="0"/>
-        <ValueNameID value="268"/>  <!-- Condensed -->
+        <ValueNameID value="267"/>  <!-- Condensed -->
         <NominalValue value="50.0"/>
         <RangeMinValue value="50.0"/>
         <RangeMaxValue value="75.0"/>
@@ -503,7 +455,7 @@
       <AxisValue index="3" Format="2">
         <AxisIndex value="2"/>
         <Flags value="2"/>  <!-- ElidableAxisValueName -->
-        <ValueNameID value="269"/>  <!-- Normal -->
+        <ValueNameID value="268"/>  <!-- Normal -->
         <NominalValue value="100.0"/>
         <RangeMinValue value="75.0"/>
         <RangeMaxValue value="125.0"/>
@@ -511,13 +463,13 @@
       <AxisValue index="4" Format="2">
         <AxisIndex value="2"/>
         <Flags value="0"/>
-        <ValueNameID value="270"/>  <!-- Extended -->
+        <ValueNameID value="269"/>  <!-- Extended -->
         <NominalValue value="200.0"/>
         <RangeMinValue value="125.0"/>
         <RangeMaxValue value="200.0"/>
       </AxisValue>
     </AxisValueArray>
-    <ElidedFallbackNameID value="262"/>  <!-- Regular -->
+    <ElidedFallbackNameID value="2"/>  <!-- Regular -->
   </STAT>
 
   <avar>
