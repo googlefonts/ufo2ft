@@ -2086,6 +2086,67 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_contextual_mkmk_anchors(self, testufo):
+        tildecomb = testufo["tildecomb"]
+
+        tildecomb.appendAnchor(
+            {"name": "*top", "x": 120, "y": 400, "identifier": "*top"}
+        )
+        tildecomb.lib[OBJECT_LIBS_KEY] = {
+            "*top": {
+                "GPOS_Context": "f *",
+            },
+        }
+
+        writer = MarkFeatureWriter()
+        feaFile = ast.FeatureFile()
+        assert str(feaFile) == ""
+        assert writer.write(testufo, feaFile)
+
+        assert str(feaFile) == dedent(
+            """\
+            markClass acutecomb <anchor 100 200> @MC_top;
+            markClass tildecomb <anchor 100 200> @MC_top;
+
+            lookup mark2mark_top {
+                @MFS_mark2mark_top = [acutecomb tildecomb];
+                lookupflag UseMarkFilteringSet @MFS_mark2mark_top;
+                pos mark tildecomb
+                    <anchor 100 300> mark @MC_top;
+            } mark2mark_top;
+
+            lookup ContextualMarkToMark_0 {
+                pos mark tildecomb
+                    <anchor 120 400> mark @MC_top;
+            } ContextualMarkToMark_0;
+
+            lookup ContextualMarkToMarkDispatch_0 {
+                # f *
+                pos f [tildecomb] @MC_top' lookup ContextualMarkToMark_0;
+            } ContextualMarkToMarkDispatch_0;
+
+            feature mark {
+                lookup mark2base {
+                    pos base a
+                        <anchor 100 200> mark @MC_top;
+                } mark2base;
+
+                lookup mark2liga {
+                    pos ligature f_i
+                            <anchor 100 500> mark @MC_top
+                        ligComponent
+                            <anchor 600 500> mark @MC_top;
+                } mark2liga;
+
+            } mark;
+
+            feature mkmk {
+                lookup mark2mark_top;
+                lookup ContextualMarkToMarkDispatch_0;
+            } mkmk;
+            """
+        )
+
     def test_contextual_anchor_no_context(self, testufo, caplog):
         a = testufo["a"]
         a.appendAnchor({"name": "*top", "x": 200, "y": 200, "identifier": "*top"})
