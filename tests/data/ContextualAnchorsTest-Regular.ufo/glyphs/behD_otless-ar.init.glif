@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="behDotless-ar.init" format="2">
+  <advance width="150"/>
+  <anchor x="55" y="-50" name="*bottom" identifier="575ADDBE-67A1-4781-8244-18DEC9396567"/>
+  <anchor x="55" y="-200" name="*bottom.twodots" identifier="8AEC6EF0-8B9B-481A-AC0E-A95051FD2D12"/>
+  <anchor x="55" y="-259" name="*bottom.vtwodots" identifier="50838DB6-85ED-49AE-8935-C6201FC3FCD8"/>
+  <anchor x="55" y="-100" name="bottom"/>
+  <outline>
+    <contour>
+      <point x="-90" y="0" type="line"/>
+      <point x="100" y="0" type="line"/>
+      <point x="100" y="300" type="line"/>
+      <point x="0" y="200" type="line"/>
+      <point x="0" y="100" type="line"/>
+      <point x="-90" y="100" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.objectLibs</key>
+      <dict>
+        <key>50838DB6-85ED-49AE-8935-C6201FC3FCD8</key>
+        <dict>
+          <key>GPOS_Context</key>
+          <string>lookupflag UseMarrkFilteringSet [twodotsverticalbelow]; reh-ar *</string>
+        </dict>
+        <key>575ADDBE-67A1-4781-8244-18DEC9396567</key>
+        <dict>
+          <key>GPOS_Context</key>
+          <string>reh-ar *</string>
+        </dict>
+        <key>8AEC6EF0-8B9B-481A-AC0E-A95051FD2D12</key>
+        <dict>
+          <key>GPOS_Context</key>
+          <string>lookupflag UseMarrkFilteringSet [twodotshorizontalbelow]; reh-ar * behDotess-ar.medi &amp;</string>
+        </dict>
+      </dict>
+    </dict>
+  </lib>
+</glyph>

@@ -34,8 +34,6 @@ if not args.output:
 
 ufo = loader(args.ufo)
 
-include = None
-
 if args.include:
     include_set = set(args.include.split(","))
 
@@ -48,6 +46,9 @@ elif args.exclude:
     def include(g):
         return g.name not in exclude_set
 
+else:
+    include = None
+
 
 for filtername in args.filters:
     f = loadFilterFromString(filtername)
@@ -56,4 +57,7 @@ for filtername in args.filters:
     f(ufo)
 
 logger.info("Written on %s" % args.output)
-ufo.save(args.output)
+try:
+    ufo.save(args.output, overwrite=True)
+except TypeError:
+    ufo.save(args.output)

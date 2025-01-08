@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ttFont sfntVersion="\x00\x01\x00\x00" ttLibVersion="4.33">
+<ttFont sfntVersion="\x00\x01\x00\x00" ttLibVersion="4.44">
 
   <GlyphOrder>
     <!-- The 'id' attribute is only for humans; it is ignored when parsed. -->
@@ -41,7 +41,7 @@
     <minLeftSideBearing value="0"/>
     <minRightSideBearing value="-10"/>
     <xMaxExtent value="450"/>
-    <caretSlopeRise value="1"/>
+    <caretSlopeRise value="1000"/>
     <caretSlopeRun value="0"/>
     <caretOffset value="0"/>
     <reserved0 value="0"/>
@@ -63,10 +63,10 @@
     <maxZones value="1"/>
     <maxTwilightPoints value="0"/>
     <maxStorage value="0"/>
-    <maxFunctionDefs value="0"/>
+    <maxFunctionDefs value="1"/>
     <maxInstructionDefs value="0"/>
-    <maxStackElements value="0"/>
-    <maxSizeOfInstructions value="0"/>
+    <maxStackElements value="2"/>
+    <maxSizeOfInstructions value="5"/>
     <maxComponentElements value="0"/>
     <maxComponentDepth value="0"/>
   </maxp>
@@ -141,6 +141,31 @@
     </cmap_format_4>
   </cmap>
 
+  <fpgm>
+    <assembly>
+      PUSHB[ ]
+      0
+      FDEF[ ]
+        POP[ ]
+      ENDF[ ]
+    </assembly>
+  </fpgm>
+
+  <prep>
+    <assembly>
+      PUSHB[ ]
+      4 3
+      INSTCTRL[ ]
+    </assembly>
+  </prep>
+
+  <cvt>
+    <cv index="0" value="0"/>
+    <cv index="1" value="0"/>
+    <cv index="2" value="30"/>
+    <cv index="3" value="100"/>
+  </cvt>
+
   <loca>
     <!-- The 'loca' table will be calculated by the compiler -->
   </loca>
@@ -213,105 +238,19 @@
         <pt x="10" y="10" on="1"/>
         <pt x="10" y="0" on="1"/>
       </contour>
-      <instructions/>
+      <instructions>
+        <assembly>
+          PUSHB[ ]
+          0 0
+          SVTCA[0]
+          MDRP[01100]
+        </assembly>
+      </instructions>
     </TTGlyph>
 
   </glyf>
 
   <name>
-    <namerecord nameID="256" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Weight
-    </namerecord>
-    <namerecord nameID="257" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Width
-    </namerecord>
-    <namerecord nameID="258" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans Light Condensed
-    </namerecord>
-    <namerecord nameID="259" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansLightCondensed
-    </namerecord>
-    <namerecord nameID="260" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans Bold Condensed
-    </namerecord>
-    <namerecord nameID="261" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansBoldCondensed
-    </namerecord>
-    <namerecord nameID="262" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans Light Extended
-    </namerecord>
-    <namerecord nameID="263" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansLightExtended
-    </namerecord>
-    <namerecord nameID="264" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans Bold Extended
-    </namerecord>
-    <namerecord nameID="265" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansBoldExtended
-    </namerecord>
-    <namerecord nameID="266" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans Medium
-    </namerecord>
-    <namerecord nameID="267" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansMedium
-    </namerecord>
-    <namerecord nameID="268" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansMedium
-    </namerecord>
-    <namerecord nameID="269" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans Bold
-    </namerecord>
-    <namerecord nameID="270" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansBold
-    </namerecord>
-    <namerecord nameID="271" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans Medium Extended
-    </namerecord>
-    <namerecord nameID="272" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansMediumExtended
-    </namerecord>
-    <namerecord nameID="273" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      MutatorMathTest-SansLightCondensed
-    </namerecord>
-    <namerecord nameID="274" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Regular
-    </namerecord>
-    <namerecord nameID="275" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      serif
-    </namerecord>
-    <namerecord nameID="276" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Sans
-    </namerecord>
-    <namerecord nameID="277" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      weight
-    </namerecord>
-    <namerecord nameID="278" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Light
-    </namerecord>
-    <namerecord nameID="279" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Medium
-    </namerecord>
-    <namerecord nameID="280" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Bold
-    </namerecord>
-    <namerecord nameID="281" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      width
-    </namerecord>
-    <namerecord nameID="282" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Condensed
-    </namerecord>
-    <namerecord nameID="283" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Normal
-    </namerecord>
-    <namerecord nameID="284" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      Extended
-    </namerecord>
-    <namerecord nameID="285" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      S1
-    </namerecord>
-    <namerecord nameID="286" platformID="1" platEncID="0" langID="0x0" unicode="True">
-      S2
-    </namerecord>
     <namerecord nameID="1" platformID="3" platEncID="1" langID="0x409">
       New Font
     </namerecord>
@@ -385,42 +324,39 @@
       MutatorMathTest-SansLightCondensed
     </namerecord>
     <namerecord nameID="274" platformID="3" platEncID="1" langID="0x409">
-      Regular
-    </namerecord>
-    <namerecord nameID="275" platformID="3" platEncID="1" langID="0x409">
       serif
     </namerecord>
-    <namerecord nameID="276" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="275" platformID="3" platEncID="1" langID="0x409">
       Sans
     </namerecord>
-    <namerecord nameID="277" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="276" platformID="3" platEncID="1" langID="0x409">
       weight
     </namerecord>
-    <namerecord nameID="278" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="277" platformID="3" platEncID="1" langID="0x409">
       Light
     </namerecord>
-    <namerecord nameID="279" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="278" platformID="3" platEncID="1" langID="0x409">
       Medium
     </namerecord>
-    <namerecord nameID="280" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="279" platformID="3" platEncID="1" langID="0x409">
       Bold
     </namerecord>
-    <namerecord nameID="281" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="280" platformID="3" platEncID="1" langID="0x409">
       width
     </namerecord>
-    <namerecord nameID="282" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="281" platformID="3" platEncID="1" langID="0x409">
       Condensed
     </namerecord>
-    <namerecord nameID="283" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="282" platformID="3" platEncID="1" langID="0x409">
       Normal
     </namerecord>
-    <namerecord nameID="284" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="283" platformID="3" platEncID="1" langID="0x409">
       Extended
     </namerecord>
-    <namerecord nameID="285" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="284" platformID="3" platEncID="1" langID="0x409">
       S1
     </namerecord>
-    <namerecord nameID="286" platformID="3" platEncID="1" langID="0x409">
+    <namerecord nameID="285" platformID="3" platEncID="1" langID="0x409">
       S2
     </namerecord>
   </name>
@@ -576,103 +512,7 @@
       <Format value="1"/>
       <VarRegionList>
         <!-- RegionAxisCount=2 -->
-        <!-- RegionCount=8 -->
-        <Region index="0">
-          <VarRegionAxis index="0">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="0.7"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-          <VarRegionAxis index="1">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="0.0"/>
-            <EndCoord value="0.0"/>
-          </VarRegionAxis>
-        </Region>
-        <Region index="1">
-          <VarRegionAxis index="0">
-            <StartCoord value="0.7"/>
-            <PeakCoord value="1.0"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-          <VarRegionAxis index="1">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="0.0"/>
-            <EndCoord value="0.0"/>
-          </VarRegionAxis>
-        </Region>
-        <Region index="2">
-          <VarRegionAxis index="0">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="0.0"/>
-            <EndCoord value="0.0"/>
-          </VarRegionAxis>
-          <VarRegionAxis index="1">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="1.0"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-        </Region>
-        <Region index="3">
-          <VarRegionAxis index="0">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="0.7"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-          <VarRegionAxis index="1">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="1.0"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-        </Region>
-        <Region index="4">
-          <VarRegionAxis index="0">
-            <StartCoord value="0.7"/>
-            <PeakCoord value="1.0"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-          <VarRegionAxis index="1">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="1.0"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-        </Region>
-        <Region index="5">
-          <VarRegionAxis index="0">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="0.7"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-          <VarRegionAxis index="1">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="0.5691"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-        </Region>
-        <Region index="6">
-          <VarRegionAxis index="0">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="1.0"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-          <VarRegionAxis index="1">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="0.0"/>
-            <EndCoord value="0.0"/>
-          </VarRegionAxis>
-        </Region>
-        <Region index="7">
-          <VarRegionAxis index="0">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="1.0"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-          <VarRegionAxis index="1">
-            <StartCoord value="0.0"/>
-            <PeakCoord value="1.0"/>
-            <EndCoord value="1.0"/>
-          </VarRegionAxis>
-        </Region>
+        <!-- RegionCount=0 -->
       </VarRegionList>
       <!-- VarDataCount=1 -->
       <VarData index="0">
@@ -699,17 +539,17 @@
     <DesignAxisRecord>
       <Axis index="0">
         <AxisTag value="SRIF"/>
-        <AxisNameID value="275"/>  <!-- serif -->
+        <AxisNameID value="274"/>  <!-- serif -->
         <AxisOrdering value="0"/>
       </Axis>
       <Axis index="1">
         <AxisTag value="wght"/>
-        <AxisNameID value="277"/>  <!-- weight -->
+        <AxisNameID value="276"/>  <!-- weight -->
         <AxisOrdering value="1"/>
       </Axis>
       <Axis index="2">
         <AxisTag value="wdth"/>
-        <AxisNameID value="281"/>  <!-- width -->
+        <AxisNameID value="280"/>  <!-- width -->
         <AxisOrdering value="2"/>
       </Axis>
     </DesignAxisRecord>
@@ -718,7 +558,7 @@
       <AxisValue index="0" Format="4">
         <!-- AxisCount=3 -->
         <Flags value="0"/>
-        <ValueNameID value="285"/>  <!-- S1 -->
+        <ValueNameID value="284"/>  <!-- S1 -->
         <AxisValueRecord index="0">
           <AxisIndex value="0"/>
           <Value value="0.0"/>
@@ -735,7 +575,7 @@
       <AxisValue index="1" Format="4">
         <!-- AxisCount=3 -->
         <Flags value="0"/>
-        <ValueNameID value="286"/>  <!-- S2 -->
+        <ValueNameID value="285"/>  <!-- S2 -->
         <AxisValueRecord index="0">
           <AxisIndex value="0"/>
           <Value value="0.0"/>
@@ -752,13 +592,13 @@
       <AxisValue index="2" Format="1">
         <AxisIndex value="0"/>
         <Flags value="0"/>
-        <ValueNameID value="276"/>  <!-- Sans -->
+        <ValueNameID value="275"/>  <!-- Sans -->
         <Value value="0.0"/>
       </AxisValue>
       <AxisValue index="3" Format="2">
         <AxisIndex value="1"/>
         <Flags value="0"/>
-        <ValueNameID value="278"/>  <!-- Light -->
+        <ValueNameID value="277"/>  <!-- Light -->
         <NominalValue value="300.0"/>
         <RangeMinValue value="300.0"/>
         <RangeMaxValue value="400.0"/>
@@ -766,7 +606,7 @@
       <AxisValue index="4" Format="2">
         <AxisIndex value="1"/>
         <Flags value="0"/>
-        <ValueNameID value="279"/>  <!-- Medium -->
+        <ValueNameID value="278"/>  <!-- Medium -->
         <NominalValue value="500.0"/>
         <RangeMinValue value="400.0"/>
         <RangeMaxValue value="600.0"/>
@@ -774,7 +614,7 @@
       <AxisValue index="5" Format="2">
         <AxisIndex value="1"/>
         <Flags value="0"/>
-        <ValueNameID value="280"/>  <!-- Bold -->
+        <ValueNameID value="279"/>  <!-- Bold -->
         <NominalValue value="700.0"/>
         <RangeMinValue value="600.0"/>
         <RangeMaxValue value="700.0"/>
@@ -782,7 +622,7 @@
       <AxisValue index="6" Format="2">
         <AxisIndex value="2"/>
         <Flags value="0"/>
-        <ValueNameID value="282"/>  <!-- Condensed -->
+        <ValueNameID value="281"/>  <!-- Condensed -->
         <NominalValue value="50.0"/>
         <RangeMinValue value="50.0"/>
         <RangeMaxValue value="75.0"/>
@@ -790,7 +630,7 @@
       <AxisValue index="7" Format="2">
         <AxisIndex value="2"/>
         <Flags value="2"/>  <!-- ElidableAxisValueName -->
-        <ValueNameID value="283"/>  <!-- Normal -->
+        <ValueNameID value="282"/>  <!-- Normal -->
         <NominalValue value="100.0"/>
         <RangeMinValue value="75.0"/>
         <RangeMaxValue value="125.0"/>
@@ -798,16 +638,17 @@
       <AxisValue index="8" Format="2">
         <AxisIndex value="2"/>
         <Flags value="0"/>
-        <ValueNameID value="284"/>  <!-- Extended -->
+        <ValueNameID value="283"/>  <!-- Extended -->
         <NominalValue value="200.0"/>
         <RangeMinValue value="125.0"/>
         <RangeMaxValue value="200.0"/>
       </AxisValue>
     </AxisValueArray>
-    <ElidedFallbackNameID value="274"/>  <!-- Regular -->
+    <ElidedFallbackNameID value="2"/>  <!-- Regular -->
   </STAT>
 
   <avar>
+    <version major="1" minor="0"/>
     <segment axis="wght">
       <mapping from="-1.0" to="-1.0"/>
       <mapping from="0.0" to="0.0"/>
@@ -820,6 +661,40 @@
       <mapping from="1.0" to="1.0"/>
     </segment>
   </avar>
+
+  <cvar>
+    <version major="1" minor="0"/>
+    <tuple>
+      <coord axis="wght" min="0.7" value="1.0" max="1.0"/>
+      <delta cvt="0" value="0"/>
+      <delta cvt="1" value="0"/>
+      <delta cvt="2" value="10"/>
+      <delta cvt="3" value="-1"/>
+    </tuple>
+    <tuple>
+      <coord axis="wdth" value="1.0"/>
+      <delta cvt="0" value="0"/>
+      <delta cvt="1" value="0"/>
+      <delta cvt="2" value="20"/>
+      <delta cvt="3" value="-4"/>
+    </tuple>
+    <tuple>
+      <coord axis="wght" min="0.0" value="0.7" max="1.0"/>
+      <coord axis="wdth" value="1.0"/>
+      <delta cvt="0" value="0"/>
+      <delta cvt="1" value="0"/>
+      <delta cvt="2" value="-20"/>
+      <delta cvt="3" value="4"/>
+    </tuple>
+    <tuple>
+      <coord axis="wght" min="0.7" value="1.0" max="1.0"/>
+      <coord axis="wdth" value="1.0"/>
+      <delta cvt="0" value="0"/>
+      <delta cvt="1" value="0"/>
+      <delta cvt="2" value="0"/>
+      <delta cvt="3" value="-4"/>
+    </tuple>
+  </cvar>
 
   <fvar>
 

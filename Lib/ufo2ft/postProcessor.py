@@ -3,6 +3,7 @@ import logging
 import re
 from io import BytesIO
 
+from fontTools.cffLib.CFFToCFF2 import convertCFFToCFF2
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.standardGlyphOrder import standardGlyphOrder
 
@@ -10,6 +11,7 @@ from ufo2ft.constants import (
     GLYPHS_DONT_USE_PRODUCTION_NAMES,
     KEEP_GLYPH_NAMES,
     USE_PRODUCTION_NAMES,
+    CFFOptimization,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,10 +40,10 @@ class PostProcessor:
         2: SubroutinizerBackend.CFFSUBR,
     }
 
-    def __init__(self, otf, ufo, glyphSet=None):
+    def __init__(self, otf, ufo, glyphSet=None, info=None):
         self.ufo = ufo
         self.glyphSet = glyphSet if glyphSet is not None else ufo
-
+        self.info = info
         self.otf = otf
 
         self._postscriptNames = ufo.lib.get("public.postscriptNames")
@@ -81,8 +83,9 @@ class PostProcessor:
           when this is present if the UFO lib and is set to True, this is
           equivalent to 'useProductionNames' set to False.
 
-        optimizeCFF (bool):
-          Subroubtinize CFF or CFF2 table, if present.
+        optimizeCFF (bool | CFFOptimization):
+          If True or >= CFFOptimization.SUBROUTINIZE, subroubtinize CFF or CFF2 table
+          (if present).
 
         cffVersion (Optiona[int]):
           The output CFF format, choose between 1 or 2. By default, it's the same as
@@ -95,6 +98,8 @@ class PostProcessor:
           NOTE: compreffor currently doesn't support input fonts with CFF2 table.
         """
         if self._get_cff_version(self.otf):
+            if not isinstance(optimizeCFF, bool):
+                optimizeCFF = optimizeCFF >= CFFOptimization.SUBROUTINIZE
             self.process_cff(
                 optimizeCFF=optimizeCFF,
                 cffVersion=cffVersion,
@@ -102,6 +107,9 @@ class PostProcessor:
             )
 
         self.process_glyph_names(useProductionNames)
+
+        if self.info:
+            self.apply_fontinfo()
 
         return self.otf
 
@@ -127,7 +135,8 @@ class PostProcessor:
                 cffInputVersion == CFFVersion.CFF
                 and cffOutputVersion == CFFVersion.CFF2
             ):
-                self._convert_cff_to_cff2(self.otf)
+                logger.info("Converting CFF table to CFF2")
+                convertCFFToCFF2(self.otf)
             else:
                 raise NotImplementedError(
                     "Unsupported CFF conversion {cffInputVersion} => {cffOutputVersion}"
@@ -309,22 +318,6 @@ class PostProcessor:
         else:
             return None
 
-    @staticmethod
-    def _convert_cff_to_cff2(otf):
-        from fontTools.varLib.cff import convertCFFtoCFF2
-
-        logger.info("Converting CFF table to CFF2")
-
-        # convertCFFtoCFF2 doesn't strip T2CharStrings' widths, so we do it ourselves
-        # https://github.com/fonttools/fonttools/issues/1835
-        charstrings = otf["CFF "].cff[0].CharStrings
-        for glyph_name in otf.getGlyphOrder():
-            cs = charstrings[glyph_name]
-            cs.decompile()
-            cs.program = _stripCharStringWidth(cs.program)
-
-        convertCFFtoCFF2(otf)
-
     @classmethod
     def _subroutinize(cls, backend, otf, cffVersion):
         subroutinize = getattr(cls, f"_subroutinize_with_{backend.value}")
@@ -357,46 +350,15 @@ class PostProcessor:
 
         return cffsubr.subroutinize(otf, cff_version=cffVersion, keep_glyph_names=False)
 
+    def apply_fontinfo(self):
+        """Apply the fontinfo data from the DesignSpace variable-font's lib to
+        the compiled font."""
+        from ufo2ft.infoCompiler import InfoCompiler
 
-# Adapted from fontTools.cff.specializer.programToCommands
-# https://github.com/fonttools/fonttools/blob/babca16
-# /Lib/fontTools/cffLib/specializer.py#L40-L122
-# When converting from CFF to CFF2 we need to drop the charstrings' widths.
-# This function returns a new charstring program without the initial width value.
-# TODO: Move to fontTools?
-def _stripCharStringWidth(program):
-    seenWidthOp = False
-    result = []
-    stack = []
-    for token in program:
-        if not isinstance(token, str):
-            stack.append(token)
-            continue
+        logger.info("Applying variable-font info from DesignSpace lib")
 
-        if (not seenWidthOp) and token in {
-            "hstem",
-            "hstemhm",
-            "vstem",
-            "vstemhm",
-            "cntrmask",
-            "hintmask",
-            "hmoveto",
-            "vmoveto",
-            "rmoveto",
-            "endchar",
-        }:
-            seenWidthOp = True
-            parity = token in {"hmoveto", "vmoveto"}
-            numArgs = len(stack)
-            if numArgs and (numArgs % 2) ^ parity:
-                stack.pop(0)  # pop width
-
-        result.extend(stack)
-        result.append(token)
-        stack = []
-    if stack:
-        result.extend(stack)
-    return result
+        compiler = InfoCompiler(self.otf, self.ufo, self.info)
+        compiler.compile()
 
 
 def _reloadFont(font: TTFont) -> TTFont:
@@ -404,4 +366,5 @@ def _reloadFont(font: TTFont) -> TTFont:
     stream = BytesIO()
     font.save(stream)
     stream.seek(0)
-    return TTFont(stream)
+    # keep the same Config (constructor will make a copy)
+    return TTFont(stream, cfg=font.cfg)

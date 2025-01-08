@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="reh-ar" format="2">
+  <advance width="200"/>
+  <unicode hex="0631"/>
+  <outline>
+    <contour>
+      <point x="-50" y="-150" type="curve"/>
+      <point x="114" y="-150"/>
+      <point x="150" y="-58"/>
+      <point x="150" y="2" type="curve" smooth="yes"/>
+      <point x="150" y="300" type="line"/>
+      <point x="50" y="200" type="line"/>
+      <point x="50" y="3" type="line" smooth="yes"/>
+      <point x="50" y="-35"/>
+      <point x="40" y="-128"/>
+    </contour>
+  </outline>
+</glyph>

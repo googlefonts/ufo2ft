@@ -1,0 +1,76 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>ascender</key>
+    <integer>800</integer>
+    <key>capHeight</key>
+    <integer>700</integer>
+    <key>descender</key>
+    <integer>-200</integer>
+    <key>familyName</key>
+    <string>Contextual Anchors Test</string>
+    <key>guidelines</key>
+    <array>
+      <dict>
+        <key>angle</key>
+        <integer>0</integer>
+        <key>name</key>
+        <string> [locked]</string>
+        <key>x</key>
+        <integer>-126</integer>
+        <key>y</key>
+        <integer>90</integer>
+      </dict>
+    </array>
+    <key>italicAngle</key>
+    <integer>0</integer>
+    <key>openTypeHeadCreated</key>
+    <string>2023/07/31 15:25:34</string>
+    <key>openTypeOS2Type</key>
+    <array>
+      <integer>3</integer>
+    </array>
+    <key>postscriptBlueValues</key>
+    <array>
+      <integer>-12</integer>
+      <integer>0</integer>
+      <integer>480</integer>
+      <integer>492</integer>
+      <integer>700</integer>
+      <integer>712</integer>
+      <integer>800</integer>
+      <integer>812</integer>
+    </array>
+    <key>postscriptOtherBlues</key>
+    <array>
+      <integer>-212</integer>
+      <integer>-200</integer>
+    </array>
+    <key>postscriptStemSnapH</key>
+    <array>
+      <integer>80</integer>
+      <integer>88</integer>
+      <integer>91</integer>
+    </array>
+    <key>postscriptStemSnapV</key>
+    <array>
+      <integer>90</integer>
+      <integer>93</integer>
+    </array>
+    <key>postscriptUnderlinePosition</key>
+    <integer>-100</integer>
+    <key>postscriptUnderlineThickness</key>
+    <integer>50</integer>
+    <key>styleName</key>
+    <string>Regular</string>
+    <key>unitsPerEm</key>
+    <integer>1000</integer>
+    <key>versionMajor</key>
+    <integer>1</integer>
+    <key>versionMinor</key>
+    <integer>0</integer>
+    <key>xHeight</key>
+    <integer>480</integer>
+  </dict>
+</plist>

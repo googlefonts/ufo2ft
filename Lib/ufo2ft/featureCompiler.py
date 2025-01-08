@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import logging
 import os
+import re
 from collections import OrderedDict
 from inspect import isclass
 from io import StringIO
 from tempfile import NamedTemporaryFile
 
 from fontTools import mtiLib
+from fontTools.designspaceLib import DesignSpaceDocument, SourceDescriptor
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
 from fontTools.feaLib.parser import Parser
@@ -21,6 +25,7 @@ from ufo2ft.featureWriters import (
     isValidFeatureWriter,
     loadFeatureWriters,
 )
+from ufo2ft.util import describe_ufo
 
 logger = logging.getLogger(__name__)
 timer = Timer(logging.getLogger("ufo2ft.timer"), level=logging.DEBUG)
@@ -47,7 +52,7 @@ def parseLayoutFeatures(font, includeDir=None):
         # the include directory to the parent of the UFO.
         ufoPath = os.path.normpath(ufoPath)
         buf.name = os.path.join(ufoPath, "features.fea")
-        includeDir = os.path.dirname(ufoPath)
+        includeDir = os.path.dirname(ufoPath) or "."
     glyphNames = set(font.keys())
     includeDir = os.path.normpath(includeDir) if includeDir else None
     try:
@@ -70,7 +75,7 @@ class BaseFeatureCompiler:
     layout tables from these.
     """
 
-    def __init__(self, ufo, ttFont=None, glyphSet=None, **kwargs):
+    def __init__(self, ufo, ttFont=None, glyphSet=None, extraSubstitutions=None):
         """
         Args:
           ufo: an object representing a UFO (defcon.Font or equivalent)
@@ -80,6 +85,10 @@ class BaseFeatureCompiler:
             the same glyph order as the ufo object.
           glyphSet: a (optional) dict containing pre-processed copies of
             the UFO glyphs.
+          extraSubstitutions: an optional dictionary mapping glyph names
+            to a set of other glyphs which should be considered reachable
+            from them (for example when using designspace rules to effect
+            substitutions).
         """
         self.ufo = ufo
 
@@ -94,10 +103,16 @@ class BaseFeatureCompiler:
 
         glyphOrder = ttFont.getGlyphOrder()
         if glyphSet is not None:
+            if set(glyphOrder) != set(glyphSet.keys()):
+                print("Glyph order incompatible")
+                print("In UFO but not in font:", set(glyphSet.keys()) - set(glyphOrder))
+                print("In font but not in UFO:", set(glyphOrder) - set(glyphSet.keys()))
             assert set(glyphOrder) == set(glyphSet.keys())
         else:
             glyphSet = ufo
         self.glyphSet = OrderedDict((gn, glyphSet[gn]) for gn in glyphOrder)
+
+        self.extraSubstitutions = extraSubstitutions
 
     def setupFeatures(self):
         """Make the features source.
@@ -157,10 +172,10 @@ class FeatureCompiler(BaseFeatureCompiler):
     """
 
     defaultFeatureWriters = [
+        CursFeatureWriter,
         KernFeatureWriter,
         MarkFeatureWriter,
         GdefFeatureWriter,
-        CursFeatureWriter,
     ]
 
     def __init__(
@@ -170,6 +185,7 @@ class FeatureCompiler(BaseFeatureCompiler):
         glyphSet=None,
         featureWriters=None,
         feaIncludeDir=None,
+        extraSubstitutions=None,
         **kwargs,
     ):
         """
@@ -195,8 +211,9 @@ class FeatureCompiler(BaseFeatureCompiler):
             the feature file. If None, the include directory is set to the
             parent directory of the UFO, provided the UFO has a path.
         """
-        BaseFeatureCompiler.__init__(self, ufo, ttFont, glyphSet)
-
+        BaseFeatureCompiler.__init__(
+            self, ufo, ttFont, glyphSet, extraSubstitutions=extraSubstitutions
+        )
         self.feaIncludeDir = feaIncludeDir
 
         self.initFeatureWriters(featureWriters)
@@ -281,8 +298,25 @@ class FeatureCompiler(BaseFeatureCompiler):
             if self.featureWriters:
                 featureFile = parseLayoutFeatures(self.ufo, self.feaIncludeDir)
 
+                # Insertion markers are only considered in "skip" mode.
+                if any(writer.mode == "skip" for writer in self.featureWriters):
+                    markers = {
+                        writer.insertFeatureMarker
+                        for writer in self.featureWriters
+                        if writer.insertFeatureMarker is not None
+                    }
+                    warn_about_miscased_insertion_markers(
+                        describe_ufo(self.ufo), featureFile, markers
+                    )
+
+                path = self.ufo.path
                 for writer in self.featureWriters:
-                    writer.write(self.ufo, featureFile, compiler=self)
+                    try:
+                        writer.write(self.ufo, featureFile, compiler=self)
+                    except FeatureLibError:
+                        if path is None:
+                            self._write_temporary_feature_file(featureFile.asFea())
+                        raise
 
                 # stringify AST to get correct line numbers in error messages
                 self.features = featureFile.asFea()
@@ -316,14 +350,15 @@ class FeatureCompiler(BaseFeatureCompiler):
                 addOpenTypeFeaturesFromString(self.ttFont, self.features, filename=path)
             except FeatureLibError:
                 if path is None:
-                    # if compilation fails, create temporary file for inspection
-                    data = self.features.encode("utf-8")
-                    with NamedTemporaryFile(delete=False) as tmp:
-                        tmp.write(data)
-                    logger.error(
-                        "Compilation failed! Inspect temporary file: %r", tmp.name
-                    )
+                    self._write_temporary_feature_file(self.features)
                 raise
+
+    def _write_temporary_feature_file(self, features: str) -> None:
+        # if compilation fails, create temporary file for inspection
+        data = features.encode("utf-8")
+        with NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(data)
+        logger.error("Compilation failed! Inspect temporary file: %r", tmp.name)
 
 
 class MtiFeatureCompiler(BaseFeatureCompiler):
@@ -347,3 +382,95 @@ class MtiFeatureCompiler(BaseFeatureCompiler):
             table = mtiLib.build(features.splitlines(), self.ttFont)
             assert table.tableTag == tag
             self.ttFont[tag] = table
+
+
+def warn_about_miscased_insertion_markers(
+    ufo_description: str, feaFile: ast.FeatureFile, patterns: set[str]
+) -> None:
+    """Warn the user about potentially mistyped feature insertion markers."""
+
+    patterns_compiled = tuple(
+        (re.compile(pattern), re.compile(pattern, re.IGNORECASE))
+        for pattern in patterns
+    )
+
+    # NOTE: Insertion markers can only meaningfully occur in top-level feature
+    # blocks.
+    for block in ast.iterFeatureBlocks(feaFile):
+        for statement in block.statements:
+            if not isinstance(statement, ast.Comment):
+                continue
+            for pattern_case, pattern_ignore_case in patterns_compiled:
+                text = str(statement)
+                match_case = re.match(pattern_case, text)
+                match_ignore_case = re.match(pattern_ignore_case, text)
+                if match_ignore_case and not match_case:
+                    logger.warning(
+                        "%s: The insertion comment '%s' in the feature file is "
+                        "miscased (search pattern: %s), ignoring it.",
+                        ufo_description,
+                        text,
+                        pattern_case.pattern,
+                    )
+
+
+class VariableFeatureCompiler(FeatureCompiler):
+    """Generate a variable feature file and compile OpenType tables from a
+    designspace file.
+    """
+
+    def __init__(
+        self,
+        ufo,
+        designspace,
+        ttFont=None,
+        glyphSet=None,
+        featureWriters=None,
+        **kwargs,
+    ):
+        self.designspace = designspace
+        super().__init__(ufo, ttFont, glyphSet, featureWriters, **kwargs)
+
+    def setupFeatures(self):
+        if self.featureWriters:
+            featureFile = parseLayoutFeatures(self.ufo)
+
+            for writer in self.featureWriters:
+                writer.write(self.designspace, featureFile, compiler=self)
+
+            # stringify AST to get correct line numbers in error messages
+            self.features = featureFile.asFea()
+        else:
+            # no featureWriters, simply read existing features' text
+            self.features = self.ufo.features.text or ""
+
+
+def _featuresCompatible(designSpaceDoc: DesignSpaceDocument) -> bool:
+    """Returns True when the features of the individual source UFOs are the same,
+    or when only the default source has features.
+
+    NOTE: Only compares the feature file text inside the source UFO and does not
+    follow imports. This will suffice as long as no external feature file is
+    using variable syntax and all sources are stored n the same parent folder
+    (so the same includes point to the same files).
+    """
+
+    assert all(hasattr(source.font, "features") for source in designSpaceDoc.sources)
+
+    def transform(f: SourceDescriptor) -> str:
+        # Strip comments
+        text = re.sub("(?m)#.*$", "", f.font.features.text or "")
+        # Strip extraneous whitespace
+        text = re.sub(r"\s+", " ", text)
+        return text
+
+    sources = sorted(
+        designSpaceDoc.sources, key=lambda source: source != designSpaceDoc.default
+    )
+    assert sources[0] == designSpaceDoc.default
+
+    transformed = [transform(s) for s in sources]
+    first = transformed[0]
+    return all(s == first for s in transformed[1:]) or all(
+        not s for s in transformed[1:]
+    )

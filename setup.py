@@ -30,17 +30,17 @@ setup(
     setup_requires=pytest_runner + wheel + ["setuptools_scm"],
     tests_require=["pytest>=2.8"],
     install_requires=[
-        "fonttools[ufo]>=4.38.0",
-        "cu2qu>=1.6.7",
-        "cffsubr>=0.2.8",
+        "fonttools[ufo]>=4.52.0",
+        "cffsubr>=0.3.0",
         "booleanOperations>=0.9.0",
+        "fontMath>=0.9.3",
     ],
     extras_require={
-        "pathops": ["skia-pathops>=0.5.1"],
+        "pathops": ["skia-pathops>=0.8.0"],
         "cffsubr": [],  # keep empty for backward compat
-        "compreffor": ["compreffor>=0.4.6"],
+        "compreffor": ["compreffor>=0.5.5"],
     },
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",

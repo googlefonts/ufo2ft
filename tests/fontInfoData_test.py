@@ -133,7 +133,7 @@ class GetAttrWithFallbackTest:
         assert getAttrWithFallback(info, "openTypeOS2WinDescent") == 250
 
     def test_caret_slope(self, info):
-        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == 1
+        assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRise") == 1000
         assert getAttrWithFallback(info, "openTypeHheaCaretSlopeRun") == 0
 
         info.italicAngle = -12
@@ -184,6 +184,12 @@ class GetAttrWithFallbackTest:
         assert getAttrWithFallback(info, "capHeight") == 1434
         assert getAttrWithFallback(info, "xHeight") == 1024
         assert getAttrWithFallback(info, "descender") == -410
+
+    def test_underline_position(self, info):
+        assert getAttrWithFallback(info, "postscriptUnderlinePosition") == -75
+
+        info.postscriptUnderlinePosition = -485
+        assert getAttrWithFallback(info, "postscriptUnderlinePosition") == -485
 
 
 class PostscriptBlueScaleFallbackTest:

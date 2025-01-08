@@ -1,17 +1,26 @@
+from __future__ import annotations
+
 import importlib
 import logging
 import re
+import sys
 from copy import deepcopy
+from functools import partial
 from inspect import currentframe, getfullargspec
-from typing import Set
+from typing import Any, Mapping, NamedTuple, Set
 
 from fontTools import subset, ttLib, unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.builder import addOpenTypeFeatures
 from fontTools.misc.fixedTools import otRound
-from fontTools.misc.transform import Identity, Transform
+from fontTools.misc.transform import Identity
+from fontTools.pens.filterPen import DecomposingFilterPointPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
+
+from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY, UNICODE_SCRIPT_ALIASES
+from ufo2ft.errors import InvalidDesignSpaceData, InvalidFontData
+from ufo2ft.fontInfoData import getAttrWithFallback
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +50,39 @@ def makeOfficialGlyphOrder(font, glyphOrder=None):
     return order
 
 
+def decomposeCompositeGlyph(
+    glyph,
+    glyphSet,
+    skipMissing=False,
+    reverseFlipped=True,
+    include=None,
+    decomposeNested=True,
+):
+    """Decompose composite glyph in-place resolving references from glyphSet."""
+    if len(glyph.components) == 0:
+        return
+    pen = DecomposingFilterPointPen(
+        glyph.getPointPen(),
+        glyphSet,
+        reverseFlipped=reverseFlipped,
+        include=include,
+        decomposeNested=decomposeNested,
+    )
+    for component in list(glyph.components):
+        try:
+            component.drawPoints(pen)
+        except pen.MissingComponentError:
+            if skipMissing:
+                logger.warning(
+                    "dropping non-existent component '%s' in glyph '%s'",
+                    component.baseGlyph,
+                    glyph.name,
+                )
+            else:
+                raise
+        glyph.removeComponent(component)
+
+
 class _GlyphSet(dict):
     @classmethod
     def from_layer(cls, font, layerName=None, copy=False, skipExportGlyphs=None):
@@ -56,32 +98,15 @@ class _GlyphSet(dict):
         else:
             self = cls((g.name, g) for g in layer)
             self.lib = layer.lib
+        self.name = layer.name if layerName is not None else None
 
         # If any glyphs in the skipExportGlyphs list are used as components, decompose
         # them in the containing glyphs...
         if skipExportGlyphs:
-            for glyph in self.values():
-                if any(c.baseGlyph in skipExportGlyphs for c in glyph.components):
-                    deepCopyContours(self, glyph, glyph, Transform(), skipExportGlyphs)
-                    if hasattr(glyph, "removeComponent"):  # defcon
-                        for c in [
-                            component
-                            for component in glyph.components
-                            if component.baseGlyph in skipExportGlyphs
-                        ]:
-                            glyph.removeComponent(c)
-                    else:  # ufoLib2
-                        glyph.components[:] = [
-                            c
-                            for c in glyph.components
-                            if c.baseGlyph not in skipExportGlyphs
-                        ]
-            # ... and then remove them from the glyph set, if even present.
-            for glyph_name in skipExportGlyphs:
-                if glyph_name in self:
-                    del self[glyph_name]
+            from ufo2ft.filters.skipExportGlyphs import SkipExportGlyphsFilter
 
-        self.name = layer.name if layerName is not None else None
+            SkipExportGlyphsFilter(skipExportGlyphs)(font, self)
+
         return self
 
 
@@ -149,15 +174,14 @@ def _setGlyphMargin(glyph, side, margin):
     assert side in {"left", "right", "top", "bottom"}
     if hasattr(glyph, f"set{side.title()}Margin"):  # ufoLib2
         getattr(glyph, f"set{side.title()}Margin")(margin)
-        assert getattr(glyph, f"get{side.title()}Margin")() == margin
     elif hasattr(glyph, f"{side}Margin"):  # defcon
         descriptor = getattr(type(glyph), f"{side}Margin")
         descriptor.__set__(glyph, margin)
-        assert descriptor.__get__(glyph) == margin
     else:
         raise NotImplementedError(f"Unsupported Glyph class: {type(glyph)!r}")
 
 
+# DEPRECATED: use ufo2ft.util.decomposeCompositeGlyph above
 def deepCopyContours(
     glyphSet, parent, composite, transformation, specificComponents=None
 ):
@@ -229,21 +253,21 @@ def makeUnicodeToGlyphNameMapping(font, glyphOrder=None):
             if uni not in mapping:
                 mapping[uni] = glyphName
             else:
-                from ufo2ft.errors import InvalidFontData
-
-                InvalidFontData(
+                raise InvalidFontData(
                     "cannot map '%s' to U+%04X; already mapped to '%s'"
                     % (glyphName, uni, mapping[uni])
                 )
     return mapping
 
 
-def compileGSUB(featureFile, glyphOrder):
+def compileGSUB(featureFile, glyphOrder, fvar=None):
     """Compile and return a GSUB table from `featureFile` (feaLib
     FeatureFile), using the given `glyphOrder` (list of glyph names).
     """
     font = ttLib.TTFont()
     font.setGlyphOrder(glyphOrder)
+    if fvar:
+        font["fvar"] = fvar
     addOpenTypeFeatures(font, featureFile, tables={"GSUB"})
     return font.get("GSUB")
 
@@ -279,14 +303,17 @@ def closeGlyphsOverGSUB(gsub, glyphs):
     gsub.closure_glyphs(subsetter)
 
 
-def classifyGlyphs(unicodeFunc, cmap, gsub=None):
+def classifyGlyphs(unicodeFunc, cmap, gsub=None, extra_substitutions=None):
     """'unicodeFunc' is a callable that takes a Unicode codepoint and
-    returns a string denoting some Unicode property associated with the
-    given character (or None if a character is considered 'neutral').
-    'cmap' is a dictionary mapping Unicode codepoints to glyph names.
-    'gsub' is an (optional) fonttools GSUB table object, used to find all
-    the glyphs that are "reachable" via substitutions from the initial
-    sets of glyphs defined in the cmap.
+    returns a string, or collection of strings, denoting some Unicode
+    property associated with the given character (or None if a character
+    is considered 'neutral'). 'cmap' is a dictionary mapping Unicode
+    codepoints to glyph names. 'gsub' is an (optional) fonttools GSUB
+    table object, used to find all the glyphs that are "reachable" via
+    substitutions from the initial sets of glyphs defined in the cmap.
+    'extra_substitutions' is an optional dictionary mapping glyph names
+    to a set of other glyphs which should be considered reachable from them
+    (for example when using designspace rules to effect substitutions).
 
     Returns a dictionary of glyph sets associated with the given Unicode
     properties.
@@ -294,11 +321,14 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
     glyphSets = {}
     neutralGlyphs = set()
     for uv, glyphName in cmap.items():
-        key = unicodeFunc(uv)
-        if key is None:
+        key_or_keys = unicodeFunc(uv)
+        if key_or_keys is None:
             neutralGlyphs.add(glyphName)
+        elif isinstance(key_or_keys, (list, set, tuple)):
+            for key in key_or_keys:
+                glyphSets.setdefault(key, set()).add(glyphName)
         else:
-            glyphSets.setdefault(key, set()).add(glyphName)
+            glyphSets.setdefault(key_or_keys, set()).add(glyphName)
 
     if gsub is not None:
         if neutralGlyphs:
@@ -309,6 +339,13 @@ def classifyGlyphs(unicodeFunc, cmap, gsub=None):
             closeGlyphsOverGSUB(gsub, s)
             glyphs.update(s - neutralGlyphs)
 
+    if extra_substitutions:
+        for glyphs in glyphSets.values():
+            to_append = set()
+            for glyph in glyphs:
+                to_append |= extra_substitutions.get(glyph, set())
+            glyphs.update(to_append)
+
     return glyphSets
 
 
@@ -318,7 +355,7 @@ def unicodeInScripts(uv, scripts):
     False if it does not intersect.
     Return None for 'Common' script ('Zyyy').
     """
-    sx = unicodedata.script_extension(chr(uv))
+    sx = unicodeScriptExtensions(uv)
     if "Zyyy" in sx:
         return None
     return not sx.isdisjoint(scripts)
@@ -333,7 +370,7 @@ def unicodeScriptDirection(uv):
     sc = unicodedata.script(chr(uv))
     if sc in DFLT_SCRIPTS:
         return None
-    return unicodedata.script_horizontal_direction(sc)
+    return unicodedata.script_horizontal_direction(sc, "LTR")
 
 
 def calcCodePageRanges(unicodes):
@@ -436,22 +473,16 @@ class _LazyFontName:
         self.font = font
 
     def __str__(self):
-        from ufo2ft.fontInfoData import getAttrWithFallback
-
         return getAttrWithFallback(self.font.info, "postscriptFontName")
 
 
 def getDefaultMasterFont(designSpaceDoc):
     defaultSource = designSpaceDoc.findDefault()
     if not defaultSource:
-        from ufo2ft.errors import InvalidDesignSpaceData
-
         raise InvalidDesignSpaceData(
             "Can't find base (neutral) master in DesignSpace document"
         )
     if not defaultSource.font:
-        from ufo2ft.errors import InvalidDesignSpaceData
-
         raise InvalidDesignSpaceData(
             "DesignSpace source '%s' is missing required 'font' attribute"
             % getattr(defaultSource, "name", "<Unknown>")
@@ -459,9 +490,17 @@ def getDefaultMasterFont(designSpaceDoc):
     return defaultSource.font
 
 
-def _getDefaultNotdefGlyph(designSpaceDoc):
-    from ufo2ft.errors import InvalidDesignSpaceData
+def _notdefGlyphFallback(designSpaceDoc):
+    """Return an empty glyph to be used as .notdef for sparse layer masters.
 
+    Sparse layers usually do not contain a .notdef glyph, however in order to
+    compile valid TTFs to be used as master in varLib.build, a .notdef at index 0 is
+    required. We can't use the auto-generated .notdef glyph because it may be
+    incompatible with the one already present in the other masters. So we make
+    an empty glyph which will be ignored when building gvar or HVAR.
+    If the default master does not contain a .notdef either, return None since
+    the auto-generated .notdef can be used.
+    """
     try:
         baseUfo = getDefaultMasterFont(designSpaceDoc)
     except InvalidDesignSpaceData:
@@ -472,6 +511,12 @@ def _getDefaultNotdefGlyph(designSpaceDoc):
             notdefGlyph = baseUfo[".notdef"]
         except KeyError:
             notdefGlyph = None
+        else:
+            notdefGlyph = _getNewGlyphFactory(notdefGlyph)(".notdef")
+            # sentinel value for varLib that means this advance does not participate
+            # https://github.com/fonttools/fonttools/pull/3235
+            notdefGlyph.width = 0xFFFF
+            notdefGlyph.height = 0xFFFF
     return notdefGlyph
 
 
@@ -517,7 +562,16 @@ def _loadPluginFromString(spec, moduleName, isValidFunc):
 
 def quantize(number, factor):
     """Round to a multiple of the given parameter"""
+    if not isinstance(number, (float, int)):
+        # Some kind of variable scalar
+        return number
     return factor * otRound(number / factor)
+
+
+def otRoundIgnoringVariable(number):
+    if not isinstance(number, (float, int)):
+        return number
+    return otRound(number)
 
 
 def init_kwargs(kwargs, defaults):
@@ -545,7 +599,11 @@ def prune_unknown_kwargs(kwargs, *callables):
     """
     known_args = set()
     for func in callables:
-        known_args.update(getfullargspec(func).args)
+        arg_spec = getfullargspec(func)
+        known_args.update(arg_spec.args)
+        # also handle optional keyword-only arguments
+        if arg_spec.kwonlydefaults:
+            known_args.update(arg_spec.kwonlydefaults)
     return {k: v for k, v in kwargs.items() if k in known_args}
 
 
@@ -565,7 +623,9 @@ def ensure_all_sources_have_names(doc: DesignSpaceDocument) -> None:
         used_names.add(source.name)
 
 
-def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
+def getMaxComponentDepth(
+    glyph, glyphSet, maxComponentDepth=0, visited=None, rec_stack=None
+):
     """Return the height of a composite glyph's tree of components.
 
     This is equal to the depth of its deepest node, where the depth
@@ -574,9 +634,20 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
 
     For glyphs that contain no components, only contours, this is 0.
     Composite glyphs have max component depth of 1 or greater.
+
+    Raises InvalidFontData if a cyclical component reference is detected.
     """
     if not glyph.components:
         return maxComponentDepth
+
+    if visited is None:
+        visited = set()
+    if rec_stack is None:
+        rec_stack = []
+
+    assert glyph.name not in visited
+    visited.add(glyph.name)
+    rec_stack.append(glyph.name)
 
     maxComponentDepth += 1
 
@@ -586,9 +657,203 @@ def getMaxComponentDepth(glyph, glyphSet, maxComponentDepth=0):
             baseGlyph = glyphSet[component.baseGlyph]
         except KeyError:
             continue
-        componentDepth = getMaxComponentDepth(
-            baseGlyph, glyphSet, initialMaxComponentDepth
-        )
-        maxComponentDepth = max(maxComponentDepth, componentDepth)
+        if component.baseGlyph not in visited:
+            componentDepth = getMaxComponentDepth(
+                baseGlyph, glyphSet, initialMaxComponentDepth, visited, rec_stack
+            )
+            maxComponentDepth = max(maxComponentDepth, componentDepth)
+        elif component.baseGlyph in rec_stack:
+            raise InvalidFontData(
+                f"cyclical component reference:"
+                f" {' -> '.join(rec_stack)} => {component.baseGlyph}"
+            )
+
+    rec_stack.pop()
 
     return maxComponentDepth
+
+
+def location_to_string(location):
+    """Reports a designspace location (dictionary mapping axis:loc)
+    in a user-friendly way"""
+    return ", ".join([f"{axis}={loc:g}" for axis, loc in location.items()])
+
+
+def unicodeScriptExtensions(
+    codepoint: int, aliases: Mapping[str, str] = UNICODE_SCRIPT_ALIASES
+) -> set[str]:
+    """Returns the Unicode script extensions for a codepoint, optionally
+    aliasing some scripts.
+
+    This allows lookups to contain more than one script. The most prominent case
+    is being able to kern Hiragana and Katakana against each other, Unicode
+    defines "Hrkt" as an alias for both scripts.
+    """
+    return {aliases.get(s, s) for s in unicodedata.script_extension(chr(codepoint))}
+
+
+def describe_ufo(ufo: Any) -> str:
+    """Returns a description of a UFO suitable for logging."""
+    if (
+        hasattr(ufo, "reader")
+        and hasattr(ufo.reader, "fs")
+        and hasattr(ufo.reader.fs, "root_path")
+    ):
+        return ufo.reader.fs.root_path
+    elif ufo.info.familyName or ufo.info.styleName:
+        return " ".join(n for n in (ufo.info.familyName, ufo.info.styleName) if n)
+    return repr(ufo)
+
+
+def colrClipBoxQuantization(ufo: Any) -> int:
+    """Integer value to quantize COLR ClipBoxes.
+
+    The higher the value, the greater the chances that that same clipboxes get
+    reused for multiple color glyphs.
+    This is only called when compile option `colrAutoClipBoxes` is True.
+
+    By default, we quantize to 1/10th of the font's upem, rounded to nearest
+    multiple of 10: e.g. 100 unit intervals for 1000 upem, 200 units for 2048 etc.
+
+    The caller can pass their own callback function to return a different value
+    than the default one.
+    """
+    upem = getAttrWithFallback(ufo.info, "unitsPerEm")
+    return int(round(upem / 10, -1))
+
+
+def get_userspace_location(designspace, location):
+    """Map a location from designspace to userspace across all axes."""
+    location_user = designspace.map_backward(location)
+    return {designspace.getAxis(k).tag: v for k, v in location_user.items()}
+
+
+def collapse_varscalar(varscalar, threshold=0):
+    """Collapse a variable scalar to a plain scalar if all values are similar"""
+    # This should eventually be a method on the VariableScalar object
+    values = list(varscalar.values.values())
+    if not any(abs(v - values[0]) > threshold for v in values[1:]):
+        return list(varscalar.values.values())[0]
+    return varscalar
+
+
+class OpenTypeCategories(NamedTuple):
+    unassigned: frozenset[str]
+    base: frozenset[str]
+    ligature: frozenset[str]
+    mark: frozenset[str]
+    component: frozenset[str]
+
+    @classmethod
+    def load(cls, font):
+        """Return 'public.openTypeCategories' values as a tuple of sets of
+        unassigned, bases, ligatures, marks, components."""
+        unassigned, bases, ligatures, marks, components = (
+            set(),
+            set(),
+            set(),
+            set(),
+            set(),
+        )
+        openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
+        # Handle case where we are a variable feature writer
+        if not openTypeCategories and isinstance(font, DesignSpaceDocument):
+            designspace = font
+            default = designspace.findDefault()
+            if default is None:
+                raise InvalidDesignSpaceData("No default source found in designspace")
+            font = default.font
+            openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
+
+        for glyphName, category in openTypeCategories.items():
+            if category == "unassigned":
+                unassigned.add(glyphName)
+            elif category == "base":
+                bases.add(glyphName)
+            elif category == "ligature":
+                ligatures.add(glyphName)
+            elif category == "mark":
+                marks.add(glyphName)
+            elif category == "component":
+                components.add(glyphName)
+            else:
+                logging.getLogger("ufo2ft").warning(
+                    f"The '{OPENTYPE_CATEGORIES_KEY}' value of {glyphName} in "
+                    f"{font.info.familyName} {font.info.styleName} is '{category}' "
+                    "when it should be 'unassigned', 'base', 'ligature', 'mark' "
+                    "or 'component'."
+                )
+        return cls(
+            frozenset(unassigned),
+            frozenset(bases),
+            frozenset(ligatures),
+            frozenset(marks),
+            frozenset(components),
+        )
+
+
+def importUfoModule():
+    try:
+        import ufoLib2
+    except ModuleNotFoundError:
+        try:
+            import defcon
+        except ModuleNotFoundError:
+            raise
+        else:
+            return defcon
+    else:
+        return ufoLib2
+
+
+def openFontFactory(*, ufo_module=None):
+    if ufo_module is None:
+        ufo_module = importUfoModule()
+
+    if hasattr(ufo_module.Font, "open"):
+
+        def ctor(path=None):
+            if path is None:
+                return ufo_module.Font()
+            else:
+                return ufo_module.Font.open(path)
+
+        return ctor
+    return ufo_module.Font
+
+
+def openFont(*args, ufo_module=None, **kwargs):
+    return openFontFactory(ufo_module=ufo_module)(*args, **kwargs)
+
+
+# zip(strict=True) was added with Python 3.10, we provide a backport below
+# https://docs.python.org/3/library/functions.html#zip
+if sys.version_info[:2] < (3, 10):
+
+    def zip_strict(*iterables):
+        # https://peps.python.org/pep-0618/#reference-implementation
+        if not iterables:
+            return
+        iterators = tuple(iter(iterable) for iterable in iterables)
+        try:
+            while True:
+                items = []
+                for iterator in iterators:
+                    items.append(next(iterator))
+                yield tuple(items)
+        except StopIteration:
+            pass
+        if items:
+            i = len(items)
+            plural = " " if i == 1 else "s 1-"
+            msg = f"zip() argument {i + 1} is shorter than argument{plural}{i}"
+            raise ValueError(msg)
+        sentinel = object()
+        for i, iterator in enumerate(iterators[1:], 1):
+            if next(iterator, sentinel) is not sentinel:
+                plural = " " if i == 1 else "s 1-"
+                msg = f"zip() argument {i + 1} is longer than argument{plural}{i}"
+                raise ValueError(msg)
+
+else:
+    zip_strict = partial(zip, strict=True)

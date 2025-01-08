@@ -41,9 +41,10 @@ def test_getFilterClass():
     assert getFilterClass("fooBar") == FooBarFilter
     with pytest.raises(ImportError):
         getFilterClass("Baz")
+    with pytest.raises(ImportError):
+        getFilterClass("FooBarFilter")
 
     with _TempModule("myfilters"), _TempModule("myfilters.fooBar") as temp_module:
-
         with pytest.raises(AttributeError):
             # this fails because `myfilters.fooBar` module does not
             # have a `FooBarFilter` class

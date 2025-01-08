@@ -14,7 +14,7 @@ from fontTools.cffLib import (
     TopDictIndex,
 )
 from fontTools.misc.arrayTools import unionRect
-from fontTools.misc.fixedTools import otRound
+from fontTools.misc.roundTools import noRound, otRound
 from fontTools.pens.boundsPen import ControlBoundsPen
 from fontTools.pens.pointPen import SegmentToPointPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
@@ -22,7 +22,7 @@ from fontTools.pens.t2CharStringPen import T2CharStringPen
 from fontTools.pens.ttGlyphPen import TTGlyphPointPen
 from fontTools.ttLib import TTFont, newTable
 from fontTools.ttLib.standardGlyphOrder import standardGlyphOrder
-from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS, Glyph
+from fontTools.ttLib.tables._g_l_y_f import Glyph, flagCubic
 from fontTools.ttLib.tables._h_e_a_d import mac_epoch_diff
 from fontTools.ttLib.tables.O_S_2f_2 import Panose
 
@@ -30,8 +30,14 @@ from ufo2ft.constants import (
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
     COLR_CLIP_BOXES_KEY,
+    GLYPHS_MATH_CONSTANTS_KEY,
+    GLYPHS_MATH_EXTENDED_SHAPE_KEY,
+    GLYPHS_MATH_PREFIX,
+    GLYPHS_MATH_VARIANTS_KEY,
     OPENTYPE_META_KEY,
+    OPENTYPE_POST_UNDERLINE_POSITION_KEY,
     UNICODE_VARIATION_SEQUENCES_KEY,
+    CFFOptimization,
 )
 from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import (
@@ -41,9 +47,13 @@ from ufo2ft.fontInfoData import (
     intListToNum,
     normalizeStringForPostscript,
 )
+from ufo2ft.instructionCompiler import InstructionCompiler
 from ufo2ft.util import (
     _copyGlyph,
+    _getNewGlyphFactory,
     calcCodePageRanges,
+    colrClipBoxQuantization,
+    getMaxComponentDepth,
     makeOfficialGlyphOrder,
     makeUnicodeToGlyphNameMapping,
 )
@@ -90,6 +100,7 @@ class BaseOutlineCompiler:
             "vhea",
             "COLR",
             "CPAL",
+            "MATH",
             "meta",
         ]
     )
@@ -102,11 +113,19 @@ class BaseOutlineCompiler:
         tables=None,
         notdefGlyph=None,
         colrLayerReuse=True,
+        colrAutoClipBoxes=True,
+        colrClipBoxQuantization=colrClipBoxQuantization,
+        ftConfig=None,
+        *,
+        compilingVFDefaultSource=True,
     ):
         self.ufo = font
         # use the previously filtered glyphSet, if any
         if glyphSet is None:
             glyphSet = {g.name: g for g in font}
+        # this is set to False by Interpolatable{O,T}TFCompiler when building a VF's
+        # non-default masters. E.g. it's used by makeMissingRequiredGlyphs method below.
+        self.compilingVFDefaultSource = compilingVFDefaultSource
         self.makeMissingRequiredGlyphs(font, glyphSet, self.sfntVersion, notdefGlyph)
         self.allGlyphs = glyphSet
         # store the glyph order
@@ -118,16 +137,20 @@ class BaseOutlineCompiler:
         if tables is not None:
             self.tables = tables
         self.colrLayerReuse = colrLayerReuse
+        self.colrAutoClipBoxes = colrAutoClipBoxes
+        self.colrClipBoxQuantization = colrClipBoxQuantization
+        self.ftConfig = ftConfig or {}
         # cached values defined later on
         self._glyphBoundingBoxes = None
         self._fontBoundingBox = None
         self._compiledGlyphs = None
+        self._maxComponentDepths = None
 
     def compile(self):
         """
         Compile the OpenType binary.
         """
-        self.otf = TTFont(sfntVersion=self.sfntVersion)
+        self.otf = TTFont(sfntVersion=self.sfntVersion, cfg=self.ftConfig)
 
         # only compile vertical metrics tables if vhea metrics are defined
         vertical_metrics = [
@@ -164,7 +187,11 @@ class BaseOutlineCompiler:
             self.setupTable_CPAL()
         if self.meta:
             self.setupTable_meta()
+        if any(key.startswith(GLYPHS_MATH_PREFIX) for key in self.ufo.lib):
+            self.setupTable_MATH()
         self.setupOtherTables()
+        if self.colorLayers and self.colrAutoClipBoxes:
+            self._computeCOLRClipBoxes()
         self.importTTX()
 
         return self.otf
@@ -238,8 +265,7 @@ class BaseOutlineCompiler:
         """
         return makeUnicodeToGlyphNameMapping(self.allGlyphs, self.glyphOrder)
 
-    @staticmethod
-    def makeMissingRequiredGlyphs(font, glyphSet, sfntVersion, notdefGlyph=None):
+    def makeMissingRequiredGlyphs(self, font, glyphSet, sfntVersion, notdefGlyph=None):
         """
         Add .notdef to the glyph set if it is not present.
 
@@ -251,7 +277,7 @@ class BaseOutlineCompiler:
             return
 
         reverseContour = sfntVersion == "\000\001\000\000"
-        if notdefGlyph:
+        if notdefGlyph is not None:
             notdefGlyph = _copyGlyph(notdefGlyph, reverseContour=reverseContour)
         else:
             unitsPerEm = otRound(getAttrWithFallback(font.info, "unitsPerEm"))
@@ -269,6 +295,10 @@ class BaseOutlineCompiler:
 
         glyphSet[".notdef"] = notdefGlyph
 
+    def glyphFactory(self):
+        layer = self.ufo.layers.defaultLayer
+        return _getNewGlyphFactory(layer.instantiateGlyphObject())
+
     def makeOfficialGlyphOrder(self, glyphOrder):
         """
         Make the final glyph order.
@@ -282,19 +312,6 @@ class BaseOutlineCompiler:
     # --------------
     # Table Builders
     # --------------
-
-    def setupTable_gasp(self):
-        if "gasp" not in self.tables:
-            return
-
-        self.otf["gasp"] = gasp = newTable("gasp")
-        gasp_ranges = dict()
-        for record in self.ufo.info.openTypeGaspRangeRecords:
-            rangeMaxPPEM = record["rangeMaxPPEM"]
-            behavior_bits = record["rangeGaspBehavior"]
-            rangeGaspBehavior = intListToNum(behavior_bits, 0, 4)
-            gasp_ranges[rangeMaxPPEM] = rangeGaspBehavior
-        gasp.gaspRange = gasp_ranges
 
     def setupTable_head(self):
         """
@@ -365,7 +382,7 @@ class BaseOutlineCompiler:
         )
         head.fontDirectionHint = 2
         head.indexToLocFormat = 0
-        head.glyphDataFormat = 0
+        head.glyphDataFormat = getattr(self, "glyphDataFormat", 0)
 
     def setupTable_name(self):
         """
@@ -381,20 +398,6 @@ class BaseOutlineCompiler:
         font = self.ufo
         self.otf["name"] = name = newTable("name")
         name.names = []
-
-        # Set name records from font.info.openTypeNameRecords
-        for nameRecord in getAttrWithFallback(font.info, "openTypeNameRecords"):
-            nameId = nameRecord["nameID"]
-            platformId = nameRecord["platformID"]
-            platEncId = nameRecord["encodingID"]
-            langId = nameRecord["languageID"]
-            # on Python 2, plistLib (used by ufoLib) returns unicode strings
-            # only when plist data contain non-ascii characters, and returns
-            # ascii-encoded bytes when it can. On the other hand, fontTools's
-            # name table `setName` method wants unicode strings, so we must
-            # decode them first
-            nameVal = nameRecord["string"]
-            name.setName(nameVal, nameId, platformId, platEncId, langId)
 
         # Build name records
         familyName = getAttrWithFallback(font.info, "styleMapFamilyName")
@@ -431,10 +434,9 @@ class BaseOutlineCompiler:
             22: getAttrWithFallback(font.info, "openTypeNameWWSSubfamilyName"),
         }
 
-        # don't add typographic names if they are the same as the legacy ones
-        if nameVals[1] == nameVals[16]:
+        # don't add typographic names if *both* are the same as the legacy ones
+        if nameVals[1] == nameVals[16] and nameVals[2] == nameVals[17]:
             del nameVals[16]
-        if nameVals[2] == nameVals[17]:
             del nameVals[17]
         # postscript font name
         if nameVals[6]:
@@ -450,6 +452,15 @@ class BaseOutlineCompiler:
             # Set built name record if not set yet
             if name.getName(nameId, platformId, platEncId, langId):
                 continue
+            name.setName(nameVal, nameId, platformId, platEncId, langId)
+
+        # Set name records from font.info.openTypeNameRecords
+        for nameRecord in getAttrWithFallback(font.info, "openTypeNameRecords"):
+            nameId = nameRecord["nameID"]
+            platformId = nameRecord["platformID"]
+            platEncId = nameRecord["encodingID"]
+            langId = nameRecord["languageID"]
+            nameVal = nameRecord["string"]
             name.setName(nameVal, nameId, platformId, platEncId, langId)
 
     def setupTable_maxp(self):
@@ -561,12 +572,7 @@ class BaseOutlineCompiler:
         font = self.ufo
         os2.version = 0x0004
         # average glyph width
-        os2.xAvgCharWidth = 0
-        hmtx = self.otf.get("hmtx")
-        if hmtx is not None:
-            widths = [width for width, _ in hmtx.metrics.values() if width > 0]
-            if widths:
-                os2.xAvgCharWidth = otRound(sum(widths) / len(widths))
+        os2.recalcAvgCharWidth(self.otf)
         # weight and width classes
         os2.usWeightClass = getAttrWithFallback(font.info, "openTypeOS2WeightClass")
         os2.usWidthClass = getAttrWithFallback(font.info, "openTypeOS2WidthClass")
@@ -654,7 +660,7 @@ class BaseOutlineCompiler:
             os2.ulUnicodeRange2 = intListToNum(uniRanges, 32, 32)
             os2.ulUnicodeRange3 = intListToNum(uniRanges, 64, 32)
             os2.ulUnicodeRange4 = intListToNum(uniRanges, 96, 32)
-        else:
+        elif "cmap" in self.otf:
             os2.recalcUnicodeRanges(self.otf)
 
         # codepage ranges
@@ -665,8 +671,8 @@ class BaseOutlineCompiler:
         os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
         os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
 
-        # vendor id
-        os2.achVendID = getAttrWithFallback(font.info, "openTypeOS2VendorID")
+        # vendor id, padded with spaces if < 4 bytes
+        os2.achVendID = getAttrWithFallback(font.info, "openTypeOS2VendorID").ljust(4)
 
         # vertical metrics
         os2.sxHeight = otRound(getAttrWithFallback(font.info, "xHeight"))
@@ -941,9 +947,12 @@ class BaseOutlineCompiler:
         italicAngle = float(getAttrWithFallback(font.info, "italicAngle"))
         post.italicAngle = italicAngle
         # underline
-        underlinePosition = getAttrWithFallback(
-            font.info, "postscriptUnderlinePosition"
-        )
+        if OPENTYPE_POST_UNDERLINE_POSITION_KEY in font.lib:
+            underlinePosition = font.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY]
+        else:
+            underlinePosition = getAttrWithFallback(
+                font.info, "postscriptUnderlinePosition"
+            )
         post.underlinePosition = otRound(underlinePosition)
         underlineThickness = getAttrWithFallback(
             font.info, "postscriptUnderlineThickness"
@@ -979,12 +988,41 @@ class BaseOutlineCompiler:
                 for glyphs, box in self.ufo.lib.get(COLR_CLIP_BOXES_KEY, ())
                 for glyphName in glyphs
             }
-            self.otf["COLR"] = buildCOLR(
+            colr = buildCOLR(
                 layerInfo,
                 glyphMap=glyphMap,
                 clipBoxes=clipBoxes,
                 allowLayerReuse=self.colrLayerReuse,
             )
+
+            # Warn if there are any COLRv0 base glyphs and the gid1 isn't blank
+            # https://github.com/MicrosoftDocs/typography-issues/issues/346
+            if (colr.version == 0 or colr.table.BaseGlyphRecordCount > 0) and len(
+                self.glyphOrder
+            ) > 1:
+                g1 = self.allGlyphs[self.glyphOrder[1]]
+                if len(g1) > 0 or len(g1.components) > 0:
+                    logger.warning(
+                        "COLRv0 might not render correctly on Windows because "
+                        "the glyph at index 1 is not empty ('%s'). DirectWrite's "
+                        "COLRv0 implementation in Windows 10 used to require glyph ID "
+                        "1 to be blank, see: "
+                        "https://github.com/MicrosoftDocs/typography-issues/issues/346",
+                        g1.name,
+                    )
+
+            self.otf["COLR"] = colr
+
+    def _computeCOLRClipBoxes(self):
+        if (
+            "COLR" not in self.otf
+            or self.otf["COLR"].version == 0
+            or self.otf["COLR"].table.ClipList is not None
+        ):
+            return
+
+        q = self.colrClipBoxQuantization(self.ufo)
+        self.otf["COLR"].table.computeClipBoxes(self.otf.getGlyphSet(), quantization=q)
 
     def setupTable_CPAL(self):
         """
@@ -1047,6 +1085,179 @@ class BaseOutlineCompiler:
                     f"public.openTypeMeta '{key}' value should be bytes or a string."
                 )
 
+    def _bboxWidth(self, glyph):
+        bbox = self.glyphBoundingBoxes[glyph]
+        if bbox is None:
+            return 0
+        return bbox.xMax - bbox.xMin
+
+    def _bboxHeight(self, glyph):
+        bbox = self.glyphBoundingBoxes[glyph]
+        if bbox is None:
+            return 0
+        return bbox.yMax - bbox.yMin
+
+    def setupTable_MATH(self):
+        """
+        This builds MATH table based on data in the UFO font. The data is stored
+        either in private font/glyph lib keys or as glyph anchors with specific
+        names.
+
+        The data is based on GlyphsApp MATH plugin data as written out by
+        glyphsLib to the UFO font.
+
+        The font lib keys are:
+            - com.nagwa.MATHPlugin.constants: a dictionary of MATH constants as
+              expected by fontTools.otlLib.builder.buildMathTable(). Example:
+
+                ufo.lib["com.nagwa.MATHPlugin.constants"] = {
+                    "ScriptPercentScaleDown": 70,
+                    "ScriptScriptPercentScaleDown": 60,
+                    ...
+                }
+
+            - com.nagwa.MATHPlugin.extendedShape: a list of glyph names that
+              are extended shapes. Example:
+
+                ufo.lib["com.nagwa.MATHPlugin.extendedShapes"] = ["integral", "radical"]
+
+        The glyph lib keys are:
+            - com.nagwa.MATHPlugin.variants: a dictionary of MATH glyph variants
+              keyed by glyph names, and each value is a dictionary with keys
+              "hVariants", "vVariants", "hAssembly", and "vAssembly". Example:
+
+                ufo["braceleft"].lib["com.nagwa.MATHPlugin.variants"] = {
+                    "vVariants": ["braceleft", "braceleft.s1", "braceleft.s2"],
+                    "vAssembly": [
+                        # glyph name, flags, start connector length, end connector length
+                        ["braceleft.bottom", 0, 0, 200],
+                        ["braceleft.extender", 1, 200, 200],
+                        ["braceleft.middle", 0, 100, 100],
+                        ["braceleft.extender", 1, 200, 200],
+                        ["braceleft.top", 0, 200, 0],
+                    ],
+                }
+
+        The anchors are:
+            - math.ic: italic correction anchor
+            - math.ta: top accent attachment anchor
+            - math.tr*: top right kerning anchors
+            - math.tl*: top left kerning anchors
+            - math.br*: bottom right kerning anchors
+            - math.bl*: bottom left kerning anchors
+        """
+        if "MATH" not in self.tables:
+            return
+
+        from fontTools.otlLib.builder import buildMathTable
+
+        ufo = self.ufo
+        constants = ufo.lib.get(GLYPHS_MATH_CONSTANTS_KEY)
+        min_connector_overlap = constants.pop("MinConnectorOverlap", 0)
+
+        italics_correction = {}
+        top_accent_attachment = {}
+        math_kerns = {}
+        kerning_sides = {
+            "tr": "TopRight",
+            "tl": "TopLeft",
+            "br": "BottomRight",
+            "bl": "BottomLeft",
+        }
+        for name, glyph in self.allGlyphs.items():
+            kerns = {}
+            for anchor in glyph.anchors:
+                if anchor.name == "math.ic":
+                    # The anchor x position is absolute, but we want
+                    # a value relative to the glyph's width.
+                    italics_correction[name] = anchor.x - glyph.width
+                if anchor.name == "math.ta":
+                    top_accent_attachment[name] = anchor.x
+                for aName in kerning_sides.keys():
+                    if anchor.name.startswith(f"math.{aName}"):
+                        side = kerning_sides[aName]
+                        # The anchor x positions are absolute, but we want
+                        # values relative to the glyph's width/origin.
+                        x, y = anchor.x, anchor.y
+                        if side.endswith("Right"):
+                            x -= glyph.width
+                        elif side.endswith("Left"):
+                            x = -x
+                        kerns.setdefault(side, []).append([x, y])
+            if kerns:
+                math_kerns[name] = {}
+                # Convert anchor positions to correction heights and kern
+                # values.
+                for side, pts in kerns.items():
+                    pts = sorted(pts, key=lambda pt: pt[1])
+                    # Y positions, the last one is ignored as the last kern
+                    # value is applied to all heights greater than the last one.
+                    correctionHeights = [pt[1] for pt in pts[:-1]]
+                    # X positions
+                    kernValues = [pt[0] for pt in pts]
+                    math_kerns[name][side] = (correctionHeights, kernValues)
+
+        # buildMathTable takes two dictionaries of glyph variants, one for
+        # horizontal variants and one for vertical variants, and items are
+        # tuples of glyph name and the advance width/height of the variant.
+        # Here we convert the UFO data to the expected format and measure the
+        # advances.
+        h_variants = {}
+        v_variants = {}
+        # It also takes two dictionaries of glyph assemblies, one for
+        # horizontal assemblies and one for vertical assemblies, and items are
+        # lists of tuples of assembly parts and italics correction, and the
+        # assembly part includes the advance width/height of the part. Here we
+        # convert the UFO data to the expected format and measure the advances.
+        h_assemblies = {}
+        v_assemblies = {}
+        for name, glyph in self.allGlyphs.items():
+            if GLYPHS_MATH_VARIANTS_KEY in glyph.lib:
+                variants = glyph.lib[GLYPHS_MATH_VARIANTS_KEY]
+                if names := variants.get("hVariants"):
+                    h_variants[name] = [(n, self._bboxWidth(n)) for n in names]
+                if names := variants.get("vVariants"):
+                    v_variants[name] = [(n, self._bboxHeight(n)) for n in names]
+                if parts := variants.get("hAssembly"):
+                    if not all(len(part) == 4 for part in parts):
+                        raise InvalidFontData("Invalid assembly")
+                    h_assemblies[name] = (
+                        [(*part, self._bboxWidth(part[0])) for part in parts],
+                        # If the last part has italic correction, we use it as
+                        # the assembly's.
+                        italics_correction.pop(parts[-1][0], 0),
+                    )
+                if parts := variants.get("vAssembly"):
+                    if not all(len(part) == 4 for part in parts):
+                        raise InvalidFontData("Invalid assembly")
+                    v_assemblies[name] = (
+                        [(*part, self._bboxHeight(part[0])) for part in parts],
+                        # If the last part has italic correction, we use it as
+                        # the assembly's.
+                        italics_correction.pop(parts[-1][0], 0),
+                    )
+
+        # Collect the set of extended shapes, and if a shape has vertical
+        # variants, add the variants to the set.
+        extended_shapes = set(ufo.lib.get(GLYPHS_MATH_EXTENDED_SHAPE_KEY, []))
+        for name, variants in v_variants.items():
+            if name in extended_shapes:
+                extended_shapes.update(v[0] for v in variants)
+
+        buildMathTable(
+            self.otf,
+            constants=constants,
+            italicsCorrections=italics_correction,
+            topAccentAttachments=top_accent_attachment,
+            extendedShapes=extended_shapes,
+            mathKerns=math_kerns,
+            minConnectorOverlap=min_connector_overlap,
+            vertGlyphVariants=v_variants,
+            horizGlyphVariants=h_variants,
+            vertGlyphAssembly=v_assemblies,
+            horizGlyphAssembly=h_assemblies,
+        )
+
     def setupOtherTables(self):
         """
         Make the other tables. The default implementation does nothing.
@@ -1100,6 +1311,12 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         notdefGlyph=None,
         roundTolerance=None,
         optimizeCFF=True,
+        colrLayerReuse=True,
+        colrAutoClipBoxes=True,
+        colrClipBoxQuantization=colrClipBoxQuantization,
+        ftConfig=None,
+        *,
+        compilingVFDefaultSource=True,
     ):
         if roundTolerance is not None:
             self.roundTolerance = float(roundTolerance)
@@ -1112,7 +1329,14 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             glyphOrder=glyphOrder,
             tables=tables,
             notdefGlyph=notdefGlyph,
+            colrLayerReuse=colrLayerReuse,
+            colrAutoClipBoxes=colrAutoClipBoxes,
+            colrClipBoxQuantization=colrClipBoxQuantization,
+            ftConfig=ftConfig,
+            compilingVFDefaultSource=compilingVFDefaultSource,
         )
+        if not isinstance(optimizeCFF, bool):
+            optimizeCFF = optimizeCFF >= CFFOptimization.SPECIALIZE
         self.optimizeCFF = optimizeCFF
         self._defaultAndNominalWidths = None
 
@@ -1322,7 +1546,16 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         # populate various numbers
         topDict.isFixedPitch = int(getAttrWithFallback(info, "postscriptIsFixedPitch"))
         topDict.ItalicAngle = float(getAttrWithFallback(info, "italicAngle"))
-        underlinePosition = getAttrWithFallback(info, "postscriptUnderlinePosition")
+        if (
+            OPENTYPE_POST_UNDERLINE_POSITION_KEY in self.ufo.lib
+            and info.postscriptUnderlinePosition is None
+        ):
+            underlinePosition = (
+                self.ufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY]
+                - getAttrWithFallback(info, "postscriptUnderlineThickness") / 2
+            )
+        else:
+            underlinePosition = getAttrWithFallback(info, "postscriptUnderlinePosition")
         topDict.UnderlinePosition = otRound(underlinePosition)
         underlineThickness = getAttrWithFallback(info, "postscriptUnderlineThickness")
         topDict.UnderlineThickness = otRound(underlineThickness)
@@ -1401,12 +1634,84 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
     """Compile a .ttf font with TrueType outlines."""
 
     sfntVersion = "\000\001\000\000"
-    tables = BaseOutlineCompiler.tables | {"loca", "gasp", "glyf"}
+    tables = BaseOutlineCompiler.tables | {
+        "cvt ",
+        "fpgm",
+        "gasp",
+        "glyf",
+        "loca",
+        "prep",
+    }
+
+    def __init__(
+        self,
+        font,
+        glyphSet=None,
+        glyphOrder=None,
+        tables=None,
+        notdefGlyph=None,
+        colrLayerReuse=True,
+        colrAutoClipBoxes=True,
+        colrClipBoxQuantization=colrClipBoxQuantization,
+        dropImpliedOnCurves=False,
+        autoUseMyMetrics=True,
+        roundCoordinates=True,
+        glyphDataFormat=0,
+        ftConfig=None,
+        *,
+        compilingVFDefaultSource=True,
+    ):
+        super().__init__(
+            font,
+            glyphSet=glyphSet,
+            glyphOrder=glyphOrder,
+            tables=tables,
+            notdefGlyph=notdefGlyph,
+            colrLayerReuse=colrLayerReuse,
+            colrAutoClipBoxes=colrAutoClipBoxes,
+            colrClipBoxQuantization=colrClipBoxQuantization,
+            ftConfig=ftConfig,
+            compilingVFDefaultSource=compilingVFDefaultSource,
+        )
+        self.autoUseMyMetrics = autoUseMyMetrics
+        self.dropImpliedOnCurves = dropImpliedOnCurves
+        self.roundCoordinates = roundCoordinates
+        self.glyphDataFormat = glyphDataFormat
+
+    def makeMissingRequiredGlyphs(self, font, glyphSet, sfntVersion, notdefGlyph=None):
+        """
+        Add .notdef to the glyph set if it is not present.
+
+        When compiling non-default interpolatable master TTFs used to build a VF,
+        if any 'sparse' composite glyphs reference missing components, we add empty base
+        glyphs so that the master TTFs' glyf table will keep the composites; varLib will
+        ignores these empty glyphs when building variations.
+        """
+        super().makeMissingRequiredGlyphs(font, glyphSet, sfntVersion, notdefGlyph)
+
+        if not self.compilingVFDefaultSource:
+            newGlyph = self.glyphFactory()
+            for glyphName in list(glyphSet.keys()):
+                glyph = glyphSet[glyphName]
+                for comp in glyph.components:
+                    if comp.baseGlyph not in glyphSet:
+                        logger.info(
+                            "Added missing '%s' component base glyph, referenced from '%s'",
+                            comp.baseGlyph,
+                            glyphName,
+                        )
+                        # use sentinel value for width/height to signal varLib this glyph
+                        # doesn't participate in {H,V}VAR glyph metrics variations
+                        glyphSet[comp.baseGlyph] = newGlyph(
+                            comp.baseGlyph, width=0xFFFF, height=0xFFFF
+                        )
 
     def compileGlyphs(self):
         """Compile and return the TrueType glyphs for this font."""
         allGlyphs = self.allGlyphs
         ttGlyphs = {}
+        round = otRound if self.roundCoordinates else noRound
+        glyphDataFormat = self.glyphDataFormat
         for name in self.glyphOrder:
             glyph = allGlyphs[name]
             pen = TTGlyphPointPen(allGlyphs)
@@ -1416,7 +1721,20 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                 logger.error("%r has invalid curve format; skipped", name)
                 ttGlyph = Glyph()
             else:
-                ttGlyph = pen.glyph()
+                ttGlyph = pen.glyph(
+                    dropImpliedOnCurves=self.dropImpliedOnCurves,
+                    round=round,
+                )
+                if (
+                    glyphDataFormat == 0
+                    and ttGlyph.numberOfContours > 0
+                    and any(f & flagCubic for f in ttGlyph.flags)
+                ):
+                    raise ValueError(
+                        f"{name!r} has cubic Bezier curves, but glyphDataFormat=0; "
+                        "either convert to quadratic (convertCubics=True) or use "
+                        "allQuadratic=False so that glyphDataFormat=1."
+                    )
             ttGlyphs[name] = ttGlyph
         return ttGlyphs
 
@@ -1438,6 +1756,23 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
             glyphBoxes[glyphName] = bounds
         return glyphBoxes
 
+    def getMaxComponentDepths(self):
+        """Collect glyphs max components depths.
+
+        Return a dictionary of non zero max components depth keyed by glyph names.
+        The max component depth of composite glyphs is 1 or more.
+        Simple glyphs are not keyed.
+        """
+        if self._maxComponentDepths:
+            return self._maxComponentDepths
+        maxComponentDepths = dict()
+        for name, glyph in self.allGlyphs.items():
+            depth = getMaxComponentDepth(glyph, self.allGlyphs)
+            if depth > 0:
+                maxComponentDepths[name] = depth
+        self._maxComponentDepths = maxComponentDepths
+        return self._maxComponentDepths
+
     def setupTable_maxp(self):
         """Make the maxp table."""
         if "maxp" not in self.tables:
@@ -1456,6 +1791,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         maxp.maxComponentElements = max(
             len(g.components) for g in self.allGlyphs.values()
         )
+        maxp.maxComponentDepth = max(self.getMaxComponentDepths().values(), default=0)
 
     def setupTable_post(self):
         """Make a format 2 post table with the compiler's glyph order."""
@@ -1473,9 +1809,22 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         post.glyphOrder = self.glyphOrder
 
     def setupOtherTables(self):
+        self.instructionCompiler = InstructionCompiler(
+            self.ufo, self.otf, autoUseMyMetrics=self.autoUseMyMetrics
+        )
+
         self.setupTable_glyf()
-        if self.ufo.info.openTypeGaspRangeRecords:
-            self.setupTable_gasp()
+
+        if "cvt " in self.tables:
+            self.instructionCompiler.setupTable_cvt()
+        if "fpgm" in self.tables:
+            self.instructionCompiler.setupTable_fpgm()
+        if "gasp" in self.tables:
+            self.instructionCompiler.setupTable_gasp()
+        if "prep" in self.tables:
+            self.instructionCompiler.setupTable_prep()
+
+        self.instructionCompiler.update_maxp()
 
     def setupTable_glyf(self):
         """Make the glyf table."""
@@ -1487,45 +1836,35 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         glyf.glyphs = {}
         glyf.glyphOrder = self.glyphOrder
 
-        hmtx = self.otf.get("hmtx")
         ttGlyphs = self.getCompiledGlyphs()
-        for name in self.glyphOrder:
+        # Sort the glyphs so that simple glyphs are compiled first, and composite
+        # glyphs are compiled later. Otherwise the glyph hashes may not be ready
+        # to calculate when a base glyph of a composite glyph is not in the font yet.
+        maxComponentDepths = self.getMaxComponentDepths()
+        for name in sorted(self.glyphOrder, key=lambda n: maxComponentDepths.get(n, 0)):
             ttGlyph = ttGlyphs[name]
-            if ttGlyph.isComposite() and hmtx is not None and self.autoUseMyMetrics:
-                self.autoUseMyMetrics(ttGlyph, name, hmtx)
+            self.instructionCompiler.compileGlyphInstructions(ttGlyph, name)
             glyf[name] = ttGlyph
 
         # update various maxp fields based on glyf without needing to compile the font
         if "maxp" in self.otf:
             self.otf["maxp"].recalc(self.otf)
 
-    @staticmethod
-    def autoUseMyMetrics(ttGlyph, glyphName, hmtx):
-        """Set the "USE_MY_METRICS" flag on the first component having the
-        same advance width as the composite glyph, no transform and no
-        horizontal shift (but allow it to shift vertically).
-        This forces the composite glyph to use the possibly hinted horizontal
-        metrics of the sub-glyph, instead of those from the "hmtx" table.
-        """
-        width = hmtx[glyphName][0]
-        for component in ttGlyph.components:
-            try:
-                baseName, transform = component.getComponentInfo()
-            except AttributeError:
-                # component uses '{first,second}Pt' instead of 'x' and 'y'
-                continue
-            try:
-                baseMetrics = hmtx[baseName]
-            except KeyError:
-                continue  # ignore missing components
-            else:
-                if baseMetrics[0] == width and transform[:-1] == (1, 0, 0, 1, 0):
-                    component.flags |= USE_MY_METRICS
-                    break
+    # NOTE: the previous 'autoUseMyMetrics' method was moved to the InstructionCompiler
+    # This property setter is kept for backward compatibility to support the relatively
+    # obscure use-case (present in tests) of setting compiler.autoUseMyMetrics = None
+    # in order to disable the feature. It seems to me it's unlikely that one would like
+    # actually disable this at all...
+    @property
+    def autoUseMyMetrics(self) -> bool:
+        return getattr(self, "_autoUseMyMetrics", True)
+
+    @autoUseMyMetrics.setter
+    def autoUseMyMetrics(self, value):
+        self._autoUseMyMetrics = bool(value)
 
 
 class StubGlyph:
-
     """
     This object will be used to create missing glyphs
     (specifically .notdef) in the provided UFO.
@@ -1557,6 +1896,7 @@ class StubGlyph:
             self.draw = self._drawDefaultNotdef
             self.drawPoints = self._drawDefaultNotdefPoints
         self.reverseContour = reverseContour
+        self.lib = {}
 
     def __len__(self):
         if self.name == ".notdef":

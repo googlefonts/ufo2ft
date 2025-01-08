@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Astroke" format="2">
+  <advance width="730"/>
+  <unicode hex="023A"/>
+  <outline>
+    <component base="A"/>
+    <component base="_stroke" xOffset="-5"/>
+  </outline>
+</glyph>

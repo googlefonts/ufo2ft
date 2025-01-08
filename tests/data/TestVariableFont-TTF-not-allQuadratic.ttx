@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ttFont sfntVersion="\x00\x01\x00\x00" ttLibVersion="4.44">
+
+  <glyf>
+
+    <!-- The xMin, yMin, xMax and yMax values
+         will be recalculated by the compiler. -->
+
+    <TTGlyph name=".notdef" xMin="50" yMin="-250" xMax="450" yMax="750">
+      <contour>
+        <pt x="50" y="-250" on="1"/>
+        <pt x="50" y="750" on="1"/>
+        <pt x="450" y="750" on="1"/>
+        <pt x="450" y="-250" on="1"/>
+      </contour>
+      <contour>
+        <pt x="100" y="-200" on="1"/>
+        <pt x="400" y="-200" on="1"/>
+        <pt x="400" y="700" on="1"/>
+        <pt x="100" y="700" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="a" xMin="9" yMin="-12" xMax="468" yMax="504">
+      <contour>
+        <pt x="468" y="-1" on="1"/>
+        <pt x="366" y="-3" on="1"/>
+        <pt x="363" y="357" on="1"/>
+        <pt x="208" y="397" on="1"/>
+        <pt x="36" y="337" on="1"/>
+        <pt x="9" y="428" on="1"/>
+        <pt x="214" y="504" on="1"/>
+        <pt x="447" y="434" on="1"/>
+      </contour>
+      <contour>
+        <pt x="378" y="263" on="1"/>
+        <pt x="382" y="207" on="1"/>
+        <pt x="88" y="172" on="1"/>
+        <pt x="86" y="126" on="1"/>
+        <pt x="161" y="74" on="1"/>
+        <pt x="383" y="134" on="1"/>
+        <pt x="389" y="71" on="1"/>
+        <pt x="168" y="-12" on="1"/>
+        <pt x="29" y="22" on="1"/>
+        <pt x="26" y="240" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="curved" xMin="0" yMin="0" xMax="500" yMax="500">
+      <contour>
+        <pt x="500" y="0" on="1"/>
+        <pt x="0" y="0" on="1"/>
+        <pt x="0" y="277.614" on="0" cubic="1"/>
+        <pt x="111.928" y="500" on="0" cubic="1"/>
+        <pt x="250" y="500" on="1"/>
+        <pt x="388.072" y="500" on="0" cubic="1"/>
+        <pt x="500" y="277.614" on="0" cubic="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="dotabovecomb" xMin="-37" yMin="501" xMax="50" yMax="597">
+      <contour>
+        <pt x="-21" y="597" on="1"/>
+        <pt x="50" y="589" on="1"/>
+        <pt x="41" y="501" on="1"/>
+        <pt x="-37" y="503" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="e" xMin="40" yMin="-18" xMax="576" yMax="513">
+      <contour>
+        <pt x="127" y="228" on="1"/>
+        <pt x="125" y="298" on="1"/>
+        <pt x="480" y="292" on="1"/>
+        <pt x="317" y="416" on="1"/>
+        <pt x="147" y="263" on="1"/>
+        <pt x="229" y="75" on="1"/>
+        <pt x="509" y="129" on="1"/>
+        <pt x="526" y="45" on="1"/>
+        <pt x="188" y="-18" on="1"/>
+        <pt x="40" y="261" on="1"/>
+        <pt x="316" y="513" on="1"/>
+        <pt x="571" y="305" on="1"/>
+        <pt x="576" y="226" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+    <TTGlyph name="edotabove" xMin="40" yMin="-18" xMax="576" yMax="693">
+      <component glyphName="e" x="0" y="0" flags="0x204"/>
+      <component glyphName="dotabovecomb" x="313" y="96" flags="0x4"/>
+    </TTGlyph>
+
+    <TTGlyph name="s" xMin="25" yMin="-13" xMax="582" yMax="530">
+      <contour>
+        <pt x="559" y="459" on="1"/>
+        <pt x="539" y="376" on="1"/>
+        <pt x="326" y="442" on="1"/>
+        <pt x="213" y="366" on="1"/>
+        <pt x="582" y="174" on="1"/>
+        <pt x="304" y="-13" on="1"/>
+        <pt x="25" y="83" on="1"/>
+        <pt x="53" y="174" on="1"/>
+        <pt x="282" y="76" on="1"/>
+        <pt x="427" y="155" on="1"/>
+        <pt x="38" y="343" on="1"/>
+        <pt x="324" y="530" on="1"/>
+      </contour>
+      <instructions/>
+    </TTGlyph>
+
+  </glyf>
+
+</ttFont>

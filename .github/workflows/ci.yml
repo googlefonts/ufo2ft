@@ -13,9 +13,9 @@ jobs:
     # https://github.community/t/github-actions-does-not-respect-skip-ci/17325/8
     if: "! contains(toJSON(github.event.commits.*.message), '[skip ci]')"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.x"
     - name: Install dependencies
@@ -27,12 +27,12 @@ jobs:
     if: "! contains(toJSON(github.event.commits.*.message), '[skip ci]')"
     strategy:
       matrix:
-        python-version: ["3.7", "3.11"]
+        python-version: ["3.8", "3.12"]
         platform: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -42,12 +42,12 @@ jobs:
     - name: Produce coverage files
       run: tox -e htmlcov
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v4
       with:
         file: coverage.xml
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: true
+        fail_ci_if_error: false
         # see https://github.com/codecov/codecov-action/issues/557
         token: ${{ secrets.CODECOV_TOKEN }}
   deploy:
@@ -59,12 +59,12 @@ jobs:
       - test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         # setuptools_scm requires the git clone to not be 'shallow'
         fetch-depth: 0
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.x"
     - name: Extract release notes from annotated tag message
@@ -91,13 +91,8 @@ jobs:
         fi
     - name: Create GitHub release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        # This token is provided by Actions, you do not need to create your own token
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref }}
         body_path: "${{ runner.temp }}/release_notes.md"
         draft: false
         prerelease: ${{ env.IS_PRERELEASE }}

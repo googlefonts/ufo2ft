@@ -1,0 +1,37 @@
+# Prefix: Languagesystems
+# automatic
+languagesystem DFLT dflt;
+
+languagesystem arab dflt;
+
+
+feature aalt {
+# automatic
+feature init;
+feature medi;
+feature fina;
+
+} aalt;
+
+feature ccmp {
+sub beh-ar by behDotless-ar dotbelow-ar;
+
+} ccmp;
+
+feature init {
+# automatic
+sub behDotless-ar by behDotless-ar.init;
+
+} init;
+
+feature medi {
+# automatic
+sub behDotless-ar by behDotless-ar.medi;
+
+} medi;
+
+feature fina {
+# automatic
+sub behDotless-ar by behDotless-ar.fina;
+
+} fina;

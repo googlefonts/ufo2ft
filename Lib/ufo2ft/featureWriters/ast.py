@@ -1,6 +1,5 @@
 """Helpers to build or extract data from feaLib AST objects."""
 
-
 import collections
 import functools
 import operator
@@ -20,15 +19,16 @@ for name in getattr(ast, "__all__", dir(ast)):
 del sys, self, name
 
 
-def getScriptLanguageSystems(feaFile):
+def getScriptLanguageSystems(feaFile, excludeDflt=True):
     """Return dictionary keyed by Unicode script code containing lists of
-    (OT_SCRIPT_TAG, [OT_LANGUAGE_TAG, ...]) tuples (excluding "DFLT").
+    (OT_SCRIPT_TAG, [OT_LANGUAGE_TAG, ...]) tuples (excluding "DFLT" by default,
+    unless excludeDflt is False).
     """
     languagesByScript = collections.OrderedDict()
     for ls in [
         st for st in feaFile.statements if isinstance(st, ast.LanguageSystemStatement)
     ]:
-        if ls.script == "DFLT":
+        if ls.script == "DFLT" and excludeDflt:
             continue
         languagesByScript.setdefault(ls.script, []).append(ls.language)
 
@@ -72,17 +72,12 @@ def findTable(feaLib, tag):
             return statement
 
 
-def iterClassDefinitions(feaFile, featureTag=None):
-    if featureTag is None:
-        # start from top-level class definitions
-        for s in feaFile.statements:
-            if isinstance(s, ast.GlyphClassDefinition):
-                yield s
-    # then iterate over per-feature class definitions
-    for fea in iterFeatureBlocks(feaFile, tag=featureTag):
-        for s in fea.statements:
-            if isinstance(s, ast.GlyphClassDefinition):
-                yield s
+def iterClassDefinitions(feaFile):
+    for s in feaFile.statements:
+        if isinstance(s, ast.GlyphClassDefinition):
+            yield s
+        elif isinstance(s, (ast.Block)):
+            yield from iterClassDefinitions(s)
 
 
 LOOKUP_FLAGS = {
@@ -214,17 +209,25 @@ def getGDEFGlyphClasses(feaLib):
             for st in s.statements:
                 if isinstance(st, ast.GlyphClassDefStatement):
                     return _GDEFGlyphClasses(
-                        frozenset(st.baseGlyphs.glyphSet())
-                        if st.baseGlyphs is not None
-                        else frozenset(),
-                        frozenset(st.ligatureGlyphs.glyphSet())
-                        if st.ligatureGlyphs is not None
-                        else frozenset(),
-                        frozenset(st.markGlyphs.glyphSet())
-                        if st.markGlyphs is not None
-                        else frozenset(),
-                        frozenset(st.componentGlyphs.glyphSet())
-                        if st.componentGlyphs is not None
-                        else frozenset(),
+                        (
+                            frozenset(st.baseGlyphs.glyphSet())
+                            if st.baseGlyphs is not None
+                            else frozenset()
+                        ),
+                        (
+                            frozenset(st.ligatureGlyphs.glyphSet())
+                            if st.ligatureGlyphs is not None
+                            else frozenset()
+                        ),
+                        (
+                            frozenset(st.markGlyphs.glyphSet())
+                            if st.markGlyphs is not None
+                            else frozenset()
+                        ),
+                        (
+                            frozenset(st.componentGlyphs.glyphSet())
+                            if st.componentGlyphs is not None
+                            else frozenset()
+                        ),
                     )
     return _GDEFGlyphClasses(None, None, None, None)

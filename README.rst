@@ -204,3 +204,9 @@ color layer is an array of glyph name and palette color index. For example:
         </array>
       </array>
     <dict>
+
+Setup Notes
+~~~~~~~~~~~
+
+If you are installing ufo2ft from source, note that the strict dependency versions in `requirements.txt` are
+for testing, see `setup.py`'s install_requires and extras_requires for more relaxed dependency requirements.

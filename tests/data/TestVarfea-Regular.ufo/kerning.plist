@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>alef-ar.fina</key>
+    <dict>
+      <key>alef-ar.fina</key>
+      <integer>15</integer>
+    </dict>
+    <key>public.kern1.a</key>
+    <dict>
+      <key>public.kern2.a</key>
+      <integer>0</integer>
+    </dict>
+  </dict>
+</plist>

@@ -1,4 +1,13 @@
+from fontTools.feaLib.variableScalar import VariableScalar
+from fontTools.misc.fixedTools import otRound
+
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
+
+
+def caretSortKey(caret):
+    if isinstance(caret, VariableScalar):
+        return list(caret.values.values())[0]
+    return caret
 
 
 class GdefFeatureWriter(BaseFeatureWriter):
@@ -55,16 +64,19 @@ class GdefFeatureWriter(BaseFeatureWriter):
                     and anchor.name.startswith("caret_")
                     and anchor.x is not None
                 ):
-                    glyphCarets.add(round(anchor.x))
+                    glyphCarets.add(self._getAnchor(glyphName, anchor.name)[0])
                 elif (
                     anchor.name
                     and anchor.name.startswith("vcaret_")
                     and anchor.y is not None
                 ):
-                    glyphCarets.add(round(anchor.y))
+                    glyphCarets.add(self._getAnchor(glyphName, anchor.name)[1])
 
             if glyphCarets:
-                carets[glyphName] = sorted(glyphCarets)
+                if self.context.isVariable:
+                    carets[glyphName] = sorted(glyphCarets, key=caretSortKey)
+                else:
+                    carets[glyphName] = [otRound(c) for c in sorted(glyphCarets)]
 
         return carets
 

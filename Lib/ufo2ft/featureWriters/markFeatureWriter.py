@@ -2,12 +2,16 @@ import itertools
 import re
 from collections import OrderedDict, defaultdict
 from functools import partial
+from typing import Dict, Optional, Set, Tuple
 
-from fontTools.misc.fixedTools import otRound
-
-from ufo2ft.constants import INDIC_SCRIPTS, USE_SCRIPTS
+from ufo2ft.constants import INDIC_SCRIPTS, OBJECT_LIBS_KEY, USE_SCRIPTS
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
-from ufo2ft.util import classifyGlyphs, quantize, unicodeInScripts
+from ufo2ft.util import (
+    classifyGlyphs,
+    otRoundIgnoringVariable,
+    unicodeInScripts,
+    unicodeScriptExtensions,
+)
 
 
 class AbstractMarkPos:
@@ -29,7 +33,13 @@ class AbstractMarkPos:
 
     def _marksAsAST(self):
         return [
-            (ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)), anchor.markClass)
+            (
+                ast.Anchor(
+                    x=otRoundIgnoringVariable(anchor.x),
+                    y=otRoundIgnoringVariable(anchor.y),
+                ),
+                anchor.markClass,
+            )
             for anchor in sorted(self.marks, key=lambda a: a.name)
         ]
 
@@ -54,17 +64,14 @@ class AbstractMarkPos:
 
 
 class MarkToBasePos(AbstractMarkPos):
-
     Statement = ast.MarkBasePosStatement
 
 
 class MarkToMarkPos(AbstractMarkPos):
-
     Statement = ast.MarkMarkPosStatement
 
 
 class MarkToLigaPos(AbstractMarkPos):
-
     Statement = ast.MarkLigPosStatement
 
     def _filterMarks(self, include):
@@ -76,7 +83,13 @@ class MarkToLigaPos(AbstractMarkPos):
     def _marksAsAST(self):
         return [
             [
-                (ast.Anchor(x=otRound(anchor.x), y=otRound(anchor.y)), anchor.markClass)
+                (
+                    ast.Anchor(
+                        x=otRoundIgnoringVariable(anchor.x),
+                        y=otRoundIgnoringVariable(anchor.y),
+                    ),
+                    anchor.markClass,
+                )
                 for anchor in sorted(component, key=lambda a: a.name)
             ]
             for component in self.marks
@@ -115,8 +128,14 @@ def parseAnchorName(
     three elements above.
     """
     number = None
+    isContextual = False
     if ignoreRE is not None:
         anchorName = re.sub(ignoreRE, "", anchorName)
+
+    if anchorName[0] == "*":
+        isContextual = True
+        anchorName = anchorName[1:]
+        anchorName = re.sub(r"\..*", "", anchorName)
 
     m = ligaNumRE.match(anchorName)
     if not m:
@@ -144,13 +163,26 @@ def parseAnchorName(
     else:
         isMark = False
 
-    return isMark, key, number
+    isIgnorable = key and not key[0].isalpha()
+
+    return isMark, key, number, isContextual, isIgnorable
 
 
 class NamedAnchor:
     """A position with a name, and an associated markClass."""
 
-    __slots__ = ("name", "x", "y", "isMark", "key", "number", "markClass")
+    __slots__ = (
+        "name",
+        "x",
+        "y",
+        "isMark",
+        "key",
+        "number",
+        "markClass",
+        "isContextual",
+        "isIgnorable",
+        "libData",
+    )
 
     # subclasses can customize these to use different anchor naming schemes
     markPrefix = MARK_PREFIX
@@ -158,11 +190,11 @@ class NamedAnchor:
     ligaSeparator = LIGA_SEPARATOR
     ligaNumRE = LIGA_NUM_RE
 
-    def __init__(self, name, x, y, markClass=None):
+    def __init__(self, name, x, y, markClass=None, libData=None):
         self.name = name
         self.x = x
         self.y = y
-        isMark, key, number = parseAnchorName(
+        isMark, key, number, isContextual, isIgnorable = parseAnchorName(
             name,
             markPrefix=self.markPrefix,
             ligaSeparator=self.ligaSeparator,
@@ -178,6 +210,9 @@ class NamedAnchor:
         self.key = key
         self.number = number
         self.markClass = markClass
+        self.isContextual = isContextual
+        self.isIgnorable = isIgnorable
+        self.libData = libData
 
     @property
     def markAnchorName(self):
@@ -264,9 +299,21 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     If the `quantization` argument is given in the filter options, the resulting
     anchors are rounded to the nearest multiple of the quantization value.
+
+    If `groupMarkClases=True`, mark-to-base or mark-to-ligature attachments that
+    reference non-overlapping mark classes will get grouped in the same lookup; and
+    if a mark glyph is in more than one mark class, additional lookups will be generated
+    for those as required. NOTE: this was the default behavior until ufo2ft 2.33.4.
+    The current default behavior was simplified to match other font editors and
+    we now build as many mark-to-base and mark-to-liga lookups as there
+    are mark classes, and lookups are sorted alphabetically by the mark class
+    name so the more specific ('top.alt' instead 'top') would be applied last and
+    wins in case when the same base or ligature glyph can attach to the same mark
+    through multiple mark classes.
+    https://github.com/googlefonts/ufo2ft/issues/591
     """
 
-    options = dict(quantization=1)
+    options = dict(quantization=1, groupMarkClasses=False)
 
     tableTag = "GPOS"
     features = frozenset(["mark", "mkmk", "abvm", "blwm"])
@@ -300,6 +347,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         ctx.gdefClasses = self.getGDEFGlyphClasses()
         ctx.anchorLists = self._getAnchorLists()
         ctx.anchorPairs = self._getAnchorPairs()
+        ctx.feaScripts = set(ast.getScriptLanguageSystems(feaFile).keys())
 
     def shouldContinue(self):
         if not self.context.anchorPairs:
@@ -331,9 +379,15 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     self.log.warning(
                         "duplicate anchor '%s' in glyph '%s'", anchorName, glyphName
                     )
-                x = quantize(anchor.x, self.options.quantization)
-                y = quantize(anchor.y, self.options.quantization)
-                a = self.NamedAnchor(name=anchorName, x=x, y=y)
+                x, y = self._getAnchor(glyphName, anchorName, anchor=anchor)
+                libData = None
+                if anchor.identifier:
+                    libData = glyph.lib[OBJECT_LIBS_KEY].get(anchor.identifier)
+                a = self.NamedAnchor(name=anchorName, x=x, y=y, libData=libData)
+                if a.isContextual and not libData:
+                    continue
+                if a.isIgnorable:
+                    continue
                 anchorDict[anchorName] = a
             if anchorDict:
                 result[glyphName] = list(anchorDict.values())
@@ -408,7 +462,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return newDefs
 
     def _defineMarkClass(self, glyphName, x, y, className, markClasses):
-        anchor = ast.Anchor(x=otRound(x), y=otRound(y))
+        anchor = ast.Anchor(x=otRoundIgnoringVariable(x), y=otRoundIgnoringVariable(y))
         markClass = markClasses.get(className)
         if markClass is None:
             markClass = ast.MarkClass(className)
@@ -497,28 +551,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
             ),
         )
 
-    def _logIfAmbiguous(self, attachments, groupedMarkClasses):
-        """Warn about ambiguous situations and log the current resolution.
-        An anchor attachment is ambiguous if for the same mark glyph, more
-        than one mark class can be used to attach it to the base.
-        """
-        for attachment in attachments:
-            for markGlyph, markClasses in attachment.getMarkGlyphToMarkClasses():
-                if len(markClasses) > 1:
-                    self.log.info(
-                        "The base glyph %s and mark glyph %s are ambiguously "
-                        "connected by several anchor classes: %s. "
-                        "The last one will prevail.",
-                        attachment.name,
-                        markGlyph,
-                        ", ".join(
-                            markClass
-                            for group in groupedMarkClasses
-                            for markClass in group
-                            if markClass in markClasses
-                        ),
-                    )
-
     def _removeClassPrefix(self, markClass):
         assert markClass.startswith(self.markClassPrefix)
         return markClass[len(self.markClassPrefix) :]
@@ -543,12 +575,23 @@ class MarkFeatureWriter(BaseFeatureWriter):
         #   through different anchor names, we may have to split the attachment
         #   into two attachments, using null anchors instead of one or the other
         #   mark class in each split attachment.
-        markGlyphToMarkClasses = defaultdict(set)
-        for attachment in attachments:
-            for markGlyph, markClasses in attachment.getMarkGlyphToMarkClasses():
-                markGlyphToMarkClasses[markGlyph].update(markClasses)
-        groupedMarkClasses = self._groupMarkClasses(markGlyphToMarkClasses)
-        self._logIfAmbiguous(attachments, groupedMarkClasses)
+        if self.options.groupMarkClasses:
+            markGlyphToMarkClasses = defaultdict(set)
+            for attachment in attachments:
+                for markGlyph, markClasses in attachment.getMarkGlyphToMarkClasses():
+                    markGlyphToMarkClasses[markGlyph].update(markClasses)
+            groupedMarkClasses = self._groupMarkClasses(markGlyphToMarkClasses)
+        else:
+            # this will generate one lookup per mark class, and sort them
+            # lexicographically by the anchor name, so the lookup for e.g.
+            # '_top.alt01' will occur *after* the one for `_top` (the last wins) thus
+            # allowing some degree of control on potentially ambiguous attachments
+            # https://github.com/googlefonts/ufo2ft/issues/762
+            # https://github.com/googlefonts/ufo2ft/issues/591
+            groupedMarkClasses = [
+                [markClass.name]
+                for _, markClass in sorted(self.context.markClasses.items())
+            ]
         lookups = []
         for markClasses in groupedMarkClasses:
             lookup = []
@@ -584,6 +627,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     # skip '_1', '_2', etc. suffixed anchors for this lookup
                     # type; these will be are added in the mark2liga lookup
                     continue
+                if anchor.isContextual:
+                    # skip contextual anchors. They are handled separately.
+                    continue
                 assert not anchor.isMark
                 baseMarks.append(anchor)
             if not baseMarks:
@@ -603,6 +649,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
             for anchor in anchors:
                 # skip anchors for which no mark class is defined
                 if anchor.markClass is None or anchor.isMark:
+                    continue
+                if anchor.isContextual:
+                    # skip contextual anchors. They are handled separately.
                     continue
                 if anchor.number is not None:
                     self.log.warning(
@@ -635,6 +684,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 if number is None:
                     # we handled these in the mark2base lookup
                     continue
+                if anchor.isContextual:
+                    # skip contextual anchors. They are handled separately.
+                    continue
                 # unnamed anchors with only a number suffix "_1", "_2", etc.
                 # are understood as the ligature component having <anchor NULL>
                 if not anchor.key:
@@ -650,6 +702,69 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 ligatureMarks.append(componentAnchors.get(number, []))
             result.append(MarkToLigaPos(glyphName, ligatureMarks))
         return result
+
+    def _makeContextualAttachments(
+        self,
+        baseClass: Optional[Set[str]],
+        ligatureClass: Optional[Set[str]],
+        markClass: Optional[Set[str]],
+    ) -> Tuple[Dict[str, Tuple[str, NamedAnchor]], Dict[str, Tuple[str, NamedAnchor]]]:
+        def includedOrNoClass(gdefClass: Optional[Set[str]], glyphName: str) -> bool:
+            return glyphName in gdefClass if gdefClass is not None else True
+
+        def includedInClass(gdefClass: Optional[Set[str]], glyphName: str) -> bool:
+            return glyphName in gdefClass if gdefClass is not None else False
+
+        markGlyphNames = self.context.markGlyphNames
+
+        baseResult = defaultdict(list)
+        ligatureResult = defaultdict(list)
+        markResult = defaultdict(list)
+
+        for glyphName, anchors in sorted(self.context.anchorLists.items()):
+            for anchor in anchors:
+                # Skip non-contextual anchors
+                if not anchor.isContextual:
+                    continue
+
+                # Mark glyphs go to mkmk lookups
+                if glyphName in markGlyphNames:
+                    # skip anchors for which no mark class is defined
+                    if anchor.markClass is None or anchor.isMark:
+                        continue
+                    if anchor.number is not None:
+                        self.log.warning(
+                            "invalid contextual ligature anchor '%s' in mark glyph '%s'; "
+                            "skipped",
+                            anchor.name,
+                            glyphName,
+                        )
+                        continue
+                    dest = markResult
+                # See "after" truth table for what this logic hopes to achieve:
+                # https://github.com/googlefonts/ufo2ft/pull/890#issuecomment-2498032081
+                elif anchor.number is not None and includedOrNoClass(
+                    ligatureClass, glyphName
+                ):
+                    dest = ligatureResult
+                elif anchor.number is None and (
+                    includedOrNoClass(baseClass, glyphName)
+                    or includedInClass(ligatureClass, glyphName)
+                ):
+                    dest = baseResult
+                else:
+                    continue
+
+                anchor_context = anchor.libData.get("GPOS_Context", "").strip()
+                if not anchor_context:
+                    self.log.warning(
+                        "contextual anchor '%s' in glyph '%s' has no context data; skipped",
+                        anchor.name,
+                        glyphName,
+                    )
+                    continue
+                dest[anchor_context].append((glyphName, anchor))
+        return baseResult, ligatureResult, markResult
 
     @staticmethod
     def _iterAttachments(attachments, include=None, marksFilter=None):
@@ -704,41 +819,176 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return lkp
 
     def _makeMarkFeature(self, include):
+        # First make the non-contextual lookups
         baseLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToBaseAttachments):
+        for attachments in self.context.groupedMarkToBaseAttachments:
+            i = len(baseLkps)
             lookup = self._makeMarkLookup(
                 f"mark2base{'_' + str(i) if i > 0 else ''}", attachments, include
             )
             if lookup:
                 baseLkps.append(lookup)
         ligaLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
+        for attachments in self.context.groupedMarkToLigaAttachments:
+            i = len(ligaLkps)
             lookup = self._makeMarkLookup(
                 f"mark2liga{'_' + str(i) if i > 0 else ''}", attachments, include
             )
             if lookup:
                 ligaLkps.append(lookup)
-        if not baseLkps and not ligaLkps:
-            return
+
+        # Then make the contextual ones
+        refLkps = []
+        ctxLkps = {}
+        # We sort the full context by longest first. This isn't perfect
+        # but it gives us the best chance that more specific contexts
+        # (typically longer) will take precedence over more general ones.
+        for context, glyph_anchor_pair in sorted(
+            self.context.contextualMarkToBaseAnchors.items(), key=lambda x: -len(x[0])
+        ):
+            # Group by anchor
+            attachments = defaultdict(list)
+            for glyphName, anchor in glyph_anchor_pair:
+                attachments[anchor.key].append(MarkToBasePos(glyphName, [anchor]))
+            self._makeContextualMarkLookup(
+                attachments,
+                context,
+                refLkps,
+                ctxLkps,
+            )
+
+        for context, glyph_anchor_pair in sorted(
+            self.context.contextualMarkToLigaAnchors.items(), key=lambda x: -len(x[0])
+        ):
+            # Group by anchor
+            attachments = defaultdict(list)
+            for glyphName, anchor in glyph_anchor_pair:
+                marks = [[]] * max(
+                    a.number
+                    for a in self.context.anchorLists[glyphName]
+                    if a.key and a.number is not None
+                )
+                marks[anchor.number - 1] = [anchor]
+                attachments[anchor.key].append(MarkToLigaPos(glyphName, marks))
+            self._makeContextualMarkLookup(
+                attachments,
+                context,
+                refLkps,
+                ctxLkps,
+            )
+
+        ctxLkps = list(ctxLkps.values())
+        if not baseLkps and not ligaLkps and not ctxLkps:
+            return None, []
 
         feature = ast.FeatureBlock("mark")
-        for baseLkp in baseLkps:
-            feature.statements.append(baseLkp)
-        for ligaLkp in ligaLkps:
-            feature.statements.append(ligaLkp)
-        return feature
+        if ctxLkps:
+            # When we have contextual lookups, we need to make sure that the
+            # contextual and non-contextual lookups are in the right order
+            # and we can’t use nested lookups inside the feature block for
+            # the referenced lookups, so we put all lookups outside the feature
+            # and use lookup references instead.
+            # We should probably always do this, as nested lookups are full of
+            # gotchas, but this will require updating many test expectations.
+            lookups = baseLkps + ligaLkps + refLkps + ctxLkps
+            for lookup in baseLkps + ligaLkps + ctxLkps:
+                feature.statements.append(ast.LookupReferenceStatement(lookup))
+        else:
+            lookups = []
+            for lookup in baseLkps + ligaLkps:
+                feature.statements.append(lookup)
+        return feature, lookups
+
+    def _makeContextualMarkLookup(
+        self,
+        attachments,
+        fullcontext,
+        refLkps,
+        ctxLkps,
+        prefix="ContextualMark",
+    ):
+        for anchorKey, statements in attachments.items():
+            # First make the contextual lookup
+            if ";" in fullcontext:
+                before, after = fullcontext.split(";")
+            else:
+                before, after = "", fullcontext
+            after = after.strip()
+            if before not in ctxLkps:
+                ctxLkps[before] = ast.LookupBlock(f"{prefix}Dispatch_{len(ctxLkps)}")
+                if before:
+                    # I know it's not really a comment but this is the easiest way
+                    # to get the lookup flag in there without reparsing it.
+                    ctxLkps[before].statements.append(ast.Comment(f"{before};"))
+            ctxLkp = ctxLkps[before]
+            ctxLkp.statements.append(ast.Comment(f"# {after}"))
+
+            # Insert mark glyph names after base glyph names if not specified otherwise.
+            if "&" not in after:
+                after = after.replace("*", "* &")
+
+            baseGlyphNames = " ".join([s.name for s in statements])
+            marks = ast.MarkClassName(self.context.markClasses[anchorKey]).asFea()
+
+            # Replace * with base glyph names
+            contextual = after.replace("*", f"[{baseGlyphNames}]")
+
+            # Replace & with mark glyph names
+            refLkpName = f"{prefix}_{len(refLkps)}"
+            contextual = contextual.replace("&", f"{marks}' lookup {refLkpName}")
+            ctxLkp.statements.append(ast.Comment(f"pos {contextual};"))
+
+            # Then make the non-contextual lookup it references
+            refLkp = ast.LookupBlock(refLkpName)
+            refLkp.statements = [s.asAST() for s in statements]
+            refLkps.append(refLkp)
 
     def _makeMkmkFeature(self, include):
-        feature = ast.FeatureBlock("mkmk")
-
+        # First make the non-contextual lookups
+        markLkps = []
         for anchorName, attachments in sorted(
             self.context.markToMarkAttachments.items()
         ):
             lkp = self._makeMarkToMarkLookup(anchorName, attachments, include)
             if lkp is not None:
-                feature.statements.append(lkp)
+                markLkps.append(lkp)
 
-        return feature if feature.statements else None
+        # Then make the contextual ones
+        refLkps = []
+        ctxLkps = {}
+        # We sort the full context by longest first. This isn't perfect
+        # but it gives us the best chance that more specific contexts
+        # (typically longer) will take precedence over more general ones.
+        for context, glyph_anchor_pair in sorted(
+            self.context.contextualMarkToMarkAnchors.items(), key=lambda x: -len(x[0])
+        ):
+            # Group by anchor
+            attachments = defaultdict(list)
+            for glyphName, anchor in glyph_anchor_pair:
+                attachments[anchor.key].append(MarkToMarkPos(glyphName, [anchor]))
+            self._makeContextualMarkLookup(
+                attachments,
+                context,
+                refLkps,
+                ctxLkps,
+                prefix="ContextualMarkToMark",
+            )
+
+        ctxLkps = list(ctxLkps.values())
+        if not markLkps and not ctxLkps:
+            return None, []
+
+        feature = ast.FeatureBlock("mkmk")
+        if ctxLkps:
+            lookups = markLkps + refLkps + ctxLkps
+            for lookup in markLkps + ctxLkps:
+                feature.statements.append(ast.LookupReferenceStatement(lookup))
+        else:
+            lookups = []
+            for lookup in markLkps:
+                feature.statements.append(lookup)
+
+        return feature, lookups
 
     def _isAboveMark(self, anchor):
         if anchor.name in self.abvmAnchorNames:
@@ -767,7 +1017,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
             raise AssertionError(tag)
 
         baseLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToBaseAttachments):
+        for attachments in self.context.groupedMarkToBaseAttachments:
+            i = len(baseLkps)
             lookup = self._makeMarkLookup(
                 f"{tag}_mark2base{'_' + str(i) if i > 0 else ''}",
                 attachments,
@@ -777,7 +1028,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
             if lookup:
                 baseLkps.append(lookup)
         ligaLkps = []
-        for i, attachments in enumerate(self.context.groupedMarkToLigaAttachments):
+        for attachments in self.context.groupedMarkToLigaAttachments:
+            i = len(ligaLkps)
             lookup = self._makeMarkLookup(
                 f"{tag}_mark2liga{'_' + str(i) if i > 0 else ''}",
                 attachments,
@@ -814,6 +1066,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
     def _makeFeatures(self):
         ctx = self.context
 
+        # First do non-contextual lookups
         ctx.groupedMarkToBaseAttachments = self._groupAttachments(
             self._makeMarkToBaseAttachments()
         )
@@ -822,24 +1075,36 @@ class MarkFeatureWriter(BaseFeatureWriter):
         )
         ctx.markToMarkAttachments = self._makeMarkToMarkAttachments()
 
-        abvmGlyphs = self._getAbvmGlyphs()
+        baseClass = self.context.gdefClasses.base
+        ligatureClass = self.context.gdefClasses.ligature
+        markClass = self.context.gdefClasses.mark
+        (
+            ctx.contextualMarkToBaseAnchors,
+            ctx.contextualMarkToLigaAnchors,
+            ctx.contextualMarkToMarkAnchors,
+        ) = self._makeContextualAttachments(baseClass, ligatureClass, markClass)
+
+        abvmGlyphs, notAbvmGlyphs = self._getAbvmGlyphs()
 
         def isAbvm(glyphName):
             return glyphName in abvmGlyphs
 
         def isNotAbvm(glyphName):
-            return glyphName not in abvmGlyphs
+            return glyphName in notAbvmGlyphs
 
         features = {}
+        lookups = []
         todo = ctx.todo
         if "mark" in todo:
-            mark = self._makeMarkFeature(include=isNotAbvm)
+            mark, markLookups = self._makeMarkFeature(include=isNotAbvm)
             if mark is not None:
                 features["mark"] = mark
+                lookups.extend(markLookups)
         if "mkmk" in todo:
-            mkmk = self._makeMkmkFeature(include=isNotAbvm)
+            mkmk, mkmkLookups = self._makeMkmkFeature(include=isNotAbvm)
             if mkmk is not None:
                 features["mkmk"] = mkmk
+                lookups.extend(mkmkLookups)
         if "abvm" in todo or "blwm" in todo:
             if abvmGlyphs:
                 for tag in ("abvm", "blwm"):
@@ -849,22 +1114,47 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     if feature is not None:
                         features[tag] = feature
 
-        return features
+        return features, lookups
 
     def _getAbvmGlyphs(self):
-        cmap = self.makeUnicodeToGlyphNameMapping()
-        unicodeIsAbvm = partial(unicodeInScripts, scripts=self.scriptsUsingAbvm)
-        if any(unicodeIsAbvm(uv) for uv in cmap):
-            # If there are any characters from Indic/USE/Khmer scripts in the cmap, we
-            # compile a temporary GSUB table to resolve substitutions and get
-            # the set of all the relevant glyphs, including alternate glyphs.
-            gsub = self.compileGSUB()
-            glyphGroups = classifyGlyphs(unicodeIsAbvm, cmap, gsub)
-            # the 'glyphGroups' dict is keyed by the return value of the
-            # classifying include, so here 'True' means all the Indic/USE/Khmer glyphs
-            return glyphGroups.get(True, set())
-        else:
-            return set()
+        glyphSet = set(self.getOrderedGlyphSet().keys())
+        scriptsUsingAbvm = self.scriptsUsingAbvm
+        if self.context.feaScripts:
+            # https://github.com/googlefonts/ufo2ft/issues/579 Some characters
+            # can be used in multiple scripts and some of these scripts might
+            # need an abvm feature and some might not, so we filter-out the
+            # abvm scripts that the font does not intend to support.
+            scriptsUsingAbvm = scriptsUsingAbvm & self.context.feaScripts
+        if scriptsUsingAbvm:
+            cmap = self.makeUnicodeToGlyphNameMapping()
+            unicodeIsAbvm = partial(unicodeInScripts, scripts=scriptsUsingAbvm)
+
+            def unicodeIsNotAbvm(uv):
+                return bool(unicodeScriptExtensions(uv) - self.scriptsUsingAbvm)
+
+            if any(unicodeIsAbvm(uv) for uv in cmap):
+                # If there are any characters from Indic/USE/Khmer scripts in
+                # the cmap, we compile a temporary GSUB table to resolve
+                # substitutions and get the set of all the relevant glyphs,
+                # including alternate glyphs.
+                gsub = self.compileGSUB()
+                extras = self.extraSubstitutions()
+                glyphGroups = classifyGlyphs(unicodeIsAbvm, cmap, gsub, extras)
+                # the 'glyphGroups' dict is keyed by the return value of the
+                # classifying include, so here 'True' means all the
+                # Indic/USE/Khmer glyphs
+                abvmGlyphs = glyphGroups.get(True, set())
+
+                # If a character can be used in Indic/USE/Khmer scripts as well
+                # as other scripts, we want to return it in both 'abvmGlyphs'
+                # (done above) and 'notAbvmGlyphs' (done below) sets.
+                glyphGroups = classifyGlyphs(unicodeIsNotAbvm, cmap, gsub, extras)
+                notAbvmGlyphs = glyphGroups.get(True, set())
+                # Since cmap might not cover all glyphs, we union with the
+                # glyph set.
+                notAbvmGlyphs |= glyphSet - abvmGlyphs
+                return abvmGlyphs, notAbvmGlyphs
+        return set(), glyphSet
 
     def _write(self):
         self._pruneUnusedAnchors()
@@ -872,7 +1162,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         newClassDefs = self._makeMarkClassDefinitions()
         self._setBaseAnchorMarkClasses()
 
-        features = self._makeFeatures()
+        features, lookups = self._makeFeatures()
         if not features:
             return False
 
@@ -882,6 +1172,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
             feaFile=feaFile,
             markClassDefs=newClassDefs,
             features=[features[tag] for tag in sorted(features.keys())],
+            lookups=lookups,
         )
 
         return True

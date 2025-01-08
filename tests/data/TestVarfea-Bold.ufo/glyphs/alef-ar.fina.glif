@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="alef-ar.fina" format="2">
+  <advance width="600"/>
+  <unicode hex="0627"/>
+  <anchor x="330" y="115" name="entry"/>
+  <anchor x="214" y="797" name="top"/>
+  <outline>
+    <contour>
+      <point x="297" y="601" type="line"/>
+      <point x="297" y="173"/>
+      <point x="310" y="133"/>
+      <point x="348" y="118" type="curve" smooth="yes"/>
+      <point x="402" y="97"/>
+      <point x="433" y="86"/>
+      <point x="487" y="123" type="curve"/>
+      <point x="565" y="-41" type="line"/>
+      <point x="501" y="-73"/>
+      <point x="400" y="-76"/>
+      <point x="355" y="-76" type="curve" smooth="yes"/>
+      <point x="108" y="-76"/>
+      <point x="137" y="121"/>
+      <point x="137" y="569" type="curve"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2023/11/20 16:51:14</string>
+    </dict>
+  </lib>
+</glyph>

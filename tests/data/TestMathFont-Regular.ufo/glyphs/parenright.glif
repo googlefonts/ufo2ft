@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="parenright" format="2">
+  <advance width="331"/>
+  <unicode hex="0029"/>
+  <outline>
+    <component base="parenleft" xScale="-1" xOffset="331"/>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.nagwa.MATHPlugin.variants</key>
+      <dict>
+        <key>vAssembly</key>
+        <array>
+          <array>
+            <string>parenright.bot</string>
+            <integer>0</integer>
+            <integer>0</integer>
+            <integer>314</integer>
+          </array>
+          <array>
+            <string>parenright.ext</string>
+            <integer>1</integer>
+            <integer>630</integer>
+            <integer>630</integer>
+          </array>
+          <array>
+            <string>parenright.top</string>
+            <integer>0</integer>
+            <integer>314</integer>
+            <integer>0</integer>
+          </array>
+        </array>
+        <key>vVariants</key>
+        <array>
+          <string>parenright</string>
+          <string>parenright.size1</string>
+          <string>parenright.size2</string>
+          <string>parenright.size3</string>
+          <string>parenright.size4</string>
+        </array>
+      </dict>
+    </dict>
+  </lib>
+</glyph>

@@ -8,5 +8,7 @@
     <string>a.color1.glif</string>
     <key>a.color2</key>
     <string>a.color2.glif</string>
+    <key>space</key>
+    <string>space.glif</string>
   </dict>
 </plist>

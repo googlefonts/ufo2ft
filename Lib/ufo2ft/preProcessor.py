@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import itertools
+from typing import TYPE_CHECKING
 
 from ufo2ft.constants import (
     COLOR_LAYER_MAPPING_KEY,
@@ -6,12 +9,16 @@ from ufo2ft.constants import (
     COLOR_PALETTES_KEY,
 )
 from ufo2ft.filters import isValidFilter, loadFilters
-from ufo2ft.filters.decomposeComponents import DecomposeComponentsFilter
-from ufo2ft.filters.decomposeTransformedComponents import (
-    DecomposeTransformedComponentsFilter,
+from ufo2ft.filters.base import BaseFilter, BaseIFilter
+from ufo2ft.filters.decomposeComponents import (
+    DecomposeComponentsFilter,
+    DecomposeComponentsIFilter,
 )
 from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.util import _GlyphSet
+from ufo2ft.util import _GlyphSet, zip_strict
+
+if TYPE_CHECKING:
+    from ufo2ft.instantiator import Instantiator
 
 
 def _load_custom_filters(ufo, filters=None):
@@ -195,6 +202,7 @@ class TTFPreProcessor(OTFPreProcessor):
         flattenComponents=False,
         convertCubics=True,
         conversionError=None,
+        allQuadratic=True,
         reverseDirection=True,
         rememberCurveType=True,
     ):
@@ -227,12 +235,169 @@ class TTFPreProcessor(OTFPreProcessor):
                     conversionError=conversionError,
                     reverseDirection=reverseDirection,
                     rememberCurveType=rememberCurveType and self.inplace,
+                    allQuadratic=allQuadratic,
                 )
             )
+        elif reverseDirection:
+            from ufo2ft.filters.reverseContourDirection import (
+                ReverseContourDirectionFilter,
+            )
+
+            filters.append(ReverseContourDirectionFilter(include=lambda g: len(g)))
         return filters
 
 
-class TTFInterpolatablePreProcessor:
+class BaseInterpolatablePreProcessor:
+    """Base class for interpolatable pre-processors.
+
+    These apply filters to same-named glyphs from multiple source layers at once,
+    ensuring that outlines are kept interpolation compatible.
+
+    The optional `instantiator` can be used by filters to interpolate glyph
+    instances (e.g. when decomposing composite glyphs defined at more or less
+    source locations as some of their components' base glyphs).
+    """
+
+    def __init__(
+        self,
+        ufos,
+        inplace=False,
+        layerNames=None,
+        skipExportGlyphs=None,
+        filters=None,
+        *,
+        instantiator: Instantiator | None = None,
+        **kwargs,
+    ):
+        self.ufos = ufos
+        self.inplace = inplace
+
+        if layerNames is None:
+            layerNames = [None] * len(ufos)
+        assert len(ufos) == len(layerNames)
+        self.layerNames = layerNames
+
+        if instantiator is not None and len(instantiator.source_layers) != len(ufos):
+            raise ValueError(
+                f"Expected {len(ufos)} sources for instantiator; "
+                f"found {len(instantiator.source_layers)}"
+            )
+        self.instantiator = instantiator
+
+        # For each UFO, make a mapping of name to glyph object (and ensure it
+        # contains none of the glyphs to be skipped, or any references to it).
+        self.glyphSets = [
+            _GlyphSet.from_layer(ufo, layerName, copy=not inplace)
+            for ufo, layerName in zip_strict(ufos, layerNames)
+        ]
+        if skipExportGlyphs:
+            from ufo2ft.filters.skipExportGlyphs import SkipExportGlyphsIFilter
+
+            self._run(SkipExportGlyphsIFilter(skipExportGlyphs))
+
+        self.defaultFilters = self.initDefaultFilters(**kwargs)
+
+        filterses = [_load_custom_filters(ufo, filters) for ufo in ufos]
+        self.preFilters = [[f for f in filters if f.pre] for filters in filterses]
+        self.postFilters = [[f for f in filters if not f.pre] for filters in filterses]
+
+    def initDefaultFilters(self, **kwargs):
+        filterses = []
+        for ufo in self.ufos:
+            filterses.append([])
+            _init_explode_color_layer_glyphs_filter(ufo, filterses[-1])
+        return filterses
+
+    def process(self):
+        # first apply all custom pre-filters, then all default filters, and finally
+        # all custom post-filters
+        for filterses in (self.preFilters, self.defaultFilters, self.postFilters):
+            for filters in itertools.zip_longest(*filterses):
+                self._run(*filters)
+        return self.glyphSets
+
+    def _update_instantiator(self):
+        # the instantiator's source layers must be updated after each filter is run,
+        # since each filter can modify/remove/add glyphs.
+        if self.instantiator is not None:
+            self.instantiator.replace_source_layers(self.glyphSets)
+
+    def _run_interpolatable(self, filter_: BaseIFilter) -> set[str]:
+        # apply a single, interpolatable filter to all the glyphSets
+        modified = filter_(self.ufos, self.glyphSets, self.instantiator)
+        if modified:
+            self._update_instantiator()
+        return modified
+
+    @staticmethod
+    def _try_as_interpolatable_filter(
+        filters: list[BaseFilter | None],
+    ) -> BaseIFilter | None:
+        # Try to combine multiple filters into a single interpolatable variant
+        assert len(filters) > 0
+        filter_ = next(filter(None, filters))
+        filter_class = type(filter_)
+
+        if not all(
+            (
+                type(f) is filter_class
+                and f.options == filter_.options
+                and f.pre == filter_.pre
+            )
+            for f in filters[1:]
+        ):
+            return None
+
+        if isinstance(filter_, BaseIFilter):
+            return filter_
+
+        ifilter_class = None
+        try:
+            ifilter_class = filter_class.getInterpolatableFilterClass()
+        except AttributeError:
+            pass
+        if ifilter_class is None:
+            return None
+
+        if not isValidFilter(ifilter_class, BaseIFilter):
+            raise ValueError(f"Invalid interpolatable filter class: {ifilter_class!r}")
+
+        # in the unlikely scenario individual filters have different includes,
+        # this effectively takes the union of those
+        def include(g):
+            return any(f.include(g) for f in filters)
+
+        return ifilter_class(
+            pre=filter_.pre,
+            include=include,
+            **filter_.options.__dict__,
+        )
+
+    def _run(self, *filters: tuple[BaseFilter | None]) -> set[str]:
+        # apply either multiple (one per glyphSet) or a single filter to all glyphSets
+        if len(filters) == 1:
+            assert filters[0] is not None
+            if isinstance(filters[0], BaseIFilter):
+                return self._run_interpolatable(filters[0])
+
+            filters = [filters[0]] * len(self.ufos)
+
+        # attempt to convert mutltiple filters to single interpolatable variant (if any)
+        if ifilter := self._try_as_interpolatable_filter(filters):
+            return self._run_interpolatable(ifilter)
+
+        # or else apply individual filters to the respective glyphSet, one at a time,
+        # and hope for the best...
+        modified = set()
+        for filter_, ufo, glyphSet in zip_strict(filters, self.ufos, self.glyphSets):
+            if filter_ is not None:
+                modified |= filter_(ufo, glyphSet)
+        if modified:
+            self._update_instantiator()
+        return modified
+
+
+class TTFInterpolatablePreProcessor(BaseInterpolatablePreProcessor):
     """Preprocessor for building TrueType-flavored OpenType fonts with
     interpolatable quadratic outlines.
 
@@ -260,98 +425,141 @@ class TTFInterpolatablePreProcessor:
         ufos,
         inplace=False,
         flattenComponents=False,
+        convertCubics=True,
         conversionError=None,
         reverseDirection=True,
         rememberCurveType=True,
         layerNames=None,
         skipExportGlyphs=None,
         filters=None,
+        allQuadratic=True,
+        *,
+        instantiator: Instantiator | None = None,
+        **kwargs,
     ):
-        from cu2qu.ufo import DEFAULT_MAX_ERR
+        from fontTools.cu2qu.ufo import DEFAULT_MAX_ERR
 
-        self.ufos = ufos
-        self.inplace = inplace
+        super().__init__(
+            ufos,
+            inplace=inplace,
+            layerNames=layerNames,
+            skipExportGlyphs=skipExportGlyphs,
+            filters=filters,
+            instantiator=instantiator,
+            **kwargs,
+        )
         self.flattenComponents = flattenComponents
-
-        if layerNames is None:
-            layerNames = [None] * len(ufos)
-        assert len(ufos) == len(layerNames)
-        self.layerNames = layerNames
-
-        # For each UFO, make a mapping of name to glyph object (and ensure it
-        # contains none of the glyphs to be skipped, or any references to it).
-        self.glyphSets = [
-            _GlyphSet.from_layer(
-                ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
-            )
-            for ufo, layerName in zip(ufos, layerNames)
-        ]
+        self.convertCubics = convertCubics
         self._conversionErrors = [
             (conversionError or DEFAULT_MAX_ERR)
             * getAttrWithFallback(ufo.info, "unitsPerEm")
-            for ufo in ufos
+            for ufo in self.ufos
         ]
         self._reverseDirection = reverseDirection
         self._rememberCurveType = rememberCurveType
-
-        self.defaultFilters = []
-        for ufo in ufos:
-            self.defaultFilters.append([])
-            _init_explode_color_layer_glyphs_filter(ufo, self.defaultFilters[-1])
-
-        filterses = [_load_custom_filters(ufo, filters) for ufo in ufos]
-        self.preFilters = [[f for f in filters if f.pre] for filters in filterses]
-        self.postFilters = [[f for f in filters if not f.pre] for filters in filterses]
+        self.allQuadratic = allQuadratic
 
     def process(self):
-        from cu2qu.ufo import fonts_to_quadratic
-
-        needs_decomposition = set()
+        from fontTools.cu2qu.ufo import fonts_to_quadratic
 
         # first apply all custom pre-filters
-        for funcs, ufo, glyphSet in zip(self.preFilters, self.ufos, self.glyphSets):
-            for func in funcs:
-                if isinstance(func, DecomposeTransformedComponentsFilter):
-                    needs_decomposition |= func(ufo, glyphSet)
-                else:
-                    func(ufo, glyphSet)
-
-        # If we decomposed a glyph in some masters, we must ensure it is decomposed in
-        # all masters. (https://github.com/googlefonts/ufo2ft/issues/507)
-        if needs_decomposition:
-            decompose = DecomposeComponentsFilter(include=needs_decomposition)
-            for ufo, glyphSet in zip(self.ufos, self.glyphSets):
-                decompose(ufo, glyphSet)
-
-        # then apply all default filters
-        for funcs, ufo, glyphSet in zip(self.defaultFilters, self.ufos, self.glyphSets):
-            for func in funcs:
-                func(ufo, glyphSet)
-
-        fonts_to_quadratic(
-            self.glyphSets,
-            max_err=self._conversionErrors,
-            reverse_direction=self._reverseDirection,
-            dump_stats=True,
-            remember_curve_type=self._rememberCurveType and self.inplace,
-        )
+        for funcs in itertools.zip_longest(*self.preFilters):
+            self._run(*funcs)
 
         # TrueType fonts cannot mix contours and components, so pick out all glyphs
-        # that have contours (`bool(len(g)) == True`) and decompose their
-        # components, if any.
-        decompose = DecomposeComponentsFilter(include=lambda g: len(g))
-        for ufo, glyphSet in zip(self.ufos, self.glyphSets):
-            decompose(ufo, glyphSet)
+        # that have both contours _and_ components.
+        needs_decomposition = {
+            gname
+            for glyphSet in self.glyphSets
+            for gname, glyph in glyphSet.items()
+            if len(glyph) > 0 and glyph.components
+        }
+        # Variable fonts can only variate glyf components' x or y offsets, not their
+        # 2x2 transformation matrix; decompose of these don't match across masters
+        self.check_for_nonmatching_components(needs_decomposition)
+        if needs_decomposition:
+            self._run(DecomposeComponentsIFilter(include=needs_decomposition))
+
+        # then apply all default filters
+        for funcs in itertools.zip_longest(*self.defaultFilters):
+            self._run(*funcs)
+
+        if self.convertCubics:
+            if fonts_to_quadratic(
+                self.glyphSets,
+                max_err=self._conversionErrors,
+                reverse_direction=self._reverseDirection,
+                dump_stats=True,
+                remember_curve_type=self._rememberCurveType and self.inplace,
+                all_quadratic=self.allQuadratic,
+            ):
+                self._update_instantiator()
+        elif self._reverseDirection:
+            from ufo2ft.filters.reverseContourDirection import (
+                ReverseContourDirectionFilter,
+            )
+
+            self._run(ReverseContourDirectionFilter(include=lambda g: len(g)))
 
         if self.flattenComponents:
-            from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
+            from ufo2ft.filters.flattenComponents import FlattenComponentsIFilter
 
-            for ufo, glyphSet in zip(self.ufos, self.glyphSets):
-                FlattenComponentsFilter()(ufo, glyphSet)
+            self._run(FlattenComponentsIFilter(include=lambda g: len(g.components)))
 
         # finally apply all custom post-filters
-        for funcs, ufo, glyphSet in zip(self.postFilters, self.ufos, self.glyphSets):
-            for func in funcs:
-                func(ufo, glyphSet)
+        for funcs in itertools.zip_longest(*self.postFilters):
+            self._run(*funcs)
 
         return self.glyphSets
+
+    def check_for_nonmatching_components(self, needs_decomposition):
+        # Look through all the glyphsets and if we find any glyphs
+        # where the transforms don't match across masters, we add it
+        # to the needs_decomposition list. See #507
+
+        all_glyphs = set.union(*[set(x.keys()) for x in self.glyphSets])
+
+        for glyph in all_glyphs:
+            if glyph in needs_decomposition:
+                continue  # We know there's an issue here
+            layers = [
+                glyphset[glyph] for glyphset in self.glyphSets if glyph in glyphset
+            ]
+
+            # Skip early if there aren't any components
+            component_counts = [len(layer.components) for layer in layers]
+            if not any(component_counts):
+                continue
+
+            # Other bits of the system will check for incompatible construction,
+            # we just want to stay alive.
+            for component_index in range(0, min(component_counts)):
+                # We only care about the two-by-twos; translations can differ
+                transforms = [
+                    layer.components[component_index].transformation[0:4]
+                    for layer in layers
+                ]
+
+                if any(transform != transforms[0] for transform in transforms):
+                    needs_decomposition.add(glyph)
+                    break
+
+
+class OTFInterpolatablePreProcessor(BaseInterpolatablePreProcessor):
+    """Interpolatable pre-processor for CFF-flavored fonts.
+
+    By default, besides any user-defined custom pre/post filters, this decomposes
+    all composite glyphs, which aren't a thing in PostScript outlines.
+
+    Unlike the non-interpolatable OTFPreProcessor, overlaps are *not* removed as
+    that could make outlines incompatible for interpolation.
+    """
+
+    def initDefaultFilters(self, **kwargs):
+        filterses = super().initDefaultFilters(**kwargs)
+        # this interpolatable filter will only run once on all the glyphSets,
+        # (see _try_as_interpolatable_filter)
+        decompose = DecomposeComponentsIFilter()
+        for filters in filterses:
+            filters.append(decompose)
+        return filterses

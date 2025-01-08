@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>lib</key>
+    <dict>
+      <key>com.schriftgestaltung.layerId</key>
+      <string>C4872ECA-A3A9-40AB-960A-1DB2202F16DE</string>
+      <key>com.schriftgestaltung.layerOrderInGlyph.A</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.Adieresis</key>
+      <integer>0</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.a</key>
+      <integer>1</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.adieresis</key>
+      <integer>0</integer>
+      <key>com.schriftgestaltung.layerOrderInGlyph.dieresiscomb</key>
+      <integer>0</integer>
+    </dict>
+  </dict>
+</plist>

@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>ka-oriya</key>
+    <string>ka-oriya.glif</string>
+    <key>ka-oriya.BRACKET.varAlt01</key>
+    <string>ka-oriya.B_R_A_C_K_E_T_.varA_lt01.glif</string>
+    <key>ka-oriya.below</key>
+    <string>ka-oriya.below.glif</string>
+    <key>lVocalicMatra-oriya</key>
+    <string>lV_ocalicM_atra-oriya.glif</string>
+    <key>lVocalicMatra-oriya.BRACKET.varAlt01</key>
+    <string>lV_ocalicM_atra-oriya.B_R_A_C_K_E_T_.varA_lt01.glif</string>
+    <key>uuMatra-oriya</key>
+    <string>uuM_atra-oriya.glif</string>
+    <key>uuMatra-oriya.BRACKET.varAlt01</key>
+    <string>uuM_atra-oriya.B_R_A_C_K_E_T_.varA_lt01.glif</string>
+  </dict>
+</plist>

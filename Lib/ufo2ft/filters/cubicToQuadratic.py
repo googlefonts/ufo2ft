@@ -1,7 +1,7 @@
 import logging
 
-from cu2qu.pens import Cu2QuPointPen
-from cu2qu.ufo import CURVE_TYPE_LIB_KEY, DEFAULT_MAX_ERR
+from fontTools.cu2qu.ufo import CURVE_TYPE_LIB_KEY, DEFAULT_MAX_ERR
+from fontTools.pens.cu2quPen import Cu2QuPointPen
 
 from ufo2ft.filters import BaseFilter
 from ufo2ft.fontInfoData import getAttrWithFallback
@@ -10,11 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 class CubicToQuadraticFilter(BaseFilter):
-
     _kwargs = {
         "conversionError": None,
         "reverseDirection": True,
         "rememberCurveType": False,
+        "allQuadratic": True,
     }
 
     def set_context(self, font, glyphSet):
@@ -65,6 +65,7 @@ class CubicToQuadraticFilter(BaseFilter):
             self.context.absoluteError,
             reverse_direction=self.options.reverseDirection,
             stats=self.context.stats,
+            all_quadratic=self.options.allQuadratic,
         )
         contours = list(glyph)
         glyph.clearContours()

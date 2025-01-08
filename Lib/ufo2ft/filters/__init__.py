@@ -5,28 +5,41 @@ from inspect import getfullargspec, isclass
 from ufo2ft.constants import FILTERS_KEY
 from ufo2ft.util import _loadPluginFromString
 
-from .base import BaseFilter
+from .base import BaseFilter, BaseIFilter
 from .cubicToQuadratic import CubicToQuadraticFilter
-from .decomposeComponents import DecomposeComponentsFilter
-from .decomposeTransformedComponents import DecomposeTransformedComponentsFilter
-from .dottedCircleFilter import DottedCircleFilter
+from .decomposeComponents import DecomposeComponentsFilter, DecomposeComponentsIFilter
+from .decomposeTransformedComponents import (
+    DecomposeTransformedComponentsFilter,
+    DecomposeTransformedComponentsIFilter,
+)
+from .dottedCircle import DottedCircleFilter
 from .explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
-from .flattenComponents import FlattenComponentsFilter
-from .propagateAnchors import PropagateAnchorsFilter
+from .flattenComponents import FlattenComponentsFilter, FlattenComponentsIFilter
+from .propagateAnchors import PropagateAnchorsFilter, PropagateAnchorsIFilter
 from .removeOverlaps import RemoveOverlapsFilter
+from .reverseContourDirection import ReverseContourDirectionFilter
+from .skipExportGlyphs import SkipExportGlyphsFilter, SkipExportGlyphsIFilter
 from .sortContours import SortContoursFilter
 from .transformations import TransformationsFilter
 
 __all__ = [
     "BaseFilter",
+    "BaseIFilter",
     "CubicToQuadraticFilter",
     "DecomposeComponentsFilter",
+    "DecomposeComponentsIFilter",
     "DecomposeTransformedComponentsFilter",
+    "DecomposeTransformedComponentsIFilter",
     "DottedCircleFilter",
     "ExplodeColorLayerGlyphsFilter",
     "FlattenComponentsFilter",
+    "FlattenComponentsIFilter",
     "PropagateAnchorsFilter",
+    "PropagateAnchorsIFilter",
     "RemoveOverlapsFilter",
+    "ReverseContourDirectionFilter",
+    "SkipExportGlyphsFilter",
+    "SkipExportGlyphsIFilter",
     "SortContoursFilter",
     "TransformationsFilter",
     "loadFilters",
@@ -48,7 +61,9 @@ def getFilterClass(filterName, pkg="ufo2ft.filters"):
     moduleName = filterName[0].lower() + filterName[1:]
     module = importlib.import_module(".".join([pkg, moduleName]))
     # if filter name is 'Foo Bar', the class should be called 'FooBarFilter'
-    className = filterName[0].upper() + filterName[1:] + "Filter"
+    className = filterName[0].upper() + filterName[1:]
+    if not className.endswith("Filter"):
+        className += "Filter"
     return getattr(module, className)
 
 
@@ -81,13 +96,15 @@ def loadFilters(ufo):
     return preFilters, postFilters
 
 
-def isValidFilter(klass):
+def isValidFilter(klass, *bases):
     """Return True if 'klass' is a valid filter class.
     A valid filter class is a class (of type 'type'), that has
     a '__call__' (bound method), with the signature matching the same method
-    from the BaseFilter class:
+    from the BaseFilter or BaseIFilter classes, respectively:
 
            def __call__(self, font, glyphSet=None)
+
+           def __call__(self, fonts, glyphSets=None, instantiator=None, **kwargs)
     """
     if not isclass(klass):
         logger.error(f"{klass!r} is not a class")
@@ -95,10 +112,14 @@ def isValidFilter(klass):
     if not callable(klass):
         logger.error(f"{klass!r} is not callable")
         return False
-    if getfullargspec(klass.__call__).args != getfullargspec(BaseFilter.__call__).args:
-        logger.error(f"{klass!r} '__call__' method has incorrect signature")
-        return False
-    return True
+    for baseClass in bases or (BaseFilter, BaseIFilter):
+        if (
+            getfullargspec(klass.__call__).args
+            == getfullargspec(baseClass.__call__).args
+        ):
+            return True
+    logger.error(f"{klass!r} '__call__' method has incorrect signature")
+    return False
 
 
 def loadFilterFromString(spec):

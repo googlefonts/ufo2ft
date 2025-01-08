@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>beh-ar</key>
+    <string>beh-ar.glif</string>
+    <key>behDotless-ar</key>
+    <string>behD_otless-ar.glif</string>
+    <key>behDotless-ar.fina</key>
+    <string>behD_otless-ar.fina.glif</string>
+    <key>behDotless-ar.init</key>
+    <string>behD_otless-ar.init.glif</string>
+    <key>behDotless-ar.init.alt</key>
+    <string>behD_otless-ar.init.alt.glif</string>
+    <key>behDotless-ar.medi</key>
+    <string>behD_otless-ar.medi.glif</string>
+    <key>behTwodotsbelowDotabove-ar</key>
+    <string>behT_wodotsbelowD_otabove-ar.glif</string>
+    <key>dotabove-ar</key>
+    <string>dotabove-ar.glif</string>
+    <key>dotbelow-ar</key>
+    <string>dotbelow-ar.glif</string>
+    <key>reh-ar</key>
+    <string>reh-ar.glif</string>
+    <key>twodotshorizontalbelow-ar</key>
+    <string>twodotshorizontalbelow-ar.glif</string>
+    <key>twodotsverticalbelow-ar</key>
+    <string>twodotsverticalbelow-ar.glif</string>
+  </dict>
+</plist>

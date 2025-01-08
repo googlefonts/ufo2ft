@@ -1,10 +1,19 @@
 import logging
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from types import SimpleNamespace
 
-from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
-from ufo2ft.errors import InvalidFeaturesData
+from fontTools.designspaceLib import DesignSpaceDocument
+from fontTools.feaLib.variableScalar import VariableScalar
+from fontTools.misc.fixedTools import otRound
+
 from ufo2ft.featureWriters import ast
+from ufo2ft.util import (
+    OpenTypeCategories,
+    collapse_varscalar,
+    get_userspace_location,
+    quantize,
+    unicodeScriptExtensions,
+)
 
 INSERT_FEATURE_MARKER = r"\s*# Automatic Code.*"
 
@@ -32,6 +41,11 @@ class BaseFeatureWriter:
     The `options` class attribute contains a mapping of option
     names with their default values. These can be overridden on an
     instance by passing keyword arguments to the constructor.
+
+    Combining manually written and automatically generated feature code
+    can be achieved by using the `# Automatic Code` insertion marker
+    inside the feature code. Automatically generated code for the
+    respective feature is added in that spot.
     """
 
     tableTag = None
@@ -79,11 +93,13 @@ class BaseFeatureWriter:
           instantiated from a FeatureCompiler);
         - a set of features (tags) to be generated. If self.mode is "skip",
           these are all the features which are _not_ already present.
+        - a set of all existing features (tags) in the feaFile.
 
         Returns the context namespace instance.
         """
         todo = set(self.features)
         insertComments = None
+        existing = set()
         if self.mode == "skip":
             if self.insertFeatureMarker is not None:
                 insertComments = self.collectInsertMarkers(
@@ -103,6 +119,8 @@ class BaseFeatureWriter:
             compiler=compiler,
             todo=todo,
             insertComments=insertComments,
+            existingFeatures=existing,
+            isVariable=isinstance(font, DesignSpaceDocument),
         )
 
         return self.context
@@ -122,8 +140,12 @@ class BaseFeatureWriter:
     def write(self, font, feaFile, compiler=None):
         """Write features and class definitions for this font to a feaLib
         FeatureFile object.
-        Returns True if feature file was modified, False if no new features
-        were generated.
+
+        The main entry point for the FeatureCompiler to any of the
+        FeatureWriters.
+
+        Returns True if feature file was modified, False if no new features were
+        generated.
         """
         self.setContext(font, feaFile, compiler=compiler)
         try:
@@ -195,17 +217,14 @@ class BaseFeatureWriter:
 
                 # insertFeatureMarker is in the middle of a feature block
                 # preceded and followed by statements that are not comments
-                #
-                # Glyphs3 can insert a feature block when rules are before
-                # and after the insert marker.
-                # See
-                # https://github.com/googlefonts/ufo2ft/issues/351#issuecomment-765294436
-                # This is currently not supported.
                 else:
-                    raise InvalidFeaturesData(
-                        "Insert marker has rules before and after, feature "
-                        f"{block.name} cannot be inserted. This is not supported."
-                    )
+                    index = statements.index(block) + 1
+                    # Split statements after the insertFeatureMarker into a new block
+                    afterBlock = ast.FeatureBlock(block.name)
+                    afterBlock.statements = block.statements[markerIndex:]
+                    statements.insert(index, afterBlock)
+                    # And remove them from the original block
+                    block.statements = block.statements[:markerIndex]
 
                 statements.insert(index, feature)
                 indices.append(index)
@@ -229,23 +248,21 @@ class BaseFeatureWriter:
             statements.insert(index, feature)
             indices.append(index)
 
-        # Write classDefs, anchorsDefs, markClassDefs, lookups at earliest
-        # opportunity.
-        others = []
         minindex = min(indices)
+        if lookups:
+            feaFile.statements = statements = (
+                statements[:minindex] + lookups + statements[minindex:]
+            )
+
+        # Write classDefs, anchorsDefs, markClassDefs, lookups at
+        # the very top of the feature file.
+        others = []
         for defs in [classDefs, anchorDefs, markClassDefs]:
             if defs:
                 others.extend(defs)
                 others.append(ast.Comment(""))
-        # Insert lookups
-        if lookups:
-            if minindex > 0 and not others:
-                others.append(ast.Comment(""))
-            others.extend(lookups)
-        if others:
-            feaFile.statements = statements = (
-                statements[:minindex] + others + statements[minindex:]
-            )
+
+        feaFile.statements = statements = others + statements
 
     @staticmethod
     def collectInsertMarkers(feaFile, insertFeatureMarker, featureTags):
@@ -306,6 +323,8 @@ class BaseFeatureWriter:
         from ufo2ft.util import compileGSUB
 
         compiler = self.context.compiler
+        fvar = None
+        feafile = self.context.feaFile
         if compiler is not None:
             # The result is cached in the compiler instance, so if another
             # writer requests one it is not compiled again.
@@ -313,57 +332,27 @@ class BaseFeatureWriter:
                 return compiler._gsub
 
             glyphOrder = compiler.ttFont.getGlyphOrder()
+            fvar = compiler.ttFont.get("fvar")
         else:
             # the 'real' glyph order doesn't matter because the table is not
             # compiled to binary, only the glyph names are used
             glyphOrder = sorted(self.context.font.keys())
 
-        gsub = compileGSUB(self.context.feaFile, glyphOrder)
+        gsub = compileGSUB(feafile, glyphOrder, fvar=fvar)
 
         if compiler and not hasattr(compiler, "_gsub"):
             compiler._gsub = gsub
         return gsub
 
+    def extraSubstitutions(self):
+        compiler = self.context.compiler
+        if compiler is not None:
+            return compiler.extraSubstitutions
+
     def getOpenTypeCategories(self):
         """Return 'public.openTypeCategories' values as a tuple of sets of
         unassigned, bases, ligatures, marks, components."""
-        font = self.context.font
-        unassigned, bases, ligatures, marks, components = (
-            set(),
-            set(),
-            set(),
-            set(),
-            set(),
-        )
-        openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
-
-        for glyphName, category in openTypeCategories.items():
-            if category == "unassigned":
-                unassigned.add(glyphName)
-            elif category == "base":
-                bases.add(glyphName)
-            elif category == "ligature":
-                ligatures.add(glyphName)
-            elif category == "mark":
-                marks.add(glyphName)
-            elif category == "component":
-                components.add(glyphName)
-            else:
-                self.log.warning(
-                    f"The '{OPENTYPE_CATEGORIES_KEY}' value of {glyphName} in "
-                    f"{font.info.familyName} {font.info.styleName} is '{category}' "
-                    "when it should be 'unassigned', 'base', 'ligature', 'mark' "
-                    "or 'component'."
-                )
-        return namedtuple(
-            "OpenTypeCategories", "unassigned base ligature mark component"
-        )(
-            frozenset(unassigned),
-            frozenset(bases),
-            frozenset(ligatures),
-            frozenset(marks),
-            frozenset(components),
-        )
+        return OpenTypeCategories.load(self.context.font)
 
     def getGDEFGlyphClasses(self):
         """Return a tuple of GDEF GlyphClassDef base, ligature, mark, component
@@ -386,3 +375,80 @@ class BaseFeatureWriter:
             frozenset(marks),
             frozenset(components),
         )
+
+    def guessFontScripts(self):
+        """Returns a set of scripts the font probably supports.
+
+        This is done by:
+
+        1. Looking at all defined codepoints in a font and remembering the
+           script of any of the codepoints if it is associated with just one
+           script. This would remember the script of U+0780 THAANA LETTER HAA
+           (Thaa) but not U+061F ARABIC QUESTION MARK (multiple scripts).
+        2. Adding explicitly declared `languagesystem` scripts on top.
+        """
+        font = self.context.font
+        glyphSet = self.context.glyphSet
+        feaFile = self.context.feaFile
+        single_scripts = set()
+
+        # If we're dealing with a Designspace, look at the default source.
+        if hasattr(font, "findDefault"):
+            font = font.findDefault().font
+
+        # First, detect scripts from the codepoints.
+        for glyph in font:
+            if glyph.name not in glyphSet or glyph.unicodes is None:
+                continue
+            for codepoint in glyph.unicodes:
+                scripts = unicodeScriptExtensions(codepoint)
+                if len(scripts) == 1:
+                    single_scripts.update(scripts)
+
+        # Then, add explicitly declared languagesystems on top.
+        feaScripts = ast.getScriptLanguageSystems(feaFile)
+        single_scripts.update(feaScripts.keys())
+
+        return single_scripts
+
+    def _getAnchor(self, glyphName, anchorName, anchor=None):
+        if self.context.isVariable:
+            designspace = self.context.font
+            x_value = VariableScalar()
+            y_value = VariableScalar()
+            found = False
+            for source in designspace.sources:
+                if source.layerName is None:
+                    layer = source.font
+                else:
+                    layer = source.font.layers[source.layerName]
+                if glyphName not in layer:
+                    continue
+                glyph = layer[glyphName]
+                for anchor in glyph.anchors:
+                    if anchor.name == anchorName:
+                        location = get_userspace_location(designspace, source.location)
+                        x_value.add_value(location, otRound(anchor.x))
+                        y_value.add_value(location, otRound(anchor.y))
+                        found = True
+            if not found:
+                return None
+            x, y = collapse_varscalar(x_value), collapse_varscalar(y_value)
+        else:
+            if anchor is None:
+                if glyphName not in self.context.font:
+                    return None
+                glyph = self.context.font[glyphName]
+                anchors = [
+                    anchor for anchor in glyph.anchors if anchor.name == anchorName
+                ]
+                if not anchors:
+                    return None
+                anchor = anchors[0]
+
+            x = anchor.x
+            y = anchor.y
+            if hasattr(self.options, "quantization"):
+                x = quantize(x, self.options.quantization)
+                y = quantize(y, self.options.quantization)
+        return x, y

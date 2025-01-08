@@ -1,8 +1,11 @@
 import logging
 import os
+from io import BytesIO
 
 import pytest
-from cu2qu.ufo import font_to_quadratic
+from fontTools.colorLib.unbuilder import unbuildColrV1
+from fontTools.cu2qu.ufo import font_to_quadratic
+from fontTools.misc.arrayTools import quantizeRect
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._g_l_y_f import USE_MY_METRICS
 
@@ -15,10 +18,15 @@ from ufo2ft import (
 )
 from ufo2ft.constants import (
     GLYPHS_DONT_USE_PRODUCTION_NAMES,
+    GLYPHS_MATH_CONSTANTS_KEY,
+    GLYPHS_MATH_EXTENDED_SHAPE_KEY,
+    GLYPHS_MATH_VARIANTS_KEY,
+    OPENTYPE_POST_UNDERLINE_POSITION_KEY,
     SPARSE_OTF_MASTER_TABLES,
     SPARSE_TTF_MASTER_TABLES,
     USE_PRODUCTION_NAMES,
 )
+from ufo2ft.errors import InvalidFontData
 from ufo2ft.fontInfoData import intListToNum
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 
@@ -43,6 +51,12 @@ def quadufo(FontClass):
 
 
 @pytest.fixture
+def nestedcomponentsufo(FontClass):
+    font = FontClass(getpath("NestedComponents-Regular.ufo"))
+    return font
+
+
+@pytest.fixture
 def use_my_metrics_ufo(FontClass):
     return FontClass(getpath("UseMyMetrics.ufo"))
 
@@ -61,29 +75,22 @@ def emptyufo(FontClass):
 
 
 class OutlineTTFCompilerTest:
-    def test_setupTable_gasp(self, testufo):
-        compiler = OutlineTTFCompiler(testufo)
-        compiler.otf = TTFont()
-        compiler.setupTable_gasp()
-        assert "gasp" in compiler.otf
-        assert compiler.otf["gasp"].gaspRange == {7: 10, 65535: 15}
-
-    def test_compile_with_gasp(self, testufo):
-        compiler = OutlineTTFCompiler(testufo)
+    def test_compile_with_gasp(self, quadufo):
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert "gasp" in compiler.otf
         assert compiler.otf["gasp"].gaspRange == {7: 10, 65535: 15}
 
-    def test_compile_without_gasp(self, testufo):
-        testufo.info.openTypeGaspRangeRecords = None
-        compiler = OutlineTTFCompiler(testufo)
+    def test_compile_without_gasp(self, quadufo):
+        quadufo.info.openTypeGaspRangeRecords = None
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert "gasp" not in compiler.otf
 
-    def test_compile_empty_gasp(self, testufo):
+    def test_compile_empty_gasp(self, quadufo):
         # ignore empty gasp
-        testufo.info.openTypeGaspRangeRecords = []
-        compiler = OutlineTTFCompiler(testufo)
+        quadufo.info.openTypeGaspRangeRecords = []
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert "gasp" not in compiler.otf
 
@@ -94,6 +101,14 @@ class OutlineTTFCompilerTest:
         assert compiler.glyphBoundingBoxes["space"] is None
         # float coordinates are rounded, so is the bbox
         assert compiler.glyphBoundingBoxes["d"] == (90, 77, 211, 197)
+
+    def test_getMaxComponentDepths(self, nestedcomponentsufo):
+        compiler = OutlineTTFCompiler(nestedcomponentsufo)
+        assert "a" not in compiler.getMaxComponentDepths()
+        assert "b" not in compiler.getMaxComponentDepths()
+        assert compiler.getMaxComponentDepths()["c"] == 1
+        assert compiler.getMaxComponentDepths()["d"] == 1
+        assert compiler.getMaxComponentDepths()["e"] == 2
 
     def test_autoUseMyMetrics(self, use_my_metrics_ufo):
         compiler = OutlineTTFCompiler(use_my_metrics_ufo)
@@ -109,6 +124,11 @@ class OutlineTTFCompilerTest:
         # different width
         for component in ttf["glyf"]["romanthree"].components:
             assert not (component.flags & USE_MY_METRICS)
+
+    def test_autoUseMyMetrics_False(self, use_my_metrics_ufo):
+        compiler = OutlineTTFCompiler(use_my_metrics_ufo, autoUseMyMetrics=False)
+        ttf = compiler.compile()
+        assert not (ttf["glyf"]["Iacute"].components[1].flags & USE_MY_METRICS)
 
     def test_autoUseMyMetrics_None(self, use_my_metrics_ufo):
         compiler = OutlineTTFCompiler(use_my_metrics_ufo)
@@ -135,10 +155,10 @@ class OutlineTTFCompilerTest:
         assert compiler.otf["hhea"].minRightSideBearing == 0
         assert compiler.otf["hhea"].xMaxExtent == 0
 
-    def test_os2_no_widths(self, testufo):
-        for glyph in testufo:
+    def test_os2_no_widths(self, quadufo):
+        for glyph in quadufo:
             glyph.width = 0
-        compiler = OutlineTTFCompiler(testufo)
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert compiler.otf["OS/2"].xAvgCharWidth == 0
 
@@ -205,8 +225,8 @@ class OutlineTTFCompilerTest:
         assert endPts == [4]
         assert list(flags) == [0, 0, 0, 0, 1]
 
-    def test_setupTable_meta(self, testufo):
-        testufo.lib["public.openTypeMeta"] = {
+    def test_setupTable_meta(self, quadufo):
+        quadufo.lib["public.openTypeMeta"] = {
             "appl": b"BEEF",
             "bild": b"AAAA",
             "dlng": ["en-Latn", "nl-Latn"],
@@ -216,7 +236,7 @@ class OutlineTTFCompilerTest:
             "PRIU": "Some private unicode string…",
         }
 
-        compiler = OutlineTTFCompiler(testufo)
+        compiler = OutlineTTFCompiler(quadufo)
         ttFont = compiler.compile()
         meta = ttFont["meta"]
 
@@ -227,6 +247,39 @@ class OutlineTTFCompilerTest:
         assert meta.data["PRIB"] == b"Some private bytes"
         assert meta.data["PRIA"] == b"Some private ascii string"
         assert meta.data["PRIU"] == "Some private unicode string…".encode("utf-8")
+
+    def test_setupTable_name(self, quadufo):
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
+        assert actual == "Some Font Regular (Style Map Family Name)"
+
+        quadufo.info.openTypeNameRecords.append(
+            {
+                "nameID": 1,
+                "platformID": 3,
+                "encodingID": 1,
+                "languageID": 1033,
+                "string": "Custom Name for Windows",
+            }
+        )
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
+        assert actual == "Custom Name for Windows"
+
+    def test_post_underline_without_public_key(self, quadufo):
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        actual = compiler.otf["post"].underlinePosition
+        assert actual == -200
+
+    def test_post_underline_with_public_key(self, quadufo):
+        quadufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        actual = compiler.otf["post"].underlinePosition
+        assert actual == -485
 
 
 class OutlineOTFCompilerTest:
@@ -562,9 +615,84 @@ class OutlineOTFCompilerTest:
         assert private.defaultWidthX == 500
         assert private.nominalWidthX == 0
 
+    def test_underline_without_public_key(self, testufo):
+        # Test with no lib key
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        assert post == -200
+        assert cff_underline == -200
+
+    def test_underline_with_public_key(self, testufo):
+        # Test with a lib key and postscriptUnderlinePosition
+        testufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
+        testufo.info.postscriptUnderlinePosition = -42
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        assert post == -485
+        assert cff_underline == -42
+
+    def test_underline_with_public_key_and_no_psPosition(self, testufo):
+        # Test with a lib key and no postscriptUnderlinePosition
+        testufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
+        testufo.info.postscriptUnderlinePosition = None
+        testufo.info.postscriptUnderlineThickness = 100
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        assert post == -485
+        assert cff_underline == -535
+
+    def test_underline_with_no_public_key_and_no_psPosition(self, testufo):
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        # Note: This is actually incorrect according to the post/cff
+        # spec, but it is how UFO3 has things defined, and is expected
+        # current behavior.
+        assert post == -200
+        assert cff_underline == -200
+
+    def test_underline_ps_rounding(self, testufo):
+        # Test rounding
+        testufo.lib[OPENTYPE_POST_UNDERLINE_POSITION_KEY] = -485
+        testufo.info.postscriptUnderlinePosition = None
+        testufo.info.postscriptUnderlineThickness = 43
+        compiler = OutlineOTFCompiler(testufo)
+        compiler.compile()
+
+        post = compiler.otf["post"].underlinePosition
+
+        cff = compiler.otf["CFF "].cff
+        cff_underline = cff[list(cff.keys())[0]].UnderlinePosition
+
+        assert post == -485
+        assert cff_underline == -506
+
 
 class GlyphOrderTest:
-    def test_compile_original_glyph_order(self, testufo):
+    def test_compile_original_glyph_order(self, quadufo):
         DEFAULT_ORDER = [
             ".notdef",
             "space",
@@ -581,11 +709,11 @@ class GlyphOrderTest:
             "k",
             "l",
         ]
-        compiler = OutlineTTFCompiler(testufo)
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == DEFAULT_ORDER
 
-    def test_compile_tweaked_glyph_order(self, testufo):
+    def test_compile_tweaked_glyph_order(self, quadufo):
         NEW_ORDER = [
             ".notdef",
             "space",
@@ -602,12 +730,12 @@ class GlyphOrderTest:
             "k",
             "l",
         ]
-        testufo.lib["public.glyphOrder"] = NEW_ORDER
-        compiler = OutlineTTFCompiler(testufo)
+        quadufo.lib["public.glyphOrder"] = NEW_ORDER
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == NEW_ORDER
 
-    def test_compile_strange_glyph_order(self, testufo):
+    def test_compile_strange_glyph_order(self, quadufo):
         """Move space and .notdef to end of glyph ids
         ufo2ft always puts .notdef first.
         """
@@ -628,8 +756,8 @@ class GlyphOrderTest:
             "k",
             "l",
         ]
-        testufo.lib["public.glyphOrder"] = NEW_ORDER
-        compiler = OutlineTTFCompiler(testufo)
+        quadufo.lib["public.glyphOrder"] = NEW_ORDER
+        compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()
         assert compiler.otf.getGlyphOrder() == EXPECTED_ORDER
 
@@ -881,6 +1009,118 @@ class ColrCpalTest:
             "c": [("c.color2", 1), ("c.color1", 0)],
         }
 
+    def test_colr_cpal_gid1_not_blank(self, FontClass, caplog):
+        # https://github.com/MicrosoftDocs/typography-issues/issues/346
+        testufo = FontClass(getpath("ColorTest.ufo"))
+        del testufo["space"]
+
+        with caplog.at_level(logging.WARNING, logger="ufo2ft.outlineCompiler"):
+            ttf = compileTTF(testufo)
+
+        assert ttf["COLR"].version == 0
+        assert ttf.getGlyphOrder()[1] == "a"
+        assert (
+            "COLRv0 might not render correctly on Windows because "
+            "the glyph at index 1 is not empty ('a')."
+        ) in caplog.text
+
+    @pytest.mark.parametrize("compileFunc", [compileTTF, compileOTF])
+    @pytest.mark.parametrize("manualClipBoxes", [True, False])
+    @pytest.mark.parametrize(
+        "autoClipBoxes, quantization",
+        [
+            (True, 1),
+            (True, 32),
+            (True, 100),
+            (False, None),
+        ],
+    )
+    def test_colrv1_computeClipBoxes(
+        self,
+        FontClass,
+        compileFunc,
+        manualClipBoxes,
+        autoClipBoxes,
+        quantization,
+    ):
+        testufo = FontClass(getpath("COLRv1Test.ufo"))
+        assert "com.github.googlei18n.ufo2ft.colorLayers" in testufo.lib
+        assert "com.github.googlei18n.ufo2ft.colorPalettes" in testufo.lib
+        assert "com.github.googlei18n.ufo2ft.colrClipBoxes" not in testufo.lib
+
+        if manualClipBoxes:
+            testufo.lib["com.github.googlei18n.ufo2ft.colrClipBoxes"] = [
+                ("a", (0, 0, 1000, 1000))
+            ]
+
+        result = compileFunc(
+            testufo,
+            colrAutoClipBoxes=autoClipBoxes,
+            colrClipBoxQuantization=lambda _ufo: quantization,
+        )
+        palettes = [
+            [(c.red, c.green, c.blue, c.alpha) for c in p]
+            for p in result["CPAL"].palettes
+        ]
+        assert palettes == [[(255, 76, 26, 255), (0, 102, 204, 255)]]
+
+        colr = result["COLR"].table
+        layers = unbuildColrV1(colr.LayerList, colr.BaseGlyphList)
+        assert layers == {
+            "a": {
+                "Format": 1,
+                "Layers": [
+                    {
+                        "Format": 10,
+                        "Paint": {"Format": 2, "PaletteIndex": 0, "Alpha": 1.0},
+                        "Glyph": "a.color1",
+                    },
+                    {
+                        "Format": 10,
+                        "Paint": {"Format": 2, "PaletteIndex": 1, "Alpha": 1.0},
+                        "Glyph": "a.color2",
+                    },
+                ],
+            }
+        }
+
+        if manualClipBoxes or autoClipBoxes:
+            assert colr.ClipList is not None
+            clipBoxes = {g: clip.as_tuple() for g, clip in colr.ClipList.clips.items()}
+            if manualClipBoxes:
+                # the one that was set manually always prevails
+                assert clipBoxes == {"a": (0, 0, 1000, 1000)}
+            elif autoClipBoxes:
+                # the clipBox that was computed automatically
+                assert clipBoxes == {
+                    "a": quantizeRect((111, 82, 485, 626), quantization)
+                }
+        else:
+            # no clipboxes, neither manual nor automatic
+            assert colr.ClipList is None
+
+    @pytest.mark.parametrize("compileFunc", [compileTTF, compileOTF])
+    def test_strip_color_codepoints(self, FontClass, compileFunc):
+        """Test that glyphs in the color layer do not become accessible by
+        codepoint in the final font, given that they are copied into the default
+        layer as alternates.
+
+        See: https://github.com/googlefonts/ufo2ft/pull/739#issuecomment-1516075892"""
+
+        # Load a test UFO with color layers, and give a codepoint to one of the
+        # glyphs in those layers.
+        ufo = FontClass(getpath("ColorTest.ufo"))
+
+        color_glyph = ufo.layers["color1"]["a"]
+        color_glyph.unicode = 0x3020
+
+        # Build the UFO into a TTF or OTF.
+        built = compileFunc(ufo)
+
+        # Confirm that it has no entry for the codepoint above.
+        cmap = built.getBestCmap()
+        assert 0x3020 not in cmap
+
 
 class CmapTest:
     def test_cmap_BMP(self, testufo):
@@ -1099,7 +1339,12 @@ def test_custom_layer_compilation_interpolatable_otf_from_ds(designspace, inplac
         "dotabovecomb",
         "edotabove",
     ]
-    assert master_otfs[1].getGlyphOrder() == [".notdef", "e"]
+    # 'edotabove' composite glyph needed to be decomposed because these are CFF fonts;
+    # and because one of its components 'e' has an additional intermediate master, the
+    # latter 'bubbled up' to the parent glyph when this got decomposed; hence why
+    # we see 'edotabove' in master_otfs[1] below, but we do not in the previous test
+    # with interpolatalbe TTFs where 'edotabove' stays a composite glyph.
+    assert master_otfs[1].getGlyphOrder() == [".notdef", "e", "edotabove"]
     assert master_otfs[2].getGlyphOrder() == [
         ".notdef",
         "a",
@@ -1157,6 +1402,99 @@ def test_pass_on_conversion_error(FontClass):
     # Two off-curves:
     font2_coords = list(font2["glyf"]["test"].coordinates)
     assert font2_coords == [(0, 43), (0, 0), (43, 0), (43, 19), (19, 43)]
+
+
+@pytest.mark.parametrize("CompilerClass", [OutlineOTFCompiler, OutlineTTFCompiler])
+@pytest.mark.parametrize(
+    "vendorID, expected",
+    [
+        ("A", "A   "),
+        ("AA", "AA  "),
+        ("AAA", "AAA "),
+        ("AAAA", "AAAA"),
+    ],
+)
+def test_achVendId_space_padded_if_less_than_4_chars(
+    FontClass, CompilerClass, vendorID, expected
+):
+    ufo = FontClass()
+    ufo.info.openTypeOS2VendorID = vendorID
+    font = CompilerClass(ufo).compile()
+    tmp = BytesIO()
+    font.save(tmp)
+    font = TTFont(tmp)
+
+    assert font["OS/2"].achVendID == expected
+
+
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+def test_MATH_table(FontClass, compile):
+    ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
+    result = compile(ufo)
+    assert "MATH" in result
+
+    math = result["MATH"].table
+
+    for key, value in ufo.lib[GLYPHS_MATH_CONSTANTS_KEY].items():
+        attr = getattr(math.MathConstants, key)
+        if isinstance(attr, int):
+            assert attr == value
+        else:
+            assert attr.Value == value
+
+    extendedShapes = set(ufo.lib[GLYPHS_MATH_EXTENDED_SHAPE_KEY])
+    for glyph in ufo.lib[GLYPHS_MATH_EXTENDED_SHAPE_KEY]:
+        if variants := ufo[glyph].lib.get(GLYPHS_MATH_VARIANTS_KEY):
+            extendedShapes.update(variants.get("vVariants", []))
+
+    assert set(math.MathGlyphInfo.ExtendedShapeCoverage.glyphs) == extendedShapes
+
+    assert set(math.MathVariants.VertGlyphCoverage.glyphs) == {
+        "parenright",
+        "parenleft",
+    }
+    assert math.MathVariants.VertGlyphConstruction
+    assert len(math.MathVariants.VertGlyphConstruction) == 2
+    assert (
+        math.MathVariants.VertGlyphConstruction[0].GlyphAssembly.ItalicsCorrection.Value
+        == 0
+    )
+    assert (
+        len(math.MathVariants.VertGlyphConstruction[0].GlyphAssembly.PartRecords) == 3
+    )
+
+    assert not math.MathVariants.HorizGlyphCoverage
+    assert not math.MathVariants.HorizGlyphConstruction
+
+
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+@pytest.mark.parametrize(
+    "attribute",
+    [
+        "vAssembly",
+        "hAssembly",
+        "vVariants",
+        "hVariants",
+    ],
+)
+def test_MATH_table_ignore_empty(FontClass, compile, attribute):
+    # Should not raise becaise of empty assembly/variants
+    ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
+    ufo["parenright"].lib[GLYPHS_MATH_VARIANTS_KEY][attribute] = []
+    compile(ufo)
+
+
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+@pytest.mark.parametrize("attribute", ["vAssembly", "hAssembly"])
+def test_MATH_table_invalid(FontClass, compile, attribute):
+    ufo = FontClass(getpath("TestMathFont-Regular.ufo"))
+    ufo["parenright"].lib[GLYPHS_MATH_VARIANTS_KEY][attribute] = [
+        ["parenright.top", 0, 0],
+        ["parenright.ext", 1, 100, 100],
+        ["parenright.bot", 0, 100, 0],
+    ]
+    with pytest.raises(InvalidFontData, match="Invalid assembly"):
+        compile(ufo)
 
 
 if __name__ == "__main__":

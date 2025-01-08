@@ -1,8 +1,15 @@
 import pytest
+from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.misc.loggingTools import CapturingLogHandler
 
 import ufo2ft.filters
-from ufo2ft.filters.propagateAnchors import PropagateAnchorsFilter, logger
+from ufo2ft.filters.propagateAnchors import (
+    PropagateAnchorsFilter,
+    PropagateAnchorsIFilter,
+    logger,
+)
+from ufo2ft.instantiator import Instantiator
+from ufo2ft.util import _GlyphSet
 
 
 @pytest.fixture(
@@ -106,6 +113,25 @@ from ufo2ft.filters.propagateAnchors import PropagateAnchorsFilter, logger
                         ("addComponent", ("macroncomb", (1, 0, 0, 1, 175, 0))),
                     ],
                 },
+                {
+                    "name": "r",
+                    "width": 350,
+                    "outline": [
+                        ("moveTo", ((0, 0),)),
+                        ("lineTo", ((0, 300),)),
+                        ("lineTo", ((175, 300),)),
+                        ("closePath", ()),
+                    ],
+                    "anchors": [(175, 300, "top"), (175, 0, "bottom")],
+                },
+                {
+                    "name": "rcombbelow",
+                    "width": 0,
+                    "outline": [
+                        ("addComponent", ("r", (0.5, 0, 0, 0.5, -100, -100))),
+                    ],
+                    "anchors": [(0, 0, "_bottom")],
+                },
             ]
         }
     ]
@@ -120,6 +146,12 @@ def font(request, FontClass):
             getattr(pen, operator)(*operands)
         for x, y, name in param.get("anchors", []):
             glyph.appendAnchor(dict(x=x, y=y, name=name))
+    # classify as 'mark' all glyphs with zero width and 'comb' in their name
+    font.lib["public.openTypeCategories"] = {
+        g["name"]: "mark"
+        for g in request.param["glyphs"]
+        if g.get("width", 0) == 0 and "comb" in g["name"]
+    }
     return font
 
 
@@ -149,6 +181,10 @@ EXPECTED = {
         ],
         {"a_a"},
     ),
+    # the composite glyph is a mark with anchors, hence propagation is not performed,
+    # i.e. 'top' and 'bottom' are *not* copied to 'rcombbelow':
+    # https://github.com/googlefonts/ufo2ft/issues/802
+    "rcombbelow": ([("_bottom", 0, 0)], set()),
 }
 
 
@@ -173,7 +209,7 @@ class PropagateAnchorsFilterTest:
     def test_whole_font(self, font):
         philter = PropagateAnchorsFilter()
         modified = philter(font)
-        assert modified == set(EXPECTED)
+        assert modified == {k for k in EXPECTED if k in EXPECTED[k][1]}
         for name, (expected_anchors, _) in EXPECTED.items():
             assert [(a.name, a.x, a.y) for a in font[name].anchors] == expected_anchors
 
@@ -228,3 +264,50 @@ def test_CantarellAnchorPropagation_reduced_filter(FontClass, datadir):
 
     anchors_o = {(a.name, a.x, a.y) for a in ufo["ocircumflextilde"].anchors}
     assert ("top", 284.0, 730.0) in anchors_o
+
+
+class PropagateAnchorsIFilterTest:
+    def test_propagate_from_interpolated_components(self, FontClass, data_dir):
+        ds_path = data_dir / "SkipExportGlyphsTest.designspace"
+        ds = DesignSpaceDocument.fromfile(ds_path)
+        ds.loadSourceFonts(FontClass)
+
+        ufos = [s.font for s in ds.sources]
+        glyphSets = [_GlyphSet.from_layer(s.font, s.layerName) for s in ds.sources]
+
+        assert len(ufos) == len(glyphSets) == 4
+
+        # the composite glyph 'Astroke' has no anchors, but 'A' has some
+        for glyphSet in glyphSets:
+            if "Astroke" in glyphSet:
+                assert not glyphSet["Astroke"].anchors
+            if "A" in glyphSet:
+                assert glyphSet["A"].anchors
+
+        # in glyphSets[2] the 'Astroke' component base glyphs are missing so their
+        # propagated anchors are supposed to be interpolated on the fly
+        assert "Astroke" in glyphSets[2]
+        assert {c.baseGlyph for c in glyphSets[2]["Astroke"].components}.isdisjoint(
+            glyphSets[2].keys()
+        )
+        assert not glyphSets[2]["Astroke"].anchors
+
+        instantiator = Instantiator.from_designspace(
+            ds, do_kerning=False, do_info=False
+        )
+
+        philter = PropagateAnchorsIFilter()
+
+        modified = philter(ufos, glyphSets, instantiator)
+
+        assert modified == {"Astroke"}
+
+        assert [dict(a) for a in glyphSets[2]["Astroke"].anchors] == [
+            {"name": "bottom", "x": 458, "y": 0},
+            {"name": "center", "x": 457, "y": 358},
+            {"name": "top", "x": 457, "y": 714},
+            {"name": "topright", "x": 716, "y": 714},
+        ]
+        assert {c.baseGlyph for c in glyphSets[2]["Astroke"].components}.isdisjoint(
+            glyphSets[2].keys()
+        )

@@ -1,11 +1,22 @@
 import difflib
 import io
+import logging
 import os
+import re
 import sys
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
+from fontTools.designspaceLib import DesignSpaceDocument
+from fontTools.otlLib.optimize.gpos import COMPRESSION_LEVEL as GPOS_COMPRESSION_LEVEL
 from fontTools.pens.boundsPen import BoundsPen
+from fontTools.pens.transformPen import TransformPen
+from fontTools.ttLib.tables._g_l_y_f import (
+    OVERLAP_COMPOUND,
+    flagCubic,
+    flagOverlapSimple,
+)
 
 from ufo2ft import (
     compileInterpolatableTTFs,
@@ -16,7 +27,8 @@ from ufo2ft import (
     compileVariableTTF,
     compileVariableTTFs,
 )
-from ufo2ft.constants import KEEP_GLYPH_NAMES
+from ufo2ft.constants import KEEP_GLYPH_NAMES, TRUETYPE_OVERLAP_KEY
+from ufo2ft.errors import InvalidFontData
 from ufo2ft.filters import TransformationsFilter
 
 
@@ -67,7 +79,6 @@ def useProductionNames(request):
 
 
 class IntegrationTest:
-
     _layoutTables = ["GDEF", "GSUB", "GPOS", "BASE"]
 
     # We have specific unit tests for CFF vs TrueType output, but we run
@@ -154,6 +165,14 @@ class IntegrationTest:
         for ttf in ttfs:
             assert ttf["maxp"].maxComponentDepth == 1
 
+    def test_nestedComponents_variable(self, FontClass):
+        designspace = DesignSpaceDocument.fromfile(
+            getpath("NestedComponents.designspace")
+        )
+        designspace.loadSourceFonts(FontClass)
+        vf = compileVariableTTF(designspace, flattenComponents=True)
+        assert vf["maxp"].maxComponentDepth == 1
+
     def test_interpolatableTTFs_lazy(self, FontClass):
         # two same UFOs **must** be interpolatable
         ufos = [FontClass(getpath("TestFont.ufo")) for _ in range(2)]
@@ -234,9 +253,23 @@ class IntegrationTest:
         tmp = io.StringIO()
 
         _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
+        assert "\n" + tmp.getvalue() == dedent(
+            """
+            markClass dotabovecomb <anchor -2 465> @MC_top;
 
-        assert "### LayerFont-Regular ###" in tmp.getvalue()
-        assert "### LayerFont-Bold ###" in tmp.getvalue()
+            feature liga {
+                sub a e s s by s;
+            } liga;
+
+            feature mark {
+                lookup mark2base {
+                    pos base e
+                        <anchor (wght=350:314 wght=450:403 wght=625:315) (wght=350:556 wght=450:567 wght=625:644)> mark @MC_top;
+                } mark2base;
+
+            } mark;
+        """  # noqa: B950
+        )
 
     @pytest.mark.parametrize(
         "output_format, options, expected_ttx",
@@ -415,6 +448,175 @@ class IntegrationTest:
             fonts["MutatorSerifVariable_Width"],
             "DSv5/MutatorSerifVariable_Width-CFF2.ttx",
         )
+
+    @pytest.mark.parametrize(
+        "compileFunc",
+        [
+            compileOTF,
+            compileTTF,
+        ],
+    )
+    def test_compile_overloaded_codepoints(self, FontClass, compileFunc):
+        """Confirm that ufo2ft produces an error when compiling a UFO with
+        multiple glyphs using the same codepoint. Currently only covers
+        individual UFOs."""
+
+        # Create a UFO in-memory with two glyphs using the same codepoint.
+        ufo = FontClass()
+        glyph_a = ufo.newGlyph("A")
+        glyph_b = ufo.newGlyph("B")
+        glyph_a.unicode = glyph_b.unicode = 0x0041
+
+        # Confirm that ufo2ft raises an appropriate exception with an
+        # appropriate description when compiling.
+        with pytest.raises(
+            InvalidFontData,
+            match=re.escape("cannot map 'B' to U+0041; already mapped to 'A'"),
+        ):
+            _ = compileFunc(ufo)
+
+    def test_compileTTF_glyf1_not_allQuadratic(self, testufo):
+        ttf = compileTTF(testufo, allQuadratic=False)
+        expectTTX(ttf, "TestFont-not-allQuadratic.ttx", tables=["glyf"])
+
+        assert ttf["head"].glyphDataFormat == 1
+
+    @staticmethod
+    def drawCurvedContour(glyph, transform=None):
+        pen = glyph.getPen()
+        if transform is not None:
+            pen = TransformPen(pen, transform)
+        pen.moveTo((500, 0))
+        pen.curveTo((500, 277.614), (388.072, 500), (250, 500))
+        pen.curveTo((111.928, 500), (0, 277.614), (0, 0))
+        pen.closePath()
+
+    def test_compileVariableTTF_glyf1_not_allQuadratic(self, designspace):
+        base_master = designspace.findDefault()
+        assert base_master is not None
+        # add a glyph with some curveTo to exercise the cu2qu codepath
+        glyph = base_master.font.newGlyph("curved")
+        glyph.width = 1000
+        self.drawCurvedContour(glyph)
+
+        vf = compileVariableTTF(designspace, allQuadratic=False)
+        expectTTX(vf, "TestVariableFont-TTF-not-allQuadratic.ttx", tables=["glyf"])
+
+        assert vf["head"].glyphDataFormat == 1
+
+    def test_compileTTF_overlap_simple_flag(self, testufo):
+        """Test that the OVERLAP_{SIMPLE,COMPOUND} are set on glyphs that have it"""
+        testufo["a"].lib = {TRUETYPE_OVERLAP_KEY: True}
+        testufo["h"].lib = {TRUETYPE_OVERLAP_KEY: True}
+        ttf = compileTTF(testufo, useProductionNames=False)
+
+        # OVERLAP_SIMPLE is set on 'a' but not on 'b'
+        assert ttf["glyf"]["a"].flags[0] & flagOverlapSimple
+        assert not ttf["glyf"]["b"].flags[0] & flagOverlapSimple
+        # OVERLAP_COMPOUND is set on 'h' but not on 'g'
+        assert not ttf["glyf"]["g"].components[0].flags & OVERLAP_COMPOUND
+        assert ttf["glyf"]["h"].components[0].flags & OVERLAP_COMPOUND
+
+    def test_compileVariableTTF_notdefGlyph_with_curves(self, designspace):
+        # The test DS contains two full masters (Regular and Bold) and one intermediate
+        # 'sparse' (Medium) master, which does not contain a .notdef glyph and as such
+        # is supposed to inherit one from the default master. If the notdef contains
+        # any curves, an error occured because these are weren't been converted to
+        # quadratic: https://github.com/googlefonts/ufo2ft/issues/501
+
+        # First we draw an additional contour containing cubic curves in the Regular
+        # and Bold's .notdef glyphs
+        for src_idx, transform in ((0, (1, 0, 0, 1, 0, 0)), (2, (2, 0, 0, 2, 0, 0))):
+            notdef = designspace.sources[src_idx].font[".notdef"]
+            self.drawCurvedContour(notdef, transform)
+        assert ".notdef" not in designspace.sources[1].font.layers["Medium"]
+
+        # this must NOT fail!
+        vf = compileVariableTTF(designspace, convertCubics=True, allQuadratic=True)
+
+        # and because allQuadratic=True, we expect .notdef contains no cubic curves
+        assert not any(f & flagCubic for f in vf["glyf"][".notdef"].flags)
+
+        # ensure .notdef has variations and was NOT dropped as incompatible,
+        # varLib only warns: https://github.com/fonttools/fonttools/issues/2572
+        assert ".notdef" in vf["gvar"].variations
+
+    def test_compileVariableCFF2_sparse_notdefGlyph(self, designspace):
+        # test that sparse layer without .notdef does not participate in computation
+        # of CFF2 and HVAR deltas for the .notdef glypht
+        for src_idx, transform in ((0, (1, 0, 0, 1, 0, 0)), (2, (2, 0, 0, 2, 0, 0))):
+            notdef = designspace.sources[src_idx].font[".notdef"]
+            self.drawCurvedContour(notdef, transform)
+        designspace.sources[2].font[".notdef"].width *= 2
+        assert ".notdef" not in designspace.sources[1].font.layers["Medium"]
+
+        vf = compileVariableCFF2(designspace)
+
+        expectTTX(
+            vf,
+            "TestVariableFont-CFF2-sparse-notdefGlyph.ttx",
+            tables=["CFF2", "hmtx", "HVAR"],
+        )
+
+    @pytest.mark.parametrize("compileMethod", [compileTTF, compileOTF])
+    @pytest.mark.parametrize("compression_level", [0, 9])
+    def test_compile_static_font_with_gpos_compression(
+        self, caplog, compileMethod, testufo, compression_level
+    ):
+        with caplog.at_level(logging.INFO, logger="fontTools"):
+            compileMethod(testufo, ftConfig={GPOS_COMPRESSION_LEVEL: compression_level})
+        disabled = compression_level == 0
+        logged = "Compacting GPOS..." in caplog.text
+        assert logged ^ disabled
+
+    @pytest.mark.parametrize("compileMethod", [compileVariableTTF, compileVariableCFF2])
+    @pytest.mark.parametrize("variableFeatures", [True, False])
+    @pytest.mark.parametrize("compression_level", [0, 9])
+    def test_compile_variable_font_with_gpos_compression(
+        self, caplog, compileMethod, FontClass, variableFeatures, compression_level
+    ):
+        designspace = DesignSpaceDocument.fromfile(getpath("TestVarfea.designspace"))
+        designspace.loadSourceFonts(FontClass)
+        with caplog.at_level(logging.INFO, logger="fontTools"):
+            compileMethod(
+                designspace,
+                ftConfig={GPOS_COMPRESSION_LEVEL: compression_level},
+                variableFeatures=variableFeatures,
+            )
+        disabled = compression_level == 0
+        logged = "Compacting GPOS..." in caplog.text
+        assert logged ^ disabled
+
+    @pytest.mark.parametrize(
+        "compileMethod", [compileVariableTTFs, compileVariableCFF2s]
+    )
+    def test_apply_varfont_info(self, FontClass, compileMethod):
+        designspace = DesignSpaceDocument.fromfile(getpath("TestVarFont.designspace"))
+        designspace.loadSourceFonts(FontClass)
+
+        fonts = compileMethod(designspace)
+        assert len(fonts) == 2
+
+        expectTTX(fonts["MyFontVF1"], "TestVarFont-MyFontVF1.ttx", ["head", "name"])
+        expectTTX(fonts["MyFontVF2"], "TestVarFont-MyFontVF2.ttx", ["head", "name"])
+
+    def test_compile_variable_ttf_drop_implied_oncurves(self, FontClass, caplog):
+        # https://github.com/googlefonts/ufo2ft/pull/817
+        designspace = DesignSpaceDocument.fromfile(getpath("OTestFont.designspace"))
+        designspace.loadSourceFonts(FontClass)
+
+        # dropImpliedOnCurves is False by default
+        vf1 = compileVariableTTF(designspace)
+
+        with caplog.at_level(logging.INFO, logger="fontTools.varLib"):
+            vf2 = compileVariableTTF(designspace, dropImpliedOnCurves=True)
+
+        assert "Failed to drop implied oncurves" not in caplog.text
+        assert "Dropped 4 on-curve points" in caplog.text
+
+        o1 = vf1["glyf"]["o"].coordinates
+        o2 = vf2["glyf"]["o"].coordinates
+        assert len(o1) == len(o2) + 4
 
 
 if __name__ == "__main__":
