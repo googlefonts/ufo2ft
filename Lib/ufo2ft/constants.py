@@ -125,7 +125,7 @@ USE_SCRIPTS = [
     "Nagm",  # Nag Mundari
     "Nand",  # Nandinagari
     "Newa",  # Newa
-    "Nhks",  # Bhaiksuki
+    "Bhks",  # Bhaiksuki
     "Nko ",  # Nko
     "Ougr",  # Old Uyghur
     "Phag",  # Phags Pa
