@@ -1628,11 +1628,13 @@ def test_kern_split_and_mix_common(FontClass):
             script latn;
             language dflt;
             lookup kern_Latn;
+        } kern;
 
+        feature dist {
             script nko;
             language dflt;
             lookup kern_Nkoo;
-        } kern;
+        } dist;
         """
     )
 
@@ -1690,11 +1692,13 @@ def test_kern_multi_script(FontClass):
             script arab;
             language dflt;
             lookup kern_Arab_Nkoo;
+        } kern;
 
+        feature dist {
             script nko;
             language dflt;
             lookup kern_Arab_Nkoo;
-        } kern;
+        } dist;
         """
     )
 
