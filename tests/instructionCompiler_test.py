@@ -280,7 +280,7 @@ class InstructionCompilerTest:
         assert "prep" in ic.otf
 
         # Check if the bytecode is correct, though this may be out of scope
-        assert ic.otf["fpgm"].program.getBytecode() == b"\xb0\x00\x2C\x21\x2D"
+        assert ic.otf["fpgm"].program.getBytecode() == b"\xb0\x00\x2c\x21\x2d"
         assert ic.otf["prep"].program.getBytecode() == b"\xb8\x01\xff\x85"
 
     # compileGlyphInstructions
@@ -741,7 +741,7 @@ class InstructionCompilerTest:
         assert "fpgm" in ic.otf
 
         # Check if the bytecode is correct, though this may be out of scope
-        assert ic.otf["fpgm"].program.getBytecode() == b"\xb0\x00\x2C\x21\x2D"
+        assert ic.otf["fpgm"].program.getBytecode() == b"\xb0\x00\x2c\x21\x2d"
 
     # setupTable_gasp
 
