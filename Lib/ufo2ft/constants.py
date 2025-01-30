@@ -126,7 +126,8 @@ USE_SCRIPTS = [
     "Nand",  # Nandinagari
     "Newa",  # Newa
     "Bhks",  # Bhaiksuki
-    "Nko ",  # Nko
+    "Nko ",  # Nko  (this one is incorrect but probably won't hurt to keep?)
+    "Nkoo",  # Nko
     "Ougr",  # Old Uyghur
     "Phag",  # Phags Pa
     "Phlp",  # Psalter Pahlavi
