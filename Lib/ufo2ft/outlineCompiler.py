@@ -1511,7 +1511,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         trademark = getAttrWithFallback(info, "trademark")
         if trademark:
             trademark = normalizeStringForPostscript(
-                trademark.replace("\u00A9", "Copyright")
+                trademark.replace("\u00a9", "Copyright")
             )
         if trademark != self.ufo.info.trademark:
             logger.info(
@@ -1526,7 +1526,7 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
         copyright = getAttrWithFallback(info, "copyright")
         if copyright:
             copyright = normalizeStringForPostscript(
-                copyright.replace("\u00A9", "Copyright")
+                copyright.replace("\u00a9", "Copyright")
             )
         if copyright != self.ufo.info.copyright:
             logger.info(
