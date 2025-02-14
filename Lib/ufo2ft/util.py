@@ -18,6 +18,10 @@ from fontTools.pens.filterPen import DecomposingFilterPointPen
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
 
+# we keep this unused import in case some external code relied on the
+# old location of this function, which now lives in fontTools
+from fontTools.ttLib.tables.O_S_2f_2 import calcCodePageRanges  # noqa: F401
+
 from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY, UNICODE_SCRIPT_ALIASES
 from ufo2ft.errors import InvalidDesignSpaceData, InvalidFontData
 from ufo2ft.fontInfoData import getAttrWithFallback
