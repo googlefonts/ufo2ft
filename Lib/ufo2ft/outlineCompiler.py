@@ -51,7 +51,6 @@ from ufo2ft.instructionCompiler import InstructionCompiler
 from ufo2ft.util import (
     _copyGlyph,
     _getNewGlyphFactory,
-    calcCodePageRanges,
     colrClipBoxQuantization,
     getMaxComponentDepth,
     makeOfficialGlyphOrder,
@@ -665,11 +664,11 @@ class BaseOutlineCompiler:
 
         # codepage ranges
         codepageRanges = getAttrWithFallback(font.info, "openTypeOS2CodePageRanges")
-        if codepageRanges is None:
-            unicodes = self.unicodeToGlyphNameMapping.keys()
-            codepageRanges = calcCodePageRanges(unicodes)
-        os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
-        os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
+        if codepageRanges is not None:
+            os2.ulCodePageRange1 = intListToNum(codepageRanges, 0, 32)
+            os2.ulCodePageRange2 = intListToNum(codepageRanges, 32, 32)
+        elif "cmap" in self.otf:
+            os2.recalcCodePageRanges(self.otf)
 
         # vendor id, padded with spaces if < 4 bytes
         os2.achVendID = getAttrWithFallback(font.info, "openTypeOS2VendorID").ljust(4)
@@ -1066,8 +1065,7 @@ class BaseOutlineCompiler:
                     isinstance(string, str) for string in value
                 ):
                     raise TypeError(
-                        f"public.openTypeMeta '{key}' value should "
-                        "be a list of strings"
+                        f"public.openTypeMeta '{key}' value should be a list of strings"
                     )
                 meta.data[key] = ",".join(value)
             elif key in ["appl", "bild"]:
