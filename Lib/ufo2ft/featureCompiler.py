@@ -433,7 +433,7 @@ class VariableFeatureCompiler(FeatureCompiler):
 
     def setupFeatures(self):
         if self.featureWriters:
-            featureFile = parseLayoutFeatures(self.ufo)
+            featureFile = parseLayoutFeatures(self.ufo, self.feaIncludeDir)
 
             for writer in self.featureWriters:
                 writer.write(self.designspace, featureFile, compiler=self)

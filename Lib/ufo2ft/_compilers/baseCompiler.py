@@ -459,7 +459,8 @@ class BaseInterpolatableCompiler(BaseCompiler):
         default_ufo = designSpaceDoc.findDefault().font
 
         featureCompiler = VariableFeatureCompiler(
-            default_ufo, designSpaceDoc, ttFont=ttFont, glyphSet=glyphSet
+            default_ufo, designSpaceDoc, ttFont=ttFont, glyphSet=glyphSet,
+            feaIncludeDir=self.feaIncludeDir,
         )
         featureCompiler.compile()
 
