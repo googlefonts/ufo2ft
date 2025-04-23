@@ -171,6 +171,32 @@ class InfoCompiler(BaseOutlineCompiler):
         }
         orig_names.update(temp_names)
         orig.names = list(orig_names.values())
+        # If the 'typographic' family/subfamily names were present in the original
+        # font's name table (as built from the base master UFO's fontinfo.plist) but
+        # are now omitted from the 'temp' font's (built from the VF's public.fontInfo)
+        # it means they are no longer needed after merging the latter into the former
+        # and should be removed.
+        typo_name_ids = {16, 17}
+        if typo_name_ids.issubset(
+            {n.nameID for n in orig.names}
+        ) and not typo_name_ids.issubset({n.nameID for n in temp.names}):
+            orig.removeNames(nameID=16)
+            orig.removeNames(nameID=17)
+            # Any references to the removed typographic style name (nameID 17) in either
+            # fvar instances or STAT axis values must be replaced with the legacy style
+            # name (nameID 2).
+            if "fvar" in self.orig_otf:
+                for inst in self.orig_otf["fvar"].instances:
+                    if inst.subfamilyNameID == 17:
+                        inst.subfamilyNameID = 2
+            if "STAT" in self.orig_otf:
+                stat = self.orig_otf["STAT"].table
+                if stat.ElidedFallbackNameID == 17:
+                    stat.ElidedFallbackNameID = 2
+                if stat.AxisValueArray:
+                    for rec in stat.AxisValueArray.AxisValue:
+                        if rec.ValueNameID == 17:
+                            rec.ValueNameID = 2
 
     def setupTable_gasp(self):
         from ufo2ft.instructionCompiler import InstructionCompiler
