@@ -547,7 +547,7 @@ class BaseOutlineCompiler:
                 uvsList = []
                 for hexvalue, glyphName in glyphMapping.items():
                     value = int(hexvalue, 16)
-                    if glyphName == mapping[value]:
+                    if value in mapping and glyphName == mapping[value]:
                         uvsList.append((value, None))
                     else:
                         uvsList.append((value, glyphName))
