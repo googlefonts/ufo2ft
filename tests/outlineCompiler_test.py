@@ -1496,6 +1496,21 @@ def test_MATH_table_invalid(FontClass, compile, attribute):
     with pytest.raises(InvalidFontData, match="Invalid assembly"):
         compile(ufo)
 
+@pytest.mark.parametrize("compile", [compileTTF, compileOTF])
+def test_CMAP_format_14_table_no_cmap_entry(FontClass, compile):
+    #
+    # https://github.com/googlefonts/ufo2ft/issues/908
+    #
+    # Typically, code points listed in the uvsMappings array will have corresponding
+    # entries in a Unicode 'cmap' subtable. This is not required, however.
+    # In Bug908.ufo, the font maps U+20122 U+FE00 to U+2F803, but U+20122
+    # is not in the 'cmap' subtable.
+    ufo = FontClass(getpath("Bug908.ufo"))
+    result = compile(ufo)
+
+    cmap = result.getBestCmap()
+    assert 0x20122 not in cmap
+
 
 if __name__ == "__main__":
     import sys

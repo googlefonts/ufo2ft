@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>public.glyphOrder</key>
+		<array>
+			<string>.notdef</string>
+			<string>u2F803</string>
+		</array>
+		<key>public.unicodeVariationSequences</key>
+    	<dict>
+			<key>FE00</key>
+			<dict>
+				<key>20122</key>
+        		<string>u2F803</string>
+			</dict>
+		</dict>
+	</dict>
+</plist>
