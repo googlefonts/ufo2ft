@@ -1496,6 +1496,7 @@ def test_MATH_table_invalid(FontClass, compile, attribute):
     with pytest.raises(InvalidFontData, match="Invalid assembly"):
         compile(ufo)
 
+
 @pytest.mark.parametrize("compile", [compileTTF, compileOTF])
 def test_CMAP_format_14_table_no_cmap_entry(FontClass, compile):
     #
