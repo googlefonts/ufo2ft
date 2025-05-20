@@ -368,6 +368,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
             if include is not None and glyphName not in include:
                 continue
             anchorDict = OrderedDict()
+            objectLibs = glyph.lib.get(OBJECT_LIBS_KEY)
             for anchor in glyph.anchors:
                 anchorName = anchor.name
                 if not anchorName:
@@ -381,8 +382,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     )
                 x, y = self._getAnchor(glyphName, anchorName, anchor=anchor)
                 libData = None
-                if anchor.identifier:
-                    libData = glyph.lib[OBJECT_LIBS_KEY].get(anchor.identifier)
+                if anchor.identifier and objectLibs:
+                    libData = objectLibs.get(anchor.identifier)
                 a = self.NamedAnchor(name=anchorName, x=x, y=y, libData=libData)
                 if a.isContextual and not libData:
                     continue
