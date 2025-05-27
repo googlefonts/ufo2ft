@@ -2144,7 +2144,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
     def test_contextual_anchor_no_context(self, testufo, caplog):
         a = testufo["a"]
         a.appendAnchor({"name": "*top", "x": 200, "y": 200, "identifier": "*top"})
-        a.lib[OBJECT_LIBS_KEY] = {"*top": {"foo": "bar"}}
+        a.lib[OBJECT_LIBS_KEY] = {"*top": {"GPOS_Context": " "}}
 
         writer = MarkFeatureWriter()
         feaFile = ast.FeatureFile()

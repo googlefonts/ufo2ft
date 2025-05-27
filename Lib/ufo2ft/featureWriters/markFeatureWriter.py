@@ -115,6 +115,7 @@ def parseAnchorName(
     ligaSeparator=LIGA_SEPARATOR,
     ligaNumRE=LIGA_NUM_RE,
     ignoreRE=None,
+    libData=None,
 ):
     """Parse anchor name and return a tuple that specifies:
     1) whether the anchor is a "mark" anchor (bool);
@@ -132,7 +133,7 @@ def parseAnchorName(
     if ignoreRE is not None:
         anchorName = re.sub(ignoreRE, "", anchorName)
 
-    if anchorName[0] == "*":
+    if anchorName[0] == "*" and libData and "GPOS_Context" in libData:
         isContextual = True
         anchorName = anchorName[1:]
         anchorName = re.sub(r"\..*", "", anchorName)
@@ -200,6 +201,7 @@ class NamedAnchor:
             ligaSeparator=self.ligaSeparator,
             ligaNumRE=self.ligaNumRE,
             ignoreRE=self.ignoreRE,
+            libData=libData,
         )
         if number is not None:
             if number < 1:
@@ -385,8 +387,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 if anchor.identifier and objectLibs:
                     libData = objectLibs.get(anchor.identifier)
                 a = self.NamedAnchor(name=anchorName, x=x, y=y, libData=libData)
-                if a.isContextual and not libData:
-                    continue
                 if a.isIgnorable:
                     continue
                 anchorDict[anchorName] = a
@@ -756,7 +756,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 else:
                     continue
 
-                anchor_context = anchor.libData.get("GPOS_Context", "").strip()
+                anchor_context = anchor.libData["GPOS_Context"].strip()
                 if not anchor_context:
                     self.log.warning(
                         "contextual anchor '%s' in glyph '%s' has no context data; skipped",
