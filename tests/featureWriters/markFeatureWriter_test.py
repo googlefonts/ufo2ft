@@ -5,7 +5,7 @@ from textwrap import dedent
 
 import pytest
 
-from ufo2ft.constants import OBJECT_LIBS_KEY
+from ufo2ft.constants import ANCHOR_LIB_GPOS_CONTEXT_KEY, OBJECT_LIBS_KEY
 from ufo2ft.featureCompiler import FeatureCompiler, parseLayoutFeatures
 from ufo2ft.featureWriters import ast
 from ufo2ft.featureWriters.markFeatureWriter import (
@@ -2144,7 +2144,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
     def test_contextual_anchor_no_context(self, testufo, caplog):
         a = testufo["a"]
         a.appendAnchor({"name": "*top", "x": 200, "y": 200, "identifier": "*top"})
-        a.lib[OBJECT_LIBS_KEY] = {"*top": {"GPOS_Context": " "}}
+        a.lib[OBJECT_LIBS_KEY] = {"*top": {ANCHOR_LIB_GPOS_CONTEXT_KEY: " "}}
 
         writer = MarkFeatureWriter()
         feaFile = ast.FeatureFile()

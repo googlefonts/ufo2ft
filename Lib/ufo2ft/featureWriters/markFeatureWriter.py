@@ -4,7 +4,12 @@ from collections import OrderedDict, defaultdict
 from functools import partial
 from typing import Dict, Optional, Set, Tuple
 
-from ufo2ft.constants import INDIC_SCRIPTS, OBJECT_LIBS_KEY, USE_SCRIPTS
+from ufo2ft.constants import (
+    ANCHOR_LIB_GPOS_CONTEXT_KEY,
+    INDIC_SCRIPTS,
+    OBJECT_LIBS_KEY,
+    USE_SCRIPTS,
+)
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
 from ufo2ft.util import (
     classifyGlyphs,
@@ -133,7 +138,7 @@ def parseAnchorName(
     if ignoreRE is not None:
         anchorName = re.sub(ignoreRE, "", anchorName)
 
-    if anchorName[0] == "*" and libData and "GPOS_Context" in libData:
+    if anchorName[0] == "*" and libData and ANCHOR_LIB_GPOS_CONTEXT_KEY in libData:
         isContextual = True
         anchorName = anchorName[1:]
         anchorName = re.sub(r"\..*", "", anchorName)
@@ -756,7 +761,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 else:
                     continue
 
-                anchor_context = anchor.libData["GPOS_Context"].strip()
+                anchor_context = anchor.libData[ANCHOR_LIB_GPOS_CONTEXT_KEY].strip()
                 if not anchor_context:
                     self.log.warning(
                         "contextual anchor '%s' in glyph '%s' has no context data; skipped",

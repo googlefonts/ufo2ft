@@ -158,3 +158,5 @@ USE_SCRIPTS = [
     "Yezi",  # Yezidi
     "Zanb",  # Zanabazar Square
 ]
+
+ANCHOR_LIB_GPOS_CONTEXT_KEY = "GPOS_Context"
