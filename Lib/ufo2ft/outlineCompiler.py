@@ -1585,10 +1585,10 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             familyOtherBlues = [otRound(i) for i in familyOtherBlues]
         stemSnapH = getAttrWithFallback(info, "postscriptStemSnapH")
         if isinstance(stemSnapH, list):
-            stemSnapH = sorted([otRound(i) for i in stemSnapH])
+            stemSnapH = [otRound(i) for i in stemSnapH]
         stemSnapV = getAttrWithFallback(info, "postscriptStemSnapV")
         if isinstance(stemSnapV, list):
-            stemSnapV = sorted([otRound(i) for i in stemSnapV])
+            stemSnapV = [otRound(i) for i in stemSnapV]
         # only write the blues data if some blues are defined.
         if any((blueValues, otherBlues, familyBlues, familyOtherBlues)):
             private.rawDict["BlueFuzz"] = blueFuzz
@@ -1605,9 +1605,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
                 private.rawDict["FamilyOtherBlues"] = familyOtherBlues
         # only write the stems if both are defined.
         if stemSnapH and stemSnapV:
-            private.rawDict["StemSnapH"] = stemSnapH
+            private.rawDict["StemSnapH"] = sorted(stemSnapH)
             private.rawDict["StdHW"] = stemSnapH[0]
-            private.rawDict["StemSnapV"] = stemSnapV
+            private.rawDict["StemSnapV"] = sorted(stemSnapV)
             private.rawDict["StdVW"] = stemSnapV[0]
         # populate glyphs
         cffGlyphs = self.getCompiledGlyphs()
