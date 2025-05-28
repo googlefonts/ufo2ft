@@ -1605,9 +1605,9 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
                 private.rawDict["FamilyOtherBlues"] = familyOtherBlues
         # only write the stems if both are defined.
         if stemSnapH and stemSnapV:
-            private.rawDict["StemSnapH"] = stemSnapH
+            private.rawDict["StemSnapH"] = sorted(stemSnapH)
             private.rawDict["StdHW"] = stemSnapH[0]
-            private.rawDict["StemSnapV"] = stemSnapV
+            private.rawDict["StemSnapV"] = sorted(stemSnapV)
             private.rawDict["StdVW"] = stemSnapV[0]
         # populate glyphs
         cffGlyphs = self.getCompiledGlyphs()
