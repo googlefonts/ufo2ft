@@ -1585,10 +1585,10 @@ class OutlineOTFCompiler(BaseOutlineCompiler):
             familyOtherBlues = [otRound(i) for i in familyOtherBlues]
         stemSnapH = getAttrWithFallback(info, "postscriptStemSnapH")
         if isinstance(stemSnapH, list):
-            stemSnapH = [otRound(i) for i in stemSnapH]
+            stemSnapH = sorted([otRound(i) for i in stemSnapH])
         stemSnapV = getAttrWithFallback(info, "postscriptStemSnapV")
         if isinstance(stemSnapV, list):
-            stemSnapV = [otRound(i) for i in stemSnapV]
+            stemSnapV = sorted([otRound(i) for i in stemSnapV])
         # only write the blues data if some blues are defined.
         if any((blueValues, otherBlues, familyBlues, familyOtherBlues)):
             private.rawDict["BlueFuzz"] = blueFuzz
