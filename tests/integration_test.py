@@ -600,6 +600,13 @@ class IntegrationTest:
         expectTTX(fonts["MyFontVF1"], "TestVarFont-MyFontVF1.ttx", ["head", "name"])
         expectTTX(fonts["MyFontVF2"], "TestVarFont-MyFontVF2.ttx", ["head", "name"])
 
+        # the default weight is defined as 100 in the designspace and fontTools.varLib's
+        # `set_default_weight_width_slant` updates the OS/2.usWeightClass accordingly.
+        # Ensure it doesn't change after the postProcessor applies 'public.fontInfo'
+        # overrides that have nothing to do with the OS/2 table:
+        # https://github.com/googlefonts/ufo2ft/issues/914
+        assert fonts["MyFontVF2"]["OS/2"].usWeightClass == 100
+
     def test_compile_variable_ttf_drop_implied_oncurves(self, FontClass, caplog):
         # https://github.com/googlefonts/ufo2ft/pull/817
         designspace = DesignSpaceDocument.fromfile(getpath("OTestFont.designspace"))
