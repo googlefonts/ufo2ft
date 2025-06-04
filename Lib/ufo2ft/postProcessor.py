@@ -355,10 +355,26 @@ class PostProcessor:
         the compiled font."""
         from ufo2ft.infoCompiler import InfoCompiler
 
+        weightClass = self.otf["OS/2"].usWeightClass
+        widthClass = self.otf["OS/2"].usWidthClass
+        italicAngle = self.otf["post"].italicAngle
+
         logger.info("Applying variable-font info from DesignSpace lib")
 
         compiler = InfoCompiler(self.otf, self.ufo, self.info)
         compiler.compile()
+
+        # restore the previous weight/width/slant values unless the 'public.fontInfo'
+        # key explicitly overrode them. fontTools.varLib.build() may have updated them
+        # to match the VF's default location (as recommended by the OT spec), and the
+        # InfoCompiler (which rebuilds OS/2 and post) risks overwriting them:
+        # https://github.com/googlefonts/ufo2ft/issues/914
+        if "openTypeOSWeightClass" not in self.info:
+            self.otf["OS/2"].usWeightClass = weightClass
+        if "openTypeOSWidthClass" not in self.info:
+            self.otf["OS/2"].usWidthClass = widthClass
+        if "italicAngle" not in self.info:
+            self.otf["post"].italicAngle = italicAngle
 
 
 def _reloadFont(font: TTFont) -> TTFont:
