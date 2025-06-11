@@ -476,23 +476,33 @@ def test_instance_no_attributes(ufo_module, data_dir, caplog):
     assert instance_font.info.styleMapFamilyName is None
     assert instance_font.info.styleMapStyleName is None
 
-def test_instance_lib_attributes(ufo_module, data_dir):
-        designspace = designspaceLib.DesignSpaceDocument.fromfile(
-            data_dir / "MutatorSans" / "MutatorSans.designspace"
-        )
-        designspace.instances[0].lib["public.fontInfo"] = {}
-        designspace.instances[0].lib["public.fontInfo"]["openTypeOS2Panose"] = [
-            2, 11, 5, 4, 2, 2, 2, 2, 2, 4
-        ]
-        designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
-        generator = ufo2ft.instantiator.Instantiator.from_designspace(
-            designspace, round_geometry=True
-        )
-        instance_font = generator.generate_instance(designspace.instances[0])
-        assert instance_font.info.openTypeOS2Panose == [2, 11, 5, 4, 2, 2, 2, 2, 2, 4]
 
-        instance_font2 = generator.generate_instance(designspace.instances[1])
-        assert instance_font2.info.openTypeOS2Panose == None
+def test_instance_lib_attributes(ufo_module, data_dir):
+    designspace = designspaceLib.DesignSpaceDocument.fromfile(
+        data_dir / "MutatorSans" / "MutatorSans.designspace"
+    )
+    designspace.instances[0].lib["public.fontInfo"] = {}
+    designspace.instances[0].lib["public.fontInfo"]["openTypeOS2Panose"] = [
+        2,
+        11,
+        5,
+        4,
+        2,
+        2,
+        2,
+        2,
+        2,
+        4,
+    ]
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
+        designspace, round_geometry=True
+    )
+    instance_font = generator.generate_instance(designspace.instances[0])
+    assert instance_font.info.openTypeOS2Panose == [2, 11, 5, 4, 2, 2, 2, 2, 2, 4]
+
+    instance_font2 = generator.generate_instance(designspace.instances[1])
+    assert instance_font2.info.openTypeOS2Panose == None
 
 
 def test_axis_mapping(ufo_module, data_dir):
