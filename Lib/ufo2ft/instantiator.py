@@ -596,6 +596,21 @@ class Instantiator:
                     copy.deepcopy(getattr(self.copy_info, attribute)),
                 )
 
+        # Copy instance-specific attributes from the InstanceDescriptor.
+        if hasattr(instance, "lib") and "public.fontInfo" in instance.lib:
+            for key, value in instance.lib["public.fontInfo"].items():
+                if hasattr(font.info, key):
+                    setattr(font.info, key, value)
+                else:
+                    logger.warning(
+                        "Instance %s at location %s has an unknown font info "
+                        "attribute %s with value %s. This will be ignored.",
+                        instance.familyName,
+                        location,
+                        key,
+                        value,
+                    )
+
         # TODO: multilingual names to replace possibly existing name records.
         if instance.familyName:
             font.info.familyName = instance.familyName
