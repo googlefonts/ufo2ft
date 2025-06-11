@@ -603,7 +603,7 @@ class Instantiator:
                     setattr(font.info, key, value)
                 else:
                     logger.warning(
-                        f"Instance %s at location %s has an unknown font info "
+                        "Instance %s at location %s has an unknown font info "
                         "attribute %s with value %s. This will be ignored.",
                         instance.familyName,
                         location,
