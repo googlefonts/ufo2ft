@@ -477,29 +477,39 @@ def test_instance_no_attributes(ufo_module, data_dir, caplog):
     assert instance_font.info.styleMapStyleName is None
 
 
-def test_instance_lib_attributes(ufo_module, data_dir):
+def test_instance_lib_attributes(ufo_module, data_dir, caplog):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "MutatorSans" / "MutatorSans.designspace"
     )
-    designspace.instances[0].lib["public.fontInfo"] = {}
-    designspace.instances[0].lib["public.fontInfo"]["openTypeOS2Panose"] = [
-        2,
-        11,
-        5,
-        4,
-        2,
-        2,
-        2,
-        2,
-        2,
-        4,
-    ]
+    designspace.instances[0].lib["public.fontInfo"] = {
+        "openTypeOS2Panose": [
+            2,
+            11,
+            5,
+            4,
+            2,
+            2,
+            2,
+            2,
+            2,
+            4,
+        ],
+        "invalidFontInfoAttribute": "foobarbaz",
+    }
     designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
     generator = ufo2ft.instantiator.Instantiator.from_designspace(
         designspace, round_geometry=True
     )
-    instance_font = generator.generate_instance(designspace.instances[0])
+
+    with caplog.at_level(logging.WARNING):
+        instance_font = generator.generate_instance(designspace.instances[0])
+
     assert instance_font.info.openTypeOS2Panose == [2, 11, 5, 4, 2, 2, 2, 2, 2, 4]
+    assert (
+        "Instance 'MutatorMathTest' at location {'width': 0.0, 'weight': 0.0} "
+        "has an unknown font info attribute 'invalidFontInfoAttribute' "
+        "with value foobarbaz. This will be ignored."
+    ) in caplog.text
 
     instance_font2 = generator.generate_instance(designspace.instances[1])
     assert instance_font2.info.openTypeOS2Panose is None
