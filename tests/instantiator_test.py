@@ -502,7 +502,7 @@ def test_instance_lib_attributes(ufo_module, data_dir):
     assert instance_font.info.openTypeOS2Panose == [2, 11, 5, 4, 2, 2, 2, 2, 2, 4]
 
     instance_font2 = generator.generate_instance(designspace.instances[1])
-    assert instance_font2.info.openTypeOS2Panose == None
+    assert instance_font2.info.openTypeOS2Panose is None
 
 
 def test_axis_mapping(ufo_module, data_dir):
