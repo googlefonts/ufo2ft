@@ -999,7 +999,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
     def _isAboveMark(self, anchor):
         if anchor.name in self.abvmAnchorNames:
             return True
-        if anchor.name in self.blwmAnchorNames or anchor.name.startswith("bottom"):
+        if (
+            anchor.name in self.blwmAnchorNames
+            or anchor.name.startswith("bottom")
+            or anchor.name.startswith("nukta")
+        ):
             return False
         # Glyphs uses (used to use?) a heuristic to guess whether an anchor
         # should go into abvm or blwm. (See
