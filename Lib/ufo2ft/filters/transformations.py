@@ -111,12 +111,12 @@ class TransformationsFilter(BaseFilter):
                     # call filter recursively until all the included bases are
                     # transformed, or there are no more components
                     modified.add(base_name)
-    
+
             rec = RecordingPointPen()
             glyph.drawPoints(rec)
             glyph.clearContours()
             glyph.clearComponents()
-    
+
             outpen = glyph.getPointPen()
             filterpen = TransformPointPen(outpen, matrix, modified)
             rec.replay(filterpen)
