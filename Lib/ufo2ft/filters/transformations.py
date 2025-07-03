@@ -95,30 +95,31 @@ class TransformationsFilter(BaseFilter):
 
     def filter(self, glyph):
         matrix = self.context.matrix
-        if matrix == Identity or not (glyph or glyph.components or glyph.anchors):
+        if matrix == Identity:
             return False  # nothing to do
 
-        modified = self.context.modified
-        glyphSet = self.context.glyphSet
-        for component in glyph.components:
-            base_name = component.baseGlyph
-            if base_name in modified:
-                continue
-            base_glyph = glyphSet[base_name]
-            if self.include(base_glyph) and self.filter(base_glyph):
-                # base glyph is included but was not transformed yet; we
-                # call filter recursively until all the included bases are
-                # transformed, or there are no more components
-                modified.add(base_name)
+        if glyph or glyph.components:
+            modified = self.context.modified
+            glyphSet = self.context.glyphSet
+            for component in glyph.components:
+                base_name = component.baseGlyph
+                if base_name in modified:
+                    continue
+                base_glyph = glyphSet[base_name]
+                if self.include(base_glyph) and self.filter(base_glyph):
+                    # base glyph is included but was not transformed yet; we
+                    # call filter recursively until all the included bases are
+                    # transformed, or there are no more components
+                    modified.add(base_name)
 
-        rec = RecordingPointPen()
-        glyph.drawPoints(rec)
-        glyph.clearContours()
-        glyph.clearComponents()
+            rec = RecordingPointPen()
+            glyph.drawPoints(rec)
+            glyph.clearContours()
+            glyph.clearComponents()
 
-        outpen = glyph.getPointPen()
-        filterpen = TransformPointPen(outpen, matrix, modified)
-        rec.replay(filterpen)
+            outpen = glyph.getPointPen()
+            filterpen = TransformPointPen(outpen, matrix, modified)
+            rec.replay(filterpen)
 
         # anchors are not drawn through the pen API,
         # must be transformed separately

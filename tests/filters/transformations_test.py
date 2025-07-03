@@ -80,8 +80,8 @@ class TransformationsFilterTest:
         excinfo.match(r"is not a valid (TransformationsFilter\.)?Origin")
 
     def test_empty_glyph(self, font):
-        filter_ = TransformationsFilter(OffsetY=51, include={"space"})
-        assert not filter_(font)
+        filter_ = TransformationsFilter(ScaleX=50, include={"space"})
+        assert filter_(font)
 
     def test_Identity(self, font):
         filter_ = TransformationsFilter()
