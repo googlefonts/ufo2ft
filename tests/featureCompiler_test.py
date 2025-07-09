@@ -278,6 +278,7 @@ class FeatureCompilerTest:
         ufo = FontClass()
         ufo.newGlyph("f")
         ufo.newGlyph("f.alt01")
+        ufo.newGlyph("f.alt02")
         ufo.newGlyph("f_f")
         features = dedent(
             """\
@@ -285,7 +286,7 @@ class FeatureCompilerTest:
                 # invalid
                 lookup MIXED_TYPE {
                     sub f by f.alt01;
-                    sub f f by f_f;
+                    sub f from [f.alt01 f.alt02];
                 } MIXED_TYPE;
 
             } BUGS;

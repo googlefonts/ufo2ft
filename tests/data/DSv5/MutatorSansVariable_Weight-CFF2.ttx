@@ -385,9 +385,6 @@
         </FeatureTableSubstitution>
       </FeatureVariationRecord>
       <FeatureVariationRecord index="1">
-        <ConditionSet>
-          <!-- ConditionCount=0 -->
-        </ConditionSet>
         <FeatureTableSubstitution>
           <Version value="0x00010000"/>
           <!-- SubstitutionCount=1 -->
