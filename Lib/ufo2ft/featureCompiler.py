@@ -9,9 +9,10 @@ from io import StringIO
 from tempfile import NamedTemporaryFile
 
 from fontTools import mtiLib
-from fontTools.designspaceLib import DesignSpaceDocument, SourceDescriptor
+from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
+from fontTools.feaLib.lexer import IncludingLexer, Lexer
 from fontTools.feaLib.parser import Parser
 from fontTools.misc.loggingTools import Timer
 
@@ -68,6 +69,41 @@ def parseLayoutFeatures(font, includeDir=None):
             )
         raise
     return doc
+
+
+def tokenizeLayoutFeatures(
+    font, includeDir: str | None = None
+) -> list[tuple[str, str]]:
+    """Tokenize the font features.fea with a lexer that follows include statements.
+
+    Comments, newlines and whitespace characters are excluded.
+
+    Return a list of (type, token) tuples.
+    """
+    featxt = font.features.text or ""
+    if not featxt:
+        return []
+    buf = StringIO(featxt)
+    ufoPath = font.path
+    if includeDir is None and ufoPath is not None:
+        ufoPath = os.path.normpath(ufoPath)
+        buf.name = os.path.join(ufoPath, "features.fea")
+        includeDir = os.path.dirname(ufoPath) or "."
+    try:
+        return [
+            (typ, tok)
+            for typ, tok, _ in IncludingLexer(buf, includeDir=includeDir)
+            if typ != Lexer.COMMENT
+        ]
+    except IncludedFeaNotFound as e:
+        if ufoPath and os.path.exists(os.path.join(ufoPath, e.args[0])):
+            logger.warning(
+                "Please change the file name in the include(...); "
+                "statement to be relative to the UFO itself, "
+                "instead of relative to the 'features.fea' file "
+                "contained in it."
+            )
+        raise
 
 
 class BaseFeatureCompiler:
@@ -222,8 +258,7 @@ class FeatureCompiler(BaseFeatureCompiler):
             import warnings
 
             warnings.warn(
-                "mtiFeatures argument is ignored; "
-                "you should use MtiLibFeatureCompiler",
+                "mtiFeatures argument is ignored; you should use MtiLibFeatureCompiler",
                 category=UserWarning,
                 stacklevel=2,
             )
@@ -445,7 +480,9 @@ class VariableFeatureCompiler(FeatureCompiler):
             self.features = self.ufo.features.text or ""
 
 
-def _featuresCompatible(designSpaceDoc: DesignSpaceDocument) -> bool:
+def _featuresCompatible(
+    designSpaceDoc: DesignSpaceDocument, includeDir: str | None = None
+) -> bool:
     """Returns True when the features of the individual source UFOs are the same,
     or when only the default source has features.
 
@@ -457,20 +494,11 @@ def _featuresCompatible(designSpaceDoc: DesignSpaceDocument) -> bool:
 
     assert all(hasattr(source.font, "features") for source in designSpaceDoc.sources)
 
-    def transform(f: SourceDescriptor) -> str:
-        # Strip comments
-        text = re.sub("(?m)#.*$", "", f.font.features.text or "")
-        # Strip extraneous whitespace
-        text = re.sub(r"\s+", " ", text)
-        return text
-
     sources = sorted(
         designSpaceDoc.sources, key=lambda source: source != designSpaceDoc.default
     )
     assert sources[0] == designSpaceDoc.default
 
-    transformed = [transform(s) for s in sources]
-    first = transformed[0]
-    return all(s == first for s in transformed[1:]) or all(
-        not s for s in transformed[1:]
-    )
+    tokenized = [tokenizeLayoutFeatures(s.font, includeDir) for s in sources]
+    first = tokenized[0]
+    return all(s == first for s in tokenized[1:]) or all(not s for s in tokenized[1:])
