@@ -1,0 +1,141 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<designspace format="4.0">
+  <axes>
+    <axis tag="wght" name="weight" minimum="300" maximum="700" default="300">
+      <map input="300" output="50"/>
+      <map input="400" output="100"/>
+      <map input="700" output="150"/>
+    </axis>
+  </axes>
+  <sources>
+    <source filename="MyFont-Light.ufo">
+      <location>
+        <dimension name="weight" xvalue="50"/>
+      </location>
+    </source>
+    <source filename="MyFont-Bold.ufo">
+      <location>
+        <dimension name="weight" xvalue="150"/>
+      </location>
+    </source>
+  </sources>
+  <lib>
+    <dict>
+      <key>public.fontInfo</key>
+      <dict>
+        <key>familyName</key>
+        <string>MyFont VF</string>
+        <key>styleName</key>
+        <string>Regular</string>
+        <key>versionMajor</key>
+        <integer>1</integer>
+        <key>versionMinor</key>
+        <integer>0</integer>
+        <key>xHeight</key>
+        <integer>50</integer>
+        <key>openTypeNameRecords</key>
+        <array>
+          <dict>
+            <key>platformID</key>
+            <integer>3</integer>
+            <key>encodingID</key>
+            <integer>1</integer>
+            <key>languageID</key>
+            <integer>1031</integer>
+            <key>nameID</key>
+            <integer>0</integer>
+            <key>string</key>
+            <string>Urheberrecht 2025</string>
+          </dict>
+        </array>
+      </dict>
+    </dict>
+  </lib>
+  <instances>
+    <instance filename="MyFont-Light.ufo">
+      <location>
+        <dimension name="weight" xvalue="50"/>
+      </location>
+    </instance>
+    <instance familyname="MyFont" stylename="SemiLight" filename="MyFont-SemiLight.ufo">
+      <familyname xml:lang="de">MehrNamenTest</familyname>
+      <stylename xml:lang="de">HalbLeicht</stylename>
+      <location>
+        <dimension name="weight" xvalue="75"/>
+      </location>
+    </instance>
+    <instance familyname="MyFont" stylename="DemiLight" filename="MyFont-DemiLight.ufo">
+      <familyname xml:lang="de">MehrNamenTest</familyname>
+      <stylename xml:lang="de">DemiLeicht</stylename>
+      <stylemapfamilyname xml:lang="de">MehrNamenTest DemiLeichtx</stylemapfamilyname>
+      <stylemapstylename xml:lang="de">Regular</stylemapstylename>
+      <location>
+        <dimension name="weight" xvalue="80"/>
+      </location>
+    </instance>
+    <instance familyname="MyFont" stylename="Regular" filename="MyFont-Regular.ufo">
+      <familyname xml:lang="de">MehrNamenTest</familyname>
+      <location>
+        <dimension name="weight" xvalue="100"/>
+      </location>
+      <lib>
+        <dict>
+          <key>public.fontInfo</key>
+          <dict>
+            <key>versionMajor</key>
+            <integer>3</integer>
+            <key>versionMinor</key>
+            <integer>141</integer>
+            <key>xHeight</key>
+            <integer>70</integer>
+            <key>openTypeNameRecords</key>
+            <array>
+              <dict>
+                <key>platformID</key>
+                <integer>3</integer>
+                <key>encodingID</key>
+                <integer>1</integer>
+                <key>languageID</key>
+                <integer>1031</integer>
+                <key>nameID</key>
+                <integer>0</integer>
+                <key>string</key>
+                <string>Urheberrecht 2025 Overriden</string>
+              </dict>
+            </array>
+          </dict>
+        </dict>
+      </lib>
+    </instance>
+    <instance familyname="MyFont" stylename="Bold" filename="MyFont-Bold.ufo">
+      <familyname xml:lang="de">MehrNamenTest</familyname>
+      <location>
+        <dimension name="weight" xvalue="150"/>
+      </location>
+      <lib>
+        <dict>
+          <key>public.fontInfo</key>
+          <dict>
+            <key>openTypeNameSampleText</key>
+            <string>Sample text for Bold instance</string>
+            <key>openTypeNameRecords</key>
+            <array>
+              <dict>
+                <key>platformID</key>
+                <integer>3</integer>
+                <key>encodingID</key>
+                <integer>1</integer>
+                <key>languageID</key>
+                <integer>1031</integer>
+                <key>nameID</key>
+                <integer>19</integer>
+                <key>string</key>
+                <string>Beispieltext für die Fettschrift</string>
+              </dict>
+            </array>
+          </dict>
+        </dict>
+      </lib>
+    </instance>
+  </instances>
+</designspace>
