@@ -1782,9 +1782,9 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         lookup = feature.statements[-3].lookup
         assert str(lookup) == (
             "lookup ContextualMarkDispatch_0 {\n"
-            "    lookupflag UseMarrkFilteringSet [twodotshorizontalbelow];\n"
-            "    # reh-ar * behDotess-ar.medi &\n"
-            "    pos reh-ar [behDotless-ar.init] behDotess-ar.medi"
+            "    lookupflag UseMarkFilteringSet [twodotshorizontalbelow-ar];\n"
+            "    # reh-ar * behDotless-ar.medi &\n"
+            "    pos reh-ar [behDotless-ar.init] behDotless-ar.medi"
             " @MC_bottom'"
             " lookup ContextualMark_0;\n"
             "} ContextualMarkDispatch_0;\n"
@@ -1793,11 +1793,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         lookup = feature.statements[-2].lookup
         assert str(lookup) == (
             "lookup ContextualMarkDispatch_1 {\n"
-            "    lookupflag UseMarrkFilteringSet [twodotsverticalbelow];\n"
+            "    lookupflag UseMarkFilteringSet [twodotsverticalbelow-ar];\n"
+            "    # dotbelow-ar *\n"
+            "    pos dotbelow-ar [behDotless-ar.init.alt]"
+            " @MC_bottom'"
+            " lookup ContextualMark_1;\n"
             "    # reh-ar *\n"
             "    pos reh-ar [behDotless-ar.init behDotless-ar.init.alt]"
             " @MC_bottom'"
-            " lookup ContextualMark_1;\n"
+            " lookup ContextualMark_2;\n"
             "} ContextualMarkDispatch_1;\n"
         )
 
@@ -1807,7 +1811,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             "    # reh-ar *\n"
             "    pos reh-ar [behDotless-ar.init]"
             " @MC_bottom'"
-            " lookup ContextualMark_2;\n"
+            " lookup ContextualMark_3;\n"
             "} ContextualMarkDispatch_2;\n"
         )
 
