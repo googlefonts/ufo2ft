@@ -762,6 +762,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     continue
 
                 anchor_context = anchor.libData[ANCHOR_LIB_GPOS_CONTEXT_KEY].strip()
+                
                 if not anchor_context:
                     self.log.warning(
                         "contextual anchor '%s' in glyph '%s' has no context data; skipped",
@@ -769,7 +770,10 @@ class MarkFeatureWriter(BaseFeatureWriter):
                         glyphName,
                     )
                     continue
-                dest[anchor_context].append((glyphName, anchor))
+                
+                for context in anchor_context.splitlines():
+                    context = context.strip().rstrip(";")
+                    dest[context].append((glyphName, anchor))
         return baseResult, ligatureResult, markResult
 
     @staticmethod

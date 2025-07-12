@@ -22,7 +22,7 @@
         <key>50838DB6-85ED-49AE-8935-C6201FC3FCD8</key>
         <dict>
           <key>GPOS_Context</key>
-          <string>lookupflag UseMarrkFilteringSet [twodotsverticalbelow]; reh-ar *</string>
+          <string>lookupflag UseMarkFilteringSet [twodotsverticalbelow-ar]; reh-ar *</string>
         </dict>
         <key>575ADDBE-67A1-4781-8244-18DEC9396567</key>
         <dict>
@@ -32,7 +32,7 @@
         <key>8AEC6EF0-8B9B-481A-AC0E-A95051FD2D12</key>
         <dict>
           <key>GPOS_Context</key>
-          <string>lookupflag UseMarrkFilteringSet [twodotshorizontalbelow]; reh-ar * behDotess-ar.medi &amp;</string>
+          <string>lookupflag UseMarkFilteringSet [twodotshorizontalbelow-ar]; reh-ar * behDotless-ar.medi &amp;</string>
         </dict>
       </dict>
     </dict>
