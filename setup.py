@@ -30,7 +30,7 @@ setup(
     setup_requires=pytest_runner + wheel + ["setuptools_scm"],
     tests_require=["pytest>=2.8"],
     install_requires=[
-        "fonttools[ufo]>=4.52.0",
+        "fonttools[ufo]>=4.58.5",
         "cffsubr>=0.3.0",
         "booleanOperations>=0.9.0",
         "fontMath>=0.9.3",
@@ -40,7 +40,7 @@ setup(
         "cffsubr": [],  # keep empty for backward compat
         "compreffor": ["compreffor>=0.5.5"],
     },
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
@@ -53,11 +53,11 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Topic :: Multimedia :: Graphics",
         "Topic :: Multimedia :: Graphics :: Graphics Conversion",
         "Topic :: Multimedia :: Graphics :: Editors :: Vector-Based",

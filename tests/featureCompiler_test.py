@@ -7,7 +7,12 @@ import pytest
 from fontTools import ttLib
 from fontTools.feaLib.error import FeatureLibError, IncludedFeaNotFound
 
-from ufo2ft.featureCompiler import FeatureCompiler, logger, parseLayoutFeatures
+from ufo2ft.featureCompiler import (
+    FeatureCompiler,
+    logger,
+    parseLayoutFeatures,
+    tokenizeLayoutFeatures,
+)
 from ufo2ft.featureWriters import (
     FEATURE_WRITERS_KEY,
     BaseFeatureWriter,
@@ -111,6 +116,148 @@ class ParseLayoutFeaturesTest:
             fea = parseLayoutFeatures(ufo)
 
         assert "# hello world" in str(fea)
+
+
+class TokenizeLayoutFeaturesTest:
+    def tokenize(self, ufo, includeDir=None):
+        return [tok for _, tok in tokenizeLayoutFeatures(ufo, includeDir=includeDir)]
+
+    def test_include(self, FontClass, tmp_path):
+        (tmp_path / "test.fea").write_text(
+            dedent(
+                """\
+            # hello world
+            feature kern {
+                pos A V -40;
+            } kern;
+            """
+            ),
+            encoding="utf-8",
+        )
+        ufo = FontClass()
+        ufo.features.text = dedent(
+            """\
+            include(test.fea)
+            """
+        )
+        ufo.save(tmp_path / "Test.ufo")
+
+        assert self.tokenize(ufo) == [
+            "feature",
+            "kern",
+            "{",
+            "pos",
+            "A",
+            "V",
+            -40,
+            ";",
+            "}",
+            "kern",
+            ";",
+        ]
+
+    def test_include_does_not_exist(self, FontClass, tmp_path, monkeypatch):
+        ufo = FontClass()
+        ufo.features.text = dedent(
+            """\
+            include(test.fea)
+            """
+        )
+        with monkeypatch.context() as context:
+            context.chdir(tmp_path)
+            ufo.save("Test.ufo")
+            with pytest.raises(IncludedFeaNotFound):
+                tokenizeLayoutFeatures(ufo)
+
+    def test_include_no_ufo_path_nor_include_dir(self, FontClass, tmp_path):
+        ufo = FontClass()
+        ufo.features.text = dedent(
+            """\
+            include(test.fea)
+            """
+        )
+        assert ufo.path is None
+        with pytest.raises(IncludedFeaNotFound):
+            tokenizeLayoutFeatures(ufo, includeDir=None)
+
+    def test_include_not_found_with_warning(self, FontClass, tmp_path, caplog):
+        caplog.set_level(logging.ERROR)
+
+        (tmp_path / "test.fea").write_text(
+            dedent(
+                """\
+            # hello world
+            """
+            ),
+            encoding="utf-8",
+        )
+        ufo = FontClass()
+        ufo.features.text = dedent(
+            """\
+            include(../test.fea)
+            """
+        )
+        ufo.save(tmp_path / "Test.ufo")
+
+        # the included 'test.fea' is in the same directory as the ufo, but the include
+        # statement appears to be relative to the inner ufo/features.fea, treating ufo as
+        # if it were a directory. The spec wants include paths to be relative to the ufo
+        # itself as a whole, hence we expect the include error plus a warning
+        with caplog.at_level(logging.WARNING, logger=logger.name):
+            with pytest.raises(IncludedFeaNotFound):
+                tokenizeLayoutFeatures(ufo)
+
+        assert len(caplog.records) == 1
+        assert "change the file name in the include" in caplog.text
+
+    def test_include_dir(self, FontClass, tmp_path, caplog):
+        features_dir = tmp_path / "features"
+        features_dir.mkdir()
+        (features_dir / "test.fea").write_text(
+            dedent(
+                """\
+                # hello world
+                feature kern {
+                    pos A V -40;
+                } kern;
+                """
+            ),
+            encoding="utf-8",
+        )
+        ufo = FontClass()
+        ufo.features.text = dedent(
+            """\
+            include(test.fea)
+            """
+        )
+        ufo.save(tmp_path / "Test.ufo")
+
+        assert self.tokenize(ufo, includeDir=features_dir) == [
+            "feature",
+            "kern",
+            "{",
+            "pos",
+            "A",
+            "V",
+            -40,
+            ";",
+            "}",
+            "kern",
+            ";",
+        ]
+
+    def test_include_dir_defaults_to_cwd(self, FontClass, tmp_path, monkeypatch):
+        (tmp_path / "test.fea").write_text("# hello world", encoding="utf-8")
+        ufo = FontClass()
+        ufo.features.text = "include(test.fea)"
+
+        with monkeypatch.context() as context:
+            context.chdir(tmp_path)
+            # even without ufo.path or an explicit includeDir, we expect no exceptions
+            # because we cd to test.fea's directory.
+            # (result is empty because comments are ignored)
+            assert ufo.path is None
+            assert self.tokenize(ufo) == []
 
 
 class DummyFeatureWriter:
@@ -278,6 +425,7 @@ class FeatureCompilerTest:
         ufo = FontClass()
         ufo.newGlyph("f")
         ufo.newGlyph("f.alt01")
+        ufo.newGlyph("f.alt02")
         ufo.newGlyph("f_f")
         features = dedent(
             """\
@@ -285,7 +433,7 @@ class FeatureCompilerTest:
                 # invalid
                 lookup MIXED_TYPE {
                     sub f by f.alt01;
-                    sub f f by f_f;
+                    sub f from [f.alt01 f.alt02];
                 } MIXED_TYPE;
 
             } BUGS;
