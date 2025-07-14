@@ -20,7 +20,9 @@
         <key>051ABFBB-3A07-48C5-A5A3-82D4291DEAD1</key>
         <dict>
           <key>GPOS_Context</key>
-          <string>lookupflag UseMarrkFilteringSet [twodotsverticalbelow]; reh-ar *</string>
+          <string>lookupflag UseMarkFilteringSet [twodotsverticalbelow-ar]; reh-ar *
+lookupflag UseMarkFilteringSet [twodotsverticalbelow-ar]; dotbelow-ar *
+          </string>
         </dict>
       </dict>
     </dict>
