@@ -773,6 +773,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
                 for context in anchor_context.splitlines():
                     context = context.strip().rstrip(";")
+                    if not context:
+                        continue
                     dest[context].append((glyphName, anchor))
         return baseResult, ligatureResult, markResult
 
