@@ -464,6 +464,7 @@ class BaseInterpolatableCompiler(BaseCompiler):
             ttFont=ttFont,
             glyphSet=glyphSet,
             feaIncludeDir=self.feaIncludeDir,
+            featureWriters=self.featureWriters,
         )
         featureCompiler.compile()
 
