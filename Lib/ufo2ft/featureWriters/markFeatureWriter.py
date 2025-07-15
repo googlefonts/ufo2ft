@@ -721,11 +721,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
         def includedInClass(gdefClass: Optional[Set[str]], glyphName: str) -> bool:
             return glyphName in gdefClass if gdefClass is not None else False
 
+        abvmGlyphs, _ = self._getAbvmGlyphs()
         markGlyphNames = self.context.markGlyphNames
 
         baseResult = defaultdict(list)
         ligatureResult = defaultdict(list)
         markResult = defaultdict(list)
+        abvmResult = defaultdict(list)
 
         for glyphName, anchors in sorted(self.context.anchorLists.items()):
             for anchor in anchors:
@@ -757,7 +759,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     includedOrNoClass(baseClass, glyphName)
                     or includedInClass(ligatureClass, glyphName)
                 ):
-                    dest = baseResult
+                    dest = abvmResult if glyphName in abvmGlyphs else baseResult
                 else:
                     continue
 
@@ -776,7 +778,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                     if not context:
                         continue
                     dest[context].append((glyphName, anchor))
-        return baseResult, ligatureResult, markResult
+        return baseResult, ligatureResult, markResult, abvmResult
 
     @staticmethod
     def _iterAttachments(attachments, include=None, marksFilter=None):
@@ -849,25 +851,10 @@ class MarkFeatureWriter(BaseFeatureWriter):
             if lookup:
                 ligaLkps.append(lookup)
 
-        # Then make the contextual ones
-        refLkps = []
-        ctxLkps = {}
-        # We sort the full context by longest first. This isn't perfect
-        # but it gives us the best chance that more specific contexts
-        # (typically longer) will take precedence over more general ones.
-        for context, glyph_anchor_pair in sorted(
-            self.context.contextualMarkToBaseAnchors.items(), key=lambda x: -len(x[0])
-        ):
-            # Group by anchor
-            attachments = defaultdict(list)
-            for glyphName, anchor in glyph_anchor_pair:
-                attachments[anchor.key].append(MarkToBasePos(glyphName, [anchor]))
-            self._makeContextualMarkLookup(
-                attachments,
-                context,
-                refLkps,
-                ctxLkps,
-            )
+        ctxLkps, refLkps = self._makeAllContextualMarkLookups(
+            tag="mark",
+            markAnchors=self.context.contextualMarkToBaseAnchors.items(),
+        )
 
         for context, glyph_anchor_pair in sorted(
             self.context.contextualMarkToLigaAnchors.items(), key=lambda x: -len(x[0])
@@ -965,26 +952,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
             if lkp is not None:
                 markLkps.append(lkp)
 
-        # Then make the contextual ones
-        refLkps = []
-        ctxLkps = {}
-        # We sort the full context by longest first. This isn't perfect
-        # but it gives us the best chance that more specific contexts
-        # (typically longer) will take precedence over more general ones.
-        for context, glyph_anchor_pair in sorted(
-            self.context.contextualMarkToMarkAnchors.items(), key=lambda x: -len(x[0])
-        ):
-            # Group by anchor
-            attachments = defaultdict(list)
-            for glyphName, anchor in glyph_anchor_pair:
-                attachments[anchor.key].append(MarkToMarkPos(glyphName, [anchor]))
-            self._makeContextualMarkLookup(
-                attachments,
-                context,
-                refLkps,
-                ctxLkps,
-                prefix="ContextualMarkToMark",
-            )
+        ctxLkps, refLkps = self._makeAllContextualMarkLookups(
+            tag="mkmk",
+            markAnchors=self.context.contextualMarkToMarkAnchors.items(),
+            prefix="ContextualMarkToMark",
+        )
 
         ctxLkps = list(ctxLkps.values())
         if not markLkps and not ctxLkps:
@@ -1002,13 +974,47 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
         return feature, lookups
 
+    def _makeAllContextualMarkLookups(
+        self,
+        tag,
+        markAnchors: list,
+        prefix="ContextualMark",
+    ):
+        markClass = None
+
+        if tag in ["mark", "abvm", "blwm"]:
+            markClass = MarkToBasePos
+        elif tag == "mkmk":
+            markClass = MarkToMarkPos
+
+        # Then make the contextual ones
+        refLkps = []
+        ctxLkps = {}
+        # We sort the full context by longest first. This isn't perfect
+        # but it gives us the best chance that more specific contexts
+        # (typically longer) will take precedence over more general ones.
+        # print(tag, markAnchors, "\n")
+        for context, glyph_anchor_pair in sorted(markAnchors, key=lambda x: -len(x[0])):
+            # Group by anchor
+            attachments = defaultdict(list)
+            for glyphName, anchor in glyph_anchor_pair:
+                attachments[anchor.key].append(markClass(glyphName, [anchor]))
+
+            self._makeContextualMarkLookup(
+                attachments, context, refLkps, ctxLkps, prefix
+            )
+
+        return ctxLkps, refLkps
+
     def _isAboveMark(self, anchor):
-        if anchor.name in self.abvmAnchorNames:
+        anchorName = self._getParentAnchor(anchor)
+
+        if anchorName in self.abvmAnchorNames:
             return True
         if (
-            anchor.name in self.blwmAnchorNames
-            or anchor.name.startswith("bottom")
-            or anchor.name.startswith("nukta")
+            anchorName in self.blwmAnchorNames
+            or anchorName.startswith("bottom")
+            or anchorName.startswith("nukta")
         ):
             return False
         # Glyphs uses (used to use?) a heuristic to guess whether an anchor
@@ -1023,6 +1029,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     def _isBelowMark(self, anchor):
         return not self._isAboveMark(anchor)
+
+    def _getParentAnchor(self, anchor):
+        # We will get the actual anchor by removing the * and split by the dot.
+        if anchor.name.startswith("*"):
+            anchorName = anchor.name.lstrip("*").split(".")
+            return anchorName[0] if anchorName else anchor.name
+        return anchor.name
 
     def _makeAbvmOrBlwmFeature(self, tag, include):
         if tag == "abvm":
@@ -1068,16 +1081,47 @@ class MarkFeatureWriter(BaseFeatureWriter):
             if lkp is not None:
                 mkmkLookups.append(lkp)
 
-        if not any([baseLkps, ligaLkps, mkmkLookups]):
-            return
+        anchorsList = []
+
+        # Let's filter only the corresponding anchors in the current feature (abvm or blwm).
+        for (
+            context,
+            glyph_anchor_pair,
+        ) in self.context.contextualMarkAbvmBlwmAnchors.items():
+            for _, anchor in glyph_anchor_pair:
+                if marksFilter(anchor):
+                    anchorsList.append((context, glyph_anchor_pair))
+
+        (ctxLkps, refLkps) = self._makeAllContextualMarkLookups(
+            tag=tag,
+            markAnchors=anchorsList,
+            prefix=f"Contextual{tag.capitalize()}",
+        )
+
+        ctxLkps = list(ctxLkps.values())
+
+        if not any([baseLkps, ligaLkps, mkmkLookups]) and not ctxLkps:
+            return None, []
 
         feature = ast.FeatureBlock(tag)
-        for baseLkp in baseLkps:
-            feature.statements.append(baseLkp)
-        for ligaLkp in ligaLkps:
-            feature.statements.append(ligaLkp)
+        lookups = []
+        if ctxLkps:
+            # When we have contextual lookups, we need to make sure that the
+            # contextual and non-contextual lookups are in the right order
+            # and we can’t use nested lookups inside the feature block for
+            # the referenced lookups, so we put all lookups outside the feature
+            # and use lookup references instead.
+            # We should probably always do this, as nested lookups are full of
+            # gotchas, but this will require updating many test expectations.
+            lookups = baseLkps + ligaLkps + refLkps + ctxLkps
+            for lookup in baseLkps + ligaLkps + ctxLkps:
+                feature.statements.append(ast.LookupReferenceStatement(lookup))
+        else:
+            for lookup in baseLkps + ligaLkps:
+                feature.statements.append(lookup)
+
         feature.statements.extend(mkmkLookups)
-        return feature
+        return feature, lookups
 
     def _makeFeatures(self):
         ctx = self.context
@@ -1098,6 +1142,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
             ctx.contextualMarkToBaseAnchors,
             ctx.contextualMarkToLigaAnchors,
             ctx.contextualMarkToMarkAnchors,
+            ctx.contextualMarkAbvmBlwmAnchors,
         ) = self._makeContextualAttachments(baseClass, ligatureClass, markClass)
 
         abvmGlyphs, notAbvmGlyphs = self._getAbvmGlyphs()
@@ -1126,9 +1171,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 for tag in ("abvm", "blwm"):
                     if tag not in todo:
                         continue
-                    feature = self._makeAbvmOrBlwmFeature(tag, include=isAbvm)
+                    feature, featureLookups = self._makeAbvmOrBlwmFeature(
+                        tag, include=isAbvm
+                    )
                     if feature is not None:
                         features[tag] = feature
+                        lookups.extend(featureLookups)
 
         return features, lookups
 
