@@ -933,6 +933,97 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         assert str(generated) == expected
 
+    def test_contextual_abvm_blwm_anchors(self, FontClass):
+        ufo = FontClass()
+        ufo.info.unitsPerEm = 1000
+
+        iMark = ufo.newGlyph("iMark-khmer")
+        iMark.unicode = 0x17B7
+        iMark.appendAnchor({"name": "_topright", "x": 412, "y": 600})
+
+        iiMark = ufo.newGlyph("iiMark-khmer")
+        iiMark.unicode = 0x17B8
+        iiMark.appendAnchor({"name": "_topright", "x": 412, "y": 600})
+
+        kaBelow = ufo.newGlyph("ka-khmer.below")
+        kaBelow.appendAnchor({"name": "_bottom", "x": 276, "y": 0})
+
+        ka = ufo.newGlyph("ka-khmer")
+        ka.unicode = 0x1780
+        ka.appendAnchor({"name": "topright", "x": 470, "y": 600})
+        ka.appendAnchor(
+            {"name": "*topright", "x": 276, "y": 700, "identifier": "*topright"}
+        )
+        ka.appendAnchor({"name": "bottom", "x": 276, "y": 0})
+        ka.appendAnchor(
+            {"name": "*bottom", "x": 276, "y": 100, "identifier": "*bottom"}
+        )
+
+        ka.lib[OBJECT_LIBS_KEY] = {
+            "*topright": {
+                "GPOS_Context": "lookupflag UseMarkFilteringSet [iMark-khmer]; "
+                "* ka-khmer iMark-khmer"
+            },
+            "*bottom": {
+                "GPOS_Context": "lookupflag UseMarkFilteringSet [ka-khmer.below]; *"
+            },
+        }
+
+        writer = MarkFeatureWriter()
+        feaFile = ast.FeatureFile()
+        assert str(feaFile) == ""
+        assert writer.write(ufo, feaFile)
+
+        assert str(feaFile) == dedent(
+            """\
+            markClass ka-khmer.below <anchor 276 0> @MC_bottom;
+            markClass iMark-khmer <anchor 412 600> @MC_topright;
+            markClass iiMark-khmer <anchor 412 600> @MC_topright;
+
+            lookup abvm_mark2base {
+                pos base ka-khmer
+                    <anchor 470 600> mark @MC_topright;
+            } abvm_mark2base;
+
+            lookup ContextualAbvm_0 {
+                pos base ka-khmer
+                    <anchor 276 700> mark @MC_topright;
+            } ContextualAbvm_0;
+
+            lookup ContextualAbvmDispatch_0 {
+                lookupflag UseMarkFilteringSet [iMark-khmer];
+                # * ka-khmer iMark-khmer
+                pos [ka-khmer] @MC_topright' lookup ContextualAbvm_0 ka-khmer iMark-khmer;
+            } ContextualAbvmDispatch_0;
+
+            lookup blwm_mark2base {
+                pos base ka-khmer
+                    <anchor 276 0> mark @MC_bottom;
+            } blwm_mark2base;
+
+            lookup ContextualBlwm_0 {
+                pos base ka-khmer
+                    <anchor 276 100> mark @MC_bottom;
+            } ContextualBlwm_0;
+
+            lookup ContextualBlwmDispatch_0 {
+                lookupflag UseMarkFilteringSet [ka-khmer.below];
+                # *
+                pos [ka-khmer] @MC_bottom' lookup ContextualBlwm_0;
+            } ContextualBlwmDispatch_0;
+
+            feature abvm {
+                lookup abvm_mark2base;
+                lookup ContextualAbvmDispatch_0;
+            } abvm;
+
+            feature blwm {
+                lookup blwm_mark2base;
+                lookup ContextualBlwmDispatch_0;
+            } blwm;
+            """
+        )
+
     def test_shared_script_char(self, FontClass):
         ufo = FontClass()
         ufo.info.unitsPerEm = 1000
