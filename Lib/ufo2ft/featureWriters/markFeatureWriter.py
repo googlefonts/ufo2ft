@@ -1007,7 +1007,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         return ctxLkps, refLkps
 
     def _isAboveMark(self, anchor):
-        anchorName = self._getParentAnchor(anchor)
+        anchorName = anchor.key if anchor.isContextual else anchor.name
 
         if anchorName in self.abvmAnchorNames:
             return True
@@ -1029,13 +1029,6 @@ class MarkFeatureWriter(BaseFeatureWriter):
 
     def _isBelowMark(self, anchor):
         return not self._isAboveMark(anchor)
-
-    def _getParentAnchor(self, anchor):
-        # We will get the actual anchor by removing the * and split by the dot.
-        if anchor.name.startswith("*"):
-            anchorName = anchor.name.lstrip("*").split(".")
-            return anchorName[0] if anchorName else anchor.name
-        return anchor.name
 
     def _makeAbvmOrBlwmFeature(self, tag, include):
         if tag == "abvm":

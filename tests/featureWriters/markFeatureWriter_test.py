@@ -955,16 +955,18 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             {"name": "*topright", "x": 276, "y": 700, "identifier": "*topright"}
         )
         ka.appendAnchor({"name": "bottom", "x": 276, "y": 0})
+        ka.appendAnchor(
+            {"name": "*bottom", "x": 276, "y": 100, "identifier": "*bottom"}
+        )
 
         ka.lib[OBJECT_LIBS_KEY] = {
             "*topright": {
-                "GPOS_Context": dedent(
-                    """\
-                    lookupflag UseMarkFilteringSet [iiMark-khmer]; * ka-khmer iMark-khmer
-                    lookupflag UseMarkFilteringSet [ka-khmer.below]; * ka-khmer ka-khmer.below
-                    """
-                )
-            }
+                "GPOS_Context": "lookupflag UseMarkFilteringSet [iMark-khmer]; "
+                "* ka-khmer iMark-khmer"
+            },
+            "*bottom": {
+                "GPOS_Context": "lookupflag UseMarkFilteringSet [ka-khmer.below]; *"
+            },
         }
 
         writer = MarkFeatureWriter()
@@ -988,35 +990,36 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                     <anchor 276 700> mark @MC_topright;
             } ContextualAbvm_0;
 
-            lookup ContextualAbvm_1 {
-                pos base ka-khmer
-                    <anchor 276 700> mark @MC_topright;
-            } ContextualAbvm_1;
-
             lookup ContextualAbvmDispatch_0 {
-                lookupflag UseMarkFilteringSet [ka-khmer.below];
-                # * ka-khmer ka-khmer.below
-                pos [ka-khmer] @MC_topright' lookup ContextualAbvm_0 ka-khmer ka-khmer.below;
+                lookupflag UseMarkFilteringSet [iMark-khmer];
+                # * ka-khmer iMark-khmer
+                pos [ka-khmer] @MC_topright' lookup ContextualAbvm_0 ka-khmer iMark-khmer;
             } ContextualAbvmDispatch_0;
 
-            lookup ContextualAbvmDispatch_1 {
-                lookupflag UseMarkFilteringSet [iiMark-khmer];
-                # * ka-khmer iMark-khmer
-                pos [ka-khmer] @MC_topright' lookup ContextualAbvm_1 ka-khmer iMark-khmer;
-            } ContextualAbvmDispatch_1;
+            lookup blwm_mark2base {
+                pos base ka-khmer
+                    <anchor 276 0> mark @MC_bottom;
+            } blwm_mark2base;
+
+            lookup ContextualBlwm_0 {
+                pos base ka-khmer
+                    <anchor 276 100> mark @MC_bottom;
+            } ContextualBlwm_0;
+
+            lookup ContextualBlwmDispatch_0 {
+                lookupflag UseMarkFilteringSet [ka-khmer.below];
+                # *
+                pos [ka-khmer] @MC_bottom' lookup ContextualBlwm_0;
+            } ContextualBlwmDispatch_0;
 
             feature abvm {
                 lookup abvm_mark2base;
                 lookup ContextualAbvmDispatch_0;
-                lookup ContextualAbvmDispatch_1;
             } abvm;
 
             feature blwm {
-                lookup blwm_mark2base {
-                    pos base ka-khmer
-                        <anchor 276 0> mark @MC_bottom;
-                } blwm_mark2base;
-
+                lookup blwm_mark2base;
+                lookup ContextualBlwmDispatch_0;
             } blwm;
             """
         )
