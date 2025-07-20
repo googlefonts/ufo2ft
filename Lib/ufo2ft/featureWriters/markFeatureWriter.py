@@ -980,12 +980,12 @@ class MarkFeatureWriter(BaseFeatureWriter):
         markAnchors: list,
         prefix="ContextualMark",
     ):
-        markClass = None
+        markType = None
 
         if tag in ["mark", "abvm", "blwm"]:
-            markClass = MarkToBasePos
+            markType = MarkToBasePos
         elif tag == "mkmk":
-            markClass = MarkToMarkPos
+            markType = MarkToMarkPos
 
         # Then make the contextual ones
         refLkps = []
@@ -993,12 +993,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
         # We sort the full context by longest first. This isn't perfect
         # but it gives us the best chance that more specific contexts
         # (typically longer) will take precedence over more general ones.
-        # print(tag, markAnchors, "\n")
         for context, glyph_anchor_pair in sorted(markAnchors, key=lambda x: -len(x[0])):
             # Group by anchor
             attachments = defaultdict(list)
             for glyphName, anchor in glyph_anchor_pair:
-                attachments[anchor.key].append(markClass(glyphName, [anchor]))
+                attachments[anchor.key].append(markType(glyphName, [anchor]))
 
             self._makeContextualMarkLookup(
                 attachments, context, refLkps, ctxLkps, prefix
