@@ -986,6 +986,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
             markType = MarkToBasePos
         elif tag == "mkmk":
             markType = MarkToMarkPos
+        else:
+            raise AssertionError(tag)
 
         # Then make the contextual ones
         refLkps = []
