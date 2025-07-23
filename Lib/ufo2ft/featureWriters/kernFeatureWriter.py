@@ -4,7 +4,7 @@ import itertools
 import logging
 from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import Any, Iterator, Mapping
+from typing import Any, Iterator, Mapping, Union
 
 from fontTools import unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
@@ -628,7 +628,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 )
         return lookup
 
-    def knownScriptsPerCodepoint(self, uv: int) -> set[str]:
+    def knownScriptsPerCodepoint(self, uv: int) -> Union[set[str], None]:
         if not self.context.knownScripts:
             # If there are no languagesystems and nothing to derive from Unicode
             # codepoints, consider everything common; it'll all end in DFLT/dflt
@@ -636,7 +636,10 @@ class KernFeatureWriter(BaseFeatureWriter):
             return {COMMON_SCRIPT}
         else:
             script_extension = unicodeScriptExtensions(uv)
-            return script_extension & (self.context.knownScripts | DFLT_SCRIPTS)
+            known = script_extension & (self.context.knownScripts | DFLT_SCRIPTS)
+            if len(known) > 0:
+                return known
+            return None
 
     def _makeKerningLookups(self):
         marks = self.context.gdefClasses.mark
