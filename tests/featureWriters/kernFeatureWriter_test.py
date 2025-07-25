@@ -1382,6 +1382,52 @@ class KernFeatureWriterTest(FeatureWriterTest):
             """
         )
 
+    def test_kern_closure_neutral_glyphs(self, FontClass):
+        glyphs = {
+            "An-georgian": 0x10D0,
+            "acutecomb": 0x301,
+            "An-georgian_acutecomb": None,
+        }
+        groups = {
+            "public.kern1.foo": ["An-georgian", "An-georgian_acutecomb"],
+            "public.kern2.foo": ["An-georgian", "An-georgian_acutecomb"],
+        }
+
+        kerning = {("public.kern1.foo", "public.kern2.foo"): -20}
+        features = dedent(
+            """\
+            languagesystem DFLT dflt;
+            languagesystem geor dflt;
+
+            feature test {
+            sub An-georgian acutecomb by An-georgian_acutecomb;
+            } test;
+            """
+        )
+        ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+        newFeatures = self.writeFeatures(ufo, ignoreMarks=False)
+
+        assert dedent(str(newFeatures)).lstrip("\n") == dedent(
+            """\
+            @kern1.Geor.foo = [An-georgian An-georgian_acutecomb];
+            @kern2.Geor.foo = [An-georgian An-georgian_acutecomb];
+
+            lookup kern_Geor {
+                pos @kern1.Geor.foo @kern2.Geor.foo -20;
+            } kern_Geor;
+
+            feature kern {
+                script DFLT;
+                language dflt;
+                lookup kern_Geor;
+
+                script geor;
+                language dflt;
+                lookup kern_Geor;
+            } kern;
+            """
+        )
+
 
 def test_kern_split_multi_glyph_class(FontClass):
     glyphs = {

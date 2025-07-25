@@ -628,7 +628,7 @@ class KernFeatureWriter(BaseFeatureWriter):
                 )
         return lookup
 
-    def knownScriptsPerCodepoint(self, uv: int) -> set[str]:
+    def knownScriptsPerCodepoint(self, uv: int) -> set[str] | None:
         if not self.context.knownScripts:
             # If there are no languagesystems and nothing to derive from Unicode
             # codepoints, consider everything common; it'll all end in DFLT/dflt
@@ -636,7 +636,7 @@ class KernFeatureWriter(BaseFeatureWriter):
             return {COMMON_SCRIPT}
         else:
             script_extension = unicodeScriptExtensions(uv)
-            return script_extension & (self.context.knownScripts | DFLT_SCRIPTS)
+            return script_extension & (self.context.knownScripts | DFLT_SCRIPTS) or None
 
     def _makeKerningLookups(self):
         marks = self.context.gdefClasses.mark
