@@ -22,7 +22,7 @@ class InterpolatableTTFCompiler(BaseInterpolatableCompiler):
     layerNames: Optional[str] = None
     colrLayerReuse: bool = False
     colrAutoClipBoxes: bool = False
-    autoUseMyMetrics: bool = True
+    autoUseMyMetrics: bool = False
     allQuadratic: bool = True
     skipFeatureCompilation: bool = False
 

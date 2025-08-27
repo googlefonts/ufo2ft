@@ -177,8 +177,8 @@ class IntegrationTest:
         # two same UFOs **must** be interpolatable
         ufos = [FontClass(getpath("TestFont.ufo")) for _ in range(2)]
         ttfs = list(compileInterpolatableTTFs(ufos))
-        expectTTX(ttfs[0], "TestFont.ttx")
-        expectTTX(ttfs[1], "TestFont.ttx")
+        expectTTX(ttfs[0], "TestFont-interpolatable.ttx")
+        expectTTX(ttfs[1], "TestFont-interpolatable.ttx")
 
     @pytest.mark.parametrize(
         "cff_version, expected_ttx",
