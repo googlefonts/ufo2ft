@@ -91,7 +91,7 @@
     </TTGlyph>
 
     <TTGlyph name="edotabove" xMin="40" yMin="-18" xMax="576" yMax="693">
-      <component glyphName="e" x="0" y="0" flags="0x204"/>
+      <component glyphName="e" x="0" y="0" flags="0x4"/>
       <component glyphName="dotabovecomb" x="313" y="96" flags="0x4"/>
     </TTGlyph>
 

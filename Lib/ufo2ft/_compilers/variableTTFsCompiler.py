@@ -18,7 +18,7 @@ class VariableTTFsCompiler(InterpolatableTTFCompiler):
     excludeVariationTables: tuple = ()
     optimizeGvar: bool = True
     colrAutoClipBoxes: bool = False
-    autoUseMyMetrics: bool = True
+    autoUseMyMetrics: bool = False
     dropImpliedOnCurves: bool = False
     allQuadratic: bool = True
     variableFeatures: bool = True
