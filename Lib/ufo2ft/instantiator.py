@@ -51,9 +51,6 @@ from typing import (
 import fontMath
 import fontTools.misc.fixedTools
 from fontTools import designspaceLib, varLib
-from fontTools.ttLib.tables._n_a_m_e import NameRecord as ftNameRecord
-from fontTools.ttLib.tables._n_a_m_e import _makeWindowsName
-from ufoLib2.objects.info import NameRecord as ufoNameRecord
 
 from ufo2ft.util import (
     _getNewGlyphFactory,
@@ -200,87 +197,6 @@ def process_rules_swaps(rules, location, glyphNames):
     return swaps
 
 
-def _override_name_record(
-    openTypeNameRecords: list[ufoNameRecord],
-    new_value: ufoNameRecord,
-) -> None:
-    """Override an existing name record in the list of OpenType name records."""
-    for record in openTypeNameRecords:
-        if (
-            record.platformID == new_value.platformID
-            and record.encodingID == new_value.encodingID
-            and record.languageID == new_value.languageID
-            and record.nameID == new_value.nameID
-        ):
-            # Override existing name record
-            record.string = new_value.string
-            return True
-    return False
-
-
-def _make_ufo_name_record(
-    name_id: int,
-    value: str,
-    language_tag: str = "en",
-) -> None:
-    """Add a name to the list of OpenType name records, or override an existing one."""
-    temp_name_record: ftNameRecord = _makeWindowsName(value, name_id, language_tag)
-    new_name_record: ufoNameRecord = ufoNameRecord(
-        platformID=temp_name_record.platformID,
-        encodingID=temp_name_record.platEncID,
-        languageID=temp_name_record.langID,
-        nameID=temp_name_record.nameID,
-        string=value.strip(),
-    )
-    return new_name_record
-
-
-def merge_public_font_info(
-    font: Font,
-    override_public_font_info: Dict[str, Any],
-    instance_location: Location,
-) -> None:
-    """Merge the public.fontInfo dict into the ufoLib2.Font's info object (fontinfo.plist)."""
-    for key, value in override_public_font_info.items():
-        try:
-            if key == "openTypeNameRecords":
-                # directly save if openTypeNameRecords is None
-                if font.info.openTypeNameRecords is None:
-                    for dict_name_record in value:
-                        # strip the string value to prevent XML whitespace issues
-                        dict_name_record["string"] = dict_name_record["string"].strip()
-                    font.info.openTypeNameRecords = value
-                    continue
-                else:
-                    # openTypeNameRecords is a list of dicts of name records
-                    assert isinstance(value, list), "openTypeNameRecords must be a list"
-
-                # merge the existing openTypeNameRecords with the new ones
-                for dict_name_record in value:
-                    ufo_name_record = ufoNameRecord(
-                        platformID=dict_name_record["platformID"],
-                        encodingID=dict_name_record["encodingID"],
-                        languageID=dict_name_record["languageID"],
-                        nameID=dict_name_record["nameID"],
-                        string=dict_name_record["string"].strip(),
-                    )
-                    if not _override_name_record(
-                        font.info.openTypeNameRecords, ufo_name_record
-                    ):
-                        font.info.openTypeNameRecords.append(ufo_name_record)
-            else:
-                setattr(font.info, key, copy.deepcopy(value))
-        except AttributeError:
-            logger.warning(
-                "Font '%s' at instance location %s has an unknown font info "
-                "attribute '%s' with value %s. This will be ignored.",
-                font.info.familyName,
-                instance_location,
-                key,
-                value,
-            )
-
-
 @dataclass(frozen=True)
 class Instantiator:
     """Data class that holds all necessary information to generate a static
@@ -298,7 +214,6 @@ class Instantiator:
     kerning_mutator: Optional["Variator"] = None
     round_geometry: bool = False
     skip_export_glyphs: List[str] = field(default_factory=list)
-    designspace_root_lib_font_info: Dict[str, Any] = field(default_factory=dict)
     special_axes: Mapping[str, designspaceLib.AxisDescriptor] = field(
         default_factory=dict
     )
@@ -474,11 +389,6 @@ class Instantiator:
         # instance libs, where the ufo2ft compilation functions will pick it up.
         skip_export_glyphs = designspace.lib.get("public.skipExportGlyphs", [])
 
-        # The font information (public.fontInfo) in the root <lib> of designspace to
-        # copy to all instance libs. May be overridden by instance-specific <lib>
-        # public.fontInfo
-        designspace_root_lib_font_info = designspace.lib.get("public.fontInfo", {})
-
         return cls(
             axis_bounds,
             source_layers,
@@ -492,7 +402,6 @@ class Instantiator:
             kerning_mutator,
             round_geometry,
             skip_export_glyphs,
-            designspace_root_lib_font_info,
             special_axes,
         )
 
@@ -670,15 +579,6 @@ class Instantiator:
         """Generate fontinfo related attributes.
 
         Separate, as fontinfo treatment is more extensive than the rest.
-
-        The name record priority order follows the order defined in
-        https://fonttools.readthedocs.io/en/stable/designspaceLib/index.html#common-lib-key-registry
-        and is as follows, from highest to lowest priority:
-        1. <instance>/<variable-font> element's <lib> public.fontInfo key
-        2. <instance>'s familyName, styleName, postScriptFontName, styleMapFamilyName,
-        styleMapStyleName attributes (including multilingual names)
-        3. root <lib> public.fontInfo key
-        4. non-interpolating metadata from the default font fontinfo.plist
         """
         assert self.info_mutator is not None
         assert self.copy_info is not None
@@ -687,7 +587,7 @@ class Instantiator:
             info_instance = info_instance.round()
         info_instance.extractInfo(font.info)
 
-        # level 4: Copy non-interpolating metadata from the default font.
+        # Copy non-interpolating metadata from the default font.
         for attribute in UFO_INFO_ATTRIBUTES_TO_COPY_TO_INSTANCES:
             if hasattr(self.copy_info, attribute):
                 setattr(
@@ -696,139 +596,40 @@ class Instantiator:
                     copy.deepcopy(getattr(self.copy_info, attribute)),
                 )
 
-        # level 3: copy the designspace root <lib> public.fontInfo key
-        if self.designspace_root_lib_font_info:
-            merge_public_font_info(
-                font,
-                override_public_font_info=self.designspace_root_lib_font_info,
-                instance_location=location,
-            )
+        # Copy instance-specific attributes from the InstanceDescriptor.
+        if hasattr(instance, "lib") and "public.fontInfo" in instance.lib:
+            for key, value in instance.lib["public.fontInfo"].items():
+                try:
+                    setattr(font.info, key, value)
+                except AttributeError:
+                    logger.warning(
+                        "Instance '%s' at location %s has an unknown font info "
+                        "attribute '%s' with value %s. This will be ignored.",
+                        instance.familyName,
+                        location,
+                        key,
+                        value,
+                    )
 
-        # level 2: add instance-specific family name, style name, etc.
-        # from <instance> attributes
+        # TODO: multilingual names to replace possibly existing name records.
         if instance.familyName:
             font.info.familyName = instance.familyName
-        if instance.styleName:
-            font.info.styleName = instance.styleName
-        elif not font.info.styleName:
-            # only copy styleName from default UFO fontinfo (level 4)
-            # if result styleName is empty at this step
-            # as might have gotten a value from root lib key (level 3)
+        if instance.styleName is None:
             logger.warning(
                 "The given instance or instance at location %s is missing the "
                 "stylename attribute, which is required. Copying over the styleName "
-                "%s from the default font, which is probably wrong.",
+                "from the default font, which is probably wrong.",
                 location,
-                self.copy_info.styleName,
             )
             font.info.styleName = self.copy_info.styleName
+        else:
+            font.info.styleName = instance.styleName
         if instance.postScriptFontName:
             font.info.postscriptFontName = instance.postScriptFontName
         if instance.styleMapFamilyName:
             font.info.styleMapFamilyName = instance.styleMapFamilyName
         if instance.styleMapStyleName:
-            if instance.styleMapStyleName.lower() not in {
-                "regular",
-                "italic",
-                "bold",
-                "bold italic",
-            }:
-                logger.warning(
-                    "The given instance or instance at location %s has a styleMapStyleName "
-                    "that is not one of the standard values ('Regular', 'Italic', 'Bold', "
-                    "'Bold Italic'). This may cause problems in some applications.",
-                    location,
-                )
-            # convert to lowercase as per UFO spec
-            font.info.styleMapStyleName = instance.styleMapStyleName.lower()
-
-        # multilingual names overriding; specific for OpenType name records on Windows
-        mulitlingual_opentype_font_records = []
-        # list out all language tags that are used in the instance
-        declared_language_tags = set(
-            instance.localisedFamilyName.keys()
-            | instance.localisedStyleName.keys()
-            | instance.localisedStyleMapFamilyName.keys()
-            | instance.localisedStyleMapStyleName.keys()
-        )
-        OT_TYPOGRAPHIC_FAMILY_NAME_ID = 16
-        OT_TYPOGRAPHIC_SUBFAMILY_NAME_ID = 17
-        OT_STYLE_MAP_FAMILY_NAME_ID = 1
-        OT_STYLE_MAP_STYLE_NAME_ID = 2
-        for language_tag in declared_language_tags:
-            if font.info.openTypeNameRecords is None:
-                font.info.openTypeNameRecords = []
-            # currently only make records for Windows language tag
-            # (platform 3, platform encoding 1)
-            if language_tag in instance.localisedFamilyName:
-                # assume is Preferred Family Name (ID=16)
-                mulitlingual_opentype_font_records.append(
-                    _make_ufo_name_record(
-                        OT_TYPOGRAPHIC_FAMILY_NAME_ID,
-                        instance.localisedFamilyName[language_tag],
-                        language_tag,
-                    )
-                )
-            if language_tag in instance.localisedStyleName:
-                # assume is Preferred Subfamily Name (ID=17)
-                mulitlingual_opentype_font_records.append(
-                    _make_ufo_name_record(
-                        OT_TYPOGRAPHIC_SUBFAMILY_NAME_ID,
-                        instance.localisedStyleName[language_tag],
-                        language_tag,
-                    )
-                )
-            if language_tag in instance.localisedStyleMapFamilyName:
-                # Style Map Family Name (ID=1)
-                mulitlingual_opentype_font_records.append(
-                    _make_ufo_name_record(
-                        OT_STYLE_MAP_FAMILY_NAME_ID,
-                        instance.localisedStyleMapFamilyName[language_tag],
-                        language_tag,
-                    )
-                )
-            elif language_tag in instance.localisedFamilyName:
-                # Style Map Family Name (ID=1)
-                # autofallback to ID=16 + styleName ID=17
-                # (but omit ID=17 if it's standard style)
-                full_family_name = instance.localisedFamilyName[language_tag]
-                if language_tag in instance.localisedStyleName:
-                    full_family_name += " " + instance.localisedStyleName[language_tag]
-                elif font.info.styleName.lower() not in {
-                    "regular",
-                    "italic",
-                    "bold",
-                    "bold italic",
-                }:
-                    # if the styleName is not one of the standard styles,
-                    # add style name to ID=1
-                    full_family_name += " " + font.info.styleName
-                mulitlingual_opentype_font_records.append(
-                    _make_ufo_name_record(
-                        OT_STYLE_MAP_FAMILY_NAME_ID,
-                        full_family_name,
-                        language_tag,
-                    )
-                )
-            if language_tag in instance.localisedStyleMapStyleName:
-                # Style Map Subfamily Name (ID=2)
-                mulitlingual_opentype_font_records.append(
-                    _make_ufo_name_record(
-                        OT_STYLE_MAP_STYLE_NAME_ID,
-                        instance.localisedStyleMapStyleName[language_tag],
-                        language_tag,
-                    )
-                )
-        # level 2 (part 2): add multilingual instance-specific family name,
-        # style name, etc. from sub-elements
-        if mulitlingual_opentype_font_records:
-            merge_public_font_info(
-                font,
-                override_public_font_info={
-                    "openTypeNameRecords": mulitlingual_opentype_font_records
-                },
-                instance_location=location,
-            )
+            font.info.styleMapStyleName = instance.styleMapStyleName
 
         # If the masters haven't set the OS/2 weight and width class, use the
         # user-space values ("input") of the axis mapping in the Designspace file for
@@ -849,11 +650,6 @@ class Instantiator:
             font.info.italicAngle = italic_angle_from_slnt_value(
                 slant_axis.map_backward(location[slant_axis.name])
             )
-
-        # Copy instance-specific attributes from the InstanceDescriptor.
-        # level 1: public.fontInfo key in <instance><lib>, copy last to override everything else
-        if hasattr(instance, "lib") and "public.fontInfo" in instance.lib:
-            merge_public_font_info(font, instance.lib["public.fontInfo"], location)
 
     @property
     def interpolated_layers(self) -> list[InterpolatedLayer]:
