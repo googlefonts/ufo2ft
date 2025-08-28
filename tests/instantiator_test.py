@@ -942,6 +942,39 @@ def test_font_info_fallback_in_instance(ufo_module, data_dir):
     )
 
 
+def test_font_info_fallback_should_skip_english_in_localized(ufo_module, data_dir):
+    designspace = designspaceLib.DesignSpaceDocument.fromfile(
+        data_dir / "BagelFatOne-Regular.designspace"
+    )
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+
+    # fontmake calls `splitInterpolable` before constructing the Instantiator.
+    # It does that to split a v5 designspace which may contain discrete axes into
+    # 'interpolable' sub-designspaces. This code also handles generating instance
+    # names from STAT-related elements like axis <labelname>. As part of this, it
+    # can sometimes add "en" (English) names to the sub-doc instances' localized
+    # names (English names are normally defined in the instance attributes, but
+    # subsequent designspaceLib code wants to access all the instance names via
+    # the same localized* interface).
+    # The uf2ft code in Instantiator._generate_instance_info that handles
+    # the localized instance names currently does not distinguish between the
+    # true localized names and these "en" name duplicates, and ends up
+    # writing unnecessary openTypeNameRecords for the latter.
+    [(_, designspace2)] = designspaceLib.split.splitInterpolable(designspace)
+    assert designspace.instances[0].localisedFamilyName == {}
+    assert designspace2.instances[0].localisedFamilyName == {"en": "Bagel Fat One"}
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
+        designspace2, round_geometry=True
+    )
+
+    instance_font = generator.generate_instance(designspace2.instances[0])
+
+    assert instance_font.info.familyName == "Bagel Fat One"
+    assert instance_font.info.styleName == "Regular"
+    assert instance_font.info.openTypeNameRecords is None
+
+
 def test_data_independence(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "DesignspaceTest" / "DesignspaceTest.designspace"
