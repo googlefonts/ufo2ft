@@ -28,6 +28,7 @@ The aim is to be a minimal implementation that is focussed on using ufoLib2 for 
 abstraction, varLib for instance computation and fontMath as a font data shell for
 instance computation directly and exclusively.
 """
+
 from __future__ import annotations
 
 import copy
@@ -756,6 +757,8 @@ class Instantiator:
         OT_STYLE_MAP_FAMILY_NAME_ID = 1
         OT_STYLE_MAP_STYLE_NAME_ID = 2
         for language_tag in declared_language_tags:
+            if language_tag == "en":
+                continue
             if font.info.openTypeNameRecords is None:
                 font.info.openTypeNameRecords = []
             # currently only make records for Windows language tag
