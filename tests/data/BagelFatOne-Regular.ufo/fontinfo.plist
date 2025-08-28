@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>ascender</key>
+    <integer>880</integer>
+    <key>capHeight</key>
+    <integer>726</integer>
+    <key>descender</key>
+    <integer>-288</integer>
+    <key>familyName</key>
+    <string>Bagel Fat One</string>
+    <key>styleMapFamilyName</key>
+    <string>Bagel Fat One</string>
+    <key>styleMapStyleName</key>
+    <string>regular</string>
+    <key>styleName</key>
+    <string>Regular</string>
+    <key>unitsPerEm</key>
+    <integer>1000</integer>
+    <key>versionMajor</key>
+    <integer>1</integer>
+    <key>versionMinor</key>
+    <integer>0</integer>
+    <key>xHeight</key>
+    <integer>523</integer>
+  </dict>
+</plist>
