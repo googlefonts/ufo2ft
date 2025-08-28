@@ -6,92 +6,10 @@
     <integer>880</integer>
     <key>capHeight</key>
     <integer>726</integer>
-    <key>copyright</key>
-    <string>Copyright 2022 The Bagel Fat Project Authors (https://github.com/JAMO-TYPEFACE/BagelFat)</string>
     <key>descender</key>
     <integer>-288</integer>
     <key>familyName</key>
     <string>Bagel Fat One</string>
-    <key>guidelines</key>
-    <array>
-      <dict>
-        <key>angle</key>
-        <integer>0</integer>
-        <key>name</key>
-        <string> [locked]</string>
-        <key>x</key>
-        <integer>347</integer>
-        <key>y</key>
-        <integer>778</integer>
-      </dict>
-      <dict>
-        <key>angle</key>
-        <integer>0</integer>
-        <key>name</key>
-        <string> [locked]</string>
-        <key>x</key>
-        <integer>45</integer>
-        <key>y</key>
-        <integer>555</integer>
-      </dict>
-      <dict>
-        <key>angle</key>
-        <integer>0</integer>
-        <key>x</key>
-        <integer>571</integer>
-        <key>y</key>
-        <integer>758</integer>
-      </dict>
-    </array>
-    <key>italicAngle</key>
-    <integer>0</integer>
-    <key>openTypeHeadCreated</key>
-    <string>2022/05/28 05:22:08</string>
-    <key>openTypeHheaAscender</key>
-    <integer>1160</integer>
-    <key>openTypeHheaDescender</key>
-    <integer>-288</integer>
-    <key>openTypeHheaLineGap</key>
-    <integer>0</integer>
-    <key>openTypeNameDesigner</key>
-    <string>Kyung-won Kim</string>
-    <key>openTypeNameDesignerURL</key>
-    <string>https://www.instagram.com/keikim_works/</string>
-    <key>openTypeNameLicense</key>
-    <string>This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL</string>
-    <key>openTypeNameLicenseURL</key>
-    <string>https://scripts.sil.org/OFL</string>
-    <key>openTypeNameManufacturer</key>
-    <string>JAMO</string>
-    <key>openTypeNameManufacturerURL</key>
-    <string>https://jamo.works</string>
-    <key>openTypeOS2Type</key>
-    <array/>
-    <key>openTypeOS2TypoAscender</key>
-    <integer>880</integer>
-    <key>openTypeOS2TypoDescender</key>
-    <integer>-120</integer>
-    <key>openTypeOS2TypoLineGap</key>
-    <integer>0</integer>
-    <key>openTypeOS2VendorID</key>
-    <string>JAMO</string>
-    <key>openTypeOS2WinAscent</key>
-    <integer>1160</integer>
-    <key>openTypeOS2WinDescent</key>
-    <integer>288</integer>
-    <key>postscriptBlueValues</key>
-    <array>
-      <integer>-2</integer>
-      <integer>0</integer>
-      <integer>523</integer>
-      <integer>527</integer>
-      <integer>726</integer>
-      <integer>734</integer>
-    </array>
-    <key>postscriptUnderlinePosition</key>
-    <integer>-100</integer>
-    <key>postscriptUnderlineThickness</key>
-    <integer>50</integer>
     <key>styleMapFamilyName</key>
     <string>Bagel Fat One</string>
     <key>styleMapStyleName</key>
