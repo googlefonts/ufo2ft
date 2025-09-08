@@ -121,7 +121,6 @@ WDTH_VALUE_TO_OS2_WIDTH_CLASS = {
 # - openTypeNameUniqueID
 # - openTypeNameWWSFamilyName
 # - openTypeNameWWSSubfamilyName
-# - openTypeOS2Panose
 # - postscriptFullName
 # - postscriptUniqueID
 # - woffMetadataUniqueID
@@ -152,6 +151,7 @@ UFO_INFO_ATTRIBUTES_TO_COPY_TO_INSTANCES = {
     "openTypeNameVersion",
     "openTypeOS2CodePageRanges",
     "openTypeOS2FamilyClass",
+    "openTypeOS2Panose",
     "openTypeOS2Selection",
     "openTypeOS2Type",
     "openTypeOS2UnicodeRanges",
@@ -467,6 +467,23 @@ class Instantiator:
             else {}
         )
         copy_info: Optional[Info] = default_font.info if do_info else None
+        if copy_info is not None and copy_info.openTypeOS2Panose is not None:
+            # only copy panose values that are shared by all the designspace.sources,
+            # and set to 0 those that differ
+            panose_sources = [
+                source.font.info.openTypeOS2Panose
+                for source in designspace.sources
+                if source.font.info.openTypeOS2Panose is not None
+            ]
+            shared_panose = [
+                values[0] if len(set(values)) == 1 else 0
+                for values in zip(*panose_sources)
+            ]
+            copy_info = copy.copy(copy_info)
+            copy_info.openTypeOS2Panose = (
+                shared_panose if any(shared_panose) else None
+            )
+
         copy_lib: Mapping[str, Any] = default_font.lib if do_info else {}
 
         # The list of glyphs-not-to-export-and-decompose-where-used-as-a-component is

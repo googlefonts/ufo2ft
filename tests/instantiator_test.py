@@ -1011,8 +1011,8 @@ def test_data_independence(ufo_module, data_dir):
 
     assert generator.copy_info.openTypeOS2Panose == [2, 11, 5, 4, 2, 2, 2, 2, 2, 4]
     generator.copy_info.openTypeOS2Panose.append(1000)
-    assert instance_font1.info.openTypeOS2Panose is None
-    assert instance_font2.info.openTypeOS2Panose is None
+    assert instance_font1.info.openTypeOS2Panose == [2, 11, 5, 4, 2, 2, 2, 2, 2, 4]
+    assert instance_font2.info.openTypeOS2Panose == [2, 11, 5, 4, 2, 2, 2, 2, 2, 4]
 
     # copy_feature_text not tested because it is a(n immutable) string
 
@@ -1039,7 +1039,6 @@ def test_skipped_fontinfo_attributes():
         "openTypeNameUniqueID",
         "openTypeNameWWSFamilyName",
         "openTypeNameWWSSubfamilyName",
-        "openTypeOS2Panose",
         "postscriptFontName",
         "postscriptFullName",
         "postscriptUniqueID",
@@ -1068,6 +1067,186 @@ def test_designspace_v5_discrete_axis_raises_error(data_dir):
         ufo2ft.instantiator.InstantiatorError, match="splitInterpolable"
     ):
         ufo2ft.instantiator.Instantiator.from_designspace(designspace)
+
+
+def test_opentype_os2_panose_merging(ufo_module):
+    """Test that openTypeOS2Panose values are properly merged across sources.
+
+    Only panose values that are identical across all sources should be copied
+    to instances. Different values should be set to 0.
+    """
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=300, default=300, maximum=900
+    )
+
+    font1 = ufo_module.Font()
+    font1.info.openTypeOS2Panose = [2, 11, 5, 2, 4, 5, 4, 2, 2, 4]  # default source
+
+    font2 = ufo_module.Font()
+    font2.info.openTypeOS2Panose = [
+        2,
+        11,
+        8,  # different at index 2
+        2,
+        4,
+        5,
+        4,
+        2,
+        2,
+        4,
+    ]
+
+    font3 = ufo_module.Font()
+    font3.info.openTypeOS2Panose = [
+        2,
+        11,
+        5,
+        3,  # different at index 3
+        4,
+        5,
+        4,
+        2,
+        2,
+        4,
+    ]
+
+    d.addSourceDescriptor(location={"Weight": 300}, font=font1)
+    d.addSourceDescriptor(location={"Weight": 600}, font=font2)
+    d.addSourceDescriptor(location={"Weight": 900}, font=font3)
+    d.addInstanceDescriptor(styleName="Regular", location={"Weight": 400})
+    d.addInstanceDescriptor(styleName="Bold", location={"Weight": 700})
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+
+    instance1 = generator.generate_instance(d.instances[0])
+    instance2 = generator.generate_instance(d.instances[1])
+
+    # Indices 2 and 3 differ across sources, so they should be 0
+    # All other indices are the same across sources
+    expected_panose = [2, 11, 0, 0, 4, 5, 4, 2, 2, 4]
+
+    assert instance1.info.openTypeOS2Panose == expected_panose
+    assert instance2.info.openTypeOS2Panose == expected_panose
+
+
+def test_opentype_os2_panose_all_different(ufo_module):
+    """Test that when all panose values differ, the attribute is deleted."""
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=300, default=300, maximum=900
+    )
+
+    # Create fonts with completely different panose values
+    font1 = ufo_module.Font()
+    font1.info.openTypeOS2Panose = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    font2 = ufo_module.Font()
+    font2.info.openTypeOS2Panose = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+
+    d.addSourceDescriptor(location={"Weight": 300}, font=font1)
+    d.addSourceDescriptor(location={"Weight": 900}, font=font2)
+    d.addInstanceDescriptor(styleName="Regular", location={"Weight": 600})
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+    instance = generator.generate_instance(d.instances[0])
+
+    # All values differ, so openTypeOS2Panose should be unset
+    assert instance.info.openTypeOS2Panose is None
+
+
+def test_opentype_os2_panose_missing_in_some_sources(ufo_module):
+    """Test handling when some sources don't have panose values."""
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=300, default=300, maximum=900
+    )
+
+    font1 = ufo_module.Font()
+    font1.info.openTypeOS2Panose = [2, 11, 5, 2, 4, 5, 4, 2, 2, 4]
+
+    # Second font doesn't have panose, doesn't contribute
+    font2 = ufo_module.Font()
+    assert font2.info.openTypeOS2Panose is None
+
+    font3 = ufo_module.Font()
+    font3.info.openTypeOS2Panose = [2, 11, 5, 2, 4, 5, 4, 2, 2, 4]
+
+    d.addSourceDescriptor(location={"Weight": 300}, font=font1)
+    d.addSourceDescriptor(location={"Weight": 600}, font=font2)
+    d.addSourceDescriptor(location={"Weight": 900}, font=font3)
+    d.addInstanceDescriptor(styleName="Regular", location={"Weight": 400})
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+    instance = generator.generate_instance(d.instances[0])
+
+    # The default source's panose should be copied since font2 has None and
+    # font3 has same panose as font1
+    assert instance.info.openTypeOS2Panose == [2, 11, 5, 2, 4, 5, 4, 2, 2, 4]
+
+
+def test_opentype_os2_panose_single_source(ufo_module):
+    """Test that panose values are preserved as-is when there's only one source.
+
+    Cf. https://github.com/googlefonts/fontc/issues/1609
+    """
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=300, default=400, maximum=900
+    )
+
+    font1 = ufo_module.Font()
+    font1.info.openTypeOS2Panose = [2, 11, 5, 2, 4, 5, 4, 2, 2, 4]
+
+    d.addSourceDescriptor(location={"Weight": 400}, font=font1)
+    d.addInstanceDescriptor(styleName="Regular", location={"Weight": 400})
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+
+    instance = generator.generate_instance(d.instances[0])
+
+    # With only one source, panose should be preserved as-is
+    assert instance.info.openTypeOS2Panose == [2, 11, 5, 2, 4, 5, 4, 2, 2, 4]
+
+
+def test_opentype_os2_panose_no_mutation_of_default(ufo_module):
+    """Test that processing panose values doesn't mutate the default source."""
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=300, default=300, maximum=900
+    )
+
+    font1 = ufo_module.Font()
+    original_panose = [2, 11, 5, 2, 4, 5, 4, 2, 2, 4]
+    font1.info.openTypeOS2Panose = original_panose.copy()
+
+    font2 = ufo_module.Font()
+    font2.info.openTypeOS2Panose = [
+        2,
+        11,
+        8,  # different at index 2
+        2,
+        4,
+        5,
+        4,
+        2,
+        2,
+        4,
+    ]
+
+    d.addSourceDescriptor(location={"Weight": 300}, font=font1)
+    d.addSourceDescriptor(location={"Weight": 900}, font=font2)
+    d.addInstanceDescriptor(styleName="Regular", location={"Weight": 600})
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+    instance = generator.generate_instance(d.instances[0])
+
+    # The instance should have merged panose with 0 at index 2
+    assert instance.info.openTypeOS2Panose == [2, 11, 0, 2, 4, 5, 4, 2, 2, 4]
+
+    # The default source should remain unchanged
+    assert font1.info.openTypeOS2Panose == original_panose
+    assert d.default.font.info.openTypeOS2Panose == original_panose
 
 
 def test_strict_math_glyph(ufo_module, data_dir):
