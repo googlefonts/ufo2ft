@@ -1249,6 +1249,57 @@ def test_opentype_os2_panose_no_mutation_of_default(ufo_module):
     assert d.default.font.info.openTypeOS2Panose == original_panose
 
 
+@pytest.mark.parametrize(
+    "panose_data,expected",
+    [
+        pytest.param(
+            [[2, 11, 5], [2, 11, 8, 2, 4, 5, 4, 2, 2, 4, 99, 88, 77, 66, 55]],
+            [2, 11, 0, 0, 0, 0, 0, 0, 0, 0],
+            id="zero-padded",  # At least one source has length < 10 (will be padded)
+        ),
+        pytest.param(
+            [
+                [2, 11, 5, 2, 4, 5, 4, 2, 2, 4, 99, 88],
+                [2, 11, 8, 2, 4, 5, 4, 2, 2, 4, 77, 66, 55],
+            ],
+            [2, 11, 0, 2, 4, 5, 4, 2, 2, 4],
+            id="truncated",  # All sources have length > 10 (will be truncated)
+        ),
+    ],
+)
+def test_opentype_os2_panose_malformed_lengths(panose_data, expected, caplog):
+    """Test handling of panose values with incorrect lengths (ufoLib2 only)."""
+    ufo_module = pytest.importorskip("ufoLib2")
+
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=300, default=300, maximum=900
+    )
+
+    fonts = []
+    for i, panose_values in enumerate(panose_data):
+        font = ufo_module.Font()
+        font.info.openTypeOS2Panose = panose_values
+        fonts.append(font)
+        d.addSourceDescriptor(location={"Weight": 300 + i * 600}, font=font)
+
+    d.addInstanceDescriptor(styleName="Regular", location={"Weight": 600})
+
+    with caplog.at_level(logging.WARNING):
+        generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+        instance = generator.generate_instance(d.instances[0])
+
+    # Should log a warning about invalid length
+    assert (
+        "openTypeOS2Panose values in designspace sources have invalid length"
+        in caplog.text
+    )
+
+    # Should produce a valid result with exactly 10 values
+    assert instance.info.openTypeOS2Panose == expected
+    assert len(instance.info.openTypeOS2Panose) == 10
+
+
 def test_strict_math_glyph(ufo_module, data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "InstantiatorStrictMathGlyph" / "StrictMathGlyph.designspace"

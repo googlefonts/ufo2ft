@@ -479,10 +479,16 @@ class Instantiator:
                 values[0] if len(set(values)) == 1 else 0
                 for values in zip(*panose_sources)
             ]
+            # defcon already validates openTypeOS2Panose length, while ufoLib2 doesn't;
+            # to be safe, ensure we have exactly 10 values (pad with zeros or truncate)
+            if len(shared_panose) != 10:
+                logger.warning(
+                    "openTypeOS2Panose values in designspace sources have invalid "
+                    "length, they will be padded/truncated to 10 values"
+                )
+                shared_panose = (shared_panose + [0] * 10)[:10]
             copy_info = copy.copy(copy_info)
-            copy_info.openTypeOS2Panose = (
-                shared_panose if any(shared_panose) else None
-            )
+            copy_info.openTypeOS2Panose = shared_panose if any(shared_panose) else None
 
         copy_lib: Mapping[str, Any] = default_font.lib if do_info else {}
 
