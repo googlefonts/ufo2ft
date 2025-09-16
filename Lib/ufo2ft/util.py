@@ -14,7 +14,7 @@ from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.builder import addOpenTypeFeatures
 from fontTools.misc.fixedTools import otRound
 from fontTools.misc.transform import Identity
-from fontTools.pens.filterPen import DecomposingFilterPointPen
+from fontTools.pens.filterPen import DecomposingFilterPointPen, ReverseFlipped
 from fontTools.pens.reverseContourPen import ReverseContourPen
 from fontTools.pens.transformPen import TransformPen
 
@@ -58,7 +58,11 @@ def decomposeCompositeGlyph(
     glyph,
     glyphSet,
     skipMissing=False,
-    reverseFlipped=True,
+    # When decomposing flipped components (with negative determinant), ensure that
+    # the first point is an on-curve point before reversing the winding contour
+    # direction, otherwise they get different starting points than in fontc:
+    # https://github.com/googlefonts/fontc/issues/1633
+    reverseFlipped=ReverseFlipped.ON_CURVE_FIRST,
     include=None,
     decomposeNested=True,
 ):
