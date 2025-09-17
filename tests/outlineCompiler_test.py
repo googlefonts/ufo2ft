@@ -27,6 +27,7 @@ from ufo2ft.constants import (
     USE_PRODUCTION_NAMES,
 )
 from ufo2ft.errors import InvalidFontData
+from ufo2ft.filters import DecomposeTransformedComponentsFilter
 from ufo2ft.fontInfoData import intListToNum
 from ufo2ft.outlineCompiler import OutlineOTFCompiler, OutlineTTFCompiler
 
@@ -224,6 +225,49 @@ class OutlineTTFCompilerTest:
         assert list(coords) == [(0, 0), (0, 10), (10, 10), (10, 0), (5, 0)]
         assert endPts == [4]
         assert list(flags) == [0, 0, 0, 0, 1]
+
+    def test_compileTTF_decomposes_flipped_component_with_oncurve_first(self, emptyufo):
+        # https://github.com/googlefonts/fontc/issues/1633
+        ufo = emptyufo
+
+        base = ufo.newGlyph("base")
+        pen = base.getPointPen()
+        pen.beginPath()
+        # the first point is off-curve in the original base glyph
+        pen.addPoint((50, 0), None)
+        pen.addPoint((100, 0), "curve")
+        pen.addPoint((150, 0), None)
+        pen.addPoint((200, 50), None)
+        pen.addPoint((200, 100), "curve")
+        pen.addPoint((200, 150), None)
+        pen.addPoint((150, 200), None)
+        pen.addPoint((100, 200), "curve")
+        pen.addPoint((50, 200), None)
+        pen.addPoint((0, 150), None)
+        pen.addPoint((0, 100), "curve")
+        pen.addPoint((0, 50), None)
+        pen.endPath()
+
+        comp = ufo.newGlyph("comp")
+        pen = comp.getPen()
+        # Apply a horizontal flip to the component (negative determinant).
+        pen.addComponent("base", (-1, 0, 0, 1, 0, 0))
+
+        ttFont = compileTTF(ufo, filters=[DecomposeTransformedComponentsFilter()])
+        glyf = ttFont["glyf"]
+        compGlyph = glyf["comp"]
+
+        # Flipped component gets decomposed to a single contour
+        assert compGlyph.numberOfContours == 1
+        coords, endPts, flags = compGlyph.getCoordinates(glyf)
+        assert endPts == [len(coords) - 1]
+        # The contour point list is rotated such that it starts with an on-curve point,
+        # which corresponds to the original base glyph's first on-curve point, flipped.
+        assert flags[0] == 1
+        assert coords[0] == (-100, 0)
+        # Its contour direction is reversed from counter-clockwise to clockwise
+        oncurve_points = [p for p, f in zip(coords, flags) if f & 1]
+        assert oncurve_points == [(-100, 0), (-200, 100), (-100, 200), (0, 100)]
 
     def test_setupTable_meta(self, quadufo):
         quadufo.lib["public.openTypeMeta"] = {
