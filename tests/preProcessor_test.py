@@ -18,6 +18,7 @@ from ufo2ft.preProcessor import (
     TTFPreProcessor,
     _init_explode_color_layer_glyphs_filter,
 )
+from ufo2ft.util import _hasOverflowingComponentTransforms
 
 
 def getpath(filename):
@@ -144,6 +145,24 @@ class TTFPreProcessorTest:
         assert points[1].segmentType is None
         assert points[2].segmentType is None
         assert points[3].segmentType == "curve"
+
+    def test_decompose_components_with_overflowing_transforms(self, FontClass):
+        ufo = FontClass(getpath("OverflowingComponentTransforms-Regular.ufo"))
+
+        composite = ufo["composite"]
+        assert _hasOverflowingComponentTransforms(composite)
+
+        # initially two components and no contours
+        assert len(composite.components) == 2
+        assert len(composite) == 0
+
+        glyphSet = TTFPreProcessor(ufo, removeOverlaps=True).process()
+
+        # after preprocessing, we get zero components and one contour;
+        # not 2 contours, because the components overlapped each other
+        # and their decomposed outlines got merged by removeOverlaps
+        assert len(glyphSet["composite"].components) == 0
+        assert len(glyphSet["composite"]) == 1
 
 
 class TTFInterpolatablePreProcessorTest:
@@ -277,6 +296,33 @@ class TTFInterpolatablePreProcessorTest:
             assert points[1].segmentType is None
             assert points[2].segmentType is None
             assert points[3].segmentType == "curve"
+
+    def test_decompose_components_with_overflowing_transforms(self, FontClass):
+        ufo1 = FontClass(getpath("OverflowingComponentTransforms-Regular.ufo"))
+        ufo2 = FontClass(getpath("OverflowingComponentTransforms-Bold.ufo"))
+
+        composite1 = ufo1["composite"]
+        composite2 = ufo2["composite"]
+
+        assert _hasOverflowingComponentTransforms(composite1)
+        assert _hasOverflowingComponentTransforms(composite2)
+
+        # initially there are two (overflowing) components in each master, and no
+        # contours. The components have the same transformation: this is to prevent
+        # them from being decomposed because of inconsistent transformations across
+        # masters, which is not what we are testing here.
+        assert len(composite1.components) == len(composite2.components) == 2
+        for comp1, comp2 in zip(composite1.components, composite2.components):
+            assert comp1.transformation == comp2.transformation
+        assert len(composite1) == len(composite2) == 0
+
+        glyphSets = TTFInterpolatablePreProcessor([ufo1, ufo2]).process()
+
+        # after preprocessing, the components are decomposed into two contours
+        # (no removeOverlaps for VFs)
+        assert not glyphSets[0]["composite"].components
+        assert not glyphSets[1]["composite"].components
+        assert len(glyphSets[0]["composite"]) == len(glyphSets[1]["composite"]) == 2
 
 
 class SkipExportGlyphsTest:
