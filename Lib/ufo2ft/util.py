@@ -89,6 +89,31 @@ def decomposeCompositeGlyph(
             else:
                 raise
         glyph.removeComponent(component)
+        logger.debug(
+            "decomposed component '%s' in glyph '%s'",
+            component.baseGlyph,
+            glyph.name,
+        )
+
+
+def _hasOverflowingComponentTransforms(glyph):
+    """Check if all component transform values fit in F2Dot14 range.
+
+    F2Dot14 is used to encode component 2x2 matrix in the glyf table.
+    if any component transform value exceeds this, the glyph must be decomposed
+    to keep its shape.
+
+    This is the same check as in fontTools.pens.ttGlyphPen:
+    https://github.com/fonttools/fonttools/blob/c4e96980/Lib/fontTools/pens/ttGlyphPen.py#L90-L97
+
+    Note that, like in fonttools, the upper bound is 2.0 instead of
+    1.99993896484375 which is the actual value of F2Dot14::MAX.
+    The TTGlyphPen will clamp values between F2Dot14::MAX and +2.0 to F2Dot14::MAX.
+    """
+    return any(
+        any(v < -2.0 or v > 2.0 for v in comp.transformation[:4])
+        for comp in glyph.components
+    )
 
 
 class _GlyphSet(dict):

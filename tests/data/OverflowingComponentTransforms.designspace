@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<designspace format="5.0">
+  <axes>
+    <axis tag="wght" name="Weight" minimum="400" maximum="700" default="400">
+      <map input="400" output="0"/>
+      <map input="700" output="100"/>
+    </axis>
+  </axes>
+  <sources>
+    <source filename="OverflowingComponentTransforms-Regular.ufo" name="Overflowing Component Transforms Regular">
+      <location>
+        <dimension name="Weight" xvalue="0"/>
+      </location>
+    </source>
+    <source filename="OverflowingComponentTransforms-Bold.ufo" name="Overflowing Component Transforms Bold">
+      <location>
+        <dimension name="Weight" xvalue="100"/>
+      </location>
+    </source>
+  </sources>
+</designspace>

@@ -15,7 +15,7 @@ from ufo2ft.filters.decomposeComponents import (
     DecomposeComponentsIFilter,
 )
 from ufo2ft.fontInfoData import getAttrWithFallback
-from ufo2ft.util import _GlyphSet, zip_strict
+from ufo2ft.util import _GlyphSet, _hasOverflowingComponentTransforms, zip_strict
 
 if TYPE_CHECKING:
     from ufo2ft.instantiator import Instantiator
@@ -211,8 +211,17 @@ class TTFPreProcessor(OTFPreProcessor):
         _init_explode_color_layer_glyphs_filter(self.ufo, filters)
 
         # len(g) is the number of contours, so we include the all glyphs
-        # that have both components and at least one contour
-        filters.append(DecomposeComponentsFilter(include=lambda g: len(g)))
+        # that have both components and at least one contour.
+        # We must also decompose composite glyphs with components whose 2x2 transform
+        # matrix contain values that exceed F2Dot14 range [-2.0, 2.0], as these
+        # cannot be encoded in the glyf table. The TTGlyphPen would do this
+        # automatically later in the pipeline, but we do it explicitly in here to
+        # make sure that any filters that follow will process the decomposed glyphs.
+        filters.append(
+            DecomposeComponentsFilter(
+                include=lambda g: len(g) or _hasOverflowingComponentTransforms(g)
+            )
+        )
 
         if flattenComponents:
             from ufo2ft.filters.flattenComponents import FlattenComponentsFilter
@@ -467,12 +476,14 @@ class TTFInterpolatablePreProcessor(BaseInterpolatablePreProcessor):
             self._run(*funcs)
 
         # TrueType fonts cannot mix contours and components, so pick out all glyphs
-        # that have both contours _and_ components.
+        # that have both contours _and_ components. Also, decompose components whose
+        # transform values exceed the F2Dot14 range as they can't be encoded in glyf.
         needs_decomposition = {
             gname
             for glyphSet in self.glyphSets
             for gname, glyph in glyphSet.items()
-            if len(glyph) > 0 and glyph.components
+            if glyph.components
+            and (len(glyph) > 0 or _hasOverflowingComponentTransforms(glyph))
         }
         # Variable fonts can only variate glyf components' x or y offsets, not their
         # 2x2 transformation matrix; decompose of these don't match across masters

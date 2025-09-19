@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="composite" format="2">
+  <advance width="1200"/>
+  <outline>
+    <component base="base"/>
+    <component base="base" xScale="0.8811" yScale="6.4512" xOffset="169" yOffset="-1107"/>
+  </outline>
+</glyph>
