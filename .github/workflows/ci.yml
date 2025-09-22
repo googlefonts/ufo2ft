@@ -60,8 +60,12 @@ jobs:
     runs-on: ubuntu-latest
     # This is required to create a release using Github integration token
     # https://github.com/softprops/action-gh-release?tab=readme-ov-file#permissions
+    environment:
+      name: publish-to-pypi
+      url: https://pypi.org/p/ufo2ft
     permissions:
       contents: write
+      id-token: write # IMPORTANT: mandatory for trusted publishing
     steps:
     - uses: actions/checkout@v4
       with:
@@ -100,16 +104,14 @@ jobs:
         body_path: "${{ runner.temp }}/release_notes.md"
         draft: false
         prerelease: ${{ env.IS_PRERELEASE }}
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v6
     - name: Build and publish
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         if [ "$IS_PRERELEASE" == true ]; then
           echo "DEBUG: This is a pre-release"
         else
           echo "DEBUG: This is a final release"
         fi
-        pipx run build
-        pipx run twine check dist/*
-        pipx run twine upload dist/*
+        uv build
+        uv publish
