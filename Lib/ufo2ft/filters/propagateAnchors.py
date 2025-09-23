@@ -110,8 +110,9 @@ def _propagate_glyph_anchors(glyphSet, composite, processed, modified, categorie
             glyph = glyphSet[component.baseGlyph]
         except KeyError:
             logger.warning(
-                "Anchors not propagated for inexistent component {} "
-                "in glyph {}".format(component.baseGlyph, composite.name)
+                "Anchors not propagated for inexistent component {} in glyph {}".format(
+                    component.baseGlyph, composite.name
+                )
             )
         else:
             _propagate_glyph_anchors(glyphSet, glyph, processed, modified, categories)

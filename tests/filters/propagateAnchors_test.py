@@ -219,7 +219,7 @@ class PropagateAnchorsFilterTest:
             philter = PropagateAnchorsFilter(include={name})
             philter(font)
         captor.assertRegex(
-            "Anchors not propagated for inexistent component e " "in glyph emacron"
+            "Anchors not propagated for inexistent component e in glyph emacron"
         )
 
     def test_logger(self, font):
