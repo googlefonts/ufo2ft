@@ -1244,8 +1244,10 @@ class InterpolatedLayer(Mapping):
 
     def __getitem__(self, glyph_name: str) -> Glyph:
         try:
+            src_glyph = self._get(glyph_name)
             return self._cache.setdefault(
-                glyph_name, self._get(glyph_name) or self._interpolate(glyph_name)
+                glyph_name,
+                src_glyph if src_glyph is not None else self._interpolate(glyph_name),
             )
         except InstantiatorError as e:
             raise KeyError(glyph_name) from e
