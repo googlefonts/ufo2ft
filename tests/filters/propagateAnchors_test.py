@@ -311,3 +311,74 @@ class PropagateAnchorsIFilterTest:
         assert {c.baseGlyph for c in glyphSets[2]["Astroke"].components}.isdisjoint(
             glyphSets[2].keys()
         )
+
+    def test_propagate_from_shared_nested_component_is_order_independent(
+        self, FontClass, data_dir
+    ):
+        """Reproduces https://github.com/googlefonts/fontc/issues/1646
+
+        This particular test font contains the following composite glyphs:
+        - A-cy: uses A as base
+        - Abreve-cy: uses A-cy and brevecomb as bases
+        - Adieresis-cy: uses A-cy and dieresiscomb as bases
+        The base glyph A has the following anchors: bottom, ogonek, top; A-cy has only
+        top anchor; Abreve-cy and Adieresis-cy have no anchors.
+
+        After PropagateAnchorsIFilterTest, the anchors of Abreve-cy and Adieresis-cy
+        should be the same as A-cy.
+
+        PropagateAnchorsIFilter processes glyphs with the same component depth in a
+        non-deterministic order which varies because of hash randomization, which is ok
+        because the algorithm is supposed to be order independent.
+        However this exposed another bug whereby, depending on whether Abreve-cy or
+        Adieresis-cy was processed first, only _one_ of the two glyphs would receive the
+        anchors from A while the other would only get a single "top" anchor from A-cy.
+        """
+        ds_path = data_dir / "PropagateAnchorsIFilterTest.designspace"
+        ds = DesignSpaceDocument.fromfile(ds_path)
+        ds.loadSourceFonts(FontClass)
+
+        ufos = [s.font for s in ds.sources]
+        glyphSets = [_GlyphSet.from_layer(s.font, s.layerName) for s in ds.sources]
+
+        assert len(ufos) == len(glyphSets) == 2
+
+        expected_anchors = {"bottom", "ogonek", "top"}
+
+        for glyphSet in glyphSets:
+            # A has all three anchors
+            assert {a.name for a in glyphSet["A"].anchors} == expected_anchors
+            # A-cy has only top anchor and uses A as component
+            assert {a.name for a in glyphSet["A-cy"].anchors} == {"top"}
+            assert {c.baseGlyph for c in glyphSet["A-cy"].components} == {"A"}
+            # Abreve-cy and Adieresis-cy both have no anchors and use A-cy as component
+            assert not {a.name for a in glyphSet["Abreve-cy"].anchors}
+            assert {c.baseGlyph for c in glyphSet["Abreve-cy"].components} == {
+                "A-cy",
+                "brevecomb.cap",
+            }
+
+            assert not {a.name for a in glyphSet["Adieresis-cy"].anchors}
+            assert {c.baseGlyph for c in glyphSet["Adieresis-cy"].components} == {
+                "A-cy",
+                "dieresiscomb.cap",
+            }
+
+        instantiator = Instantiator.from_designspace(
+            ds, do_kerning=False, do_info=False
+        )
+
+        philter = PropagateAnchorsIFilter()
+        modified = philter(ufos, glyphSets, instantiator)
+
+        # We expect all three glyphs to have the same anchor names after propagation
+        assert modified == {"A-cy", "Abreve-cy", "Adieresis-cy"}
+        for glyphSet in glyphSets:
+            # but sometimes the first assert would fail, sometimes the second...
+            assert {
+                a.name for a in glyphSet["Abreve-cy"].anchors
+            } == expected_anchors, "Abreve-cy"
+            assert {
+                a.name for a in glyphSet["Adieresis-cy"].anchors
+            } == expected_anchors, "Adieresis-cy"
+            assert {a.name for a in glyphSet["A-cy"].anchors} == expected_anchors
