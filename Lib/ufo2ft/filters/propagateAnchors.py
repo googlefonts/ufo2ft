@@ -39,7 +39,6 @@ class PropagateAnchorsFilter(BaseFilter):
     def filter(self, glyph):
         if not glyph.components:
             return False
-        before = len(glyph.anchors)
         _propagate_glyph_anchors(
             self.context.glyphSet,
             glyph,
@@ -47,7 +46,7 @@ class PropagateAnchorsFilter(BaseFilter):
             self.context.modified,
             self.context.categories,
         )
-        return len(glyph.anchors) > before
+        return glyph.name in self.context.modified
 
 
 class PropagateAnchorsIFilter(BaseIFilter):
@@ -67,7 +66,6 @@ class PropagateAnchorsIFilter(BaseIFilter):
         modified = False
         if not any(glyph.components for glyph in glyphs):
             return modified
-        before = len(self.context.modified)
         for i, (glyphSet, interpolatedLayer) in enumerate(
             zip_strict(self.context.glyphSets, self.getInterpolatedLayers())
         ):
@@ -80,7 +78,7 @@ class PropagateAnchorsIFilter(BaseIFilter):
                     self.context.modified,
                     self.context.categories,
                 )
-        return len(self.context.modified) > before
+        return glyphName in self.context.modified
 
 
 def _propagate_glyph_anchors(glyphSet, composite, processed, modified, categories):
@@ -110,8 +108,9 @@ def _propagate_glyph_anchors(glyphSet, composite, processed, modified, categorie
             glyph = glyphSet[component.baseGlyph]
         except KeyError:
             logger.warning(
-                "Anchors not propagated for inexistent component {} "
-                "in glyph {}".format(component.baseGlyph, composite.name)
+                "Anchors not propagated for inexistent component {} in glyph {}".format(
+                    component.baseGlyph, composite.name
+                )
             )
         else:
             _propagate_glyph_anchors(glyphSet, glyph, processed, modified, categories)

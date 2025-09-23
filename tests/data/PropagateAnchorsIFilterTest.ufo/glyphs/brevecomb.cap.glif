@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="brevecomb.cap" format="2">
+  <advance width="0"/>
+  <anchor x="202" y="716" name="_top"/>
+  <outline>
+    <component base="brevecomb" yOffset="189"/>
+  </outline>
+</glyph>

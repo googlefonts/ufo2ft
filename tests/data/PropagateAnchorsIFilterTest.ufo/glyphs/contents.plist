@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>A</key>
+    <string>A_.glif</string>
+    <key>A-cy</key>
+    <string>A_-cy.glif</string>
+    <key>Abreve-cy</key>
+    <string>A_breve-cy.glif</string>
+    <key>Adieresis-cy</key>
+    <string>A_dieresis-cy.glif</string>
+    <key>brevecomb</key>
+    <string>brevecomb.glif</string>
+    <key>brevecomb.cap</key>
+    <string>brevecomb.cap.glif</string>
+    <key>dieresiscomb</key>
+    <string>dieresiscomb.glif</string>
+    <key>dieresiscomb.cap</key>
+    <string>dieresiscomb.cap.glif</string>
+  </dict>
+</plist>
