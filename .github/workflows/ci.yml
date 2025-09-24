@@ -106,7 +106,7 @@ jobs:
         prerelease: ${{ env.IS_PRERELEASE }}
     - name: Install the latest version of uv
       uses: astral-sh/setup-uv@v6
-    - name: Build and publish
+    - name: Build
       run: |
         if [ "$IS_PRERELEASE" == true ]; then
           echo "DEBUG: This is a pre-release"
@@ -114,4 +114,5 @@ jobs:
           echo "DEBUG: This is a final release"
         fi
         uv build
-        uv publish
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@v1.13.0
