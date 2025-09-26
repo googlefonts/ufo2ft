@@ -104,8 +104,6 @@ jobs:
         body_path: "${{ runner.temp }}/release_notes.md"
         draft: false
         prerelease: ${{ env.IS_PRERELEASE }}
-    - name: Install the latest version of uv
-      uses: astral-sh/setup-uv@v6
     - name: Build
       run: |
         if [ "$IS_PRERELEASE" == true ]; then
@@ -113,6 +111,6 @@ jobs:
         else
           echo "DEBUG: This is a final release"
         fi
-        uv build
+        pipx run build
     - name: Publish package distributions to PyPI
       uses: pypa/gh-action-pypi-publish@v1.13.0
