@@ -70,7 +70,7 @@ pathops = [
     "skia-pathops>=0.8.0",
 ]
 testing = [
-    "pytest>=2.8",
+    "pytest",
 ]
 
 [project.readme]
