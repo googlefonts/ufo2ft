@@ -663,6 +663,7 @@ def test_font_info_fallback_in_instance(ufo_module, data_dir):
     assert designspace.default.font.info.xHeight == 0
     assert designspace.default.font.info.openTypeNameRecords is None
     assert designspace.default.font.info.openTypeNameSampleText is None
+    assert designspace.default.font.info.postscriptFontName == "MyFont-Light"
     # font info from the designspace root lib
     assert designspace.lib["public.fontInfo"]["familyName"] == "MyFont VF"
     assert designspace.lib["public.fontInfo"]["styleName"] == "Regular"
@@ -692,6 +693,11 @@ def test_font_info_fallback_in_instance(ufo_module, data_dir):
     assert instance_light_font.info.versionMinor == 0
     assert instance_light_font.info.xHeight == 50
     assert instance_light_font.info.openTypeNameSampleText is None
+    # although the default source defines a 'postscriptFontName', this is considered
+    # instance-specific and does not be copied (unless when there's only one source
+    # and can unambiguously be copied to all instances, as they'll all be at the
+    # default location, see `test_static_font_default_instance_inherits_all_fontinfo`
+    assert instance_light_font.info.postscriptFontName is None
     assert_name_record_in_list(
         {
             "platformID": 3,
@@ -1056,6 +1062,32 @@ def test_skipped_fontinfo_attributes():
         - ufo2ft.instantiator.UFO_INFO_ATTRIBUTES_TO_COPY_TO_INSTANCES
         == SKIPPED_ATTRS
     )
+
+
+def test_static_font_default_instance_inherits_all_fontinfo(data_dir, ufo_module):
+    designspace = designspaceLib.DesignSpaceDocument.fromfile(
+        data_dir / "DesignspaceTest" / "DesignspaceTest-static.designspace"
+    )
+    designspace.loadSourceFonts(openFontFactory(ufo_module=ufo_module))
+
+    assert len(designspace.sources) == 1  # single-master, static font
+    assert len(designspace.instances) == 1
+    # the default source's fontinfo.plist has a `postscriptFontName`
+    designspace.sources[0].font.info.postscriptFontName = "MyFont-Light"
+
+    # the DS instance does not have a `postScriptFontName` attribute, nor
+    # does it have a `public.fontInfo` dict
+    assert designspace.instances[0].postScriptFontName is None
+    assert "public.fontInfo" not in designspace.instances[0].lib
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(
+        designspace, round_geometry=True
+    )
+    instance_font = generator.generate_instance(designspace.instances[0])
+
+    # the instance inherits the postscriptFontName from the default source's
+    # fontinfo.plist
+    assert instance_font.info.postscriptFontName == "MyFont-Light"
 
 
 def test_designspace_v5_discrete_axis_raises_error(data_dir):
