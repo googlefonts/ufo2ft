@@ -572,6 +572,18 @@ class BaseOutlineCompiler:
         os2.version = 0x0004
         # average glyph width
         os2.recalcAvgCharWidth(self.otf)
+        # When compiling VFs, 'sparse' master TTFs may contain synthetic '.notdef'
+        # or other glyphs with magic 0xFFFF width, which we use as sentinel value
+        # to tell varLib that the glyphs do not participate in {H,V}VAR glyph metrics
+        # variations (see ufo2ft.util._notdefGlyphFallback or the
+        # OutlineTTFCompiler.makeMissingRequiredGlyphs method).
+        # With these huge widths present, the above recalcAvgCharWidth() call may set
+        # an OS/2.xAvgCharWidth that doesn't fit into a signed 16-bit integer. If
+        # this TTFont were saved to disk (e.g. with fontmake -o ttf-interpolatable),
+        # a struct.error would be raised. It's safe to clamp here, since this field
+        # is mostly unused, except for the default master TTF where it's unlikely
+        # that the average glyph width is so large to overflow.
+        os2.xAvgCharWidth = max(min(os2.xAvgCharWidth, 0x7FFF), -0x8000)
         # weight and width classes
         os2.usWeightClass = getAttrWithFallback(font.info, "openTypeOS2WeightClass")
         os2.usWidthClass = getAttrWithFallback(font.info, "openTypeOS2WidthClass")
