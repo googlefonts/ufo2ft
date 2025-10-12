@@ -51,7 +51,7 @@ from typing import (
 
 import fontMath
 import fontTools.misc.fixedTools
-from fontTools import designspaceLib, varLib
+from fontTools import designspaceLib, varLib, ufoLib
 from fontTools.ttLib.tables._n_a_m_e import NameRecord as ftNameRecord
 from fontTools.ttLib.tables._n_a_m_e import _makeWindowsName
 from ufoLib2.objects.info import NameRecord as ufoNameRecord
@@ -109,7 +109,9 @@ WDTH_VALUE_TO_OS2_WIDTH_CLASS = {
 # fontMath at the time of this writing handles the following attributes:
 # https://github.com/robotools/fontMath/blob/0.5.0/Lib/fontMath/mathInfo.py#L360-L422
 #
-# From the attributes that are left, we skip instance-specific ones on purpose:
+# From the attributes that are left, we skip non-interpolating ones on purpose as
+# they are instance-specific, unless the instance location is the same as the the
+# default source:
 # - guidelines
 # - postscriptFontName
 # - styleMapFamilyName
@@ -706,19 +708,28 @@ class Instantiator:
         """
         assert self.info_mutator is not None
         assert self.copy_info is not None
+
         info_instance = self.info_mutator.instance_at(location_normalized)
         if self.round_geometry:
             info_instance = info_instance.round()
-        info_instance.extractInfo(font.info)
 
-        # level 4: Copy non-interpolating metadata from the default font.
-        for attribute in UFO_INFO_ATTRIBUTES_TO_COPY_TO_INSTANCES:
-            if hasattr(self.copy_info, attribute):
-                setattr(
-                    font.info,
-                    attribute,
-                    copy.deepcopy(getattr(self.copy_info, attribute)),
-                )
+        # If there is only one master (static font), the instance can only be at the
+        # default location after the latter has been normalized. It's OK for it to
+        # inherit ALL the fontinfo from the default source.
+        if self.info_mutator.is_static_font():
+            assert all(v == 0.0 for v in location_normalized.values())
+            for attribute in ufoLib.fontInfoAttributesVersion3:
+                if (value := getattr(self.copy_info, attribute, None)) is not None:
+                    setattr(font.info, attribute, copy.deepcopy(value))
+        else:
+            # Multiple masters: copy interpolating fontinfo metadata from MathInfo
+            info_instance.extractInfo(font.info)
+
+            # level 4: Copy the generic, non-interpolating metadata from the default
+            # font, except attributes that are instance-specific (see comments above).
+            for attribute in UFO_INFO_ATTRIBUTES_TO_COPY_TO_INSTANCES:
+                if (value := getattr(self.copy_info, attribute, None)) is not None:
+                    setattr(font.info, attribute, copy.deepcopy(value))
 
         # level 3: copy the designspace root <lib> public.fontInfo key
         if self.designspace_root_lib_font_info:
@@ -1210,6 +1221,9 @@ class Variator:
             return copy.deepcopy(self.location_to_master[normalized_location_key])
 
         return self.model.interpolateFromMasters(normalized_location, self.masters)
+
+    def is_static_font(self):
+        return len(self.masters) == 1
 
 
 @dataclass(frozen=True, repr=False)
