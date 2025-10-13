@@ -29,5 +29,7 @@
       <integer>2</integer>
       <integer>4</integer>
     </array>
+    <key>postscriptFontName</key>
+    <string>MyFont-Light</string>
   </dict>
 </plist>

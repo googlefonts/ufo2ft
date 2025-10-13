@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<designspace format="4.0">
+  <axes>
+    <axis tag="wght" name="weight" minimum="300" maximum="300" default="300">
+      <map input="300" output="50"/>
+    </axis>
+  </axes>
+  <sources>
+    <source filename="MyFont-Light.ufo" name="MyFont Light" familyname="MyFont" stylename="Light">
+      <info copy="1"/>
+      <location>
+        <dimension name="weight" xvalue="50"/>
+      </location>
+    </source>
+  </sources>
+  <instances>
+    <instance familyname="MyFont" stylename="Light" filename="instances/MyFont-Light.ufo">
+      <location>
+        <dimension name="weight" xvalue="50"/>
+      </location>
+      <kerning/>
+      <info/>
+    </instance>
+  </instances>
+</designspace>
