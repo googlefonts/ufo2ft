@@ -51,7 +51,7 @@ from typing import (
 
 import fontMath
 import fontTools.misc.fixedTools
-from fontTools import designspaceLib, varLib, ufoLib
+from fontTools import designspaceLib, ufoLib, varLib
 from fontTools.ttLib.tables._n_a_m_e import NameRecord as ftNameRecord
 from fontTools.ttLib.tables._n_a_m_e import _makeWindowsName
 from ufoLib2.objects.info import NameRecord as ufoNameRecord
