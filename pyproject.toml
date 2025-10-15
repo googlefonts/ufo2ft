@@ -72,6 +72,7 @@ pathops = [
 ]
 test = [
     "pytest",
+    "syrupy",
 ]
 
 [project.readme]
