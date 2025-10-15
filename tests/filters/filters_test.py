@@ -96,9 +96,10 @@ def test_loadFilters_custom_namespace(ufo):
             # shutil.rmtree(os.path.expanduser("~"))
             return True
 
-    with _TempModule("my_dangerous_filters"), _TempModule(
-        "my_dangerous_filters.selfDestruct"
-    ) as temp:
+    with (
+        _TempModule("my_dangerous_filters"),
+        _TempModule("my_dangerous_filters.selfDestruct") as temp,
+    ):
         temp.module.__dict__["SelfDestructFilter"] = SelfDestructFilter
 
         _, [filter_obj] = loadFilters(ufo)
