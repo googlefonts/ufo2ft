@@ -104,9 +104,10 @@ testpaths = [
 include-package-data = true
 
 [tool.setuptools.package-dir]
-ufo2ft = "Lib/ufo2ft"
+"" = "Lib"
 
 [tool.setuptools.packages.find]
+where = ["Lib"]
 namespaces = false
 
 [tool.setuptools_scm]
