@@ -32,14 +32,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "booleanoperations==0.9.0",
-    "cffsubr==0.3.0",
-    "compreffor==0.5.6",
-    "defcon==0.10.3",
-    "fontmath==0.9.4",
-    "fonttools[lxml,ufo]==4.60.0",
-    "skia-pathops==0.8.0.post2",
-    "ufolib2==0.18.1",
+    "booleanoperations>=0.9.0",
+    "cffsubr>=0.3.0",
+    "fontmath>=0.9.4",
+    "fonttools[ufo]>=4.60.0",
 ]
 description = "A bridge between UFOs and FontTools."
 dynamic = [
@@ -59,6 +55,8 @@ requires-python = ">=3.9"
 compreffor = [
     "compreffor>=0.5.6",
 ]
+# keep empty for backward compat
+cffsubf = []
 dev = [
     "black",
     "coverage",
