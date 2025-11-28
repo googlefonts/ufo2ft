@@ -15,7 +15,7 @@ build
 dist
 
 # Unit test / coverage files
-.tox/*
+.tox/
 .cache/
 .coverage
 .coverage.*
