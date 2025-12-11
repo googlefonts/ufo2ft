@@ -2279,6 +2279,60 @@ def test_dflt_language(FontClass):
     )
 
 
+def test_skip_existing_feature_no_dangling_lookups(FontClass):
+    """Check that when a feature block already exists (e.g. dist), the lookups
+    that would have been generated for that feature are not written to the
+    feature file, thus ensuring no dangling/unreferenced lookups.
+
+    See: https://github.com/googlefonts/ufo2ft/issues/960
+    """
+    # Create glyphs for both kern (Latin) and dist (Kannada)
+    glyphs = {
+        "a": ord("a"),
+        "b": ord("b"),
+        "aaMatra_kannada": 0x0CBE,
+        "ailength_kannada": 0xCD6,
+    }
+    groups = {
+        "public.kern1.KND_aaMatra_R": ["aaMatra_kannada"],
+        "public.kern2.KND_ailength_L": ["aaMatra_kannada"],
+    }
+    kerning = {
+        ("a", "b"): 10,  # This will go to kern feature
+        ("public.kern1.KND_aaMatra_R", "public.kern2.KND_ailength_L"): 34,  # dist
+    }
+    # Features with existing dist block: this should cause dist to be skipped
+    features = dedent(
+        """\
+        languagesystem DFLT dflt;
+        languagesystem latn dflt;
+        languagesystem knda dflt;
+        languagesystem knd2 dflt;
+
+        feature dist {
+            # manual dist feature
+            pos aaMatra_kannada ailength_kannada 50;
+        } dist;
+        """
+    )
+
+    ufo = makeUFO(FontClass, glyphs, groups, kerning, features)
+
+    writer = KernFeatureWriter()
+    feaFile = parseLayoutFeatures(ufo)
+    writer.write(ufo, feaFile)
+
+    # Get all lookups in the generated feature file
+    lookups = getLookups(feaFile)
+    lookup_names = [lkp.name for lkp in lookups]
+
+    # Expect kern lookup for Latin, but NOT dist lookup for Kannada
+    assert "kern_Latn" in lookup_names
+    assert (
+        "kern_Knda" not in lookup_names
+    ), "kern_Knda lookup should not be generated when dist feature exists"
+
+
 if __name__ == "__main__":
     import sys
 

@@ -291,17 +291,31 @@ class KernFeatureWriter(BaseFeatureWriter):
         classDefs = self.context.kerning.classDefs
         newClassDefs = [c for _, c in sorted(classDefs.items())]
 
+        featureBlocks = [features[tag] for tag in ["kern", "dist"] if tag in features]
+
+        # Collect only the lookups that are referenced by the features we're
+        # writing, to avoid inserting unreferenced/dangling lookups when a
+        # feature block already exists in the feature file.
+        referencedLookups = {
+            statement.lookup
+            for feature in featureBlocks
+            for statement in feature.statements
+            if isinstance(statement, ast.LookupReferenceStatement)
+        }
+
         lookupGroups = []
         for _, lookupGroup in sorted(lookups.items(), key=lambda x: x[0].value):
             lookupGroups.extend(
-                lkp for lkp in lookupGroup.values() if lkp not in lookupGroups
+                lkp
+                for lkp in lookupGroup.values()
+                if lkp in referencedLookups and lkp not in lookupGroups
             )
 
         self._insert(
             feaFile=feaFile,
             classDefs=newClassDefs,
             lookups=lookupGroups,
-            features=[features[tag] for tag in ["kern", "dist"] if tag in features],
+            features=featureBlocks,
         )
         return True
 
