@@ -290,6 +290,12 @@ class KernFeatureWriter(BaseFeatureWriter):
             self.log.debug("kerning features empty; skipped")
             return False
 
+        used_lookups = set()
+        for feat_ast in features.values():
+            for stmt in feat_ast.statements:
+                if isinstance(stmt, ast.LookupReferenceStatement):
+                    used_lookups.add(stmt.lookup.name)
+
         # extend feature file with the new generated statements
         feaFile = self.context.feaFile
 
@@ -300,7 +306,9 @@ class KernFeatureWriter(BaseFeatureWriter):
         lookupGroups = []
         for _, lookupGroup in sorted(lookups.items()):
             lookupGroups.extend(
-                lkp for lkp in lookupGroup.values() if lkp not in lookupGroups
+                lkp
+                for lkp in lookupGroup.values()
+                if lkp not in lookupGroups and lkp.name in used_lookups
             )
 
         # NOTE: We don't write classDefs because we literalise all classes.
