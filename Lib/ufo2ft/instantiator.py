@@ -54,7 +54,6 @@ import fontTools.misc.fixedTools
 from fontTools import designspaceLib, ufoLib, varLib
 from fontTools.ttLib.tables._n_a_m_e import NameRecord as ftNameRecord
 from fontTools.ttLib.tables._n_a_m_e import _makeWindowsName
-from ufoLib2.objects.info import NameRecord as ufoNameRecord
 
 from ufo2ft.util import (
     _getNewGlyphFactory,
@@ -67,6 +66,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, KeysView
 
     from ufoLib2.objects import Font, Glyph, Info
+    from ufoLib2.objects.info import NameRecord as ufoNameRecord
 
 logger = logging.getLogger(__name__)
 
@@ -225,10 +225,12 @@ def _make_ufo_name_record(
     name_id: int,
     value: str,
     language_tag: str = "en",
-) -> None:
+) -> ufoNameRecord:
     """Add a name to the list of OpenType name records, or override an existing one."""
+    from ufoLib2.objects.info import NameRecord
+
     temp_name_record: ftNameRecord = _makeWindowsName(value, name_id, language_tag)
-    new_name_record: ufoNameRecord = ufoNameRecord(
+    new_name_record: ufoNameRecord = NameRecord(
         platformID=temp_name_record.platformID,
         encodingID=temp_name_record.platEncID,
         languageID=temp_name_record.langID,
@@ -244,6 +246,8 @@ def merge_public_font_info(
     instance_location: Location,
 ) -> None:
     """Merge the public.fontInfo dict into the ufoLib2.Font's info object (fontinfo.plist)."""
+    from ufoLib2.objects.info import NameRecord
+
     for key, value in override_public_font_info.items():
         try:
             if key == "openTypeNameRecords":
@@ -260,7 +264,7 @@ def merge_public_font_info(
 
                 # merge the existing openTypeNameRecords with the new ones
                 for dict_name_record in value:
-                    ufo_name_record = ufoNameRecord(
+                    ufo_name_record = NameRecord(
                         platformID=dict_name_record["platformID"],
                         encodingID=dict_name_record["encodingID"],
                         languageID=dict_name_record["languageID"],

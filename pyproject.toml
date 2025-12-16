@@ -35,7 +35,6 @@ dependencies = [
     "cffsubr>=0.3.0",
     "fontmath>=0.9.4",
     "fonttools[ufo]>=4.61.1",
-    "ufoLib2>=0.17.0",
 ]
 description = "A bridge between UFOs and FontTools."
 dynamic = [
