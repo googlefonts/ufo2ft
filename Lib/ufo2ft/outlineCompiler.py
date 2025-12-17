@@ -483,7 +483,9 @@ class BaseOutlineCompiler:
         if "cmap" not in self.tables:
             return
 
-        from fontTools.ttLib.tables._c_m_a_p import cmap_format_4
+        self.otf["cmap"] = cmap = newTable("cmap")
+        cmap.tableVersion = 0
+        cmap.tables = []
 
         nonBMP = {k: v for k, v in self.unicodeToGlyphNameMapping.items() if k > 65535}
         if nonBMP:
@@ -492,24 +494,29 @@ class BaseOutlineCompiler:
             }
         else:
             mapping = dict(self.unicodeToGlyphNameMapping)
-        # mac
-        cmap4_0_3 = cmap_format_4(4)
-        cmap4_0_3.platformID = 0
-        cmap4_0_3.platEncID = 3
-        cmap4_0_3.language = 0
-        cmap4_0_3.cmap = mapping
-        # windows
-        cmap4_3_1 = cmap_format_4(4)
-        cmap4_3_1.platformID = 3
-        cmap4_3_1.platEncID = 1
-        cmap4_3_1.language = 0
-        cmap4_3_1.cmap = mapping
-        # store
-        self.otf["cmap"] = cmap = newTable("cmap")
-        cmap.tableVersion = 0
-        cmap.tables = [cmap4_0_3, cmap4_3_1]
-        # If we have glyphs outside Unicode BMP, we must set another
-        # subtable that can hold longer codepoints for them.
+
+        # If we have glyphs within the Unicode BMP, include a Format 4 subtable
+        # to hold their codepoints.
+        if mapping:
+            from fontTools.ttLib.tables._c_m_a_p import cmap_format_4
+
+            # mac
+            cmap4_0_3 = cmap_format_4(4)
+            cmap4_0_3.platformID = 0
+            cmap4_0_3.platEncID = 3
+            cmap4_0_3.language = 0
+            cmap4_0_3.cmap = mapping
+            # windows
+            cmap4_3_1 = cmap_format_4(4)
+            cmap4_3_1.platformID = 3
+            cmap4_3_1.platEncID = 1
+            cmap4_3_1.language = 0
+            cmap4_3_1.cmap = mapping
+
+            cmap.tables.extend([cmap4_0_3, cmap4_3_1])
+
+        # If we have glyphs outside the Unicode BMP, we must include a subtable
+        # that can hold their longer codepoints.
         if nonBMP:
             from fontTools.ttLib.tables._c_m_a_p import cmap_format_12
 
@@ -527,7 +534,7 @@ class BaseOutlineCompiler:
             cmap12_3_10.language = 0
             cmap12_3_10.cmap = nonBMP
             # update tables registry
-            cmap.tables = [cmap4_0_3, cmap4_3_1, cmap12_0_4, cmap12_3_10]
+            cmap.tables.extend([cmap12_0_4, cmap12_3_10])
         # unicode variation sequences
         uvsMapping = self.ufo.lib.get(UNICODE_VARIATION_SEQUENCES_KEY)
         if uvsMapping:
