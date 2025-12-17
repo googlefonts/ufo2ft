@@ -1553,8 +1553,9 @@ def test_CMAP_format_14_table_no_cmap_entry(FontClass, compile):
     ufo = FontClass(getpath("Bug908.ufo"))
     result = compile(ufo)
 
-    cmap = result.getBestCmap()
-    assert 0x20122 not in cmap
+    # There are no direct unicode-to-glyph mappings, only variation sequences,
+    # so getBestCmap() returns None (no format 4 or 12 subtables, only format 14)
+    assert result.getBestCmap() is None
 
 
 if __name__ == "__main__":
