@@ -2309,6 +2309,12 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             assert len(statement.marks) == 1
             assert statement.marks[0][1].name == "MC_top"
 
+    def test_mark_ckass_prefix(self, testufo):
+        writer = MarkFeatureWriter(markClassPrefix="mark")
+        feaFile = ast.FeatureFile()
+        assert writer.write(testufo, feaFile)
+        assert all(c.startswith("mark_") for c in feaFile.markClasses)
+
 
 if __name__ == "__main__":
     import sys

@@ -318,9 +318,13 @@ class MarkFeatureWriter(BaseFeatureWriter):
     wins in case when the same base or ligature glyph can attach to the same mark
     through multiple mark classes.
     https://github.com/googlefonts/ufo2ft/issues/591
+
+    If `markClassPrefix=None` the default prefix (`MC`) will be used for prefixing
+    mark class names (e.g. `@MC_top` for top anchor), otherwise the given prefix
+    will be used.
     """
 
-    options = dict(quantization=1, groupMarkClasses=False)
+    options = dict(quantization=1, groupMarkClasses=False, markClassPrefix=None)
 
     tableTag = "GPOS"
     features = frozenset(["mark", "mkmk", "abvm", "blwm"])
@@ -361,6 +365,11 @@ class MarkFeatureWriter(BaseFeatureWriter):
             self.log.debug("No mark-attaching anchors found; skipped")
             return False
         return super().shouldContinue()
+
+    def _getMarkClassPrefix(self):
+        if self.options.markClassPrefix is not None:
+            return self.options.markClassPrefix
+        return self.markClassPrefix
 
     def _getAnchorLists(self):
         gdefClasses = self.context.gdefClasses
@@ -452,7 +461,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
         markGlyphSets = self._groupMarkGlyphsByAnchor()
         currentClasses = self.context.feaFile.markClasses
         allMarkClasses = self.context.markClasses = {}
-        classPrefix = self.markClassPrefix
+        classPrefix = self._getMarkClassPrefix()
         newDefs = []
         for markAnchorName, glyphAnchorPairs in sorted(markGlyphSets.items()):
             className = ast.makeFeaClassName(classPrefix + markAnchorName)
@@ -558,8 +567,9 @@ class MarkFeatureWriter(BaseFeatureWriter):
         )
 
     def _removeClassPrefix(self, markClass):
-        assert markClass.startswith(self.markClassPrefix)
-        return markClass[len(self.markClassPrefix) :]
+        classPrefix = self._getMarkClassPrefix()
+        assert markClass.startswith(classPrefix)
+        return markClass[len(classPrefix) :]
 
     def _groupAttachments(self, attachments):
         """Group the given attachments so that no group contains conflicting
