@@ -110,6 +110,7 @@ where = ["Lib"]
 namespaces = false
 
 [tool.setuptools_scm]
+write_to = "Lib/ufo2ft/_version.py"
 
 [tool.wheel]
 universal = "1"
