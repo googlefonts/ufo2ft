@@ -253,8 +253,7 @@ class IntegrationTest:
         tmp = io.StringIO()
 
         _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
-        assert "\n" + tmp.getvalue() == dedent(
-            """
+        assert "\n" + tmp.getvalue() == dedent("""
             markClass dotabovecomb <anchor -2 465> @MC_top;
 
             feature liga {
@@ -268,8 +267,7 @@ class IntegrationTest:
                 } mark2base;
 
             } mark;
-        """  # noqa: B950
-        )
+        """)  # noqa: B950
 
     @pytest.mark.parametrize(
         "output_format, options, expected_ttx",

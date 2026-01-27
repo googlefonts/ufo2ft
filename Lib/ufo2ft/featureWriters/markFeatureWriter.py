@@ -1086,7 +1086,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 if marksFilter(anchor):
                     anchorsList.append((context, glyph_anchor_pair))
 
-        (ctxLkps, refLkps) = self._makeAllContextualMarkLookups(
+        ctxLkps, refLkps = self._makeAllContextualMarkLookups(
             tag=tag,
             markAnchors=anchorsList,
             prefix=f"Contextual{tag.capitalize()}",

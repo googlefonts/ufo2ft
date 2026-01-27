@@ -14,8 +14,7 @@ def test_variable_features(FontClass):
     designspace.loadSourceFonts(FontClass)
     _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
 
-    assert dedent("\n" + tmp.getvalue()) == dedent(
-        """
+    assert dedent("\n" + tmp.getvalue()) == dedent("""
         markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
         markClass gravecmb <anchor 250 400> @MC_top;
 
@@ -57,8 +56,7 @@ def test_variable_features(FontClass):
         table GDEF {
             LigatureCaretByPos peh-ar.init 100;
         } GDEF;
-"""  # noqa: B950
-    )
+""")  # noqa: B950
 
 
 def test_variable_features_old_kern_writer(FontClass):
@@ -98,8 +96,7 @@ def test_variable_features_old_kern_writer(FontClass):
 
     _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
 
-    assert dedent("\n" + tmp.getvalue()) == dedent(
-        """
+    assert dedent("\n" + tmp.getvalue()) == dedent("""
         markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
         markClass gravecmb <anchor 250 400> @MC_top;
 
@@ -145,5 +142,4 @@ def test_variable_features_old_kern_writer(FontClass):
             } curs_rtl;
 
         } curs;
-"""  # noqa: B950
-    )
+""")  # noqa: B950

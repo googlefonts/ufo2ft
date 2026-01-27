@@ -18,8 +18,7 @@ import pytest
 
 from ..testSupport import _TempModule
 
-TEST_LIB_PLIST = readPlistFromString(
-    b"""
+TEST_LIB_PLIST = readPlistFromString(b"""
 <dict>
     <key>com.github.googlei18n.ufo2ft.featureWriters</key>
     <array>
@@ -34,8 +33,7 @@ TEST_LIB_PLIST = readPlistFromString(
         </dict>
     </array>
 </dict>
-"""
-)
+""")
 
 
 class FooBarWriter(BaseFeatureWriter):

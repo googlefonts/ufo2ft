@@ -24,8 +24,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
     def test_curs_feature(self, testufo):
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             feature curs {
                 lookup curs {
                     lookupflag RightToLeft IgnoreMarks;
@@ -35,8 +34,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
                 } curs;
 
             } curs;
-            """
-        )
+            """)
 
     def test_curs_feature_LTR(self, testufo):
         testufo["a"].unicode = ord("a")
@@ -44,8 +42,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
         testufo["c"].unicode = ord("c")
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             feature curs {
                 lookup curs_ltr {
                     lookupflag IgnoreMarks;
@@ -55,8 +52,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
                 } curs_ltr;
 
             } curs;
-            """
-        )
+            """)
 
     def test_curs_feature_mixed(self, testufo):
         testufo["a"].unicode = ord("a")
@@ -77,8 +73,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
         glyph.appendAnchor({"name": "exit", "x": 0, "y": 10})
         glyph = testufo.newGlyph("meem.fina")
         glyph.appendAnchor({"name": "entry", "x": 500, "y": 10})
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             feature swsh {
                 sub a by a.swsh;
             } swsh;
@@ -92,8 +87,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
                 sub alef by alef.fina;
                 sub meem by meem.fina;
             } fina;
-            """
-        )
+            """)
         testufo.lib["public.glyphOrder"] = [
             "a",
             "b",
@@ -108,8 +102,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
         ]
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             feature curs {
                 lookup curs_ltr {
                     lookupflag IgnoreMarks;
@@ -128,8 +121,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
                 } curs_rtl;
 
             } curs;
-            """
-        )
+            """)
 
     def test_curs_feature_multiple_anchors(self, testufo):
         glyph = testufo.newGlyph("d")
@@ -144,8 +136,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
         glyph.appendAnchor({"name": "entry.2", "x": 100, "y": 200})
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             feature curs {
                 lookup curs {
                     lookupflag RightToLeft IgnoreMarks;
@@ -168,8 +159,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
                 } curs_2;
 
             } curs;
-            """
-        )
+            """)
 
     def test_curs_feature_multiple_anchors_LTR(self, testufo):
         testufo["a"].unicode = ord("a")
@@ -191,8 +181,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
         glyph.appendAnchor({"name": "entry.2", "x": 100, "y": 200})
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             feature curs {
                 lookup curs_ltr {
                     lookupflag IgnoreMarks;
@@ -215,8 +204,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
                 } curs_2_ltr;
 
             } curs;
-            """
-        )
+            """)
 
     def test_curs_feature_multiple_anchors_mixed(self, testufo):
         testufo["a"].unicode = ord("a")
@@ -251,8 +239,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
         glyph.appendAnchor({"name": "entry.2", "x": 100, "y": 200})
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             feature curs {
                 lookup curs_ltr {
                     lookupflag IgnoreMarks;
@@ -293,8 +280,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
                 } curs_2_rtl;
 
             } curs;
-            """
-        )
+            """)
 
     def test_curs_feature_forced_RTL(self, testufo):
         for c in ("a", "b", "c"):
@@ -307,8 +293,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
 
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
                 feature curs {
                     lookup curs_RTL {
                         lookupflag RightToLeft IgnoreMarks;
@@ -318,8 +303,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
                     } curs_RTL;
 
                 } curs;
-                """
-        )
+                """)
 
     def test_curs_feature_forced_LTR(self, testufo):
         for n, u in (("a", 0x0627), ("b", 0x0628), ("c", 0x062C)):
@@ -332,8 +316,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
 
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
                 feature curs {
                     lookup curs_LTR {
                         lookupflag IgnoreMarks;
@@ -343,8 +326,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
                     } curs_LTR;
 
                 } curs;
-                """
-        )
+                """)
 
     def test_curs_feature_mixed_forced_direction(self, testufo):
         testufo["a"].unicode = ord("a")
@@ -392,8 +374,7 @@ class CursFeatureWriterTest(FeatureWriterTest):
 
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
                 feature curs {
                     lookup curs_ltr {
                         lookupflag IgnoreMarks;
@@ -424,5 +405,4 @@ class CursFeatureWriterTest(FeatureWriterTest):
                     } curs_RTL;
 
                 } curs;
-                """
-        )
+                """)

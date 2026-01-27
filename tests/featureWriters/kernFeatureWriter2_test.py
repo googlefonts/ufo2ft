@@ -248,13 +248,11 @@ def test_comment_wrong_case_or_missing(snapshot, FontClass, caplog):
     for name in ("a", "b"):
         ufo.newGlyph(name)
     ufo.kerning.update({("a", "b"): 25.0})
-    ufo.features.text = (
-        """
+    ufo.features.text = ("""
         feature kern {
             # Automatic code
         } kern;
-        """
-    ).strip()
+        """).strip()
 
     with caplog.at_level(logging.WARNING):
         compiler = FeatureCompiler(ufo, featureWriters=[KernFeatureWriter])

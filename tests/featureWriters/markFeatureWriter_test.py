@@ -96,12 +96,10 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         ufo.newGlyph("c").appendAnchor({"name": "bottom", "x": 250, "y": -100})
         ufo.newGlyph("grave").appendAnchor({"name": "_top", "x": 100, "y": 200})
         ufo.newGlyph("cedilla").appendAnchor({"name": "_bottom", "x": 100, "y": 0})
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             markClass cedilla <anchor 200 0> @MC_bottom;
             markClass grave <anchor 100 200> @MC_top;
-            """
-        )
+            """)
 
         writer = MarkFeatureWriter()
         feaFile = parseLayoutFeatures(ufo)
@@ -189,8 +187,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert re.search(r"ligComponent\s+<anchor NULL>", str(generated))
 
     def test_skip_existing_feature(self, testufo):
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
@@ -198,14 +195,12 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         <anchor 100 200> mark @MC_top;
                 } mark1;
             } mark;
-            """
-        )
+            """)
 
         generated = self.writeFeatures(testufo)
 
         # only mkmk is generated, mark was already present
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mkmk {
@@ -217,12 +212,10 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_append_feature(self, testufo):
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
@@ -230,13 +223,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         <anchor 100 200> mark @MC_top;
                 } mark1;
             } mark;
-            """
-        )
+            """)
 
         generated = self.writeFeatures(testufo, mode="append")
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mark {
@@ -263,13 +254,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_insert_comment_before(self, testufo):
         writer = MarkFeatureWriter()
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 #
@@ -280,14 +269,12 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         <anchor 100 200> mark @MC_top;
                 } mark1;
             } mark;
-            """
-        )
+            """)
         feaFile = parseLayoutFeatures(testufo)
 
         assert writer.write(testufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass tildecomb <anchor 100 200> @MC_top;
 
             markClass acutecomb <anchor 100 200> @MC_top;
@@ -325,13 +312,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
         # test append mode ignores insert marker
         generated = self.writeFeatures(testufo, mode="append")
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mark {
@@ -358,13 +343,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_insert_comment_after(self, testufo):
         writer = MarkFeatureWriter()
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
@@ -375,14 +358,12 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 # Automatic Code
                 #
             } mark;
-            """
-        )
+            """)
         feaFile = parseLayoutFeatures(testufo)
 
         assert writer.write(testufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass tildecomb <anchor 100 200> @MC_top;
 
             markClass acutecomb <anchor 100 200> @MC_top;
@@ -420,13 +401,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
         # test append mode ignores insert marker
         generated = self.writeFeatures(testufo, mode="append")
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mark {
@@ -453,13 +432,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_insert_comment_middle(self, testufo):
         writer = MarkFeatureWriter()
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             feature mark {
                 lookup mark1 {
@@ -474,13 +451,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         <anchor 150 250> mark @MC_top;
                 } mark2;
             } mark;
-            """
-        )
+            """)
         feaFile = parseLayoutFeatures(testufo)
 
         writer.write(testufo, feaFile)
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass tildecomb <anchor 100 200> @MC_top;
 
             markClass acutecomb <anchor 100 200> @MC_top;
@@ -526,13 +501,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
         # test append mode ignores insert marker
         generated = self.writeFeatures(testufo, mode="append")
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass tildecomb <anchor 100 200> @MC_top;
 
             feature mark {
@@ -559,24 +532,20 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_insert_comment_outside_block(self, testufo):
         writer = MarkFeatureWriter()
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             #
             # Automatic Code
             #
-            """
-        )
+            """)
         feaFile = parseLayoutFeatures(testufo)
 
         assert writer.write(testufo, feaFile)
 
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             #
             # Automatic Code
             #
@@ -588,8 +557,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark1;
 
             } mark;
-            """
-        )
+            """)
         feaFile = parseLayoutFeatures(testufo)
 
         assert writer.write(testufo, feaFile)
@@ -601,8 +569,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
     def test_defs_and_lookups_first(self, testufo):
         testufo.newGlyph("circumflexcomb")
         writer = MarkFeatureWriter()
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             feature mkmk {
                 # Automatic Code
                 # Move acutecomb down and right if preceded by circumflexcomb
@@ -611,14 +578,12 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                     pos circumflexcomb acutecomb' <0 20 0 20>;
                 } move_acutecomb;
             } mkmk;
-            """
-        )
+            """)
         feaFile = parseLayoutFeatures(testufo)
 
         assert writer.write(testufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
@@ -655,16 +620,14 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } move_acutecomb;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_mark_mkmk_features(self, testufo):
         writer = MarkFeatureWriter()  # by default both mark + mkmk are built
         feaFile = ast.FeatureFile()
         assert writer.write(testufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
@@ -692,8 +655,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_write_only_one(self, testufo):
         writer = MarkFeatureWriter(features=["mkmk"])  # only builds "mkmk"
@@ -750,8 +712,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         feaFile = ast.FeatureFile()
         writer.write(ufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass cedillacomb <anchor 200 0> @MC_markbottom;
             markClass gravecomb <anchor 160 780> @MC_marktop;
 
@@ -787,16 +748,14 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """  # noqa: B950
-        )
+            """)  # noqa: B950
 
     @pytest.mark.parametrize(
         "groupMarkClasses, expected",
         [
             (
                 True,
-                dedent(
-                    """\
+                dedent("""\
                     markClass nukta-kannada <anchor 0 0> @MC_bottom;
                     markClass candrabindu-kannada <anchor 0 547> @MC_top;
                     markClass halant-kannada <anchor -456 460> @MC_topright;
@@ -829,13 +788,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         } mark2base;
 
                     } mark;
-                    """  # noqa: B950
-                ),
+                    """),  # noqa: B950
             ),
             (
                 False,
-                dedent(
-                    """\
+                dedent("""\
                     markClass nukta-kannada <anchor 0 0> @MC_bottom;
                     markClass candrabindu-kannada <anchor 0 547> @MC_top;
                     markClass halant-kannada <anchor -456 460> @MC_topright;
@@ -880,8 +837,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         } mark2base_2;
 
                     } mark;
-                    """  # noqa: B950
-                ),
+                    """),  # noqa: B950
             ),
         ],
     )
@@ -918,8 +874,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         ka_base.appendAnchor({"name": "topright", "x": 391, "y": 460})
         ka_base.appendAnchor({"name": "bottom", "x": 290, "y": 0})
 
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             languagesystem DFLT dflt;
             languagesystem knda dflt;
             languagesystem knd2 dflt;
@@ -927,8 +882,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             feature psts {
                 sub ka-kannada' halant-kannada by ka-kannada.base;
             } psts;
-            """
-        )
+            """)
         generated = self.writeFeatures(ufo, groupMarkClasses=groupMarkClasses)
 
         assert str(generated) == expected
@@ -974,8 +928,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert str(feaFile) == ""
         assert writer.write(ufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass ka-khmer.below <anchor 276 0> @MC_bottom;
             markClass iMark-khmer <anchor 412 600> @MC_topright;
             markClass iiMark-khmer <anchor 412 600> @MC_topright;
@@ -1021,8 +974,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup blwm_mark2base;
                 lookup ContextualBlwmDispatch_0;
             } blwm;
-            """
-        )
+            """)
 
     def test_shared_script_char(self, FontClass):
         ufo = FontClass()
@@ -1043,16 +995,13 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         nukta.unicode = 0x0650
         nukta.appendAnchor({"name": "_bottom", "x": 0, "y": 547})
 
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             languagesystem DFLT dflt;
             languagesystem arab dflt;
-            """
-        )
+            """)
         generated = self.writeFeatures(ufo, groupMarkClasses=True)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass kasra-ar <anchor 0 547> @MC_bottom;
             markClass fatha-ar <anchor 0 0> @MC_top;
 
@@ -1064,11 +1013,9 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2base;
 
             } mark;
-            """  # noqa: B950
-        )
+            """)  # noqa: B950
 
-        expected = dedent(
-            """\
+        expected = dedent("""\
             markClass kasra-ar <anchor 0 547> @MC_bottom;
             markClass fatha-ar <anchor 0 0> @MC_top;
 
@@ -1096,20 +1043,17 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2base;
 
             } mark;
-            """  # noqa: B950
-        )
+            """)  # noqa: B950
 
         ufo.features.text = ""
         generated = self.writeFeatures(ufo, groupMarkClasses=True)
         assert str(generated) == expected
 
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             languagesystem DFLT dflt;
             languagesystem arab dflt;
             languagesystem adlm dflt;
-            """
-        )
+            """)
         generated = self.writeFeatures(ufo, groupMarkClasses=True)
         assert str(generated) == expected
 
@@ -1118,8 +1062,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         [
             (
                 True,
-                dedent(
-                    """\
+                dedent("""\
                     markClass barcomb <anchor 100 40> @MC_bar;
                     markClass cedillacomb <anchor 10 -5> @MC_bottom;
                     markClass bazcomb <anchor 90 320> @MC_bottom;
@@ -1214,13 +1157,11 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         } mark2mark_top;
 
                     } mkmk;
-                    """  # noqa: B950
-                ),
+                    """),  # noqa: B950
             ),
             (
                 False,
-                dedent(
-                    """\
+                dedent("""\
                     markClass barcomb <anchor 100 40> @MC_bar;
                     markClass cedillacomb <anchor 10 -5> @MC_bottom;
                     markClass bazcomb <anchor 90 320> @MC_bottom;
@@ -1331,8 +1272,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         } mark2mark_top;
 
                     } mkmk;
-                    """  # noqa: B950
-                ),
+                    """),  # noqa: B950
             ),
         ],
     )
@@ -1401,12 +1341,10 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             "foo_bar_baz",
             "bar_foo",
         ]
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             languagesystem DFLT dflt;
             languagesystem taml dflt;
-            """
-        )
+            """)
         generated = self.writeFeatures(testufo, groupMarkClasses=groupMarkClasses)
 
         assert str(generated) == expected
@@ -1430,15 +1368,13 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             {"name": "_top", "x": 0, "y": 0},
             {"name": "top", "x": 0, "y": 300},
         ]
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             @Bases = [a D];
             @Marks = [acutecomb tildecomb dotaccentcomb];
             table GDEF {
                 GlyphClassDef @Bases, [f_i], @Marks, ;
             } GDEF;
-            """
-        )
+            """)
         testufo.glyphOrder = [
             "Alpha",
             "D",
@@ -1452,8 +1388,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass dotaccentcomb <anchor 0 0> @MC_center;
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass dotaccentcomb <anchor 0 0> @MC_top;
@@ -1492,8 +1427,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_mark_mkmk_features_with_GDEF_and_openTypeCategories(self, testufo):
         # this glyph has compatible anchors and has an openTypeCategories "base"
@@ -1522,15 +1456,13 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             "dotaccentcomb": "mark",
             "tildecomb": "base",
         }
-        testufo.features.text = dedent(
-            """\
+        testufo.features.text = dedent("""\
             @Bases = [a];
             @Marks = [acutecomb tildecomb];
             table GDEF {
                 GlyphClassDef @Bases, [f_i], @Marks, ;
             } GDEF;
-            """
-        )
+            """)
         testufo.glyphOrder = [
             "Alpha",
             "D",
@@ -1544,8 +1476,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
@@ -1573,8 +1504,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_multiple_anchor_classes_base(self, FontClass):
         dirname = os.path.dirname(os.path.dirname(__file__))
@@ -1582,8 +1512,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         testufo = FontClass(fontPath)
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass acutecomb <anchor -175 589> @MC_topA;
             markClass acutecomb <anchor -175 572> @MC_topE;
 
@@ -1599,8 +1528,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2base_1;
 
             } mark;
-            """
-        )
+            """)
 
     @pytest.mark.parametrize(
         "groupMarkClasses, expected",
@@ -1611,8 +1539,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 # this is wrong and might not match current Glyphs.app's behavior
                 # but we decided to keep for backward compatibility with existing
                 # projects.
-                dedent(
-                    """\
+                dedent("""\
                     markClass acutecomb <anchor 100 200> @MC_top;
                     markClass acutecomb <anchor 150 250> @MC_topOther;
 
@@ -1640,15 +1567,13 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         } mark2liga_1;
 
                     } mark;
-                    """
-                ),
+                    """),
             ),
             (
                 False,
                 # with groupMarkClasses=False, lookups are simply sorted by mark
                 # class name alphabetically so 'MC_topOther' is last and wins
-                dedent(
-                    """\
+                dedent("""\
                     markClass acutecomb <anchor 100 200> @MC_top;
                     markClass acutecomb <anchor 150 250> @MC_topOther;
 
@@ -1676,8 +1601,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         } mark2liga_1;
 
                     } mark;
-                    """
-                ),
+                    """),
             ),
         ],
     )
@@ -1707,8 +1631,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 True,
                 # 'MC_top' should be last thanks to the anchorSortKey
                 "MC_topOther, MC_top",
-                dedent(
-                    """\
+                dedent("""\
                     markClass acutecomb <anchor 100 200> @MC_top;
                     markClass acutecomb <anchor 150 250> @MC_topOther;
 
@@ -1724,15 +1647,13 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         } mark2base_1;
 
                     } mark;
-                    """
-                ),
+                    """),
             ),
             (
                 False,
                 # 'MC_topOther' (sorted alphabetically) should be last
                 "MC_top, MC_topOther",
-                dedent(
-                    """\
+                dedent("""\
                     markClass acutecomb <anchor 100 200> @MC_top;
                     markClass acutecomb <anchor 150 250> @MC_topOther;
 
@@ -1748,8 +1669,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                         } mark2base_1;
 
                     } mark;
-                    """
-                ),
+                    """),
             ),
         ],
     )
@@ -1784,8 +1704,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
 
         generated = self.writeFeatures(testufo)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
 
             feature mark {
@@ -1795,8 +1714,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2base;
 
             } mark;
-            """
-        )
+            """)
 
     def test_quantize(self, testufo):
         testufo.newGlyph("ogonekcomb").anchors = [
@@ -1805,8 +1723,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         testufo.lib["public.skipExportGlyphs"] = ["f_i", "tildecomb"]
         generated = self.writeFeatures(testufo, quantization=50)
 
-        assert str(generated) == dedent(
-            """\
+        assert str(generated) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass ogonekcomb <anchor 250 200> @MC_top;
 
@@ -1817,8 +1734,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2base;
 
             } mark;
-            """
-        )
+            """)
 
     def test_extra_substitutions(self, FontClass):
         dirname = os.path.dirname(os.path.dirname(__file__))
@@ -1858,8 +1774,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert feature.name == "mark"
         # note there are two mark2base lookups because ufo2ft v3 generates one lookup
         # per mark class (previously 'top' and 'bottom' would go into one lookup)
-        assert str(feature) == dedent(
-            """\
+        assert str(feature) == dedent("""\
             feature mark {
                 lookup mark2base;
                 lookup mark2base_1;
@@ -1867,8 +1782,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup ContextualMarkDispatch_1;
                 lookup ContextualMarkDispatch_2;
             } mark;
-            """
-        )
+            """)
 
         lookup = feature.statements[-3].lookup
         assert str(lookup) == (
@@ -1921,8 +1835,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert str(feaFile) == ""
         assert writer.write(testufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
@@ -1935,16 +1848,14 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
         writer = MarkFeatureWriter()
         feaFile = ast.FeatureFile()
         assert str(feaFile) == ""
         assert writer.write(testufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
@@ -1985,8 +1896,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_contextual_liga_anchors(self, testufo):
         a = testufo["a"]
@@ -2029,8 +1939,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert str(feaFile) == ""
         assert writer.write(testufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
@@ -2097,8 +2006,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_contextual_liga_anchor_no_number(self, testufo):
         fi = testufo["f_i"]
@@ -2121,8 +2029,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         feaFile = ast.FeatureFile()
         assert writer.write(testufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
@@ -2172,8 +2079,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_contextual_mkmk_anchors(self, testufo):
         tildecomb = testufo["tildecomb"]
@@ -2192,8 +2098,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         assert str(feaFile) == ""
         assert writer.write(testufo, feaFile)
 
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
@@ -2233,8 +2138,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 lookup mark2mark_top;
                 lookup ContextualMarkToMarkDispatch_0;
             } mkmk;
-            """
-        )
+            """)
 
     def test_contextual_anchor_no_context(self, testufo, caplog):
         a = testufo["a"]
@@ -2253,8 +2157,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
             "contextual anchor '*top' in glyph 'a' has no context data; skipped"
             in caplog.text
         )
-        assert str(feaFile) == dedent(
-            """\
+        assert str(feaFile) == dedent("""\
             markClass acutecomb <anchor 100 200> @MC_top;
             markClass tildecomb <anchor 100 200> @MC_top;
 
@@ -2282,8 +2185,7 @@ class MarkFeatureWriterTest(FeatureWriterTest):
                 } mark2mark_top;
 
             } mkmk;
-            """
-        )
+            """)
 
     def test_ignorable_anchors(self, FontClass):
         dirname = os.path.dirname(os.path.dirname(__file__))

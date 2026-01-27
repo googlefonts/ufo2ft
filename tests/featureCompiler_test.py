@@ -24,19 +24,15 @@ from ufo2ft.featureWriters import (
 class ParseLayoutFeaturesTest:
     def test_include(self, FontClass, tmpdir):
         tmpdir.join("test.fea").write_text(
-            dedent(
-                """\
+            dedent("""\
             # hello world
-            """
-            ),
+            """),
             encoding="utf-8",
         )
         ufo = FontClass()
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(test.fea)
-            """
-        )
+            """)
         ufo.save(str(tmpdir.join("Test.ufo")))
 
         fea = parseLayoutFeatures(ufo)
@@ -45,11 +41,9 @@ class ParseLayoutFeaturesTest:
 
     def test_include_no_ufo_path(self, FontClass, tmpdir, monkeypatch):
         ufo = FontClass()
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(test.fea)
-            """
-        )
+            """)
         with monkeypatch.context() as context:
             context.chdir(str(tmpdir))
             ufo.save("Test.ufo")
@@ -60,19 +54,15 @@ class ParseLayoutFeaturesTest:
         caplog.set_level(logging.ERROR)
 
         tmpdir.join("test.fea").write_text(
-            dedent(
-                """\
+            dedent("""\
             # hello world
-            """
-            ),
+            """),
             encoding="utf-8",
         )
         ufo = FontClass()
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(../test.fea)
-            """
-        )
+            """)
         ufo.save(str(tmpdir.join("Test.ufo")))
 
         with caplog.at_level(logging.WARNING, logger=logger.name):
@@ -86,19 +76,15 @@ class ParseLayoutFeaturesTest:
         features_dir = tmp_path / "features"
         features_dir.mkdir()
         (features_dir / "test.fea").write_text(
-            dedent(
-                """\
+            dedent("""\
                 # hello world
-                """
-            ),
+                """),
             encoding="utf-8",
         )
         ufo = FontClass()
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(test.fea)
-            """
-        )
+            """)
         ufo.save(tmp_path / "Test.ufo")
 
         fea = parseLayoutFeatures(ufo, features_dir)
@@ -124,22 +110,18 @@ class TokenizeLayoutFeaturesTest:
 
     def test_include(self, FontClass, tmp_path):
         (tmp_path / "test.fea").write_text(
-            dedent(
-                """\
+            dedent("""\
             # hello world
             feature kern {
                 pos A V -40;
             } kern;
-            """
-            ),
+            """),
             encoding="utf-8",
         )
         ufo = FontClass()
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(test.fea)
-            """
-        )
+            """)
         ufo.save(tmp_path / "Test.ufo")
 
         assert self.tokenize(ufo) == [
@@ -158,11 +140,9 @@ class TokenizeLayoutFeaturesTest:
 
     def test_include_does_not_exist(self, FontClass, tmp_path, monkeypatch):
         ufo = FontClass()
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(test.fea)
-            """
-        )
+            """)
         with monkeypatch.context() as context:
             context.chdir(tmp_path)
             ufo.save("Test.ufo")
@@ -171,11 +151,9 @@ class TokenizeLayoutFeaturesTest:
 
     def test_include_no_ufo_path_nor_include_dir(self, FontClass, tmp_path):
         ufo = FontClass()
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(test.fea)
-            """
-        )
+            """)
         assert ufo.path is None
         with pytest.raises(IncludedFeaNotFound):
             tokenizeLayoutFeatures(ufo, includeDir=None)
@@ -184,19 +162,15 @@ class TokenizeLayoutFeaturesTest:
         caplog.set_level(logging.ERROR)
 
         (tmp_path / "test.fea").write_text(
-            dedent(
-                """\
+            dedent("""\
             # hello world
-            """
-            ),
+            """),
             encoding="utf-8",
         )
         ufo = FontClass()
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(../test.fea)
-            """
-        )
+            """)
         ufo.save(tmp_path / "Test.ufo")
 
         # the included 'test.fea' is in the same directory as the ufo, but the include
@@ -214,22 +188,18 @@ class TokenizeLayoutFeaturesTest:
         features_dir = tmp_path / "features"
         features_dir.mkdir()
         (features_dir / "test.fea").write_text(
-            dedent(
-                """\
+            dedent("""\
                 # hello world
                 feature kern {
                     pos A V -40;
                 } kern;
-                """
-            ),
+                """),
             encoding="utf-8",
         )
         ufo = FontClass()
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(test.fea)
-            """
-        )
+            """)
         ufo.save(tmp_path / "Test.ufo")
 
         assert self.tokenize(ufo, includeDir=features_dir) == [
@@ -272,13 +242,11 @@ class FeatureCompilerTest:
         ufo = FontClass()
         ufo.newGlyph("f")
         ufo.newGlyph("f_f")
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             feature liga {
                 sub f f by f_f;
             } liga;
-            """
-        )
+            """)
         ttFont = ttLib.TTFont()
         ttFont.setGlyphOrder(["f", "f_f"])
 
@@ -295,13 +263,11 @@ class FeatureCompilerTest:
         ufo = FontClass()
         ufo.newGlyph("f")
         ufo.newGlyph("f_f")
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             feature liga {
                 sub f f by f_f;
             } liga;
-            """
-        )
+            """)
 
         compiler = FeatureCompiler(ufo)
         ttFont = compiler.compile()
@@ -427,8 +393,7 @@ class FeatureCompilerTest:
         ufo.newGlyph("f.alt01")
         ufo.newGlyph("f.alt02")
         ufo.newGlyph("f_f")
-        features = dedent(
-            """\
+        features = dedent("""\
             feature BUGS {
                 # invalid
                 lookup MIXED_TYPE {
@@ -437,8 +402,7 @@ class FeatureCompilerTest:
                 } MIXED_TYPE;
 
             } BUGS;
-            """
-        )
+            """)
         ufo.features.text = features
 
         compiler = FeatureCompiler(ufo)
@@ -461,30 +425,25 @@ class FeatureCompilerTest:
                 tmpfile.remove(ignore_errors=True)
 
     def test_setupFeatures_custom_feaIncludeDir(self, FontClass, tmp_path):
-        (tmp_path / "family.fea").write_text(
-            """\
+        (tmp_path / "family.fea").write_text("""\
             feature liga {
                 sub f f by f_f;
             } liga;
-            """
-        )
+            """)
         ufo = FontClass()
         ufo.newGlyph("a")
         ufo.newGlyph("v")
         ufo.newGlyph("f")
         ufo.newGlyph("f_f")
         ufo.kerning.update({("a", "v"): -40})
-        ufo.features.text = dedent(
-            """\
+        ufo.features.text = dedent("""\
             include(family.fea);
-            """
-        )
+            """)
         compiler = FeatureCompiler(ufo, feaIncludeDir=str(tmp_path))
 
         compiler.setupFeatures()
 
-        assert compiler.features == dedent(
-            """\
+        assert compiler.features == dedent("""\
             feature liga {
                 sub f f by f_f;
             } liga;
@@ -499,5 +458,4 @@ class FeatureCompilerTest:
                 language dflt;
                 lookup kern_Default;
             } kern;
-            """
-        )
+            """)
