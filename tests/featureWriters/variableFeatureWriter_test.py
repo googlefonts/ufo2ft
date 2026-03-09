@@ -15,8 +15,8 @@ def test_variable_features(FontClass):
     _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
 
     assert dedent("\n" + tmp.getvalue()) == dedent("""
-        markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
-        markClass gravecmb <anchor 250 400> @MC_top;
+        markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @mark_top;
+        markClass gravecmb <anchor 250 400> @mark_top;
 
         feature curs {
             lookup curs_rtl {
@@ -46,9 +46,9 @@ def test_variable_features(FontClass):
         feature mark {
             lookup mark2base {
                 pos base alef-ar.fina
-                    <anchor (wght=100:211 wght=1000:214) (wght=100:730 wght=1000:797)> mark @MC_top;
+                    <anchor (wght=100:211 wght=1000:214) (wght=100:730 wght=1000:797)> mark @mark_top;
                 pos base a
-                    <anchor 250 400> mark @MC_top;
+                    <anchor 250 400> mark @mark_top;
             } mark2base;
 
         } mark;
@@ -97,8 +97,8 @@ def test_variable_features_old_kern_writer(FontClass):
     _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
 
     assert dedent("\n" + tmp.getvalue()) == dedent("""
-        markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @MC_top;
-        markClass gravecmb <anchor 250 400> @MC_top;
+        markClass dotabove-ar <anchor (wght=100:100 wght=1000:125) (wght=100:320 wght=1000:416)> @mark_top;
+        markClass gravecmb <anchor 250 400> @mark_top;
 
         @kern1.rtl.alef = [alef-ar.fina];
         @kern2.rtl.alef = [alef-ar.fina];
@@ -122,9 +122,9 @@ def test_variable_features_old_kern_writer(FontClass):
         feature mark {
             lookup mark2base {
                 pos base alef-ar.fina
-                    <anchor (wght=100:211 wght=1000:214) (wght=100:730 wght=1000:797)> mark @MC_top;
+                    <anchor (wght=100:211 wght=1000:214) (wght=100:730 wght=1000:797)> mark @mark_top;
                 pos base a
-                    <anchor 250 400> mark @MC_top;
+                    <anchor 250 400> mark @mark_top;
             } mark2base;
 
         } mark;

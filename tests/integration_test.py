@@ -254,7 +254,7 @@ class IntegrationTest:
 
         _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
         assert "\n" + tmp.getvalue() == dedent("""
-            markClass dotabovecomb <anchor -2 465> @MC_top;
+            markClass dotabovecomb <anchor -2 465> @mark_top;
 
             feature liga {
                 sub a e s s by s;
@@ -263,7 +263,7 @@ class IntegrationTest:
             feature mark {
                 lookup mark2base {
                     pos base e
-                        <anchor (wght=350:314 wght=450:403 wght=625:315) (wght=350:556 wght=450:567 wght=625:644)> mark @MC_top;
+                        <anchor (wght=350:314 wght=450:403 wght=625:315) (wght=350:556 wght=450:567 wght=625:644)> mark @mark_top;
                 } mark2base;
 
             } mark;
