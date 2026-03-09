@@ -328,8 +328,8 @@ class MarkFeatureWriter(BaseFeatureWriter):
     # subclasses may override this to use different anchor naming schemes
     NamedAnchor = NamedAnchor
 
-    # @MC_top, @MC_bottom, etc.
-    markClassPrefix = "MC"
+    # @mark_top, @mark_bottom, etc.
+    markClassPrefix = "mark"
 
     abvmAnchorNames = {
         "top",
@@ -532,7 +532,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 adjacency[markClass].add(other)
                 adjacency[other].add(markClass)
         colorGroups = colorGraph(adjacency)
-        # Sort the groups, because the group that contains MC_top or MC_bottom
+        # Sort the groups, because the group that contains mark_top or mark_bottom
         # needs to go to the end (as specified in self.anchorSortKey) so that
         # they are applied last and "win" in case of conflict.
         # We also sort alphabetically for reproducibility, both within each
@@ -545,7 +545,7 @@ class MarkFeatureWriter(BaseFeatureWriter):
                 # self.anchorSortKey was designed to put the _top and _bottom
                 # at the start (and now we want them at the end).
                 -min(
-                    # Remove the MC prefix because that's how the mark classes
+                    # Remove the "mark" prefix because that's how the mark classes
                     # are looking at this stage (the original
                     # self.anchorSortKey was applied at a different stage of
                     # the algorithm, on anchors instead of mark classes)
