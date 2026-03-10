@@ -10,6 +10,7 @@ class RemoveOverlapsFilter(BaseFilter):
     class Backend(Enum):
         BOOLEAN_OPERATIONS = "booleanOperations"
         SKIA_PATHOPS = "pathops"
+        LINESWEEPER = "linesweeper"
 
     # use booleanOperations by default, unless pathops specified as backend
     _kwargs = {"backend": Backend.BOOLEAN_OPERATIONS}
@@ -33,6 +34,14 @@ class RemoveOverlapsFilter(BaseFilter):
             self.penGetter = "getPen"
 
             logger.debug("using skia-pathops as RemoveOverlapsFilter backend")
+        elif self.options.backend is self.Backend.LINESWEEPER:
+            from linesweeper import LinesweeperError, union
+
+            self.union = union
+            self.Error = LinesweeperError
+            self.penGetter = "getPen"
+
+            logger.debug("using linesweeper as RemoveOverlapsFilter backend")
         else:
             raise AssertionError(self.options.backend)
 

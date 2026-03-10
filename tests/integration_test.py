@@ -146,6 +146,21 @@ class IntegrationTest:
         ttf = compileTTF(testufo, removeOverlaps=True, overlapsBackend="pathops")
         expectTTX(ttf, "TestFont-NoOverlaps-TTF-pathops.ttx")
 
+    def test_removeOverlaps_CFF_linesweeper(self, testufo):
+        otf = compileOTF(
+            testufo, removeOverlaps=True, overlapsBackend="linesweeper"
+        )
+        # Smoke test: verify it compiled and the CFF table has charstrings
+        assert "CFF " in otf
+        assert len(otf.getGlyphOrder()) > 1
+
+    def test_removeOverlaps_linesweeper(self, testufo):
+        ttf = compileTTF(
+            testufo, removeOverlaps=True, overlapsBackend="linesweeper"
+        )
+        assert "glyf" in ttf
+        assert len(ttf.getGlyphOrder()) > 1
+
     def test_nestedComponents(self, FontClass):
         ufo = FontClass(getpath("NestedComponents-Regular.ufo"))
         ttf = compileTTF(ufo)
