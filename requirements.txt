@@ -1,4 +1,4 @@
-fonttools[ufo,lxml]==4.61.1
+fonttools[lxml,ufo]==4.62.1
 defcon==0.12.2
 compreffor==0.6.0
 booleanOperations==0.10.0
