@@ -312,6 +312,16 @@ class OutlineTTFCompilerTest:
         actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
         assert actual == "Custom Name for Windows"
 
+    def test_setupTable_name_empty_styleName(self, quadufo):
+        """nameID=4 (full name) should not have trailing space when styleName is empty."""
+        quadufo.info.styleName = ""
+        quadufo.info.styleMapFamilyName = None
+        quadufo.info.openTypeNamePreferredSubfamilyName = None
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        fullName = compiler.otf["name"].getName(4, 3, 1, 1033).string
+        assert fullName == fullName.strip()
+
     def test_post_underline_without_public_key(self, quadufo):
         compiler = OutlineTTFCompiler(quadufo)
         compiler.compile()

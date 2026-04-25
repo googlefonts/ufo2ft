@@ -407,7 +407,7 @@ class BaseOutlineCompiler:
         preferredSubfamilyName = getAttrWithFallback(
             font.info, "openTypeNamePreferredSubfamilyName"
         )
-        fullName = f"{preferredFamilyName} {preferredSubfamilyName}"
+        fullName = f"{preferredFamilyName} {preferredSubfamilyName}".strip()
 
         nameVals = {
             0: getAttrWithFallback(font.info, "copyright"),
