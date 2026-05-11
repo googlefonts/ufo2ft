@@ -682,10 +682,13 @@ class OpenTypeCategories(NamedTuple):
     mark: frozenset[str]
     component: frozenset[str]
 
+    @property
+    def is_empty(self):
+        return not any(self)
+
     @classmethod
-    def load(cls, font):
-        """Return 'public.openTypeCategories' values as a tuple of sets of
-        unassigned, bases, ligatures, marks, components."""
+    def from_dict(cls, categories_dict):
+        """Build from a {glyphName: category} dictionary."""
         unassigned, bases, ligatures, marks, components = (
             set(),
             set(),
@@ -693,17 +696,7 @@ class OpenTypeCategories(NamedTuple):
             set(),
             set(),
         )
-        openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
-        # Handle case where we are a variable feature writer
-        if not openTypeCategories and isinstance(font, DesignSpaceDocument):
-            designspace = font
-            default = designspace.findDefault()
-            if default is None:
-                raise InvalidDesignSpaceData("No default source found in designspace")
-            font = default.font
-            openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
-
-        for glyphName, category in openTypeCategories.items():
+        for glyphName, category in categories_dict.items():
             if category == "unassigned":
                 unassigned.add(glyphName)
             elif category == "base":
@@ -716,10 +709,9 @@ class OpenTypeCategories(NamedTuple):
                 components.add(glyphName)
             else:
                 logging.getLogger("ufo2ft").warning(
-                    f"The '{OPENTYPE_CATEGORIES_KEY}' value of {glyphName} in "
-                    f"{font.info.familyName} {font.info.styleName} is '{category}' "
-                    "when it should be 'unassigned', 'base', 'ligature', 'mark' "
-                    "or 'component'."
+                    f"The '{OPENTYPE_CATEGORIES_KEY}' value of {glyphName} is "
+                    f"'{category}' when it should be 'unassigned', 'base', "
+                    "'ligature', 'mark' or 'component'."
                 )
         return cls(
             frozenset(unassigned),
@@ -728,6 +720,22 @@ class OpenTypeCategories(NamedTuple):
             frozenset(marks),
             frozenset(components),
         )
+
+    @classmethod
+    def load(cls, font):
+        """Return 'public.openTypeCategories' values as a tuple of sets of
+        unassigned, bases, ligatures, marks, components."""
+        openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
+        # Handle case where we are a variable feature writer
+        if not openTypeCategories and isinstance(font, DesignSpaceDocument):
+            designspace = font
+            default = designspace.findDefault()
+            if default is None:
+                raise InvalidDesignSpaceData("No default source found in designspace")
+            font = default.font
+            openTypeCategories = font.lib.get(OPENTYPE_CATEGORIES_KEY, {})
+
+        return cls.from_dict(openTypeCategories)
 
 
 def importUfoModule():

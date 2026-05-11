@@ -8,7 +8,7 @@ from fontTools.designspaceLib.split import splitInterpolable, splitVariableFonts
 from fontTools.misc.loggingTools import Timer
 from fontTools.otlLib.optimize.gpos import COMPRESSION_LEVEL as GPOS_COMPRESSION_LEVEL
 
-from ufo2ft.constants import MTI_FEATURES_PREFIX
+from ufo2ft.constants import MTI_FEATURES_PREFIX, OPENTYPE_CATEGORIES_KEY
 from ufo2ft.errors import InvalidDesignSpaceData
 from ufo2ft.featureCompiler import (
     FeatureCompiler,
@@ -181,6 +181,8 @@ class BaseInterpolatableCompiler(BaseCompiler):
     extraSubstitutions: Optional[dict] = None
     variableFontNames: Optional[list] = None
 
+    # DS-level public.openTypeCategories, read in _pre_compile_designspace
+    openTypeCategories: Optional[dict] = field(init=False, default=None)
     # used to generate glyph instances on-the-fly (e.g. decomposing sparse composites)
     instantiator: Optional[Instantiator] = field(init=False, default=None)
     # We may need to compile things differently based on whether the source is default
@@ -252,6 +254,7 @@ class BaseInterpolatableCompiler(BaseCompiler):
             self.layerNames.append(source.layerName)
 
         self.skipExportGlyphs = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
+        self.openTypeCategories = designSpaceDoc.lib.get(OPENTYPE_CATEGORIES_KEY)
 
         if self.notdefGlyph is None:
             self.notdefGlyph = _notdefGlyphFallback(designSpaceDoc)

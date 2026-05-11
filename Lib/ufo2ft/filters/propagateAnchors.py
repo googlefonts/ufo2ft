@@ -473,7 +473,11 @@ class PropagateAnchorsIFilter(BaseIFilter):
             glyphSets = [_GlyphSet.from_layer(font) for font in fonts]
 
         self.set_context(fonts, glyphSets, instantiator, **kwargs)
-        categories = OpenTypeCategories.load(self.getDefaultFont())
+        ds_categories = kwargs.get("openTypeCategories")
+        if ds_categories:
+            categories = OpenTypeCategories.from_dict(ds_categories)
+        else:
+            categories = OpenTypeCategories.load(self.getDefaultFont())
         interpolated_layers = self.getInterpolatedLayers()
 
         # Classify using default font's glyphSet

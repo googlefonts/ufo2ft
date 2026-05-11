@@ -273,6 +273,7 @@ class BaseInterpolatablePreProcessor:
         inplace=False,
         layerNames=None,
         skipExportGlyphs=None,
+        openTypeCategories=None,
         filters=None,
         *,
         instantiator: Instantiator | None = None,
@@ -280,6 +281,7 @@ class BaseInterpolatablePreProcessor:
     ):
         self.ufos = ufos
         self.inplace = inplace
+        self.openTypeCategories = openTypeCategories
 
         if layerNames is None:
             layerNames = [None] * len(ufos)
@@ -333,7 +335,12 @@ class BaseInterpolatablePreProcessor:
 
     def _run_interpolatable(self, filter_: BaseIFilter) -> set[str]:
         # apply a single, interpolatable filter to all the glyphSets
-        modified = filter_(self.ufos, self.glyphSets, self.instantiator)
+        modified = filter_(
+            self.ufos,
+            self.glyphSets,
+            self.instantiator,
+            openTypeCategories=self.openTypeCategories,
+        )
         if modified:
             self._update_instantiator()
         return modified
@@ -440,6 +447,7 @@ class TTFInterpolatablePreProcessor(BaseInterpolatablePreProcessor):
         rememberCurveType=True,
         layerNames=None,
         skipExportGlyphs=None,
+        openTypeCategories=None,
         filters=None,
         allQuadratic=True,
         *,
@@ -453,6 +461,7 @@ class TTFInterpolatablePreProcessor(BaseInterpolatablePreProcessor):
             inplace=inplace,
             layerNames=layerNames,
             skipExportGlyphs=skipExportGlyphs,
+            openTypeCategories=openTypeCategories,
             filters=filters,
             instantiator=instantiator,
             **kwargs,
