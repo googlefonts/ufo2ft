@@ -49,6 +49,7 @@ class BaseCompiler:
     colrClipBoxQuantization: Callable[[object], int] = colrClipBoxQuantization
     feaIncludeDir: Optional[str] = None
     skipFeatureCompilation: bool = False
+    preliminaryOpenTypeCategories: Optional[dict] = None
     ftConfig: dict = field(default_factory=dict)
 
     def __post_init__(self):
@@ -255,6 +256,9 @@ class BaseInterpolatableCompiler(BaseCompiler):
 
         self.skipExportGlyphs = designSpaceDoc.lib.get("public.skipExportGlyphs", [])
         self.openTypeCategories = designSpaceDoc.lib.get(OPENTYPE_CATEGORIES_KEY)
+        # Source-level categories take precedence over preliminary ones
+        if self.openTypeCategories:
+            self.preliminaryOpenTypeCategories = None
 
         if self.notdefGlyph is None:
             self.notdefGlyph = _notdefGlyphFallback(designSpaceDoc)

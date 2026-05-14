@@ -51,6 +51,7 @@ GLYPHS_MATH_EXTENDED_SHAPE_KEY = GLYPHS_MATH_PREFIX + "extendedShape"
 
 OBJECT_LIBS_KEY = "public.objectLibs"
 OPENTYPE_CATEGORIES_KEY = "public.openTypeCategories"
+_PRELIMINARY_CATEGORIES_KEY = UFO2FT_PREFIX + "__preliminaryOpenTypeCategories"
 OPENTYPE_META_KEY = "public.openTypeMeta"
 OPENTYPE_POST_UNDERLINE_POSITION_KEY = "public.openTypePostUnderlinePosition"
 TRUETYPE_INSTRUCTIONS_KEY = "public.truetype.instructions"

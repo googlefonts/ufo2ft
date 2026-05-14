@@ -22,7 +22,11 @@ from math import atan2, degrees, isinf
 
 from fontTools.misc.transform import Transform
 
-from ufo2ft.constants import GLYPHS_COMPONENT_INFO_KEY
+from ufo2ft.constants import (
+    GLYPHS_COMPONENT_INFO_KEY,
+    OPENTYPE_CATEGORIES_KEY,
+    _PRELIMINARY_CATEGORIES_KEY,
+)
 from ufo2ft.filters import BaseFilter, BaseIFilter
 from ufo2ft.util import OpenTypeCategories, _GlyphSet, zip_strict
 
@@ -168,9 +172,8 @@ def _classify_glyphs(glyph_set, categories):
     """
     marks = set(categories.mark)
     ligatures = set(categories.ligature)
-    has_categories = bool(marks or ligatures or categories.base or categories.component)
 
-    if not has_categories:
+    if categories.is_empty:
         logger.warning(
             "public.openTypeCategories not found or empty; anchor propagation "
             "may differ from fontc/Glyphs.app for mark and ligature glyphs."
@@ -181,6 +184,28 @@ def _classify_glyphs(glyph_set, categories):
                 marks.add(name)
 
     return marks, ligatures
+
+
+def _finalize_categories(preliminary_categories, done_anchors):
+    """Refine preliminary categories after anchor propagation.
+
+    Matches fontc's recompute_gdef_categories: marks are kept as-is,
+    ligatures are kept only if they gained attaching anchors, and bases
+    are inferred from attaching anchors for all remaining glyphs.
+    """
+    finalized = {}
+    for name, anchors in done_anchors.items():
+        has_attaching = any(
+            a.name and not a.name.startswith("_") for a in anchors
+        )
+        preliminary = preliminary_categories.get(name)
+        if preliminary == "mark":
+            finalized[name] = "mark"
+        elif preliminary == "ligature" and has_attaching:
+            finalized[name] = "ligature"
+        elif has_attaching and preliminary != "mark":
+            finalized[name] = "base"
+    return finalized
 
 
 def _get_component_anchors(glyph):
@@ -419,6 +444,11 @@ class PropagateAnchorsFilter(BaseFilter):
             glyphSet = _GlyphSet.from_layer(font)
 
         categories = OpenTypeCategories.load(font)
+        preliminary = None
+        if categories.is_empty:
+            preliminary = font.lib.get(_PRELIMINARY_CATEGORIES_KEY)
+            if preliminary:
+                categories = OpenTypeCategories.from_dict(preliminary)
         marks, ligatures = _classify_glyphs(glyphSet, categories)
 
         sorted_glyphs = _depth_sorted_glyphs(glyphSet)
@@ -443,6 +473,17 @@ class PropagateAnchorsFilter(BaseFilter):
                 component_anchor_map=_get_component_anchors(glyph),
             )
             done_anchors[name] = result
+
+        if preliminary:
+            finalized = _finalize_categories(preliminary, done_anchors)
+            font.lib[OPENTYPE_CATEGORIES_KEY] = finalized
+            font.lib.pop(_PRELIMINARY_CATEGORIES_KEY, None)
+            logger.info(
+                "Finalized preliminary categories: %d base, %d ligature, %d mark",
+                sum(1 for v in finalized.values() if v == "base"),
+                sum(1 for v in finalized.values() if v == "ligature"),
+                sum(1 for v in finalized.values() if v == "mark"),
+            )
 
         # Determine which glyphs to write: included roots + component closure
         include = self.include
@@ -474,10 +515,14 @@ class PropagateAnchorsIFilter(BaseIFilter):
 
         self.set_context(fonts, glyphSets, instantiator, **kwargs)
         ds_categories = kwargs.get("openTypeCategories")
+        preliminary = kwargs.get("preliminaryOpenTypeCategories")
         if ds_categories:
             categories = OpenTypeCategories.from_dict(ds_categories)
         else:
             categories = OpenTypeCategories.load(self.getDefaultFont())
+        used_preliminary = categories.is_empty and preliminary
+        if used_preliminary:
+            categories = OpenTypeCategories.from_dict(preliminary)
         interpolated_layers = self.getInterpolatedLayers()
 
         # Classify using default font's glyphSet
@@ -539,6 +584,25 @@ class PropagateAnchorsIFilter(BaseIFilter):
                     component_anchor_map=_get_component_anchors(glyph),
                 )
                 done[name] = result
+
+        # Finalize preliminary categories after propagation: prune anchorless
+        # ligatures and infer bases from attaching anchors.  Write the result
+        # to every master UFO's lib so GdefFeatureWriter picks it up.
+        if used_preliminary:
+            if self.context.instantiator is not None:
+                default_idx = self.context.instantiator.default_source_idx
+            else:
+                default_idx = 0
+            default_done = per_master_done[default_idx]
+            finalized = _finalize_categories(preliminary, default_done)
+            for font in fonts:
+                font.lib[OPENTYPE_CATEGORIES_KEY] = finalized
+            logger.info(
+                "Finalized preliminary categories: %d base, %d ligature, %d mark",
+                sum(1 for v in finalized.values() if v == "base"),
+                sum(1 for v in finalized.values() if v == "ligature"),
+                sum(1 for v in finalized.values() if v == "mark"),
+            )
 
         # Determine which glyphs to write
         include = self.include
