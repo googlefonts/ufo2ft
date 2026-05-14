@@ -148,7 +148,7 @@ class PostProcessor:
             useProductionNames = self.ufo.lib.get(
                 USE_PRODUCTION_NAMES,
                 not self.ufo.lib.get(GLYPHS_DONT_USE_PRODUCTION_NAMES)
-                and self._postscriptNames is not None,
+                and self._postscriptNames,
             )
         else:
             keepGlyphNames = True

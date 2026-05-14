@@ -958,6 +958,12 @@ class NamesTest:
             "lll",
         ]
 
+    def test_empty_postscript_names_no_rename(self, testufo):
+        testufo.lib["public.postscriptNames"] = {}
+        original_order = compileTTF(testufo, useProductionNames=False).getGlyphOrder()
+        result = compileTTF(testufo).getGlyphOrder()
+        assert result == original_order
+
     def test_warn_name_exceeds_max_length(self, testufo, caplog):
         long_name = 64 * "a"
         testufo.newGlyph(long_name)
