@@ -722,11 +722,16 @@ class Instantiator:
         if self.round_geometry:
             info_instance = info_instance.round()
 
-        # If there is only one master (static font), the instance can only be at the
-        # default location after the latter has been normalized. It's OK for it to
-        # inherit ALL the fontinfo from the default source.
-        if self.info_mutator.is_static_font():
-            assert all(v == 0.0 for v in location_normalized.values())
+        # If there is only one info master AND the instance is at the default
+        # location, it's OK for it to inherit ALL the fontinfo from the default
+        # source. This covers true static fonts as well as variable fonts with
+        # sparse/virtual masters (where collect_info_masters skips the
+        # non-default layer-only sources) when the instance happens to be at
+        # the default. Instances at non-default locations fall through to the
+        # multi-master path, which correctly skips instance-specific attributes
+        # like postscriptFontName, styleName, openTypeNameUniqueID, etc.
+        is_at_default = all(v == 0.0 for v in location_normalized.values())
+        if self.info_mutator.is_static_font() and is_at_default:
             for attribute in ufoLib.fontInfoAttributesVersion3:
                 if (value := getattr(self.copy_info, attribute, None)) is not None:
                     setattr(font.info, attribute, copy.deepcopy(value))
