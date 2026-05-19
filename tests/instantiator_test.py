@@ -1090,6 +1090,100 @@ def test_static_font_default_instance_inherits_all_fontinfo(data_dir, ufo_module
     assert instance_font.info.postscriptFontName == "MyFont-Light"
 
 
+def test_sparse_master_instance_at_non_default_location(ufo_module):
+    """Designspaces with sparse/virtual masters (e.g. those Glyphs.app emits for a
+    "Virtual Master" custom parameter) have only one source carrying fontinfo
+    even though sources exist at non-default locations in design space. Instances
+    at non-default locations must be generatable without tripping the
+    is_static_font() assertion in _generate_instance_info.
+
+    https://github.com/googlefonts/ufo2ft/issues/981
+    """
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Pixel Shape", tag="PXSH", minimum=1, default=1, maximum=100
+    )
+
+    # Default source: carries fontinfo, default layer holds the glyph.
+    default_font = ufo_module.Font()
+    default_font.info.familyName = "Geist Pixel"
+    default_font.info.styleName = "Regular"
+    default_font.info.unitsPerEm = 1000
+    default_font.info.ascender = 800
+    default_font.info.descender = -200
+    default_font.info.xHeight = 500
+    default_font.info.capHeight = 700
+    # instance-specific attribute that the multi-master path must NOT inherit
+    default_font.info.postscriptFontName = "GeistPixel-Regular"
+    default_glyph = default_font.newGlyph("A")
+    default_glyph.width = 600
+    pen = default_glyph.getPen()
+    pen.moveTo((0, 0))
+    pen.lineTo((600, 0))
+    pen.lineTo((600, 700))
+    pen.lineTo((0, 700))
+    pen.closePath()
+
+    # Sparse source: shares the same font object but points at a non-default
+    # layer. collect_info_masters() will skip it because layerName is not None,
+    # so info_mutator ends up with a single master.
+    sparse_layer = default_font.newLayer("{100}")
+    sparse_glyph = sparse_layer.newGlyph("A")
+    sparse_glyph.width = 600
+    pen = sparse_glyph.getPen()
+    pen.moveTo((50, 50))
+    pen.lineTo((550, 50))
+    pen.lineTo((550, 650))
+    pen.lineTo((50, 650))
+    pen.closePath()
+
+    d.addSourceDescriptor(
+        name="Geist Pixel Regular",
+        familyName="Geist Pixel",
+        styleName="Regular",
+        location={"Pixel Shape": 1},
+        font=default_font,
+    )
+    d.addSourceDescriptor(
+        name="Geist Pixel Regular {100}",
+        familyName="Geist Pixel",
+        styleName="Regular {100}",
+        layerName="{100}",
+        location={"Pixel Shape": 100},
+        font=default_font,
+    )
+    d.addInstanceDescriptor(
+        familyName="Geist Pixel",
+        styleName="Circle",
+        location={"Pixel Shape": 20},
+    )
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+
+    # info_mutator was built from only the default source (the sparse source was
+    # skipped by collect_info_masters), so it reports as a single-master Variator.
+    assert generator.info_mutator.is_static_font()
+
+    # The bug: generating an instance at a non-default location currently trips
+    # `assert all(v == 0.0 for v in location_normalized.values())`.
+    instance_font = generator.generate_instance(d.instances[0])
+
+    # Instance-specific attributes must NOT be inherited from the default source
+    # when the instance is at a non-default location. (Only the static-font
+    # path that runs at the default location is allowed to inherit them.)
+    assert instance_font.info.postscriptFontName is None
+
+    # The interpolating fontinfo (a no-op with a single info master) reduces to
+    # the default master's values, which is what we want.
+    assert instance_font.info.unitsPerEm == 1000
+    assert instance_font.info.ascender == 800
+    assert instance_font.info.descender == -200
+
+    # Instance-level overrides still apply.
+    assert instance_font.info.familyName == "Geist Pixel"
+    assert instance_font.info.styleName == "Circle"
+
+
 def test_designspace_v5_discrete_axis_raises_error(data_dir):
     designspace = designspaceLib.DesignSpaceDocument.fromfile(
         data_dir / "MutatorSansLite" / "MutatorFamily_v5_discrete_axis.designspace"
