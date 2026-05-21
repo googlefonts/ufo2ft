@@ -4,11 +4,11 @@ import itertools
 from typing import TYPE_CHECKING
 
 from ufo2ft.constants import (
+    _PRELIMINARY_CATEGORIES_KEY,
     COLOR_LAYER_MAPPING_KEY,
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
     OPENTYPE_CATEGORIES_KEY,
-    _PRELIMINARY_CATEGORIES_KEY,
 )
 from ufo2ft.filters import isValidFilter, loadFilters
 from ufo2ft.filters.base import BaseFilter, BaseIFilter

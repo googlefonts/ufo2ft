@@ -6,6 +6,11 @@ from fontTools.misc.loggingTools import CapturingLogHandler
 from fontTools.misc.transform import Transform
 
 import ufo2ft.filters
+from ufo2ft.constants import (
+    _PRELIMINARY_CATEGORIES_KEY,
+    GLYPHS_COMPONENT_INFO_KEY,
+    OPENTYPE_CATEGORIES_KEY,
+)
 from ufo2ft.filters.propagateAnchors import (
     AnchorData,
     PropagateAnchorsFilter,
@@ -13,11 +18,6 @@ from ufo2ft.filters.propagateAnchors import (
     _finalize_categories,
     get_xy_rotation,
     logger,
-)
-from ufo2ft.constants import (
-    GLYPHS_COMPONENT_INFO_KEY,
-    OPENTYPE_CATEGORIES_KEY,
-    _PRELIMINARY_CATEGORIES_KEY,
 )
 from ufo2ft.instantiator import Instantiator
 from ufo2ft.util import _GlyphSet
@@ -314,13 +314,17 @@ def _assert_anchors(font, glyph_name, expected):
     """Assert anchors match expected list of (name, (x, y)) tuples."""
     actual = [(a.name, (a.x, a.y)) for a in font[glyph_name].anchors]
     assert sorted(actual) == sorted(expected), (
-        f"anchors for '{glyph_name}':\n  actual:   {sorted(actual)}\n  expected: {sorted(expected)}"
+        f"anchors for '{glyph_name}':\n"
+        f"  actual:   {sorted(actual)}\n"
+        f"  expected: {sorted(expected)}"
     )
 
 
 def test_affine_scale():
     """Ported from glyphsLib test_affine_scale."""
-    assert get_xy_rotation(Transform().translate(589, 502).rotate(math.radians(180))) == (-1, -1)
+    assert get_xy_rotation(
+        Transform().translate(589, 502).rotate(math.radians(180))
+    ) == (-1, -1)
     assert get_xy_rotation(Transform().translate(10, 10)) == (1, 1)
     assert get_xy_rotation(Transform().scale(1, -1)) == (1, -1)
     assert get_xy_rotation(Transform().scale(-1, 1)) == (-1, 1)
@@ -336,105 +340,221 @@ class PortedAlgorithmTest:
     def test_no_components_anchors_are_unchanged(self, FontClass):
         """Ported from glyphsLib test_no_components_anchors_are_unchanged."""
         font = FontClass()
-        _make_glyph(font, "A", 600, anchors=[
-            ("bottom", (234, 0)), ("ogonek", (411, 0)), ("top", (234, 810)),
-        ])
-        _make_glyph(font, "acutecomb", 0, anchors=[
-            ("_top", (0, 578)), ("top", (0, 810)),
-        ])
+        _make_glyph(
+            font,
+            "A",
+            600,
+            anchors=[
+                ("bottom", (234, 0)),
+                ("ogonek", (411, 0)),
+                ("top", (234, 810)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "acutecomb",
+            0,
+            anchors=[
+                ("_top", (0, 578)),
+                ("top", (0, 810)),
+            ],
+        )
         font.lib["public.openTypeCategories"] = {"acutecomb": "mark"}
 
         philter = PropagateAnchorsFilter()
         philter(font)
 
-        _assert_anchors(font, "A", [
-            ("bottom", (234, 0)), ("ogonek", (411, 0)), ("top", (234, 810)),
-        ])
-        _assert_anchors(font, "acutecomb", [
-            ("_top", (0, 578)), ("top", (0, 810)),
-        ])
+        _assert_anchors(
+            font,
+            "A",
+            [
+                ("bottom", (234, 0)),
+                ("ogonek", (411, 0)),
+                ("top", (234, 810)),
+            ],
+        )
+        _assert_anchors(
+            font,
+            "acutecomb",
+            [
+                ("_top", (0, 578)),
+                ("top", (0, 810)),
+            ],
+        )
 
     def test_basic_composite_anchor(self, FontClass):
         """Ported from glyphsLib test_basic_composite_anchor."""
         font = FontClass()
-        _make_glyph(font, "A", 600, anchors=[
-            ("bottom", (234, 0)), ("ogonek", (411, 0)), ("top", (234, 810)),
-        ])
-        _make_glyph(font, "acutecomb", 0, anchors=[
-            ("_top", (0, 578)), ("top", (0, 810)),
-        ])
-        _make_glyph(font, "Aacute", 600, contour=False, components=[
-            ("A", (0, 0)), ("acutecomb", (234, 232)),
-        ])
+        _make_glyph(
+            font,
+            "A",
+            600,
+            anchors=[
+                ("bottom", (234, 0)),
+                ("ogonek", (411, 0)),
+                ("top", (234, 810)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "acutecomb",
+            0,
+            anchors=[
+                ("_top", (0, 578)),
+                ("top", (0, 810)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "Aacute",
+            600,
+            contour=False,
+            components=[
+                ("A", (0, 0)),
+                ("acutecomb", (234, 232)),
+            ],
+        )
         font.lib["public.openTypeCategories"] = {"acutecomb": "mark"}
 
         philter = PropagateAnchorsFilter()
         philter(font)
 
-        _assert_anchors(font, "Aacute", [
-            ("bottom", (234, 0)), ("ogonek", (411, 0)), ("top", (234, 1042)),
-        ])
+        _assert_anchors(
+            font,
+            "Aacute",
+            [
+                ("bottom", (234, 0)),
+                ("ogonek", (411, 0)),
+                ("top", (234, 1042)),
+            ],
+        )
 
     def test_propagate_ligature_anchors(self, FontClass):
         """Ported from glyphsLib test_propagate_ligature_anchors.
         Based on the IJ glyph in Oswald (ExtraLight)."""
         font = FontClass()
-        _make_glyph(font, "I", 206, anchors=[
-            ("bottom", (103, 0)), ("ogonek", (103, 0)),
-            ("top", (103, 810)), ("topleft", (20, 810)),
-        ])
-        _make_glyph(font, "J", 266, anchors=[
-            ("bottom", (133, 0)), ("top", (163, 810)),
-        ])
-        _make_glyph(font, "IJ", 472, contour=False, components=[
-            ("I", (0, 0)), ("J", (206, 0)),
-        ])
+        _make_glyph(
+            font,
+            "I",
+            206,
+            anchors=[
+                ("bottom", (103, 0)),
+                ("ogonek", (103, 0)),
+                ("top", (103, 810)),
+                ("topleft", (20, 810)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "J",
+            266,
+            anchors=[
+                ("bottom", (133, 0)),
+                ("top", (163, 810)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "IJ",
+            472,
+            contour=False,
+            components=[
+                ("I", (0, 0)),
+                ("J", (206, 0)),
+            ],
+        )
         font.lib["public.openTypeCategories"] = {"IJ": "ligature"}
 
         philter = PropagateAnchorsFilter()
         philter(font)
 
-        _assert_anchors(font, "IJ", [
-            ("bottom_1", (103, 0)), ("ogonek_1", (103, 0)),
-            ("top_1", (103, 810)), ("topleft_1", (20, 810)),
-            ("bottom_2", (339, 0)), ("top_2", (369, 810)),
-        ])
+        _assert_anchors(
+            font,
+            "IJ",
+            [
+                ("bottom_1", (103, 0)),
+                ("ogonek_1", (103, 0)),
+                ("top_1", (103, 810)),
+                ("topleft_1", (20, 810)),
+                ("bottom_2", (339, 0)),
+                ("top_2", (369, 810)),
+            ],
+        )
 
     def test_digraphs_arent_ligatures(self, FontClass):
         """Ported from glyphsLib test_digraphs_arent_ligatures.
         Same glyphs as test_propagate_ligature_anchors but IJ is NOT
         classified as ligature — anchors are not numbered."""
         font = FontClass()
-        _make_glyph(font, "I", 206, anchors=[
-            ("bottom", (103, 0)), ("ogonek", (103, 0)),
-            ("top", (103, 810)), ("topleft", (20, 810)),
-        ])
-        _make_glyph(font, "J", 266, anchors=[
-            ("bottom", (133, 0)), ("top", (163, 810)),
-        ])
-        _make_glyph(font, "IJ", 472, contour=False, components=[
-            ("I", (0, 0)), ("J", (206, 0)),
-        ])
+        _make_glyph(
+            font,
+            "I",
+            206,
+            anchors=[
+                ("bottom", (103, 0)),
+                ("ogonek", (103, 0)),
+                ("top", (103, 810)),
+                ("topleft", (20, 810)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "J",
+            266,
+            anchors=[
+                ("bottom", (133, 0)),
+                ("top", (163, 810)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "IJ",
+            472,
+            contour=False,
+            components=[
+                ("I", (0, 0)),
+                ("J", (206, 0)),
+            ],
+        )
         font.lib["public.openTypeCategories"] = {}
 
         philter = PropagateAnchorsFilter()
         philter(font)
 
-        _assert_anchors(font, "IJ", [
-            ("bottom", (339, 0)), ("ogonek", (103, 0)),
-            ("top", (369, 810)), ("topleft", (20, 810)),
-        ])
+        _assert_anchors(
+            font,
+            "IJ",
+            [
+                ("bottom", (339, 0)),
+                ("ogonek", (103, 0)),
+                ("top", (369, 810)),
+                ("topleft", (20, 810)),
+            ],
+        )
 
     def test_remove_exit_anchor_on_component(self, FontClass):
         """Ported from glyphsLib test_remove_exit_anchor_on_component."""
         font = FontClass()
         _make_glyph(font, "comma", 250)
-        _make_glyph(font, "ain-ar.init", 400, anchors=[
-            ("top", (294, 514)), ("exit", (0, 0)),
-        ])
-        _make_glyph(font, "ain-ar.init.alt", 400, contour=False, components=[
-            ("ain-ar.init", (0, 0)), ("comma", (0, 0)),
-        ])
+        _make_glyph(
+            font,
+            "ain-ar.init",
+            400,
+            anchors=[
+                ("top", (294, 514)),
+                ("exit", (0, 0)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "ain-ar.init.alt",
+            400,
+            contour=False,
+            components=[
+                ("ain-ar.init", (0, 0)),
+                ("comma", (0, 0)),
+            ],
+        )
         font.lib["public.openTypeCategories"] = {}
 
         philter = PropagateAnchorsFilter()
@@ -445,20 +565,47 @@ class PortedAlgorithmTest:
     def test_component_anchor(self, FontClass):
         """Ported from glyphsLib test_component_anchor / fontc component_anchor."""
         font = FontClass()
-        _make_glyph(font, "acutecomb", 0, anchors=[
-            ("_top", (150, 580)), ("top", (170, 792)),
-        ])
-        g = _make_glyph(font, "aa", 960, anchors=[
-            ("bottom_1", (218, 8)), ("bottom_2", (742, 7)),
-            ("ogonek_1", (398, 9)), ("ogonek_2", (902, 9)),
-            ("top_1", (227, 548)), ("top_2", (746, 548)),
-        ])
-        _make_glyph(font, "a_a", 960, contour=False, components=[
-            ("aa", (0, 0)),
-        ])
-        g = _make_glyph(font, "a_aacute", 960, contour=False, components=[
-            ("a_a", (0, 0)), ("acutecomb", (596, -32)),
-        ])
+        _make_glyph(
+            font,
+            "acutecomb",
+            0,
+            anchors=[
+                ("_top", (150, 580)),
+                ("top", (170, 792)),
+            ],
+        )
+        g = _make_glyph(
+            font,
+            "aa",
+            960,
+            anchors=[
+                ("bottom_1", (218, 8)),
+                ("bottom_2", (742, 7)),
+                ("ogonek_1", (398, 9)),
+                ("ogonek_2", (902, 9)),
+                ("top_1", (227, 548)),
+                ("top_2", (746, 548)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "a_a",
+            960,
+            contour=False,
+            components=[
+                ("aa", (0, 0)),
+            ],
+        )
+        g = _make_glyph(
+            font,
+            "a_aacute",
+            960,
+            contour=False,
+            components=[
+                ("a_a", (0, 0)),
+                ("acutecomb", (596, -32)),
+            ],
+        )
         # UFO components have no lib, so glyphsLib stores per-component
         # properties in the composite glyph's lib; index 1 = acutecomb
         g.lib[GLYPHS_COMPONENT_INFO_KEY] = [
@@ -474,44 +621,82 @@ class PortedAlgorithmTest:
         philter = PropagateAnchorsFilter()
         philter(font)
 
-        _assert_anchors(font, "a_aacute", [
-            ("bottom_1", (218, 8)), ("bottom_2", (742, 7)),
-            ("ogonek_1", (398, 9)), ("ogonek_2", (902, 9)),
-            ("top_1", (227, 548)),
-            # top_2 replaced by acutecomb's "top" renamed via ComponentInfo:
-            # (170, 792) + offset (596, -32) = (766, 760)
-            ("top_2", (766, 760)),
-        ])
+        _assert_anchors(
+            font,
+            "a_aacute",
+            [
+                ("bottom_1", (218, 8)),
+                ("bottom_2", (742, 7)),
+                ("ogonek_1", (398, 9)),
+                ("ogonek_2", (902, 9)),
+                ("top_1", (227, 548)),
+                # top_2 replaced by acutecomb's "top" renamed via ComponentInfo:
+                # (170, 792) + offset (596, -32) = (766, 760)
+                ("top_2", (766, 760)),
+            ],
+        )
 
     def test_origin_anchor(self, FontClass):
         """Ported from glyphsLib test_origin_anchor."""
         font = FontClass()
-        _make_glyph(font, "a", 500, anchors=[
-            ("*origin", (-20, 0)),
-            ("bottom", (242, 7)), ("ogonek", (402, 9)), ("top", (246, 548)),
-        ])
-        _make_glyph(font, "acutecomb", 0, anchors=[
-            ("_top", (150, 580)), ("top", (170, 792)),
-        ])
-        _make_glyph(font, "aacute", 500, contour=False, components=[
-            ("a", (0, 0)), ("acutecomb", (116, -32)),
-        ])
+        _make_glyph(
+            font,
+            "a",
+            500,
+            anchors=[
+                ("*origin", (-20, 0)),
+                ("bottom", (242, 7)),
+                ("ogonek", (402, 9)),
+                ("top", (246, 548)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "acutecomb",
+            0,
+            anchors=[
+                ("_top", (150, 580)),
+                ("top", (170, 792)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "aacute",
+            500,
+            contour=False,
+            components=[
+                ("a", (0, 0)),
+                ("acutecomb", (116, -32)),
+            ],
+        )
         font.lib["public.openTypeCategories"] = {"acutecomb": "mark"}
 
         philter = PropagateAnchorsFilter()
         philter(font)
 
-        _assert_anchors(font, "aacute", [
-            ("bottom", (262, 7)), ("ogonek", (422, 9)), ("top", (286, 760)),
-        ])
+        _assert_anchors(
+            font,
+            "aacute",
+            [
+                ("bottom", (262, 7)),
+                ("ogonek", (422, 9)),
+                ("top", (286, 760)),
+            ],
+        )
 
     def test_invert_names_on_rotation(self, FontClass):
         """Ported from glyphsLib test_invert_names_on_rotation."""
         font = FontClass()
         _make_glyph(font, "comma", 250)
-        _make_glyph(font, "commaaccentcomb", 0, anchors=[
-            ("_bottom", (289, 0)), ("mybottom", (277, -308)),
-        ])
+        _make_glyph(
+            font,
+            "commaaccentcomb",
+            0,
+            anchors=[
+                ("_bottom", (289, 0)),
+                ("mybottom", (277, -308)),
+            ],
+        )
         # Add a component to commaaccentcomb
         pen = font["commaaccentcomb"].getPen()
         pen.addComponent("comma", (1, 0, 0, 1, 9, -164))
@@ -530,18 +715,30 @@ class PortedAlgorithmTest:
         philter = PropagateAnchorsFilter()
         philter(font)
 
-        _assert_anchors(font, "commaturnedabovecomb", [
-            ("_top", (300, 502)), ("mytop", (312, 810)),
-        ])
+        _assert_anchors(
+            font,
+            "commaturnedabovecomb",
+            [
+                ("_top", (300, 502)),
+                ("mytop", (312, 810)),
+            ],
+        )
 
     def test_entry_anchor_on_non_first_component(self, FontClass):
         """Ported from glyphsLib test_entry_anchor_on_non_first_component."""
         font = FontClass()
         _make_glyph(font, "part1", 200, anchors=[("top", (10, 0))])
         _make_glyph(font, "part2", 200, anchors=[("entry.2", (10, 0))])
-        _make_glyph(font, "combo", 400, contour=False, components=[
-            ("part1", (0, 0)), ("part2", (100, 0)),
-        ])
+        _make_glyph(
+            font,
+            "combo",
+            400,
+            contour=False,
+            components=[
+                ("part1", (0, 0)),
+                ("part2", (100, 0)),
+            ],
+        )
         font.lib["public.openTypeCategories"] = {}
 
         philter = PropagateAnchorsFilter()
@@ -552,20 +749,37 @@ class PortedAlgorithmTest:
     def test_cursive_anchors_ligature(self, FontClass):
         """Ported from glyphsLib test_cursive_anchors_ligature."""
         font = FontClass()
-        _make_glyph(font, "part1_part2", 200, anchors=[
-            ("entry.1", (10, 0)), ("exit.1", (100, 0)),
-        ])
-        _make_glyph(font, "combo", 200, contour=False, components=[
-            ("part1_part2", (0, 0)),
-        ])
+        _make_glyph(
+            font,
+            "part1_part2",
+            200,
+            anchors=[
+                ("entry.1", (10, 0)),
+                ("exit.1", (100, 0)),
+            ],
+        )
+        _make_glyph(
+            font,
+            "combo",
+            200,
+            contour=False,
+            components=[
+                ("part1_part2", (0, 0)),
+            ],
+        )
         font.lib["public.openTypeCategories"] = {"combo": "ligature"}
 
         philter = PropagateAnchorsFilter()
         philter(font)
 
-        _assert_anchors(font, "combo", [
-            ("entry.1", (10, 0)), ("exit.1", (100, 0)),
-        ])
+        _assert_anchors(
+            font,
+            "combo",
+            [
+                ("entry.1", (10, 0)),
+                ("exit.1", (100, 0)),
+            ],
+        )
 
 
 class CharacterizationTest:
@@ -912,6 +1126,7 @@ class AlgorithmDetailTest:
         assert ("top", 500, 300) in anchors_aa
         assert ("bottom", 500, 0) in anchors_aa
         assert not any("_1" in a[0] or "_2" in a[0] for a in anchors_aa)
+
     def test_partial_categories(self, FontClass):
         """When public.openTypeCategories is present but partial, the fallback
         heuristic does NOT activate — only explicitly classified glyphs are
@@ -1227,7 +1442,8 @@ class PropagateAnchorsIFilterTest:
         glyphSets = [_GlyphSet.from_layer(font)]
         philter = PropagateAnchorsIFilter()
         philter(
-            [font], glyphSets,
+            [font],
+            glyphSets,
             openTypeCategories=ds_categories,
             preliminaryOpenTypeCategories=preliminary,
         )

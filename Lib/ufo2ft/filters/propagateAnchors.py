@@ -23,9 +23,9 @@ from math import atan2, degrees, isinf
 from fontTools.misc.transform import Transform
 
 from ufo2ft.constants import (
+    _PRELIMINARY_CATEGORIES_KEY,
     GLYPHS_COMPONENT_INFO_KEY,
     OPENTYPE_CATEGORIES_KEY,
-    _PRELIMINARY_CATEGORIES_KEY,
 )
 from ufo2ft.filters import BaseFilter, BaseIFilter
 from ufo2ft.util import OpenTypeCategories, _GlyphSet, zip_strict
@@ -60,9 +60,7 @@ def _depth_sorted_glyphs(glyph_set):
     while queue:
         name = queue.popleft()
         glyph = glyph_set[name]
-        comp_names = {
-            c.baseGlyph for c in glyph.components if c.baseGlyph in glyph_set
-        }
+        comp_names = {c.baseGlyph for c in glyph.components if c.baseGlyph in glyph_set}
         if all(c in depths for c in comp_names):
             depths[name] = max((depths[c] for c in comp_names), default=-1) + 1
             waiting_for.pop(name, None)
@@ -81,10 +79,7 @@ def _depth_sorted_glyphs(glyph_set):
             depths[name] = 0
 
     return [
-        name
-        for _, name in sorted(
-            (d, n) for n, d in depths.items() if not isinf(d)
-        )
+        name for _, name in sorted((d, n) for n, d in depths.items() if not isinf(d))
     ]
 
 
@@ -195,9 +190,7 @@ def _finalize_categories(preliminary_categories, done_anchors):
     """
     finalized = {}
     for name, anchors in done_anchors.items():
-        has_attaching = any(
-            a.name and not a.name.startswith("_") for a in anchors
-        )
+        has_attaching = any(a.name and not a.name.startswith("_") for a in anchors)
         preliminary = preliminary_categories.get(name)
         if preliminary == "mark":
             finalized[name] = "mark"
@@ -250,22 +243,18 @@ def anchors_traversing_components(
         comp_name = component.baseGlyph
         if comp_name not in done_anchors:
             logger.warning(
-                "Anchors not propagated for inexistent component %s "
-                "in glyph %s",
+                "Anchors not propagated for inexistent component %s " "in glyph %s",
                 comp_name,
                 glyph_name,
             )
             continue
 
         anchors = [
-            AnchorData(name=a.name, x=a.x, y=a.y)
-            for a in done_anchors[comp_name]
+            AnchorData(name=a.name, x=a.x, y=a.y) for a in done_anchors[comp_name]
         ]
 
         if component_anchor_map and component_idx in component_anchor_map:
-            maybe_rename_component_anchor(
-                component_anchor_map[component_idx], anchors
-            )
+            maybe_rename_component_anchor(component_anchor_map[component_idx], anchors)
 
         component_number_of_base_glyphs = base_glyph_counts.get(comp_name, 0)
 
@@ -312,9 +301,7 @@ def anchors_traversing_components(
         number_of_base_glyphs += base_glyph_counts.get(comp_name, 0)
 
     # Apply explicitly defined anchors on this glyph (overrides component ones)
-    all_anchors.update(
-        (a.name, a) for a in origin_adjusted_anchors(existing_anchors)
-    )
+    all_anchors.update((a.name, a) for a in origin_adjusted_anchors(existing_anchors))
 
     # Count base glyphs from anchors
     has_underscore_anchor = False
@@ -570,17 +557,25 @@ class PropagateAnchorsIFilter(BaseIFilter):
                         ig = interpolatedLayer[cn]
                         ie = _anchors_from_glyph(ig)
                         ir = anchors_traversing_components(
-                            cn, ie, ig.components,
-                            cn in marks, cn in ligatures,
-                            done, counts,
+                            cn,
+                            ie,
+                            ig.components,
+                            cn in marks,
+                            cn in ligatures,
+                            done,
+                            counts,
                             component_anchor_map=_get_component_anchors(ig),
                         )
                         done[cn] = ir
 
                 result = anchors_traversing_components(
-                    name, existing, glyph.components,
-                    is_mark, is_ligature,
-                    done, counts,
+                    name,
+                    existing,
+                    glyph.components,
+                    is_mark,
+                    is_ligature,
+                    done,
+                    counts,
                     component_anchor_map=_get_component_anchors(glyph),
                 )
                 done[name] = result
@@ -618,9 +613,7 @@ class PropagateAnchorsIFilter(BaseIFilter):
         for name in sorted_glyphs:
             if name not in write_set:
                 continue
-            has_components = any(
-                name in gs and gs[name].components for gs in glyphSets
-            )
+            has_components = any(name in gs and gs[name].components for gs in glyphSets)
             if not has_components:
                 continue
 

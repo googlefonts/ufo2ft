@@ -7,10 +7,10 @@ from fontTools.cu2qu.ufo import CURVE_TYPE_LIB_KEY
 
 import ufo2ft
 from ufo2ft.constants import (
+    _PRELIMINARY_CATEGORIES_KEY,
     COLOR_LAYER_MAPPING_KEY,
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
-    _PRELIMINARY_CATEGORIES_KEY,
 )
 from ufo2ft.filters import FILTERS_KEY, loadFilterFromString
 from ufo2ft.filters.explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
