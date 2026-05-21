@@ -10,6 +10,7 @@ from ufo2ft.constants import (
     COLOR_LAYER_MAPPING_KEY,
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
+    _PRELIMINARY_CATEGORIES_KEY,
 )
 from ufo2ft.filters import FILTERS_KEY, loadFilterFromString
 from ufo2ft.filters.explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
@@ -145,6 +146,23 @@ class TTFPreProcessorTest:
         assert points[1].segmentType is None
         assert points[2].segmentType is None
         assert points[3].segmentType == "curve"
+
+    def test_preliminary_categories_key_removed_when_filter_fails(self, FontClass):
+        class FailingFilter(ufo2ft.filters.BaseFilter):
+            def filter(self, glyph):
+                raise ValueError("boom")
+
+        ufo = FontClass(getpath("TestFont.ufo"))
+        processor = TTFPreProcessor(
+            ufo,
+            preliminaryOpenTypeCategories={"a": "base"},
+            filters=[FailingFilter()],
+        )
+
+        with pytest.raises(ValueError, match="boom"):
+            processor.process()
+
+        assert _PRELIMINARY_CATEGORIES_KEY not in ufo.lib
 
     def test_decompose_components_with_overflowing_transforms(self, FontClass):
         ufo = FontClass(getpath("OverflowingComponentTransforms-Regular.ufo"))
