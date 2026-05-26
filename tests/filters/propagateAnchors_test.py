@@ -1644,3 +1644,9 @@ class FinalizeCategoriesTest:
         }
         result = _finalize_categories({"acutecomb": "mark"}, done_anchors)
         assert result["acutecomb"] == "mark"
+
+
+def test_propagate_anchors_filter_defaults_to_pre():
+    """PropagateAnchorsFilter must run before component decomposition."""
+    assert PropagateAnchorsFilter().pre is True
+    assert PropagateAnchorsIFilter().pre is True

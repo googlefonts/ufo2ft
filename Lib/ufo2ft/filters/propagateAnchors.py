@@ -423,6 +423,9 @@ def _write_anchors_to_glyph(glyph, new_anchors):
 
 
 class PropagateAnchorsFilter(BaseFilter):
+    # must run before decomposition, while components are still present
+    _pre = True
+
     def __call__(self, font, glyphSet=None):
         fontName = font.__class__.__name__
         logger.info("Running %s on %s", self.name, fontName)
@@ -494,6 +497,8 @@ class PropagateAnchorsFilter(BaseFilter):
 
 
 class PropagateAnchorsIFilter(BaseIFilter):
+    _pre = True
+
     def __call__(self, fonts, glyphSets=None, instantiator=None, **kwargs):
         logger.info("Running interpolatable %s", self.name)
 
