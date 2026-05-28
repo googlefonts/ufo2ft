@@ -540,38 +540,16 @@ class PropagateAnchorsIFilter(BaseIFilter):
             for i, (glyphSet, interpolatedLayer) in enumerate(
                 zip_strict(glyphSets, interpolated_layers)
             ):
-                if name not in glyphSet:
+                if name in glyphSet:
+                    glyph = glyphSet[name]
+                elif interpolatedLayer is not None and name in interpolatedLayer:
+                    glyph = interpolatedLayer[name]
+                else:
                     continue
 
-                glyph = glyphSet[name]
                 existing = _anchors_from_glyph(glyph)
-
                 done = per_master_done[i]
                 counts = per_master_counts[i]
-
-                # Ensure component anchors are available: if a component is
-                # missing from the real glyphSet, generate from interpolated
-                # layer and propagate its anchors into done_anchors.
-                for comp in glyph.components:
-                    cn = comp.baseGlyph
-                    if cn in done:
-                        continue
-                    if cn in glyphSet:
-                        continue
-                    if interpolatedLayer is not None and cn in interpolatedLayer:
-                        ig = interpolatedLayer[cn]
-                        ie = _anchors_from_glyph(ig)
-                        ir = anchors_traversing_components(
-                            cn,
-                            ie,
-                            ig.components,
-                            cn in marks,
-                            cn in ligatures,
-                            done,
-                            counts,
-                            component_anchor_map=_get_component_anchors(ig),
-                        )
-                        done[cn] = ir
 
                 result = anchors_traversing_components(
                     name,
