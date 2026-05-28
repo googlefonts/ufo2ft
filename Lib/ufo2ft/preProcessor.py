@@ -109,7 +109,7 @@ class BasePreProcessor:
         ufo = self.ufo
         glyphSet = self.glyphSet
         preliminary = self.preliminaryOpenTypeCategories
-        if preliminary and OPENTYPE_CATEGORIES_KEY not in ufo.lib:
+        if preliminary and not ufo.lib.get(OPENTYPE_CATEGORIES_KEY):
             ufo.lib[_PRELIMINARY_CATEGORIES_KEY] = preliminary
         try:
             for func in self.preFilters + self.defaultFilters + self.postFilters:
