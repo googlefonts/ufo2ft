@@ -214,10 +214,10 @@ class GdefFeatureWriterTest(FeatureWriterTest):
             "acutecomb": "mark",
             "tildecomb": "components",
         }
-        logger = "ufo2ft.featureWriters.gdefFeatureWriter.GdefFeatureWriter"
+        logger = "ufo2ft"
         with caplog.at_level(logging.WARNING, logger=logger):
             self.writeGDEF(testufo)
 
         assert len(caplog.records) == 1
-        assert "The 'public.openTypeCategories' value of tildecomb in" in caplog.text
+        assert "The 'public.openTypeCategories' value of tildecomb" in caplog.text
         assert "is 'components' when it should be" in caplog.text

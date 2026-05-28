@@ -4,9 +4,11 @@ import itertools
 from typing import TYPE_CHECKING
 
 from ufo2ft.constants import (
+    _PRELIMINARY_CATEGORIES_KEY,
     COLOR_LAYER_MAPPING_KEY,
     COLOR_LAYERS_KEY,
     COLOR_PALETTES_KEY,
+    OPENTYPE_CATEGORIES_KEY,
 )
 from ufo2ft.filters import isValidFilter, loadFilters
 from ufo2ft.filters.base import BaseFilter, BaseIFilter
@@ -83,12 +85,14 @@ class BasePreProcessor:
         inplace=False,
         layerName=None,
         skipExportGlyphs=None,
+        preliminaryOpenTypeCategories=None,
         filters=None,
         **kwargs,
     ):
         self.ufo = ufo
         self.inplace = inplace
         self.layerName = layerName
+        self.preliminaryOpenTypeCategories = preliminaryOpenTypeCategories
         self.glyphSet = _GlyphSet.from_layer(
             ufo, layerName, copy=not inplace, skipExportGlyphs=skipExportGlyphs
         )
@@ -104,8 +108,14 @@ class BasePreProcessor:
     def process(self):
         ufo = self.ufo
         glyphSet = self.glyphSet
-        for func in self.preFilters + self.defaultFilters + self.postFilters:
-            func(ufo, glyphSet)
+        preliminary = self.preliminaryOpenTypeCategories
+        if preliminary and not ufo.lib.get(OPENTYPE_CATEGORIES_KEY):
+            ufo.lib[_PRELIMINARY_CATEGORIES_KEY] = preliminary
+        try:
+            for func in self.preFilters + self.defaultFilters + self.postFilters:
+                func(ufo, glyphSet)
+        finally:
+            ufo.lib.pop(_PRELIMINARY_CATEGORIES_KEY, None)
         return glyphSet
 
 
@@ -273,6 +283,8 @@ class BaseInterpolatablePreProcessor:
         inplace=False,
         layerNames=None,
         skipExportGlyphs=None,
+        openTypeCategories=None,
+        preliminaryOpenTypeCategories=None,
         filters=None,
         *,
         instantiator: Instantiator | None = None,
@@ -280,6 +292,8 @@ class BaseInterpolatablePreProcessor:
     ):
         self.ufos = ufos
         self.inplace = inplace
+        self.openTypeCategories = openTypeCategories
+        self.preliminaryOpenTypeCategories = preliminaryOpenTypeCategories
 
         if layerNames is None:
             layerNames = [None] * len(ufos)
@@ -333,7 +347,13 @@ class BaseInterpolatablePreProcessor:
 
     def _run_interpolatable(self, filter_: BaseIFilter) -> set[str]:
         # apply a single, interpolatable filter to all the glyphSets
-        modified = filter_(self.ufos, self.glyphSets, self.instantiator)
+        modified = filter_(
+            self.ufos,
+            self.glyphSets,
+            self.instantiator,
+            openTypeCategories=self.openTypeCategories,
+            preliminaryOpenTypeCategories=self.preliminaryOpenTypeCategories,
+        )
         if modified:
             self._update_instantiator()
         return modified
@@ -440,6 +460,8 @@ class TTFInterpolatablePreProcessor(BaseInterpolatablePreProcessor):
         rememberCurveType=True,
         layerNames=None,
         skipExportGlyphs=None,
+        openTypeCategories=None,
+        preliminaryOpenTypeCategories=None,
         filters=None,
         allQuadratic=True,
         *,
@@ -453,6 +475,8 @@ class TTFInterpolatablePreProcessor(BaseInterpolatablePreProcessor):
             inplace=inplace,
             layerNames=layerNames,
             skipExportGlyphs=skipExportGlyphs,
+            openTypeCategories=openTypeCategories,
+            preliminaryOpenTypeCategories=preliminaryOpenTypeCategories,
             filters=filters,
             instantiator=instantiator,
             **kwargs,
