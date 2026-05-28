@@ -1,7 +1,11 @@
 import math
 
 import pytest
-from fontTools.designspaceLib import DesignSpaceDocument
+from fontTools.designspaceLib import (
+    AxisDescriptor,
+    DesignSpaceDocument,
+    SourceDescriptor,
+)
 from fontTools.misc.loggingTools import CapturingLogHandler
 from fontTools.misc.transform import Transform
 
@@ -1650,3 +1654,79 @@ def test_propagate_anchors_filter_defaults_to_pre():
     """PropagateAnchorsFilter must run before component decomposition."""
     assert PropagateAnchorsFilter().pre is True
     assert PropagateAnchorsIFilter().pre is True
+
+
+class SparseNestedCompositesTest:
+    def test_nested_missing_composites_in_sparse_master(self, FontClass):
+        """When a sparse master only has a root composite, and its component
+        chain (root -> mid -> base) is entirely missing, anchors should still
+        propagate through the interpolated layer.
+
+        Regression test for: the IFilter only resolved one level of missing
+        components from the interpolated layer, so nested composites lost
+        their anchors.
+        """
+        # Default master: has all three glyphs
+        default_font = FontClass()
+        _make_glyph(
+            default_font,
+            "base",
+            600,
+            anchors=[("top", (300, 700)), ("bottom", (300, 0))],
+        )
+        _make_glyph(
+            default_font,
+            "mid",
+            600,
+            components=[("base", (0, 0))],
+        )
+        _make_glyph(
+            default_font,
+            "root",
+            600,
+            components=[("mid", (0, 0))],
+        )
+
+        # Sparse master: only has root
+        sparse_font = FontClass()
+        _make_glyph(
+            sparse_font,
+            "root",
+            600,
+            components=[("mid", (0, 0))],
+        )
+
+        ds = DesignSpaceDocument()
+        a = AxisDescriptor()
+        a.tag = "wght"
+        a.name = "Weight"
+        a.minimum = a.default = 400
+        a.maximum = 700
+        ds.addAxis(a)
+
+        s1 = SourceDescriptor()
+        s1.font = default_font
+        s1.location = {"Weight": 400}
+        ds.addSource(s1)
+
+        s2 = SourceDescriptor()
+        s2.font = sparse_font
+        s2.location = {"Weight": 700}
+        ds.addSource(s2)
+
+        glyphSets = [
+            _GlyphSet.from_layer(default_font),
+            _GlyphSet.from_layer(sparse_font),
+        ]
+
+        instantiator = Instantiator.from_designspace(
+            ds, do_kerning=False, do_info=False
+        )
+        philter = PropagateAnchorsIFilter()
+        philter([default_font, sparse_font], glyphSets, instantiator)
+
+        # Default master: straightforward propagation
+        assert {a.name for a in glyphSets[0]["root"].anchors} == {"top", "bottom"}
+
+        # Sparse master: root should still get anchors via interpolated mid -> base
+        assert {a.name for a in glyphSets[1]["root"].anchors} == {"top", "bottom"}
