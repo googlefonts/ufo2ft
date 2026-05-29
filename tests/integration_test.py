@@ -32,6 +32,12 @@ from ufo2ft.errors import InvalidFontData
 from ufo2ft.filters import TransformationsFilter
 
 
+def test_has_version():
+    import ufo2ft
+
+    assert ufo2ft.__version__ != "0.0.0+unknown"
+
+
 def getpath(filename):
     dirname = os.path.dirname(__file__)
     return os.path.join(dirname, "data", filename)
