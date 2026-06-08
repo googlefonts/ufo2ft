@@ -105,6 +105,7 @@ class BaseCompiler:
             )
             kwargs = prune_unknown_kwargs(self.__dict__, postProcessor.process)
             ttf = postProcessor.process(**kwargs)
+        _maybe_uppercase_beyond64k(ttf)
         return ttf
 
     def compileFeatures(
@@ -481,3 +482,12 @@ class BaseInterpolatableCompiler(BaseCompiler):
 
         # Add back feature variations, as the code above would overwrite them.
         varLib.addGSUBFeatureVariations(ttFont, designSpaceDoc)
+
+
+def _maybe_uppercase_beyond64k(ttFont):
+    if len(ttFont.getGlyphOrder()) <= 0x10000:
+        return
+
+    from fontTools.ttLib.beyond64k import upper_tables
+
+    upper_tables(ttFont)
