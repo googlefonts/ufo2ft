@@ -1,36 +1,36 @@
-import sys
-from types import ModuleType
+import pytest
 
-from ufo2ft._compilers.baseCompiler import _maybe_uppercase_beyond64k
+from ufo2ft import compileTTF
 
-
-class _FakeTTFont:
-    def __init__(self, glyph_count):
-        self.glyph_count = glyph_count
-
-    def getGlyphOrder(self):
-        return range(self.glyph_count)
+ufoLib2 = pytest.importorskip("ufoLib2")
 
 
-def test_maybe_uppercase_beyond64k_ignores_64k_glyphs(monkeypatch):
-    def import_module(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "fontTools.ttLib.beyond64k":
-            raise AssertionError("beyond64k should not be imported")
-        return real_import(name, globals, locals, fromlist, level)
+def _make_ufo(glyph_count):
+    font = ufoLib2.Font()
+    font.info.familyName = "Test"
+    font.info.styleName = "Regular"
+    font.info.unitsPerEm = 1000
+    font.info.ascender = 800
+    font.info.descender = -200
 
-    real_import = __import__
-    monkeypatch.setattr("builtins.__import__", import_module)
+    glyph_order = [f"glyph{i}" for i in range(glyph_count)]
+    for glyph_name in glyph_order:
+        font.newGlyph(glyph_name).width = 500
+    font.lib["public.glyphOrder"] = glyph_order
+    return font
 
-    _maybe_uppercase_beyond64k(_FakeTTFont(0x10000))
+
+def test_compile_ttf_keeps_compact_tables_for_small_font():
+    ttf = compileTTF(_make_ufo(2))
+
+    assert len(ttf.getGlyphOrder()) == 3
+    assert {"glyf", "loca", "maxp", "hhea", "hmtx"} <= set(ttf.keys())
+    assert not {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} & set(ttf.keys())
 
 
-def test_maybe_uppercase_beyond64k_converts_above_64k(monkeypatch):
-    calls = []
-    module = ModuleType("fontTools.ttLib.beyond64k")
-    module.upper_tables = calls.append
-    monkeypatch.setitem(sys.modules, "fontTools.ttLib.beyond64k", module)
+def test_compile_ttf_uses_beyond64k_tables_for_large_font():
+    ttf = compileTTF(_make_ufo(0x10000))
 
-    font = _FakeTTFont(0x10001)
-    _maybe_uppercase_beyond64k(font)
-
-    assert calls == [font]
+    assert len(ttf.getGlyphOrder()) == 0x10001
+    assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+    assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
