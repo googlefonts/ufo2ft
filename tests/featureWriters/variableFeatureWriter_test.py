@@ -1,7 +1,10 @@
 import io
+import itertools
 from textwrap import dedent
 
+import pytest
 from fontTools import designspaceLib
+from fontTools.ufoLib.kerning import lookupKerningValue
 
 from ufo2ft import compileVariableTTF
 
@@ -137,6 +140,40 @@ def test_variable_kern_uniform_override_exception(FontClass):
             lookup kern_Latn;
         } kern;
 """)
+
+
+@pytest.mark.parametrize("coverAllMembers", [False, True])
+def test_variable_kern_matches_source_at_masters(coverAllMembers, FontClass):
+    # At a master location the variation model reconstructs that source exactly,
+    # so the kern the font applies to a pair there must equal the value the
+    # master's own DS+UFO cascade resolves.
+    hb = pytest.importorskip("uharfbuzz")
+
+    designspace = _makePartialExceptionDesignSpace(
+        FontClass, coverAllMembers=coverAllMembers
+    )
+    vf = compileVariableTTF(designspace)
+    buf = io.BytesIO()
+    vf.save(buf)
+    face = hb.Face(buf.getvalue())
+
+    for source in designspace.sources:
+        kerning = source.font.kerning
+        groups = source.font.groups
+        hbFont = hb.Font(face)
+        hbFont.set_variations({"wght": source.location["Weight"]})
+        for first, second in itertools.product(("A", "B"), ("X", "Y")):
+            expected = lookupKerningValue((first, second), kerning, groups)
+            hbBuf = hb.Buffer()
+            hbBuf.add_str(first + second)
+            hbBuf.guess_segment_properties()
+            hb.shape(hbFont, hbBuf, {"kern": True})
+            info, pos = hbBuf.glyph_infos, hbBuf.glyph_positions
+            actual = pos[0].x_advance - hbFont.get_glyph_h_advance(info[0].codepoint)
+            assert actual == expected, (
+                f"{source.name} {first}{second}: "
+                f"font kerns {actual}, source resolves {expected}"
+            )
 
 
 def test_variable_features(FontClass):

@@ -8,3 +8,6 @@ fontMath==0.10.0
 
 # alternative UFO implementation
 ufoLib2==0.18.1
+
+# shape compiled fonts in tests to verify the kerning they actually apply
+uharfbuzz==0.55.0
