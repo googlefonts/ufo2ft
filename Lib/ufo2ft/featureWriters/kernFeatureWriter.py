@@ -770,77 +770,17 @@ def getVariableKerningPairs(
         for glyph_name in glyphs
     }
 
-    # Collate every kerning pair in the designspace, as even UFOs that
-    # provide no entry for the pair must contribute a value at their
-    # source's location in the VariableScalar.
-    # NOTE: This is required as the DS+UFO kerning model and the OpenType
-    #       variation model handle the absence of a kerning value at a
-    #       given location differently:
-    #       - DS+UFO:
-    #           If the missing pair excepts another pair, take its value;
-    #           Otherwise, take a value of 0.
-    #       - OpenType:
-    #           Always interpolate from other locations, ignoring more
-    #           general pairs that this one excepts.
-    # See discussion: https://github.com/googlefonts/ufo2ft/pull/635
-    all_pairs: set[tuple[str, str]] = set()
+    # Cache each non-sparse source's kerning keyed by its VariableScalar
+    # location. Sparse sources (those with a layerName) carry no kerning.
+    sources = []
     for source in designspace.sources:
         if source.layerName is not None:
             continue
         assert source.font is not None
-        all_pairs |= set(source.font.kerning)
-
-    kerning_pairs_in_progress: dict[
-        tuple[str | tuple[str], str | tuple[str]], VariableScalar
-    ] = {}
-    for source in designspace.sources:
-        # Skip sparse sources, because they can have no kerning.
-        if source.layerName is not None:
-            continue
-        assert source.font is not None
-
         location = VariableScalarLocation(
             get_userspace_location(designspace, source.location)
         )
-
-        kerning: Mapping[tuple[str, str], float] = source.font.kerning
-        for pair in all_pairs:
-            side1, side2 = pair
-            firstIsClass = side1 in side1Classes
-            secondIsClass = side2 in side2Classes
-
-            # Filter out pairs that reference missing groups or glyphs.
-            # TODO: Can we do this outside of the loop? We know the pairs already.
-            if not firstIsClass and side1 not in glyphSet:
-                continue
-            if not secondIsClass and side2 not in glyphSet:
-                continue
-
-            # Get the kerning value for this source and quantize, following
-            # the DS+UFO semantics described above.
-            value = quantize(
-                lookupKerningValue(
-                    pair,
-                    kerning,
-                    unified_groups,
-                    glyphToFirstGroup=glyphToFirstGroup,
-                    glyphToSecondGroup=glyphToSecondGroup,
-                ),
-                quantization,
-            )
-
-            if firstIsClass:
-                side1 = side1Classes[side1]
-            if secondIsClass:
-                side2 = side2Classes[side2]
-
-            # TODO: Can we instantiate these outside of the loop? We know the pairs already.
-            var_scalar = kerning_pairs_in_progress.setdefault(
-                (side1, side2), VariableScalar()
-            )
-            # NOTE: Avoid using .add_value because it instantiates a new
-            # VariableScalarLocation on each call.
-            var_scalar.values[location] = value
+        sources.append((location, source.font.kerning))
 
     # We may need to provide a default location value to the variation
     # model, find out where that is.
@@ -850,22 +790,121 @@ def getVariableKerningPairs(
         get_userspace_location(designspace, default_source.location)
     )
 
-    result = []
-    for (side1, side2), value in kerning_pairs_in_progress.items():
-        # TODO: Should we interpolate a default value if it's not in the
-        # sources, rather than inserting a zero? What would varLib do?
-        if default_location not in value.values:
-            value.values[default_location] = 0
-        value = collapse_varscalar(value)
-        pair = KerningPair(side1, side2, value)
+    # Collate every kerning pair *key* in the designspace, as even sources
+    # that provide no entry for the pair must contribute a value at their
+    # location in the VariableScalar.
+    # NOTE: This is required because the DS+UFO kerning model and the
+    #       OpenType variation model handle the absence of a kerning value
+    #       at a given location differently:
+    #       - DS+UFO:
+    #           If the missing pair excepts another pair, take its value;
+    #           Otherwise, take a value of 0.
+    #       - OpenType:
+    #           Always interpolate from other locations, ignoring more
+    #           general pairs that this one excepts.
+    # See discussion: https://github.com/googlefonts/ufo2ft/pull/635
+    all_pairs: set[tuple[str, str]] = set()
+    for _, kerning in sources:
+        all_pairs |= set(kerning)
+
+    def build_scalar(side1: str, side2: str) -> VariableScalar:
+        """Resolve the (side1, side2) pair at every source with the DS+UFO
+        kerning cascade and return the resulting VariableScalar."""
+        scalar = VariableScalar()
+        for location, kerning in sources:
+            # NOTE: assign .values directly rather than .add_value, which
+            # instantiates a new VariableScalarLocation on each call.
+            scalar.values[location] = quantize(
+                lookupKerningValue(
+                    (side1, side2),
+                    kerning,
+                    unified_groups,
+                    glyphToFirstGroup=glyphToFirstGroup,
+                    glyphToSecondGroup=glyphToSecondGroup,
+                ),
+                quantization,
+            )
+        # Anchor the default (the model's reference) at 0 when no source
+        # sets it; it's a base value, never interpolated.
+        if default_location not in scalar.values:
+            scalar.values[default_location] = 0
+        return scalar
+
+    def resolve_pairs(side1, side2):
+        """Yield the variable KerningPair(s) for one source kerning key.
+
+        Most keys yield a single pair resolved with the DS+UFO cascade. The
+        exceptions:
+        - a key referencing a missing glyph yields nothing;
+        - a zero-valued class-to-class kern yields nothing;
+        - a glyph-to-class exception is resolved cell by cell. Its value must
+          be defined at every location; where a source omits it the cascade
+          backfills the class-to-class value, and since glyph-to-class
+          outranks class-to-glyph that backfill would shadow a competing
+          class-to-glyph exception on a shared cell -- rendering there a value
+          the source never resolves to (a "phantom"). So group the members by
+          the value each cell lands on and yield one compact class pair when
+          they all agree, else one pair per value group (a lone glyph, or an
+          inline class of the members that agree).
+          See https://github.com/googlefonts/ufo2ft/issues/988.
+        """
+        firstIsClass = side1 in side1Classes
+        secondIsClass = side2 in side2Classes
+
+        # Skip pairs that reference a missing glyph.
+        if not firstIsClass and side1 not in glyphSet:
+            return
+        if not secondIsClass and side2 not in glyphSet:
+            return
+
+        if not firstIsClass and secondIsClass:
+            # getKerningGroups prunes class members to the glyph set, so
+            # every value group is non-empty.
+            members = side2Classes[side2]
+            members_by_value: dict[tuple, list[str]] = {}
+            scalar_by_value: dict[tuple, VariableScalar] = {}
+            for member in members:
+                scalar = build_scalar(side1, member)
+                signature = tuple(sorted(scalar.values.items()))
+                members_by_value.setdefault(signature, []).append(member)
+                scalar_by_value[signature] = scalar
+
+            if len(members_by_value) == 1:
+                [scalar] = scalar_by_value.values()
+                yield KerningPair(side1, members, collapse_varscalar(scalar))
+            else:
+                for signature, group in members_by_value.items():
+                    group.sort()
+                    side2repr = group[0] if len(group) == 1 else tuple(group)
+                    scalar = scalar_by_value[signature]
+                    yield KerningPair(side1, side2repr, collapse_varscalar(scalar))
+            return
+
+        s1 = side1Classes[side1] if firstIsClass else side1
+        s2 = side2Classes[side2] if secondIsClass else side2
+        pair = KerningPair(s1, s2, collapse_varscalar(build_scalar(side1, side2)))
         # Ignore zero-valued class kern pairs. They are the most general
         # kerns, so they don't override anything else like glyph kerns would
         # and zero is the default.
-        if pair.firstIsClass and pair.secondIsClass and pair.value == 0:
-            continue
-        result.append(pair)
+        if not (pair.firstIsClass and pair.secondIsClass and pair.value == 0):
+            yield pair
 
-    return result
+    # The per-cell split can emit a glyph-glyph pair that another key also
+    # yields (an explicit pair, or another overlapping class), so dedupe on the
+    # output pair. Colliding pairs resolve the same cell, so their values match.
+    result: dict[tuple[Any, Any], KerningPair] = {}
+    for side1, side2 in all_pairs:
+        for pair in resolve_pairs(side1, side2):
+            key = (pair.side1, pair.side2)
+            if key in result:
+                # VariableScalar has no value __eq__, so compare contents.
+                a, b = result[key].value, pair.value
+                a = a.values if isinstance(a, VariableScalar) else a
+                b = b.values if isinstance(b, VariableScalar) else b
+                assert a == b, f"conflicting variable kern values for {key}"
+            result[key] = pair
+
+    return list(result.values())
 
 
 def splitKerning(pairs, glyphScripts):
