@@ -105,7 +105,13 @@ class BaseCompiler:
             )
             kwargs = prune_unknown_kwargs(self.__dict__, postProcessor.process)
             ttf = postProcessor.process(**kwargs)
-        _maybe_uppercase_beyond64k(ttf)
+            # Upgrade to the beyond-64k companion tables (GLYF/LOCA/MAXP/...) only
+            # on final outputs. While building a variable font, postProcessorClass
+            # is None for the interpolation masters (see _compileNeededSources), so
+            # they keep their lowercase glyf/loca/maxp tables and varLib sees a
+            # consistent table family; the merged VF is uppercased here when its
+            # own postprocess runs.
+            _maybe_uppercase_beyond64k(ttf)
         return ttf
 
     def compileFeatures(

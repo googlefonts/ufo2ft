@@ -8,7 +8,11 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from fontTools.designspaceLib import DesignSpaceDocument
+from fontTools.designspaceLib import (
+    AxisDescriptor,
+    DesignSpaceDocument,
+    SourceDescriptor,
+)
 from fontTools.otlLib.optimize.gpos import COMPRESSION_LEVEL as GPOS_COMPRESSION_LEVEL
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.transformPen import TransformPen
@@ -660,6 +664,36 @@ def test_compile_ttf_uses_beyond64k_tables_for_large_font():
     assert len(ttf.getGlyphOrder()) == 0x10001
     assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
     assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+
+
+def test_compile_variable_ttf_with_sparse_master_beyond64k():
+    # A sparse master (a layer with only a subset of glyphs) stays below 64k while
+    # the full masters cross it. ufo2ft must not uppercase each master by its own
+    # glyph count, else the sparse master keeps its lowercase tables while the full
+    # ones go uppercase and varLib rejects the mixed glyf/GLYF table family.
+    full = _make_beyond64k_ufo(0x10000)  # 0x10001 glyphs incl. .notdef -> beyond-64k
+    sparse = full.newLayer("sparse")
+    sparse.newGlyph("glyph1").width = 600
+
+    doc = DesignSpaceDocument()
+    doc.addAxis(
+        AxisDescriptor(tag="wght", name="Weight", minimum=0, default=0, maximum=1000)
+    )
+    s0 = SourceDescriptor()
+    s0.font = full
+    s0.location = {"Weight": 0}
+    doc.addSource(s0)
+    s1 = SourceDescriptor()
+    s1.font = full
+    s1.layerName = "sparse"
+    s1.location = {"Weight": 1000}
+    doc.addSource(s1)
+
+    (vf,) = compileVariableTTFs(doc).values()
+
+    assert len(vf.getGlyphOrder()) == 0x10001
+    assert {"GLYF", "LOCA", "MAXP"} <= set(vf.keys())
+    assert not {"glyf", "loca", "maxp"} & set(vf.keys())
 
 
 if __name__ == "__main__":
