@@ -1861,7 +1861,10 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         for name in sorted(self.glyphOrder, key=lambda n: maxComponentDepths.get(n, 0)):
             ttGlyph = ttGlyphs[name]
             self.instructionCompiler.compileGlyphInstructions(ttGlyph, name)
-            glyf[name] = ttGlyph
+            # assign the inner dict directly instead of via glyf[name] = ...; the latter
+            # checks membership against glyphOrder on every assignment and is O(n^2)
+            # for the whole font.
+            glyf.glyphs[name] = ttGlyph
 
         # update various maxp fields based on glyf without needing to compile the font
         if "maxp" in self.otf:
