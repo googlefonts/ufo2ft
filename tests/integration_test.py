@@ -666,6 +666,17 @@ def test_compile_ttf_uses_beyond64k_tables_for_large_font():
     assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
 
 
+def test_compile_ttf_uses_beyond64k_tables_at_exactly_65536_glyphs():
+    # 65536 is the boundary: gids 0..0xFFFF fit uint16 but the count overflows
+    # maxp.numGlyphs, so the companion tables are required. 65535 fits and the
+    # other tests' 65537 is already past 0x10000, so only 65536 catches the bug.
+    ttf = compileTTF(_make_beyond64k_ufo(0xFFFF))
+
+    assert len(ttf.getGlyphOrder()) == 0x10000
+    assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+    assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+
+
 def test_compile_variable_ttf_with_sparse_master_beyond64k():
     # A sparse master (a layer with only a subset of glyphs) stays below 64k while
     # the full masters cross it. ufo2ft must not uppercase each master by its own

@@ -491,7 +491,9 @@ class BaseInterpolatableCompiler(BaseCompiler):
 
 
 def _maybe_uppercase_beyond64k(ttFont):
-    if len(ttFont.getGlyphOrder()) <= 0x10000:
+    # maxp.numGlyphs is uint16: a count of 65536 overflows it even though every
+    # gid (0..0xFFFF) still fits. Guard on count > 0xFFFF, not gid width.
+    if len(ttFont.getGlyphOrder()) <= 0xFFFF:
         return
 
     from fontTools.ttLib.beyond64k import upper_tables
