@@ -381,7 +381,7 @@ class BaseOutlineCompiler:
         )
         head.fontDirectionHint = 2
         head.indexToLocFormat = 0
-        head.glyphDataFormat = getattr(self, "glyphDataFormat", 0)
+        head.glyphDataFormat = 0
 
     def setupTable_name(self):
         """
