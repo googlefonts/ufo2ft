@@ -509,6 +509,6 @@ def _has_cubic_glyf(ttFont):
 
     glyf = ttFont["glyf"]
     return any(
-        any(flag & flagCubic for flag in getattr(glyph, "flags", ()))
-        for glyph in glyf.glyphs.values()
+        any(flag & flagCubic for flag in getattr(glyf[name], "flags", ()))
+        for name in ttFont.getGlyphOrder()
     )
