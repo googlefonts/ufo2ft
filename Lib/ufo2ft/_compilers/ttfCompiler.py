@@ -23,6 +23,6 @@ class TTFCompiler(BaseCompiler):
 
     def compileOutlines(self, ufo, glyphSet):
         kwargs = prune_unknown_kwargs(self.__dict__, self.outlineCompilerClass)
-        kwargs["glyphDataFormat"] = 0 if self.allQuadratic else 1
+        kwargs["allowCubic"] = not self.allQuadratic
         outlineCompiler = self.outlineCompilerClass(ufo, glyphSet=glyphSet, **kwargs)
         return outlineCompiler.compile()

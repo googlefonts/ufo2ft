@@ -105,12 +105,12 @@ class BaseCompiler:
             )
             kwargs = prune_unknown_kwargs(self.__dict__, postProcessor.process)
             ttf = postProcessor.process(**kwargs)
-            # Upgrade to the beyond-64k companion tables (GLYF/LOCA/MAXP/...) only
-            # on final outputs. While building a variable font, postProcessorClass
-            # is None for the interpolation masters (see _compileNeededSources), so
-            # they keep their lowercase glyf/loca/maxp tables and varLib sees a
-            # consistent table family; the merged VF is uppercased here when its
-            # own postprocess runs.
+            # Upgrade to the beyond-64k companion tables (GLYF/LOCA/MAXP/...)
+            # only on final outputs. While building a variable font,
+            # postProcessorClass is None for the interpolation masters (see
+            # _compileNeededSources), so they keep their lowercase glyf/loca/maxp
+            # tables and varLib sees a consistent table family; the merged VF is
+            # uppercased here when its own postprocess runs.
             _maybe_uppercase_beyond64k(ttf)
         return ttf
 
@@ -493,9 +493,22 @@ class BaseInterpolatableCompiler(BaseCompiler):
 def _maybe_uppercase_beyond64k(ttFont):
     # maxp.numGlyphs is uint16: a count of 65536 overflows it even though every
     # gid (0..0xFFFF) still fits. Guard on count > 0xFFFF, not gid width.
-    if len(ttFont.getGlyphOrder()) <= 0xFFFF:
+    if len(ttFont.getGlyphOrder()) <= 0xFFFF and not _has_cubic_glyf(ttFont):
         return
 
     from fontTools.ttLib.beyond64k import upper_tables
 
     upper_tables(ttFont)
+
+
+def _has_cubic_glyf(ttFont):
+    if "glyf" not in ttFont:
+        return False
+
+    from fontTools.ttLib.tables._g_l_y_f import flagCubic
+
+    glyf = ttFont["glyf"]
+    return any(
+        any(flag & flagCubic for flag in getattr(glyph, "flags", ()))
+        for glyph in glyf.glyphs.values()
+    )

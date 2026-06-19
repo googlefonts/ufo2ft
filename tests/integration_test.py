@@ -263,7 +263,8 @@ class IntegrationTest:
         tmp = io.StringIO()
 
         _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
-        assert "\n" + tmp.getvalue() == dedent("""
+        assert "\n" + tmp.getvalue() == dedent(
+            """
             markClass dotabovecomb <anchor -2 465> @mark_top;
 
             feature liga {
@@ -277,7 +278,8 @@ class IntegrationTest:
                 } mark2base;
 
             } mark;
-        """)  # noqa: B950
+        """
+        )  # noqa: B950
 
     @pytest.mark.parametrize(
         "output_format, options, expected_ttx",
@@ -483,11 +485,23 @@ class IntegrationTest:
         ):
             _ = compileFunc(ufo)
 
-    def test_compileTTF_glyf1_not_allQuadratic(self, testufo):
-        ttf = compileTTF(testufo, allQuadratic=False)
-        expectTTX(ttf, "TestFont-not-allQuadratic.ttx", tables=["glyf"])
+    def test_compileTTF_GLYF_not_allQuadratic(self):
+        ufo = _make_beyond64k_ufo(2)
+        glyph = ufo.newGlyph("curved")
+        glyph.width = 1000
+        self.drawCurvedContour(glyph)
+        ufo.lib["public.glyphOrder"].append("curved")
 
-        assert ttf["head"].glyphDataFormat == 1
+        ttf = compileTTF(ufo, convertCubics=False, allQuadratic=False)
+
+        assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+        assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+        assert ttf["head"].glyphDataFormat == 0
+        assert any(
+            flag & flagCubic
+            for glyph in ttf["GLYF"].glyphs.values()
+            for flag in getattr(glyph, "flags", ())
+        )
 
     @staticmethod
     def drawCurvedContour(glyph, transform=None):
@@ -499,7 +513,7 @@ class IntegrationTest:
         pen.curveTo((111.928, 500), (0, 277.614), (0, 0))
         pen.closePath()
 
-    def test_compileVariableTTF_glyf1_not_allQuadratic(self, designspace):
+    def test_compileVariableTTF_GLYF_not_allQuadratic(self, designspace):
         base_master = designspace.findDefault()
         assert base_master is not None
         # add a glyph with some curveTo to exercise the cu2qu codepath
@@ -507,10 +521,16 @@ class IntegrationTest:
         glyph.width = 1000
         self.drawCurvedContour(glyph)
 
-        vf = compileVariableTTF(designspace, allQuadratic=False)
-        expectTTX(vf, "TestVariableFont-TTF-not-allQuadratic.ttx", tables=["glyf"])
+        vf = compileVariableTTF(designspace, convertCubics=False, allQuadratic=False)
 
-        assert vf["head"].glyphDataFormat == 1
+        assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(vf.keys())
+        assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(vf.keys())
+        assert vf["head"].glyphDataFormat == 0
+        assert any(
+            flag & flagCubic
+            for glyph in vf["GLYF"].glyphs.values()
+            for flag in getattr(glyph, "flags", ())
+        )
 
     def test_compileTTF_overlap_simple_flag(self, testufo):
         """Test that the OVERLAP_{SIMPLE,COMPOUND} are set on glyphs that have it"""
