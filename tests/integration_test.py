@@ -497,10 +497,38 @@ class IntegrationTest:
         assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
         assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
         assert ttf["head"].glyphDataFormat == 0
+        glyf = ttf["GLYF"]
         assert any(
             flag & flagCubic
-            for glyph in ttf["GLYF"].glyphs.values()
-            for flag in getattr(glyph, "flags", ())
+            for name in ttf.getGlyphOrder()
+            for flag in getattr(glyf[name], "flags", ())
+        )
+
+    def test_compileTTF_GLYF_not_allQuadratic_useProductionNames(self):
+        # useProductionNames=True makes the postprocessor reload the font from a
+        # buffer; the reloaded glyf table is lazy, so its Glyph objects hold raw
+        # .data and have no .flags until expanded. _maybe_uppercase_beyond64k must
+        # still detect the cubic outlines (via the expanding glyf[name] accessor)
+        # and upgrade to the GLYF family; otherwise the cubic flags ship in the
+        # lowercase glyf table, which the spec forbids.
+        ufo = _make_beyond64k_ufo(2)
+        glyph = ufo.newGlyph("curved")
+        glyph.width = 1000
+        self.drawCurvedContour(glyph)
+        ufo.lib["public.glyphOrder"].append("curved")
+
+        ttf = compileTTF(
+            ufo, convertCubics=False, allQuadratic=False, useProductionNames=True
+        )
+
+        assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+        assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+        assert ttf["head"].glyphDataFormat == 0
+        glyf = ttf["GLYF"]
+        assert any(
+            flag & flagCubic
+            for name in ttf.getGlyphOrder()
+            for flag in getattr(glyf[name], "flags", ())
         )
 
     @staticmethod
@@ -526,10 +554,11 @@ class IntegrationTest:
         assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(vf.keys())
         assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(vf.keys())
         assert vf["head"].glyphDataFormat == 0
+        glyf = vf["GLYF"]
         assert any(
             flag & flagCubic
-            for glyph in vf["GLYF"].glyphs.values()
-            for flag in getattr(glyph, "flags", ())
+            for name in vf.getGlyphOrder()
+            for flag in getattr(glyf[name], "flags", ())
         )
 
     def test_compileTTF_overlap_simple_flag(self, testufo):
