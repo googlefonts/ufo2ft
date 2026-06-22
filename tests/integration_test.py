@@ -506,11 +506,9 @@ class IntegrationTest:
 
     def test_compileTTF_GLYF_not_allQuadratic_useProductionNames(self):
         # useProductionNames=True makes the postprocessor reload the font from a
-        # buffer; the reloaded glyf table is lazy, so its Glyph objects hold raw
-        # .data and have no .flags until expanded. _maybe_uppercase_beyond64k must
-        # still detect the cubic outlines (via the expanding glyf[name] accessor)
-        # and upgrade to the GLYF family; otherwise the cubic flags ship in the
-        # lowercase glyf table, which the spec forbids.
+        # buffer before _maybe_uppercase_beyond64k runs. Check that the GLYF
+        # upgrade still happens after that reload (and isn't reverted to the
+        # lowercase glyf family by it).
         ufo = _make_beyond64k_ufo(2)
         glyph = ufo.newGlyph("curved")
         glyph.width = 1000
@@ -524,12 +522,18 @@ class IntegrationTest:
         assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
         assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
         assert ttf["head"].glyphDataFormat == 0
-        glyf = ttf["GLYF"]
-        assert any(
-            flag & flagCubic
-            for name in ttf.getGlyphOrder()
-            for flag in getattr(glyf[name], "flags", ())
-        )
+
+    def test_compileTTF_GLYF_not_allQuadratic_without_cubics(self):
+        # allQuadratic=False always upgrades to the GLYF family, even for a small
+        # font whose outlines turn out to contain no cubic curves: the table
+        # family follows the build option, not the glyph content.
+        ufo = _make_beyond64k_ufo(2)  # empty glyphs, no cubics, well under 64k
+
+        ttf = compileTTF(ufo, convertCubics=False, allQuadratic=False)
+
+        assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+        assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+        assert ttf["head"].glyphDataFormat == 0
 
     @staticmethod
     def drawCurvedContour(glyph, transform=None):

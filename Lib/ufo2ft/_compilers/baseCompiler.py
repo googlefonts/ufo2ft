@@ -111,7 +111,7 @@ class BaseCompiler:
             # _compileNeededSources), so they keep their lowercase glyf/loca/maxp
             # tables and varLib sees a consistent table family; the merged VF is
             # uppercased here when its own postprocess runs.
-            _maybe_uppercase_beyond64k(ttf)
+            _maybe_uppercase_beyond64k(ttf, getattr(self, "allQuadratic", True))
         return ttf
 
     def compileFeatures(
@@ -490,25 +490,16 @@ class BaseInterpolatableCompiler(BaseCompiler):
         varLib.addGSUBFeatureVariations(ttFont, designSpaceDoc)
 
 
-def _maybe_uppercase_beyond64k(ttFont):
+def _maybe_uppercase_beyond64k(ttFont, allQuadratic=True):
     # maxp.numGlyphs is uint16: a count of 65536 overflows it even though every
     # gid (0..0xFFFF) still fits. Guard on count > 0xFFFF, not gid width.
-    if len(ttFont.getGlyphOrder()) <= 0xFFFF and not _has_cubic_glyf(ttFont):
+    # allQuadratic=False opts into cubic curves (CUBIC flag is only valid in the
+    # uppercase GLYF, never lowercase glyf), so always upgrade then to make the
+    # compatibility breaking obvious rather than depending on whether a cubic
+    # was emitted, which could be a silent footgun.
+    if len(ttFont.getGlyphOrder()) <= 0xFFFF and allQuadratic:
         return
 
     from fontTools.ttLib.beyond64k import upper_tables
 
     upper_tables(ttFont)
-
-
-def _has_cubic_glyf(ttFont):
-    if "glyf" not in ttFont:
-        return False
-
-    from fontTools.ttLib.tables._g_l_y_f import flagCubic
-
-    glyf = ttFont["glyf"]
-    return any(
-        any(flag & flagCubic for flag in getattr(glyf[name], "flags", ()))
-        for name in ttFont.getGlyphOrder()
-    )
