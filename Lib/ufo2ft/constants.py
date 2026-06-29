@@ -18,6 +18,8 @@ GLYPHS_PREFIX = "com.schriftgestaltung."
 
 FILTERS_KEY = UFO2FT_PREFIX + "filters"
 
+EXPLICIT_CLOSING_LINE_KEY = UFO2FT_PREFIX + "explicitClosingLine"
+
 MTI_FEATURES_PREFIX = UFO2FT_PREFIX + "mtiFeatures"
 
 FEATURE_WRITERS_KEY = UFO2FT_PREFIX + "featureWriters"

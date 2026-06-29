@@ -16,6 +16,7 @@ from ufo2ft.filters.decomposeComponents import (
     DecomposeComponentsFilter,
     DecomposeComponentsIFilter,
 )
+from ufo2ft.filters.explicitClosingLine import ExplicitClosingLineIFilter
 from ufo2ft.fontInfoData import getAttrWithFallback
 from ufo2ft.util import _GlyphSet, _hasOverflowingComponentTransforms, zip_strict
 
@@ -595,6 +596,8 @@ class OTFInterpolatablePreProcessor(BaseInterpolatablePreProcessor):
         # this interpolatable filter will only run once on all the glyphSets,
         # (see _try_as_interpolatable_filter)
         decompose = DecomposeComponentsIFilter()
+        explicitClosingLine = ExplicitClosingLineIFilter()
         for filters in filterses:
             filters.append(decompose)
+            filters.append(explicitClosingLine)
         return filterses

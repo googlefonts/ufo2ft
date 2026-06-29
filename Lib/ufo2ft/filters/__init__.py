@@ -13,6 +13,7 @@ from .decomposeTransformedComponents import (
     DecomposeTransformedComponentsIFilter,
 )
 from .dottedCircle import DottedCircleFilter
+from .explicitClosingLine import ExplicitClosingLineIFilter
 from .explodeColorLayerGlyphs import ExplodeColorLayerGlyphsFilter
 from .flattenComponents import FlattenComponentsFilter, FlattenComponentsIFilter
 from .propagateAnchors import PropagateAnchorsFilter, PropagateAnchorsIFilter
@@ -31,6 +32,7 @@ __all__ = [
     "DecomposeTransformedComponentsFilter",
     "DecomposeTransformedComponentsIFilter",
     "DottedCircleFilter",
+    "ExplicitClosingLineIFilter",
     "ExplodeColorLayerGlyphsFilter",
     "FlattenComponentsFilter",
     "FlattenComponentsIFilter",
