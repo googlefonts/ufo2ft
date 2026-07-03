@@ -842,10 +842,9 @@ def getVariableKerningPairs(
           backfills the class-to-class value, and since glyph-to-class
           outranks class-to-glyph that backfill would shadow a competing
           class-to-glyph exception on a shared cell -- rendering there a value
-          the source never resolves to (a "phantom"). So group the members by
-          the value each cell lands on and yield one compact class pair when
-          they all agree, else one pair per value group (a lone glyph, or an
-          inline class of the members that agree).
+          the source never resolves to (a "phantom"). So resolve each member
+          against the cascade and emit it as its own pair, carrying the value
+          that cell actually lands on.
           See https://github.com/googlefonts/ufo2ft/issues/988.
         """
         firstIsClass = side1 in side1Classes
@@ -859,25 +858,13 @@ def getVariableKerningPairs(
 
         if not firstIsClass and secondIsClass:
             # getKerningGroups prunes class members to the glyph set, so
-            # every value group is non-empty.
-            members = side2Classes[side2]
-            members_by_value: dict[tuple, list[str]] = {}
-            scalar_by_value: dict[tuple, VariableScalar] = {}
-            for member in members:
+            # every member resolves to a real pair. Members that agree on a
+            # value could share an inline class, but that only compacts the
+            # debug feature file: enum-expanded and per-glyph pairs compile to
+            # identical GPOS, so keep it simple and emit one pair per member.
+            for member in side2Classes[side2]:
                 scalar = build_scalar(side1, member)
-                signature = tuple(sorted(scalar.values.items()))
-                members_by_value.setdefault(signature, []).append(member)
-                scalar_by_value[signature] = scalar
-
-            if len(members_by_value) == 1:
-                [scalar] = scalar_by_value.values()
-                yield KerningPair(side1, members, collapse_varscalar(scalar))
-            else:
-                for signature, group in members_by_value.items():
-                    group.sort()
-                    side2repr = group[0] if len(group) == 1 else tuple(group)
-                    scalar = scalar_by_value[signature]
-                    yield KerningPair(side1, side2repr, collapse_varscalar(scalar))
+                yield KerningPair(side1, member, collapse_varscalar(scalar))
             return
 
         s1 = side1Classes[side1] if firstIsClass else side1
