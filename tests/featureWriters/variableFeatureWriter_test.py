@@ -109,12 +109,11 @@ def test_variable_kern_partial_master_exception(FontClass):
 
 def test_variable_kern_uniform_override_exception(FontClass):
     # When the class-to-glyph exception covers every member of the second-side
-    # class, all overlap cells resolve to the same value, so nothing diverges and
-    # the compact "enum pos A @kern2.c2 ..." form is kept. It must still carry the
-    # agreed cell value (30 at the default), not the class-to-class value (50)
-    # backfilled where the glyph-to-class exception is absent. The backfill would
-    # shadow the class-to-glyph exceptions on every cell at the default -- a
-    # phantom even though no two cells disagree with each other.
+    # class, all overlap cells resolve to the same value. Each member is emitted
+    # as its own pair carrying that agreed cell value (30 at the default), not the
+    # class-to-class value (50) backfilled where the glyph-to-class exception is
+    # absent. The backfill would shadow the class-to-glyph exceptions on every
+    # cell at the default -- a phantom even though no two cells disagree.
     tmp = io.StringIO()
     designspace = _makePartialExceptionDesignSpace(FontClass, coverAllMembers=True)
     compileVariableTTF(designspace, debugFeatureFile=tmp)
@@ -124,7 +123,8 @@ def test_variable_kern_uniform_override_exception(FontClass):
 
         lookup kern_Latn {
             lookupflag IgnoreMarks;
-            enum pos A @kern2.Latn.c2 (wght=0:30 wght=1000:70);
+            pos A X (wght=0:30 wght=1000:70);
+            pos A Y (wght=0:30 wght=1000:70);
             enum pos @kern1.Latn.c1 X 30;
             enum pos @kern1.Latn.c1 Y 30;
             pos @kern1.Latn.c1 @kern2.Latn.c2 50;
