@@ -9,6 +9,10 @@ from fontTools import designspaceLib
 from fontTools.ufoLib.kerning import lookupKerningValue
 
 from ufo2ft import compileVariableTTF
+from ufo2ft.featureWriters.kernFeatureWriter import (
+    _refineMembers,
+    collectKerningGroups,
+)
 from ufo2ft.featureWriters.kernFeatureWriter2 import (
     KernFeatureWriter as KernFeatureWriter2,
 )
@@ -515,6 +519,63 @@ def _makeDivergentGroupsDesignSpace(FontClass, mode):
         source.familyName = "Test"
         designspace.addSource(source)
     return designspace
+
+
+@pytest.mark.parametrize(
+    "members, kernedMaps, expected",
+    [
+        pytest.param(
+            ("X", "Y"),
+            [{"X": "right", "Y": "right"}, {"X": "right", "Y": "right"}],
+            [(("right", "right"), ("X", "Y"))],
+            id="consistent-membership-one-class",
+        ),
+        pytest.param(
+            ("X", "Y"),
+            [{"X": "right", "Y": "right"}, {"X": "right", "Y": "other"}],
+            [(("right", "right"), ("X",)), (("right", "other"), ("Y",))],
+            id="regrouped-alone-splits-off",
+        ),
+        pytest.param(
+            ("X", "Y", "Z"),
+            [
+                {"X": "right", "Y": "right", "Z": "right"},
+                {"X": "right", "Y": "other", "Z": "other"},
+            ],
+            [(("right", "right"), ("X",)), (("right", "other"), ("Y", "Z"))],
+            id="regrouped-together-stays-one-class",
+        ),
+        pytest.param(
+            ("W", "X"),
+            [{"X": "right"}, {"X": "right"}],
+            [((None, None), ("W",)), (("right", "right"), ("X",))],
+            id="ungrouped-everywhere-shares-fallback-class",
+        ),
+        pytest.param(
+            ("X", "Y", "Z"),
+            [{"X": "right", "Y": "right", "Z": "right"}, {"X": "right"}],
+            [(("right", "right"), ("X",)), (("right", None), ("Y", "Z"))],
+            id="unkerned-groups-omitted-matching-varlib",
+        ),
+    ],
+)
+def test_refineMembers_partitions_by_cross_source_signature(
+    members, kernedMaps, expected
+):
+    # Pin the partition primitive independently of full font compilation.
+    assert _refineMembers(members, kernedMaps) == expected
+
+
+def test_collectKerningGroups_backfills_merge_dropped_glyphs(FontClass):
+    # late_added strands Y outside merged classes; backfill preserves its name.
+    designspace = _makeDivergentGroupsDesignSpace(FontClass, "late_added")
+    glyphSet = {g: None for g in ("A", "B", "X", "Y", "Z", "W")}
+    _, side2Groups, _, side2Membership = collectKerningGroups(
+        designspace, glyphSet, isVariable=True
+    )
+    assert side2Groups["public.kern2.right"] == ("X",)
+    assert "Y" not in {g for members in side2Groups.values() for g in members}
+    assert side2Membership["Y"] == "right"
 
 
 @pytest.mark.parametrize(

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import itertools
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Any, Iterator, Mapping
+from typing import Any, Iterator, Mapping, NamedTuple
 
 from fontTools import unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
@@ -44,6 +44,8 @@ LTR_BIDI_TYPES = {"L", "AN", "EN"}
 AMBIGUOUS_BIDIS = {"R", "L"}
 COMMON_SCRIPTS_SET = {COMMON_SCRIPT}
 COMMON_CLASS_NAME = "Default"
+
+_MAX_LOGGED_DIVERGENT_GLYPHS = 10
 
 
 def unicodeBidiType(uv):
@@ -337,75 +339,11 @@ class KernFeatureWriter(BaseFeatureWriter):
     def getKerningGroups(
         self,
     ) -> tuple[Mapping[str, tuple[str, ...]], Mapping[str, tuple[str, ...]]]:
-        allGlyphs = self.context.glyphSet
-
-        side1Groups: dict[str, tuple[str, ...]] = {}
-        side1Membership: dict[str, str] = {}
-        side2Groups: dict[str, tuple[str, ...]] = {}
-        side2Membership: dict[str, str] = {}
-
-        if isinstance(self.context.font, DesignSpaceDocument):
-            fonts = [source.font for source in self.context.font.sources]
-        else:
-            fonts = [self.context.font]
-
-        for font in fonts:
-            assert font is not None
-            for name, members in font.groups.items():
-                # prune non-existent or skipped glyphs
-                members = {g for g in members if g in allGlyphs}
-                # skip empty groups
-                if not members:
-                    continue
-                # skip groups without UFO3 public.kern{1,2} prefix
-                if name.startswith(SIDE1_PREFIX):
-                    name_truncated = name[len(SIDE1_PREFIX) :]
-                    known_members = members.intersection(side1Membership.keys())
-                    if known_members:
-                        for glyph_name in known_members:
-                            original_name_truncated = side1Membership[glyph_name]
-                            if name_truncated != original_name_truncated:
-                                log_regrouped_glyph(
-                                    "first",
-                                    name,
-                                    original_name_truncated,
-                                    font,
-                                    glyph_name,
-                                )
-                        # Skip the whole group definition if there is any
-                        # overlap problem.
-                        continue
-                    group = side1Groups.get(name)
-                    if group is None:
-                        side1Groups[name] = tuple(sorted(members))
-                        for member in members:
-                            side1Membership[member] = name_truncated
-                    elif set(group) != members:
-                        log_redefined_group("left", name, group, font, members)
-                elif name.startswith(SIDE2_PREFIX):
-                    name_truncated = name[len(SIDE2_PREFIX) :]
-                    known_members = members.intersection(side2Membership.keys())
-                    if known_members:
-                        for glyph_name in known_members:
-                            original_name_truncated = side2Membership[glyph_name]
-                            if name_truncated != original_name_truncated:
-                                log_regrouped_glyph(
-                                    "second",
-                                    name,
-                                    original_name_truncated,
-                                    font,
-                                    glyph_name,
-                                )
-                        # Skip the whole group definition if there is any
-                        # overlap problem.
-                        continue
-                    group = side2Groups.get(name)
-                    if group is None:
-                        side2Groups[name] = tuple(sorted(members))
-                        for member in members:
-                            side2Membership[member] = name_truncated
-                    elif set(group) != members:
-                        log_redefined_group("right", name, group, font, members)
+        side1Groups, side2Groups, side1Membership, side2Membership = (
+            collectKerningGroups(
+                self.context.font, self.context.glyphSet, self.context.isVariable
+            )
+        )
         self.context.side1Membership = side1Membership
         self.context.side2Membership = side2Membership
         return side1Groups, side2Groups
@@ -418,8 +356,6 @@ class KernFeatureWriter(BaseFeatureWriter):
         if self.context.isVariable:
             return getVariableKerningPairs(
                 self.context.font,
-                side1Classes,
-                side2Classes,
                 self.context.glyphSet,
                 self.options,
             )
@@ -745,34 +681,256 @@ class KernFeatureWriter(BaseFeatureWriter):
                 )
 
 
+# One source's glyph -> group name assignments for a single kern side; lists of
+# these are always parallel to the non-sparse sources they were built from.
+GroupMap = dict[str, str]
+
+
+def _sourceGroupMaps(
+    font: Any, glyphSet: Mapping[str, str]
+) -> tuple[GroupMap, GroupMap]:
+    side1Map: GroupMap = {}
+    side2Map: GroupMap = {}
+    for name, members in font.groups.items():
+        members = {g for g in members if g in glyphSet}
+        if not members:
+            continue
+        if name.startswith(SIDE1_PREFIX):
+            for member in members:
+                side1Map[member] = name
+        elif name.startswith(SIDE2_PREFIX):
+            for member in members:
+                side2Map[member] = name
+    return side1Map, side2Map
+
+
+def _groupMembers(maps: list[GroupMap]) -> dict[str, tuple[str, ...]]:
+    """Invert source maps without dropping overlapping groups.
+
+    Inverting the maps rather than font.groups keeps class membership
+    consistent with value resolution: a glyph in two same-side groups of one
+    source (invalid per UFO3) resolves to the last, lookupKerningValue's own
+    tie-break.
+    """
+    members: dict[str, set[str]] = {}
+    for sourceMap in maps:
+        for glyph, name in sourceMap.items():
+            members.setdefault(name, set()).add(glyph)
+    return {name: tuple(sorted(glyphs)) for name, glyphs in members.items()}
+
+
+def _divergentGlyphs(maps: list[GroupMap]) -> set[str]:
+    """Return glyphs whose group assignment differs between sources.
+
+    Ungrouped or absent in a source counts as a distinct assignment.
+    """
+    divergent: set[str] = set()
+    allGlyphs: set[str] = set()
+    for sourceMap in maps:
+        allGlyphs.update(sourceMap)
+    for glyph in allGlyphs:
+        if len({sourceMap.get(glyph) for sourceMap in maps}) > 1:
+            divergent.add(glyph)
+    return divergent
+
+
+def _refineMembers(
+    members: tuple[str, ...], kernedMaps: list[GroupMap]
+) -> list[tuple[tuple[str | None, ...], tuple[str, ...]]]:
+    """Partition members into refined classes by kerned-group signature.
+
+    A member's signature is its kerned group name in each source (None where it
+    has none); members sharing the same signature form one refined class,
+    returned as a (signature, members) pair. Members are assumed sorted, so
+    output is deterministic. kernedMaps hold only groups referenced by that
+    source's kerning: an unkerned group never reaches the compiled ClassDefs
+    that varLib.merger partitions, so its members count as ungrouped here.
+    Grouping by the per-source signature yields the coarsest common refinement
+    that varLib.merger derives with classifyTools.classify; see ufo2ft#992.
+    """
+    bySignature: dict[tuple[str | None, ...], list[str]] = {}
+    for member in members:
+        signature = tuple(kernedMap.get(member) for kernedMap in kernedMaps)
+        bySignature.setdefault(signature, []).append(member)
+    return sorted(
+        ((signature, tuple(refined)) for signature, refined in bySignature.items()),
+        key=lambda pair: pair[1],
+    )
+
+
+class _KernSource(NamedTuple):
+    location: VariableScalarLocation
+    kerning: Mapping[tuple[str, str], float]
+    side1Map: GroupMap
+    side2Map: GroupMap
+
+
+@dataclass
+class _KernSide:
+    """Per-side (kern1 or kern2) partition state for the variable writer.
+
+    Built from the sources' own group maps, it exposes the group union (which,
+    unlike first-wins merging, never strands glyphs that still need variable
+    values) and refines only classes whose membership diverges across masters.
+    Refining splits a class into refined classes: the largest subsets of its
+    members that share the same kerned group in every source (a consistent
+    class stays whole); pairing side1 and side2 refined classes reproduces
+    varLib.merger's refined class matrix, each pair one cell of it. The full
+    maps carry what the sources declare, the kerned maps
+    what the varLib.merge path (variableFeatures=False) sees in the compiled
+    per-master ClassDefs: divergence is detected on the former, the refined
+    partition computed on the latter.
+    """
+
+    kernedMaps: list[GroupMap]
+    groups: dict[str, tuple[str, ...]]
+    divergentGlyphs: set[str]
+    divergentClasses: set[str]
+    _refinedClasses: dict[str, list[tuple[tuple[str | None, ...], tuple[str, ...]]]] = (
+        field(default_factory=dict, init=False)
+    )
+
+    @classmethod
+    def fromSources(cls, sources: list[_KernSource], side: int) -> _KernSide:
+        """Build one side's state; side is 1 or 2, matching kern1/kern2."""
+        assert side in (1, 2)
+        maps = [source.side1Map if side == 1 else source.side2Map for source in sources]
+        # Refine against groups referenced by kerning only; unkerned groups do
+        # not appear in compiled ClassDefs, so treating them as ungrouped
+        # matches varLib.merger.
+        kernedMaps = []
+        for source, sourceMap in zip(sources, maps):
+            kerned = {key[side - 1] for key in source.kerning}
+            kernedMaps.append(
+                {glyph: name for glyph, name in sourceMap.items() if name in kerned}
+            )
+        groups = _groupMembers(maps)
+        divergentGlyphs = _divergentGlyphs(maps)
+        divergentClasses = {
+            name
+            for name, members in groups.items()
+            if divergentGlyphs.intersection(members)
+        }
+        return cls(kernedMaps, groups, divergentGlyphs, divergentClasses)
+
+    def refine(
+        self, name: str
+    ) -> Iterator[tuple[str | tuple[str | None, ...], str | tuple[str, ...]]]:
+        """Yield (names, glyphs) for one glyph or group name of a kern key.
+
+        names feeds build_scalar -- either one name looked up in every source,
+        or a tuple with one name (or None) per source; glyphs is the emitted
+        KerningPair side. A divergent class is split into its refined classes,
+        singletons included, to match varLib.merger's class-based GPOS.
+        """
+        members = self.groups.get(name)
+        if members is None:  # a bare glyph, not a class
+            yield name, name
+            return
+        if name not in self.divergentClasses:
+            yield name, members
+            return
+        if name not in self._refinedClasses:
+            self._refinedClasses[name] = _refineMembers(members, self.kernedMaps)
+        yield from self._refinedClasses[name]
+
+
+def collectKerningGroups(designspaceOrFont, glyphSet, isVariable) -> tuple[
+    dict[str, tuple[str, ...]],
+    dict[str, tuple[str, ...]],
+    dict[str, str],
+    dict[str, str],
+]:
+    """Merge kern groups for both kern writers.
+
+    Returns merged side1/side2 group maps plus glyph -> truncated-group-name
+    memberships. Memberships are backfilled from groups that first-source-wins
+    merging drops, so refined classes can still be named.
+    """
+    allGlyphs = glyphSet
+
+    side1Groups: dict[str, tuple[str, ...]] = {}
+    side1Membership: dict[str, str] = {}
+    side2Groups: dict[str, tuple[str, ...]] = {}
+    side2Membership: dict[str, str] = {}
+    # Fallback names for glyphs stranded by first-wins merging, recorded before
+    # any drop so a stranded glyph can still name its refined class.
+    side1Fallback: dict[str, str] = {}
+    side2Fallback: dict[str, str] = {}
+
+    if isinstance(designspaceOrFont, DesignSpaceDocument):
+        fonts = [source.font for source in designspaceOrFont.sources]
+    else:
+        fonts = [designspaceOrFont]
+
+    # Variable builds reconcile cross-source overlaps later, so only static
+    # builds warn about dropped groups.
+    warn_on_drop = not isVariable
+
+    for font in fonts:
+        assert font is not None
+        for name, members in font.groups.items():
+            # prune non-existent or skipped glyphs
+            members = {g for g in members if g in allGlyphs}
+            # skip empty groups
+            if not members:
+                continue
+            if name.startswith(SIDE1_PREFIX):
+                prefix = SIDE1_PREFIX
+                groups, membership = side1Groups, side1Membership
+                fallback = side1Fallback
+                side_label = "first"
+            elif name.startswith(SIDE2_PREFIX):
+                prefix = SIDE2_PREFIX
+                groups, membership = side2Groups, side2Membership
+                fallback = side2Fallback
+                side_label = "second"
+            else:
+                continue
+            name_truncated = name[len(prefix) :]
+            for member in members:
+                fallback.setdefault(member, name_truncated)
+            known_members = members.intersection(membership.keys())
+            if known_members:
+                if warn_on_drop:
+                    for glyph_name in known_members:
+                        original_name_truncated = membership[glyph_name]
+                        if name_truncated != original_name_truncated:
+                            log_regrouped_glyph(
+                                side_label,
+                                name,
+                                original_name_truncated,
+                                font,
+                                glyph_name,
+                            )
+                # Skip the whole group definition if there is any overlap problem.
+                continue
+            group = groups.get(name)
+            if group is None:
+                groups[name] = tuple(sorted(members))
+                for member in members:
+                    membership[member] = name_truncated
+            elif set(group) != members and warn_on_drop:
+                log_redefined_group(side_label, name, group, font, members)
+    # Apply the fallback names last, keeping already-merged names canonical.
+    # Deferred to here (not written mid-merge) because the merge reads
+    # membership to decide drops.
+    for member, name_truncated in side1Fallback.items():
+        side1Membership.setdefault(member, name_truncated)
+    for member, name_truncated in side2Fallback.items():
+        side2Membership.setdefault(member, name_truncated)
+    return side1Groups, side2Groups, side1Membership, side2Membership
+
+
 def getVariableKerningPairs(
     designspace: DesignSpaceDocument,
-    side1Classes: Mapping[str, tuple[str, ...]],
-    side2Classes: Mapping[str, tuple[str, ...]],
     glyphSet: Mapping[str, str],
     options: SimpleNamespace,
 ) -> list[KerningPair]:
     quantization = options.quantization
 
-    # Gather utility variables for faster kerning lookups.
-    # TODO: Do we construct these in code elsewhere?
-    assert not (set(side1Classes) & set(side2Classes))
-    unified_groups = {**side1Classes, **side2Classes}
-
-    glyphToFirstGroup = {
-        glyph_name: group_name  # TODO: Is this overwrite safe? User input is adversarial
-        for group_name, glyphs in side1Classes.items()
-        for glyph_name in glyphs
-    }
-    glyphToSecondGroup = {
-        glyph_name: group_name
-        for group_name, glyphs in side2Classes.items()
-        for glyph_name in glyphs
-    }
-
-    # Cache each non-sparse source's kerning keyed by its VariableScalar
-    # location. Sparse sources (those with a layerName) carry no kerning.
-    sources = []
+    # Resolve each non-sparse source against its own group maps.
+    sources: list[_KernSource] = []
     for source in designspace.sources:
         if source.layerName is not None:
             continue
@@ -780,7 +938,23 @@ def getVariableKerningPairs(
         location = VariableScalarLocation(
             get_userspace_location(designspace, source.location)
         )
-        sources.append((location, source.font.kerning))
+        side1Map, side2Map = _sourceGroupMaps(source.font, glyphSet)
+        sources.append(_KernSource(location, source.font.kerning, side1Map, side2Map))
+
+    kern1 = _KernSide.fromSources(sources, 1)
+    kern2 = _KernSide.fromSources(sources, 2)
+
+    divergent = kern1.divergentGlyphs | kern2.divergentGlyphs
+    if divergent:
+        # Avoid listing hundreds of glyph names in one log record.
+        shown = ", ".join(sorted(divergent)[:_MAX_LOGGED_DIVERGENT_GLYPHS])
+        if len(divergent) > _MAX_LOGGED_DIVERGENT_GLYPHS:
+            shown += f", ... ({len(divergent) - _MAX_LOGGED_DIVERGENT_GLYPHS} more)"
+        LOGGER.info(
+            "Reconciling kerning groups that differ across masters for %d glyph(s): %s",
+            len(divergent),
+            shown,
+        )
 
     # We may need to provide a default location value to the variation
     # model, find out where that is.
@@ -803,27 +977,38 @@ def getVariableKerningPairs(
     #           Always interpolate from other locations, ignoring more
     #           general pairs that this one excepts.
     # See discussion: https://github.com/googlefonts/ufo2ft/pull/635
-    all_pairs: set[tuple[str, str]] = set()
-    for _, kerning in sources:
-        all_pairs |= set(kerning)
+    all_pairs = {pair for source in sources for pair in source.kerning}
 
-    def build_scalar(side1: str, side2: str) -> VariableScalar:
-        """Resolve the (side1, side2) pair at every source with the DS+UFO
-        kerning cascade and return the resulting VariableScalar."""
+    def build_scalar(side1Names, side2Names) -> VariableScalar:
+        """Resolve per-source glyph/group names with the DS+UFO kerning cascade.
+
+        A bare name is used for every source; a tuple supplies one name (or
+        None) per source. Glyph names use the full cascade; group names match
+        only class-level entries; None (no kerned class in that source)
+        resolves to 0, varLib.merger's class 0.
+        """
+        if isinstance(side1Names, str):
+            side1Names = (side1Names,) * len(sources)
+        if isinstance(side2Names, str):
+            side2Names = (side2Names,) * len(sources)
         scalar = VariableScalar()
-        for location, kerning in sources:
+        for source, side1, side2 in zip(sources, side1Names, side2Names):
+            if side1 is None or side2 is None:
+                value = 0
+            else:
+                value = quantize(
+                    lookupKerningValue(
+                        (side1, side2),
+                        source.kerning,
+                        {},  # groups unused when explicit maps are passed
+                        glyphToFirstGroup=source.side1Map,
+                        glyphToSecondGroup=source.side2Map,
+                    ),
+                    quantization,
+                )
             # NOTE: assign .values directly rather than .add_value, which
             # instantiates a new VariableScalarLocation on each call.
-            scalar.values[location] = quantize(
-                lookupKerningValue(
-                    (side1, side2),
-                    kerning,
-                    unified_groups,
-                    glyphToFirstGroup=glyphToFirstGroup,
-                    glyphToSecondGroup=glyphToSecondGroup,
-                ),
-                quantization,
-            )
+            scalar.values[source.location] = value
         # Anchor the default (the model's reference) at 0 when no source
         # sets it; it's a base value, never interpolated.
         if default_location not in scalar.values:
@@ -846,9 +1031,11 @@ def getVariableKerningPairs(
           against the cascade and emit it as its own pair, carrying the value
           that cell actually lands on.
           See https://github.com/googlefonts/ufo2ft/issues/988.
+        - a class whose membership diverges across masters is refined into the
+          per-master common refinement (see _KernSide.refine, #992).
         """
-        firstIsClass = side1 in side1Classes
-        secondIsClass = side2 in side2Classes
+        firstIsClass = side1 in kern1.groups
+        secondIsClass = side2 in kern2.groups
 
         # Skip pairs that reference a missing glyph.
         if not firstIsClass and side1 not in glyphSet:
@@ -857,24 +1044,28 @@ def getVariableKerningPairs(
             return
 
         if not firstIsClass and secondIsClass:
-            # getKerningGroups prunes class members to the glyph set, so
-            # every member resolves to a real pair. Members that agree on a
-            # value could share an inline class, but that only compacts the
-            # debug feature file: enum-expanded and per-glyph pairs compile to
+            # The source group maps prune members to the glyph set, so every
+            # member resolves to a real pair. Members that agree on a value
+            # could share an inline class, but that only compacts the debug
+            # feature file: enum-expanded and per-glyph pairs compile to
             # identical GPOS, so keep it simple and emit one pair per member.
-            for member in side2Classes[side2]:
+            # Per-member resolution also covers divergent membership -- each
+            # member takes its own per-source value -- so no refinement is
+            # needed here.
+            for member in kern2.groups[side2]:
                 scalar = build_scalar(side1, member)
                 yield KerningPair(side1, member, collapse_varscalar(scalar))
             return
 
-        s1 = side1Classes[side1] if firstIsClass else side1
-        s2 = side2Classes[side2] if secondIsClass else side2
-        pair = KerningPair(s1, s2, collapse_varscalar(build_scalar(side1, side2)))
-        # Ignore zero-valued class kern pairs. They are the most general
-        # kerns, so they don't override anything else like glyph kerns would
-        # and zero is the default.
-        if not (pair.firstIsClass and pair.secondIsClass and pair.value == 0):
-            yield pair
+        for names1, glyphs1 in kern1.refine(side1):
+            for names2, glyphs2 in kern2.refine(side2):
+                pair = KerningPair(
+                    glyphs1, glyphs2, collapse_varscalar(build_scalar(names1, names2))
+                )
+                # Zero class-to-class pairs override nothing, even when refined.
+                if firstIsClass and secondIsClass and pair.value == 0:
+                    continue
+                yield pair
 
     # The per-cell split can emit a glyph-glyph pair that another key also
     # yields (an explicit pair, or another overlapping class), so dedupe on the
