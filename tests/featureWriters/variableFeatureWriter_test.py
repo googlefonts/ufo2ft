@@ -761,6 +761,37 @@ def test_variable_kern_kernless_master_no_groups_matches_varlib(writerClass, Fon
         assert "pos A X" not in fea, fea
 
 
+@pytest.mark.parametrize(
+    "writerClass", [None, KernFeatureWriter2], ids=["writer1", "writer2"]
+)
+def test_variable_kern_explicit_zero_master_participates(writerClass, FontClass):
+    # A master with an explicit zero-valued pair has non-empty kerning, so it is
+    # NOT treated as kernless: it participates and pins the kern to 0 at its
+    # location, identically to the varLib merge path. This is the escape hatch
+    # #995 leaves for an author who genuinely wants the kern to collapse to 0 at
+    # a master (contrast test_variable_kern_kernless_master_matches_varlib, where
+    # an absent kerning interpolates across instead).
+    hb = pytest.importorskip("uharfbuzz")
+    featureWriters = None if writerClass is None else [writerClass()]
+    # Both paths honor the explicit zero identically.
+    _assertKernlessMasterMatchesVarLib(
+        FontClass, ["AX"], featureWriters=featureWriters, midKern={("A", "X"): 0}
+    )
+    # And it must actually pull the kern to 0 at the mid master, proving that
+    # master participated rather than being skipped as kernless.
+    kwargs = {} if featureWriters is None else {"featureWriters": featureWriters}
+    varfea = compileVariableTTF(
+        _makeKernlessMasterDesignSpace(FontClass, midKern={("A", "X"): 0}),
+        variableFeatures=True,
+        **kwargs,
+    )
+    buf = io.BytesIO()
+    varfea.save(buf)
+    face = hb.Face(buf.getvalue())
+    assert _shapeKern(face, hb, "AX", 500) == 0
+    assert _shapeKern(face, hb, "AX", 0) == 100
+
+
 # Shared feature/lookup tail for the exact-FEA cases.
 _KERN_FEATURE_TAIL = """
     feature kern {

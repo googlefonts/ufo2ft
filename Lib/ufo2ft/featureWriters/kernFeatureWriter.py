@@ -934,12 +934,27 @@ def getVariableKerningPairs(
 ) -> list[KerningPair]:
     quantization = options.quantization
 
+    # We may need to provide a default location value to the variation model,
+    # find out where that is. The default source is always kept below, even if
+    # it has no kerning: it anchors the model, and a kernless default is out of
+    # scope for #995.
+    default_source = designspace.findDefault()
+    assert default_source is not None
+
     # Resolve each non-sparse source against its own group maps.
     sources: list[_KernSource] = []
     for source in designspace.sources:
         if source.layerName is not None:
             continue
         assert source.font is not None
+        # A full (non-layer) source with no kerning at all does not participate
+        # in the varLib merge path: it compiles to no GPOS and VariationMerger
+        # excludes it (fontTools varLib/merger.py). Mirror that by skipping it,
+        # so it adds no location to the kern VariableScalars and the model
+        # interpolates across it instead of pinning the kern to 0 there.
+        # https://github.com/googlefonts/ufo2ft/issues/995
+        if source is not default_source and not source.font.kerning:
+            continue
         location = VariableScalarLocation(
             get_userspace_location(designspace, source.location)
         )
@@ -961,10 +976,8 @@ def getVariableKerningPairs(
             shown,
         )
 
-    # We may need to provide a default location value to the variation
-    # model, find out where that is.
-    default_source = designspace.findDefault()
-    assert default_source is not None
+    # The default source (located above) anchors the variation model; find where
+    # that is in the VariableScalar coordinate space.
     default_location = VariableScalarLocation(
         get_userspace_location(designspace, default_source.location)
     )
