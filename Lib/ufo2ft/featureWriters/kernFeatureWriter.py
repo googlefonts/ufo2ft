@@ -10,6 +10,7 @@ from fontTools import unicodedata
 from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.feaLib.variableScalar import Location as VariableScalarLocation
 from fontTools.feaLib.variableScalar import VariableScalar
+from fontTools.misc.classifyTools import classify
 from fontTools.ufoLib.kerning import lookupKerningValue
 from fontTools.unicodedata import script_horizontal_direction
 
@@ -741,21 +742,25 @@ def _refineMembers(
 
     A member's signature is its kerned group name in each source (None where it
     has none); members sharing the same signature form one refined class,
-    returned as a (signature, members) pair. Members are assumed sorted, so
-    output is deterministic. kernedMaps hold only groups referenced by that
-    source's kerning: an unkerned group never reaches the compiled ClassDefs
-    that varLib.merger partitions, so its members count as ungrouped here.
-    Grouping by the per-source signature yields the coarsest common refinement
-    that varLib.merger derives with classifyTools.classify; see ufo2ft#992.
+    returned as a (signature, members) pair, sorted for deterministic output.
+    kernedMaps hold only groups referenced by that source's kerning: an
+    unkerned group never reaches the compiled ClassDefs that varLib.merger
+    partitions, so its members count as ungrouped here. The members are
+    bucketed per source by their group, and classifyTools.classify -- the same
+    primitive varLib.merger uses -- derives the coarsest common refinement;
+    see ufo2ft#992.
     """
-    bySignature: dict[tuple[str | None, ...], list[str]] = {}
-    for member in members:
-        signature = tuple(kernedMap.get(member) for kernedMap in kernedMaps)
-        bySignature.setdefault(signature, []).append(member)
-    return sorted(
-        ((signature, tuple(refined)) for signature, refined in bySignature.items()),
-        key=lambda pair: pair[1],
-    )
+    perSourceSets: list[list[str]] = []
+    for kernedMap in kernedMaps:
+        byGroup: dict[str | None, list[str]] = {}
+        for member in members:
+            byGroup.setdefault(kernedMap.get(member), []).append(member)
+        perSourceSets.extend(byGroup.values())
+    classes, _ = classify(perSourceSets, sort=False)
+    return [
+        (tuple(kernedMap.get(cell[0]) for kernedMap in kernedMaps), cell)
+        for cell in sorted(tuple(sorted(refined)) for refined in classes)
+    ]
 
 
 class _KernSource(NamedTuple):
