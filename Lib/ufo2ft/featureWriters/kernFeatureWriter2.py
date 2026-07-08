@@ -36,7 +36,6 @@ from typing import Any, Iterator, Mapping, cast
 
 import fontTools.feaLib.ast as fea_ast
 from fontTools import unicodedata
-from fontTools.designspaceLib import DesignSpaceDocument
 from fontTools.unicodedata import script_horizontal_direction
 
 from ufo2ft.featureWriters import BaseFeatureWriter, ast
@@ -52,13 +51,10 @@ from .kernFeatureWriter import (
     DIST_ENABLED_SCRIPTS,
     LTR_BIDI_TYPES,
     RTL_BIDI_TYPES,
-    SIDE1_PREFIX,
-    SIDE2_PREFIX,
     KerningPair,
     addClassDefinition,
+    collectKerningGroups,
     getVariableKerningPairs,
-    log_redefined_group,
-    log_regrouped_glyph,
 )
 
 if sys.version_info < (3, 10):
@@ -344,7 +340,7 @@ def unicodeScriptDirection(uv: int) -> Direction | None:
 def extract_kerning_data(context: KernContext, options: SimpleNamespace) -> Any:
     side1Groups, side2Groups = get_kerning_groups(context)
     if context.isVariable:
-        pairs = get_variable_kerning_pairs(context, options, side1Groups, side2Groups)
+        pairs = get_variable_kerning_pairs(context, options)
     else:
         pairs = get_kerning_pairs(context, options, side1Groups, side2Groups)
 
@@ -368,75 +364,9 @@ def extract_kerning_data(context: KernContext, options: SimpleNamespace) -> Any:
 
 
 def get_kerning_groups(context: KernContext) -> tuple[KerningGroup, KerningGroup]:
-    allGlyphs = context.glyphSet
-
-    side1Groups: dict[str, tuple[str, ...]] = {}
-    side1Membership: dict[str, str] = {}
-    side2Groups: dict[str, tuple[str, ...]] = {}
-    side2Membership: dict[str, str] = {}
-
-    if isinstance(context.font, DesignSpaceDocument):
-        fonts = [source.font for source in context.font.sources]
-    else:
-        fonts = [context.font]
-
-    for font in fonts:
-        assert font is not None
-        for name, members in font.groups.items():
-            # prune non-existent or skipped glyphs
-            members = {g for g in members if g in allGlyphs}
-            # skip empty groups
-            if not members:
-                continue
-            # skip groups without UFO3 public.kern{1,2} prefix
-            if name.startswith(SIDE1_PREFIX):
-                name_truncated = name[len(SIDE1_PREFIX) :]
-                known_members = members.intersection(side1Membership.keys())
-                if known_members:
-                    for glyph_name in known_members:
-                        original_name_truncated = side1Membership[glyph_name]
-                        if name_truncated != original_name_truncated:
-                            log_regrouped_glyph(
-                                "first",
-                                name,
-                                original_name_truncated,
-                                font,
-                                glyph_name,
-                            )
-                    # Skip the whole group definition if there is any
-                    # overlap problem.
-                    continue
-                group = side1Groups.get(name)
-                if group is None:
-                    side1Groups[name] = tuple(sorted(members))
-                    for member in members:
-                        side1Membership[member] = name_truncated
-                elif set(group) != members:
-                    log_redefined_group("left", name, group, font, members)
-            elif name.startswith(SIDE2_PREFIX):
-                name_truncated = name[len(SIDE2_PREFIX) :]
-                known_members = members.intersection(side2Membership.keys())
-                if known_members:
-                    for glyph_name in known_members:
-                        original_name_truncated = side2Membership[glyph_name]
-                        if name_truncated != original_name_truncated:
-                            log_regrouped_glyph(
-                                "second",
-                                name,
-                                original_name_truncated,
-                                font,
-                                glyph_name,
-                            )
-                    # Skip the whole group definition if there is any
-                    # overlap problem.
-                    continue
-                group = side2Groups.get(name)
-                if group is None:
-                    side2Groups[name] = tuple(sorted(members))
-                    for member in members:
-                        side2Membership[member] = name_truncated
-                elif set(group) != members:
-                    log_redefined_group("right", name, group, font, members)
+    side1Groups, side2Groups, side1Membership, side2Membership = collectKerningGroups(
+        context.font, context.glyphSet, context.isVariable
+    )
     context.side1Membership = side1Membership
     context.side2Membership = side2Membership
     return side1Groups, side2Groups
@@ -479,8 +409,6 @@ def get_kerning_pairs(
 def get_variable_kerning_pairs(
     context: KernContext,
     options: SimpleNamespace,
-    side1Classes: KerningGroup,
-    side2Classes: KerningGroup,
 ) -> list[KerningPair]:
     # This legacy writer shares the default KernFeatureWriter's variable kerning
     # extraction, so the logic lives in exactly one place. The default writer
@@ -488,8 +416,6 @@ def get_variable_kerning_pairs(
     # KernContext, so unpack them here.
     return getVariableKerningPairs(
         context.font,
-        side1Classes,
-        side2Classes,
         context.glyphSet,
         options,
     )
