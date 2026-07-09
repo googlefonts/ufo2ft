@@ -947,11 +947,12 @@ def getVariableKerningPairs(
         if source.layerName is not None:
             continue
         assert source.font is not None
-        # A full (non-layer) source with no kerning at all does not participate
-        # in the varLib merge path: it compiles to no GPOS and VariationMerger
-        # excludes it (fontTools varLib/merger.py). Mirror that by skipping it,
-        # so it adds no location to the kern VariableScalars and the model
-        # interpolates across it instead of pinning the kern to 0 there.
+        # A full (non-layer) source with no kerning contributes no kern GPOS, so
+        # skip it: it adds no location to the kern VariableScalars and the model
+        # interpolates across it instead of pinning the kern to 0. varLib either
+        # excludes such a source (no other GPOS -> VariationMerger drops it) or
+        # crashes on it (has marks etc. -> structural mismatch, #350); skipping
+        # matches the former and beats the latter.
         # https://github.com/googlefonts/ufo2ft/issues/995
         if source is not default_source and not source.font.kerning:
             continue
