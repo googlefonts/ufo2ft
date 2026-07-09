@@ -7,6 +7,7 @@ from typing import NamedTuple
 import pytest
 from fontTools import designspaceLib
 from fontTools.ufoLib.kerning import lookupKerningValue
+from fontTools.varLib.errors import VarLibMergeError
 
 from ufo2ft import compileVariableTTF
 from ufo2ft.featureWriters.kernFeatureWriter import (
@@ -16,6 +17,7 @@ from ufo2ft.featureWriters.kernFeatureWriter import (
 from ufo2ft.featureWriters.kernFeatureWriter2 import (
     KernFeatureWriter as KernFeatureWriter2,
 )
+from ufo2ft.featureWriters.markFeatureWriter import MarkFeatureWriter
 
 
 def _makePartialExceptionDesignSpace(FontClass, *, coverAllMembers=False):
@@ -591,7 +593,7 @@ def test_variable_kern_divergent_groups_match_sources(mode, writerClass, FontCla
 
 
 def _makeKernlessMasterDesignSpace(
-    FontClass, *, kerned="glyph", midGroups=False, midKern=None
+    FontClass, *, kerned="glyph", midGroups=False, midKern=None, withMarks=False
 ):
     # Three full (non-layer) masters: two flanking masters that kern 100 at both
     # ends of the axis, and a middle master under test whose kerning is midKern
@@ -635,6 +637,15 @@ def _makeKernlessMasterDesignSpace(
             pen.lineTo((50, 700))
             pen.closePath()
             order.append(name)
+        if withMarks:
+            # A "top" base anchor plus a combining mark glyph makes ufo2ft emit
+            # a mark feature, i.e. GPOS content beyond kerning.
+            font["A"].appendAnchor({"name": "top", "x": 300, "y": 700})
+            mark = font.newGlyph("gravecomb")
+            mark.width = 0
+            mark.unicodes = [0x0300]
+            mark.appendAnchor({"name": "_top", "x": 0, "y": 0})
+            order.append("gravecomb")
         if withGroups and groups:
             font.groups.update({n: list(m) for n, m in groups.items()})
         font.kerning.update(kerning)
@@ -790,6 +801,49 @@ def test_variable_kern_explicit_zero_master_participates(writerClass, FontClass)
     face = hb.Face(buf.getvalue())
     assert _shapeKern(face, hb, "AX", 500) == 0
     assert _shapeKern(face, hb, "AX", 0) == 100
+
+
+@pytest.mark.parametrize(
+    "writerClass", [None, KernFeatureWriter2], ids=["writer1", "writer2"]
+)
+def test_variable_kern_kernless_master_with_marks_compiles(writerClass, FontClass):
+    # The case raised in #997 review: a kernless master can still carry other
+    # GPOS. Here the middle master has a mark feature (from anchors) but no
+    # kerning. The varLib merge path cannot handle it -- that master's GPOS has
+    # the mark feature but no kern feature, so the per-master feature lists
+    # diverge and the merge raises (#350). The variable-fea path builds features
+    # once over the whole designspace, so it compiles: the empty kerning is
+    # simply non-participating (#995) while the marks build independently.
+    hb = pytest.importorskip("uharfbuzz")
+    # Default writers include the kern and mark writers; for writer2 the mark
+    # writer must be added explicitly so the mark GPOS is still generated.
+    if writerClass is None:
+        featureWriters = None
+    else:
+        featureWriters = [writerClass(), MarkFeatureWriter()]
+    kwargs = {} if featureWriters is None else {"featureWriters": featureWriters}
+
+    with pytest.raises(VarLibMergeError):
+        compileVariableTTF(
+            _makeKernlessMasterDesignSpace(FontClass, withMarks=True),
+            variableFeatures=False,
+            **kwargs,
+        )
+
+    varfea = compileVariableTTF(
+        _makeKernlessMasterDesignSpace(FontClass, withMarks=True),
+        variableFeatures=True,
+        **kwargs,
+    )
+    features = {fr.FeatureTag for fr in varfea["GPOS"].table.FeatureList.FeatureRecord}
+    assert {"kern", "mark"} <= features, features
+    # The kern interpolates across the kernless master (stays 100) rather than
+    # being pinned to 0 there, and the marks survived alongside it.
+    buf = io.BytesIO()
+    varfea.save(buf)
+    face = hb.Face(buf.getvalue())
+    for wght in (0, 500, 1000):
+        assert _shapeKern(face, hb, "AX", wght) == 100
 
 
 # Shared feature/lookup tail for the exact-FEA cases.
