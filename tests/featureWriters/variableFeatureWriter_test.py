@@ -7,6 +7,7 @@ from typing import NamedTuple
 import pytest
 from fontTools import designspaceLib
 from fontTools.ufoLib.kerning import lookupKerningValue
+from fontTools.varLib.errors import VarLibMergeError
 
 from ufo2ft import compileVariableTTF
 from ufo2ft.featureWriters.kernFeatureWriter import (
@@ -16,6 +17,7 @@ from ufo2ft.featureWriters.kernFeatureWriter import (
 from ufo2ft.featureWriters.kernFeatureWriter2 import (
     KernFeatureWriter as KernFeatureWriter2,
 )
+from ufo2ft.featureWriters.markFeatureWriter import MarkFeatureWriter
 
 
 def _makePartialExceptionDesignSpace(FontClass, *, coverAllMembers=False):
@@ -588,6 +590,260 @@ def test_variable_kern_divergent_groups_match_sources(mode, writerClass, FontCla
     _assertVariableKernMatchesSources(
         designspace, ("A", "B"), ("X", "Y", "Z", "W"), featureWriters=featureWriters
     )
+
+
+def _makeKernlessMasterDesignSpace(
+    FontClass, *, kerned="glyph", midGroups=False, midKern=None, withMarks=False
+):
+    # Three full (non-layer) masters: two flanking masters that kern 100 at both
+    # ends of the axis, and a middle master under test whose kerning is midKern
+    # (default empty -- the #995 kernless shape). The default source is kept
+    # non-kernless (its own kernless corner is out of scope for #995).
+    #
+    # kerned selects how the flanking masters kern: a bare glyph pair ("glyph"),
+    # a glyph-to-class pair ("glyph_class", second side @right = [X, Y]), or a
+    # class-to-class pair ("class_class", @left = [A, B] against @right = [X, Y]
+    # -- the Roboto Flex parametric shape). midGroups additionally gives the
+    # middle master those same kern groups, so its empty kerning must not make
+    # the grouped glyphs look divergent.
+    U = {"A": 0x41, "B": 0x42, "X": 0x58, "Y": 0x59}
+    if kerned == "glyph":
+        names = ("A", "X")
+        groups = {}
+        endKern = {("A", "X"): 100}
+    elif kerned == "glyph_class":
+        names = ("A", "X", "Y")
+        groups = {"public.kern2.right": ["X", "Y"]}
+        endKern = {("A", "public.kern2.right"): 100}
+    elif kerned == "class_class":
+        names = ("A", "B", "X", "Y")
+        groups = {"public.kern1.left": ["A", "B"], "public.kern2.right": ["X", "Y"]}
+        endKern = {("public.kern1.left", "public.kern2.right"): 100}
+    else:
+        raise ValueError(f"unknown kerned mode: {kerned!r}")
+
+    def makeMaster(kerning, withGroups):
+        font = FontClass()
+        font.newGlyph(".notdef").width = 600
+        order = [".notdef"]
+        for name in names:
+            glyph = font.newGlyph(name)
+            glyph.width = 600
+            glyph.unicodes = [U[name]]
+            pen = glyph.getPen()
+            pen.moveTo((50, 0))
+            pen.lineTo((550, 0))
+            pen.lineTo((550, 700))
+            pen.lineTo((50, 700))
+            pen.closePath()
+            order.append(name)
+        if withMarks:
+            # A "top" base anchor plus a combining mark glyph makes ufo2ft emit
+            # a mark feature, i.e. GPOS content beyond kerning.
+            font["A"].appendAnchor({"name": "top", "x": 300, "y": 700})
+            mark = font.newGlyph("gravecomb")
+            mark.width = 0
+            mark.unicodes = [0x0300]
+            mark.appendAnchor({"name": "_top", "x": 0, "y": 0})
+            order.append("gravecomb")
+        if withGroups and groups:
+            font.groups.update({n: list(m) for n, m in groups.items()})
+        font.kerning.update(kerning)
+        font.lib["public.glyphOrder"] = order
+        return font
+
+    masters = [
+        (makeMaster(endKern, True), 0, "regular"),
+        (makeMaster(midKern or {}, midGroups), 500, "mid"),
+        (makeMaster(endKern, True), 1000, "bold"),
+    ]
+
+    designspace = designspaceLib.DesignSpaceDocument()
+    axis = designspace.newAxisDescriptor()
+    axis.name, axis.tag = "Weight", "wght"
+    axis.minimum, axis.default, axis.maximum = 0, 0, 1000
+    designspace.addAxis(axis)
+    for font, location, name in masters:
+        source = designspace.newSourceDescriptor()
+        source.font = font
+        source.location = {"Weight": location}
+        source.name = source.styleName = name
+        source.familyName = "Test"
+        designspace.addSource(source)
+    return designspace
+
+
+def _shapeKern(face, hb, text, wght):
+    font = hb.Font(face)
+    font.set_variations({"wght": wght})
+    buf = hb.Buffer()
+    buf.add_str(text)
+    buf.guess_segment_properties()
+    hb.shape(font, buf, {"kern": True})
+    info, pos = buf.glyph_infos, buf.glyph_positions
+    return pos[0].x_advance - font.get_glyph_h_advance(info[0].codepoint)
+
+
+def _assertKernlessMasterMatchesVarLib(FontClass, texts, *, featureWriters, **dsKwargs):
+    # The varLib merge path (variableFeatures=False) is the oracle: it excludes
+    # the kernless master's absent GPOS and keeps the kern constant. The
+    # variable-features path (variableFeatures=True) must reproduce it.
+    hb = pytest.importorskip("uharfbuzz")
+    locations = (0, 250, 500, 750, 1000)
+    kwargs = {} if featureWriters is None else {"featureWriters": featureWriters}
+    varlib = compileVariableTTF(
+        _makeKernlessMasterDesignSpace(FontClass, **dsKwargs),
+        variableFeatures=False,
+    )
+    varfea = compileVariableTTF(
+        _makeKernlessMasterDesignSpace(FontClass, **dsKwargs),
+        variableFeatures=True,
+        **kwargs,
+    )
+    varlibBuf, varfeaBuf = io.BytesIO(), io.BytesIO()
+    varlib.save(varlibBuf)
+    varfea.save(varfeaBuf)
+    varlibFace = hb.Face(varlibBuf.getvalue())
+    varfeaFace = hb.Face(varfeaBuf.getvalue())
+    for text in texts:
+        for wght in locations:
+            expected = _shapeKern(varlibFace, hb, text, wght)
+            actual = _shapeKern(varfeaFace, hb, text, wght)
+            assert actual == expected, (
+                f"{text} wght={wght}: " f"varfea kerns {actual}, varlib {expected}"
+            )
+
+
+@pytest.mark.parametrize(
+    "writerClass", [None, KernFeatureWriter2], ids=["writer1", "writer2"]
+)
+def test_variable_kern_kernless_master_matches_varlib(writerClass, FontClass):
+    # https://github.com/googlefonts/ufo2ft/issues/995: a full master with no
+    # kerning must not pin the kern to 0 at its location.
+    featureWriters = None if writerClass is None else [writerClass()]
+    _assertKernlessMasterMatchesVarLib(
+        FontClass, ["AX"], featureWriters=featureWriters, kerned="glyph"
+    )
+
+
+@pytest.mark.parametrize(
+    "writerClass", [None, KernFeatureWriter2], ids=["writer1", "writer2"]
+)
+def test_variable_kern_kernless_master_with_groups_matches_varlib(
+    writerClass, FontClass
+):
+    # The kernless master still carries the kern groups: its empty kerning must
+    # neither zero the class kern nor make the grouped glyphs look divergent.
+    featureWriters = None if writerClass is None else [writerClass()]
+    _assertKernlessMasterMatchesVarLib(
+        FontClass,
+        ["AX", "AY"],
+        featureWriters=featureWriters,
+        kerned="glyph_class",
+        midGroups=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "writerClass", [None, KernFeatureWriter2], ids=["writer1", "writer2"]
+)
+def test_variable_kern_kernless_master_no_groups_matches_varlib(writerClass, FontClass):
+    # The Roboto Flex parametric shape: flanking masters kern one class-to-class
+    # pair; the middle master has neither groups nor kerning. Skipping it keeps
+    # that pair intact -- letting it participate would make its glyphs look
+    # ungrouped, splintering the class pair into per-cell glyph pairs. Shaping
+    # stays correct either way, so the FEA assertion below guards GPOS structure.
+    featureWriters = None if writerClass is None else [writerClass()]
+    _assertKernlessMasterMatchesVarLib(
+        FontClass,
+        ["AX", "AY", "BX", "BY"],
+        featureWriters=featureWriters,
+        kerned="class_class",
+    )
+    if writerClass is None:
+        # The class kern stays a single, non-varying class-to-class pair.
+        tmp = io.StringIO()
+        compileVariableTTF(
+            _makeKernlessMasterDesignSpace(FontClass, kerned="class_class"),
+            debugFeatureFile=tmp,
+        )
+        fea = tmp.getvalue()
+        assert "pos @kern1.Latn.left @kern2.Latn.right 100;" in fea, fea
+        assert "pos A X" not in fea, fea
+
+
+@pytest.mark.parametrize(
+    "writerClass", [None, KernFeatureWriter2], ids=["writer1", "writer2"]
+)
+def test_variable_kern_explicit_zero_master_participates(writerClass, FontClass):
+    # A master with an explicit zero-valued pair has non-empty kerning, so it is
+    # NOT treated as kernless: it participates and pins the kern to 0 at its
+    # location, identically to the varLib merge path. This is the escape hatch
+    # #995 leaves for an author who genuinely wants the kern to collapse to 0 at
+    # a master (contrast test_variable_kern_kernless_master_matches_varlib, where
+    # an absent kerning interpolates across instead).
+    hb = pytest.importorskip("uharfbuzz")
+    featureWriters = None if writerClass is None else [writerClass()]
+    # Both paths honor the explicit zero identically.
+    _assertKernlessMasterMatchesVarLib(
+        FontClass, ["AX"], featureWriters=featureWriters, midKern={("A", "X"): 0}
+    )
+    # And it must actually pull the kern to 0 at the mid master, proving that
+    # master participated rather than being skipped as kernless.
+    kwargs = {} if featureWriters is None else {"featureWriters": featureWriters}
+    varfea = compileVariableTTF(
+        _makeKernlessMasterDesignSpace(FontClass, midKern={("A", "X"): 0}),
+        variableFeatures=True,
+        **kwargs,
+    )
+    buf = io.BytesIO()
+    varfea.save(buf)
+    face = hb.Face(buf.getvalue())
+    assert _shapeKern(face, hb, "AX", 500) == 0
+    assert _shapeKern(face, hb, "AX", 0) == 100
+
+
+@pytest.mark.parametrize(
+    "writerClass", [None, KernFeatureWriter2], ids=["writer1", "writer2"]
+)
+def test_variable_kern_kernless_master_with_marks_compiles(writerClass, FontClass):
+    # The case raised in #997 review: a kernless master can still carry other
+    # GPOS. Here the middle master has a mark feature (from anchors) but no
+    # kerning. The varLib merge path cannot handle it -- that master's GPOS has
+    # the mark feature but no kern feature, so the per-master feature lists
+    # diverge and the merge raises (#350). The variable-fea path builds features
+    # once over the whole designspace, so it compiles: the empty kerning is
+    # simply non-participating (#995) while the marks build independently.
+    hb = pytest.importorskip("uharfbuzz")
+    # Default writers include the kern and mark writers; for writer2 the mark
+    # writer must be added explicitly so the mark GPOS is still generated.
+    if writerClass is None:
+        featureWriters = None
+    else:
+        featureWriters = [writerClass(), MarkFeatureWriter()]
+    kwargs = {} if featureWriters is None else {"featureWriters": featureWriters}
+
+    with pytest.raises(VarLibMergeError):
+        compileVariableTTF(
+            _makeKernlessMasterDesignSpace(FontClass, withMarks=True),
+            variableFeatures=False,
+            **kwargs,
+        )
+
+    varfea = compileVariableTTF(
+        _makeKernlessMasterDesignSpace(FontClass, withMarks=True),
+        variableFeatures=True,
+        **kwargs,
+    )
+    features = {fr.FeatureTag for fr in varfea["GPOS"].table.FeatureList.FeatureRecord}
+    assert {"kern", "mark"} <= features, features
+    # The kern interpolates across the kernless master (stays 100) rather than
+    # being pinned to 0 there, and the marks survived alongside it.
+    buf = io.BytesIO()
+    varfea.save(buf)
+    face = hb.Face(buf.getvalue())
+    for wght in (0, 500, 1000):
+        assert _shapeKern(face, hb, "AX", wght) == 100
 
 
 # Shared feature/lookup tail for the exact-FEA cases.
