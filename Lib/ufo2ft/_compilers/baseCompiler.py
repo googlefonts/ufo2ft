@@ -105,6 +105,13 @@ class BaseCompiler:
             )
             kwargs = prune_unknown_kwargs(self.__dict__, postProcessor.process)
             ttf = postProcessor.process(**kwargs)
+            # Upgrade to the beyond-64k companion tables (GLYF/LOCA/MAXP/...)
+            # only on final outputs. While building a variable font,
+            # postProcessorClass is None for the interpolation masters (see
+            # _compileNeededSources), so they keep their lowercase glyf/loca/maxp
+            # tables and varLib sees a consistent table family; the merged VF is
+            # uppercased here when its own postprocess runs.
+            _maybe_uppercase_beyond64k(ttf, getattr(self, "allQuadratic", True))
         return ttf
 
     def compileFeatures(
@@ -481,3 +488,18 @@ class BaseInterpolatableCompiler(BaseCompiler):
 
         # Add back feature variations, as the code above would overwrite them.
         varLib.addGSUBFeatureVariations(ttFont, designSpaceDoc)
+
+
+def _maybe_uppercase_beyond64k(ttFont, allQuadratic=True):
+    # maxp.numGlyphs is uint16: a count of 65536 overflows it even though every
+    # gid (0..0xFFFF) still fits. Guard on count > 0xFFFF, not gid width.
+    # allQuadratic=False opts into cubic curves (CUBIC flag is only valid in the
+    # uppercase GLYF, never lowercase glyf), so always upgrade then to make the
+    # compatibility breaking obvious rather than depending on whether a cubic
+    # was emitted, which could be a silent footgun.
+    if len(ttFont.getGlyphOrder()) <= 0xFFFF and allQuadratic:
+        return
+
+    from fontTools.ttLib.beyond64k import upper_tables
+
+    upper_tables(ttFont)

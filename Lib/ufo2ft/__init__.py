@@ -49,8 +49,9 @@ def compileTTF(ufo, **kwargs):
     in between two off-curves can be dropped when building glyphs (default: False).
 
     *allQuadratic* (bool) specifies whether to convert all curves to quadratic - True
-    by default, builds traditional glyf v0 table. If False, quadratic curves or cubic
-    curves are generated depending on which has fewer points; a glyf v1 is generated.
+    by default, builds traditional glyf v0 table. If False, quadratic or cubic curves
+    are generated depending on which has fewer points, and any cubic outlines are
+    placed in the uppercase GLYF table.
     """
     return TTFCompiler(**kwargs).compile(ufo)
 
@@ -158,8 +159,9 @@ def compileVariableTTFs(designSpaceDoc, **kwargs):
       designspace will by built.
 
     *allQuadratic* (bool) specifies whether to convert all curves to quadratic - True
-      by default, builds traditional glyf v0 table. If False, quadratic curves or cubic
-      curves are generated depending on which has fewer points; a glyf v1 is generated.
+      by default, builds traditional glyf v0 table. If False, quadratic or cubic curves
+      are generated depending on which has fewer points, and any cubic outlines are
+      placed in the uppercase GLYF table.
 
     The rest of the arguments works the same as in the other compile functions.
 
@@ -281,8 +283,9 @@ def compileVariableCFF2s(designSpaceDoc, **kwargs):
       designspace will by built.
 
     *allQuadratic* (bool) specifies whether to convert all curves to quadratic - True
-      by default, builds traditional glyf v0 table. If False, quadratic curves or cubic
-      curves are generated depending on which has fewer points; a glyf v1 is generated.
+      by default, builds traditional glyf v0 table. If False, quadratic or cubic curves
+      are generated depending on which has fewer points, and any cubic outlines are
+      placed in the uppercase GLYF table.
 
     The rest of the arguments works the same as in the other compile functions.
 

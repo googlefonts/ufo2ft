@@ -382,7 +382,7 @@ class BaseOutlineCompiler:
         )
         head.fontDirectionHint = 2
         head.indexToLocFormat = 0
-        head.glyphDataFormat = getattr(self, "glyphDataFormat", 0)
+        head.glyphDataFormat = 0
 
     def setupTable_name(self):
         """
@@ -1677,7 +1677,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         dropImpliedOnCurves=False,
         autoUseMyMetrics=True,
         roundCoordinates=True,
-        glyphDataFormat=0,
+        allowCubic=False,
         ftConfig=None,
         *,
         compilingVFDefaultSource=True,
@@ -1697,7 +1697,7 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         self.autoUseMyMetrics = autoUseMyMetrics
         self.dropImpliedOnCurves = dropImpliedOnCurves
         self.roundCoordinates = roundCoordinates
-        self.glyphDataFormat = glyphDataFormat
+        self.allowCubic = allowCubic
 
     def makeMissingRequiredGlyphs(self, font, glyphSet, sfntVersion, notdefGlyph=None):
         """
@@ -1732,7 +1732,6 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
         allGlyphs = self.allGlyphs
         ttGlyphs = {}
         round = otRound if self.roundCoordinates else noRound
-        glyphDataFormat = self.glyphDataFormat
         for name in self.glyphOrder:
             glyph = allGlyphs[name]
             pen = TTGlyphPointPen(allGlyphs)
@@ -1747,14 +1746,13 @@ class OutlineTTFCompiler(BaseOutlineCompiler):
                     round=round,
                 )
                 if (
-                    glyphDataFormat == 0
+                    not self.allowCubic
                     and ttGlyph.numberOfContours > 0
                     and any(f & flagCubic for f in ttGlyph.flags)
                 ):
                     raise ValueError(
-                        f"{name!r} has cubic Bezier curves, but glyphDataFormat=0; "
-                        "either convert to quadratic (convertCubics=True) or use "
-                        "allQuadratic=False so that glyphDataFormat=1."
+                        f"{name!r} has cubic Bezier curves; either convert to "
+                        "quadratic (convertCubics=True) or use allQuadratic=False."
                     )
             ttGlyphs[name] = ttGlyph
         return ttGlyphs
