@@ -1,4 +1,4 @@
-fonttools[lxml,ufo]==4.63.0
+fonttools[ufo,lxml]==4.64.0
 defcon==0.12.2
 compreffor==0.6.0
 booleanOperations==0.10.0
@@ -10,4 +10,4 @@ fontMath==0.10.0
 ufoLib2==0.18.1
 
 # shape compiled fonts in tests to verify the kerning they actually apply
-uharfbuzz==0.56.0
+uharfbuzz==0.56.1
