@@ -10,4 +10,4 @@ fontMath==0.10.0
 ufoLib2==0.18.1
 
 # shape compiled fonts in tests to verify the kerning they actually apply
-uharfbuzz==0.56.0
+uharfbuzz==0.56.1
