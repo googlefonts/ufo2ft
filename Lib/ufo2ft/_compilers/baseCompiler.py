@@ -29,6 +29,14 @@ from ufo2ft.util import (
 )
 
 
+def _extraSubstitutions(designSpaceDoc):
+    extraSubstitutions = defaultdict(set)
+    for rule in designSpaceDoc.rules:
+        for left, right in rule.subs:
+            extraSubstitutions[left].add(right)
+    return extraSubstitutions
+
+
 @dataclass
 class BaseCompiler:
     postProcessorClass: Type = PostProcessor
@@ -263,10 +271,7 @@ class BaseInterpolatableCompiler(BaseCompiler):
         if self.notdefGlyph is None:
             self.notdefGlyph = _notdefGlyphFallback(designSpaceDoc)
 
-        self.extraSubstitutions = defaultdict(set)
-        for rule in designSpaceDoc.rules:
-            for left, right in rule.subs:
-                self.extraSubstitutions[left].add(right)
+        self.extraSubstitutions = _extraSubstitutions(designSpaceDoc)
 
         # used to interpolate glyphs on-the-fly in filters (e.g. DecomposeComponents)
         self.instantiator = Instantiator.from_designspace(
@@ -472,6 +477,7 @@ class BaseInterpolatableCompiler(BaseCompiler):
             glyphSet=glyphSet,
             feaIncludeDir=self.feaIncludeDir,
             featureWriters=self.featureWriters,
+            extraSubstitutions=_extraSubstitutions(designSpaceDoc),
         )
         featureCompiler.compile()
 

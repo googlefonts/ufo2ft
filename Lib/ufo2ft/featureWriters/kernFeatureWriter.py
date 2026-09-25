@@ -254,9 +254,6 @@ class KernFeatureWriter(BaseFeatureWriter):
             for otTag, languages in languageSystems
         }
 
-        # TODO: Also include substitution information from Designspace rules to
-        # correctly set the scripts of variable substitution glyphs, maybe add
-        # `glyphUnicodeMapping: dict[str, int] | None` to `BaseFeatureCompiler`?
         cmap = self.makeUnicodeToGlyphNameMapping()
         gsub = self.compileGSUB()
         extras = self.extraSubstitutions()
