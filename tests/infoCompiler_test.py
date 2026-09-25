@@ -49,6 +49,59 @@ class InfoCompilerTest:
         ttf = compiler.compile()
         assert ttf["name"].getDebugName(6) == "TestFontOverride-Italic"
 
+    def test_name_stat_value_keeps_its_string_when_style_name_changes(
+        self, testttf, testufo
+    ):
+        # The STAT built from the default master may point an axis value at a
+        # standard name ID whose string matched, e.g. name ID 2 "Regular" for
+        # the elidable default label. When the variable font's fontinfo renames
+        # name ID 2, the axis value must keep saying "Regular". The default label
+        # is often the same string on several axes; those axis values share one
+        # name record and must keep sharing it after the move.
+        from fontTools.otlLib.builder import buildStatTable
+
+        assert testttf["name"].getDebugName(2) == "Regular"
+        buildStatTable(
+            testttf,
+            [
+                dict(
+                    tag="wght",
+                    name="Weight",
+                    values=[
+                        dict(value=400, name="Regular", flags=0x2),
+                        dict(value=700, name="Bold"),
+                    ],
+                ),
+                dict(
+                    tag="wdth",
+                    name="Width",
+                    values=[dict(value=100, name="Regular", flags=0x2)],
+                ),
+            ],
+            windowsNames=True,
+            macNames=False,
+        )
+        stat = testttf["STAT"].table
+        assert [v.ValueNameID for v in stat.AxisValueArray.AxisValue][::2] == [2, 2]
+
+        info = {"styleName": "Italic", "styleMapStyleName": "italic"}
+        compiler = InfoCompiler(testttf, testufo, info)
+        ttf = compiler.compile()
+
+        name = ttf["name"]
+        assert name.getDebugName(2) == "Italic"
+        values = ttf["STAT"].table.AxisValueArray.AxisValue
+        assert [name.getDebugName(v.ValueNameID) for v in values] == [
+            "Regular",
+            "Bold",
+            "Regular",
+        ]
+        assert values[0].ValueNameID >= 256
+        assert values[2].ValueNameID == values[0].ValueNameID
+        assert [n.nameID for n in name.names if n.toUnicode() == "Regular"] == [
+            values[0].ValueNameID
+        ]
+
     def test_OS2(self, testttf, testufo):
         info = {
             "openTypeOS2TypoAscender": 100,
