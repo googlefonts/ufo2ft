@@ -169,6 +169,7 @@ class InfoCompiler(BaseOutlineCompiler):
         orig_names = {
             (n.nameID, n.platformID, n.platEncID, n.langID): n for n in orig.names
         }
+        self._preserveStatValueNames(orig, orig_names, temp_names)
         orig_names.update(temp_names)
         orig.names = list(orig_names.values())
         # If the 'typographic' family/subfamily names were present in the original
@@ -197,6 +198,40 @@ class InfoCompiler(BaseOutlineCompiler):
                     for rec in stat.AxisValueArray.AxisValue:
                         if rec.ValueNameID == 17:
                             rec.ValueNameID = 2
+
+    def _preserveStatValueNames(self, orig, orig_names, temp_names):
+        # A STAT axis value may reference a standard name ID (2, 17, ...) that
+        # happened to carry its string when the STAT was built from the default
+        # master, e.g. name ID 17 "Light" for a Light master. When the variable
+        # font's own fontinfo now redefines that ID with a different string,
+        # keep the axis value pointing at its original string under a new name ID.
+        if "STAT" not in self.orig_otf:
+            return
+        stat = self.orig_otf["STAT"].table
+        if not stat.AxisValueArray:
+            return
+        moved = {}
+        for rec in stat.AxisValueArray.AxisValue:
+            name_id = rec.ValueNameID
+            if name_id in moved:
+                rec.ValueNameID = moved[name_id]
+                continue
+            records = [n for n in orig.names if n.nameID == name_id]
+            redefined = any(
+                (key := (n.nameID, n.platformID, n.platEncID, n.langID)) in temp_names
+                and temp_names[key].toUnicode() != n.toUnicode()
+                for n in records
+            )
+            if not redefined:
+                continue
+            new_id = orig._findUnusedNameID()
+            for n in records:
+                orig.setName(n.toUnicode(), new_id, n.platformID, n.platEncID, n.langID)
+                orig_names[(new_id, n.platformID, n.platEncID, n.langID)] = (
+                    orig.getName(new_id, n.platformID, n.platEncID, n.langID)
+                )
+            moved[name_id] = new_id
+            rec.ValueNameID = new_id
 
     def setupTable_gasp(self):
         from ufo2ft.instructionCompiler import InstructionCompiler
