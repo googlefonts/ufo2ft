@@ -1016,3 +1016,58 @@ def test_variable_features_old_kern_writer(FontClass):
 
         } curs;
 """)  # noqa: B950
+
+
+def test_variable_features_extra_substitutions(data_dir, FontClass):
+    # Glyphs only reachable through designspace rules should be classified by
+    # the script of the glyph they substitute (#730), also when the features
+    # are compiled once for the whole designspace.
+    designspace = designspaceLib.DesignSpaceDocument()
+    axis = designspace.newAxisDescriptor()
+    axis.name, axis.tag = "Weight", "wght"
+    axis.minimum, axis.default, axis.maximum = 400, 400, 700
+    designspace.addAxis(axis)
+    for weight in (400, 700):
+        source = designspace.newSourceDescriptor()
+        source.font = FontClass(data_dir / "Alternates-Regular.ufo")
+        source.location = {"Weight": weight}
+        designspace.addSource(source)
+    rule = designspaceLib.RuleDescriptor()
+    rule.name = "BRACKET.varAlt01"
+    rule.conditionSets.append([{"name": "Weight", "minimum": 600, "maximum": 700}])
+    for glyphName in ("ka-oriya", "uuMatra-oriya", "lVocalicMatra-oriya"):
+        rule.subs.append((glyphName, f"{glyphName}.BRACKET.varAlt01"))
+    designspace.addRule(rule)
+
+    tmp = io.StringIO()
+    _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
+
+    assert dedent("\n" + tmp.getvalue()) == dedent("""
+        markClass uuMatra-oriya <anchor 382 0> @mark_bottom;
+        markClass lVocalicMatra-oriya <anchor 331 -2> @mark_bottom;
+        markClass ka-oriya.below <anchor 280 110> @mark_bottom;
+        markClass lVocalicMatra-oriya.BRACKET.varAlt01 <anchor 331 -2> @mark_bottom;
+        markClass uuMatra-oriya.BRACKET.varAlt01 <anchor 382 0> @mark_bottom;
+
+        # Prefix: Languagesystems
+        languagesystem DFLT dflt;
+        languagesystem ory2 dflt;
+        languagesystem latn dflt;
+        # This is needed in our full builds because we use feature variations
+        feature blwm {
+            lookup blwm_mark2base {
+                pos base ka-oriya
+                    <anchor 496 0> mark @mark_bottom;
+                pos base ka-oriya.BRACKET.varAlt01
+                    <anchor 496 0> mark @mark_bottom;
+            } blwm_mark2base;
+
+            lookup blwm_mark2mark_bottom {
+                @MFS_blwm_mark2mark_bottom = [uuMatra-oriya lVocalicMatra-oriya ka-oriya.below lVocalicMatra-oriya.BRACKET.varAlt01 uuMatra-oriya.BRACKET.varAlt01];
+                lookupflag UseMarkFilteringSet @MFS_blwm_mark2mark_bottom;
+                pos mark ka-oriya.below
+                    <anchor 351 -164> mark @mark_bottom;
+            } blwm_mark2mark_bottom;
+
+        } blwm;
+""")  # noqa: B950
