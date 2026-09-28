@@ -152,8 +152,12 @@ def parseAnchorName(
         separator = ligaSeparator
         if key.endswith(separator):
             assert separator
-            key = key[: -len(separator)]
             number = int(number)
+            key = key[: -len(separator)]
+            if number < 1 or not key:
+                # not a valid ligature anchor name (index must be >= 1, key must exist)
+                key = anchorName
+                number = None
         else:
             # not a valid ligature anchor name
             key = anchorName
@@ -209,8 +213,7 @@ class NamedAnchor:
             libData=libData,
         )
         if number is not None:
-            if number < 1:
-                raise ValueError("ligature component indexes must start from 1")
+            assert number >= 1, name
         else:
             assert key, name
         self.isMark = isMark

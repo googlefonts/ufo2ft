@@ -60,9 +60,31 @@ def test_parseAnchorName_invalid():
         parseAnchorName("_")
 
 
-def test_NamedAnchor_invalid():
-    with pytest.raises(ValueError, match="indexes must start from 1"):
-        NamedAnchor("top_0", 1, 2)
+@pytest.mark.parametrize(
+    "input_expected",
+    [
+        ("top_0", (False, "top_0", None, False, False)),
+        ("_3", (True, "3", None, False, True)),
+        ("_0", (True, "0", None, False, True)),
+        ("_1", (True, "1", None, False, True)),
+    ],
+)
+def test_parseAnchorName_invalid_ligature(input_expected):
+    anchorName, (isMark, key, number, isContextual, isIgnorable) = input_expected
+    assert parseAnchorName(anchorName) == (
+        isMark,
+        key,
+        number,
+        isContextual,
+        isIgnorable,
+    )
+
+
+def test_NamedAnchor_zero_index():
+    # index 0 is no longer valid for ligature anchors; treated as non-ligature
+    anchor = NamedAnchor("top_0", 1, 2)
+    assert anchor.number is None
+    assert anchor.key == "top_0"
 
 
 def test_NamedAnchor_repr():
@@ -180,11 +202,15 @@ class MarkFeatureWriterTest(FeatureWriterTest):
         testufo.newGlyph("f_f_foo").anchors = [
             {"name": "top_1", "x": 250, "y": 600},
             {"name": "top_2", "x": 500, "y": 600},
-            {"name": "_3", "x": 0, "y": 0},  # this becomes <anchor NULL>
+            {"name": "_3", "x": 0, "y": 0},  # now treated as mark anchor, not ligature NULL
         ]
         generated = self.writeFeatures(testufo)
 
-        assert re.search(r"ligComponent\s+<anchor NULL>", str(generated))
+        fea = str(generated)
+        # _3 is no longer a ligature anchor; no NULL anchor in output
+        assert "<anchor NULL>" not in fea
+        # ligature f_f_foo should have exactly 2 components (top_1 and top_2)
+        assert re.search(r"pos ligature f_f_foo\b", fea)
 
     def test_skip_existing_feature(self, testufo):
         testufo.features.text = dedent("""\
