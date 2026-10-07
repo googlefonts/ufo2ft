@@ -112,7 +112,7 @@ class GetAttrWithFallbackTest:
 
         assert (
             getAttrWithFallback(info, "openTypeNameUniqueID")
-            == "1.001;NONE;FamilyName-StyleName"
+            == "1.001;    ;FamilyName-StyleName"
         )
 
         assert getAttrWithFallback(info, "postscriptSlantAngle") == 0

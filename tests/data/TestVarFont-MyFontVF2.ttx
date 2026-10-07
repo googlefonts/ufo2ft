@@ -30,7 +30,7 @@
       Regular
     </namerecord>
     <namerecord nameID="3" platformID="3" platEncID="1" langID="0x409">
-      2.000;NONE;MyFontNarrVF-Regular
+      2.000;    ;MyFontNarrVF-Regular
     </namerecord>
     <namerecord nameID="4" platformID="3" platEncID="1" langID="0x409">
       My Font Narrow VF Regular

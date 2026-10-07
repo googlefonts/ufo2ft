@@ -106,7 +106,7 @@
     <ulUnicodeRange2 value="00000000 00000000 00000000 00000000"/>
     <ulUnicodeRange3 value="00000000 00000000 00000000 00000000"/>
     <ulUnicodeRange4 value="00000000 00000000 00000000 00000000"/>
-    <achVendID value="NONE"/>
+    <achVendID value="    "/>
     <fsSelection value="00000000 01000000"/>
     <usFirstCharIndex value="65535"/>
     <usLastCharIndex value="65535"/>
@@ -254,7 +254,7 @@
       Regular
     </namerecord>
     <namerecord nameID="3" platformID="3" platEncID="1" langID="0x409">
-      0.000;NONE;NewFont-Regular
+      0.000;    ;NewFont-Regular
     </namerecord>
     <namerecord nameID="4" platformID="3" platEncID="1" langID="0x409">
       New Font Regular

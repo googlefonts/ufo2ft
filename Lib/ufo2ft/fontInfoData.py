@@ -375,7 +375,8 @@ staticFallbackData = dict(
     openTypeOS2WidthClass=5,
     openTypeOS2WeightClass=400,
     openTypeOS2Selection=[],
-    openTypeOS2VendorID="NONE",
+    # four spaces: the OS/2 spec allows leaving the vendor blank
+    openTypeOS2VendorID="    ",
     openTypeOS2Panose=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     openTypeOS2FamilyClass=[0, 0],
     openTypeOS2UnicodeRanges=None,
