@@ -1468,6 +1468,7 @@ def test_pass_on_conversion_error(FontClass):
 @pytest.mark.parametrize(
     "vendorID, expected",
     [
+        ("", "    "),
         ("A", "A   "),
         ("AA", "AA  "),
         ("AAA", "AAA "),
@@ -1485,6 +1486,19 @@ def test_achVendId_space_padded_if_less_than_4_chars(
     font = TTFont(tmp)
 
     assert font["OS/2"].achVendID == expected
+
+
+@pytest.mark.parametrize("CompilerClass", [OutlineOTFCompiler, OutlineTTFCompiler])
+def test_achVendId_blank_by_default(FontClass, CompilerClass):
+    ufo = FontClass()
+    font = CompilerClass(ufo).compile()
+    tmp = BytesIO()
+    font.save(tmp)
+    font = TTFont(tmp)
+
+    assert font["OS/2"].achVendID == "    "
+    unique_id = font["name"].getDebugName(3)
+    assert unique_id.split(";")[1] == "    "
 
 
 @pytest.mark.parametrize("compile", [compileTTF, compileOTF])

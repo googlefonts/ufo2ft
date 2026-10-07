@@ -30,7 +30,7 @@
       Regular
     </namerecord>
     <namerecord nameID="3" platformID="3" platEncID="1" langID="0x409">
-      1.000;NONE;TestVarFont-Regular
+      1.000;    ;TestVarFont-Regular
     </namerecord>
     <namerecord nameID="4" platformID="3" platEncID="1" langID="0x409">
       TestVarFont Regular
