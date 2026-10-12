@@ -28,7 +28,7 @@ class InterpolatableTTFCompiler(BaseInterpolatableCompiler):
 
     def compileOutlines(self, ufo, glyphSet, layerName=None):
         kwargs = prune_unknown_kwargs(self.__dict__, self.outlineCompilerClass)
-        kwargs["glyphDataFormat"] = 0 if self.allQuadratic else 1
+        kwargs["allowCubic"] = not self.allQuadratic
         kwargs["tables"] = SPARSE_TTF_MASTER_TABLES if layerName else None
         # we want to keep coordinates as floats in glyf masters so that fonttools
         # can compute impliable on-curve points from unrounded coordinates before
