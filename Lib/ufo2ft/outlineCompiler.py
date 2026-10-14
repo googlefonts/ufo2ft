@@ -65,13 +65,6 @@ BoundingBox = namedtuple("BoundingBox", ["xMin", "yMin", "xMax", "yMax"])
 EMPTY_BOUNDING_BOX = BoundingBox(0, 0, 0, 0)
 
 
-def _isNonBMP(s):
-    for c in s:
-        if ord(c) > 65535:
-            return True
-    return False
-
-
 def _getVerticalOrigin(font, glyph):
     if hasattr(glyph, "verticalOrigin") and glyph.verticalOrigin is not None:
         verticalOrigin = glyph.verticalOrigin
@@ -447,7 +440,7 @@ class BaseOutlineCompiler:
             if not nameVal:
                 continue
             platformId = 3
-            platEncId = 10 if _isNonBMP(nameVal) else 1
+            platEncId = 1
             langId = 0x409
             # Set built name record if not set yet
             if name.getName(nameId, platformId, platEncId, langId):
