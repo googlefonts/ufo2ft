@@ -312,6 +312,17 @@ class OutlineTTFCompilerTest:
         actual = compiler.otf["name"].getName(1, 3, 1, 1033).string
         assert actual == "Custom Name for Windows"
 
+    def test_setupTable_name_non_bmp_string(self, quadufo):
+        """Strings with characters outside the BMP still get Windows encoding
+        ID 1, like every other string; UTF-16BE encodes them as surrogate pairs.
+        """
+        quadufo.info.openTypeNameDesigner = "Designer \U0001f600"
+        compiler = OutlineTTFCompiler(quadufo)
+        compiler.compile()
+        name = compiler.otf["name"]
+        assert name.getName(9, 3, 10, 1033) is None
+        assert name.getName(9, 3, 1, 1033).toUnicode() == "Designer \U0001f600"
+
     def test_setupTable_name_empty_styleName(self, quadufo):
         """nameID=4 (full name) should not have trailing space when styleName is empty."""
         quadufo.info.styleName = ""
