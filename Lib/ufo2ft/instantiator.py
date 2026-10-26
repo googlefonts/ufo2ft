@@ -881,16 +881,18 @@ class Instantiator:
                 instance_location=location,
             )
 
-        # If the masters haven't set the OS/2 weight and width class, use the
-        # user-space values ("input") of the axis mapping in the Designspace file for
-        # weight and width axes, if they exist. The slnt axis' value maps 1:1 to
-        # italicAngle. Clamp the values to the valid ranges.
-        if info_instance.openTypeOS2WeightClass is None and "wght" in self.special_axes:
+        # Set the OS/2 weight and width class from the user-space values ("input") of
+        # the axis mapping in the Designspace file for the weight and width axes, if
+        # they exist, no matter what the masters say, like varLib does for variable
+        # fonts. Round and clamp the values to the valid ranges. Without such an
+        # axis, the masters' (interpolated) classes are left alone. If the masters
+        # haven't set the italicAngle, the slnt axis' value maps 1:1 to it.
+        if "wght" in self.special_axes:
             weight_axis = self.special_axes["wght"]
             font.info.openTypeOS2WeightClass = weight_class_from_wght_value(
                 weight_axis.map_backward(location[weight_axis.name])
             )
-        if info_instance.openTypeOS2WidthClass is None and "wdth" in self.special_axes:
+        if "wdth" in self.special_axes:
             width_axis = self.special_axes["wdth"]
             font.info.openTypeOS2WidthClass = width_class_from_wdth_value(
                 width_axis.map_backward(location[width_axis.name])
