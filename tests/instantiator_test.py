@@ -1626,3 +1626,38 @@ def test_strict_math_glyph(ufo_module, data_dir):
     glyph = fonts[0]["test"]
     assert len(glyph.contours) == 1
     assert len(glyph.contours[0].points) == 16
+
+
+def test_opentype_categories_from_source_at_instance_location(ufo_module):
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=300, default=300, maximum=900
+    )
+    for weight, categories in [
+        (300, {"a": "base"}),
+        (600, None),
+        (900, {"a": "base", "b": "base"}),
+    ]:
+        font = ufo_module.Font()
+        font.newGlyph("a")
+        font.newGlyph("b")
+        if categories is not None:
+            font.lib["public.openTypeCategories"] = categories
+        d.addSourceDescriptor(location={"Weight": weight}, font=font)
+    for weight in (300, 450, 600, 900):
+        d.addInstanceDescriptor(styleName=str(weight), location={"Weight": weight})
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+    categories = [
+        generator.generate_instance(instance).lib["public.openTypeCategories"]
+        for instance in d.instances
+    ]
+
+    # Only an instance on a source that defines categories takes them, the
+    # others get the default source's.
+    assert categories == [
+        {"a": "base"},
+        {"a": "base"},
+        {"a": "base"},
+        {"a": "base", "b": "base"},
+    ]
