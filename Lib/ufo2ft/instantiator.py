@@ -55,6 +55,7 @@ from fontTools import designspaceLib, ufoLib, varLib
 from fontTools.ttLib.tables._n_a_m_e import NameRecord as ftNameRecord
 from fontTools.ttLib.tables._n_a_m_e import _makeWindowsName
 
+from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
 from ufo2ft.util import (
     _getNewGlyphFactory,
     importUfoModule,
@@ -316,6 +317,10 @@ class Instantiator:
     )
     # (design location, openTypeOS2Panose) of each source that has its own fontinfo
     source_panoses: List[Tuple[Location, List[int]]] = field(default_factory=list)
+    # (design location, public.openTypeCategories) of each source that defines them
+    source_opentype_categories: List[Tuple[Location, Dict[str, str]]] = field(
+        default_factory=list
+    )
     # computed attributes (see __post_init__ below)
     default_source_idx: int = field(init=False)
     default_design_location: Location = field(init=False)
@@ -524,6 +529,20 @@ class Instantiator:
 
         copy_lib: Mapping[str, Any] = default_font.lib if do_info else {}
 
+        # Likewise for the GDEF glyph categories, which can differ per source (e.g.
+        # glyphsLib infers them from each master's anchors). Sources that define
+        # none fall back to the default's, copied with the rest of its lib.
+        source_opentype_categories: List[Tuple[Location, Dict[str, str]]] = []
+        if do_info:
+            for source in designspace.sources:
+                if source.layerName is not None and source is not designspace.default:
+                    continue  # No lib in non-default source layers.
+                categories = source.font.lib.get(OPENTYPE_CATEGORIES_KEY)
+                if not categories:
+                    continue
+                source_location = {**default_design_location, **source.location}
+                source_opentype_categories.append((source_location, categories))
+
         # The list of glyphs-not-to-export-and-decompose-where-used-as-a-component is
         # supposed to be taken from the Designspace when a Designspace is used as the
         # starting point of the compilation process. It should be exported to all
@@ -551,6 +570,7 @@ class Instantiator:
             designspace_root_lib_font_info,
             special_axes,
             source_panoses,
+            source_opentype_categories,
         )
 
     @property
@@ -614,6 +634,11 @@ class Instantiator:
         # Lib
         #  1. Copy the default lib to the instance.
         font.lib = typing.cast(dict, copy.deepcopy(self.copy_lib))
+        #     If the instance sits on a source with its own GDEF categories, use those.
+        for source_location, categories in self.source_opentype_categories:
+            if source_location == location:
+                font.lib[OPENTYPE_CATEGORIES_KEY] = copy.deepcopy(categories)
+                break
         #  2. Copy the Designspace's skipExportGlyphs list over to the UFO to
         #     make sure it wins over the default UFO one.
         font.lib["public.skipExportGlyphs"] = [name for name in self.skip_export_glyphs]
