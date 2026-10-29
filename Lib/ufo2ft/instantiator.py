@@ -55,7 +55,7 @@ from fontTools import designspaceLib, ufoLib, varLib
 from fontTools.ttLib.tables._n_a_m_e import NameRecord as ftNameRecord
 from fontTools.ttLib.tables._n_a_m_e import _makeWindowsName
 
-from ufo2ft.constants import OPENTYPE_CATEGORIES_KEY
+from ufo2ft.constants import EMPTY_NOT_SPARSE_KEY, OPENTYPE_CATEGORIES_KEY
 from ufo2ft.util import (
     _getNewGlyphFactory,
     importUfoModule,
@@ -1084,6 +1084,10 @@ def collect_glyph_masters(
     what ufoProcessor is doing. In e.g. Mutator Sans, the 'S.closed' glyph is left
     empty in one source layer. One could treat this as a source error, but ufoProcessor
     specifically has code to skip that empty glyph and carry on.
+
+    An empty glyph whose lib sets
+    "com.github.googlei18n.ufo2ft.instantiator.emptyNotSparse" to True is meant
+    to be empty, e.g. a master layer drawn empty in Glyphs, and is kept.
     """
     locations_and_masters = []
     default_glyph_empty = False
@@ -1119,7 +1123,9 @@ def collect_glyph_masters(
         locations_and_masters = [
             (loc, master)
             for loc, master in locations_and_masters
-            if master.contours or master.components
+            if master.contours
+            or master.components
+            or master.lib.get(EMPTY_NOT_SPARSE_KEY)
         ]
 
     return locations_and_masters
