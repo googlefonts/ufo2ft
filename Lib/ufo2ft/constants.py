@@ -20,6 +20,8 @@ FILTERS_KEY = UFO2FT_PREFIX + "filters"
 
 EXPLICIT_CLOSING_LINE_KEY = UFO2FT_PREFIX + "explicitClosingLine"
 
+EMPTY_NOT_SPARSE_KEY = UFO2FT_PREFIX + "instantiator.emptyNotSparse"
+
 MTI_FEATURES_PREFIX = UFO2FT_PREFIX + "mtiFeatures"
 
 FEATURE_WRITERS_KEY = UFO2FT_PREFIX + "featureWriters"
