@@ -1474,6 +1474,92 @@ def test_opentype_os2_panose_no_mutation_of_default(ufo_module):
     assert d.default.font.info.openTypeOS2Panose == original_panose
 
 
+def test_opentype_os2_panose_instance_on_source(ufo_module):
+    """Test that an instance sitting on a source takes that source's panose.
+
+    Instances elsewhere get the panose values shared by all sources, and an
+    instance's public.fontInfo still overrides the source's panose.
+    """
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=300, default=300, maximum=900
+    )
+
+    panoses = {
+        300: [2, 11, 3, 3, 2, 2, 2, 2, 2, 4],  # default source
+        600: [2, 11, 5, 3, 2, 2, 2, 2, 2, 4],
+        900: [2, 11, 8, 4, 2, 2, 2, 2, 2, 4],
+    }
+    for weight, panose in panoses.items():
+        font = ufo_module.Font()
+        font.info.openTypeOS2Panose = panose
+        d.addSourceDescriptor(location={"Weight": weight}, font=font)
+    for weight in (300, 450, 600, 900):
+        d.addInstanceDescriptor(styleName=f"W{weight}", location={"Weight": weight})
+    override = [2, 11, 9, 4, 2, 2, 2, 2, 2, 4]
+    d.addInstanceDescriptor(
+        styleName="Override",
+        location={"Weight": 900},
+        lib={"public.fontInfo": {"openTypeOS2Panose": override}},
+    )
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+    panose = {
+        instance.styleName: generator.generate_instance(instance).info.openTypeOS2Panose
+        for instance in d.instances
+    }
+
+    assert panose == {
+        "W300": panoses[300],
+        "W450": [2, 11, 0, 0, 2, 2, 2, 2, 2, 4],
+        "W600": panoses[600],
+        "W900": panoses[900],
+        "Override": override,
+    }
+    # The sources should remain unchanged
+    for source in d.sources:
+        assert source.font.info.openTypeOS2Panose == panoses[source.location["Weight"]]
+
+
+def test_opentype_os2_panose_instance_on_source_without_panose(ufo_module):
+    """Test that an instance on a source layer, or on a source with no panose of
+    its own, gets the panose values shared by all sources."""
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=300, default=300, maximum=900
+    )
+
+    default = ufo_module.Font()
+    default.info.openTypeOS2Panose = [2, 11, 3, 3, 2, 2, 2, 2, 2, 4]
+    bold = ufo_module.Font()
+    bold.info.openTypeOS2Panose = [2, 11, 8, 4, 2, 2, 2, 2, 2, 4]
+    bold.newLayer("support")
+    no_panose = ufo_module.Font()
+
+    d.addSourceDescriptor(location={"Weight": 300}, font=default)
+    d.addSourceDescriptor(location={"Weight": 900}, font=bold)
+    d.addSourceDescriptor(location={"Weight": 600}, font=bold, layerName="support")
+    d.addSourceDescriptor(location={"Weight": 750}, font=no_panose)
+    d.addInstanceDescriptor(styleName="Layer", location={"Weight": 600})
+    d.addInstanceDescriptor(styleName="NoPanose", location={"Weight": 750})
+
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+
+    for instance in d.instances:
+        assert generator.generate_instance(instance).info.openTypeOS2Panose == [
+            2,
+            11,
+            0,
+            0,
+            2,
+            2,
+            2,
+            2,
+            2,
+            4,
+        ]
+
+
 @pytest.mark.parametrize(
     "panose_data,expected",
     [

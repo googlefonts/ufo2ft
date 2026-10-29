@@ -314,6 +314,8 @@ class Instantiator:
     special_axes: Mapping[str, designspaceLib.AxisDescriptor] = field(
         default_factory=dict
     )
+    # (design location, openTypeOS2Panose) of each source that has its own fontinfo
+    source_panoses: List[Tuple[Location, List[int]]] = field(default_factory=list)
     # computed attributes (see __post_init__ below)
     default_source_idx: int = field(init=False)
     default_design_location: Location = field(init=False)
@@ -501,6 +503,25 @@ class Instantiator:
             copy_info = copy.copy(copy_info)
             copy_info.openTypeOS2Panose = shared_panose if any(shared_panose) else None
 
+        # An instance that sits exactly on a source takes that source's own panose
+        # instead, as it describes that source better than the shared values do.
+        source_panoses: List[Tuple[Location, List[int]]] = []
+        if do_info:
+            for source in designspace.sources:
+                if source.layerName is not None and source is not designspace.default:
+                    continue  # No font info in non-default source layers.
+                panose = source.font.info.openTypeOS2Panose
+                if panose is None:
+                    continue
+                if len(panose) != 10:
+                    logger.warning(
+                        "openTypeOS2Panose values in source %s have invalid length, "
+                        "they will be padded/truncated to 10 values",
+                        source.name,
+                    )
+                source_location = {**default_design_location, **source.location}
+                source_panoses.append((source_location, (list(panose) + [0] * 10)[:10]))
+
         copy_lib: Mapping[str, Any] = default_font.lib if do_info else {}
 
         # The list of glyphs-not-to-export-and-decompose-where-used-as-a-component is
@@ -529,6 +550,7 @@ class Instantiator:
             skip_export_glyphs,
             designspace_root_lib_font_info,
             special_axes,
+            source_panoses,
         )
 
     @property
@@ -744,6 +766,12 @@ class Instantiator:
             for attribute in UFO_INFO_ATTRIBUTES_TO_COPY_TO_INSTANCES:
                 if (value := getattr(self.copy_info, attribute, None)) is not None:
                     setattr(font.info, attribute, copy.deepcopy(value))
+
+        # level 4 (part 2): the panose of the source the instance sits on, if any
+        for source_location, panose in self.source_panoses:
+            if source_location == location:
+                font.info.openTypeOS2Panose = list(panose)
+                break
 
         # level 3: copy the designspace root <lib> public.fontInfo key
         if self.designspace_root_lib_font_info:
