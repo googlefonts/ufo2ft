@@ -1661,3 +1661,36 @@ def test_opentype_categories_from_source_at_instance_location(ufo_module):
         {"a": "base"},
         {"a": "base", "b": "base"},
     ]
+
+
+@pytest.mark.parametrize("marked,empty", [(True, True), (False, True), (True, False)])
+def test_explicit_empty_not_sparse_glyph(ufo_module, marked, empty):
+    d = designspaceLib.DesignSpaceDocument()
+    d.addAxisDescriptor(
+        name="Weight", tag="wght", minimum=100, default=100, maximum=200
+    )
+    for value in (100, 200):
+        font = ufo_module.Font()
+        glyph = font.newGlyph("a")
+        glyph.width = 500 if value == 100 else 700
+        if value == 100 or not empty:
+            pen = glyph.getPen()
+            pen.moveTo((0, 0))
+            pen.lineTo((100, 0))
+            pen.lineTo((100, 100))
+            pen.closePath()
+        if value == 200 and marked:
+            glyph.lib["com.github.googlei18n.ufo2ft.instantiator.emptyNotSparse"] = True
+        d.addSourceDescriptor(location={"Weight": value}, font=font)
+    d.addInstanceDescriptor(styleName="Bold", location={"Weight": 200})
+    d.addInstanceDescriptor(styleName="Between", location={"Weight": 150})
+    generator = ufo2ft.instantiator.Instantiator.from_designspace(d)
+    glyph = generator.generate_instance(d.instances[0])["a"]
+    if marked and empty:
+        assert len(glyph) == 0
+        assert glyph.width == 700
+        with pytest.raises(ufo2ft.instantiator.InstantiatorError):
+            generator.generate_instance(d.instances[1])
+    else:
+        assert len(glyph) == 1
+        assert len(generator.generate_instance(d.instances[1])["a"]) == 1
