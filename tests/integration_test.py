@@ -8,7 +8,11 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from fontTools.designspaceLib import DesignSpaceDocument
+from fontTools.designspaceLib import (
+    AxisDescriptor,
+    DesignSpaceDocument,
+    SourceDescriptor,
+)
 from fontTools.otlLib.optimize.gpos import COMPRESSION_LEVEL as GPOS_COMPRESSION_LEVEL
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.transformPen import TransformPen
@@ -259,7 +263,8 @@ class IntegrationTest:
         tmp = io.StringIO()
 
         _ = compileVariableTTF(designspace, debugFeatureFile=tmp)
-        assert "\n" + tmp.getvalue() == dedent("""
+        assert "\n" + tmp.getvalue() == dedent(
+            """
             markClass dotabovecomb <anchor -2 465> @mark_top;
 
             feature liga {
@@ -273,7 +278,8 @@ class IntegrationTest:
                 } mark2base;
 
             } mark;
-        """)  # noqa: B950
+        """
+        )  # noqa: B950
 
     @pytest.mark.parametrize(
         "output_format, options, expected_ttx",
@@ -479,11 +485,55 @@ class IntegrationTest:
         ):
             _ = compileFunc(ufo)
 
-    def test_compileTTF_glyf1_not_allQuadratic(self, testufo):
-        ttf = compileTTF(testufo, allQuadratic=False)
-        expectTTX(ttf, "TestFont-not-allQuadratic.ttx", tables=["glyf"])
+    def test_compileTTF_GLYF_not_allQuadratic(self):
+        ufo = _make_beyond64k_ufo(2)
+        glyph = ufo.newGlyph("curved")
+        glyph.width = 1000
+        self.drawCurvedContour(glyph)
+        ufo.lib["public.glyphOrder"].append("curved")
 
-        assert ttf["head"].glyphDataFormat == 1
+        ttf = compileTTF(ufo, convertCubics=False, allQuadratic=False)
+
+        assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+        assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+        assert ttf["head"].glyphDataFormat == 0
+        glyf = ttf["GLYF"]
+        assert any(
+            flag & flagCubic
+            for name in ttf.getGlyphOrder()
+            for flag in getattr(glyf[name], "flags", ())
+        )
+
+    def test_compileTTF_GLYF_not_allQuadratic_useProductionNames(self):
+        # useProductionNames=True makes the postprocessor reload the font from a
+        # buffer before _maybe_uppercase_beyond64k runs. Check that the GLYF
+        # upgrade still happens after that reload (and isn't reverted to the
+        # lowercase glyf family by it).
+        ufo = _make_beyond64k_ufo(2)
+        glyph = ufo.newGlyph("curved")
+        glyph.width = 1000
+        self.drawCurvedContour(glyph)
+        ufo.lib["public.glyphOrder"].append("curved")
+
+        ttf = compileTTF(
+            ufo, convertCubics=False, allQuadratic=False, useProductionNames=True
+        )
+
+        assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+        assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+        assert ttf["head"].glyphDataFormat == 0
+
+    def test_compileTTF_GLYF_not_allQuadratic_without_cubics(self):
+        # allQuadratic=False always upgrades to the GLYF family, even for a small
+        # font whose outlines turn out to contain no cubic curves: the table
+        # family follows the build option, not the glyph content.
+        ufo = _make_beyond64k_ufo(2)  # empty glyphs, no cubics, well under 64k
+
+        ttf = compileTTF(ufo, convertCubics=False, allQuadratic=False)
+
+        assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+        assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+        assert ttf["head"].glyphDataFormat == 0
 
     @staticmethod
     def drawCurvedContour(glyph, transform=None):
@@ -495,7 +545,7 @@ class IntegrationTest:
         pen.curveTo((111.928, 500), (0, 277.614), (0, 0))
         pen.closePath()
 
-    def test_compileVariableTTF_glyf1_not_allQuadratic(self, designspace):
+    def test_compileVariableTTF_GLYF_not_allQuadratic(self, designspace):
         base_master = designspace.findDefault()
         assert base_master is not None
         # add a glyph with some curveTo to exercise the cu2qu codepath
@@ -503,10 +553,17 @@ class IntegrationTest:
         glyph.width = 1000
         self.drawCurvedContour(glyph)
 
-        vf = compileVariableTTF(designspace, allQuadratic=False)
-        expectTTX(vf, "TestVariableFont-TTF-not-allQuadratic.ttx", tables=["glyf"])
+        vf = compileVariableTTF(designspace, convertCubics=False, allQuadratic=False)
 
-        assert vf["head"].glyphDataFormat == 1
+        assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(vf.keys())
+        assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(vf.keys())
+        assert vf["head"].glyphDataFormat == 0
+        glyf = vf["GLYF"]
+        assert any(
+            flag & flagCubic
+            for name in vf.getGlyphOrder()
+            for flag in getattr(glyf[name], "flags", ())
+        )
 
     def test_compileTTF_overlap_simple_flag(self, testufo):
         """Test that the OVERLAP_{SIMPLE,COMPOUND} are set on glyphs that have it"""
@@ -628,6 +685,79 @@ class IntegrationTest:
         o1 = vf1["glyf"]["o"].coordinates
         o2 = vf2["glyf"]["o"].coordinates
         assert len(o1) == len(o2) + 4
+
+
+def _make_beyond64k_ufo(glyph_count):
+    ufoLib2 = pytest.importorskip("ufoLib2")
+    font = ufoLib2.Font()
+    font.info.familyName = "Test"
+    font.info.styleName = "Regular"
+    font.info.unitsPerEm = 1000
+    font.info.ascender = 800
+    font.info.descender = -200
+
+    glyph_order = [f"glyph{i}" for i in range(glyph_count)]
+    for glyph_name in glyph_order:
+        font.newGlyph(glyph_name).width = 500
+    font.lib["public.glyphOrder"] = glyph_order
+    return font
+
+
+def test_compile_ttf_keeps_compact_tables_for_small_font():
+    ttf = compileTTF(_make_beyond64k_ufo(2))
+
+    assert len(ttf.getGlyphOrder()) == 3
+    assert {"glyf", "loca", "maxp", "hhea", "hmtx"} <= set(ttf.keys())
+    assert not {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} & set(ttf.keys())
+
+
+def test_compile_ttf_uses_beyond64k_tables_for_large_font():
+    ttf = compileTTF(_make_beyond64k_ufo(0x10000))
+
+    assert len(ttf.getGlyphOrder()) == 0x10001
+    assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+    assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+
+
+def test_compile_ttf_uses_beyond64k_tables_at_exactly_65536_glyphs():
+    # 65536 is the boundary: gids 0..0xFFFF fit uint16 but the count overflows
+    # maxp.numGlyphs, so the companion tables are required. 65535 fits and the
+    # other tests' 65537 is already past 0x10000, so only 65536 catches the bug.
+    ttf = compileTTF(_make_beyond64k_ufo(0xFFFF))
+
+    assert len(ttf.getGlyphOrder()) == 0x10000
+    assert {"GLYF", "LOCA", "MAXP", "HHEA", "HMTX"} <= set(ttf.keys())
+    assert not {"glyf", "loca", "maxp", "hhea", "hmtx"} & set(ttf.keys())
+
+
+def test_compile_variable_ttf_with_sparse_master_beyond64k():
+    # A sparse master (a layer with only a subset of glyphs) stays below 64k while
+    # the full masters cross it. ufo2ft must not uppercase each master by its own
+    # glyph count, else the sparse master keeps its lowercase tables while the full
+    # ones go uppercase and varLib rejects the mixed glyf/GLYF table family.
+    full = _make_beyond64k_ufo(0x10000)  # 0x10001 glyphs incl. .notdef -> beyond-64k
+    sparse = full.newLayer("sparse")
+    sparse.newGlyph("glyph1").width = 600
+
+    doc = DesignSpaceDocument()
+    doc.addAxis(
+        AxisDescriptor(tag="wght", name="Weight", minimum=0, default=0, maximum=1000)
+    )
+    s0 = SourceDescriptor()
+    s0.font = full
+    s0.location = {"Weight": 0}
+    doc.addSource(s0)
+    s1 = SourceDescriptor()
+    s1.font = full
+    s1.layerName = "sparse"
+    s1.location = {"Weight": 1000}
+    doc.addSource(s1)
+
+    (vf,) = compileVariableTTFs(doc).values()
+
+    assert len(vf.getGlyphOrder()) == 0x10001
+    assert {"GLYF", "LOCA", "MAXP"} <= set(vf.keys())
+    assert not {"glyf", "loca", "maxp"} & set(vf.keys())
 
 
 if __name__ == "__main__":
