@@ -7,15 +7,20 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     # https://github.community/t/github-actions-does-not-respect-skip-ci/17325/8
     if: "! contains(toJSON(github.event.commits.*.message), '[skip ci]')"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      with:
+        persist-credentials: false
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
       with:
         python-version: "3.x"
     - name: Install dependencies
@@ -30,9 +35,11 @@ jobs:
         python-version: ["3.10", "3.14"]
         platform: [ubuntu-latest, windows-latest]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      with:
+        persist-credentials: false
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -42,7 +49,7 @@ jobs:
     - name: Produce coverage files
       run: tox -e htmlcov
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.4.0
       with:
         file: coverage.xml
         flags: unittests
@@ -65,14 +72,15 @@ jobs:
       url: https://pypi.org/p/ufo2ft
     permissions:
       contents: write
-      id-token: write # IMPORTANT: mandatory for trusted publishing
+      id-token: write
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       with:
+        persist-credentials: false
         # setuptools_scm requires the git clone to not be 'shallow'
         fetch-depth: 0
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
       with:
         python-version: "3.x"
     - name: Extract release notes from annotated tag message
@@ -88,7 +96,7 @@ jobs:
         TAG_NAME="${GITHUB_REF##*/}"
         # Dump tag message to temporary .md file (excluding the PGP signature at the bottom)
         TAG_MESSAGE=$(git tag -l --format='%(contents)' $TAG_NAME | sed -n '/-----BEGIN PGP SIGNATURE-----/q;p')
-        echo "$TAG_MESSAGE" > "${{ runner.temp }}/release_notes.md"
+        echo "$TAG_MESSAGE" > "${RUNNER_TEMP}/release_notes.md"
         # if the tag has a pre-release suffix mark the Github Release accordingly
         if egrep -q "$PRERELEASE_TAG_PATTERN" <<< "$TAG_NAME"; then
           echo "Tag contains a pre-release suffix"
@@ -99,11 +107,17 @@ jobs:
         fi
     - name: Create GitHub release
       id: create_release
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: "${{ runner.temp }}/release_notes.md"
-        draft: false
-        prerelease: ${{ env.IS_PRERELEASE }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        PRERELEASE_FLAG=()
+        if [ "${IS_PRERELEASE:-false}" = "true" ]; then
+          PRERELEASE_FLAG=(--prerelease)
+        fi
+        gh release create "${GITHUB_REF_NAME}" \
+          --title "${GITHUB_REF_NAME}" \
+          --notes-file "${RUNNER_TEMP}/release_notes.md" \
+          "${PRERELEASE_FLAG[@]}"
     - name: Build
       run: |
         if [ "$IS_PRERELEASE" == true ]; then
@@ -112,5 +126,29 @@ jobs:
           echo "DEBUG: This is a final release"
         fi
         pipx run build
-    - name: Publish package distributions to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+      with:
+        workload_identity_provider: 'projects/305452601764/locations/global/workloadIdentityPools/builders/providers/github'
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+    - name: Stage distributions and trigger OSS Exit Gate release
+      env:
+        RUN_ID: ${{ github.run_id }}
+        RUN_ATTEMPT: ${{ github.run_attempt }}
+      run: |
+        set -euo pipefail
+        python3 -m venv .exit-gate-venv
+        .exit-gate-venv/bin/python -m pip install --upgrade pip twine keyrings.google-artifactregistry-auth
+        .exit-gate-venv/bin/python -m twine upload \
+          --repository-url https://us-python.pkg.dev/oss-exit-gate-prod/ufo2ft--pypi/ \
+          --non-interactive \
+          --skip-existing \
+          dist/*
+        cat <<EOF > manifest.json
+        {
+          "publish_all": true
+        }
+        EOF
+        gcloud storage cp manifest.json \
+          "gs://oss-exit-gate-prod-projects-bucket/ufo2ft/pypi/manifests/manifest-${RUN_ID}-${RUN_ATTEMPT}.json"
